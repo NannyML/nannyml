@@ -3,7 +3,7 @@
 name = "nannyml"
 version = "0.1.0"
 homepage = "https://github.com/nnansters/nannyml"
-description = "Skeleton project created by Cookiecutter PyPackage."
+description = "The NannyML library, monitoring model performance since 2020."
 authors = ["Niels Nuyttens <niels@nannyml.com>"]
 readme = "README.md"
 license =  "Apache-2.0"
@@ -13,10 +13,10 @@ classifiers=[
     'License :: OSI Approved :: Apache Software License',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
 ]
 packages = [
     { include = "nannyml" },
