@@ -5,16 +5,23 @@
 
 import abc
 import logging
+import os.path
 from typing import List
 
+import joblib
+import numpy as np
 import pandas as pd
 from dateutil.parser import ParserError  # type: ignore
+from sklearn.metrics import roc_auc_score
 
+from nannyml import ROOT_DIR
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException
 
 logger = logging.getLogger(__name__)
 
 NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
+NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
+NML_METADATA_GROUND_TRUTH_COLUMN_NAME = 'nml_meta_ground_truth'
 
 
 class Chunk:
@@ -37,8 +44,21 @@ class Chunk:
         return self.data.shape[0]
 
 
-def _minimal_chunk_count(data: pd.DataFrame) -> int:
-    return data.shape[0] // 5
+def _minimum_chunk_count(
+    data: pd.DataFrame,
+    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+    ground_truth_column_name: str = NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
+    lower_threshold: int = 300,
+) -> int:
+    class_balance = np.mean(data[ground_truth_column_name])
+    auc = roc_auc_score(data[ground_truth_column_name], data[prediction_column_name])
+    min_chunk_size_model = joblib.load(open(os.path.join(ROOT_DIR, 'nannyml', 'min_chunk_size_pol4_model.pkl'), 'rb'))
+    chunk_size = min_chunk_size_model.predict([[class_balance, auc]])
+    chunk_size = np.maximum(lower_threshold, chunk_size)
+    chunk_size = np.round(chunk_size, -2)
+    minimum_chunk_size = int(chunk_size)
+
+    return minimum_chunk_size
 
 
 def _is_transition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME) -> bool:
@@ -74,7 +94,7 @@ class Chunker(abc.ABC):
             )
 
         # check if all chunk sizes > minimal chunk size. If not, render a warning message.
-        underpopulated_chunks = [c for c in chunks if len(c) < _minimal_chunk_count(data)]
+        underpopulated_chunks = [c for c in chunks if len(c) < _minimum_chunk_count(data)]
 
         if len(underpopulated_chunks) > 0:
             # TODO wording

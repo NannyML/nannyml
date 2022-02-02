@@ -10,7 +10,9 @@ import pandas as pd
 import pytest
 
 from nannyml._chunk import (
+    NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
     Chunk,
     Chunker,
     CountBasedChunker,
@@ -40,6 +42,8 @@ def sample_chunk_data() -> pd.DataFrame:
     data['f2'] = np.random.rand(data.shape[0])
     data['f3'] = np.random.randint(4, size=data.shape[0])
     data['f4'] = np.random.randint(20, size=data.shape[0])
+    data[NML_METADATA_PREDICTION_COLUMN_NAME] = np.random.randint(2, size=data.shape[0])
+    data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = np.random.randint(2, size=data.shape[0])
 
     # Rule 1b is the shifted feature, 75% 0 instead of 50%
     rule1a = {2: 0, 3: 1}

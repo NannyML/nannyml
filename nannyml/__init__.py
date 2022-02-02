@@ -3,8 +3,11 @@
 # License: Apache Software License 2.0
 
 import logging
+import os
 
 logger = logging.getLogger(__name__)
+
+ROOT_DIR = os.path.abspath(os.curdir)
 
 __author__ = """Niels Nuyttens"""
 __email__ = 'niels@nannyml.com'
