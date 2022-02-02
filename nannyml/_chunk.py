@@ -8,13 +8,13 @@ import logging
 from typing import List
 
 import pandas as pd
+from dateutil.parser import ParserError  # type: ignore
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException
 
-# from dateutil.parser import ParserError  # dropped due to pre-commit issues with dateutil types.
-
-
 logger = logging.getLogger(__name__)
+
+NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
 
 
 class Chunk:
@@ -41,7 +41,7 @@ def _minimal_chunk_count(data: pd.DataFrame) -> int:
     return data.shape[0] // 5
 
 
-def _is_transition(c: Chunk, partition_column_name: str) -> bool:
+def _is_transition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME) -> bool:
     if c.data.shape[0] > 1:
         return c.data[partition_column_name].nunique() > 1
     else:
@@ -56,14 +56,14 @@ class Chunker(abc.ABC):
     or a preferred number of Chunks.
     """
 
-    def __init__(self, partition_column_name: str = 'partition'):
-        self.partition_column_name = partition_column_name
+    def __init__(self):
+        pass
 
     def split(self, data: pd.DataFrame) -> List[Chunk]:
         chunks = self._split(data)
 
         for c in chunks:
-            if _is_transition(c, self.partition_column_name):
+            if _is_transition(c):
                 c.is_transition = True
 
         if len(chunks) < 6:
@@ -148,7 +148,6 @@ class PeriodBasedChunker(Chunker):
         date_column_name: str = None,
         date_column: pd.Series = None,
         offset: str = 'W',
-        partition_column_name: str = 'partition',
     ):
         """
         Parameters
@@ -166,31 +165,26 @@ class PeriodBasedChunker(Chunker):
             The offset determines how the time-based grouping will occur. A list of possible values
             is to be found at https://pandas.pydata.org/docs/user_guide/timeseries.html#offset-aliases.
 
-        partition_column_name: str
-            The name of the column containing the partition of the observation. Defaults to `partition`.
-
         Returns
         -------
 
         chunker: a PeriodBasedChunker instance used to split data into time-based Chunks.
 
         """
-        super().__init__(partition_column_name)
+        super().__init__()
         if date_column is None and not date_column_name:
             raise InvalidArgumentsException(
                 'date_column and date_column_name cannot both be None. Provide a value for one of both.'
             )
 
-        if date_column is not None:
-            self.date_column = date_column
-        if date_column_name:
-            self.date_column_name = date_column_name
+        self.date_column = date_column
+        self.date_column_name = date_column_name
 
         self.offset = offset
 
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
         chunks = []
-        date_column_name = self.date_column_name or self.date_column.name
+        date_column_name = self.date_column_name or self.date_column.name  # type: ignore
         try:
             grouped_data = data.groupby(pd.to_datetime(data[date_column_name]).dt.to_period(self.offset))
             for k in grouped_data.groups.keys():
@@ -199,12 +193,12 @@ class PeriodBasedChunker(Chunker):
             raise ChunkerException(f"could not find date_column '{date_column_name}' in given data")
 
         # Had to drop this check due to issues with dateparser types during pre-commit checks
-        #
-        # except ParserError:
-        #     raise ChunkerException(
-        #         f"could not parse date_column '{date_column_name}' values as dates."
-        #         f"Please verify if you've specified the correct date column."
-        #     )
+
+        except ParserError:
+            raise ChunkerException(
+                f"could not parse date_column '{date_column_name}' values as dates."
+                f"Please verify if you've specified the correct date column."
+            )
 
         except Exception as exc:
             raise ChunkerException(f"could not split data into chunks: {exc}")
@@ -241,16 +235,13 @@ class SizeBasedChunker(Chunker):
         chunk_size: int
             The preferred size of the resulting Chunks, i.e. the number of observations in each Chunk.
 
-        partition_column_name: str
-            The name of the column containing the partition of the observation. Defaults to `partition`.
-
         Returns
         -------
 
         chunker: a size-based instance used to split data into Chunks of a constant size.
 
         """
-        super().__init__(partition_column_name)
+        super().__init__()
 
         # TODO wording
         if not isinstance(chunk_size, int):
@@ -287,9 +278,9 @@ class CountBasedChunker(Chunker):
 
     """
 
-    def __init__(self, chunk_count: int, partition_column_name: str = 'partition'):
+    def __init__(self, chunk_count: int):
         """ """
-        super().__init__(partition_column_name)
+        super().__init__()
 
         # TODO wording
         if not isinstance(chunk_count, int):

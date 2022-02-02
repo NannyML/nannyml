@@ -5,7 +5,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml._chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml._chunk import (
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    Chunk,
+    Chunker,
+    CountBasedChunker,
+    PeriodBasedChunker,
+    SizeBasedChunker,
+)
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException
 
 rng = np.random.default_rng()
@@ -23,6 +30,7 @@ def sample_chunk_data() -> pd.DataFrame:
     data['week'] = data.ordered_at.dt.isocalendar().week - 1
     data['partition'] = 'reference'
     data.loc[data.week >= 11, ['partition']] = 'analysis'
+    data[NML_METADATA_PARTITION_COLUMN_NAME] = data['partition']  # simulate preprocessing
     np.random.seed(13)
     data['f1'] = np.random.randn(data.shape[0])
     data['f2'] = np.random.rand(data.shape[0])
