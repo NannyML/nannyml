@@ -27,13 +27,13 @@ rng = np.random.default_rng()
 
 
 @pytest.fixture
-def sample_chunk() -> Chunk:
+def sample_chunk() -> Chunk:  # noqa: D103
     df = pd.DataFrame(rng.uniform(0, 100, size=(100, 4)), columns=list('ABCD'))
     return Chunk(key='key', data=df)
 
 
 @pytest.fixture
-def sample_chunk_data() -> pd.DataFrame:
+def sample_chunk_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['ordered_at'])
     data['week'] = data.ordered_at.dt.isocalendar().week - 1
     data['partition'] = 'reference'
@@ -114,37 +114,37 @@ def sample_chunk_data() -> pd.DataFrame:
     return data
 
 
-def test_chunk_repr_should_contain_key(sample_chunk):
+def test_chunk_repr_should_contain_key(sample_chunk):  # noqa: D103
     sut = str(sample_chunk)
     assert 'key=key' in sut
 
 
-def test_chunk_repr_should_contain_data(sample_chunk):
+def test_chunk_repr_should_contain_data(sample_chunk):  # noqa: D103
     sut = str(sample_chunk)
     assert 'data=pd.DataFrame[[100x4]]' in sut
 
 
-def test_chunk_repr_should_contain_transition(sample_chunk):
+def test_chunk_repr_should_contain_transition(sample_chunk):  # noqa: D103
     sut = str(sample_chunk)
     assert 'is_transition=False' in sut
 
 
-def test_chunk_repr_should_contain_partition(sample_chunk):
+def test_chunk_repr_should_contain_partition(sample_chunk):  # noqa: D103
     sut = str(sample_chunk)
     assert 'partition' in sut
 
 
-def test_chunk_len_should_return_data_length(sample_chunk):
+def test_chunk_len_should_return_data_length(sample_chunk):  # noqa: D103
     sut = len(sample_chunk)
     assert sut == len(sample_chunk.data)
 
 
-def test_chunk_len_should_return_0_for_empty_chunk():
+def test_chunk_len_should_return_0_for_empty_chunk():  # noqa: D103
     sut = len(Chunk(key='test', data=pd.DataFrame()))
     assert sut == 0
 
 
-def test_chunker_should_log_warning_when_less_than_6_chunks(capsys, sample_chunk_data):
+def test_chunker_should_log_warning_when_less_than_6_chunks(capsys, sample_chunk_data):  # noqa: D103
     class SimpleChunker(Chunker):
         def _split(self, data: pd.DataFrame) -> List[Chunk]:
             return [Chunk(key='row0', data=data)]
@@ -157,7 +157,7 @@ def test_chunker_should_log_warning_when_less_than_6_chunks(capsys, sample_chunk
     # assert "The resulting number of chunks is too low." in sut
 
 
-def test_chunker_should_log_warning_when_some_chunks_are_underpopulated(capsys, sample_chunk_data):
+def test_chunker_should_log_warning_when_some_chunks_are_underpopulated(capsys, sample_chunk_data):  # noqa: D103
     class SimpleChunker(Chunker):
         def _split(self, data: pd.DataFrame) -> List[Chunk]:
             return [Chunk(key='row0', data=data.iloc[[0]])]
@@ -170,7 +170,7 @@ def test_chunker_should_log_warning_when_some_chunks_are_underpopulated(capsys, 
     # assert "The resulting list of chunks contains 1 underpopulated chunks." in sut
 
 
-def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_from_multiple_partitions(
+def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_from_multiple_partitions(  # noqa: D103
     sample_chunk_data,
 ):
     class SimpleChunker(Chunker):
@@ -195,45 +195,45 @@ def test_period_based_chunker_raises_exception_when_passed_neither_date_col_name
         _ = PeriodBasedChunker()
 
 
-def test_period_based_chunker_works_with_date_column_name(sample_chunk_data):
+def test_period_based_chunker_works_with_date_column_name(sample_chunk_data):  # noqa: D103
     chunker = PeriodBasedChunker(date_column_name='ordered_at')
     sut = chunker.split(sample_chunk_data)
     assert len(sut) == 20
     assert len(sut[0]) == 1008
 
 
-def test_period_based_chunker_works_with_date_column(sample_chunk_data):
+def test_period_based_chunker_works_with_date_column(sample_chunk_data):  # noqa: D103
     chunker = PeriodBasedChunker(date_column=sample_chunk_data['ordered_at'])
     sut = chunker.split(sample_chunk_data)
     assert len(sut) == 20  # 20 weeks
     assert len(sut[0]) == 1008  # Every
 
 
-def test_period_based_chunker_works_with_non_default_offset(sample_chunk_data):
+def test_period_based_chunker_works_with_non_default_offset(sample_chunk_data):  # noqa: D103
     chunker = PeriodBasedChunker(date_column_name='ordered_at', offset='M')
     sut = chunker.split(sample_chunk_data)
     assert len(sut) == 5  # 20 weeks == 5 months
 
 
-def test_period_based_chunker_works_with_empty_dataset():
+def test_period_based_chunker_works_with_empty_dataset():  # noqa: D103
     chunker = PeriodBasedChunker(date_column_name='date')
     sut = chunker.split(pd.DataFrame(columns=['date', 'f1', 'f2', 'f3', 'f4']))
     assert len(sut) == 0
 
 
-def test_period_based_chunker_fails_when_date_column_does_not_exist(sample_chunk_data):
+def test_period_based_chunker_fails_when_date_column_does_not_exist(sample_chunk_data):  # noqa: D103
     chunker = PeriodBasedChunker(date_column_name='non_existent')
     with pytest.raises(ChunkerException, match="could not find date_column 'non_existent' in given data"):
         _ = chunker.split(sample_chunk_data)
 
 
-def test_period_based_chunker_fails_when_date_column_does_not_contain_dates(sample_chunk_data):
+def test_period_based_chunker_fails_when_date_column_does_not_contain_dates(sample_chunk_data):  # noqa: D103
     chunker = PeriodBasedChunker(date_column_name='f4')
     with pytest.raises(ChunkerException, match="could not parse date_column 'f4'"):
         _ = chunker.split(sample_chunk_data)
 
 
-def test_period_based_chunker_assigns_periods_to_chunk_keys(sample_chunk_data):
+def test_period_based_chunker_assigns_periods_to_chunk_keys(sample_chunk_data):  # noqa: D103
     chunker = PeriodBasedChunker(date_column_name='ordered_at', offset='M')
     sut = chunker.split(sample_chunk_data)
     assert sut[0].key == '2020-01'
@@ -241,28 +241,28 @@ def test_period_based_chunker_assigns_periods_to_chunk_keys(sample_chunk_data):
     assert sut[-1].key == '2020-05'
 
 
-def test_size_based_chunker_raises_exception_when_passed_nan_size(sample_chunk_data):
+def test_size_based_chunker_raises_exception_when_passed_nan_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = SizeBasedChunker(chunk_size='size?')
 
 
-def test_size_based_chunker_raises_exception_when_passed_negative_size(sample_chunk_data):
+def test_size_based_chunker_raises_exception_when_passed_negative_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = SizeBasedChunker(chunk_size=-1)
 
 
-def test_size_based_chunker_raises_exception_when_passed_zero_size(sample_chunk_data):
+def test_size_based_chunker_raises_exception_when_passed_zero_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = SizeBasedChunker(chunk_size=0)
 
 
-def test_size_based_chunker_works_with_empty_dataset():
+def test_size_based_chunker_works_with_empty_dataset():  # noqa: D103
     chunker = SizeBasedChunker(chunk_size=100)
     sut = chunker.split(pd.DataFrame(columns=['date', 'f1', 'f2', 'f3', 'f4']))
     assert len(sut) == 0
 
 
-def test_size_based_chunker_returns_chunks_of_required_size(sample_chunk_data):
+def test_size_based_chunker_returns_chunks_of_required_size(sample_chunk_data):  # noqa: D103
     chunk_size = 1500
     chunker = SizeBasedChunker(chunk_size=chunk_size)
     sut = chunker.split(sample_chunk_data)
@@ -270,7 +270,7 @@ def test_size_based_chunker_returns_chunks_of_required_size(sample_chunk_data):
     assert len(sut) == sample_chunk_data.shape[0] // chunk_size
 
 
-def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):
+def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
     chunk_size = 1500
     last_chunk_start = (math.floor(sample_chunk_data.shape[0] / chunk_size) - 1) * chunk_size
     last_chunk_end = math.floor(sample_chunk_data.shape[0] / chunk_size) * chunk_size - 1
@@ -282,28 +282,28 @@ def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk
     assert sut[-1].key == f'[{last_chunk_start}:{last_chunk_end}]'
 
 
-def test_count_based_chunker_raises_exception_when_passed_nan_size(sample_chunk_data):
+def test_count_based_chunker_raises_exception_when_passed_nan_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = CountBasedChunker(chunk_count='size?')
 
 
-def test_count_based_chunker_raises_exception_when_passed_negative_size(sample_chunk_data):
+def test_count_based_chunker_raises_exception_when_passed_negative_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = CountBasedChunker(chunk_count=-1)
 
 
-def test_count_based_chunker_raises_exception_when_passed_zero_size(sample_chunk_data):
+def test_count_based_chunker_raises_exception_when_passed_zero_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = CountBasedChunker(chunk_count=0)
 
 
-def test_count_based_chunker_works_with_empty_dataset():
+def test_count_based_chunker_works_with_empty_dataset():  # noqa: D103
     chunker = CountBasedChunker(chunk_count=5)
     sut = chunker.split(pd.DataFrame(columns=['date', 'f1', 'f2', 'f3', 'f4']))
     assert len(sut) == 0
 
 
-def test_count_based_chunker_returns_chunks_of_required_size(sample_chunk_data):
+def test_count_based_chunker_returns_chunks_of_required_size(sample_chunk_data):  # noqa: D103
     chunk_count = 5
     chunker = CountBasedChunker(chunk_count=chunk_count)
     sut = chunker.split(sample_chunk_data)
@@ -311,7 +311,7 @@ def test_count_based_chunker_returns_chunks_of_required_size(sample_chunk_data):
     assert len(sut) == chunk_count
 
 
-def test_count_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):
+def test_count_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
     chunk_count = 5
 
     chunker = CountBasedChunker(chunk_count=chunk_count)
