@@ -190,7 +190,9 @@ def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_
     assert sut[1].is_transition
 
 
-def test_period_based_chunker_raises_exception_when_passed_neither_date_col_name_or_date_col(sample_chunk_data):
+def test_period_based_chunker_raises_exception_when_passed_neither_date_col_name_or_date_col(  # noqa: D103
+    sample_chunk_data,
+):
     with pytest.raises(InvalidArgumentsException):
         _ = PeriodBasedChunker()
 
