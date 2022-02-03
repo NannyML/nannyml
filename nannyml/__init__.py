@@ -2,6 +2,16 @@
 #
 # License: Apache Software License 2.0
 
+# TODO wording
+
+"""The NannyML library, helping you maintain model performance since 2020.
+
+Use the library to:
+- Calculate drift on model inputs, outputs and ground truth
+- Calculate performance metrics for your model
+- Estimate model performance metrics in the absence of ground truth
+"""
+
 import logging
 import os
 

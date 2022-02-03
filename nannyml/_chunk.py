@@ -28,6 +28,17 @@ class Chunk:
     """A subset of data that acts as a logical unit during calculations."""
 
     def __init__(self, key: str, data: pd.DataFrame, partition: str = None):
+        """Creates a new chunk.
+
+        Parameters
+        ----------
+        key : str, required.
+            A value describing what data is wrapped in this chunk.
+        data : DataFrame, required
+            The data to be contained within the chunk
+        partition : string, optional
+            The 'partition' this chunk belongs to, for example 'reference' or 'analysis'.
+        """
         self.key = key
         self.data = data
         self.partition = partition
@@ -35,12 +46,27 @@ class Chunk:
         self.is_transition: bool = False
 
     def __repr__(self):
+        """Returns textual summary of a chunk.
+
+        Returns
+        -------
+        chunk_str: str
+
+        """
         return (
             f'Chunk[key={self.key}, data=pd.DataFrame[[{self.data.shape[0]}x{self.data.shape[1]}]], '
             f'partition={self.partition}, is_transition={self.is_transition}]'
         )
 
     def __len__(self):
+        """Returns the number of rows held within this chunk.
+
+        Returns
+        -------
+        length: int
+            Number of rows in the `data` property of the chunk.
+
+        """
         return self.data.shape[0]
 
 
@@ -77,9 +103,33 @@ class Chunker(abc.ABC):
     """
 
     def __init__(self):
+        """Creates a new Chunker. Not used directly."""
         pass
 
     def split(self, data: pd.DataFrame) -> List[Chunk]:
+        """Splits a given data frame into a list of chunks.
+
+        This method provides a uniform interface across Chunker implementations to keep them interchangeable.
+
+        After performing the implementation-specific `_split` method, there are some checks on the resulting chunk list.
+
+        If the total number of chunks is low a warning will be written out to the logs.
+
+        We dynamically determine the optimal minimum number of observations per chunk and then check if the resulting
+        chunks contain at least as many. If there are any underpopulated chunks a warning will be written out in
+        the logs.
+
+        Parameters
+        ----------
+        data: DataFrame
+            The data to be split into chunks
+
+        Returns
+        -------
+        chunks: List[Chunk]
+            The list of chunks
+
+        """
         chunks = self._split(data)
 
         for c in chunks:
@@ -110,7 +160,7 @@ class Chunker(abc.ABC):
     # TODO wording
     @abc.abstractmethod
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
-        """Perform the actual splitting of the DataFrame into Chunks
+        """Splits the DataFrame into chunks.
 
         Abstract method, to be implemented within inheriting classes.
 
@@ -124,7 +174,7 @@ class Chunker(abc.ABC):
         chunks: array of Chunks
             The array of Chunks after splitting the original DataFrame `data`
 
-        See also
+        See Also
         --------
         PeriodBasedChunker: Splits data based on the timestamp of observations
         SizeBasedChunker: Splits data based on the amount of observations in a Chunk
@@ -132,7 +182,6 @@ class Chunker(abc.ABC):
 
         Notes
         -----
-
         There is a minimal number of observations that a Chunk should contain in order to retain statistical relevance.
         A chunker will log a warning message when your splitting criteria would result in underpopulated chunks.
         Note that in this situation calculation results may not be relevant.
@@ -146,7 +195,6 @@ class PeriodBasedChunker(Chunker):
 
     Examples
     --------
-
     Chunk using monthly periods and providing a column name
 
     >>> from nannyml._chunk import PeriodBasedChunker
@@ -169,10 +217,10 @@ class PeriodBasedChunker(Chunker):
         date_column: pd.Series = None,
         offset: str = 'W',
     ):
-        """
+        """Creates a new PeriodBasedChunker.
+
         Parameters
         ----------
-
         date_column_name: string
             The name of the column in the DataFrame that contains the date used for chunking.
             Required in case `date_column` is not specified, raises InvalidArgumentsException otherwise.
@@ -187,7 +235,6 @@ class PeriodBasedChunker(Chunker):
 
         Returns
         -------
-
         chunker: a PeriodBasedChunker instance used to split data into time-based Chunks.
 
         """
@@ -230,14 +277,12 @@ class SizeBasedChunker(Chunker):
 
     Notes
     -----
-
     - Chunks are adjacent, not overlapping
     - There will be no "incomplete chunks", so the leftover observations that cannot fill an entire chunk will
       be dropped by default.
 
     Examples
     --------
-
     Chunk using monthly periods and providing a column name
 
     >>> from nannyml._chunk import SizeBasedChunker
@@ -247,17 +292,16 @@ class SizeBasedChunker(Chunker):
 
     """
 
-    def __init__(self, chunk_size: int, partition_column_name: str = 'partition'):
-        """
+    def __init__(self, chunk_size: int):
+        """Create a new SizeBasedChunker.
+
         Parameters
         ----------
-
         chunk_size: int
             The preferred size of the resulting Chunks, i.e. the number of observations in each Chunk.
 
         Returns
         -------
-
         chunker: a size-based instance used to split data into Chunks of a constant size.
 
         """
@@ -290,16 +334,34 @@ class SizeBasedChunker(Chunker):
 
 
 class CountBasedChunker(Chunker):
-    """Base class for Chunker implementations.
+    """A Chunker that will split data into chunks based on the preferred number of observations per chunk.
 
     Examples
     --------
-
+    >>> from nannyml._chunk import CountBasedChunker
+    >>> df = pd.read_parquet('/path/to/my/data.pq')
+    >>> chunker = CountBasedChunker(chunk_count=100)
+    >>> chunks = chunker.split(data=df)
 
     """
 
     def __init__(self, chunk_count: int):
-        """ """
+        """Creates a new CountBasedChunker.
+
+        It will calculate the amount of observations per chunk based on the given chunk count.
+        It then continues to split the data into chunks just like a SizeBasedChunker does.
+
+        Parameters
+        ----------
+        chunk_count: int
+            The amount of chunks to split the data in.
+
+
+        Returns
+        -------
+        chunker: CountBasedChunker
+
+        """
         super().__init__()
 
         # TODO wording

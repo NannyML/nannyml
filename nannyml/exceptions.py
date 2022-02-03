@@ -2,14 +2,16 @@
 #
 # License: Apache Software License 2.0
 
+"""Custom exceptions."""
+
 
 class InvalidArgumentsException(BaseException):
-    """An exception indicating that the inputs for a function are invalid"""
+    """An exception indicating that the inputs for a function are invalid."""
 
     pass
 
 
 class ChunkerException(BaseException):
-    """An exception indicating an error occurred somewhere during chunking"""
+    """An exception indicating an error occurred somewhere during chunking."""
 
     pass
