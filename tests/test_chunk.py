@@ -11,13 +11,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml._chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml._metadata import (
+from nannyml.chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.exceptions import ChunkerException, InvalidArgumentsException
+from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
 )
-from nannyml.exceptions import ChunkerException, InvalidArgumentsException
 
 rng = np.random.default_rng()
 

@@ -15,12 +15,12 @@ from dateutil.parser import ParserError  # type: ignore
 from sklearn.metrics import roc_auc_score
 
 from nannyml import ROOT_DIR
-from nannyml._metadata import (
+from nannyml.exceptions import ChunkerException, InvalidArgumentsException
+from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
 )
-from nannyml.exceptions import ChunkerException, InvalidArgumentsException
 
 logger = logging.getLogger(__name__)
 

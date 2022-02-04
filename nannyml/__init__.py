@@ -41,4 +41,4 @@ __email__ = 'niels@nannyml.com'
 #
 __version__ = '0.1.0'
 
-__all__ = ["_chunk", "_metadata"]
+__all__ = ["chunk", "metadata"]

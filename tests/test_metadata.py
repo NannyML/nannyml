@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml._metadata import (
+from nannyml.metadata import (
     Feature,
     FeatureType,
     ModelMetadata,
