@@ -200,17 +200,17 @@ class PeriodBasedChunker(Chunker):
     --------
     Chunk using monthly periods and providing a column name
 
-    >>> from nannyml._chunk import PeriodBasedChunker
-    >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = PeriodBasedChunker(date_column_name='observation_date', offset='M')
-    >>> chunks = chunker.split(data=df)
+    > from nannyml.chunk import PeriodBasedChunker
+    > df = pd.read_parquet('/path/to/my/data.pq')
+    > chunker = PeriodBasedChunker(date_column_name='observation_date', offset='M')
+    > chunks = chunker.split(data=df)
 
     Or chunk using weekly periods
 
-    >>> from nannyml._chunk import PeriodBasedChunker
-    >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = PeriodBasedChunker(date_column=df['observation_date'], offset='W')
-    >>> chunks = chunker.split(data=df)
+    > from nannyml.chunk import PeriodBasedChunker
+    > df = pd.read_parquet('/path/to/my/data.pq')
+    > chunker = PeriodBasedChunker(date_column=df['observation_date'], offset='W')
+    > chunks = chunker.split(data=df)
 
     """
 
@@ -288,10 +288,10 @@ class SizeBasedChunker(Chunker):
     --------
     Chunk using monthly periods and providing a column name
 
-    >>> from nannyml._chunk import SizeBasedChunker
-    >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = SizeBasedChunker(chunk_size=2000)
-    >>> chunks = chunker.split(data=df)
+    > from nannyml.chunk import SizeBasedChunker
+    > df = pd.read_parquet('/path/to/my/data.pq')
+    > chunker = SizeBasedChunker(chunk_size=2000)
+    > chunks = chunker.split(data=df)
 
     """
 
@@ -341,10 +341,10 @@ class CountBasedChunker(Chunker):
 
     Examples
     --------
-    >>> from nannyml._chunk import CountBasedChunker
-    >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = CountBasedChunker(chunk_count=100)
-    >>> chunks = chunker.split(data=df)
+    > from nannyml.chunk import CountBasedChunker
+    > df = pd.read_parquet('/path/to/my/data.pq')
+    > chunker = CountBasedChunker(chunk_count=100)
+    > chunks = chunker.split(data=df)
 
     """
 
