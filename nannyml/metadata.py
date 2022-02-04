@@ -2,6 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
+"""NannyML module providing classes and utilities for dealing with model metadata."""
+
 from enum import Enum
 from typing import List, Optional
 

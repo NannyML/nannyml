@@ -3,6 +3,8 @@
 #
 # License: Apache Software License 2.0
 
+"""NannyML module providing intelligent splitting of data into chunks."""
+
 import abc
 import logging
 import os.path
