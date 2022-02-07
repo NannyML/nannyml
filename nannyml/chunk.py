@@ -149,7 +149,10 @@ class Chunker(abc.ABC):
             The list of chunks
 
         """
-        chunks = self._split(data)
+        try:
+            chunks = self._split(data)
+        except Exception as exc:
+            raise ChunkerException(f"could not split data into chunks: {exc}")
 
         for c in chunks:
             if _is_transition(c):
@@ -211,7 +214,7 @@ class Chunker(abc.ABC):
         Note that in this situation calculation results may not be relevant.
 
         """
-        pass
+        pass  # pragma: no cover
 
 
 class PeriodBasedChunker(Chunker):
@@ -277,8 +280,6 @@ class PeriodBasedChunker(Chunker):
                 f"Please verify if you've specified the correct date column."
             )
 
-        except Exception as exc:
-            raise ChunkerException(f"could not split data into chunks: {exc}")
         return chunks
 
 

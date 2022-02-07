@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.exceptions import ChunkerException, InvalidArgumentsException
+from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -207,6 +207,32 @@ def test_chunker_should_only_include_listed_columns_when_given_columns_param(sam
     c = SimpleChunker()
     sut = c.split(sample_chunk_data, columns=columns)[0].data.columns
     assert sorted(sut) == sorted(columns)
+
+
+def test_chunker_should_raise_chunker_exception_upon_exception_during_inherited_split_execution(  # noqa: D103
+    sample_chunk_data,
+):
+    class SimpleChunker(Chunker):
+        def _split(self, data: pd.DataFrame) -> List[Chunk]:
+            raise RuntimeError("oops, I broke it again")
+
+    c = SimpleChunker()
+    with pytest.raises(ChunkerException):
+        _ = c.split(sample_chunk_data)
+
+
+def test_chunker_get_partition_should_raise_missing_metadata_exception_when_partition_column_not_present(
+    sample_chunk_data,
+):
+    class SimpleChunker(Chunker):
+        def _split(self, data: pd.DataFrame) -> List[Chunk]:
+            return [Chunk(key='row0', data=data)]
+
+    c = SimpleChunker()
+    with pytest.raises(
+        MissingMetadataException, match=f"missing partition column '{NML_METADATA_PARTITION_COLUMN_NAME}'"
+    ):
+        _ = c.split(pd.DataFrame(columns=['a', 'b', 'c']))
 
 
 def test_period_based_chunker_uses_metadata_timestamp_column_when_no_date_column_name_given(  # noqa: D103
