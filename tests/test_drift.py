@@ -12,9 +12,9 @@ import pytest
 
 from nannyml.chunk import Chunk, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
-from nannyml.drift.StatisticalDriftCalculator import StatisticalDriftCalculator
+from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
+from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
 
 @pytest.fixture
 def sample_drift_metadata(sample_drift_data):  # noqa: D103
-    return ModelMetadata('drift').extract_metadata(sample_drift_data)
+    return extract_metadata(sample_drift_data, model_name='model')
 
 
 class SimpleDriftCalculator(BaseDriftCalculator):
@@ -124,7 +124,7 @@ def test_base_drift_calculator_given_empty_reference_data_should_raise_invalid_a
         calc.calculate(
             reference_data=pd.DataFrame(columns=sample_drift_data.columns),
             analysis_data=sample_drift_data,
-            model_metadata=ModelMetadata('model').extract_metadata(sample_drift_data),
+            model_metadata=extract_metadata(sample_drift_data, model_name='model'),
             chunker=SizeBasedChunker(chunk_size=1000),
         )
 
@@ -137,7 +137,7 @@ def test_base_drift_calculator_given_empty_analysis_data_should_raise_invalid_ar
         calc.calculate(
             reference_data=sample_drift_data,
             analysis_data=pd.DataFrame(columns=sample_drift_data.columns),
-            model_metadata=ModelMetadata('model').extract_metadata(sample_drift_data),
+            model_metadata=extract_metadata(sample_drift_data, model_name='model'),
             chunker=SizeBasedChunker(chunk_size=1000),
         )
 
@@ -146,7 +146,7 @@ def test_base_drift_calculator_given_empty_features_list_should_calculate_for_al
     sample_drift_data,
 ):
     calc = SimpleDriftCalculator()
-    md = ModelMetadata('model').extract_metadata(sample_drift_data)
+    md = extract_metadata(sample_drift_data, model_name='model')
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
     sut = calc.calculate(
@@ -164,7 +164,7 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     sample_drift_data,
 ):
     calc = SimpleDriftCalculator()
-    md = ModelMetadata('model').extract_metadata(sample_drift_data)
+    md = extract_metadata(sample_drift_data, model_name='model')
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
     sut = calc.calculate(
@@ -202,7 +202,7 @@ def test_statistical_drift_calculator_should_return_a_row_for_each_analysis_chun
         chunker=chunker,
     )
 
-    chunks = chunker.split(analysis_data)
+    chunks = chunker.split(sample_drift_metadata.enrich(analysis_data))
     assert len(chunks) == sut.shape[0]
     chunk_keys = [c.key for c in chunks]
     assert sorted(chunk_keys) == sorted(sut['chunk'].values)

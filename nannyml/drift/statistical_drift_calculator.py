@@ -6,6 +6,7 @@
 import itertools
 from typing import Any, Dict, List
 
+import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
@@ -39,13 +40,13 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
                     pd.concat([ref_chunk.data[col].value_counts(), ana_chunk.data[col].value_counts()], axis=1)
                 )
                 chunk_drift[f'{col}_statistic'] = [statistic]
-                chunk_drift[f'{col}_p_vaLue'] = [p_value]
+                chunk_drift[f'{col}_p_vaLue'] = [np.round(p_value, decimals=3)]
 
             cont_cols_ana = list(set(ana_chunk.data.columns) & set(continuous_column_names))
             for col in cont_cols_ana:
                 statistic, p_value = ks_2samp(ref_chunk.data[col], ana_chunk.data[col])
                 chunk_drift[f'{col}_statistic'] = [statistic]
-                chunk_drift[f'{col}_p_value'] = [p_value]
+                chunk_drift[f'{col}_p_value'] = [np.round(p_value, decimals=3)]
 
             res = res.append(pd.DataFrame(chunk_drift))
 

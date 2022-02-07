@@ -9,6 +9,8 @@ from typing import List, Optional
 
 import pandas as pd
 
+from nannyml.exceptions import MissingMetadataException
+
 NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
 NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
 NML_METADATA_GROUND_TRUTH_COLUMN_NAME = 'nml_meta_ground_truth'
@@ -34,13 +36,13 @@ class FeatureType(str, Enum):
     We consider the following feature types:
 
     CONTINUOUS: numeric variables that have an infinite number of values between any two values.
-    NOMINAL: has two or more categories, but there is no intrinsic ordering to the categories.
+    CATEGORICAL: has two or more categories, but there is no intrinsic ordering to the categories.
     ORDINAL: similar to a categorical variable, but there is a clear ordering of the categories.
     UNKNOWN: indicates NannyML couldn't detect the feature type with a high enough degree of certainty.
     """
 
     CONTINUOUS = 'continuous'
-    NOMINAL = 'nominal'
+    CATEGORICAL = 'categorical'
     ORDINAL = 'ordinal'
     UNKNOWN = 'unknown'
 
@@ -122,7 +124,6 @@ class ModelMetadata:
     def __init__(
         self,
         model_name: str,
-        model_purpose: str = None,
         model_problem: str = 'binary_classification',
         features: List[Feature] = None,
         identifier_column_name: str = 'id',
@@ -137,8 +138,6 @@ class ModelMetadata:
         ----------
         model_name : string
             A human-readable name for the model. Required.
-        model_purpose : string
-            An optional description of the use for your model. Optional
         model_problem : string
             The kind of problem your model is trying to solve. Optional, defaults to `binary_classification`.
         features : List[Feature]
@@ -164,7 +163,6 @@ class ModelMetadata:
         self.id: int
 
         self.name = model_name
-        self.model_purpose = model_purpose
         self.model_problem = model_problem
 
         self.identifier_column_name = identifier_column_name
@@ -182,9 +180,8 @@ class ModelMetadata:
             f"Metadata for model {self.name}",
             '',
             '# Warning - unable to identify all essential data',
-            f'# Please identify column names for all \'{UNKNOWN}\' values',
+            f'# Please identify column names for all \'{UNKNOWN}\' values',  # TODO: add link to relevant docs
             '',
-            f"{'Model purpose':25} {self.model_purpose or UNKNOWN:25}",
             f"{'Model problem':25} {self.model_problem or UNKNOWN:25}",
             '',
             f"{'Identifier column':25} {self.identifier_column_name or UNKNOWN:25}",
@@ -240,76 +237,20 @@ class ModelMetadata:
         else:
             return None
 
-    def extract_metadata(self, data: pd.DataFrame, add_metadata: bool = True):
-        """Tries to extract model metadata from a given data set.
-
-        Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
-        NannyML includes this helper function that tries to do the boring stuff for you using some simple rules.
-
-        Parameters
-        ----------
-        data : DataFrame
-            The dataset containing model inputs and outputs, enriched with the required metadata.
-        add_metadata: bool, default=True
-            Indicates if NannyML should add its own metadata columns to the original DataFrame.
-            These are copies of the just identified metadata columns but with static names, for easier processing
-            down the line.
-
-        Returns
-        -------
-        metadata: ModelMetadata
-            A fully initialized ModelMetadata instance.
-
-        Notes
-        -----
-        NannyML can only make educated guesses as to what kind of data lives where. When NannyML feels to unsure
-        about a guess, it will not use it.
-        Be sure to always review the results of this method for their correctness and completeness.
-        Adjust and complete as you see fit.
-        """
-        if len(data.columns) == 0:
-            return None
-
-        identifiers = _guess_identifiers(data)
-        self.identifier_column_name = None if len(identifiers) == 0 else identifiers[0]  # type: ignore
-
-        predictions = _guess_predictions(data)
-        self.prediction_column_name = None if len(predictions) == 0 else predictions[0]  # type: ignore
-
-        ground_truths = _guess_ground_truths(data)
-        self.ground_truth_column_name = None if len(ground_truths) == 0 else ground_truths[0]  # type: ignore
-
-        partitions = _guess_partitions(data)
-        self.partition_column_name = None if len(partitions) == 0 else partitions[0]  # type: ignore
-
-        timestamps = _guess_timestamps(data)
-        self.timestamp_column_name = None if len(timestamps) == 0 else timestamps[0]  # type: ignore
-
-        self.features = _extract_features(data)
-
-        if add_metadata:
-            self.enrich(data, in_place=True)
-
-        return self
-
-    def enrich(self, data: pd.DataFrame, in_place: bool = False) -> pd.DataFrame:
+    def enrich(self, data: pd.DataFrame) -> pd.DataFrame:
         """Creates copies of all metadata columns with fixed names.
 
         Parameters
         ----------
         data: DataFrame
             The data to enrich
-        in_place: bool, default=False
-            When `True` this function will modify the original DataFrame. When `False` it will operate on
-            a copy of the DataFrame.
 
         Returns
         -------
         enriched_data: DataFrame
             A DataFrame that has all metadata present in NannyML-specific columns.
         """
-        if not in_place:
-            data = data.copy()
+        data = data.copy()
 
         data[NML_METADATA_IDENTIFIER_COLUMN_NAME] = data[self.identifier_column_name]
         data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
@@ -328,7 +269,7 @@ class ModelMetadata:
         features: List[Feature]
             A list of all categorical features
         """
-        return [f for f in self.features if f.feature_type == FeatureType.NOMINAL]
+        return [f for f in self.features if f.feature_type == FeatureType.CATEGORICAL]
 
     @property
     def continuous_features(self) -> List[Feature]:
@@ -340,6 +281,67 @@ class ModelMetadata:
             A list of all continuous features
         """
         return [f for f in self.features if f.feature_type == FeatureType.CONTINUOUS]
+
+
+def extract_metadata(data: pd.DataFrame, model_name: str):
+    """Tries to extract model metadata from a given data set.
+
+    Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
+    NannyML includes this helper function that tries to do the boring stuff for you using some simple rules.
+
+    Parameters
+    ----------
+    data : DataFrame
+        The dataset containing model inputs and outputs, enriched with the required metadata.
+    model_name : string
+            A human-readable name for the model.
+
+    Returns
+    -------
+    metadata: ModelMetadata
+        A fully initialized ModelMetadata instance.
+
+    Notes
+    -----
+    NannyML can only make educated guesses as to what kind of data lives where. When NannyML feels to unsure
+    about a guess, it will not use it.
+    Be sure to always review the results of this method for their correctness and completeness.
+    Adjust and complete as you see fit.
+    """
+
+    def check_for_nan(column_names):
+        number_of_nan = data[column_names].isnull().sum().sum()
+        if number_of_nan > 0:
+            raise MissingMetadataException(f'found {number_of_nan} NaN values in one of these columns: {column_names}')
+
+    if len(data.columns) == 0:
+        return None
+
+    metadata = ModelMetadata(model_name=model_name)
+
+    identifiers = _guess_identifiers(data)
+    check_for_nan(identifiers)
+    metadata.identifier_column_name = None if len(identifiers) == 0 else identifiers[0]  # type: ignore
+
+    predictions = _guess_predictions(data)
+    check_for_nan(predictions)
+    metadata.prediction_column_name = None if len(predictions) == 0 else predictions[0]  # type: ignore
+
+    ground_truths = _guess_ground_truths(data)
+    check_for_nan(ground_truths)
+    metadata.ground_truth_column_name = None if len(ground_truths) == 0 else ground_truths[0]  # type: ignore
+
+    partitions = _guess_partitions(data)
+    check_for_nan(partitions)
+    metadata.partition_column_name = None if len(partitions) == 0 else partitions[0]  # type: ignore
+
+    timestamps = _guess_timestamps(data)
+    check_for_nan(timestamps)
+    metadata.timestamp_column_name = None if len(timestamps) == 0 else timestamps[0]  # type: ignore
+
+    metadata.features = _extract_features(data)
+
+    return metadata
 
 
 def _guess_identifiers(data: pd.DataFrame) -> List[str]:
@@ -422,7 +424,7 @@ def _predict_feature_types(df: pd.DataFrame):
             return FeatureType.CONTINUOUS
 
         elif INFERENCE_LOW_CARDINALITY_THRESHOLD <= unique_fraction <= INFERENCE_MEDIUM_CARDINALITY_THRESHOLD:
-            return FeatureType.NOMINAL
+            return FeatureType.CATEGORICAL
 
         else:
             return FeatureType.UNKNOWN
