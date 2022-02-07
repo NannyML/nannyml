@@ -221,7 +221,7 @@ def test_chunker_should_raise_chunker_exception_upon_exception_during_inherited_
         _ = c.split(sample_chunk_data)
 
 
-def test_chunker_get_partition_should_raise_missing_metadata_exception_when_partition_column_not_present(
+def test_chunker_get_partition_should_raise_missing_metadata_exception_when_partition_column_not_present(  # noqa: D103
     sample_chunk_data,
 ):
     class SimpleChunker(Chunker):
