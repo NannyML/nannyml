@@ -17,11 +17,12 @@ from dateutil.parser import ParserError  # type: ignore
 from sklearn.metrics import roc_auc_score
 
 from nannyml import ROOT_DIR
-from nannyml.exceptions import ChunkerException, InvalidArgumentsException
+from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,19 @@ def _minimum_chunk_count(
     return minimum_chunk_size
 
 
+def _get_partition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME):
+    if partition_column_name not in c.data.columns:
+        raise MissingMetadataException(
+            f"missing partition column '{NML_METADATA_PARTITION_COLUMN_NAME}'."
+            "Please extract metadata for your DataFrame first."
+        )
+
+    if _is_transition(c, partition_column_name):
+        return None
+
+    return c.data[partition_column_name].iloc[0]
+
+
 def _is_transition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME) -> bool:
     if c.data.shape[0] > 1:
         return c.data[partition_column_name].nunique() > 1
@@ -109,7 +123,7 @@ class Chunker(abc.ABC):
         """Creates a new Chunker. Not used directly."""
         pass
 
-    def split(self, data: pd.DataFrame) -> List[Chunk]:
+    def split(self, data: pd.DataFrame, columns=None) -> List[Chunk]:
         """Splits a given data frame into a list of chunks.
 
         This method provides a uniform interface across Chunker implementations to keep them interchangeable.
@@ -126,6 +140,8 @@ class Chunker(abc.ABC):
         ----------
         data: DataFrame
             The data to be split into chunks
+        columns: List[str]
+            A list of columns to be included in the resulting chunk data. Unlisted columns will be dropped.
 
         Returns
         -------
@@ -138,6 +154,11 @@ class Chunker(abc.ABC):
         for c in chunks:
             if _is_transition(c):
                 c.is_transition = True
+
+            c.partition = _get_partition(c)
+
+            if columns is not None:
+                c.data = c.data[columns]
 
         if len(chunks) < 6:
             # TODO wording
@@ -216,8 +237,7 @@ class PeriodBasedChunker(Chunker):
 
     def __init__(
         self,
-        date_column_name: str = None,
-        date_column: pd.Series = None,
+        date_column_name: str = NML_METADATA_TIMESTAMP_COLUMN_NAME,
         offset: str = 'W',
     ):
         """Creates a new PeriodBasedChunker.
@@ -226,11 +246,7 @@ class PeriodBasedChunker(Chunker):
         ----------
         date_column_name: string
             The name of the column in the DataFrame that contains the date used for chunking.
-            Required in case `date_column` is not specified, raises InvalidArgumentsException otherwise.
-
-        date_column: pd.Series
-            The column of the given DataFrame that contains the date used for chunking.
-            Required in case `date_column_name` is not specified, raises InvalidArgumentsException otherwise.
+            Defaults to the metadata timestamp column added by the `ModelMetadata.extract_metadata` function.
 
         offset: a frequency string representing a pandas.tseries.offsets.DateOffset
             The offset determines how the time-based grouping will occur. A list of possible values
@@ -239,17 +255,10 @@ class PeriodBasedChunker(Chunker):
         Returns
         -------
         chunker: a PeriodBasedChunker instance used to split data into time-based Chunks.
-
         """
         super().__init__()
-        if date_column is None and not date_column_name:
-            raise InvalidArgumentsException(
-                'date_column and date_column_name cannot both be None. Provide a value for one of both.'
-            )
 
-        self.date_column = date_column
         self.date_column_name = date_column_name
-
         self.offset = offset
 
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
@@ -261,8 +270,6 @@ class PeriodBasedChunker(Chunker):
                 chunks.append(Chunk(key=str(k), data=grouped_data.get_group(k)))
         except KeyError:
             raise ChunkerException(f"could not find date_column '{date_column_name}' in given data")
-
-        # Had to drop this check due to issues with dateparser types during pre-commit checks
 
         except ParserError:
             raise ChunkerException(
@@ -327,6 +334,7 @@ class SizeBasedChunker(Chunker):
         self.chunk_size = chunk_size
 
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
+        data = data.copy().reset_index()
         chunks = [
             Chunk(key=f'[{i}:{i + self.chunk_size - 1}]', data=data.loc[i : i + self.chunk_size - 1, :])
             for i in range(0, len(data), self.chunk_size)
@@ -386,6 +394,8 @@ class CountBasedChunker(Chunker):
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
+
+        data = data.copy().reset_index()
 
         chunk_size = data.shape[0] // self.chunk_count
         chunks = [

@@ -17,6 +17,7 @@ from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
 
 rng = np.random.default_rng()
@@ -42,6 +43,7 @@ def sample_chunk_data() -> pd.DataFrame:  # noqa: D103
     data['f4'] = np.random.randint(20, size=data.shape[0])
     data[NML_METADATA_PREDICTION_COLUMN_NAME] = np.random.randint(2, size=data.shape[0])
     data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = np.random.randint(2, size=data.shape[0])
+    data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data['ordered_at']
 
     # Rule 1b is the shifted feature, 75% 0 instead of 50%
     rule1a = {2: 0, 3: 1}
@@ -186,11 +188,32 @@ def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_
     assert sut[1].is_transition
 
 
-def test_period_based_chunker_raises_exception_when_passed_neither_date_col_name_or_date_col(  # noqa: D103
+def test_chunker_should_include_all_data_columns_by_default(sample_chunk_data):  # noqa: D103
+    class SimpleChunker(Chunker):
+        def _split(self, data: pd.DataFrame) -> List[Chunk]:
+            return [Chunk(key='row0', data=data)]
+
+    c = SimpleChunker()
+    sut = c.split(sample_chunk_data)[0].data.columns
+    assert sorted(sut) == sorted(sample_chunk_data.columns)
+
+
+def test_chunker_should_only_include_listed_columns_when_given_columns_param(sample_chunk_data):  # noqa: D103
+    class SimpleChunker(Chunker):
+        def _split(self, data: pd.DataFrame) -> List[Chunk]:
+            return [Chunk(key='row0', data=data)]
+
+    columns = ['f1', 'f3', 'partition']
+    c = SimpleChunker()
+    sut = c.split(sample_chunk_data, columns=columns)[0].data.columns
+    assert sorted(sut) == sorted(columns)
+
+
+def test_period_based_chunker_uses_metadata_timestamp_column_when_no_date_column_name_given(  # noqa: D103
     sample_chunk_data,
 ):
-    with pytest.raises(InvalidArgumentsException):
-        _ = PeriodBasedChunker()
+    chunker = PeriodBasedChunker()
+    assert chunker.date_column_name == NML_METADATA_TIMESTAMP_COLUMN_NAME
 
 
 def test_period_based_chunker_works_with_date_column_name(sample_chunk_data):  # noqa: D103
@@ -198,13 +221,6 @@ def test_period_based_chunker_works_with_date_column_name(sample_chunk_data):  #
     sut = chunker.split(sample_chunk_data)
     assert len(sut) == 20
     assert len(sut[0]) == 1008
-
-
-def test_period_based_chunker_works_with_date_column(sample_chunk_data):  # noqa: D103
-    chunker = PeriodBasedChunker(date_column=sample_chunk_data['ordered_at'])
-    sut = chunker.split(sample_chunk_data)
-    assert len(sut) == 20  # 20 weeks
-    assert len(sut[0]) == 1008  # Every
 
 
 def test_period_based_chunker_works_with_non_default_offset(sample_chunk_data):  # noqa: D103

@@ -12,6 +12,11 @@ import pandas as pd
 import pytest
 
 from nannyml.metadata import (
+    NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
+    NML_METADATA_IDENTIFIER_COLUMN_NAME,
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TIMESTAMP_COLUMN_NAME,
     Feature,
     FeatureType,
     ModelMetadata,
@@ -209,7 +214,7 @@ def test_extract_metadata_for_empty_dataframe_should_return_features_with_featur
 
 def test_extract_metadata_without_matching_columns_should_set_them_to_none():  # noqa: D103
     data = pd.DataFrame(columns=['a', 'b', 'c'])
-    sut = ModelMetadata('model').extract_metadata(data)
+    sut = ModelMetadata('model').extract_metadata(data, add_metadata=False)
     assert sut.identifier_column_name is None
     assert sut.prediction_column_name is None
     assert sut.ground_truth_column_name is None
@@ -219,7 +224,7 @@ def test_extract_metadata_without_matching_columns_should_set_them_to_none():  #
 
 def test_extract_metadata_without_matching_columns_should_set_features():  # noqa: D103
     data = pd.DataFrame(columns=['a', 'b', 'c'])
-    sut = ModelMetadata('model').extract_metadata(data)
+    sut = ModelMetadata('model').extract_metadata(data, add_metadata=False)
     assert len(sut.features) == 3
     assert sut.feature(column='a')
     assert sut.feature(column='b')
@@ -228,8 +233,39 @@ def test_extract_metadata_without_matching_columns_should_set_features():  # noq
 
 def test_extract_metadata_with_multiple_matching_columns_should_return_first_matching_column():  # noqa: D103
     data = pd.DataFrame(columns=['ident', 'id', 'uid'])
-    sut = ModelMetadata('model').extract_metadata(data)
+    sut = ModelMetadata('model').extract_metadata(data, add_metadata=False)
     assert sut.identifier_column_name == 'ident'
+
+
+def test_extract_metadata_adds_metadata_columns_to_original_data_frame_by_default():  # noqa: D103
+    cols = ['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2']
+    sut = pd.DataFrame(columns=cols)
+    _ = ModelMetadata('model').extract_metadata(sut)
+    assert len(sut.columns) == len(cols) + 5
+    assert NML_METADATA_IDENTIFIER_COLUMN_NAME in sut.columns
+    assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut.columns
+    assert NML_METADATA_PARTITION_COLUMN_NAME in sut.columns
+    assert NML_METADATA_PREDICTION_COLUMN_NAME in sut.columns
+    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in sut.columns
+
+
+def test_extract_metadata_does_not_add_metadata_columns_when_add_metadata_parameter_is_false():  # noqa: D103
+    cols = ['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2']
+    sut = pd.DataFrame(columns=cols)
+    _ = ModelMetadata('model').extract_metadata(sut, add_metadata=False)
+    assert len(sut.columns) == len(cols)
+    assert NML_METADATA_IDENTIFIER_COLUMN_NAME not in sut.columns
+    assert NML_METADATA_TIMESTAMP_COLUMN_NAME not in sut.columns
+    assert NML_METADATA_PARTITION_COLUMN_NAME not in sut.columns
+    assert NML_METADATA_PREDICTION_COLUMN_NAME not in sut.columns
+    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME not in sut.columns
+
+
+def test_extract_metadata_on_same_data_twice_does_not_add_duplicate_columns():  # noqa: D103
+    cols = ['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2']
+    sut = pd.DataFrame(columns=cols)
+    _ = ModelMetadata('model').extract_metadata(sut).extract_metadata(sut)
+    assert len(sut.columns) == len(cols) + 5
 
 
 @pytest.mark.parametrize(
@@ -318,3 +354,83 @@ def test_feature_type_detection_sets_between_low_and_mid_cardinality_threshold_t
     data = pd.DataFrame({'A': np.random.randint(6, size=1000)})
     sut = _predict_feature_types(data)
     assert sut.loc['A', 'predicted_feature_type'] == FeatureType.NOMINAL
+
+
+def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
+    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    md = ModelMetadata('model').extract_metadata(data)
+    sut = md.enrich(data).columns
+
+    assert NML_METADATA_IDENTIFIER_COLUMN_NAME in sut
+    assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
+    assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
+    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in sut
+    assert NML_METADATA_PARTITION_COLUMN_NAME in sut
+
+
+def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
+    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    md = ModelMetadata('model').extract_metadata(data, add_metadata=False)
+    sut = md.enrich(data).columns
+
+    assert len(sut) == len(data.columns) + 5
+
+    assert NML_METADATA_IDENTIFIER_COLUMN_NAME in sut
+    assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
+    assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
+    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in sut
+    assert NML_METADATA_PARTITION_COLUMN_NAME in sut
+    assert 'identity' in sut
+    assert 'prediction' in sut
+    assert 'actual' in sut
+    assert 'partition' in sut
+    assert 'feat1' in sut
+    assert 'feat2' in sut
+
+
+def test_enrich_works_on_original_data_when_in_place_is_true():  # noqa: D103
+    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    md = ModelMetadata('model').extract_metadata(data, add_metadata=False)
+    sut = md.enrich(data, in_place=True).columns
+
+    assert len(sut) == len(data.columns)
+
+    assert NML_METADATA_IDENTIFIER_COLUMN_NAME in data
+    assert NML_METADATA_TIMESTAMP_COLUMN_NAME in data
+    assert NML_METADATA_PREDICTION_COLUMN_NAME in data
+    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in data
+    assert NML_METADATA_PARTITION_COLUMN_NAME in data
+    assert 'identity' in data
+    assert 'prediction' in data
+    assert 'actual' in data
+    assert 'partition' in data
+    assert 'feat1' in data
+    assert 'feat2' in data
+
+
+def test_categorical_features_returns_only_nominal_features(sample_model_metadata):  # noqa: D103
+    sample_model_metadata.features = [
+        Feature(name='f1', column_name='f1', feature_type=FeatureType.NOMINAL),
+        Feature(name='f2', column_name='f2', feature_type=FeatureType.UNKNOWN),
+        Feature(name='f3', column_name='f3', feature_type=FeatureType.NOMINAL),
+        Feature(name='f4', column_name='f4', feature_type=FeatureType.CONTINUOUS),
+        Feature(name='f5', column_name='f5', feature_type=FeatureType.NOMINAL),
+    ]
+
+    sut = sample_model_metadata.categorical_features
+    assert len(sut) == 3
+    assert [f.name for f in sut] == ['f1', 'f3', 'f5']
+
+
+def test_continuous_features_returns_only_continuous_features(sample_model_metadata):  # noqa: D103
+    sample_model_metadata.features = [
+        Feature(name='f1', column_name='f1', feature_type=FeatureType.NOMINAL),
+        Feature(name='f2', column_name='f2', feature_type=FeatureType.UNKNOWN),
+        Feature(name='f3', column_name='f3', feature_type=FeatureType.NOMINAL),
+        Feature(name='f4', column_name='f4', feature_type=FeatureType.CONTINUOUS),
+        Feature(name='f5', column_name='f5', feature_type=FeatureType.NOMINAL),
+    ]
+
+    sut = sample_model_metadata.continuous_features
+    assert len(sut) == 1
+    assert sut[0].name == 'f4'

@@ -15,3 +15,9 @@ class ChunkerException(BaseException):
     """An exception indicating an error occurred somewhere during chunking."""
 
     pass
+
+
+class MissingMetadataException(BaseException):
+    """An exception indicating metadata columns are missing from the dataframe being processed."""
+
+    pass

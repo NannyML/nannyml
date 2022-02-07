@@ -12,6 +12,16 @@ import pandas as pd
 NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
 NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
 NML_METADATA_GROUND_TRUTH_COLUMN_NAME = 'nml_meta_ground_truth'
+NML_METADATA_IDENTIFIER_COLUMN_NAME = 'nml_meta_identifier'
+NML_METADATA_TIMESTAMP_COLUMN_NAME = 'nml_meta_timestamp'
+
+NML_METADATA_COLUMNS = [
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
+    NML_METADATA_IDENTIFIER_COLUMN_NAME,
+    NML_METADATA_TIMESTAMP_COLUMN_NAME,
+]
 
 
 # TODO wording
@@ -43,7 +53,7 @@ class Feature:
     The Feature class allows you to provide this information.
     """
 
-    def __init__(self, column_name: str, name: str, description: str, feature_type: FeatureType):
+    def __init__(self, column_name: str, name: str, feature_type: FeatureType, description: str = None):
         """Creates a new Feature instance.
 
         The ModelMetadata class contains a list of Features that describe the values that serve as model input.
@@ -54,10 +64,10 @@ class Feature:
             The name of the column where the feature is found in the (to be provided) model input/output data.
         name : str
             A (human-friendly) name for the feature.
-        description : str
-            Some additional information to display within results and visualizations.
         feature_type : FeatureType
             The kind of values the data for this feature are.
+        description : str
+            Some additional information to display within results and visualizations.
 
         Returns
         -------
@@ -230,7 +240,7 @@ class ModelMetadata:
         else:
             return None
 
-    def extract_metadata(self, data: pd.DataFrame):
+    def extract_metadata(self, data: pd.DataFrame, add_metadata: bool = True):
         """Tries to extract model metadata from a given data set.
 
         Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
@@ -240,6 +250,10 @@ class ModelMetadata:
         ----------
         data : DataFrame
             The dataset containing model inputs and outputs, enriched with the required metadata.
+        add_metadata: bool, default=True
+            Indicates if NannyML should add its own metadata columns to the original DataFrame.
+            These are copies of the just identified metadata columns but with static names, for easier processing
+            down the line.
 
         Returns
         -------
@@ -273,7 +287,59 @@ class ModelMetadata:
 
         self.features = _extract_features(data)
 
+        if add_metadata:
+            self.enrich(data, in_place=True)
+
         return self
+
+    def enrich(self, data: pd.DataFrame, in_place: bool = False) -> pd.DataFrame:
+        """Creates copies of all metadata columns with fixed names.
+
+        Parameters
+        ----------
+        data: DataFrame
+            The data to enrich
+        in_place: bool, default=False
+            When `True` this function will modify the original DataFrame. When `False` it will operate on
+            a copy of the DataFrame.
+
+        Returns
+        -------
+        enriched_data: DataFrame
+            A DataFrame that has all metadata present in NannyML-specific columns.
+        """
+        if not in_place:
+            data = data.copy()
+
+        data[NML_METADATA_IDENTIFIER_COLUMN_NAME] = data[self.identifier_column_name]
+        data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
+        data[NML_METADATA_PREDICTION_COLUMN_NAME] = data[self.prediction_column_name]
+        data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = data[self.ground_truth_column_name]
+        data[NML_METADATA_PARTITION_COLUMN_NAME] = data[self.partition_column_name]
+
+        return data
+
+    @property
+    def categorical_features(self) -> List[Feature]:
+        """Retrieves all categorical features.
+
+        Returns
+        -------
+        features: List[Feature]
+            A list of all categorical features
+        """
+        return [f for f in self.features if f.feature_type == FeatureType.NOMINAL]
+
+    @property
+    def continuous_features(self) -> List[Feature]:
+        """Retrieves all continuous features.
+
+        Returns
+        -------
+        features: List[Feature]
+            A list of all continuous features
+        """
+        return [f for f in self.features if f.feature_type == FeatureType.CONTINUOUS]
 
 
 def _guess_identifiers(data: pd.DataFrame) -> List[str]:
