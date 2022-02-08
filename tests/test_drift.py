@@ -12,6 +12,7 @@ import pytest
 
 from nannyml.chunk import Chunk, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
+from nannyml.drift._base import ChunkerPreset, _preset_to_chunker
 from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
@@ -177,6 +178,62 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     assert len(sut.columns) == 2
     assert 'f1' in sut.columns
     assert 'f3' in sut.columns
+
+
+@pytest.mark.parametrize(
+    'preset,expected',
+    [
+        ('size_1000', SizeBasedChunker(chunk_size=1000)),
+        ('period_week', PeriodBasedChunker(offset='W')),
+        ('period_month', PeriodBasedChunker(offset='M')),
+        ('period_day', PeriodBasedChunker(offset='D')),
+        ('count_100', CountBasedChunker(chunk_count=100)),
+    ],
+)
+def test_preset_to_chunker_returns_correct_chunker_given_string_value(preset, expected):  # noqa: D103
+    sut = _preset_to_chunker(preset)
+    assert isinstance(sut, type(expected))
+
+
+@pytest.mark.parametrize(
+    'preset,expected',
+    [
+        (ChunkerPreset.SIZE_1000, SizeBasedChunker(chunk_size=1000)),
+        (ChunkerPreset.PERIOD_WEEK, PeriodBasedChunker(offset='W')),
+        (ChunkerPreset.PERIOD_MONTH, PeriodBasedChunker(offset='M')),
+        (ChunkerPreset.PERIOD_DAY, PeriodBasedChunker(offset='D')),
+        (ChunkerPreset.COUNT_100, CountBasedChunker(chunk_count=100)),
+    ],
+)
+def test_preset_to_chunker_returns_correct_chunker_given_chunker_preset(preset, expected):  # noqa: D103
+    sut = _preset_to_chunker(preset)
+    assert isinstance(sut, type(expected))
+
+
+def test_preset_to_chunker_raises_exception_when_unknown_preset_given():  # noqa: D103
+    with pytest.raises(InvalidArgumentsException, match="unknown chunker preset value 'dunno'"):
+        _ = _preset_to_chunker('dunno')
+
+
+def test_base_drift_calculator_uses_default_size_1000_chunker_when_no_chunker_specified(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    class TestDriftCalculator(BaseDriftCalculator):
+        def _calculate_drift(
+            self, reference_chunks: List[Chunk], analysis_chunks: List[Chunk], model_metadata: ModelMetadata
+        ) -> pd.DataFrame:
+            chunk_keys = [c.key for c in analysis_chunks]
+            return pd.DataFrame({'keys': chunk_keys})
+
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+
+    calc = TestDriftCalculator()
+    sut = calc.calculate(ref_data, analysis_data, sample_drift_metadata)['keys']
+    expected = [c.key for c in SizeBasedChunker(chunk_size=1000).split(sample_drift_metadata.enrich(analysis_data))]
+
+    assert len(expected) == len(sut)
+    assert sorted(expected) == sorted(sut)
 
 
 @pytest.mark.parametrize(
