@@ -12,13 +12,6 @@ Use the library to:
 - Estimate model performance metrics in the absence of ground truth
 """
 
-import logging
-import os
-
-logger = logging.getLogger(__name__)
-
-ROOT_DIR = os.path.abspath(os.curdir)
-
 __author__ = """Niels Nuyttens"""
 __email__ = 'niels@nannyml.com'
 
@@ -41,4 +34,12 @@ __email__ = 'niels@nannyml.com'
 #
 __version__ = '0.1.0'
 
-__all__ = ["chunk", "metadata"]
+import logging
+import os
+
+from . import chunk, drift, exceptions
+from .metadata import Feature, FeatureType, MissingMetadataException, ModelMetadata, extract_metadata
+
+ROOT_DIR = os.path.abspath(os.curdir)
+
+logger = logging.getLogger(__name__)

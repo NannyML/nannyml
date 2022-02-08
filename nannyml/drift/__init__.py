@@ -12,5 +12,4 @@ for nominal categorical tests.
 """
 
 from ._base import BaseDriftCalculator, DriftCalculator
-
-__all__ = ["DriftCalculator", "BaseDriftCalculator", "statistical_drift_calculator.py"]
+from .statistical_drift_calculator import StatisticalDriftCalculator

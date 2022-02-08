@@ -16,7 +16,6 @@ import pandas as pd
 from dateutil.parser import ParserError  # type: ignore
 from sklearn.metrics import roc_auc_score
 
-from nannyml import ROOT_DIR
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
@@ -80,6 +79,8 @@ def _minimum_chunk_count(
     ground_truth_column_name: str = NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     lower_threshold: int = 300,
 ) -> int:
+    from nannyml import ROOT_DIR
+
     class_balance = np.mean(data[ground_truth_column_name])
     auc = roc_auc_score(data[ground_truth_column_name], data[prediction_column_name])
     min_chunk_size_model = joblib.load(open(os.path.join(ROOT_DIR, 'nannyml', 'min_chunk_size_pol4_model.pkl'), 'rb'))
