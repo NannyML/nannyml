@@ -4,14 +4,14 @@
 
 """Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
 import itertools
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.chunk import Chunk
-from nannyml.drift._base import BaseDriftCalculator
+from nannyml.drift._base import BaseDriftCalculator, ChunkerPreset
 from nannyml.metadata import ModelMetadata
 
 
@@ -52,6 +52,22 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
 
         res = res.reset_index(drop=True)
         return res
+
+
+def calculate_statistical_drift(
+    reference_data: pd.DataFrame,
+    analysis_data: pd.DataFrame,
+    model_metadata: ModelMetadata,
+    chunk_by: Union[str, ChunkerPreset] = 'size_1000',
+) -> pd.DataFrame:
+    """Calculates drift using statistical testing.
+
+    This function constructs a StatisticalDriftCalculator and subsequently uses it to calculate drift on a DataFrame
+    of analysis data against a reference DataFrame.
+
+    """
+    calculator = StatisticalDriftCalculator()
+    return calculator.calculate(reference_data, analysis_data, model_metadata, chunk_by=chunk_by)
 
 
 def _map_by_index(reference_chunks: List[Chunk], analysis_chunks: List[Chunk]) -> Dict[Chunk, Chunk]:

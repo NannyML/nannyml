@@ -13,7 +13,7 @@ import pytest
 from nannyml.chunk import Chunk, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift._base import ChunkerPreset, _preset_to_chunker
-from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator
+from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator, calculate_statistical_drift
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
 
@@ -265,15 +265,25 @@ def test_statistical_drift_calculator_should_return_a_row_for_each_analysis_chun
     assert sorted(chunk_keys) == sorted(sut['chunk'].values)
 
 
-@pytest.mark.skip("Awaiting proper static data")
 def test_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
     calc = StatisticalDriftCalculator()
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
-    sut = calc.calculate(
-        reference_data=ref_data,
-        analysis_data=analysis_data,
-        model_metadata=sample_drift_metadata,
-        chunker=PeriodBasedChunker(offset='W'),
-    )
-    print(sut)
+    try:
+        _ = calc.calculate(
+            reference_data=ref_data,
+            analysis_data=analysis_data,
+            model_metadata=sample_drift_metadata,
+            chunker=PeriodBasedChunker(offset='W'),
+        )
+    except Exception:
+        pytest.fail()
+
+
+def test_calculate_statistical_drift_function_runs_on_defaults(sample_drift_data, sample_drift_metadata):  # noqa: D103
+    reference_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    try:
+        calculate_statistical_drift(reference_data, analysis_data, sample_drift_metadata)
+    except Exception:
+        pytest.fail()
