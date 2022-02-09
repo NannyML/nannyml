@@ -37,8 +37,10 @@ __version__ = '0.1.0'
 import logging
 import os
 
-from . import chunk, drift, exceptions
-from .metadata import Feature, FeatureType, MissingMetadataException, ModelMetadata, extract_metadata
+from .chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
+from .drift import BaseDriftCalculator, DriftCalculator, StatisticalDriftCalculator
+from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
+from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
 
 ROOT_DIR = os.path.abspath(os.curdir)
 
