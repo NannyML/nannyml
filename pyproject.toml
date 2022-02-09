@@ -72,8 +72,8 @@ doc = [
     "mkdocs-include-markdown-plugin",
     "mkdocs-material",
     "mkdocstrings",
-    "mkdocs-material-extension",
-    "mkdocs-autorefs"
+    "mkdocs-material-extensions",
+    "mkdocs-autorefs",
     ]
 
 [tool.black]
