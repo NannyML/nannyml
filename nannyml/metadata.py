@@ -381,9 +381,14 @@ def _guess_partitions(data: pd.DataFrame) -> List[str]:
 
 def _guess_features(data: pd.DataFrame) -> List[str]:
     def _guess_if_feature(col: pd.Series) -> bool:
-        return col.name not in _guess_identifiers(data) + _guess_partitions(data) + _guess_predictions(
-            data
-        ) + _guess_timestamps(data) + _guess_ground_truths(data)
+        return (
+            col.name
+            not in _guess_identifiers(data)
+            + _guess_partitions(data)
+            + _guess_predictions(data)
+            + _guess_timestamps(data)
+            + _guess_ground_truths(data)
+        ) and (col.name not in NML_METADATA_COLUMNS)
 
     return [col for col in data.columns if _guess_if_feature(data[col])]
 

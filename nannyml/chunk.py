@@ -7,14 +7,13 @@
 
 import abc
 import logging
-import os.path
 from typing import List
 
-import joblib
 import numpy as np
 import pandas as pd
 from dateutil.parser import ParserError  # type: ignore
 from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
@@ -79,12 +78,33 @@ def _minimum_chunk_count(
     ground_truth_column_name: str = NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     lower_threshold: int = 300,
 ) -> int:
-    from nannyml import ROOT_DIR
+    def get_prediction(X):
+        # model data
+        h_coefs = [
+            0.00000000e00,
+            -3.46098897e04,
+            2.65871679e04,
+            3.46098897e04,
+            2.29602791e04,
+            -4.96886646e04,
+            -1.12777343e-10,
+            -2.29602791e04,
+            3.13775672e-10,
+            2.48718826e04,
+        ]
+        h_intercept = 1421.9522967076875
+        transformation = PolynomialFeatures(3)
+        #
+
+        inputs = np.asarray(X)
+        transformed_inputs = transformation.fit_transform(inputs)
+        prediction = np.dot(transformed_inputs, h_coefs)[0] + h_intercept
+
+        return prediction
 
     class_balance = np.mean(data[ground_truth_column_name])
     auc = roc_auc_score(data[ground_truth_column_name], data[prediction_column_name])
-    min_chunk_size_model = joblib.load(open(os.path.join(ROOT_DIR, 'nannyml', 'min_chunk_size_pol4_model.pkl'), 'rb'))
-    chunk_size = min_chunk_size_model.predict([[class_balance, auc]])
+    chunk_size = get_prediction([[class_balance, auc]])
     chunk_size = np.maximum(lower_threshold, chunk_size)
     chunk_size = np.round(chunk_size, -2)
     minimum_chunk_size = int(chunk_size)
