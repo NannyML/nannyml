@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 """NannyML module providing classes and utilities for dealing with model metadata."""
-
+import logging
 from enum import Enum
 from typing import List, Optional
 
@@ -24,6 +24,8 @@ NML_METADATA_COLUMNS = [
     NML_METADATA_IDENTIFIER_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 ]
+
+logger = logging.getLogger(__name__)
 
 
 # TODO wording
@@ -340,6 +342,15 @@ def extract_metadata(data: pd.DataFrame, model_name: str):
     metadata.timestamp_column_name = None if len(timestamps) == 0 else timestamps[0]  # type: ignore
 
     metadata.features = _extract_features(data)
+
+    categorical_feature_count = len([f for f in metadata.features if f.feature_type == FeatureType.CATEGORICAL])
+    if categorical_feature_count > 0:
+        # TODO: add link to docs!
+        # TODO wording
+        logger.warning(
+            f'NannyML extracted {categorical_feature_count} categorical features. '
+            f'Please review these to determine if they should be marked as ordinal instead.'
+        )
 
     return metadata
 
