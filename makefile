@@ -25,3 +25,11 @@ clean:
 	rm -rf *.egg-info
 	rm -rf .tox dist site
 	rm -rf coverage.xml .coverage
+
+docs: ## generate Sphinx HTML documentation, including API docs
+	rm -f docs/nannyml.rst
+	rm -f docs/modules.rst
+	sphinx-apidoc -o docs/ nannyml
+	$(MAKE) -C docs clean
+	$(MAKE) -C docs html
+	$(BROWSER) docs/_build/html/index.html

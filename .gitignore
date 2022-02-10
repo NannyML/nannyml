@@ -112,3 +112,7 @@ ENV/
 
 # mkdocs build dir
 site/
+
+# sphinx build artifacts
+docs/_build
+docs/nannyml
