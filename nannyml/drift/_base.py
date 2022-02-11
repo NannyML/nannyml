@@ -143,13 +143,19 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
 
         if not features:
             features = [f.column_name for f in model_metadata.features]
-        features = NML_METADATA_COLUMNS + features
+        features_and_metadata = NML_METADATA_COLUMNS + features
 
-        chunks = chunker.split(reference_data.append(analysis_data), columns=features)
+        chunks = chunker.split(reference_data.append(analysis_data), columns=features_and_metadata)
 
-        return self._calculate_drift(reference_data=reference_data, chunks=chunks, model_metadata=model_metadata)
+        return self._calculate_drift(
+            reference_data=reference_data, chunks=chunks, model_metadata=model_metadata, selected_features=features
+        )
 
     def _calculate_drift(
-        self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
+        self,
+        reference_data: pd.DataFrame,
+        chunks: List[Chunk],
+        model_metadata: ModelMetadata,
+        selected_features: List[str],
     ) -> pd.DataFrame:
         raise NotImplementedError

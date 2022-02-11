@@ -19,7 +19,11 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
     """A drift calculator that relies on statistics to detect drift."""
 
     def _calculate_drift(
-        self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
+        self,
+        reference_data: pd.DataFrame,
+        chunks: List[Chunk],
+        model_metadata: ModelMetadata,
+        selected_features: List[str],
     ) -> pd.DataFrame:
         # Get lists of categorical <-> categorical features
         categorical_column_names = [f.column_name for f in model_metadata.categorical_features]

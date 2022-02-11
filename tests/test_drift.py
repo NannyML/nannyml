@@ -13,6 +13,7 @@ import pytest
 from nannyml.chunk import Chunk, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift._base import ChunkerPreset, _preset_to_chunker
+from nannyml.drift.reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
 from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator, calculate_statistical_drift
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
@@ -111,7 +112,11 @@ class SimpleDriftCalculator(BaseDriftCalculator):
     """Dummy DriftCalculator implementation that returns a DataFrame with the selected feature columns, no rows."""
 
     def _calculate_drift(
-        self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
+        self,
+        reference_data: pd.DataFrame,
+        chunks: List[Chunk],
+        model_metadata: ModelMetadata,
+        selected_features: List[str],
     ) -> pd.DataFrame:
         df = chunks[0].data.drop(columns=NML_METADATA_COLUMNS)
         return pd.DataFrame(columns=df.columns)
@@ -220,7 +225,11 @@ def test_base_drift_calculator_uses_default_size_1000_chunker_when_no_chunker_sp
 ):
     class TestDriftCalculator(BaseDriftCalculator):
         def _calculate_drift(
-            self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
+            self,
+            reference_data: pd.DataFrame,
+            chunks: List[Chunk],
+            model_metadata: ModelMetadata,
+            selected_features: List[str],
         ) -> pd.DataFrame:
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
@@ -304,5 +313,21 @@ def test_calculate_statistical_drift_function_runs_on_defaults(sample_drift_data
     analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
     try:
         calculate_statistical_drift(reference_data, analysis_data, sample_drift_metadata)
+    except Exception:
+        pytest.fail()
+
+
+def test_reconstruction_error_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
+    calc = ReconstructionErrorDriftCalculator(n_components=0.65)
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    try:
+        drift = calc.calculate(
+            reference_data=ref_data,
+            analysis_data=analysis_data,
+            model_metadata=sample_drift_metadata,
+            chunker=PeriodBasedChunker(offset='W'),
+        )
+        print(drift)
     except Exception:
         pytest.fail()
