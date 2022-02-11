@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import StratifiedShuffleSplit
 
-from nannyml import InvalidArgumentsException
+from nannyml.exceptions import InvalidArgumentsException
 
 
 class Calibrator(abc.ABC):
