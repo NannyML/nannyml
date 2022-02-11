@@ -36,6 +36,7 @@ __version__ = '0.1.0'
 
 import logging
 
+from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
 from .drift import BaseDriftCalculator, DriftCalculator, StatisticalDriftCalculator, calculate_statistical_drift
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException

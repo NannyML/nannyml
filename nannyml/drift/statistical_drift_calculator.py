@@ -19,34 +19,31 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
     """A drift calculator that relies on statistics to detect drift."""
 
     def _calculate_drift(
-        self, reference_chunks: List[Chunk], analysis_chunks: List[Chunk], model_metadata: ModelMetadata
+        self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
     ) -> pd.DataFrame:
         # Get lists of categorical <-> categorical features
         categorical_column_names = [f.column_name for f in model_metadata.categorical_features]
         continuous_column_names = [f.column_name for f in model_metadata.continuous_features]
 
-        # Map reference_chunks to analysis_chunks
-        mapped_chunks = _map_by_index(reference_chunks, analysis_chunks)
-
         res = pd.DataFrame()
         # Calculate chunk-wise drift statistics.
         # Append all into resulting DataFrame indexed by chunk key.
-        for ref_chunk, ana_chunk in mapped_chunks.items():
-            chunk_drift: Dict[str, Any] = {'chunk': ana_chunk.key}
+        for chunk in chunks:
+            chunk_drift: Dict[str, Any] = {'chunk': chunk.key}
 
-            cat_cols_ana = list(set(ana_chunk.data.columns) & set(categorical_column_names))
-            for col in cat_cols_ana:
+            present_categorical_column_names = list(set(chunk.data.columns) & set(categorical_column_names))
+            for column in present_categorical_column_names:
                 statistic, p_value, _, _ = chi2_contingency(
-                    pd.concat([ref_chunk.data[col].value_counts(), ana_chunk.data[col].value_counts()], axis=1)
+                    pd.concat([reference_data[column].value_counts(), chunk.data[column].value_counts()], axis=1)
                 )
-                chunk_drift[f'{col}_statistic'] = [statistic]
-                chunk_drift[f'{col}_p_vaLue'] = [np.round(p_value, decimals=3)]
+                chunk_drift[f'{column}_statistic'] = [statistic]
+                chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
 
-            cont_cols_ana = list(set(ana_chunk.data.columns) & set(continuous_column_names))
-            for col in cont_cols_ana:
-                statistic, p_value = ks_2samp(ref_chunk.data[col], ana_chunk.data[col])
-                chunk_drift[f'{col}_statistic'] = [statistic]
-                chunk_drift[f'{col}_p_value'] = [np.round(p_value, decimals=3)]
+            present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
+            for column in present_continuous_column_names:
+                statistic, p_value = ks_2samp(reference_data[column], chunk.data[column])
+                chunk_drift[f'{column}_statistic'] = [statistic]
+                chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
 
             res = res.append(pd.DataFrame(chunk_drift))
 

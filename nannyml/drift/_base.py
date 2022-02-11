@@ -142,23 +142,14 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         # Generate chunks
 
         if not features:
-            features = [f.name for f in model_metadata.features]
+            features = [f.column_name for f in model_metadata.features]
         features = NML_METADATA_COLUMNS + features
 
-        # TODO verify: throw them together? Chunk twice?
-        reference_chunks = chunker.split(reference_data, columns=features)
-        analysis_chunks = chunker.split(analysis_data, columns=features)
+        chunks = chunker.split(reference_data.append(analysis_data), columns=features)
 
-        # Alternatively: chunk them together, then split afterwards
-        # chunks = chunker.split(reference_features.append(analysis_features))
-        # reference_chunks = [c for c in chunks if c.partition == 'reference' or c.is_transition]
-        # analysis_chunks = [c for c in chunks if c.partition == 'analysis' or c.is_transition]
-
-        return self._calculate_drift(
-            reference_chunks=reference_chunks, analysis_chunks=analysis_chunks, model_metadata=model_metadata
-        )
+        return self._calculate_drift(reference_data=reference_data, chunks=chunks, model_metadata=model_metadata)
 
     def _calculate_drift(
-        self, reference_chunks: List[Chunk], analysis_chunks: List[Chunk], model_metadata: ModelMetadata
+        self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
     ) -> pd.DataFrame:
         raise NotImplementedError

@@ -111,9 +111,9 @@ class SimpleDriftCalculator(BaseDriftCalculator):
     """Dummy DriftCalculator implementation that returns a DataFrame with the selected feature columns, no rows."""
 
     def _calculate_drift(
-        self, reference_chunks: List[Chunk], analysis_chunks: List[Chunk], model_metadata: ModelMetadata
+        self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
     ) -> pd.DataFrame:
-        df = analysis_chunks[0].data.drop(columns=NML_METADATA_COLUMNS)
+        df = chunks[0].data.drop(columns=NML_METADATA_COLUMNS)
         return pd.DataFrame(columns=df.columns)
 
 
@@ -220,9 +220,9 @@ def test_base_drift_calculator_uses_default_size_1000_chunker_when_no_chunker_sp
 ):
     class TestDriftCalculator(BaseDriftCalculator):
         def _calculate_drift(
-            self, reference_chunks: List[Chunk], analysis_chunks: List[Chunk], model_metadata: ModelMetadata
+            self, reference_data: pd.DataFrame, chunks: List[Chunk], model_metadata: ModelMetadata
         ) -> pd.DataFrame:
-            chunk_keys = [c.key for c in analysis_chunks]
+            chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
@@ -230,7 +230,7 @@ def test_base_drift_calculator_uses_default_size_1000_chunker_when_no_chunker_sp
 
     calc = TestDriftCalculator()
     sut = calc.calculate(ref_data, analysis_data, sample_drift_metadata)['keys']
-    expected = [c.key for c in SizeBasedChunker(chunk_size=1000).split(sample_drift_metadata.enrich(analysis_data))]
+    expected = [c.key for c in SizeBasedChunker(chunk_size=1000).split(sample_drift_metadata.enrich(sample_drift_data))]
 
     assert len(expected) == len(sut)
     assert sorted(expected) == sorted(sut)
@@ -259,10 +259,29 @@ def test_statistical_drift_calculator_should_return_a_row_for_each_analysis_chun
         chunker=chunker,
     )
 
-    chunks = chunker.split(sample_drift_metadata.enrich(analysis_data))
+    chunks = chunker.split(sample_drift_metadata.enrich(sample_drift_data))
     assert len(chunks) == sut.shape[0]
     chunk_keys = [c.key for c in chunks]
+    assert 'chunk' in sut.columns
     assert sorted(chunk_keys) == sorted(sut['chunk'].values)
+
+
+def test_statistical_drift_calculator_should_return_a_stat_column_and_p_value_column_for_each_feature(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    calc = StatisticalDriftCalculator()
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    sut = calc.calculate(
+        reference_data=ref_data,
+        analysis_data=analysis_data,
+        model_metadata=sample_drift_metadata,
+        chunker=SizeBasedChunker(chunk_size=1000),
+    ).columns
+
+    for f in sample_drift_metadata.features:
+        assert f'{f.column_name}_statistic' in sut
+        assert f'{f.column_name}_p_value' in sut
 
 
 def test_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
