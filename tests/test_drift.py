@@ -317,8 +317,8 @@ def test_calculate_statistical_drift_function_runs_on_defaults(sample_drift_data
         pytest.fail()
 
 
-def test_reconstruction_error_drift_calculator_with_params_should_not_fail(
-    sample_drift_data, sample_drift_metadata  # noqa: D103
+def test_reconstruction_error_drift_calculator_with_params_should_not_fail(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
 ):
     calc = ReconstructionErrorDriftCalculator(n_components=0.75)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
@@ -335,8 +335,8 @@ def test_reconstruction_error_drift_calculator_with_params_should_not_fail(
         pytest.fail()
 
 
-def test_reconstruction_error_drift_calculator_with_default_params_should_not_fail(
-    sample_drift_data, sample_drift_metadata  # noqa: D103
+def test_reconstruction_error_drift_calculator_with_default_params_should_not_fail(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
 ):
     calc = ReconstructionErrorDriftCalculator()
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
@@ -373,8 +373,8 @@ def test_reconstruction_error_drift_calculator_should_contain_chunk_key_and_sing
     assert 'reconstruction_error' in sut
 
 
-def test_reconstruction_error_drift_calculator_should_contain_a_row_for_each_chunk(
-    sample_drift_data, sample_drift_metadata  # noqa: D103
+def test_reconstruction_error_drift_calculator_should_contain_a_row_for_each_chunk(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
 ):
     calc = ReconstructionErrorDriftCalculator()
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
