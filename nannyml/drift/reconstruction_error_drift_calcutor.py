@@ -1,6 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #            Nikolaos Perrakis  <nikos@nannyml.com>
 #  License: Apache Software License 2.0
+
+"""Drift calculator using Reconstruction Error as a measure of drift."""
+
 from typing import Any, Dict, List, Union
 
 import numpy as np
@@ -13,6 +16,8 @@ from nannyml import BaseDriftCalculator, Chunk, Feature, ModelMetadata
 
 
 class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
+    """BaseDriftCalculator implementation using Reconstruction Error as a measure of drift."""
+
     def __init__(self, n_components: Union[int, float, str] = 0.65):
         """Creates a new ReconstructionErrorDriftCalculator instance.
 
@@ -64,7 +69,29 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
 
 def _calculate_reconstruction_error_for_chunk(
     selected_features: List[str], chunk: Chunk, encoder: CountEncoder, scaler: StandardScaler, pca: PCA
-):
+) -> pd.DataFrame:
+    """Calculates reconstruction error for a single Chunk.
+
+    Parameters
+    ----------
+    selected_features : List[str]
+        Subset of features to be included in calculation.
+    chunk : Chunk
+        The chunk containing data to calculate reconstruction error on
+    encoder : category_encoders.CountEncoder
+        Encoder used to transform categorical features into a numerical representation
+    scaler : sklearn.preprocessing.StandardScaler
+        Standardize features by removing the mean and scaling to unit variance
+    pca : sklearn.decomposition.PCA
+        Linear dimensionality reduction using Singular Value Decomposition of the
+        data to project it to a lower dimensional space.
+
+    Returns
+    -------
+    rce_for_chunk: pd.DataFrame
+        A pandas.DataFrame containing the Chunk key and reconstruction error for the given Chunk data.
+
+    """
     # encode categorical features
     data = chunk.data.reset_index(drop=True)
     data[selected_features] = encoder.transform(data[selected_features])
@@ -94,14 +121,12 @@ def _calculate_reconstruction_error_for_chunk(
 
 def _get_present_feature_names(selected_features: List[str], features: List[Feature]) -> List[str]:
     feature_column_names = [f.column_name for f in features]
+    # Calculate intersection
     return list(set(selected_features) & set(feature_column_names))
 
 
 def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], features_reconstructed: List[str]):
-    """
-    Calculate distance row wise.
-    """
-
+    """Calculate row-wise euclidian distance between preprocessed and reconstructed feature values."""
     x1 = df[features_preprocessed]
     x2 = df[features_reconstructed]
     x2.columns = x1.columns
