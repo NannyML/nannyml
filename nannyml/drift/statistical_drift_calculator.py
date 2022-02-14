@@ -3,7 +3,6 @@
 #  License: Apache Software License 2.0
 
 """Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
-import itertools
 from typing import Any, Dict, List, Union
 
 import numpy as np
@@ -69,7 +68,3 @@ def calculate_statistical_drift(
     """
     calculator = StatisticalDriftCalculator()
     return calculator.calculate(reference_data, analysis_data, model_metadata, chunk_by=chunk_by)
-
-
-def _map_by_index(reference_chunks: List[Chunk], analysis_chunks: List[Chunk]) -> Dict[Chunk, Chunk]:
-    return {l1: l2 for l1, l2 in itertools.zip_longest(reference_chunks, analysis_chunks, fillvalue=None)}
