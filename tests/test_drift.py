@@ -317,8 +317,10 @@ def test_calculate_statistical_drift_function_runs_on_defaults(sample_drift_data
         pytest.fail()
 
 
-def test_reconstruction_error_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
-    calc = ReconstructionErrorDriftCalculator(n_components=0.65)
+def test_reconstruction_error_drift_calculator_with_params_should_not_fail(
+    sample_drift_data, sample_drift_metadata  # noqa: D103
+):
+    calc = ReconstructionErrorDriftCalculator(n_components=0.75)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
     try:
@@ -331,3 +333,61 @@ def test_reconstruction_error_drift_calculator(sample_drift_data, sample_drift_m
         print(drift)
     except Exception:
         pytest.fail()
+
+
+def test_reconstruction_error_drift_calculator_with_default_params_should_not_fail(
+    sample_drift_data, sample_drift_metadata  # noqa: D103
+):
+    calc = ReconstructionErrorDriftCalculator()
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    try:
+        drift = calc.calculate(
+            reference_data=ref_data,
+            analysis_data=analysis_data,
+            model_metadata=sample_drift_metadata,
+            chunker=PeriodBasedChunker(offset='W'),
+        )
+        print(drift)
+    except Exception:
+        pytest.fail()
+
+
+def test_reconstruction_error_drift_calculator_should_contain_chunk_key_and_single_drift_value_column(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    calc = ReconstructionErrorDriftCalculator()
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+
+    drift = calc.calculate(
+        reference_data=ref_data,
+        analysis_data=analysis_data,
+        model_metadata=sample_drift_metadata,
+        chunker=PeriodBasedChunker(offset='W'),
+    )
+
+    sut = drift.columns
+    assert len(sut) == 2
+    assert 'chunk' in sut
+    assert 'reconstruction_error' in sut
+
+
+def test_reconstruction_error_drift_calculator_should_contain_a_row_for_each_chunk(
+    sample_drift_data, sample_drift_metadata  # noqa: D103
+):
+    calc = ReconstructionErrorDriftCalculator()
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+
+    drift = calc.calculate(
+        reference_data=ref_data,
+        analysis_data=analysis_data,
+        model_metadata=sample_drift_metadata,
+        chunker=PeriodBasedChunker(offset='W'),
+    )
+
+    sample_drift_data = sample_drift_metadata.enrich(sample_drift_data)
+    expected = len(PeriodBasedChunker(offset='W').split(sample_drift_data))
+    sut = len(drift)
+    assert sut == expected
