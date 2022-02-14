@@ -169,7 +169,7 @@ def needs_calibration(
         )
         ece_diffs.append(ece_before_calibration - ece_after_calibration)
 
-    if any(np.asarray(ece_diffs) < 0):
+    if any(np.asarray(ece_diffs) <= 0):
         return False
     else:
         return True

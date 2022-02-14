@@ -43,20 +43,18 @@ def test_needs_calibration_returns_false_when_calibration_does_not_always_improv
 
 
 def test_needs_calibration_returns_true_when_calibration_always_improves_ece():  # noqa: D103
-    y_true = np.asarray([0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1])
-
-    y_pred_proba = np.asarray([0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.49, 0.50, 0.51, 52])
-
-    calibrator = IsotonicCalibrator()
-    sut = needs_calibration(calibrator, y_true, y_pred_proba, bin_count=2, split_count=3)
+    y_true = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    y_pred_proba = abs(1 - y_true)
+    shuffled_indexes = np.random.permutation(len(y_true))
+    y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
+    sut = needs_calibration(IsotonicCalibrator(), y_true, y_pred_proba, bin_count=2, split_count=3)
     assert sut
 
 
 def test_needs_calibration_returns_false_when_calibration_sometimes_improves_ece():  # noqa: D103
-    y_true = np.asarray([0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1])
-
-    y_pred_proba = np.asarray([0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48, 0.7, 0.7, 0.7, 0.7])
-
-    calibrator = IsotonicCalibrator()
-    sut = needs_calibration(calibrator, y_true, y_pred_proba, bin_count=2, split_count=3)
+    y_true = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    y_pred_proba = y_true
+    shuffled_indexes = np.random.permutation(len(y_true))
+    y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
+    sut = needs_calibration(IsotonicCalibrator(), y_true, y_pred_proba, bin_count=2, split_count=3)
     assert not sut
