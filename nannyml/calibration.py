@@ -1,4 +1,5 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#            Jakub Bialek    <jakub@nannyml.com>
 #
 #  License: Apache Software License 2.0
 
@@ -7,7 +8,6 @@ import abc
 from typing import Any, List, Tuple
 
 import numpy as np
-import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import StratifiedShuffleSplit
 
@@ -17,14 +17,15 @@ from nannyml.exceptions import InvalidArgumentsException
 class Calibrator(abc.ABC):
     """Class that is able to calibrate ``y_pred_proba`` scores into probabilities."""
 
-    def calibrate(self, y_pred_proba: pd.Series):
+    def calibrate(self, y_true: np.ndarray, y_pred_proba: np.ndarray):
         """Perform calibration of prediction scores.
 
         Parameters
         ----------
-        y_pred_proba: pd.Series
-            An array of prediction scores.
-
+        y_true : numpy.ndarray
+            Vector with binary targets - 0 or 1. Shape (n,).
+        y_pred_proba: numpy.ndarray
+            Vector of continuous scores/probabilities. Has to be the same shape as y_true.
         """
         raise NotImplementedError
 
@@ -32,28 +33,49 @@ class Calibrator(abc.ABC):
 class IsotonicCalibrator(Calibrator):
     """Calibrates using IsotonicRegression model."""
 
-    def __init__(self, y_pred_proba, y_true):
+    def __init__(self):
         """Creates a new IsotonicCalibrator."""
         regressor = IsotonicRegression(out_of_bounds="clip", increasing=True)
-        regressor.fit(y_pred_proba, y_true)
         self._regressor = regressor
 
-    def calibrate(self, y_pred_proba: pd.Series):
+    def calibrate(self, y_true: np.ndarray, y_pred_proba: np.ndarray):
         """Perform calibration of prediction scores.
 
         Parameters
         ----------
-        y_pred_proba: pd.Series
-            An array of prediction scores.
-
+        y_true : numpy.ndarray
+            Vector with binary targets - ``0`` or ``1``. Shape ``(n,)``.
+        y_pred_proba: numpy.ndarray
+            Vector of continuous scores/probabilities. Has to be the same shape as ``y_true``.
         """
+        self._regressor.fit(y_pred_proba, y_true)
         return self._regressor.predict(y_pred_proba)
 
 
 def _get_bin_index_edges(vector_length: int, bin_count: int) -> List[Tuple[int, int]]:
+    """Generates edges of bins for specified vector length and number of bins required.
+
+    Parameters
+    ----------
+    vector_length : int
+        The length of the vector that will be binned using bins.
+    bin_count : int
+        Number of bins and bin edges that will be generated.
+
+    Returns
+    -------
+    bin_index_edges : list of tuples with bin edges (indexes)
+        See the example below for best intuition.
+
+    Examples
+    --------
+    >>> get_bin_edge_indexes(20, 4)
+    [(0, 5), (5, 10), (10, 15), (15, 20)]
+
+    """
     if vector_length <= 2 * bin_count:
         bin_count = vector_length // 2
-        if bin_count < 2:
+        if bin_count < 2:  # pragma: no branch
             raise InvalidArgumentsException(
                 "cannot split into minimum of 2 bins. Current sample size "
                 f"is {vector_length}, please increase sample size. "
@@ -69,7 +91,7 @@ def _get_bin_index_edges(vector_length: int, bin_count: int) -> List[Tuple[int, 
 
 
 def _calculate_expected_calibration_error(
-    y_true: pd.Series, y_pred_proba: pd.Series, bin_index_edges: List[Tuple[int, int]]
+    y_true: np.ndarray, y_pred_proba: np.ndarray, bin_index_edges: List[Tuple[int, int]]
 ) -> Any:
     terms = []
 
@@ -81,8 +103,8 @@ def _calculate_expected_calibration_error(
     y_true = y_true[sort_index]
 
     for left_edge, right_edge in bin_index_edges:
-        bin_proba = y_pred_proba[left_edge, right_edge]
-        bin_true = y_true[left_edge, right_edge]
+        bin_proba = y_pred_proba[left_edge:right_edge]
+        bin_true = y_true[left_edge:right_edge]
         mean_bin_proba = np.mean(bin_proba)
         mean_bin_true = np.mean(bin_true)
         weight = len(bin_proba) / len(y_pred_proba)
@@ -93,22 +115,24 @@ def _calculate_expected_calibration_error(
 
 
 def needs_calibration(
-    calibrator: Calibrator, y_true: pd.Series, y_pred_proba: pd.Series, bin_count: int = 10, split_count: int = 3
+    calibrator: Calibrator, y_true: np.ndarray, y_pred_proba: np.ndarray, bin_count: int = 10, split_count: int = 3
 ) -> bool:
     """Returns whether a series of prediction scores benefits from additional calibration or not.
 
-    Repeatedly splits the provided Series into binned train and test sets and checks if applying calibration using
-    the provided ``Calibrator`` resulted in a lower Expected Calibration Error (ECE) for each bin.
-    If this was true for each iteration then return True. If the ECE was raised even once then return False.
+    Performs probability calibration in cross validation loop. For each fold a difference
+    of Expected Calibration Error (ECE) between non calibrated and calibrated
+    probabilites is calculated. If in any of the folds the difference is lower than zero
+    (i.e. ECE of calibrated probability is larger than that of non-calibrated) returns ``False``.
+    Otherwise - returns ``True``.
 
     Parameters
     ----------
     calibrator : Calibrator
         The Calibrator to use during testing.
-    y_true : pd.Series
-        Truth values.
+    y_true : numpy.ndarray
+        Vector with binary targets - ``0`` or ``1``. Shape ``(n,)``.
     y_pred_proba :
-        Prediction scores.
+        Vector of continuous scores/probabilities. Has to be the same shape as ``y_true``.
     bin_count : int
         Desired amount of bins to calculate ECE on.
     split_count : int
@@ -117,8 +141,18 @@ def needs_calibration(
     Returns
     -------
     needs_calibration: bool
-        True when the scores benefit from calibration, False otherwise.
+        ``True`` when the scores benefit from calibration, ``False`` otherwise.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from nannyml.calibration import IsotonicCalibrator
+    >>> np.random.seed(1)
+    >>> y_true = np.random.binomial(1, 0.5, 10)
+    >>> y_pred_proba = np.linspace(0, 1, 10)
+    >>> calibrator = IsotonicCalibrator()
+    >>> needs_calibration(calibrator, y_true, y_pred_proba, bin_count=2, split_count=3)
+    True
     """
     sss = StratifiedShuffleSplit(n_splits=split_count, test_size=0.4, random_state=42)
     ece_diffs = []
@@ -126,7 +160,7 @@ def needs_calibration(
     for train, test in sss.split(y_pred_proba, y_true):
         y_pred_proba_test, y_true_test = y_pred_proba[test], y_true[test]
 
-        calibrated_y_pred_proba_test = calibrator.calibrate(y_pred_proba_test)
+        calibrated_y_pred_proba_test = calibrator.calibrate(y_true_test, y_pred_proba_test)
 
         bin_index_edges = _get_bin_index_edges(len(y_pred_proba_test), bin_count)
         ece_before_calibration = _calculate_expected_calibration_error(y_true_test, y_pred_proba_test, bin_index_edges)
