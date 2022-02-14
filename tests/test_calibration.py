@@ -33,12 +33,11 @@ def test_get_bin_edges_works_correctly(vector_length, bin_count, edges):  # noqa
 
 
 def test_needs_calibration_returns_false_when_calibration_does_not_always_improves_ece():  # noqa: D103
-    y_true = np.asarray([0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1])
-
-    y_pred_proba = np.asarray([0.01, 0.02, 0.03, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.7, 0.7, 0.7])
-
-    calibrator = IsotonicCalibrator()
-    sut = needs_calibration(calibrator, y_true, y_pred_proba, bin_count=2, split_count=3)
+    y_true = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    y_pred_proba = y_true
+    shuffled_indexes = np.random.permutation(len(y_true))
+    y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
+    sut = needs_calibration(IsotonicCalibrator(), y_true, y_pred_proba, bin_count=2, split_count=3)
     assert not sut
 
 
@@ -49,12 +48,3 @@ def test_needs_calibration_returns_true_when_calibration_always_improves_ece(): 
     y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
     sut = needs_calibration(IsotonicCalibrator(), y_true, y_pred_proba, bin_count=2, split_count=3)
     assert sut
-
-
-def test_needs_calibration_returns_false_when_calibration_sometimes_improves_ece():  # noqa: D103
-    y_true = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
-    y_pred_proba = y_true
-    shuffled_indexes = np.random.permutation(len(y_true))
-    y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
-    sut = needs_calibration(IsotonicCalibrator(), y_true, y_pred_proba, bin_count=2, split_count=3)
-    assert not sut
