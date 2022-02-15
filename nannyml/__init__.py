@@ -41,5 +41,6 @@ from .chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBa
 from .drift import BaseDriftCalculator, DriftCalculator, StatisticalDriftCalculator, calculate_statistical_drift
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
+from .preprocessing import preprocess
 
 logger = logging.getLogger(__name__)
