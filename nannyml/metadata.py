@@ -5,7 +5,7 @@
 """NannyML module providing classes and utilities for dealing with model metadata."""
 import logging
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pandas as pd
 
@@ -284,6 +284,29 @@ class ModelMetadata:
         """
         return [f for f in self.features if f.feature_type == FeatureType.CONTINUOUS]
 
+    def is_complete(self) -> Tuple[bool, List[str]]:
+        """Flags if the ModelMetadata is considered complete or still missing values.
+
+        Returns
+        -------
+        complete: bool
+            True when all required fields are present, False otherwise
+        missing: List[str]
+            A list of all missing properties. Empty when metadata is complete.
+        """
+        props_to_check = [
+            'name',
+            'prediction_column_name',
+            'timestamp_column_name',
+            'ground_truth_column_name',
+            'timestamp_column_name',
+            'partition_column_name',
+        ]
+
+        complete = all([self.__getattribute__(attr) is not None for attr in props_to_check])
+        missing = [attr for attr in props_to_check if self.__getattribute__(attr) is None]
+        return complete, missing
+
 
 def extract_metadata(data: pd.DataFrame, model_name: str):
     """Tries to extract model metadata from a given data set.
@@ -348,8 +371,8 @@ def extract_metadata(data: pd.DataFrame, model_name: str):
         # TODO: add link to docs!
         # TODO wording
         logger.warning(
-            f'NannyML extracted {categorical_feature_count} categorical features. '
-            f'Please review these to determine if they should be marked as ordinal instead.'
+            f'NannyML extracted {categorical_feature_count} categorical features.\n'
+            f'Please review these to determine if they should be marked as ordinal instead.\n'
         )
 
     return metadata
