@@ -142,30 +142,28 @@ def test_chunk_len_should_return_0_for_empty_chunk():  # noqa: D103
     assert sut == 0
 
 
-def test_chunker_should_log_warning_when_less_than_6_chunks(capsys, sample_chunk_data):  # noqa: D103
+def test_chunker_should_log_warning_when_less_than_6_chunks(sample_chunk_data, caplog):  # noqa: D103
     class SimpleChunker(Chunker):
         def _split(self, data: pd.DataFrame) -> List[Chunk]:
             return [Chunk(key='row0', data=data)]
 
     c = SimpleChunker()
     _ = c.split(sample_chunk_data)
-    sut, err = capsys.readouterr()
+    sut = caplog.records[-1]
+    assert sut.levelname == "WARNING"
+    assert "The resulting number of chunks is too low." in sut.msg
 
-    # TODO: check if extra log config is required
-    # assert "The resulting number of chunks is too low." in sut
 
-
-def test_chunker_should_log_warning_when_some_chunks_are_underpopulated(capsys, sample_chunk_data):  # noqa: D103
+def test_chunker_should_log_warning_when_some_chunks_are_underpopulated(sample_chunk_data, caplog):  # noqa: D103
     class SimpleChunker(Chunker):
         def _split(self, data: pd.DataFrame) -> List[Chunk]:
             return [Chunk(key='row0', data=data.iloc[[0]])]
 
     c = SimpleChunker()
     _ = c.split(sample_chunk_data)
-    sut, err = capsys.readouterr()
-
-    # TODO: check if extra log config is required
-    # assert "The resulting list of chunks contains 1 underpopulated chunks." in sut
+    sut = caplog.records[-1]
+    assert sut.levelname == "WARNING"
+    assert "The resulting list of chunks contains 1 underpopulated chunks." in sut.msg
 
 
 def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_from_multiple_partitions(  # noqa: D103
