@@ -11,8 +11,8 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.mark.parametrize('vector_size,bin_count', [(0, 0), (0, 1), (1, 1), (2, 1), (3, 5)])
-def test_get_bin_edges_raises_invalid_arguments_exception_when_given_too_few_samples(
-    vector_size, bin_count  # noqa: D103
+def test_get_bin_edges_raises_invalid_arguments_exception_when_given_too_few_samples(  # noqa: D103
+    vector_size, bin_count
 ):
     with pytest.raises(InvalidArgumentsException):
         _ = _get_bin_index_edges(vector_size, bin_count)
@@ -37,7 +37,7 @@ def test_needs_calibration_returns_false_when_calibration_does_not_always_improv
     y_pred_proba = y_true
     shuffled_indexes = np.random.permutation(len(y_true))
     y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
-    sut = needs_calibration(IsotonicCalibrator(), y_true, y_pred_proba, bin_count=2, split_count=3)
+    sut = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator(), bin_count=2, split_count=3)
     assert not sut
 
 
@@ -46,5 +46,5 @@ def test_needs_calibration_returns_true_when_calibration_always_improves_ece(): 
     y_pred_proba = abs(1 - y_true)
     shuffled_indexes = np.random.permutation(len(y_true))
     y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
-    sut = needs_calibration(IsotonicCalibrator(), y_true, y_pred_proba, bin_count=2, split_count=3)
+    sut = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator(), bin_count=2, split_count=3)
     assert sut

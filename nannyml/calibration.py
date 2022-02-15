@@ -8,10 +8,13 @@ import abc
 from typing import Any, List, Tuple
 
 import numpy as np
+import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import StratifiedShuffleSplit
 
 from nannyml.exceptions import InvalidArgumentsException
+
+NML_CALIBRATED_SCORE_COLUMN_NAME = 'nml_calibrated_score'
 
 
 class Calibrator(abc.ABC):
@@ -115,7 +118,7 @@ def _calculate_expected_calibration_error(
 
 
 def needs_calibration(
-    calibrator: Calibrator, y_true: np.ndarray, y_pred_proba: np.ndarray, bin_count: int = 10, split_count: int = 3
+    y_true: np.ndarray, y_pred_proba: np.ndarray, calibrator: Calibrator, bin_count: int, split_count: int
 ) -> bool:
     """Returns whether a series of prediction scores benefits from additional calibration or not.
 
@@ -173,3 +176,40 @@ def needs_calibration(
         return False
     else:
         return True
+
+
+def calibrated_scores(
+    y_true: pd.Series,
+    y_pred_proba: pd.Series,
+    calibrator: Calibrator = IsotonicCalibrator(),
+    bin_count: int = 10,
+    split_count: int = 3,
+) -> pd.Series:
+    """Returns calibrated scores when calibration is required, else returns the original ``y_pred_proba`` values.
+
+    Checks if ``y_pred_proba`` scores require calibration. If so it will use the specified Calibrator to do so.
+    If not it will return the (already sufficiently calibrated) ``y_pred_proba`` values.
+
+    Parameters
+    ----------
+    y_true : pd.Series
+        Vector with binary targets - ``0`` or ``1``. Shape ``(n,)``.
+    y_pred_proba :
+        Vector of continuous scores/probabilities. Has to be the same shape as ``y_true``.
+    calibrator :
+        The Calibrator to use during testing.
+    bin_count : int
+        Desired amount of bins to calculate ECE on.
+    split_count : int
+        Desired number of splits to make, i.e. number of times to evaluate calibration.
+
+    Returns
+    -------
+    scores: pd.Series
+        A vector containing
+
+    """
+    if needs_calibration(y_true.values, y_pred_proba.values, calibrator, bin_count, split_count):
+        return calibrator.calibrate(y_true.values, y_pred_proba.values)
+    else:
+        return y_pred_proba
