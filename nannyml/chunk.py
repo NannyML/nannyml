@@ -7,6 +7,7 @@
 
 import abc
 import logging
+from datetime import datetime
 from typing import List
 
 import numpy as np
@@ -47,6 +48,11 @@ class Chunk:
 
         self.is_transition: bool = False
 
+        self.start_datetime: datetime = datetime.max
+        self.end_datetime: datetime = datetime.max
+        self.start_index: int = 0
+        self.end_index: int = 0
+
     def __repr__(self):
         """Returns textual summary of a chunk.
 
@@ -57,7 +63,9 @@ class Chunk:
         """
         return (
             f'Chunk[key={self.key}, data=pd.DataFrame[[{self.data.shape[0]}x{self.data.shape[1]}]], '
-            f'partition={self.partition}, is_transition={self.is_transition}]'
+            f'partition={self.partition}, is_transition={self.is_transition},'
+            f'start_datetime={self.start_datetime}, end_datetime={self.end_datetime},'
+            f'start_index={self.start_index}, end_index={self.end_index}]'
         )
 
     def __len__(self):
@@ -115,8 +123,7 @@ def _minimum_chunk_count(
 def _get_partition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME):
     if partition_column_name not in c.data.columns:
         raise MissingMetadataException(
-            f"missing partition column '{NML_METADATA_PARTITION_COLUMN_NAME}'."
-            "Please extract metadata for your DataFrame first."
+            f"missing partition column '{NML_METADATA_PARTITION_COLUMN_NAME}'." "Please provide valid metadata."
         )
 
     if _is_transition(c, partition_column_name):
@@ -130,6 +137,22 @@ def _is_transition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION
         return c.data[partition_column_name].nunique() > 1
     else:
         return False
+
+
+def _get_boundary_timestamps(c: Chunk, timestamp_column_name: str = NML_METADATA_TIMESTAMP_COLUMN_NAME):
+    if timestamp_column_name not in c.data.columns:
+        raise MissingMetadataException(
+            f"Missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
+        )
+
+    min_date = c.data[timestamp_column_name].min().replace(hour=0, minute=0, second=0)
+    max_date = c.data[timestamp_column_name].max().replace(hour=23, minute=59, second=59)
+
+    return min_date, max_date
+
+
+def _get_boundary_indices(c: Chunk):
+    return c.data.index.min(), c.data.index.max()
 
 
 class Chunker(abc.ABC):
@@ -180,6 +203,9 @@ class Chunker(abc.ABC):
                 c.is_transition = True
 
             c.partition = _get_partition(c)
+
+            c.start_datetime, c.end_datetime = _get_boundary_timestamps(c)
+            c.start_index, c.end_index = _get_boundary_indices(c)
 
             if columns is not None:
                 c.data = c.data[columns]

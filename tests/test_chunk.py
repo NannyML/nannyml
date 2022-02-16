@@ -3,7 +3,7 @@
 # License: Apache Software License 2.0
 
 """Tests for the chunking functionality."""
-
+import datetime
 import math
 from typing import List
 
@@ -26,7 +26,13 @@ rng = np.random.default_rng()
 @pytest.fixture
 def sample_chunk() -> Chunk:  # noqa: D103
     df = pd.DataFrame(rng.uniform(0, 100, size=(100, 4)), columns=list('ABCD'))
-    return Chunk(key='key', data=df)
+    chunk = Chunk(key='key', data=df)
+    chunk.partition = 'reference'
+    chunk.start_index = 0
+    chunk.end_index = 100
+    chunk.start_datetime = datetime.datetime.min
+    chunk.end_datetime = datetime.datetime.max
+    return chunk
 
 
 @pytest.fixture
@@ -112,24 +118,22 @@ def sample_chunk_data() -> pd.DataFrame:  # noqa: D103
     return data
 
 
-def test_chunk_repr_should_contain_key(sample_chunk):  # noqa: D103
+@pytest.mark.parametrize(
+    'text',
+    [
+        'key=key',
+        'data=pd.DataFrame[[100x4]]',
+        'is_transition=False',
+        'partition=reference',
+        f'start_datetime={datetime.datetime.min}',
+        f'end_datetime={datetime.datetime.max}',
+        'start_index=0',
+        'end_index=100',
+    ],
+)
+def test_chunk_repr_should_contain_attribute(sample_chunk, text):  # noqa: D103
     sut = str(sample_chunk)
-    assert 'key=key' in sut
-
-
-def test_chunk_repr_should_contain_data(sample_chunk):  # noqa: D103
-    sut = str(sample_chunk)
-    assert 'data=pd.DataFrame[[100x4]]' in sut
-
-
-def test_chunk_repr_should_contain_transition(sample_chunk):  # noqa: D103
-    sut = str(sample_chunk)
-    assert 'is_transition=False' in sut
-
-
-def test_chunk_repr_should_contain_partition(sample_chunk):  # noqa: D103
-    sut = str(sample_chunk)
-    assert 'partition' in sut
+    assert text in sut
 
 
 def test_chunk_len_should_return_data_length(sample_chunk):  # noqa: D103
@@ -172,8 +176,8 @@ def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_
     class SimpleChunker(Chunker):
         def _split(self, data: pd.DataFrame) -> List[Chunk]:
             return [
-                Chunk(key='[0:6665]', data=data.iloc[0:6665, :]),
-                Chunk(key='[6666:13331]', data=data.iloc[6666:13331, :]),
+                Chunk(key='[0:6665]', data=data.iloc[0:6666, :]),
+                Chunk(key='[6666:13331]', data=data.iloc[6666:13332, :]),
                 Chunk(key='[13332:20160]', data=data.iloc[13332:, :]),
             ]
 
@@ -184,6 +188,44 @@ def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_
     assert sut[0].is_transition is False
     assert sut[2].is_transition is False
     assert sut[1].is_transition
+
+
+def test_chunker_should_set_index_boundaries(sample_chunk_data):  # noqa: D103
+    class SimpleChunker(Chunker):
+        def _split(self, data: pd.DataFrame) -> List[Chunk]:
+            return [
+                Chunk(key='[0:6665]', data=data.iloc[0:6666, :]),
+                Chunk(key='[6666:13331]', data=data.iloc[6666:13332, :]),
+                Chunk(key='[13332:20160]', data=data.iloc[13332:, :]),
+            ]
+
+    chunker = SimpleChunker()
+    sut = chunker.split(data=sample_chunk_data)
+    assert sut[0].start_index == 0
+    assert sut[0].end_index == 6665
+    assert sut[1].start_index == 6666
+    assert sut[1].end_index == 13331
+    assert sut[2].start_index == 13332
+    assert sut[2].end_index == 20159
+
+
+def test_chunker_should_set_index_date_times(sample_chunk_data):  # noqa: D103
+    class SimpleChunker(Chunker):
+        def _split(self, data: pd.DataFrame) -> List[Chunk]:
+            return [
+                Chunk(key='[0:6665]', data=data.iloc[0:6666, :]),
+                Chunk(key='[6666:13331]', data=data.iloc[6666:13332, :]),
+                Chunk(key='[13332:20160]', data=data.iloc[13332:, :]),
+            ]
+
+    chunker = SimpleChunker()
+    sut = chunker.split(data=sample_chunk_data)
+    assert sut[0].start_datetime == sample_chunk_data.iloc[0]['ordered_at'].replace(hour=0, minute=0, second=0)
+    assert sut[0].end_datetime == sample_chunk_data.iloc[6665]['ordered_at'].replace(hour=23, minute=59, second=59)
+    assert sut[1].start_datetime == sample_chunk_data.iloc[6666]['ordered_at'].replace(hour=0, minute=0, second=0)
+    assert sut[1].end_datetime == sample_chunk_data.iloc[13331]['ordered_at'].replace(hour=23, minute=59, second=59)
+    assert sut[2].start_datetime == sample_chunk_data.iloc[13332]['ordered_at'].replace(hour=0, minute=0, second=0)
+    assert sut[2].end_datetime == sample_chunk_data.iloc[20159]['ordered_at'].replace(hour=23, minute=59, second=59)
 
 
 def test_chunker_should_include_all_data_columns_by_default(sample_chunk_data):  # noqa: D103
