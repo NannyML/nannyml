@@ -32,20 +32,27 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
         # Calculate chunk-wise drift statistics.
         # Append all into resulting DataFrame indexed by chunk key.
         for chunk in chunks:
-            chunk_drift: Dict[str, Any] = {'chunk': chunk.key}
+            chunk_drift: Dict[str, Any] = {
+                'key': chunk.key,
+                'start_index': chunk.start_index,
+                'end_index': chunk.end_index,
+                'start_date': chunk.start_datetime,
+                'end_date': chunk.end_datetime,
+                'partition': 'analysis' if chunk.is_transition else chunk.partition,
+            }
 
             present_categorical_column_names = list(set(chunk.data.columns) & set(categorical_column_names))
             for column in present_categorical_column_names:
                 statistic, p_value, _, _ = chi2_contingency(
                     pd.concat([reference_data[column].value_counts(), chunk.data[column].value_counts()], axis=1)
                 )
-                chunk_drift[f'{column}_statistic'] = [statistic]
+                chunk_drift[f'{column}_chi2'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
 
             present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
             for column in present_continuous_column_names:
                 statistic, p_value = ks_2samp(reference_data[column], chunk.data[column])
-                chunk_drift[f'{column}_statistic'] = [statistic]
+                chunk_drift[f'{column}_dstat'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
 
             res = res.append(pd.DataFrame(chunk_drift))

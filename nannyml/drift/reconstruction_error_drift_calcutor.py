@@ -56,7 +56,12 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
 
         for chunk in chunks:
             chunk_drift: Dict[str, Any] = {
-                'chunk': chunk.key,
+                'key': chunk.key,
+                'start_index': chunk.start_index,
+                'end_index': chunk.end_index,
+                'start_date': chunk.start_datetime,
+                'end_date': chunk.end_datetime,
+                'partition': 'analysis' if chunk.is_transition else chunk.partition,
                 'reconstruction_error': [
                     _calculate_reconstruction_error_for_chunk(selected_features, chunk, encoder, scaler, pca)
                 ],

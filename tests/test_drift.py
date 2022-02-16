@@ -16,7 +16,7 @@ from nannyml.drift._base import ChunkerPreset, _preset_to_chunker
 from nannyml.drift.reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
 from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator, calculate_statistical_drift
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
+from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, ModelMetadata, extract_metadata
 
 
 @pytest.fixture
@@ -271,8 +271,31 @@ def test_statistical_drift_calculator_should_return_a_row_for_each_analysis_chun
     chunks = chunker.split(sample_drift_metadata.enrich(sample_drift_data))
     assert len(chunks) == sut.shape[0]
     chunk_keys = [c.key for c in chunks]
-    assert 'chunk' in sut.columns
-    assert sorted(chunk_keys) == sorted(sut['chunk'].values)
+    assert 'key' in sut.columns
+    assert sorted(chunk_keys) == sorted(sut['key'].values)
+
+
+def test_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    calc = ReconstructionErrorDriftCalculator()
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+
+    drift = calc.calculate(
+        reference_data=ref_data,
+        analysis_data=analysis_data,
+        model_metadata=sample_drift_metadata,
+        chunker=PeriodBasedChunker(offset='W'),
+    )
+
+    sut = drift.columns
+    assert 'key' in sut
+    assert 'start_index' in sut
+    assert 'start_date' in sut
+    assert 'end_index' in sut
+    assert 'end_date' in sut
+    assert 'partition' in sut
 
 
 def test_statistical_drift_calculator_should_return_a_stat_column_and_p_value_column_for_each_feature(  # noqa: D103
@@ -289,7 +312,10 @@ def test_statistical_drift_calculator_should_return_a_stat_column_and_p_value_co
     ).columns
 
     for f in sample_drift_metadata.features:
-        assert f'{f.column_name}_statistic' in sut
+        if f.feature_type == FeatureType.CONTINUOUS:
+            assert f'{f.column_name}_dstat' in sut
+        else:
+            assert f'{f.column_name}_chi2' in sut
         assert f'{f.column_name}_p_value' in sut
 
 
@@ -353,7 +379,7 @@ def test_reconstruction_error_drift_calculator_with_default_params_should_not_fa
         pytest.fail()
 
 
-def test_reconstruction_error_drift_calculator_should_contain_chunk_key_and_single_drift_value_column(  # noqa: D103
+def test_reconstruction_error_drift_calculator_should_contain_chunk_details_and_single_drift_value_column(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
     calc = ReconstructionErrorDriftCalculator()
@@ -368,8 +394,13 @@ def test_reconstruction_error_drift_calculator_should_contain_chunk_key_and_sing
     )
 
     sut = drift.columns
-    assert len(sut) == 2
-    assert 'chunk' in sut
+    assert len(sut) == 7
+    assert 'key' in sut
+    assert 'start_index' in sut
+    assert 'start_date' in sut
+    assert 'end_index' in sut
+    assert 'end_date' in sut
+    assert 'partition' in sut
     assert 'reconstruction_error' in sut
 
 
