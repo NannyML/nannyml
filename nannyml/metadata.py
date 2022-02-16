@@ -57,7 +57,7 @@ class Feature:
     The Feature class allows you to provide this information.
     """
 
-    def __init__(self, column_name: str, name: str, feature_type: FeatureType, description: str = None):
+    def __init__(self, column_name: str, label: str, feature_type: FeatureType, description: str = None):
         """Creates a new Feature instance.
 
         The ModelMetadata class contains a list of Features that describe the values that serve as model input.
@@ -66,8 +66,8 @@ class Feature:
         ----------
         column_name : str
             The name of the column where the feature is found in the (to be provided) model input/output data.
-        name : str
-            A (human-friendly) name for the feature.
+        label : str
+            A (human-friendly) label for the feature.
         feature_type : FeatureType
             The kind of values the data for this feature are.
         description : str
@@ -79,14 +79,14 @@ class Feature:
 
         """
         self.column_name = column_name
-        self.name = name
+        self.label = label
         self.description = description
         self.feature_type = feature_type
 
     def __str__(self):
         """String representation of a single Feature."""
         strs = [
-            f"Feature: {self.name}",
+            f"Feature: {self.label}",
             '',
             f"{'Column name':25} {self.column_name:25}",
             f"{'Description':25} {self.description:25}",
@@ -197,7 +197,7 @@ class ModelMetadata:
             f"{'Name':20} {'Column':20} {'Type':15} {'Description'}",
         ]
         for f in self.features:
-            strs.append(f"{f.name:20} {f.column_name:20} {f.feature_type or 'NA':15} {f.description}")
+            strs.append(f"{f.label:20} {f.column_name:20} {f.feature_type or 'NA':15} {f.description}")
         return str.join('\n', strs)
 
     # def asdict(self) -> Dict[str, Any]:
@@ -214,7 +214,7 @@ class ModelMetadata:
         index : int
             Retrieve a Feature using its index in the features list.
         feature : str
-            Retrieve a feature using its name.
+            Retrieve a feature using its label.
         column : str
             Retrieve a feature using the name of the column it has in the model inputs/outputs.
 
@@ -226,7 +226,7 @@ class ModelMetadata:
 
         """
         if feature:
-            matches = [f for f in self.features if f.name == feature]
+            matches = [f for f in self.features if f.label == feature]
             return matches[0] if len(matches) != 0 else None
 
         if column:
@@ -436,7 +436,7 @@ def _extract_features(data: pd.DataFrame) -> List[Feature]:
 
     return [
         Feature(
-            name=col,
+            label=col,
             column_name=col,
             description=f'extracted feature: {col}',
             feature_type=feature_types.loc[col, 'predicted_feature_type'],

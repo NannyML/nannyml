@@ -34,7 +34,7 @@ from nannyml.metadata import (
 
 @pytest.fixture
 def sample_feature() -> Feature:  # noqa: D103
-    return Feature(name='name', column_name='col', description='desc', feature_type=FeatureType.CATEGORICAL)
+    return Feature(label='label', column_name='col', description='desc', feature_type=FeatureType.CATEGORICAL)
 
 
 @pytest.fixture
@@ -43,8 +43,8 @@ def sample_model_metadata(sample_feature) -> ModelMetadata:  # noqa: D103
 
 
 def test_feature_creation_sets_properties_correctly():  # noqa: D103
-    sut = Feature(name='name', column_name='col', description='desc', feature_type=FeatureType.CATEGORICAL)
-    assert sut.name == 'name'
+    sut = Feature(label='label', column_name='col', description='desc', feature_type=FeatureType.CATEGORICAL)
+    assert sut.label == 'label'
     assert sut.column_name == 'col'
     assert sut.description == 'desc'
     assert sut.feature_type == FeatureType.CATEGORICAL
@@ -53,7 +53,7 @@ def test_feature_creation_sets_properties_correctly():  # noqa: D103
 # TODO: rewrite this using regexes
 def test_feature_string_representation_contains_all_properties(sample_feature):  # noqa: D103
     sut = str(sample_feature)
-    assert "Feature: name" in sut
+    assert "Feature: label" in sut
     assert 'Column name' in sut
     assert 'Description' in sut
     assert 'Type' in sut
@@ -86,7 +86,7 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
     assert sut.name == 'model'
     assert sut.model_problem == 'classification'
     assert len(sut.features) == 1
-    assert sut.features[0].name == 'name'
+    assert sut.features[0].label == 'label'
     assert sut.features[0].column_name == 'col'
     assert sut.features[0].description == 'desc'
     assert sut.features[0].feature_type == FeatureType.CATEGORICAL
@@ -110,12 +110,12 @@ def test_model_metadata_string_representation_contains_all_properties(sample_mod
 
     # f = sample_model_metadata.features[0]
     # assert re.match(
-    #     rf"Name\s*{f.name} Column\s*{f.column_name} Type\s*{f.feature_type} Description\s*{f.description}", sut)
+    #     rf"Name\s*{f.label} Column\s*{f.column_name} Type\s*{f.feature_type} Description\s*{f.description}", sut)
 
 
 def test_feature_filtering_by_index_delivers_correct_result(sample_model_metadata):  # noqa: D103
     features = [
-        Feature(name=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
+        Feature(label=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
         for c in ['a', 'b', 'c']
     ]
     sample_model_metadata.features = features
@@ -125,7 +125,7 @@ def test_feature_filtering_by_index_delivers_correct_result(sample_model_metadat
 
 def test_feature_filtering_by_index_with_out_of_bounds_index_raises_exception(sample_model_metadata):  # noqa: D103
     features = [
-        Feature(name=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
+        Feature(label=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
         for c in ['a', 'b', 'c']
     ]
     sample_model_metadata.features = features
@@ -135,7 +135,7 @@ def test_feature_filtering_by_index_with_out_of_bounds_index_raises_exception(sa
 
 def test_feature_filtering_by_feature_name_delivers_correct_result(sample_model_metadata):  # noqa: D103
     features = [
-        Feature(name=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
+        Feature(label=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
         for c in ['a', 'b', 'c']
     ]
     sample_model_metadata.features = features
@@ -145,7 +145,7 @@ def test_feature_filtering_by_feature_name_delivers_correct_result(sample_model_
 
 def test_feature_filtering_by_feature_name_without_matches_returns_none(sample_model_metadata):  # noqa: D103
     features = [
-        Feature(name=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
+        Feature(label=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
         for c in ['a', 'b', 'c']
     ]
     sample_model_metadata.features = features
@@ -154,7 +154,7 @@ def test_feature_filtering_by_feature_name_without_matches_returns_none(sample_m
 
 def test_feature_filtering_by_column_name_returns_correct_result(sample_model_metadata):  # noqa: D103
     features = [
-        Feature(name=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
+        Feature(label=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
         for c in ['a', 'b', 'c']
     ]
     sample_model_metadata.features = features
@@ -164,7 +164,7 @@ def test_feature_filtering_by_column_name_returns_correct_result(sample_model_me
 
 def test_feature_filtering_by_column_name_without_matches_returns_none(sample_model_metadata):  # noqa: D103
     features = [
-        Feature(name=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
+        Feature(label=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
         for c in ['a', 'b', 'c']
     ]
     sample_model_metadata.features = features
@@ -173,7 +173,7 @@ def test_feature_filtering_by_column_name_without_matches_returns_none(sample_mo
 
 def test_feature_filtering_without_criteria_returns_none(sample_model_metadata):  # noqa: D103
     features = [
-        Feature(name=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
+        Feature(label=str.upper(c), column_name=c, feature_type=FeatureType.CATEGORICAL, description='')
         for c in ['a', 'b', 'c']
     ]
     sample_model_metadata.features = features
@@ -376,27 +376,27 @@ def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
 
 def test_categorical_features_returns_only_nominal_features(sample_model_metadata):  # noqa: D103
     sample_model_metadata.features = [
-        Feature(name='f1', column_name='f1', feature_type=FeatureType.CATEGORICAL),
-        Feature(name='f2', column_name='f2', feature_type=FeatureType.UNKNOWN),
-        Feature(name='f3', column_name='f3', feature_type=FeatureType.CATEGORICAL),
-        Feature(name='f4', column_name='f4', feature_type=FeatureType.CONTINUOUS),
-        Feature(name='f5', column_name='f5', feature_type=FeatureType.CATEGORICAL),
+        Feature(label='f1', column_name='f1', feature_type=FeatureType.CATEGORICAL),
+        Feature(label='f2', column_name='f2', feature_type=FeatureType.UNKNOWN),
+        Feature(label='f3', column_name='f3', feature_type=FeatureType.CATEGORICAL),
+        Feature(label='f4', column_name='f4', feature_type=FeatureType.CONTINUOUS),
+        Feature(label='f5', column_name='f5', feature_type=FeatureType.CATEGORICAL),
     ]
 
     sut = sample_model_metadata.categorical_features
     assert len(sut) == 3
-    assert [f.name for f in sut] == ['f1', 'f3', 'f5']
+    assert [f.label for f in sut] == ['f1', 'f3', 'f5']
 
 
 def test_continuous_features_returns_only_continuous_features(sample_model_metadata):  # noqa: D103
     sample_model_metadata.features = [
-        Feature(name='f1', column_name='f1', feature_type=FeatureType.CATEGORICAL),
-        Feature(name='f2', column_name='f2', feature_type=FeatureType.UNKNOWN),
-        Feature(name='f3', column_name='f3', feature_type=FeatureType.CATEGORICAL),
-        Feature(name='f4', column_name='f4', feature_type=FeatureType.CONTINUOUS),
-        Feature(name='f5', column_name='f5', feature_type=FeatureType.CATEGORICAL),
+        Feature(label='f1', column_name='f1', feature_type=FeatureType.CATEGORICAL),
+        Feature(label='f2', column_name='f2', feature_type=FeatureType.UNKNOWN),
+        Feature(label='f3', column_name='f3', feature_type=FeatureType.CATEGORICAL),
+        Feature(label='f4', column_name='f4', feature_type=FeatureType.CONTINUOUS),
+        Feature(label='f5', column_name='f5', feature_type=FeatureType.CATEGORICAL),
     ]
 
     sut = sample_model_metadata.continuous_features
     assert len(sut) == 1
-    assert sut[0].name == 'f4'
+    assert sut[0].label == 'f4'
