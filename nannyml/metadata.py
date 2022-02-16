@@ -125,7 +125,7 @@ class ModelMetadata:
     # TODO wording
     def __init__(
         self,
-        model_name: str,
+        model_name: str = None,
         model_problem: str = 'binary_classification',
         features: List[Feature] = None,
         identifier_column_name: str = 'id',
@@ -179,7 +179,7 @@ class ModelMetadata:
         """Returns a string representation of a ModelMetadata instance."""
         UNKNOWN = "~ UNKNOWN ~"
         strs = [
-            f"Metadata for model {self.name}",
+            f"Metadata for model {self.name or UNKNOWN}",
             '',
             '# Warning - unable to identify all essential data',
             f'# Please identify column names for all \'{UNKNOWN}\' values',  # TODO: add link to relevant docs
@@ -308,7 +308,7 @@ class ModelMetadata:
         return complete, missing
 
 
-def extract_metadata(data: pd.DataFrame, model_name: str):
+def extract_metadata(data: pd.DataFrame, model_name: str = None):
     """Tries to extract model metadata from a given data set.
 
     Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
