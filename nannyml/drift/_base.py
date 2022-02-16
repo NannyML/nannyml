@@ -104,7 +104,8 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         model_metadata : ModelMetadata
             The metadata describing both reference and analysis data sets
         chunk_by: Union[str, ChunkerPreset], default='size_1000'
-            Specify a Chunker preset. Supports using an Enum `ChunkerPreset` value or one of these string values:
+            Specify how to split up your data.
+            Supports using an Enum `ChunkerPreset` value or one of these string values:
             - 'size_1000'
             - 'period_week'
             - 'period_month'
