@@ -195,6 +195,7 @@ We'll complete the model metadata by providing the missing values. Since there i
 of the data, we'll have to add one to the data manually first.
 
 .. code-block:: python
+
     >>> metadata.prediction_column_name = 'work_home_pred'
     >>> metadata.ground_truth_column_name = 'work_home_actual'
     >>> df['partition'] = 'reference'
