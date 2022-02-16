@@ -3,6 +3,8 @@ sources = nannyml
 .PHONY: test format lint unittest coverage pre-commit clean
 test: format lint unittest
 
+BROWSER = python -m webbrowser
+
 format:
 	isort $(sources) tests
 	black $(sources) tests
@@ -27,9 +29,8 @@ clean:
 	rm -rf coverage.xml .coverage
 
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/nannyml.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ nannyml
+	rm -rf docs/nannyml
+	sphinx-apidoc -o docs/nannyml nannyml tests
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
