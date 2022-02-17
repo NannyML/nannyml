@@ -39,8 +39,10 @@ import logging
 from .calibration import Calibrator, IsotonicCalibrator, calibrated_scores, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from .drift import (
+    AlertCountRanking,
     BaseDriftCalculator,
     DriftCalculator,
+    Ranking,
     ReconstructionErrorDriftCalculator,
     StatisticalDriftCalculator,
     calculate_statistical_drift,

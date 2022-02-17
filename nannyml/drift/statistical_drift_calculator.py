@@ -14,6 +14,8 @@ from nannyml.drift._base import BaseDriftCalculator
 from nannyml.exceptions import CalculatorException
 from nannyml.metadata import ModelMetadata
 
+ALERT_THRESHOLD_P_VALUE = 0.05
+
 
 class StatisticalDriftCalculator(BaseDriftCalculator):
     """A drift calculator that relies on statistics to detect drift."""
@@ -69,12 +71,14 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
                 )
                 chunk_drift[f'{column}_chi2'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
+                chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]
 
             present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
             for column in present_continuous_column_names:
                 statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])
                 chunk_drift[f'{column}_dstat'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
+                chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]
 
             res = res.append(pd.DataFrame(chunk_drift))
 

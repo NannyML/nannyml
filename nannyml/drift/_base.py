@@ -102,9 +102,6 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-        features : List[str], default=None
-            If any feature column names are given here the drift calculation will only happen for those features.
-            When not specified the calculation will occur for all features.
 
         Returns
         -------
