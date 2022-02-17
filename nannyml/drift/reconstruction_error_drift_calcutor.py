@@ -12,7 +12,9 @@ from category_encoders import CountEncoder
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-from nannyml import BaseDriftCalculator, Chunk, Feature
+from nannyml.chunk import Chunk
+from nannyml.drift import BaseDriftCalculator
+from nannyml.metadata import Feature
 
 
 class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
