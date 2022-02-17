@@ -4,6 +4,7 @@
 
 """NannyML module providing classes and utilities for dealing with model metadata."""
 import logging
+import warnings
 from enum import Enum
 from typing import List, Optional, Tuple
 
@@ -369,7 +370,7 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
     if categorical_feature_count > 0:
         # TODO: add link to docs!
         # TODO wording
-        logger.warning(
+        warnings.warn(
             f'NannyML extracted {categorical_feature_count} categorical features.\n'
             f'Please review these to determine if they should be marked as ordinal instead.\n'
         )

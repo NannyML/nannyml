@@ -42,6 +42,90 @@ def sample_model_metadata(sample_feature) -> ModelMetadata:  # noqa: D103
     return ModelMetadata(model_name='my_model', features=[sample_feature])
 
 
+@pytest.fixture
+def sample_data() -> pd.DataFrame:  # noqa: D103
+    data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
+    data['week'] = data.timestamp.dt.isocalendar().week - 1
+    data['partition'] = 'reference'
+    data.loc[data.week >= 11, ['partition']] = 'analysis'
+    # data[NML_METADATA_PARTITION_COLUMN_NAME] = data['partition']  # simulate preprocessing
+    np.random.seed(167)
+    data['f1'] = np.random.randn(data.shape[0])
+    data['f2'] = np.random.rand(data.shape[0])
+    data['f3'] = np.random.randint(4, size=data.shape[0])
+    data['f4'] = np.random.randint(20, size=data.shape[0])
+    data['output'] = np.random.randint(2, size=data.shape[0])
+    data['actual'] = np.random.randint(2, size=data.shape[0])
+
+    # Rule 1b is the shifted feature, 75% 0 instead of 50%
+    rule1a = {2: 0, 3: 1}
+    rule1b = {2: 0, 3: 0}
+    data.loc[data.week < 16, ['f3']] = data.loc[data.week < 16, ['f3']].replace(rule1a)
+    data.loc[data.week >= 16, ['f3']] = data.loc[data.week >= 16, ['f3']].replace(rule1b)
+
+    # Rule 2b is the shifted feature
+    c1 = 'white'
+    c2 = 'red'
+    c3 = 'green'
+    c4 = 'blue'
+
+    rule2a = {
+        0: c1,
+        1: c1,
+        2: c1,
+        3: c1,
+        4: c1,
+        5: c2,
+        6: c2,
+        7: c2,
+        8: c2,
+        9: c2,
+        10: c3,
+        11: c3,
+        12: c3,
+        13: c3,
+        14: c3,
+        15: c4,
+        16: c4,
+        17: c4,
+        18: c4,
+        19: c4,
+    }
+
+    rule2b = {
+        0: c1,
+        1: c1,
+        2: c1,
+        3: c1,
+        4: c1,
+        5: c2,
+        6: c2,
+        7: c2,
+        8: c2,
+        9: c2,
+        10: c3,
+        11: c3,
+        12: c3,
+        13: c1,
+        14: c1,
+        15: c4,
+        16: c4,
+        17: c4,
+        18: c1,
+        19: c2,
+    }
+
+    data.loc[data.week < 16, ['f4']] = data.loc[data.week < 16, ['f4']].replace(rule2a)
+    data.loc[data.week >= 16, ['f4']] = data.loc[data.week >= 16, ['f4']].replace(rule2b)
+
+    data.loc[data.week >= 16, ['f1']] = data.loc[data.week >= 16, ['f1']] + 0.6
+    data.loc[data.week >= 16, ['f2']] = np.sqrt(data.loc[data.week >= 16, ['f2']])
+    data['id'] = data.index
+    data.drop(columns=['week'], inplace=True)
+
+    return data
+
+
 def test_feature_creation_sets_properties_correctly():  # noqa: D103
     sut = Feature(label='label', column_name='col', description='desc', feature_type=FeatureType.CATEGORICAL)
     assert sut.label == 'label'
@@ -250,6 +334,13 @@ def test_extract_metadata_raises_missing_metadata_exception_when_missing_metadat
     df = pd.DataFrame({metadata_column: [np.NaN]})
     with pytest.raises(MissingMetadataException):
         _ = extract_metadata(df)
+
+
+def test_extract_metadata_should_warn_about_checking_found_categorical_features_being_ordinal(  # noqa: D103
+    sample_data,
+):
+    with pytest.warns(UserWarning, match="NannyML extracted 2 categorical features"):
+        _ = extract_metadata(sample_data)
 
 
 @pytest.mark.parametrize(

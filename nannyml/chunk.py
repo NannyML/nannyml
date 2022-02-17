@@ -7,6 +7,7 @@
 
 import abc
 import logging
+import warnings
 from datetime import datetime
 from typing import List
 
@@ -212,7 +213,7 @@ class Chunker(abc.ABC):
 
         if len(chunks) < 6:
             # TODO wording
-            logger.warning(
+            warnings.warn(
                 'The resulting number of chunks is too low.'
                 'Please consider splitting your data in a different way or continue at your own risk.'
             )
@@ -222,7 +223,7 @@ class Chunker(abc.ABC):
 
         if len(underpopulated_chunks) > 0:
             # TODO wording
-            logger.warning(
+            warnings.warn(
                 f'The resulting list of chunks contains {len(underpopulated_chunks)} underpopulated chunks.'
                 'They contain too few records to be statistically relevant and might negatively influence '
                 'the quality of calculations.'
