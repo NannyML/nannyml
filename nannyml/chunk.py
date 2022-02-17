@@ -80,7 +80,7 @@ class Chunk:
         return self.data.shape[0]
 
 
-def _minimum_chunk_count(
+def _minimum_chunk_size(
     data: pd.DataFrame,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     ground_truth_column_name: str = NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
@@ -142,7 +142,7 @@ def _is_transition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION
 def _get_boundary_timestamps(c: Chunk, timestamp_column_name: str = NML_METADATA_TIMESTAMP_COLUMN_NAME):
     if timestamp_column_name not in c.data.columns:
         raise MissingMetadataException(
-            f"Missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
+            f"missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
         )
 
     min_date = c.data[timestamp_column_name].min().replace(hour=0, minute=0, second=0)
@@ -218,7 +218,7 @@ class Chunker(abc.ABC):
             )
 
         # check if all chunk sizes > minimal chunk size. If not, render a warning message.
-        underpopulated_chunks = [c for c in chunks if len(c) < _minimum_chunk_count(data)]
+        underpopulated_chunks = [c for c in chunks if len(c) < _minimum_chunk_size(data)]
 
         if len(underpopulated_chunks) > 0:
             # TODO wording
@@ -451,4 +451,13 @@ class CountBasedChunker(Chunker):
             for i in range(0, len(data), chunk_size)
             if i + chunk_size - 1 < len(data)
         ]
+        return chunks
+
+
+class DefaultChunker(Chunker):
+    """Splits data into chunks sized 3 times the minimum chunk size."""
+
+    def _split(self, data: pd.DataFrame) -> List[Chunk]:
+        chunk_size = _minimum_chunk_size(data) * 3
+        chunks = SizeBasedChunker(chunk_size).split(data)
         return chunks

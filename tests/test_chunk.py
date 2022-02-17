@@ -11,7 +11,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.chunk import (
+    Chunk,
+    Chunker,
+    CountBasedChunker,
+    DefaultChunker,
+    PeriodBasedChunker,
+    SizeBasedChunker,
+    _minimum_chunk_size,
+)
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
@@ -275,6 +283,21 @@ def test_chunker_get_partition_should_raise_missing_metadata_exception_when_part
         _ = c.split(pd.DataFrame(columns=['a', 'b', 'c']))
 
 
+def test_chunker_get_boundary_timestamps_should_raise_missing_metadata_exception_when_column_not_present(  # noqa: D103
+    sample_chunk_data,
+):
+    class SimpleChunker(Chunker):
+        def _split(self, data: pd.DataFrame) -> List[Chunk]:
+            return [Chunk(key='row0', data=data)]
+
+    c = SimpleChunker()
+    with pytest.raises(
+        MissingMetadataException, match=f"missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'"
+    ):
+        data = sample_chunk_data.drop(columns=[NML_METADATA_TIMESTAMP_COLUMN_NAME])
+        _ = c.split(data)
+
+
 def test_period_based_chunker_uses_metadata_timestamp_column_when_no_date_column_name_given(  # noqa: D103
     sample_chunk_data,
 ):
@@ -399,3 +422,12 @@ def test_count_based_chunker_assigns_observation_range_to_chunk_keys(sample_chun
     assert sut[0].key == '[0:4031]'
     assert sut[1].key == '[4032:8063]'
     assert sut[-1].key == '[16128:20159]'
+
+
+def test_default_chunker_uses_3_times_minimum_chunk_size_for_size(sample_chunk_data):  # noqa: D103
+    sut = DefaultChunker().split(sample_chunk_data)
+    expected = _minimum_chunk_size(sample_chunk_data) * 3
+    assert len(sut) == sample_chunk_data.shape[0] // expected
+    assert len(sut[0]) == expected
+    assert len(sut[1]) == expected
+    assert len(sut[-1]) == expected

@@ -3,14 +3,14 @@
 #  License: Apache Software License 2.0
 
 """Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.chunk import Chunk
-from nannyml.drift._base import BaseDriftCalculator, ChunkerPreset
+from nannyml.drift._base import BaseDriftCalculator
 from nannyml.metadata import ModelMetadata
 
 
@@ -65,7 +65,9 @@ def calculate_statistical_drift(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     model_metadata: ModelMetadata,
-    chunk_by: Union[str, ChunkerPreset] = 'size_1000',
+    chunk_size: int = None,
+    chunk_number: int = None,
+    chunk_period: str = None,
 ) -> pd.DataFrame:
     """Calculates drift using statistical testing.
 
@@ -74,4 +76,4 @@ def calculate_statistical_drift(
 
     """
     calculator = StatisticalDriftCalculator()
-    return calculator.calculate(reference_data, analysis_data, model_metadata, chunk_by=chunk_by)
+    return calculator.calculate(reference_data, analysis_data, model_metadata, chunk_size, chunk_number, chunk_period)

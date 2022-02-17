@@ -2,44 +2,14 @@
 #
 #  License: Apache Software License 2.0
 import abc
-from enum import Enum
-from typing import Dict, List, Union
+from typing import List
 
 import pandas as pd
+import pandas.tseries.offsets
 
-from nannyml.chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
-
-
-class ChunkerPreset(str, Enum):
-    """Enumeration to access some easy preset Chunkers.
-
-    This allows one to set the `chunk_by` parameter by both a `magic string` and an enumeration.
-    """
-
-    SIZE_1000 = 'size_1000'
-    PERIOD_WEEK = 'period_week'
-    PERIOD_MONTH = 'period_month'
-    PERIOD_DAY = 'period_day'
-    COUNT_100 = 'count_100'
-
-
-def _preset_to_chunker(options: Union[str, ChunkerPreset]) -> Chunker:
-    mapping: Dict[ChunkerPreset, Chunker] = {
-        ChunkerPreset.PERIOD_DAY: PeriodBasedChunker(offset='D'),
-        ChunkerPreset.PERIOD_WEEK: PeriodBasedChunker(offset='W'),
-        ChunkerPreset.PERIOD_MONTH: PeriodBasedChunker(offset='M'),
-        ChunkerPreset.SIZE_1000: SizeBasedChunker(chunk_size=1000),
-        ChunkerPreset.COUNT_100: CountBasedChunker(chunk_count=100),
-    }
-    if isinstance(options, str):  # pragma: no branch
-        try:
-            options = ChunkerPreset(options)
-        except ValueError:
-            raise InvalidArgumentsException(f"unknown chunker preset value '{options}'")
-
-    return mapping[options]
 
 
 class DriftCalculator(abc.ABC):
@@ -54,7 +24,9 @@ class DriftCalculator(abc.ABC):
         reference_data: pd.DataFrame,
         analysis_data: pd.DataFrame,
         model_metadata: ModelMetadata,
-        chunk_by: Union[str, ChunkerPreset] = 'size_1000',
+        chunk_size: int = None,
+        chunk_number: int = None,
+        chunk_period: pandas.tseries.offsets.DateOffset = None,
         chunker: Chunker = None,
         features: List[str] = None,
     ) -> pd.DataFrame:
@@ -80,7 +52,9 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         reference_data: pd.DataFrame,
         analysis_data: pd.DataFrame,
         model_metadata: ModelMetadata,
-        chunk_by: Union[str, ChunkerPreset] = 'size_1000',
+        chunk_size: int = None,
+        chunk_number: int = None,
+        chunk_period: str = None,
         chunker: Chunker = None,
         features: List[str] = None,
     ) -> pd.DataFrame:
@@ -103,14 +77,15 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             The analysis data set
         model_metadata : ModelMetadata
             The metadata describing both reference and analysis data sets
-        chunk_by: Union[str, ChunkerPreset], default='size_1000'
-            Specify how to split up your data.
-            Supports using an Enum `ChunkerPreset` value or one of these string values:
-            - 'size_1000'
-            - 'period_week'
-            - 'period_month'
-            - 'period_day'
-            - 'count_100'
+        chunk_size: int
+            Splits the data into chunks containing `chunks_size` observations.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_number: int
+            Splits the data into `chunk_number` pieces.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_period: str
+            Splits the data according to the given period.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         features : List[str], default=None
@@ -134,7 +109,14 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             raise InvalidArgumentsException('analysis dataset contains no rows. Provide a valid reference data set.')
 
         if chunker is None:
-            chunker = _preset_to_chunker(chunk_by)
+            if chunk_size:
+                chunker = SizeBasedChunker(chunk_size=chunk_size)
+            elif chunk_number:
+                chunker = CountBasedChunker(chunk_count=chunk_number)
+            elif chunk_period:
+                chunker = PeriodBasedChunker(offset=chunk_period)
+            else:
+                chunker = DefaultChunker()
 
         # Create metadata columns, just to be sure.
         reference_data = model_metadata.enrich(reference_data)
