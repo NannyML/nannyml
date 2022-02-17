@@ -21,3 +21,9 @@ class MissingMetadataException(BaseException):
     """An exception indicating metadata columns are missing from the dataframe being processed."""
 
     pass
+
+
+class CalculatorException(BaseException):
+    """An exception indicating an error occurred during (drift) calculation."""
+
+    pass

@@ -12,47 +12,60 @@ from category_encoders import CountEncoder
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-from nannyml import BaseDriftCalculator, Chunk, Feature, ModelMetadata
+from nannyml import BaseDriftCalculator, Chunk, Feature
 
 
 class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
     """BaseDriftCalculator implementation using Reconstruction Error as a measure of drift."""
 
-    def __init__(self, n_components: Union[int, float, str] = 0.65):
+    def __init__(self, model_metadata, features: List[str] = None, n_components: Union[int, float, str] = 0.65):
         """Creates a new ReconstructionErrorDriftCalculator instance.
 
         Parameters
         ----------
+        model_metadata: ModelMetadata
+            Metadata for the model whose data is to be processed.
+        features: List[str], default=None
+            An optional list of feature names to use during drift calculation. None by default, in this case
+            all features are used during calculation.
         n_components: Union[int, float, str]
             The n_components parameter as passed to the sklearn.decomposition.PCA constructor.
             See https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
 
         """
-        super(ReconstructionErrorDriftCalculator, self).__init__()
+        super(ReconstructionErrorDriftCalculator, self).__init__(model_metadata, features)
         self._n_components = n_components
 
-    def _calculate_drift(
-        self,
-        reference_data: pd.DataFrame,
-        chunks: List[Chunk],
-        model_metadata: ModelMetadata,
-        selected_features: List[str],
-    ) -> pd.DataFrame:
-        res = pd.DataFrame()
-        present_categorical_column_names = _get_present_feature_names(
-            selected_features, model_metadata.categorical_features
+        self._scaler = None
+        self._encoder = None
+        self._pca = None
+
+    def _fit(self, reference_data: pd.DataFrame):
+        selected_categorical_column_names = _get_selected_feature_names(
+            self.selected_features, self.model_metadata.categorical_features
         )
-        encoder = CountEncoder(cols=present_categorical_column_names, normalize=True)
+
+        encoder = CountEncoder(cols=selected_categorical_column_names, normalize=True)
         encoded_reference_data = reference_data.copy(deep=True)
-        encoded_reference_data[selected_features] = encoder.fit_transform(reference_data[selected_features])
+        encoded_reference_data[self.selected_features] = encoder.fit_transform(reference_data[self.selected_features])
 
         scaler = StandardScaler()
         scaled_reference_data = pd.DataFrame(
-            scaler.fit_transform(encoded_reference_data[selected_features]), columns=selected_features
+            scaler.fit_transform(encoded_reference_data[self.selected_features]), columns=self.selected_features
         )
 
         pca = PCA(n_components=self._n_components, random_state=16)
-        pca.fit(scaled_reference_data[selected_features])
+        pca.fit(scaled_reference_data[self.selected_features])
+
+        self._encoder = encoder
+        self._scaler = scaler
+        self._pca = pca
+
+    def _calculate_drift(
+        self,
+        chunks: List[Chunk],
+    ) -> pd.DataFrame:
+        res = pd.DataFrame()
 
         for chunk in chunks:
             chunk_drift: Dict[str, Any] = {
@@ -63,7 +76,9 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
                 'end_date': chunk.end_datetime,
                 'partition': 'analysis' if chunk.is_transition else chunk.partition,
                 'reconstruction_error': [
-                    _calculate_reconstruction_error_for_chunk(selected_features, chunk, encoder, scaler, pca)
+                    _calculate_reconstruction_error_for_chunk(
+                        self.selected_features, chunk, self._encoder, self._scaler, self._pca
+                    )
                 ],
             }
             res = res.append(pd.DataFrame(chunk_drift))
@@ -124,7 +139,7 @@ def _calculate_reconstruction_error_for_chunk(
     return res
 
 
-def _get_present_feature_names(selected_features: List[str], features: List[Feature]) -> List[str]:
+def _get_selected_feature_names(selected_features: List[str], features: List[Feature]) -> List[str]:
     feature_column_names = [f.column_name for f in features]
     # Calculate intersection
     return list(set(selected_features) & set(feature_column_names))

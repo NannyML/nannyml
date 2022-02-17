@@ -145,8 +145,8 @@ def _get_boundary_timestamps(c: Chunk, timestamp_column_name: str = NML_METADATA
             f"missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
         )
 
-    min_date = c.data[timestamp_column_name].min().replace(hour=0, minute=0, second=0)
-    max_date = c.data[timestamp_column_name].max().replace(hour=23, minute=59, second=59)
+    min_date = pd.to_datetime(c.data[timestamp_column_name].min()).replace(hour=0, minute=0, second=0)
+    max_date = pd.to_datetime(c.data[timestamp_column_name].max()).replace(hour=23, minute=59, second=59)
 
     return min_date, max_date
 

@@ -11,22 +11,43 @@ from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.chunk import Chunk
 from nannyml.drift._base import BaseDriftCalculator
+from nannyml.exceptions import CalculatorException
 from nannyml.metadata import ModelMetadata
 
 
 class StatisticalDriftCalculator(BaseDriftCalculator):
     """A drift calculator that relies on statistics to detect drift."""
 
+    def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
+        """Constructs a new StatisticalDriftCalculator.
+
+        Parameters
+        ----------
+        model_metadata: ModelMetadata
+            Metadata for the model whose data is to be processed.
+        features: List[str], default=None
+            An optional list of feature names to use during drift calculation. None by default, in this case
+            all features are used during calculation.
+        """
+        super(StatisticalDriftCalculator, self).__init__(model_metadata, features)
+
+        self._reference_data = None
+
+    def _fit(self, reference_data: pd.DataFrame):
+        self._reference_data = reference_data.copy(deep=True)
+
     def _calculate_drift(
         self,
-        reference_data: pd.DataFrame,
         chunks: List[Chunk],
-        model_metadata: ModelMetadata,
-        selected_features: List[str],
     ) -> pd.DataFrame:
+        if self._reference_data is None:
+            raise CalculatorException(
+                'no reference data was found. Please run `calculator.fit()` ' 'before calling `calculator.calculate()`.'
+            )
+
         # Get lists of categorical <-> categorical features
-        categorical_column_names = [f.column_name for f in model_metadata.categorical_features]
-        continuous_column_names = [f.column_name for f in model_metadata.continuous_features]
+        categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
+        continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features]
 
         res = pd.DataFrame()
         # Calculate chunk-wise drift statistics.
@@ -44,14 +65,14 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
             present_categorical_column_names = list(set(chunk.data.columns) & set(categorical_column_names))
             for column in present_categorical_column_names:
                 statistic, p_value, _, _ = chi2_contingency(
-                    pd.concat([reference_data[column].value_counts(), chunk.data[column].value_counts()], axis=1)
+                    pd.concat([self._reference_data[column].value_counts(), chunk.data[column].value_counts()], axis=1)
                 )
                 chunk_drift[f'{column}_chi2'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
 
             present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
             for column in present_continuous_column_names:
-                statistic, p_value = ks_2samp(reference_data[column], chunk.data[column])
+                statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])
                 chunk_drift[f'{column}_dstat'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
 
@@ -75,5 +96,6 @@ def calculate_statistical_drift(
     of analysis data against a reference DataFrame.
 
     """
-    calculator = StatisticalDriftCalculator()
-    return calculator.calculate(reference_data, analysis_data, model_metadata, chunk_size, chunk_number, chunk_period)
+    calculator = StatisticalDriftCalculator(model_metadata)
+    calculator.fit(reference_data)
+    return calculator.calculate(analysis_data, chunk_size, chunk_number, chunk_period)

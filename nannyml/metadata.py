@@ -295,7 +295,6 @@ class ModelMetadata:
             A list of all missing properties. Empty when metadata is complete.
         """
         props_to_check = [
-            'name',
             'prediction_column_name',
             'timestamp_column_name',
             'ground_truth_column_name',

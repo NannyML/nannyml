@@ -8,7 +8,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.metadata import extract_metadata
+from nannyml import MissingMetadataException
+from nannyml.calibration import NML_CALIBRATED_SCORE_COLUMN_NAME
+from nannyml.metadata import NML_METADATA_COLUMNS, extract_metadata
 from nannyml.preprocessing import preprocess
 
 
@@ -101,38 +103,22 @@ def sample_metadata(sample_data):  # noqa: D103
     return extract_metadata(sample_data, model_name='model')
 
 
-def test_preprocess_logs_error_message_when_metadata_is_not_complete(  # noqa: D103
-    sample_data, sample_metadata, caplog
+def test_preprocess_raises_missing_metadata_exception_when_metadata_is_not_complete(  # noqa: D103
+    sample_data, sample_metadata
 ):
     sample_metadata.partition_column_name = None
     sample_data.drop(columns=['partition'], inplace=True)
 
-    _, _ = preprocess(data=sample_data, model_name='my_model')
-
-    assert len(caplog.records) != 0
-    sut = caplog.records[-1]
-    assert sut.levelname == 'ERROR'
-    assert sut.name == 'nannyml.preprocessing'
-    assert 'metadata is still missing values' in sut.msg
+    with pytest.raises(MissingMetadataException):
+        _ = preprocess(data=sample_data, model_metadata=sample_metadata)
 
 
-def test_preprocess_returns_partial_metadata_when_metadata_is_not_complete(sample_data, sample_metadata):  # noqa: D103
-    sample_data.drop(columns=['partition'], inplace=True)
-
-    sut, _ = preprocess(data=sample_data, model_name='my_model')
-
-    assert sut is not None
-    assert sut.partition_column_name is None
-    assert sut.identifier_column_name == sample_metadata.identifier_column_name
-    assert sut.timestamp_column_name == sample_metadata.timestamp_column_name
-    assert sut.prediction_column_name == sample_metadata.prediction_column_name
-    assert sut.ground_truth_column_name == sample_metadata.ground_truth_column_name
-    assert len(sut.features) == len(sample_metadata.features)
+def test_preprocess_adds_metadata_columns_to_result(sample_data, sample_metadata):  # noqa: D103
+    sut = preprocess(sample_data, sample_metadata)
+    for col in NML_METADATA_COLUMNS:
+        assert col in sut.columns
 
 
-def test_preprocess_returns_empty_dataframe_when_metadata_is_not_complete(sample_data):  # noqa: D103
-    sample_data.drop(columns=['partition'], inplace=True)
-
-    _, sut = preprocess(data=sample_data, model_name='my_model')
-
-    assert sut is None
+def test_preprocess_add_calibrated_scores_to_result(sample_data, sample_metadata):  # noqa: D103
+    sut = preprocess(sample_data, sample_metadata)
+    assert NML_CALIBRATED_SCORE_COLUMN_NAME in sut.columns

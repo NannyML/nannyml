@@ -10,25 +10,30 @@ import pandas.tseries.offsets
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
+from nannyml.preprocessing import preprocess
 
 
 class DriftCalculator(abc.ABC):
     """Base class for drift calculation."""
 
-    def __init__(self):
+    def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
         """Constructs a new DriftCalculator instance."""
-        pass
+        self.model_metadata = model_metadata
+        if not features:
+            features = [f.column_name for f in self.model_metadata.features]
+        self.selected_features = features
+
+    def fit(self, reference_data: pd.DataFrame):
+        """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
+        raise NotImplementedError
 
     def calculate(
         self,
-        reference_data: pd.DataFrame,
-        analysis_data: pd.DataFrame,
-        model_metadata: ModelMetadata,
+        data: pd.DataFrame,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: pandas.tseries.offsets.DateOffset = None,
         chunker: Chunker = None,
-        features: List[str] = None,
     ) -> pd.DataFrame:
         """Executes the drift calculation.
 
@@ -47,16 +52,29 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
 
     """
 
+    def fit(self, reference_data: pd.DataFrame):
+        """Calibrates a DriftCalculator using a reference dataset.
+
+        Parameters
+        ----------
+        reference_data : pd.DataFrame
+            The reference data used to calibrate the DriftCalculator.
+        """
+        if reference_data.empty:
+            raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
+        reference_data = preprocess(data=reference_data, model_metadata=self.model_metadata)
+        self._fit(reference_data)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        raise NotImplementedError
+
     def calculate(
         self,
-        reference_data: pd.DataFrame,
-        analysis_data: pd.DataFrame,
-        model_metadata: ModelMetadata,
+        data: pd.DataFrame,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
-        features: List[str] = None,
     ) -> pd.DataFrame:
         """Performs validations and transformations before delegating the calculation to implementing classes.
 
@@ -71,12 +89,8 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
 
         Parameters
         ----------
-        reference_data : DataFrame
-            The reference data set
-        analysis_data : DataFrame
-            The analysis data set
-        model_metadata : ModelMetadata
-            The metadata describing both reference and analysis data sets
+        data : DataFrame
+            The data to be analyzed
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -102,11 +116,8 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             in the model metadata (or less if filtered using the `features` parameter).
 
         """
-        if reference_data.empty:
-            raise InvalidArgumentsException('reference dataset contains no rows. Provide a valid reference data set.')
-
-        if analysis_data.empty:
-            raise InvalidArgumentsException('analysis dataset contains no rows. Provide a valid reference data set.')
+        if data.empty:
+            raise InvalidArgumentsException('data contains no rows. Provide a valid data set.')
 
         if chunker is None:
             if chunk_size:
@@ -118,27 +129,17 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             else:
                 chunker = DefaultChunker()
 
-        # Create metadata columns, just to be sure.
-        reference_data = model_metadata.enrich(reference_data)
-        analysis_data = model_metadata.enrich(analysis_data)
+        # Preprocess data
+        data = preprocess(data=data, model_metadata=self.model_metadata)
 
         # Generate chunks
+        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        chunks = chunker.split(data, columns=features_and_metadata)
 
-        if not features:
-            features = [f.column_name for f in model_metadata.features]
-        features_and_metadata = NML_METADATA_COLUMNS + features
-
-        chunks = chunker.split(reference_data.append(analysis_data), columns=features_and_metadata)
-
-        return self._calculate_drift(
-            reference_data=reference_data, chunks=chunks, model_metadata=model_metadata, selected_features=features
-        )
+        return self._calculate_drift(chunks=chunks)
 
     def _calculate_drift(
         self,
-        reference_data: pd.DataFrame,
         chunks: List[Chunk],
-        model_metadata: ModelMetadata,
-        selected_features: List[str],
     ) -> pd.DataFrame:
         raise NotImplementedError

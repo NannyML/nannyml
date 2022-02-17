@@ -14,4 +14,5 @@ restoring it afterwards.
 """
 
 from ._base import BaseDriftCalculator, DriftCalculator
+from .reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
 from .statistical_drift_calculator import StatisticalDriftCalculator, calculate_statistical_drift

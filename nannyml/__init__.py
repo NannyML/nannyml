@@ -36,11 +36,16 @@ __version__ = '0.1.0'
 
 import logging
 
-from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
-from .chunk import Chunk, Chunker, CountBasedChunker, PeriodBasedChunker, SizeBasedChunker
-from .drift import BaseDriftCalculator, DriftCalculator, StatisticalDriftCalculator, calculate_statistical_drift
+from .calibration import Calibrator, IsotonicCalibrator, calibrated_scores, needs_calibration
+from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from .drift import (
+    BaseDriftCalculator,
+    DriftCalculator,
+    ReconstructionErrorDriftCalculator,
+    StatisticalDriftCalculator,
+    calculate_statistical_drift,
+)
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
-from .preprocessing import preprocess
 
 logger = logging.getLogger(__name__)
