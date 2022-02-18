@@ -18,7 +18,8 @@ Glossary
     --------------------
 
     Multiple columns of data, each one containing a different feature used by your model to make its predictions.
-    Each column contains real (or realistically fake) data. NannyML can use a subset or all of them in its calculations.
+    Each column contains real (or realistically fake) data.
+    NannyML can use a subset or all of them in its calculations.
 
     We need this so that NannyML can read the kind of data each feature uses,
     and monitor for changes to types, rates and distributions.
@@ -28,7 +29,8 @@ Glossary
 
     A single column that contains the prediction of your model, given the input values for that row.
 
-    NannyML needs a sample of these to know what your model is producing as output. It can then monitor it in the future.
+    NannyML needs a sample of these to know what your model is producing as output.
+    It can then monitor it in the future.
 
     Timestamp
     ---------

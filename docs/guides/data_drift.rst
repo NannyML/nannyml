@@ -78,7 +78,7 @@ KS Test and for categorical features we use the 2 sample Chi squared test.
 
 
 Multivariate Drift Detection
---------------------------
+----------------------------
 
 - Univariate Changes in the data distributions
     - We use statistical tests to detect and measure changes
