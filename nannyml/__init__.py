@@ -36,7 +36,7 @@ __version__ = '0.1.0'
 
 import logging
 
-from .calibration import Calibrator, IsotonicCalibrator, calibrated_scores, needs_calibration
+from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from .drift import (
     AlertCountRanking,

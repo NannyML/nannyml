@@ -7,7 +7,6 @@ import logging
 
 import pandas as pd
 
-from nannyml.calibration import NML_CALIBRATED_SCORE_COLUMN_NAME, calibrated_scores
 from nannyml.exceptions import MissingMetadataException
 from nannyml.metadata import ModelMetadata
 
@@ -31,7 +30,6 @@ def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFram
         Metadata gathered by automated extraction.
     prepped_data: Optional[DataFrame]
         A copy of the uploaded data with added copies of metadata columns
-        and other calculated values such as calibrated model scores.
         Will be ``None`` when the extracted/provided metadata was not complete.
 
     """
@@ -47,11 +45,5 @@ def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFram
 
     # If complete then add copies of metadata columns
     prepped_data = model_metadata.enrich(data)
-
-    # Calibrate model score when required
-    prepped_data[NML_CALIBRATED_SCORE_COLUMN_NAME] = calibrated_scores(
-        y_true=prepped_data[model_metadata.ground_truth_column_name],
-        y_pred_proba=prepped_data[model_metadata.prediction_column_name],
-    )
 
     return prepped_data

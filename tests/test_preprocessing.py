@@ -9,7 +9,6 @@ import pandas as pd
 import pytest
 
 from nannyml import MissingMetadataException
-from nannyml.calibration import NML_CALIBRATED_SCORE_COLUMN_NAME
 from nannyml.metadata import NML_METADATA_COLUMNS, extract_metadata
 from nannyml.preprocessing import preprocess
 
@@ -117,8 +116,3 @@ def test_preprocess_adds_metadata_columns_to_result(sample_data, sample_metadata
     sut = preprocess(sample_data, sample_metadata)
     for col in NML_METADATA_COLUMNS:
         assert col in sut.columns
-
-
-def test_preprocess_add_calibrated_scores_to_result(sample_data, sample_metadata):  # noqa: D103
-    sut = preprocess(sample_data, sample_metadata)
-    assert NML_CALIBRATED_SCORE_COLUMN_NAME in sut.columns

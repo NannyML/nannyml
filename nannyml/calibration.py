@@ -8,25 +8,32 @@ import abc
 from typing import Any, List, Tuple
 
 import numpy as np
-import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import StratifiedShuffleSplit
 
 from nannyml.exceptions import InvalidArgumentsException
 
-NML_CALIBRATED_SCORE_COLUMN_NAME = 'nml_calibrated_score'
-
 
 class Calibrator(abc.ABC):
     """Class that is able to calibrate ``y_pred_proba`` scores into probabilities."""
 
-    def calibrate(self, y_true: np.ndarray, y_pred_proba: np.ndarray):
+    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+        """Fits the calibrator using a reference data set.
+
+        Parameters
+        ----------
+        y_pred_proba: numpy.ndarray
+            Vector of continuous reference scores/probabilities. Has to be the same shape as y_true.
+        y_true : numpy.ndarray
+            Vector with reference binary targets - 0 or 1. Shape (n,).
+        """
+        raise NotImplementedError
+
+    def calibrate(self, y_pred_proba: np.ndarray):
         """Perform calibration of prediction scores.
 
         Parameters
         ----------
-        y_true : numpy.ndarray
-            Vector with binary targets - 0 or 1. Shape (n,).
         y_pred_proba: numpy.ndarray
             Vector of continuous scores/probabilities. Has to be the same shape as y_true.
         """
@@ -41,17 +48,26 @@ class IsotonicCalibrator(Calibrator):
         regressor = IsotonicRegression(out_of_bounds="clip", increasing=True)
         self._regressor = regressor
 
-    def calibrate(self, y_true: np.ndarray, y_pred_proba: np.ndarray):
+    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+        """Fits the calibrator using a reference data set.
+
+        Parameters
+        ----------
+        y_pred_proba: numpy.ndarray
+            Vector of continuous reference scores/probabilities. Has to be the same shape as y_true.
+        y_true : numpy.ndarray
+            Vector with reference binary targets - 0 or 1. Shape (n,).
+        """
+        self._regressor.fit(y_pred_proba, y_true)
+
+    def calibrate(self, y_pred_proba: np.ndarray):
         """Perform calibration of prediction scores.
 
         Parameters
         ----------
-        y_true : numpy.ndarray
-            Vector with binary targets - ``0`` or ``1``. Shape ``(n,)``.
         y_pred_proba: numpy.ndarray
             Vector of continuous scores/probabilities. Has to be the same shape as ``y_true``.
         """
-        self._regressor.fit(y_pred_proba, y_true)
         return self._regressor.predict(y_pred_proba)
 
 
@@ -133,9 +149,9 @@ def needs_calibration(
     calibrator : Calibrator
         The Calibrator to use during testing.
     y_true : numpy.ndarray
-        Vector with binary targets - ``0`` or ``1``. Shape ``(n,)``.
+        Vector with reference binary targets - ``0`` or ``1``. Shape ``(n,)``.
     y_pred_proba :
-        Vector of continuous scores/probabilities. Has to be the same shape as ``y_true``.
+        Vector of continuous reference scores/probabilities. Has to be the same shape as ``y_true``.
     bin_count : int
         Desired amount of bins to calculate ECE on.
     split_count : int
@@ -154,16 +170,17 @@ def needs_calibration(
     >>> y_true = np.random.binomial(1, 0.5, 10)
     >>> y_pred_proba = np.linspace(0, 1, 10)
     >>> calibrator = IsotonicCalibrator()
-    >>> needs_calibration(calibrator, y_true, y_pred_proba, bin_count=2, split_count=3)
+    >>> needs_calibration(y_true, y_pred_proba, calibrator, bin_count=2, split_count=3)
     True
     """
     sss = StratifiedShuffleSplit(n_splits=split_count, test_size=0.4, random_state=42)
     ece_diffs = []
 
     for train, test in sss.split(y_pred_proba, y_true):
+        y_pred_proba_train, y_true_train = y_pred_proba[train], y_true[train]
         y_pred_proba_test, y_true_test = y_pred_proba[test], y_true[test]
-
-        calibrated_y_pred_proba_test = calibrator.calibrate(y_true_test, y_pred_proba_test)
+        calibrator.fit(y_pred_proba_train, y_true_train)
+        calibrated_y_pred_proba_test = calibrator.calibrate(y_pred_proba_test)
 
         bin_index_edges = _get_bin_index_edges(len(y_pred_proba_test), bin_count)
         ece_before_calibration = _calculate_expected_calibration_error(y_true_test, y_pred_proba_test, bin_index_edges)
@@ -176,40 +193,3 @@ def needs_calibration(
         return False
     else:
         return True
-
-
-def calibrated_scores(
-    y_true: pd.Series,
-    y_pred_proba: pd.Series,
-    calibrator: Calibrator = IsotonicCalibrator(),
-    bin_count: int = 10,
-    split_count: int = 3,
-) -> pd.Series:
-    """Returns calibrated scores when calibration is required, else returns the original ``y_pred_proba`` values.
-
-    Checks if ``y_pred_proba`` scores require calibration. If so it will use the specified Calibrator to do so.
-    If not it will return the (already sufficiently calibrated) ``y_pred_proba`` values.
-
-    Parameters
-    ----------
-    y_true : pd.Series
-        Vector with binary targets - ``0`` or ``1``. Shape ``(n,)``.
-    y_pred_proba :
-        Vector of continuous scores/probabilities. Has to be the same shape as ``y_true``.
-    calibrator :
-        The Calibrator to use during testing.
-    bin_count : int
-        Desired amount of bins to calculate ECE on.
-    split_count : int
-        Desired number of splits to make, i.e. number of times to evaluate calibration.
-
-    Returns
-    -------
-    scores: pd.Series
-        A vector containing
-
-    """
-    if needs_calibration(y_true.values, y_pred_proba.values, calibrator, bin_count, split_count):
-        return calibrator.calibrate(y_true.values, y_pred_proba.values)
-    else:
-        return y_pred_proba
