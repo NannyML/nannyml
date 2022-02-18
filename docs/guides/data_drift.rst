@@ -86,4 +86,3 @@ Multivariate Drift Detection
 - Multivariate changes …
     - Multidimensional data can change in ways that are not obvious from univariate views
     - We use reconstruction error to detect them
-
