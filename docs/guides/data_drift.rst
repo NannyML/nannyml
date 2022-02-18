@@ -14,8 +14,13 @@ Our model has likely been trained on some data distribution :math:`P(\mathbf{X})
 We have data drift when our production data comes from a different distribution
 :math:`P(\mathbf{X'}) \neq P(\mathbf{X})`.
 
+<<<<<<< HEAD
 A machine learning model operating on an input distribution different than
 the one it has been trained on will probably underperform. It is therefore crucial to detect
+=======
+A machine learning model operating on an input distribution different that
+then one it has been trained on will probably underperform. It is therefore crucial to detect
+>>>>>>> 9048878 (expand univariate docs)
 data drift, in a timely manner, when we have a model in production. By further investigating the
 characteristics of the observed drift, we will be able to estimate the impact
 of the drift on the model's performance.
@@ -88,11 +93,11 @@ Hence we assume that we have the following objects set up:
 Univariate Drift Detection
 --------------------------
 
-Our he Univariate approach for data drift looks at each variable individually and conducts statistical
-tests comparing the chunks created from the datasets with the reference dataset.
-For continuous features we use the KS Test and for categorical features we use the 2 sample
-Chi squared test. Both tests provide a statistic where they measure the observed drift
-and a p-value that shows how likely we are to get the observed sample if there was no drift.
+The Univariate approach looks at each variable individually and conducts statistical tests comparing
+the chunks created from the datasets with the reference dataset. For continuous features we use the
+KS Test and for categorical features we use the 2 sample Chi squared test. Both tests provide a
+statistic where they measure the observed drift and a p-value that shows how likely we are to
+get the observed sample if there was no drift.
 
 The :meth:`nannyml.drift.statistical_drift_calculator` module implements this functionality.
 An example of us using it can be seen below:
