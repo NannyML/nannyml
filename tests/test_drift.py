@@ -390,13 +390,14 @@ def test_reconstruction_error_drift_calculator_should_contain_chunk_details_and_
     )
 
     sut = drift.columns
-    assert len(sut) == 7
+    assert len(sut) == 8
     assert 'key' in sut
     assert 'start_index' in sut
     assert 'start_date' in sut
     assert 'end_index' in sut
     assert 'end_date' in sut
     assert 'partition' in sut
+    assert 'alert' in sut
     assert 'reconstruction_error' in sut
 
 

@@ -84,7 +84,7 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
                 ],
             }
             res = res.append(pd.DataFrame(chunk_drift))
-
+        res['alert'] = _add_alert_flag(res)
         res = res.reset_index(drop=True)
         return res
 
@@ -157,3 +157,18 @@ def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], feat
 
     x['rc_error'] = x.apply(lambda row: np.linalg.norm(row), axis=1)
     return x['rc_error']
+
+
+def _add_alert_flag(drift_result: pd.DataFrame) -> pd.Series:
+    reference_drift = drift_result.loc[drift_result['partition'] == 'reference', 'reconstruction_error']
+    upper_threshold = reference_drift.mean() + 2 * reference_drift.std()
+    lower_threshold = reference_drift.mean() - 2 * reference_drift.std()
+
+    alert = drift_result.apply(
+        lambda row: 1
+        if row['reconstruction_error'] > upper_threshold or row['reconstruction_error'] < lower_threshold
+        else 0,
+        axis=1,
+    )
+
+    return alert
