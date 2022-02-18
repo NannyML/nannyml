@@ -491,3 +491,11 @@ def test_continuous_features_returns_only_continuous_features(sample_model_metad
     sut = sample_model_metadata.continuous_features
     assert len(sut) == 1
     assert sut[0].label == 'f4'
+
+
+def test_setting_prediction_column_name_after_extracting_metadata_updates_the_features_list(sample_data):  # noqa: D103
+    sample_data.rename(columns={'output': 'prediction_score'}, inplace=True)
+    md = extract_metadata(sample_data)
+    md.prediction_column_name = 'prediction_score'
+    assert md.prediction_column_name == 'prediction_score'
+    assert md.feature(column='prediction_score') is None

@@ -168,13 +168,58 @@ class ModelMetadata:
         self.name = model_name
         self.model_problem = model_problem
 
-        self.identifier_column_name = identifier_column_name
-        self.prediction_column_name = prediction_column_name
-        self.ground_truth_column_name = ground_truth_column_name
-        self.partition_column_name = partition_column_name
-        self.timestamp_column_name = timestamp_column_name
+        self._identifier_column_name = identifier_column_name
+        self._prediction_column_name = prediction_column_name
+        self._ground_truth_column_name = ground_truth_column_name
+        self._partition_column_name = partition_column_name
+        self._timestamp_column_name = timestamp_column_name
 
         self.features = [] if features is None else features
+
+    @property
+    def identifier_column_name(self):  # noqa: D102
+        return self._identifier_column_name
+
+    @identifier_column_name.setter
+    def identifier_column_name(self, column_name: str):  # noqa: D102
+        self._identifier_column_name = column_name
+        self.__remove_from_features(column_name)
+
+    @property
+    def prediction_column_name(self):  # noqa: D102
+        return self._prediction_column_name
+
+    @prediction_column_name.setter
+    def prediction_column_name(self, column_name: str):  # noqa: D102
+        self._prediction_column_name = column_name
+        self.__remove_from_features(column_name)
+
+    @property
+    def ground_truth_column_name(self):  # noqa: D102
+        return self._ground_truth_column_name
+
+    @ground_truth_column_name.setter
+    def ground_truth_column_name(self, column_name: str):  # noqa: D102
+        self._ground_truth_column_name = column_name
+        self.__remove_from_features(column_name)
+
+    @property
+    def partition_column_name(self):  # noqa: D102
+        return self._partition_column_name
+
+    @partition_column_name.setter
+    def partition_column_name(self, column_name: str):  # noqa: D102
+        self._partition_column_name = column_name
+        self.__remove_from_features(column_name)
+
+    @property
+    def timestamp_column_name(self):  # noqa: D102
+        return self._timestamp_column_name
+
+    @timestamp_column_name.setter
+    def timestamp_column_name(self, column_name: str):  # noqa: D102
+        self._timestamp_column_name = column_name
+        self.__remove_from_features(column_name)
 
     def __str__(self):
         """Returns a string representation of a ModelMetadata instance."""
@@ -200,9 +245,6 @@ class ModelMetadata:
         for f in self.features:
             strs.append(f"{f.label:20} {f.column_name:20} {f.feature_type or 'NA':15} {f.description}")
         return str.join('\n', strs)
-
-    # def asdict(self) -> Dict[str, Any]:
-    #     res = {}
 
     def feature(self, index: int = None, feature: str = None, column: str = None) -> Optional[Feature]:
         """A function used to access a specific model feature.
@@ -306,6 +348,11 @@ class ModelMetadata:
         complete = all([self.__getattribute__(attr) is not None for attr in props_to_check])
         missing = [attr for attr in props_to_check if self.__getattribute__(attr) is None]
         return complete, missing
+
+    def __remove_from_features(self, column_name: str):
+        current_feature = self.feature(column=column_name)
+        if current_feature:
+            self.features.remove(current_feature)
 
 
 def extract_metadata(data: pd.DataFrame, model_name: str = None):
