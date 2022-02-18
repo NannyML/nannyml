@@ -24,6 +24,7 @@ Welcome to NannyML's documentation!
 
    guides
    glossary
+   deep_dive
    Technical reference <nannyml/modules>
 
 Indices and tables
@@ -31,3 +32,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+    
