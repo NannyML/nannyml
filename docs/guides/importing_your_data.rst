@@ -45,8 +45,9 @@ A quick exploration of the dataset:
 On data, metadata and observations
 ==================================
 
-NannyML offers tools to help you monitor your **models** in production. To do this it needs to know the predictions your
-model has made over time. This is the actual **data** you provide to NannyML: the **model inputs** (*feature values*)
+NannyML offers tools to help you monitor your **models** in production.
+To do this it needs to know the predictions your model has made over time.
+This is the actual **data** you provide to NannyML: the **model inputs** (*feature values*)
 and **model scores** (*prediction values*). Think of it as some kind of log on the usage of your model.
 
 In order to apply the correct analysis on each of your model features NannyML needs some additional information,
@@ -59,7 +60,8 @@ the time the prediction was made etc. The set of this describing information is 
     TODO: insert illustration showing model invocation and assigning names to everything
 
 Combining model inputs/outputs with metadata results in a set of rows called **observations**.
-NannyML will consume a ``pandas.DataFrame`` of these **observations** and turn these into drift and performance metrics.
+NannyML will consume a ``pandas.DataFrame`` of these **observations** and turn these into drift
+and performance metrics.
 
 .. image:: https://via.placeholder.com/900x300.png?text=annotated+tabular+data
 
@@ -137,8 +139,8 @@ Preprocessing the example data
 After all of this exploratory work it's time to fire up NannyML. We'll tell NannyML to read the example data and
 start preprocessing it.
 
-The result of the ``nannyml.preprocess`` function is a tuple. The first element is a ``ModelMetadata`` object that holds
-the metadata information about the model and its features.
+The result of the ``nannyml.preprocess`` function is a tuple. The first element is a ``ModelMetadata``
+object that holds the metadata information about the model and its features.
 
 The second returned element is a copy of the uploaded data with some additional columns. NannyML has added copies of
 metadata columns and other calculated values such as calibrated model scores. These were given fixed names,
