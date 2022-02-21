@@ -88,11 +88,11 @@ Hence we assume that we have the following objects set up:
 Univariate Drift Detection
 --------------------------
 
-The Univariate approach looks at each variable individually and conducts statistical tests comparing
-the chunks created from the datasets with the reference dataset. For continuous features we use the
-KS Test and for categorical features we use the 2 sample Chi squared test. Both tests provide a
-statistic where they measure the observed drift and a p-value that shows how likely we are to
-get the observed sample if there was no drift.
+Our he Univariate approach for data drift looks at each variable individually and conducts statistical
+tests comparing the chunks created from the datasets with the reference dataset.
+For continuous features we use the KS Test and for categorical features we use the 2 sample
+Chi squared test. Both tests provide a statistic where they measure the observed drift
+and a p-value that shows how likely we are to get the observed sample if there was no drift.
 
 The :meth:`nannyml.drift.statistical_drift_calculator` module implements this functionality.
 An example of us using it can be seen below:

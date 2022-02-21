@@ -50,6 +50,5 @@ from .drift import (
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
-from .datasets import load_synthetic_sample
 
 logger = logging.getLogger(__name__)
