@@ -1,3 +1,5 @@
+.. _data-reconstruction-pca:
+
 ============================
 Data Reconstruction with PCA
 ============================

@@ -1,3 +1,5 @@
+.. _data-drift:
+
 ====================
 Data Drift Detection
 ====================
@@ -86,11 +88,11 @@ Hence we assume that we have the following objects set up:
 Univariate Drift Detection
 --------------------------
 
-The Univariate approach looks at each variable individually and conducts statistical tests comparing
-the chunks created from the datasets with the reference dataset. For continuous features we use the
-KS Test and for categorical features we use the 2 sample Chi squared test. Both tests provide a
-statistic where they measure the observed drift and a p-value that shows how likely we are to
-get the observed sample if there was no drift.
+Our he Univariate approach for data drift looks at each variable individually and conducts statistical
+tests comparing the chunks created from the datasets with the reference dataset.
+For continuous features we use the KS Test and for categorical features we use the 2 sample
+Chi squared test. Both tests provide a statistic where they measure the observed drift
+and a p-value that shows how likely we are to get the observed sample if there was no drift.
 
 The :meth:`nannyml.drift.statistical_drift_calculator` module implements this functionality.
 An example of us using it can be seen below:
@@ -136,9 +138,22 @@ a drift alert for that feature and the relevant chunk.
 Multivariate Drift Detection
 ----------------------------
 
-- Univariate Changes in the data distributions
-    - We use statistical tests to detect and measure changes
+The univariate approach to data drift detection is very useful. But unfortunately it does
+tell us the full story. Data living in multidimensional spaces can have complex structures
+whose change may not be visible by just viewing the distributions of each features. We go
+into more detail on this issue at :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
-- Multivariate changes …
-    - Multidimensional data can change in ways that are not obvious from univariate views
-    - We use reconstruction error to detect them
+For drift detection purposes the key thing we need to know is that a change in reconstruction error
+values reflects a change in the structure we have learnt for our data. We therefore monitor
+reconstruction error over time for our machine learning models and raise an alert if the
+values get outside the range of what we are accustomed to.
+
+The :meth:`nannyml.drift.DataReconstructionDriftCalculator` module implements this functionality.
+An example of us using it can be seen below:
+
+
+.. code-block:: python
+
+    # TODO: pending finalization of re-factoring.
+
+The end ...
