@@ -136,7 +136,7 @@ def test_feature_creation_sets_properties_correctly():  # noqa: D103
 
 # TODO: rewrite this using regexes
 def test_feature_string_representation_contains_all_properties(sample_feature):  # noqa: D103
-    sut = str(sample_feature)
+    sut = sample_feature.print()
     assert "Feature: label" in sut
     assert 'Column name' in sut
     assert 'Description' in sut
@@ -183,7 +183,7 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
 
 # TODO: fix regexes
 def test_model_metadata_string_representation_contains_all_properties(sample_model_metadata):  # noqa: D103
-    sut = str(sample_model_metadata)
+    sut = sample_model_metadata.print()
     assert re.match(rf"Metadata for model\s*{sample_model_metadata.name}", sut)
     # assert re.match(rf"Model purpose\s*.{'~ UNKNOWN ~'}.*", sut)
     # assert re.match(rf"Model problem\s*{sample_model_metadata.model_purpose or '~ UNKNOWN ~'}", sut)
@@ -195,6 +195,24 @@ def test_model_metadata_string_representation_contains_all_properties(sample_mod
     # f = sample_model_metadata.features[0]
     # assert re.match(
     #     rf"Name\s*{f.label} Column\s*{f.column_name} Type\s*{f.feature_type} Description\s*{f.description}", sut)
+
+
+def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
+    sut = sample_model_metadata.to_dict()
+    assert sut['identifier_column_name'] == 'id'
+    assert sut['prediction_column_name'] == 'p'
+    assert sut['partition_column_name'] == 'partition'
+    assert sut['timestamp_column_name'] == 'date'
+    assert sut['ground_truth_column_name'] == 'target'
+
+
+def test_to_pd_contains_all_properties(sample_model_metadata):  # noqa: D103
+    sut = sample_model_metadata.to_df()
+    assert sut.loc[sut['label'] == 'identifier_column_name', 'column_name'].iloc[0] == 'id'
+    assert sut.loc[sut['label'] == 'prediction_column_name', 'column_name'].iloc[0] == 'p'
+    assert sut.loc[sut['label'] == 'partition_column_name', 'column_name'].iloc[0] == 'partition'
+    assert sut.loc[sut['label'] == 'timestamp_column_name', 'column_name'].iloc[0] == 'date'
+    assert sut.loc[sut['label'] == 'ground_truth_column_name', 'column_name'].iloc[0] == 'target'
 
 
 def test_feature_filtering_by_index_delivers_correct_result(sample_model_metadata):  # noqa: D103

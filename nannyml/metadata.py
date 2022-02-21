@@ -6,7 +6,7 @@
 import logging
 import warnings
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -88,7 +88,24 @@ class Feature:
         self.description = description
         self.feature_type = feature_type
 
-    def __str__(self):
+    def to_dict(self) -> Dict[str, Any]:
+        """Converts the feature into a Dictionary representation."""
+        return {
+            'label': self.label,
+            'column_name': self.column_name,
+            'type': self.feature_type.value,
+            'description': self.description,
+        }
+
+    def __repr__(self):
+        """String representation of a single Feature."""
+        return f'Feature({self.to_dict()})'
+
+    def __str__(self):  # pragma: no cover
+        """String representation of a single Feature."""
+        return f'Feature({self.to_dict()})'
+
+    def print(self):
         """String representation of a single Feature."""
         strs = [
             f"Feature: {self.label}",
@@ -225,7 +242,57 @@ class ModelMetadata:
         self._timestamp_column_name = column_name
         self.__remove_from_features(column_name)
 
-    def __str__(self):
+    def to_dict(self) -> Dict[str, Any]:  # pragma: no cover
+        """Converts a ModelMetadata instance into a Dictionary."""
+        return {
+            'identifier_column_name': self.identifier_column_name,
+            'timestamp_column_name': self.timestamp_column_name,
+            'partition_column_name': self.partition_column_name,
+            'ground_truth_column_name': self.ground_truth_column_name,
+            'prediction_column_name': self.prediction_column_name,
+            'features': repr(self.features),
+        }
+
+    def to_df(self) -> pd.DataFrame:
+        """Converts a ModelMetadata instance into a read-only DataFrame."""
+        return pd.DataFrame(
+            [
+                {
+                    'label': 'identifier_column_name',
+                    'column_name': self.identifier_column_name,
+                    'type': FeatureType.CONTINUOUS.value,
+                    'description': 'identifier',
+                },
+                {
+                    'label': 'timestamp_column_name',
+                    'column_name': self.timestamp_column_name,
+                    'type': FeatureType.CONTINUOUS.value,
+                    'description': 'timestamp',
+                },
+                {
+                    'label': 'partition_column_name',
+                    'column_name': self.partition_column_name,
+                    'type': FeatureType.CATEGORICAL.value,
+                    'description': 'partition',
+                },
+                {
+                    'label': 'ground_truth_column_name',
+                    'column_name': self.ground_truth_column_name,
+                    'type': FeatureType.CATEGORICAL.value,
+                    'description': 'target',
+                },
+                {
+                    'label': 'prediction_column_name',
+                    'column_name': self.prediction_column_name,
+                    'type': FeatureType.CONTINUOUS.value,
+                    'description': 'prediction score/probability',
+                },
+            ]
+            + [feature.to_dict() for feature in self.features],
+            columns=['label', 'column_name', 'type', 'description'],
+        )
+
+    def print(self):
         """Returns a string representation of a ModelMetadata instance."""
         UNKNOWN = "~ UNKNOWN ~"
         strs = [
@@ -249,6 +316,14 @@ class ModelMetadata:
         for f in self.features:
             strs.append(f"{f.label:20} {f.column_name:20} {f.feature_type or 'NA':15} {f.description}")
         return str.join('\n', strs)
+
+    def __repr__(self):
+        """Converts the ModelMetadata instance to a string representation."""
+        return f'Metadata({self.to_dict()})'
+
+    def __str__(self):  # pragma: no cover
+        """Converts the ModelMetadata instance to a string representation."""
+        return f'Metadata({self.to_dict()})'
 
     def feature(self, index: int = None, feature: str = None, column: str = None) -> Optional[Feature]:
         """A function used to access a specific model feature.
@@ -448,7 +523,7 @@ def _guess_timestamps(data: pd.DataFrame) -> List[str]:
 
 def _guess_predictions(data: pd.DataFrame) -> List[str]:
     def _guess_if_prediction(col: pd.Series) -> bool:
-        return col.name in ['p', 'pred', 'prediction', 'out', 'output']
+        return col.name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred', 'y_pred_proba']
 
     return [col for col in data.columns if _guess_if_prediction(data[col])]
 
