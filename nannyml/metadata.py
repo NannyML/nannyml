@@ -506,7 +506,9 @@ def _guess_identifiers(data: pd.DataFrame) -> List[str]:
 
 def _guess_timestamps(data: pd.DataFrame) -> List[str]:
     def _guess_if_timestamp(col: pd.Series) -> bool:
-        return col.name in ['date', 'timestamp', 'ts', 'date', 'time']
+        return (col.name in ['date', 'timestamp', 'ts', 'date', 'time']) and (
+            np.issubdtype(data[col.name].dtype, np.datetime64) if not data.empty else True
+        )
 
     return [col for col in data.columns if _guess_if_timestamp(data[col])]
 

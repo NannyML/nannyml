@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Unit tests for metadata module."""
-
+import datetime
 import math
 import re
 
@@ -347,9 +347,15 @@ def test_extract_metadata_does_not_fail_when_adding_metadata_parameter_fails(): 
         pytest.fail("should not have failed because of inner exception")
 
 
-@pytest.mark.parametrize('metadata_column', ['identity', 'prediction', 'actual', 'partition', 'timestamp'])
+@pytest.mark.parametrize('metadata_column', ['identity', 'prediction', 'actual', 'partition'])
 def test_extract_metadata_raises_missing_metadata_exception_when_missing_metadata_values(metadata_column):  # noqa: D103
     df = pd.DataFrame({metadata_column: [np.NaN]})
+    with pytest.raises(MissingMetadataException):
+        _ = extract_metadata(df)
+
+
+def test_extract_metadata_raises_missing_metadata_exception_when_missing_timestamp_values():  # noqa: D103
+    df = pd.DataFrame({'timestamp': [datetime.datetime.now(), np.NaN]})
     with pytest.raises(MissingMetadataException):
         _ = extract_metadata(df)
 
