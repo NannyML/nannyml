@@ -9,11 +9,11 @@ Suppose we have a machine learning model that uses some multidimensional input d
 :math:`\mathbf{X}` and makes predictions :math:`y`.
 
 Our model has likely been trained on some data distribution :math:`P(\mathbf{X})`.
-We have data drift when our production data comes from a distribution
+We have data drift when our production data comes from a different distribution
 :math:`P(\mathbf{X'}) \neq P(\mathbf{X})`.
 
-A machine learning model operating on an input distribution different that
-then one it has been trained on will probably underperform. It is therefore crucial to detect
+A machine learning model operating on an input distribution different than
+the one it has been trained on will probably underperform. It is therefore crucial to detect
 data drift, in a timely manner, when we have a model in production. By further investigating the
 characteristics of the observed drift, we will be able to estimate the impact
 of the drift on the model's performance.
