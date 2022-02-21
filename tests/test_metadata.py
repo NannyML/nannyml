@@ -465,6 +465,14 @@ def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
     assert 'feat2' in sut
 
 
+def test_enrich_adds_nan_ground_truth_column_if_no_ground_truth_in_original_data(sample_data):  # noqa: D103
+    md = extract_metadata(sample_data)
+    analysis_data = sample_data.drop(columns=[md.ground_truth_column_name])
+    sut = md.enrich(analysis_data)
+    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in sut.columns
+    assert sut[NML_METADATA_GROUND_TRUTH_COLUMN_NAME].isna().all()
+
+
 def test_categorical_features_returns_only_nominal_features(sample_model_metadata):  # noqa: D103
     sample_model_metadata.features = [
         Feature(label='f1', column_name='f1', feature_type=FeatureType.CATEGORICAL),

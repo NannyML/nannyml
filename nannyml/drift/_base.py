@@ -2,13 +2,21 @@
 #
 #  License: Apache Software License 2.0
 import abc
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 import pandas.tseries.offsets
 
-from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.chunk import (
+    Chunk,
+    Chunker,
+    CountBasedChunker,
+    DefaultChunker,
+    PeriodBasedChunker,
+    SizeBasedChunker,
+    _minimum_chunk_size,
+)
+from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 from nannyml.preprocessing import preprocess
 
@@ -52,6 +60,21 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
 
     """
 
+    def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
+        """Creates a new DriftCalculator.
+
+        Parameters
+        ----------
+        model_metadata: ModelMetadata
+            Metadata telling the DriftCalculator what columns are required for drift calculation.
+        features: List[str]
+            An optional list of feature column names. When set only these columns will be included in the
+            drift calculation. If not set it will default to all feature column names.
+
+        """
+        super().__init__(model_metadata, features)
+        self._minimum_chunk_size: Optional[int] = None
+
     def fit(self, reference_data: pd.DataFrame):
         """Calibrates a DriftCalculator using a reference dataset.
 
@@ -63,6 +86,11 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
         reference_data = preprocess(data=reference_data, model_metadata=self.model_metadata)
+
+        # Calculate minimum chunk size based on reference data (we need y_pred_proba and y_true for this)
+        # Store for DefaultChunker init during calculation
+        self._minimum_chunk_size = _minimum_chunk_size(data=reference_data)
+
         self._fit(reference_data)
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -116,15 +144,21 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Provide a valid data set.')
 
+        if self._minimum_chunk_size is None:
+            raise CalculatorException(
+                'missing value for `_minimum_chunk_size`. '
+                'Please ensure you run `calculator.fit(reference_data)` first.'
+            )
+
         if chunker is None:
             if chunk_size:
-                chunker = SizeBasedChunker(chunk_size=chunk_size)
+                chunker = SizeBasedChunker(chunk_size=chunk_size, minimum_chunk_size=self._minimum_chunk_size)
             elif chunk_number:
-                chunker = CountBasedChunker(chunk_count=chunk_number)
+                chunker = CountBasedChunker(chunk_count=chunk_number, minimum_chunk_size=self._minimum_chunk_size)
             elif chunk_period:
-                chunker = PeriodBasedChunker(offset=chunk_period)
+                chunker = PeriodBasedChunker(offset=chunk_period, minimum_chunk_size=self._minimum_chunk_size)
             else:
-                chunker = DefaultChunker()
+                chunker = DefaultChunker(minimum_chunk_size=self._minimum_chunk_size)
 
         # Preprocess data
         data = preprocess(data=data, model_metadata=self.model_metadata)
