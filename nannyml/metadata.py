@@ -4,7 +4,6 @@
 
 """NannyML module providing classes and utilities for dealing with model metadata."""
 import logging
-import warnings
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -494,15 +493,6 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
     metadata.timestamp_column_name = None if len(timestamps) == 0 else timestamps[0]  # type: ignore
 
     metadata.features = _extract_features(data)
-
-    categorical_feature_count = len([f for f in metadata.features if f.feature_type == FeatureType.CATEGORICAL])
-    if categorical_feature_count > 0:
-        # TODO: add link to docs!
-        # TODO wording
-        warnings.warn(
-            f'NannyML extracted {categorical_feature_count} categorical features.\n'
-            f'Please review these to determine if they should be marked as ordinal instead.\n'
-        )
 
     return metadata
 

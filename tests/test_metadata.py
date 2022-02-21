@@ -354,13 +354,6 @@ def test_extract_metadata_raises_missing_metadata_exception_when_missing_metadat
         _ = extract_metadata(df)
 
 
-def test_extract_metadata_should_warn_about_checking_found_categorical_features_being_ordinal(  # noqa: D103
-    sample_data,
-):
-    with pytest.warns(UserWarning, match="NannyML extracted 2 categorical features"):
-        _ = extract_metadata(sample_data)
-
-
 @pytest.mark.parametrize(
     'col,expected',
     [
