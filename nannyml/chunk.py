@@ -22,6 +22,7 @@ from nannyml.metadata import (
     NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
 
@@ -83,6 +84,7 @@ class Chunk:
 
 def _minimum_chunk_size(
     data: pd.DataFrame,
+    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     ground_truth_column_name: str = NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     lower_threshold: int = 300,
@@ -112,7 +114,10 @@ def _minimum_chunk_size(
         return prediction
 
     class_balance = np.mean(data[ground_truth_column_name])
-    auc = roc_auc_score(data[ground_truth_column_name], data[prediction_column_name])
+    auc = roc_auc_score(
+        data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, ground_truth_column_name],
+        data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name],
+    )
     chunk_size = get_prediction([[class_balance, auc]])
     chunk_size = np.maximum(lower_threshold, chunk_size)
     chunk_size = np.round(chunk_size, -2)
@@ -164,9 +169,9 @@ class Chunker(abc.ABC):
     or a preferred number of Chunks.
     """
 
-    def __init__(self):
+    def __init__(self, minimum_chunk_size: int):
         """Creates a new Chunker. Not used directly."""
-        pass
+        self.minimum_chunk_size = minimum_chunk_size
 
     def split(self, data: pd.DataFrame, columns=None) -> List[Chunk]:
         """Splits a given data frame into a list of chunks.
@@ -219,7 +224,7 @@ class Chunker(abc.ABC):
             )
 
         # check if all chunk sizes > minimal chunk size. If not, render a warning message.
-        underpopulated_chunks = [c for c in chunks if len(c) < _minimum_chunk_size(data)]
+        underpopulated_chunks = [c for c in chunks if len(c) < self.minimum_chunk_size]
 
         if len(underpopulated_chunks) > 0:
             # TODO wording
@@ -281,13 +286,14 @@ class PeriodBasedChunker(Chunker):
 
     >>> from nannyml.chunk import PeriodBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = PeriodBasedChunker(date_column=df['observation_date'], offset='W')
+    >>> chunker = PeriodBasedChunker(date_column=df['observation_date'], offset='W', minimum_chunk_size=50)
     >>> chunks = chunker.split(data=df)
 
     """
 
     def __init__(
         self,
+        minimum_chunk_size: int,
         date_column_name: str = NML_METADATA_TIMESTAMP_COLUMN_NAME,
         offset: str = 'W',
     ):
@@ -295,6 +301,9 @@ class PeriodBasedChunker(Chunker):
 
         Parameters
         ----------
+        minimum_chunk_size: int
+            The minimum amount of observations a Chunk should hold.
+            Usually intelligently determined by using the `_minimum_chunk_size` function.
         date_column_name: string
             The name of the column in the DataFrame that contains the date used for chunking.
             Defaults to the metadata timestamp column added by the `ModelMetadata.extract_metadata` function.
@@ -307,7 +316,7 @@ class PeriodBasedChunker(Chunker):
         -------
         chunker: a PeriodBasedChunker instance used to split data into time-based Chunks.
         """
-        super().__init__()
+        super().__init__(minimum_chunk_size)
 
         self.date_column_name = date_column_name
         self.offset = offset
@@ -346,25 +355,28 @@ class SizeBasedChunker(Chunker):
 
     >>> from nannyml.chunk import SizeBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = SizeBasedChunker(chunk_size=2000)
+    >>> chunker = SizeBasedChunker(chunk_size=2000, minimum_chunk_size=50)
     >>> chunks = chunker.split(data=df)
 
     """
 
-    def __init__(self, chunk_size: int):
+    def __init__(self, chunk_size: int, minimum_chunk_size: int):
         """Create a new SizeBasedChunker.
 
         Parameters
         ----------
         chunk_size: int
             The preferred size of the resulting Chunks, i.e. the number of observations in each Chunk.
+        minimum_chunk_size: int
+            The minimum amount of observations a Chunk should hold.
+            Usually intelligently determined by using the `_minimum_chunk_size` function.
 
         Returns
         -------
         chunker: a size-based instance used to split data into Chunks of a constant size.
 
         """
-        super().__init__()
+        super().__init__(minimum_chunk_size)
 
         # TODO wording
         if not isinstance(chunk_size, int):
@@ -400,12 +412,12 @@ class CountBasedChunker(Chunker):
     --------
     >>> from nannyml.chunk import CountBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = CountBasedChunker(chunk_count=100)
+    >>> chunker = CountBasedChunker(chunk_count=100, minimum_chunk_size=50)
     >>> chunks = chunker.split(data=df)
 
     """
 
-    def __init__(self, chunk_count: int):
+    def __init__(self, chunk_count: int, minimum_chunk_size: int):
         """Creates a new CountBasedChunker.
 
         It will calculate the amount of observations per chunk based on the given chunk count.
@@ -415,14 +427,16 @@ class CountBasedChunker(Chunker):
         ----------
         chunk_count: int
             The amount of chunks to split the data in.
-
+        minimum_chunk_size: int
+            The minimum amount of observations a Chunk should hold.
+            Usually intelligently determined by using the `_minimum_chunk_size` function.
 
         Returns
         -------
         chunker: CountBasedChunker
 
         """
-        super().__init__()
+        super().__init__(minimum_chunk_size)
 
         # TODO wording
         if not isinstance(chunk_count, int):
@@ -456,9 +470,28 @@ class CountBasedChunker(Chunker):
 
 
 class DefaultChunker(Chunker):
-    """Splits data into chunks sized 3 times the minimum chunk size."""
+    """Splits data into chunks sized 3 times the minimum chunk size.
+
+    Examples
+    --------
+    >>> from nannyml.chunk import DefaultChunker
+    >>> df = pd.read_parquet('/path/to/my/data.pq')
+    >>> chunker = DefaultChunker(minimum_chunk_size=50)
+    >>> chunks = chunker.split(data=df)
+    """
+
+    def __init__(self, minimum_chunk_size: int):
+        """Creates a new DefaultChunker.
+
+        Parameters
+        ----------
+        minimum_chunk_size: int
+            The minimum amount of observations a Chunk should hold.
+            Usually intelligently determined by using the `_minimum_chunk_size` function.
+        """
+        super(DefaultChunker, self).__init__(minimum_chunk_size)
 
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
-        chunk_size = _minimum_chunk_size(data) * 3
-        chunks = SizeBasedChunker(chunk_size).split(data)
+        chunk_size = self.minimum_chunk_size * 3
+        chunks = SizeBasedChunker(chunk_size, self.minimum_chunk_size).split(data)
         return chunks

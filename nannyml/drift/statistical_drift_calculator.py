@@ -11,7 +11,6 @@ from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.chunk import Chunk
 from nannyml.drift._base import BaseDriftCalculator
-from nannyml.exceptions import CalculatorException
 from nannyml.metadata import ModelMetadata
 
 ALERT_THRESHOLD_P_VALUE = 0.05
@@ -42,11 +41,6 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
         self,
         chunks: List[Chunk],
     ) -> pd.DataFrame:
-        if self._reference_data is None:
-            raise CalculatorException(
-                'no reference data was found. Please run `calculator.fit()` ' 'before calling `calculator.calculate()`.'
-            )
-
         # Get lists of categorical <-> categorical features
         categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
         continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features]
@@ -67,7 +61,13 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
             present_categorical_column_names = list(set(chunk.data.columns) & set(categorical_column_names))
             for column in present_categorical_column_names:
                 statistic, p_value, _, _ = chi2_contingency(
-                    pd.concat([self._reference_data[column].value_counts(), chunk.data[column].value_counts()], axis=1)
+                    pd.concat(
+                        [
+                            self._reference_data[column].value_counts(),  # type: ignore
+                            chunk.data[column].value_counts(),
+                        ],
+                        axis=1,
+                    )
                 )
                 chunk_drift[f'{column}_chi2'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
@@ -75,7 +75,7 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
 
             present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
             for column in present_continuous_column_names:
-                statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])
+                statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])  # type: ignore
                 chunk_drift[f'{column}_dstat'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
                 chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]

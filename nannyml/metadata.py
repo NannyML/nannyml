@@ -8,6 +8,7 @@ import warnings
 from enum import Enum
 from typing import List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 from nannyml.exceptions import MissingMetadataException
@@ -17,6 +18,9 @@ NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
 NML_METADATA_GROUND_TRUTH_COLUMN_NAME = 'nml_meta_ground_truth'
 NML_METADATA_IDENTIFIER_COLUMN_NAME = 'nml_meta_identifier'
 NML_METADATA_TIMESTAMP_COLUMN_NAME = 'nml_meta_timestamp'
+
+NML_METADATA_REFERENCE_PARTITION_NAME = 'reference'
+NML_METADATA_ANALYSIS_PARTITION_NAME = 'analysis'
 
 NML_METADATA_COLUMNS = [
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -300,8 +304,11 @@ class ModelMetadata:
         data[NML_METADATA_IDENTIFIER_COLUMN_NAME] = data[self.identifier_column_name]
         data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
         data[NML_METADATA_PREDICTION_COLUMN_NAME] = data[self.prediction_column_name]
-        data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = data[self.ground_truth_column_name]
         data[NML_METADATA_PARTITION_COLUMN_NAME] = data[self.partition_column_name]
+        if self.ground_truth_column_name in data.columns:
+            data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = data[self.ground_truth_column_name]
+        else:
+            data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = np.NaN
 
         return data
 
