@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml.chunk import Chunk
+from nannyml.chunk import Chunk, Chunker
 from nannyml.drift._base import BaseDriftCalculator
 from nannyml.metadata import ModelMetadata
 
@@ -19,7 +19,15 @@ ALERT_THRESHOLD_P_VALUE = 0.05
 class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
     """A drift calculator that relies on statistics to detect drift."""
 
-    def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
+    def __init__(
+        self,
+        model_metadata: ModelMetadata,
+        features: List[str] = None,
+        chunk_size: int = None,
+        chunk_number: int = None,
+        chunk_period: str = None,
+        chunker: Chunker = None,
+    ):
         """Constructs a new UnivariateStatisticalDriftCalculator.
 
         Parameters
@@ -29,8 +37,21 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
         features: List[str], default=None
             An optional list of feature names to use during drift calculation. None by default, in this case
             all features are used during calculation.
+        chunk_size: int
+            Splits the data into chunks containing `chunks_size` observations.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_number: int
+            Splits the data into `chunk_number` pieces.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_period: str
+            Splits the data according to the given period.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunker : Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
         """
-        super(UnivariateStatisticalDriftCalculator, self).__init__(model_metadata, features)
+        super(UnivariateStatisticalDriftCalculator, self).__init__(
+            model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
+        )
 
         self._reference_data = None
 

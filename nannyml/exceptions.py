@@ -27,3 +27,9 @@ class CalculatorException(BaseException):
     """An exception indicating an error occurred during (drift) calculation."""
 
     pass
+
+
+class CalculatorNotFittedException(CalculatorException):
+    """An exception indicating a calculator was not fitted before using it in calculations."""
+
+    pass

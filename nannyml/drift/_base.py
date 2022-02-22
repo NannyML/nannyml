@@ -2,10 +2,9 @@
 #
 #  License: Apache Software License 2.0
 import abc
-from typing import List, Optional
+from typing import List
 
 import pandas as pd
-import pandas.tseries.offsets
 
 from nannyml.chunk import (
     Chunk,
@@ -16,7 +15,7 @@ from nannyml.chunk import (
     SizeBasedChunker,
     _minimum_chunk_size,
 )
-from nannyml.exceptions import CalculatorException, InvalidArgumentsException
+from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 from nannyml.preprocessing import preprocess
 
@@ -25,7 +24,16 @@ class DriftCalculator(abc.ABC):
     """Base class for drift calculation."""
 
     def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
-        """Constructs a new DriftCalculator instance."""
+        """Creates a new instance of an abstract DriftCalculator.
+
+        Parameters
+        ----------
+        model_metadata: ModelMetadata
+            Metadata telling the DriftCalculator what columns are required for drift calculation.
+        features: List[str]
+            An optional list of feature column names. When set only these columns will be included in the
+            drift calculation. If not set it will default to all feature column names.
+        """
         self.model_metadata = model_metadata
         if not features:
             features = [f.column_name for f in self.model_metadata.features]
@@ -38,10 +46,6 @@ class DriftCalculator(abc.ABC):
     def calculate(
         self,
         data: pd.DataFrame,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: pandas.tseries.offsets.DateOffset = None,
-        chunker: Chunker = None,
     ) -> pd.DataFrame:
         """Executes the drift calculation.
 
@@ -60,7 +64,15 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
 
     """
 
-    def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
+    def __init__(
+        self,
+        model_metadata: ModelMetadata,
+        features: List[str] = None,
+        chunk_size: int = None,
+        chunk_number: int = None,
+        chunk_period: str = None,
+        chunker: Chunker = None,
+    ):
         """Creates a new DriftCalculator.
 
         Parameters
@@ -70,10 +82,25 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         features: List[str]
             An optional list of feature column names. When set only these columns will be included in the
             drift calculation. If not set it will default to all feature column names.
+        chunk_size: int
+            Splits the data into chunks containing `chunks_size` observations.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_number: int
+            Splits the data into `chunk_number` pieces.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_period: str
+            Splits the data according to the given period.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunker : Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
 
         """
         super().__init__(model_metadata, features)
-        self._minimum_chunk_size: Optional[int] = None
+
+        self.chunker = chunker
+        self._chunk_size = chunk_size
+        self._chunk_number = chunk_number
+        self._chunk_period = chunk_period
 
     def fit(self, reference_data: pd.DataFrame):
         """Calibrates a DriftCalculator using a reference dataset.
@@ -89,21 +116,24 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
 
         # Calculate minimum chunk size based on reference data (we need y_pred_proba and y_true for this)
         # Store for DefaultChunker init during calculation
-        self._minimum_chunk_size = _minimum_chunk_size(data=reference_data)
+        # TODO: refactor as factory function in chunk module
+        minimum_chunk_size = _minimum_chunk_size(data=reference_data)
+        if self.chunker is None:
+            if self._chunk_size:
+                self.chunker = SizeBasedChunker(chunk_size=self._chunk_size, minimum_chunk_size=minimum_chunk_size)
+            elif self._chunk_number:
+                self.chunker = CountBasedChunker(chunk_count=self._chunk_number, minimum_chunk_size=minimum_chunk_size)
+            elif self._chunk_period:
+                self.chunker = PeriodBasedChunker(offset=self._chunk_period, minimum_chunk_size=minimum_chunk_size)
+            else:
+                self.chunker = DefaultChunker(minimum_chunk_size=minimum_chunk_size)
 
         self._fit(reference_data)
 
     def _fit(self, reference_data: pd.DataFrame):
         raise NotImplementedError
 
-    def calculate(
-        self,
-        data: pd.DataFrame,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
-    ) -> pd.DataFrame:
+    def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
         """Performs validations and transformations before delegating the calculation to implementing classes.
 
         Steps taken in this function are:
@@ -119,17 +149,6 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         ----------
         data : DataFrame
             The data to be analyzed
-        chunk_size: int
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
-            The `Chunker` used to split the data sets into a lists of chunks.
 
         Returns
         -------
@@ -144,28 +163,18 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Provide a valid data set.')
 
-        if self._minimum_chunk_size is None:
-            raise CalculatorException(
-                'missing value for `_minimum_chunk_size`. '
-                'Please ensure you run `calculator.fit(reference_data)` first.'
-            )
-
-        if chunker is None:
-            if chunk_size:
-                chunker = SizeBasedChunker(chunk_size=chunk_size, minimum_chunk_size=self._minimum_chunk_size)
-            elif chunk_number:
-                chunker = CountBasedChunker(chunk_count=chunk_number, minimum_chunk_size=self._minimum_chunk_size)
-            elif chunk_period:
-                chunker = PeriodBasedChunker(offset=chunk_period, minimum_chunk_size=self._minimum_chunk_size)
-            else:
-                chunker = DefaultChunker(minimum_chunk_size=self._minimum_chunk_size)
-
         # Preprocess data
         data = preprocess(data=data, model_metadata=self.model_metadata)
 
         # Generate chunks
         features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-        chunks = chunker.split(data, columns=features_and_metadata)
+        if self.chunker is None:
+            raise CalculatorNotFittedException(
+                'chunker has not been set. '
+                'Please ensure you run ``calculator.fit()`` '
+                'before running ``calculator.calculate()``'
+            )
+        chunks = self.chunker.split(data, columns=features_and_metadata)
 
         return self._calculate_drift(chunks=chunks)
 
