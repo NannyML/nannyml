@@ -85,6 +85,8 @@ Hence we assume that we have the following objects set up:
     <class 'pandas.core.frame.DataFrame'>
 
 
+.. _data-drift-univariate:
+
 Univariate Drift Detection
 --------------------------
 
@@ -134,11 +136,16 @@ We see that for each feature we have 3 columns with results. The first column co
 statistic. The second column contains the corresponding p-value and the third value contains whether we have
 a drift alert for that feature and the relevant chunk.
 
+TODO: Show visualizations
+-------------------------
+ - What about alerts?
+
+.. _data-drift-multivariate:
 
 Multivariate Drift Detection
 ----------------------------
 
-The univariate approach to data drift detection is very useful. But unfortunately it does
+The univariate approach to data drift detection is very useful. But unfortunately it does not
 tell us the full story. Data living in multidimensional spaces can have complex structures
 whose change may not be visible by just viewing the distributions of each features. We go
 into more detail on this issue at :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
@@ -155,5 +162,5 @@ An example of us using it can be seen below:
 .. code-block:: python
 
     # TODO: pending finalization of re-factoring.
-
-The end ...
+    # CODE EXAMPLE for getting drift
+    # TODO: Show visualizations of results

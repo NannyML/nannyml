@@ -4,14 +4,36 @@ Glossary
 
 .. glossary::
 
+    feature
+        A variable used by our machine learning model. A synonym for model input.
+
+    Latent space
+        A space of reduced dimensionality, compared to the model input space, that can
+        represent our input data. This space is the result of a representation
+        learning algorithm.
+
     Model
         Definition of a model
+
     Model inputs
-        Definition of model inputs
+        A variable used by our machine learning model.
+
     Model output
-        Definition of model outputs
+        The score or probability that our model provides.
+
+    Multivariate Drift Detection
+        Drift Detection steps that involve all the features of our model in order to
+        create appropriate drift measures.
+
+    PCA
+        Principal Component Analysis. A method user for dimensionality reduction.
+
     Prediction
-        See model outputs!
+        A synonym for model output.
+
+    Univariate Drift Detection
+        Drift Detection steps that use each feature of our model individually
+        in order to create appropriate drift measures.
 
 ..
     Feature input values
