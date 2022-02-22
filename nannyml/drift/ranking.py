@@ -11,6 +11,29 @@ import pandas as pd
 from nannyml.exceptions import InvalidArgumentsException
 
 
+def rank_drifted_features(drift_calculation_result: pd.DataFrame, by: str = 'alert_count') -> pd.DataFrame:
+    """Used to rank drifted features according to multiple strategies.
+
+    Parameters
+    ----------
+    drift_calculation_result : pd.DataFrame
+        The drift calculation result containing the features to rank.
+    by : str, default='alert_count'
+        The strategy to use for ranking.
+        Must be one of these values: `alert_count`
+
+    Returns
+    -------
+    ranking: pd.DataFrame
+        A DataFrame containing a feature name and a rank per row.
+
+    """
+    if by == 'alert_count':
+        return AlertCountRanking().rank(drift_calculation_result=drift_calculation_result)
+    else:
+        raise InvalidArgumentsException(f"unknown value '{by}'. Provide one of the following: ['alert_count']")
+
+
 class Ranking(abc.ABC):
     """Used to rank drifting features according to impact."""
 
@@ -62,6 +85,10 @@ class AlertCountRanking(Ranking):
         alert_column_names = [
             column_name for column_name in drift_calculation_result.columns if self.ALERT_COLUMN_SUFFIX in column_name
         ]
+
+        if len(alert_column_names) == 0:
+            raise InvalidArgumentsException('drift results are not univariate drift results.')
+
         ranking = pd.DataFrame(drift_calculation_result[alert_column_names].sum()).reset_index()
         ranking.columns = ['feature', 'number_of_alerts']
         ranking['feature'] = ranking['feature'].str.replace(self.ALERT_COLUMN_SUFFIX, '')

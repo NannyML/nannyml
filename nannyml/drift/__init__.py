@@ -14,6 +14,6 @@ This module currently contains the following implementations of drift calculatio
 """
 
 from ._base import BaseDriftCalculator, DriftCalculator
-from .ranking import AlertCountRanking, Ranking
+from .ranking import AlertCountRanking, Ranking, rank_drifted_features
 from .reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
 from .statistical_drift_calculator import StatisticalDriftCalculator, calculate_statistical_drift
