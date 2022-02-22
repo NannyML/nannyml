@@ -83,23 +83,5 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
             res = res.append(pd.DataFrame(chunk_drift))
 
         res = res.reset_index(drop=True)
+        res.attrs['nml_drift_calculator'] = __name__
         return res
-
-
-def calculate_statistical_drift(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    model_metadata: ModelMetadata,
-    chunk_size: int = None,
-    chunk_number: int = None,
-    chunk_period: str = None,
-) -> pd.DataFrame:
-    """Calculates drift using statistical testing.
-
-    This function constructs a StatisticalDriftCalculator and subsequently uses it to calculate drift on a DataFrame
-    of analysis data against a reference DataFrame.
-
-    """
-    calculator = StatisticalDriftCalculator(model_metadata)
-    calculator.fit(reference_data)
-    return calculator.calculate(analysis_data, chunk_size, chunk_number, chunk_period)

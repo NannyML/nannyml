@@ -46,7 +46,6 @@ from .drift import (
     Ranking,
     ReconstructionErrorDriftCalculator,
     StatisticalDriftCalculator,
-    calculate_statistical_drift,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata

@@ -13,7 +13,7 @@ import pytest
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift.reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
-from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator, calculate_statistical_drift
+from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
 
@@ -354,15 +354,6 @@ def test_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):
             data=analysis_data,
             chunker=PeriodBasedChunker(offset='W', minimum_chunk_size=1),
         )
-    except Exception:
-        pytest.fail()
-
-
-def test_calculate_statistical_drift_function_runs_on_defaults(sample_drift_data, sample_drift_metadata):  # noqa: D103
-    reference_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-
-    try:
-        calculate_statistical_drift(reference_data, sample_drift_data, sample_drift_metadata)
     except Exception:
         pytest.fail()
 
