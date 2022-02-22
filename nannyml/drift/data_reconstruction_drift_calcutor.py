@@ -17,11 +17,11 @@ from nannyml.drift import BaseDriftCalculator
 from nannyml.metadata import Feature
 
 
-class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
+class DataReconstructionDriftCalculator(BaseDriftCalculator):
     """BaseDriftCalculator implementation using Reconstruction Error as a measure of drift."""
 
     def __init__(self, model_metadata, features: List[str] = None, n_components: Union[int, float, str] = 0.65):
-        """Creates a new ReconstructionErrorDriftCalculator instance.
+        """Creates a new DataReconstructionDriftCalculator instance.
 
         Parameters
         ----------
@@ -35,7 +35,7 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
             See https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
 
         """
-        super(ReconstructionErrorDriftCalculator, self).__init__(model_metadata, features)
+        super(DataReconstructionDriftCalculator, self).__init__(model_metadata, features)
         self._n_components = n_components
 
         self._scaler = None

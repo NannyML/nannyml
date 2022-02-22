@@ -42,9 +42,9 @@ from .datasets import load_synthetic_sample
 from .drift import (
     AlertCountRanking,
     BaseDriftCalculator,
+    DataReconstructionDriftCalculator,
     DriftCalculator,
     Ranking,
-    ReconstructionErrorDriftCalculator,
     UnivariateStatisticalDriftCalculator,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException

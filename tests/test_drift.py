@@ -12,7 +12,7 @@ import pytest
 
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
-from nannyml.drift.reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
+from nannyml.drift.data_reconstruction_drift_calcutor import DataReconstructionDriftCalculator
 from nannyml.drift.univariate_statistical_drift_calculator import UnivariateStatisticalDriftCalculator
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
@@ -307,7 +307,7 @@ def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_an
 def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = ReconstructionErrorDriftCalculator(sample_drift_metadata)
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
 
@@ -358,10 +358,10 @@ def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift
         pytest.fail()
 
 
-def test_reconstruction_error_drift_calculator_with_params_should_not_fail(  # noqa: D103
+def test_data_reconstruction_drift_calculator_with_params_should_not_fail(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = ReconstructionErrorDriftCalculator(sample_drift_metadata, n_components=0.75)
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata, n_components=0.75)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     try:
@@ -374,10 +374,10 @@ def test_reconstruction_error_drift_calculator_with_params_should_not_fail(  # n
         pytest.fail()
 
 
-def test_reconstruction_error_drift_calculator_with_default_params_should_not_fail(  # noqa: D103
+def test_data_reconstruction_drift_calculator_with_default_params_should_not_fail(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = ReconstructionErrorDriftCalculator(sample_drift_metadata)
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     try:
@@ -390,10 +390,10 @@ def test_reconstruction_error_drift_calculator_with_default_params_should_not_fa
         pytest.fail()
 
 
-def test_reconstruction_error_drift_calculator_should_contain_chunk_details_and_single_drift_value_column(  # noqa: D103
+def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_single_drift_value_column(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = ReconstructionErrorDriftCalculator(sample_drift_metadata)
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
 
@@ -414,10 +414,10 @@ def test_reconstruction_error_drift_calculator_should_contain_chunk_details_and_
     assert 'reconstruction_error' in sut
 
 
-def test_reconstruction_error_drift_calculator_should_contain_a_row_for_each_chunk(  # noqa: D103
+def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chunk(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = ReconstructionErrorDriftCalculator(sample_drift_metadata)
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
 
@@ -433,10 +433,10 @@ def test_reconstruction_error_drift_calculator_should_contain_a_row_for_each_chu
 
 
 # TODO: find a better way to test this
-def test_reconstruction_error_drift_calculator_should_not_fail_when_using_feature_subset(  # noqa: D103
+def test_data_reconstruction_drift_calculator_should_not_fail_when_using_feature_subset(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = ReconstructionErrorDriftCalculator(model_metadata=sample_drift_metadata, features=['f1', 'f4'])
+    calc = DataReconstructionDriftCalculator(model_metadata=sample_drift_metadata, features=['f1', 'f4'])
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     try:
         calc.fit(ref_data)
