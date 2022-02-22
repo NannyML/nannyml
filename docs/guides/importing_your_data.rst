@@ -1,3 +1,5 @@
+.. _import-data:
+
 ===========================
 Importing data into NannyML
 ===========================
