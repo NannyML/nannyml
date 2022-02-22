@@ -13,7 +13,7 @@ import pytest
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift.reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
-from nannyml.drift.statistical_drift_calculator import StatisticalDriftCalculator
+from nannyml.drift.univariate_statistical_drift_calculator import UnivariateStatisticalDriftCalculator
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
 
@@ -286,10 +286,10 @@ def test_base_drift_calculator_raises_calculator_exception_running_calculate_wit
     ],
     ids=['chunk_period_weekly', 'chunk_period_monthly', 'chunk_size_1000', 'chunk_count_25'],
 )
-def test_statistical_drift_calculator_should_return_a_row_for_each_analysis_chunk_key(  # noqa: D103
+def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_analysis_chunk_key(  # noqa: D103
     sample_drift_data, sample_drift_metadata, chunker
 ):
-    calc = StatisticalDriftCalculator(sample_drift_metadata)
+    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     sut = calc.calculate(
@@ -304,7 +304,7 @@ def test_statistical_drift_calculator_should_return_a_row_for_each_analysis_chun
     assert sorted(chunk_keys) == sorted(sut['key'].values)
 
 
-def test_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103
+def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
     calc = ReconstructionErrorDriftCalculator(sample_drift_metadata)
@@ -325,10 +325,10 @@ def test_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D10
     assert 'partition' in sut
 
 
-def test_statistical_drift_calculator_should_return_a_stat_column_and_p_value_column_for_each_feature(  # noqa: D103
+def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value_column_for_each_feature(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = StatisticalDriftCalculator(sample_drift_metadata)
+    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     sut = calc.calculate(
@@ -344,8 +344,8 @@ def test_statistical_drift_calculator_should_return_a_stat_column_and_p_value_co
         assert f'{f.column_name}_p_value' in sut
 
 
-def test_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
-    calc = StatisticalDriftCalculator(sample_drift_metadata)
+def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
+    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
     calc.fit(ref_data)

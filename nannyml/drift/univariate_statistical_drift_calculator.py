@@ -16,11 +16,11 @@ from nannyml.metadata import ModelMetadata
 ALERT_THRESHOLD_P_VALUE = 0.05
 
 
-class StatisticalDriftCalculator(BaseDriftCalculator):
+class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
     """A drift calculator that relies on statistics to detect drift."""
 
     def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
-        """Constructs a new StatisticalDriftCalculator.
+        """Constructs a new UnivariateStatisticalDriftCalculator.
 
         Parameters
         ----------
@@ -30,7 +30,7 @@ class StatisticalDriftCalculator(BaseDriftCalculator):
             An optional list of feature names to use during drift calculation. None by default, in this case
             all features are used during calculation.
         """
-        super(StatisticalDriftCalculator, self).__init__(model_metadata, features)
+        super(UnivariateStatisticalDriftCalculator, self).__init__(model_metadata, features)
 
         self._reference_data = None
 
