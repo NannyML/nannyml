@@ -27,8 +27,8 @@ def sample_metadata(sample_data):  # noqa: D103
 
 
 @pytest.fixture
-def sample_univariate_statistical_calculator(
-    sample_metadata, sample_data  # noqa: D103
+def sample_univariate_statistical_calculator(  # noqa: D103
+    sample_metadata, sample_data
 ) -> UnivariateStatisticalDriftCalculator:
     calc = UnivariateStatisticalDriftCalculator(model_metadata=sample_metadata, chunk_size=5000)
     ref_data, _ = sample_data
