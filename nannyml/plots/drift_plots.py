@@ -88,6 +88,7 @@ class DriftPlots:
         if feature is None:
             raise InvalidArgumentsException(f'could not find a feature {feature_label or feature_column_name}')
 
+        # TODO: extract helper function to improve testability
         metric_column_name, metric_label, threshold_column_name = None, None, None
         if metric == 'statistic':
             if feature.feature_type == FeatureType.CATEGORICAL:
