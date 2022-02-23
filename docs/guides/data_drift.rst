@@ -33,7 +33,7 @@ a specific outcome does not change, namely :math:`P(\mathbf{X'}|y') = P(\mathbf{
 
 
 Data Partitions
-================
+===============
 
 As can be seen from our data drift discussion earlier, before we can start talking about data drift,
 we need to have two different datasets to compare. NannyML uses the reference partition and the
@@ -90,13 +90,14 @@ Hence we assume that we have the following objects set up:
 Univariate Drift Detection
 --------------------------
 
-Our he Univariate approach for data drift looks at each variable individually and conducts statistical
-tests comparing the chunks created from the datasets with the reference dataset.
+NannyML's Univariate approach for data drift looks at each variable individually and conducts 
+statistical tests comparing the chunks created from the data provided with the reference dataset.
 For continuous features we use the KS Test and for categorical features we use the 2 sample
 Chi squared test. Both tests provide a statistic where they measure the observed drift
 and a p-value that shows how likely we are to get the observed sample if there was no drift.
 
-The :meth:`nannyml.drift.UnivariateStatisticalDriftCalculator` module implements this functionality.
+The :py:class:`nannyml.drift.univariate_statistical_drift_calculator.UnivariateStatisticalDriftCalculator`
+class implements the functionality needed for Univariate Drift Detection.
 An example of us using it can be seen below:
 
 .. code-block:: python
@@ -106,7 +107,7 @@ An example of us using it can be seen below:
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=5000)
     # NannyML compares drift versus the full reference dataset.
     >>> univariate_calculator.fit(reference_data=reference)
-    # let's see drift statistics for all available data (and )
+    # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis])
     >>> univariate_results = univariate_calculator.calculate(data=data)
     # let's view a small subset of our results:
@@ -118,6 +119,13 @@ An example of us using it can be seen below:
     2 	[10000:14999] 	10000 	        14999 	    2015-01-09 	2015-05-09 23:59:59 	reference   2.451881 	        0.484 	                False
     3 	[15000:19999] 	15000 	        19999 	    2015-05-09 	2015-09-07 23:59:59 	reference   4.062620 	        0.255 	                False
     4 	[20000:24999] 	20000 	        24999 	    2015-09-07 	2016-01-08 23:59:59 	reference   2.413988 	        0.491 	                False
+    >>> univariate_results.iloc[-5:, :9]
+        key             start_index     end_index   start_date  end_date                partition   salary_range_chi2   salary_range_p_value    salary_range_alert
+    15 	[75000:79999] 	75000           79999       2019-04-30  2019-09-01 23:59:59     analysis    455.622094          0.0                     True
+    16 	[80000:84999] 	80000           84999       2019-09-01  2019-12-31 23:59:59     analysis    428.633384          0.0                     True
+    17 	[85000:89999] 	85000           89999       2019-12-31  2020-04-30 23:59:59     analysis    453.247444          0.0                     True
+    18 	[90000:94999] 	90000           94999       2020-04-30  2020-09-01 23:59:59     analysis    438.259970          0.0                     True
+    19 	[95000:99999] 	95000           99999       2020-09-01  2021-01-01 23:59:59     analysis    474.891775          0.0                     True
 
 We see that for each feature we have 3 columns with results. The first column contains the corresponding test
 statistic. The second column contains the corresponding p-value and the third value contains whether we have
@@ -142,12 +150,41 @@ values reflects a change in the structure we have learnt for our data. We theref
 reconstruction error over time for our machine learning models and raise an alert if the
 values get outside the range of what we are accustomed to.
 
-The :meth:`nannyml.drift.DataReconstructionDriftCalculator` module implements this functionality.
-An example of us using it can be seen below:
+The :py:class:`nannyml.drift.data_reconstruction_drift_calcutor.DataReconstructionDriftCalculator`
+module implements this functionality. An example of us using it can be seen below:
 
 
 .. code-block:: python
 
-    # TODO: pending finalization of re-factoring.
-    # CODE EXAMPLE for getting drift
+    # Let's initialize the object that will perform Data Reconstruction with PCA
+    # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=md, chunk_size=5000)
+    # NannyML compares drift versus the full reference dataset.
+    >>> rcerror_calculator.fit(reference_data=reference)
+    # let's see RC error statistics for all available data
+    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    >>> rcerror_results
+
+        key             start_index end_index   start_date  end_date                partition 	reconstruction_error    alert
+    0   [0:4999]        0           4999        2014-05-09  2014-09-09 23:59:59     reference   1.120961                False
+    1   [5000:9999]     5000        9999        2014-09-09  2015-01-09 23:59:59     reference   1.118071                False
+    2   [10000:14999]   10000       14999       2015-01-09  2015-05-09 23:59:59     reference   1.117237                False
+    3   [15000:19999]   15000       19999       2015-05-09  2015-09-07 23:59:59     reference   1.125514                False
+    4   [20000:24999]   20000       24999       2015-09-07  2016-01-08 23:59:59     reference   1.109446                False
+    5   [25000:29999]   25000       29999       2016-01-08  2016-05-09 23:59:59     reference   1.122759                False
+    6   [30000:34999]   30000       34999       2016-05-09  2016-09-04 23:59:59     reference   1.107138                False
+    7   [35000:39999]   35000       39999       2016-09-04  2017-01-03 23:59:59     reference   1.127134                False
+    8   [40000:44999]   40000       44999       2017-01-03  2017-05-03 23:59:59     reference   1.114237                False
+    9   [45000:49999]   45000       49999       2017-05-03  2017-08-31 23:59:59     reference   1.110450                False
+    10  [50000:54999]   50000       54999       2017-08-31  2018-01-02 23:59:59     analysis    1.118536                False
+    11  [55000:59999]   55000       59999       2018-01-02  2018-05-01 23:59:59     analysis    1.115044                False
+    12  [60000:64999]   60000       64999       2018-05-01  2018-09-01 23:59:59     analysis    1.125460                False
+    13  [65000:69999]   65000       69999       2018-09-01  2018-12-31 23:59:59     analysis    1.128453                False
+    14  [70000:74999]   70000       74999       2018-12-31  2019-04-30 23:59:59     analysis    1.122892                False
+    15  [75000:79999]   75000       79999       2019-04-30  2019-09-01 23:59:59     analysis    1.228393                True
+    16  [80000:84999]   80000       84999       2019-09-01  2019-12-31 23:59:59     analysis    1.220028                True
+    17  [85000:89999]   85000       89999       2019-12-31  2020-04-30 23:59:59     analysis    1.237394                True
+    18  [90000:94999]   90000       94999       2020-04-30  2020-09-01 23:59:59     analysis    1.206051                True
+    19  [95000:99999]   95000       99999       2020-09-01  2021-01-01 23:59:59     analysis    1.242579                True
     # TODO: Show visualizations of results
+
