@@ -1,6 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Unit tests for drift plotting module."""
+
 import pytest
 
 import nannyml as nml
@@ -10,13 +13,13 @@ from nannyml.exceptions import CalculatorNotFittedException
 
 
 @pytest.fixture
-def sample_data():
+def sample_data():  # noqa: D103
     ref_data, ana_data, _ = nml.datasets.load_synthetic_sample()
     return ref_data, ana_data
 
 
 @pytest.fixture
-def sample_metadata(sample_data):
+def sample_metadata(sample_data):  # noqa: D103
     ref_data, _ = sample_data
     md = nml.extract_metadata(ref_data)
     md.ground_truth_column_name = 'work_home_actual'
@@ -24,7 +27,9 @@ def sample_metadata(sample_data):
 
 
 @pytest.fixture
-def sample_univariate_statistical_calculator(sample_metadata, sample_data) -> UnivariateStatisticalDriftCalculator:
+def sample_univariate_statistical_calculator(
+    sample_metadata, sample_data  # noqa: D103
+) -> UnivariateStatisticalDriftCalculator:
     calc = UnivariateStatisticalDriftCalculator(model_metadata=sample_metadata, chunk_size=5000)
     ref_data, _ = sample_data
     calc.fit(ref_data)
@@ -32,7 +37,7 @@ def sample_univariate_statistical_calculator(sample_metadata, sample_data) -> Un
 
 
 @pytest.fixture
-def sample_univariate_statistical_drift_result(sample_univariate_statistical_calculator, sample_data):
+def sample_univariate_statistical_drift_result(sample_univariate_statistical_calculator, sample_data):  # noqa: D103
     _, data = sample_data
     return sample_univariate_statistical_calculator.calculate(data)
 
