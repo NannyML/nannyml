@@ -93,6 +93,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
                 chunk_drift[f'{column}_chi2'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
                 chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]
+                chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
             for column in present_continuous_column_names:
@@ -100,6 +101,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
                 chunk_drift[f'{column}_dstat'] = [statistic]
                 chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
                 chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]
+                chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             res = res.append(pd.DataFrame(chunk_drift))
 

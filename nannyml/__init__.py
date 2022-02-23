@@ -50,5 +50,6 @@ from .drift import (
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
+from .plots import DriftPlots
 
 logger = logging.getLogger(__name__)

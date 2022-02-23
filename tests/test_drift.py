@@ -371,13 +371,14 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
     drift = calc.calculate(data=sample_drift_data)
 
     sut = drift.columns
-    assert len(sut) == 8
+    assert len(sut) == 9
     assert 'key' in sut
     assert 'start_index' in sut
     assert 'start_date' in sut
     assert 'end_index' in sut
     assert 'end_date' in sut
     assert 'partition' in sut
+    assert 'thresholds' in sut
     assert 'alert' in sut
     assert 'reconstruction_error' in sut
 
