@@ -97,6 +97,6 @@ Glossary
         Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
         observations and predictions from single hour, day, month etc. depending on the selected interval. They can
         be also size-based so that each chunk contains *n* observations. In that case chronology of data is still
-        maintained - assuming that indices are in chronological order, then the largest index in chunk *k* has
-        to be lower than smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
+        maintained. Assuming that indices are in chronological order, the largest index in chunk *k* is lower than
+        smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
 
