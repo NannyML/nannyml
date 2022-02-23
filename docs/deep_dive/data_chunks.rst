@@ -2,7 +2,7 @@
 Data Chunks
 ====================
 
-Not sure what data chunk is in the first place? Go here (# TODO link to glossary).
+Not sure what data chunk is in the first place? Read about :term:`Data Chunk`.
 
 Why we need chunks?
 ====
@@ -21,8 +21,29 @@ Minimum chunk size
 you split your data in chunks. That is because periods in the data may be meaningful and no one knows it better than
 you.
 However, when the chunks are too small, **what looks like a severe drop in performance of your model, may in fact be
-only sampling effect**. To better understand that, look at the histogram below. It shows dispersion of ROC AUC for
-random model *predicting* random target (which by definition should be 0.5).
+only sampling effect**. To better understand that, look at the histogram below and code used to create it. It shows
+dispersion of ROC AUC for random model *predicting* random binary target (which by definition should be 0.5) for sample
+of 100 observations. It is not uncommon to get ROC AUC of 0.65 for some samples.
+
+.. code-block:: python
+
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> from sklearn.metrics import roc_auc_score
+
+    >>> sample_size = 100
+    >>> roc_aucs = []
+
+    >>> for experiment in range(10_000):
+    >>>     y_trues = np.random.binomial(1, 0.5, sample_size) # balanced dataset
+    >>>     y_pred_probas = np.random.beta(0.5,0.5, sample_size) # beta distribution of y_pred_proba
+    >>>     roc_aucs.append(roc_auc_score(y_trues, y_pred_probas))
+
+    >>> plt.hist(roc_aucs, bins=50, density=True)
+    >>> plt.title("ROC AUC of random classifier\n for randomly selected samples of 100 observations.");
+
+.. image:: ../_static/deep_dive_data_chunks_stability_of_ROC_AUC.svg
+    :width: 400pt
 
 When there are many chunks, it is easy to spot the noisy nature of fluctuations. However, if you have only few chunks
 in the *analysis* period, you may get confused. In order to minimize this risk we estimate a minimum chunk size for
@@ -59,9 +80,7 @@ to data drift.
 Different partitions within one chunk
 ====
 If you want to get performance estimation or data drift results for a dataset that contains two
-partitions - *reference*
-and *analysis* (# TODO link to
-glossary), most likely
+partitions - *reference* and *analysis* (see :term:`Partition`), most likely
 there will be a chunk that contains both of them. We call it transition chunk. All the chunks before belong to
 *reference* period
 and all after, based on *analysis* period, are *actual* results. This is especially important for Performance Estimation
