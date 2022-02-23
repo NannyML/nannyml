@@ -5,3 +5,5 @@ Deep Dives
     :maxdepth: 2
 
     deep_dive/data_reconstruction
+    deep_dive/data_chunks
+
