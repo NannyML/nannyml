@@ -6,14 +6,14 @@
 
 This module currently contains the following implementations of drift calculation:
 
-- Statistical drift calculation: calculation using Kolmogorov-Smirnov test for continuous samples and Chi-squared test
-for nominal categorical tests.
-- Reconstruction error drift calculation: detect drift by decomposing the feature matrix using PCA and
-restoring it afterwards.
+- Statistical drift calculation: Calculating drift using Kolmogorov-Smirnov test for continuous features
+  and Chi-squared test for categorical features.
+- Reconstruction error drift calculation: Detect drift by performing dimensionality reduction on the model
+  inputs and then applying the inverse transofrmation on the latent (reduced) space.
 
 """
 
 from ._base import BaseDriftCalculator, DriftCalculator
-from .ranking import AlertCountRanking, Ranking
-from .reconstruction_error_drift_calcutor import ReconstructionErrorDriftCalculator
-from .statistical_drift_calculator import StatisticalDriftCalculator, calculate_statistical_drift
+from .data_reconstruction_drift_calcutor import DataReconstructionDriftCalculator
+from .ranking import AlertCountRanking, Ranking, rank_drifted_features
+from .univariate_statistical_drift_calculator import UnivariateStatisticalDriftCalculator

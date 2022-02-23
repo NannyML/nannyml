@@ -4,7 +4,7 @@
 
 """Drift calculator using Reconstruction Error as a measure of drift."""
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -12,16 +12,25 @@ from category_encoders import CountEncoder
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-from nannyml.chunk import Chunk
+from nannyml.chunk import Chunk, Chunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.metadata import Feature
 
 
-class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
+class DataReconstructionDriftCalculator(BaseDriftCalculator):
     """BaseDriftCalculator implementation using Reconstruction Error as a measure of drift."""
 
-    def __init__(self, model_metadata, features: List[str] = None, n_components: Union[int, float, str] = 0.65):
-        """Creates a new ReconstructionErrorDriftCalculator instance.
+    def __init__(
+        self,
+        model_metadata,
+        features: List[str] = None,
+        n_components: Union[int, float, str] = 0.65,
+        chunk_size: int = None,
+        chunk_number: int = None,
+        chunk_period: str = None,
+        chunker: Chunker = None,
+    ):
+        """Creates a new DataReconstructionDriftCalculator instance.
 
         Parameters
         ----------
@@ -33,14 +42,29 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
         n_components: Union[int, float, str]
             The n_components parameter as passed to the sklearn.decomposition.PCA constructor.
             See https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-
+        chunk_size: int
+            Splits the data into chunks containing `chunks_size` observations.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_number: int
+            Splits the data into `chunk_number` pieces.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_period: str
+            Splits the data according to the given period.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunker : Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
         """
-        super(ReconstructionErrorDriftCalculator, self).__init__(model_metadata, features)
+        super(DataReconstructionDriftCalculator, self).__init__(
+            model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
+        )
         self._n_components = n_components
 
         self._scaler = None
         self._encoder = None
         self._pca = None
+
+        self._upper_alert_threshold: Optional[float] = None
+        self._lower_alert_threshold: Optional[float] = None
 
     def _fit(self, reference_data: pd.DataFrame):
         selected_categorical_column_names = _get_selected_feature_names(
@@ -63,6 +87,9 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
         self._scaler = scaler
         self._pca = pca
 
+        # Calculate thresholds
+        self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
+
     def _calculate_drift(
         self,
         chunks: List[Chunk],
@@ -78,19 +105,37 @@ class ReconstructionErrorDriftCalculator(BaseDriftCalculator):
                 'end_date': chunk.end_datetime,
                 'partition': 'analysis' if chunk.is_transition else chunk.partition,
                 'reconstruction_error': [
-                    _calculate_reconstruction_error_for_chunk(
-                        self.selected_features, chunk, self._encoder, self._scaler, self._pca
+                    _calculate_reconstruction_error_for_data(
+                        self.selected_features, chunk.data, self._encoder, self._scaler, self._pca
                     )
                 ],
             }
             res = res.append(pd.DataFrame(chunk_drift))
-        res['alert'] = _add_alert_flag(res)
+
+        res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
         return res
 
+    def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
+        reference_chunks = self.chunker.split(reference_data)  # type: ignore
 
-def _calculate_reconstruction_error_for_chunk(
-    selected_features: List[str], chunk: Chunk, encoder: CountEncoder, scaler: StandardScaler, pca: PCA
+        reference_reconstruction_error = pd.Series(
+            [
+                _calculate_reconstruction_error_for_data(
+                    self.selected_features, chunk.data, self._encoder, self._scaler, self._pca
+                )
+                for chunk in reference_chunks
+            ]
+        )
+
+        return (
+            reference_reconstruction_error.mean() + 2 * reference_reconstruction_error.std(),
+            reference_reconstruction_error.mean() - 2 * reference_reconstruction_error.std(),
+        )
+
+
+def _calculate_reconstruction_error_for_data(
+    selected_features: List[str], data: pd.DataFrame, encoder: CountEncoder, scaler: StandardScaler, pca: PCA
 ) -> pd.DataFrame:
     """Calculates reconstruction error for a single Chunk.
 
@@ -98,8 +143,8 @@ def _calculate_reconstruction_error_for_chunk(
     ----------
     selected_features : List[str]
         Subset of features to be included in calculation.
-    chunk : Chunk
-        The chunk containing data to calculate reconstruction error on
+    data : pd.DataFrame
+        The dataset to calculate reconstruction error on
     encoder : category_encoders.CountEncoder
         Encoder used to transform categorical features into a numerical representation
     scaler : sklearn.preprocessing.StandardScaler
@@ -115,7 +160,7 @@ def _calculate_reconstruction_error_for_chunk(
 
     """
     # encode categorical features
-    data = chunk.data.reset_index(drop=True)
+    data = data.reset_index(drop=True)
     data[selected_features] = encoder.transform(data[selected_features])
 
     # scale all features
@@ -159,11 +204,7 @@ def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], feat
     return x['rc_error']
 
 
-def _add_alert_flag(drift_result: pd.DataFrame) -> pd.Series:
-    reference_drift = drift_result.loc[drift_result['partition'] == 'reference', 'reconstruction_error']
-    upper_threshold = reference_drift.mean() + 2 * reference_drift.std()
-    lower_threshold = reference_drift.mean() - 2 * reference_drift.std()
-
+def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_threshold: float) -> pd.Series:
     alert = drift_result.apply(
         lambda row: 1
         if row['reconstruction_error'] > upper_threshold or row['reconstruction_error'] < lower_threshold

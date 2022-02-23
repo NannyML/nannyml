@@ -38,14 +38,15 @@ import logging
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from .datasets import load_synthetic_sample
 from .drift import (
     AlertCountRanking,
     BaseDriftCalculator,
+    DataReconstructionDriftCalculator,
     DriftCalculator,
     Ranking,
-    ReconstructionErrorDriftCalculator,
-    StatisticalDriftCalculator,
-    calculate_statistical_drift,
+    UnivariateStatisticalDriftCalculator,
+    rank_drifted_features,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata

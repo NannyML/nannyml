@@ -1,3 +1,5 @@
+.. _data-drift:
+
 ====================
 Data Drift Detection
 ====================
@@ -12,19 +14,19 @@ Our model has likely been trained on some data distribution :math:`P(\mathbf{X})
 We have data drift when our production data comes from a different distribution
 :math:`P(\mathbf{X'}) \neq P(\mathbf{X})`.
 
-In general a machine learning model operating on an input distribution different than
-the one it has been trained on will underperform. It is therefore crucial to detect the
-presense of data drift when we have a model in production. By further investigating the
-characteristics of the observed drift we will be in a position to estimate the impact
-of the drift to the model's performance.
+A machine learning model operating on an input distribution different than
+the one it has been trained on will probably underperform. It is therefore crucial to detect
+data drift, in a timely manner, when we have a model in production. By further investigating the
+characteristics of the observed drift, we will be able to estimate the impact
+of the drift on the model's performance.
 
 Let us note here that data drift is not the only change that can happen when we have a
-machine learning model in production. Another change we can have is concept drift. In this
-case the distribution of our input data stays the same but the relationship between our outcome
+machine learning model in production. Another change we can have is concept drift.
+Here, the distribution of our input data stays the same, but the relationship between our outcome
 changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` while
 :math:`P(\mathbf{X'}) = P(\mathbf{X})`.
 
-There is also a special case of data drift called label shift. In this case the outcome
+There is also a special case of data drift called label shift. In this case, the outcome
 distributions between our training and production data are different, meaning
 :math:`P(y') \neq P(y)`. However, the relationship between our population characteristics and
 a specific outcome does not change, namely :math:`P(\mathbf{X'}|y') = P(\mathbf{X}|y)`.
@@ -33,7 +35,7 @@ a specific outcome does not change, namely :math:`P(\mathbf{X'}|y') = P(\mathbf{
 Data Partitions
 ================
 
-As can be seen from our data drift discussion earlier before we can start talking about data drift
+As can be seen from our data drift discussion earlier, before we can start talking about data drift,
 we need to have two different datasets to compare. NannyML uses the reference partition and the
 analysis partition for this purpose.
 
@@ -41,24 +43,24 @@ Reference Partition
 -------------------
 
 The reference partition's purpose is to serve as a dataset suitable for our machine learning model.
-We also assume that the performance results of our model are available for this dataset and that it
-has acceptable performance.
+We also assume that the performance results of our model are available for this dataset and that they
+are acceptable.
 
 The reference dataset can be the test set we used when evaluating our model before
-we deploy it to production. Alternatively it can be a reference (or benchmark) period when our
+we deploy it to production. Alternatively, it can be a reference (or benchmark) period when our
 model is in production and its performance results where satisfactory.
 
 Analysis Partition
 ------------------
 
-The analysis partition's purpose is the dataset where we want to examine the performance of our
-model. This will usually consist of the latest production data up to a desired point in the past
-after the point where our reference partition ends. The analysis partition is not required to have
-ground truth and associated performance results available.
+The analysis partition's represents the dataset where we want to examine the performance of our
+model. This will usually consist of the latest production data up to a desired point in the past,
+which will be after the point where our reference partition ends. The analysis partition is not
+required to have ground truth and associated performance results available.
 
-As part of our data drift analysis will will compare periods of the analysis partition, which we
-call chunks internaly in NannyML, with the reference data. Any meaningful differences will be
-flagged as data drift.
+As part of our data drift analysis, we will compare periods of the analysis partition, which we
+call chunks internally in NannyML, with the reference data. NannyML will flag any meaningful
+differences as data drift.
 
 
 Data Drift in practice
@@ -67,22 +69,85 @@ Data Drift in practice
 NannyML uses two approaches to detect and investigate data drift. A Univariate approach and a
 Multivariate approach.
 
+Data Preparation
+----------------
+
+We use the dataset we imported from :ref:`the import data guide<import-data>`.
+Hence we assume that we have the following objects set up:
+
+.. code-block:: python
+
+    >>> type(md)
+    <class 'nannyml.metadata.ModelMetadata'>
+    >>> type(reference)
+    <class 'pandas.core.frame.DataFrame'>
+    >>> type(analysis)
+    <class 'pandas.core.frame.DataFrame'>
+
+
+.. _data-drift-univariate:
+
 Univariate Drift Detection
 --------------------------
 
-The Univariate approach looks at each variable individually and conducts statistical tests comparing
-the chunks created from the datasets with the reference dataset. For continuous features we use the
-KS Test and for categorical features we use the 2 sample Chi squared test.
+Our he Univariate approach for data drift looks at each variable individually and conducts statistical
+tests comparing the chunks created from the datasets with the reference dataset.
+For continuous features we use the KS Test and for categorical features we use the 2 sample
+Chi squared test. Both tests provide a statistic where they measure the observed drift
+and a p-value that shows how likely we are to get the observed sample if there was no drift.
 
-    Add references to code docs ...
+The :meth:`nannyml.drift.UnivariateStatisticalDriftCalculator` module implements this functionality.
+An example of us using it can be seen below:
 
+.. code-block:: python
+
+    # Let's initialize the object that will perform the Univariate Drift calculations
+    # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=5000)
+    # NannyML compares drift versus the full reference dataset.
+    >>> univariate_calculator.fit(reference_data=reference)
+    # let's see drift statistics for all available data (and )
+    >>> data = pd.concat([reference, analysis])
+    >>> univariate_results = univariate_calculator.calculate(data=data)
+    # let's view a small subset of our results:
+
+    >>> univariate_results.iloc[:5, :9]
+        key             start_index     end_index   start_date  end_date                partition   salary_range_chi2   salary_range_p_value    salary_range_alert
+    0 	[0:4999]        0               4999        2014-05-09  2014-09-09 23:59:59     reference   2.898781            0.407                   False
+    1 	[5000:9999] 	5000 	        9999 	    2014-09-09 	2015-01-09 23:59:59 	reference   3.144391 	        0.370                   False
+    2 	[10000:14999] 	10000 	        14999 	    2015-01-09 	2015-05-09 23:59:59 	reference   2.451881 	        0.484 	                False
+    3 	[15000:19999] 	15000 	        19999 	    2015-05-09 	2015-09-07 23:59:59 	reference   4.062620 	        0.255 	                False
+    4 	[20000:24999] 	20000 	        24999 	    2015-09-07 	2016-01-08 23:59:59 	reference   2.413988 	        0.491 	                False
+
+We see that for each feature we have 3 columns with results. The first column contains the corresponding test
+statistic. The second column contains the corresponding p-value and the third value contains whether we have
+a drift alert for that feature and the relevant chunk.
+
+TODO: Show visualizations
+-------------------------
+ - What about alerts?
+
+.. _data-drift-multivariate:
 
 Multivariate Drift Detection
 ----------------------------
 
-- Univariate Changes in the data distributions
-    - We use statistical tests to detect and measure changes
+The univariate approach to data drift detection is very useful. But unfortunately it does not
+tell us the full story. Data living in multidimensional spaces can have complex structures
+whose change may not be visible by just viewing the distributions of each features. We go
+into more detail on this issue at :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
-- Multivariate changes …
-    - Multidimensional data can change in ways that are not obvious from univariate views
-    - We use reconstruction error to detect them
+For drift detection purposes the key thing we need to know is that a change in reconstruction error
+values reflects a change in the structure we have learnt for our data. We therefore monitor
+reconstruction error over time for our machine learning models and raise an alert if the
+values get outside the range of what we are accustomed to.
+
+The :meth:`nannyml.drift.DataReconstructionDriftCalculator` module implements this functionality.
+An example of us using it can be seen below:
+
+
+.. code-block:: python
+
+    # TODO: pending finalization of re-factoring.
+    # CODE EXAMPLE for getting drift
+    # TODO: Show visualizations of results
