@@ -6,7 +6,7 @@ Not sure what data chunk is in the first place? Read about :term:`Data Chunk`.
 
 Why we need chunks?
 ====
-NannyML monitors your model performance and input data changes. Both can be reliably evaluated only on samples
+NannyML monitors ML model performance and input data changes. Both can be reliably evaluated only on samples
 of data containing a number of observations. We call these samples chunks. All the results that we provide are
 calculated and presented on the level of chunk i.e. a chunk is a single data point. (# TODO example plot here)
 
