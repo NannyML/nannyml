@@ -116,7 +116,7 @@ class BasePerformanceEstimator(PerformanceEstimator):
     def _fit(self, reference_data: pd.DataFrame):
         raise NotImplementedError
 
-    def estimate(self, data: pd.DataFrame):
+    def estimate(self, data: pd.DataFrame) -> pd.DataFrame:
         """Performs validations and transformations before delegating the estimation to implementing classes.
 
         Steps taken in this function are:
@@ -155,5 +155,5 @@ class BasePerformanceEstimator(PerformanceEstimator):
 
         return self._estimate(chunks=chunks)
 
-    def _estimate(self, chunks: List[Chunk]):
+    def _estimate(self, chunks: List[Chunk]) -> pd.DataFrame:
         raise NotImplementedError
