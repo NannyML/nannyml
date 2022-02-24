@@ -318,7 +318,7 @@ def _joy_plot(
     quartiles_legend_label='Quartiles',
     date_label_hover_format='%d/%b',
     joy_hover_format='{0:.2f}',
-    joy_overlap=2,
+    joy_overlap=1,
     figure=None,
     title='Feature: distribution over time',
     x_axis_title='Feature',
