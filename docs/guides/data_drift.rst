@@ -7,58 +7,58 @@ Data Drift Detection
 What is data drift and why is it important?
 ===========================================
 
-Suppose we have a machine learning model that uses some multidimensional input data
+Let's study a machine learning model that uses some multidimensional input data
 :math:`\mathbf{X}` and makes predictions :math:`y`.
 
-Our model has likely been trained on some data distribution :math:`P(\mathbf{X})`.
-We have data drift when our production data comes from a different distribution
+The model has likely been trained on some data distribution :math:`P(\mathbf{X})`.
+There is data drift when the production data comes from a different distribution
 :math:`P(\mathbf{X'}) \neq P(\mathbf{X})`.
 
 A machine learning model operating on an input distribution different than
 the one it has been trained on will probably underperform. It is therefore crucial to detect
-data drift, in a timely manner, when we have a model in production. By further investigating the
-characteristics of the observed drift, we will be able to estimate the impact
-of the drift on the model's performance.
+data drift, in a timely manner, when a model is in production. By further investigating the
+characteristics of the observed drift, the data scientists operating the model
+will able to estimate the impact of the drift on the model's performance.
 
-Let us note here that data drift is not the only change that can happen when we have a
-machine learning model in production. Another change we can have is concept drift.
-Here, the distribution of our input data stays the same, but the relationship between our outcome
+It is important to note that data drift is not the only change that can happen when there is a
+machine learning model in production. Another change is concept drift, where the distribution
+the model's input data stays the same, but their relationship with the outcome
 changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` while
 :math:`P(\mathbf{X'}) = P(\mathbf{X})`.
 
 There is also a special case of data drift called label shift. In this case, the outcome
-distributions between our training and production data are different, meaning
-:math:`P(y') \neq P(y)`. However, the relationship between our population characteristics and
+distributions between the training and production data are different, meaning
+:math:`P(y') \neq P(y)`. However, the relationship between the population characteristics and
 a specific outcome does not change, namely :math:`P(\mathbf{X'}|y') = P(\mathbf{X}|y)`.
 
 
 Data Partitions
 ===============
 
-As can be seen from our data drift discussion earlier, before we can start talking about data drift,
-we need to have two different datasets to compare. NannyML uses the reference partition and the
-analysis partition for this purpose.
+As described earlier, in order to look for data drift one needs to have two different datasets
+to compare. NannyML uses the reference partition and the analysis partition for this purpose.
 
 Reference Partition
 -------------------
 
-The reference partition's purpose is to serve as a dataset suitable for our machine learning model.
-We also assume that the performance results of our model are available for this dataset and that they
-are acceptable.
+The reference partition's purpose is to serve as a dataset suitable for the machine learning model
+being monitored. The assumption is that the performance results of the monitored model are available
+for the reference partition and that they are acceptable.
 
-The reference dataset can be the test set we used when evaluating our model before
-we deploy it to production. Alternatively, it can be a reference (or benchmark) period when our
-model is in production and its performance results where satisfactory.
+The reference dataset can be the test set used when evaluating the monitored model before
+deploying it to production. Alternatively, it can be a reference (or benchmark) period when the
+monitored model has been in production and its performance results where satisfactory.
 
 Analysis Partition
 ------------------
 
-The analysis partition's represents the dataset where we want to examine the performance of our
-model. This will usually consist of the latest production data up to a desired point in the past,
-which will be after the point where our reference partition ends. The analysis partition is not
-required to have ground truth and associated performance results available.
+The analysis partition's represents the dataset NannyML uses to examine the performance of the
+monitored model. This will usually consist of the latest production data up to a desired point in
+the past, which will be after the point where our reference partition ends.
+The analysis partition is not required to have ground truth and associated performance results
+available.
 
-As part of our data drift analysis, we will compare periods of the analysis partition, which we
+NannyML when performing drift analysis compares periods of the analysis partition, which we
 call chunks internally in NannyML, with the reference data. NannyML will flag any meaningful
 differences as data drift.
 
@@ -90,15 +90,16 @@ Hence we assume that we have the following objects set up:
 Univariate Drift Detection
 --------------------------
 
-NannyML's Univariate approach for data drift looks at each variable individually and conducts 
+NannyML's Univariate approach for data drift looks at each variable individually and conducts
 statistical tests comparing the chunks created from the data provided with the reference dataset.
-For continuous features we use the KS Test and for categorical features we use the 2 sample
-Chi squared test. Both tests provide a statistic where they measure the observed drift
-and a p-value that shows how likely we are to get the observed sample if there was no drift.
+NannyML uses the KS Test for continuous features and the 2 sample
+Chi squared test for categorical features. Both tests provide a statistic where they measure the
+observed drift and a p-value that shows how likely we are to get the observed sample
+if there was no drift.
 
 The :py:class:`nannyml.drift.univariate_statistical_drift_calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection.
-An example of us using it can be seen below:
+An example using it can be seen below:
 
 .. code-block:: python
 
@@ -127,13 +128,78 @@ An example of us using it can be seen below:
     18 	[90000:94999] 	90000           94999       2020-04-30  2020-09-01 23:59:59     analysis    438.259970          0.0                     True
     19 	[95000:99999] 	95000           99999       2020-09-01  2021-01-01 23:59:59     analysis    474.891775          0.0                     True
 
-We see that for each feature we have 3 columns with results. The first column contains the corresponding test
-statistic. The second column contains the corresponding p-value and the third value contains whether we have
-a drift alert for that feature and the relevant chunk.
+NannyML produces 3 columns with results for each feature. The first column contains the corresponding test
+statistic. The second column contains the corresponding p-value and the third column says whether there
+is a drift alert for that feature and the relevant chunk.
 
-TODO: Show visualizations
--------------------------
- - What about alerts?
+NannyML can also visualize those results with the following code:
+
+.. code-block:: python
+
+    for itm in md.features:
+        fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
+        fig.show()
+        fig.write_image(file=f"drift-guide-{itm.label}.svg")
+
+.. image:: ../_static/drift-guide-distance_from_office.svg
+
+.. image:: ../_static/drift-guide-gas_price_per_litre.svg
+
+.. image:: ../_static/drift-guide-tenure.svg
+
+.. image:: ../_static/drift-guide-wfh_prev_workday.svg
+
+.. image:: ../_static/drift-guide-workday.svg
+
+.. image:: ../_static/drift-guide-public_transportation_cost.svg
+
+.. image:: ../_static/drift-guide-salary_range.svg
+
+
+NannyML also shows details about the distributions of continuous variables and
+stacked bar charts for categorical variables. It does so with the following code:
+
+
+.. code-block:: python
+
+    for itm in md.continuous_features:
+        fig = plots.plot_continuous_feature_distribution_over_time(
+            data=pd.concat([reference, analysis], ignore_index=True),
+            drift_results=univariate_results,
+            feature_label=itm.label
+        )
+        fig.show()
+        fig.write_image(file=f"drift-guide-joyplot-{itm.label}.svg")
+
+.. image:: ../_static/drift-guide-joyplot-distance_from_office.svg
+
+.. image:: ../_static/drift-guide-joyplot-gas_price_per_litre.svg
+
+.. image:: ../_static/drift-guide-joyplot-public_transportation_cost.svg
+
+.. image:: ../_static/drift-guide-joyplot-tenure.svg
+
+.. code-block:: python
+
+    for itm in md.categorical_features:
+        fig = plots.plot_categorical_feature_distribution_over_time(
+            data=pd.concat([reference, analysis], ignore_index=True),
+            drift_results=univariate_results,
+            feature_label=itm.label
+        )
+        fig.show()
+        fig.write_image(file=f"drift-guide-stacked-{itm.label}.svg")
+
+.. image:: ../_static/drift-guide-stacked-salary_range.svg
+
+.. image:: ../_static/drift-guide-stacked-wfh_prev_workday.svg
+
+.. image:: ../_static/drift-guide-stacked-workday.svg
+
+NannyML highlights with red the areas with possible data drift.
+The ``tenure`` feature has two alerts that are false positives. 
+The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
+``wfh_prev_workday`` have been rightly identified as exhibiting drift.
 
 .. _data-drift-multivariate:
 
@@ -142,13 +208,13 @@ Multivariate Drift Detection
 
 The univariate approach to data drift detection is very useful. But unfortunately it does not
 tell us the full story. Data living in multidimensional spaces can have complex structures
-whose change may not be visible by just viewing the distributions of each features. We go
-into more detail on this issue at :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+whose change may not be visible by just viewing the distributions of each features. There are more
+information on this issue at :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
-For drift detection purposes the key thing we need to know is that a change in reconstruction error
-values reflects a change in the structure we have learnt for our data. We therefore monitor
-reconstruction error over time for our machine learning models and raise an alert if the
-values get outside the range of what we are accustomed to.
+For drift detection purposes the key thing to know is that a change in reconstruction error
+values reflects a change in the structure of the model inputs. NannyML enables monitoring the
+reconstruction error over time for a machine learning models and raising an alert if the
+values get outside the range observed in the reference partition.
 
 The :py:class:`nannyml.drift.data_reconstruction_drift_calcutor.DataReconstructionDriftCalculator`
 module implements this functionality. An example of us using it can be seen below:
@@ -186,5 +252,16 @@ module implements this functionality. An example of us using it can be seen belo
     17  [85000:89999]   85000       89999       2019-12-31  2020-04-30 23:59:59     analysis    1.237394                True
     18  [90000:94999]   90000       94999       2020-04-30  2020-09-01 23:59:59     analysis    1.206051                True
     19  [95000:99999]   95000       99999       2020-09-01  2021-01-01 23:59:59     analysis    1.242579                True
-    # TODO: Show visualizations of results
 
+NannyML can also visualize multivariate drift results with the following code:
+
+.. code-block:: python
+
+    fig = plots.plot_data_reconstruction_drift(rcerror_results)
+    fig.show()
+    fig.write_image(file=f"drift-guide-multivariate.svg")
+
+.. image:: ../_static/drift-guide-multivariate.svg
+
+The mutlrivariate drift results provide a consice summary of where data drift
+is happening in our input data.
