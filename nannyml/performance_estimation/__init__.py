@@ -5,4 +5,4 @@
 """Contains all performance estimation implementations and utilities."""
 
 from ._base import BasePerformanceEstimator
-from .confusion_matrix_estimation import CME
+from .cme import CME
