@@ -43,3 +43,28 @@ def load_synthetic_sample():
     analysis_gt = load_csv_file_to_df('sythetic_sample_analysis_gt.csv')
 
     return reference, analysis, analysis_gt
+
+
+def load_modified_california_housing_dataset():
+    """Loads the modified california housing dataset provided for testing the NannyML package.  # noqa: D202, D415
+
+    This dataset has been altered to represent a binary classification problem over time.
+    More information about the dataset can be found at:
+    :ref:`<california-housing>`
+
+
+    Returns
+    -------
+    refererence : DataFrame
+        dataframe containing reference partition of modified california housing dataset
+    analysis : DataFrame
+        dataframe containing analysis partition of modified california housing dataset
+    analysis_gt : DataFrame
+        dataframe containing ground truth results for the analysis partition of modified california housing dataset
+    """
+
+    reference = load_csv_file_to_df('california_housing_reference.csv')
+    analysis = load_csv_file_to_df('california_housing_analysis.csv')
+    analysis_gt = load_csv_file_to_df('california_housing_analysis_gt.csv')
+
+    return reference, analysis, analysis_gt

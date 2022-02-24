@@ -197,7 +197,7 @@ stacked bar charts for categorical variables. It does so with the following code
 .. image:: ../_static/drift-guide-stacked-workday.svg
 
 NannyML highlights with red the areas with possible data drift.
-The ``tenure`` feature has two alerts that are false positives. 
+The ``tenure`` feature has two alerts that are false positives.
 The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
 ``wfh_prev_workday`` have been rightly identified as exhibiting drift.
 
