@@ -5,7 +5,7 @@
 
 """Calibrating model scores into probabilities."""
 import abc
-from typing import Any, List, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 import numpy as np
 from sklearn.isotonic import IsotonicRegression
@@ -38,6 +38,70 @@ class Calibrator(abc.ABC):
             Vector of continuous scores/probabilities. Has to be the same shape as y_true.
         """
         raise NotImplementedError
+
+
+class CalibratorFactory:
+    """Factory class to aid in construction of Calibrators."""
+
+    _calibrators = {'isotonic': lambda args: IsotonicCalibrator()}
+
+    @classmethod
+    def register_calibrator(cls, key: str, create_calibrator: Callable):
+        """Registers a new calibrator to the index.
+
+        This index associates a certain key with a function that can be used to construct a new Calibrator instance.
+
+        Parameters
+        ----------
+        key: str
+            The key used to retrieve a Calibrator. When providing a key that is already in the index, the value
+            will be overwritten.
+        create_calibrator: Callable
+            A function that - given a ``**kwargs`` argument - create a new instance of a Calibrator subclass.
+
+        Examples
+        --------
+        >>> CalibratorFactory.create('isotonic', lambda kwargs: IsotonicCalibrator())
+        """
+        cls._calibrators[key] = create_calibrator
+
+    @classmethod
+    def create(cls, key: Optional[str], **kwargs):
+        """Creates a new Calibrator given a key value and optional keyword args.
+
+        If the provided key equals ``None``, then a new instance of the default Calibrator (IsotonicCalibrator)
+        will be returned.
+
+        If a non-existent key is provided an ``InvalidArgumentsException`` is raised.
+
+        Parameters
+        ----------
+        key : str
+            The key used to retrieve a Calibrator. When providing a key that is already in the index, the value
+            will be overwritten.
+        kwargs : dict
+            Optional keyword arguments that will be passed along to the function associated with the key.
+            It can then use these arguments during the creation of a new Calibrator instance.
+
+        Returns
+        -------
+        calibrator: Calibrator
+            A new instance of a specific Calibrator subclass.
+
+        Examples
+        --------
+        >>> calibrator = CalibratorFactory.create('isotonic', kwargs={'foo': 'bar'})
+        """
+        default = IsotonicCalibrator()
+        if key is None:
+            return default
+
+        if key not in cls._calibrators:
+            raise InvalidArgumentsException(
+                f"calibrator {key} unknown. " f"Please provide one of the following: {cls._calibrators.keys()}"
+            )
+
+        return cls._calibrators.get(key, default)
 
 
 class IsotonicCalibrator(Calibrator):
