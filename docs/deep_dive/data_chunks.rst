@@ -11,22 +11,30 @@ Why we need chunks?
 NannyML monitors ML model performance and input data changes. Both can be reliably evaluated only on samples
 of data containing a number of observations. These samples are called chunks. All the results generated are
 calculated and presented on the level of chunk i.e. a chunk is a single data point. Go to
-:ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance_estimation>` to see example
+:ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance-estimation>` to see example
 results.
 
 
 
-How you define chunk?
+How chunks are splitted?
 ====
-Examples here from data drift on size-based and time-based chunks.
+
+Chunks can be created based on:
+
+ - time intervals (a week, month, quarter etc.),
+ - required number of observations in chunks,
+ - required number of chunks in the monitored data.
+
+For example implementations check out :ref:`guide on chunking data<chunk-data>`.
 
 Minimum chunk size
 ======
-**In data sciences sample size affects everything, especially when it is small**. NannyML lets you decide on the way
-you split your data in chunks. That is because periods in the data may be meaningful and no one knows it better than
-you.
-However, when the chunks are too small, **what looks like a severe drop in performance of your model, may in fact be
-only sampling effect**. To better understand that, look at the histogram below and code used to create it. It shows
+**In data sciences sample size affects everything, especially when it is small**. NannyML allows to split data
+in chunks in different ways because periods in the data may be meaningful and no one knows it better than
+the owner of the monitored data.
+However, when the chunks are too small, **what looks like a severe drop in performance of the monitored model, may in
+fact be only sampling effect**. To better understand that, look at the histogram below. It
+shows
 dispersion of ROC AUC for random model *predicting* random binary target (which by definition should be 0.5) for sample
 of 100 observations. It is not uncommon to get ROC AUC of 0.65 for some samples.
 
@@ -50,25 +58,29 @@ of 100 observations. It is not uncommon to get ROC AUC of 0.65 for some samples.
 .. image:: ../_static/deep_dive_data_chunks_stability_of_ROC_AUC.svg
     :width: 400pt
 
-When there are many chunks, it is easy to spot the noisy nature of fluctuations. However, if you have only few chunks
-in the *analysis* period, you may get confused. In order to minimize this risk we estimate a minimum chunk size for
-your data.
+When there are many chunks, it is easy to spot the noisy nature of fluctuations. However, with only few chunks it
+is difficult to tell whether the effect (the drop) is real. To minimize this risk, NannyML estimates a minimum chunk
+size for the monitored data.
 Since NannyML is performance-oriented, the minimum chunk size is estimated in order to keep variation of performance
-of your model low. Our definition of *low* is arbitrary for now:
- - For models with ROC AUC below 0.9 we want to have chunks for which standard deviation is lower
+of your model low. We define *low* by the rule of thumb in the following way:
+ - For models with ROC AUC below 0.9 we want to have chunks for which standard deviation of ROC AUC on chunks is lower
    than 0.01.
  - For other models, standard deviation of performance on chunks should be below 0.02.
 
-For the sake of computation time we did not want to iterate on your data to get the chunk size that meets the
-requirement on dispersion level. We know, that sample variation of ROC AUC is mostly affected by the quality of the model and the
-class balance. We have
-ran experiments on synthetic data to quantify that. For each artificially created vector of ground truths and
-predicted probabilities we draw sample of constant size many times and measured the dispersion. We did
-that for different sample sizes. Then we choose only the experiments that fulfill our requirements on standard
-deviation value and fitted linear regression (after transforming to 3rd order polynomial). As a result we have a
-function of two arguments - ROC AUC score and class balance calculated on your
-*reference* data that returns suggested minimum chunk size. The output of that function is limited
-with hard floor of 500 observations per sample. See the plots of experiment results and fitted surface.
+Typical way to approach the task of finding minimum chunk size would be to iterate on the monitored data to find the
+smallest chunk size that meets the above requirements. This in some cases could be resource intensive, so instead
+NannyML uses simple model to quickly estimate that based on characteristics of the monitored data.
+Experiments have shown that variability of ROC AUC with respect to sample size is mostly affected
+by the quality of the monitored model (i.e. its performance) and the target distribution (class balance). In order to
+quantify the impact, a large
+number of synthetic data sets was created with different target distributions and models of different quality. For each
+artificially created vector of ground truths and predicted probabilities a sample of constant size was drawn many times
+and the standard deviation was calculated. Then, the experiments that met the requirements on standard
+deviation value were chosen and a model was fitted (see experiment results and fitted surface on the plot below).
+As a result, a function of two arguments - ROC AUC score and target distribution - was obtained.
+NannyML uses this function to calculate minimum chunk size based on the characteristics of monitored data.
+If any of the created chunks is smaller than the minimum estimated, a warning
+is raised.
 
 .. image:: ../_static/deep_dive_data_chunks_minimum_chunk_size.svg
     :width: 800pt
@@ -82,16 +94,4 @@ as a hard limit**. It is just a chunk size, below which performance - actual or 
 governed by sampling rather than actual changes. Finally, be aware that sample size affects also calculations related
 to data drift.
 
-Different partitions within one chunk
-====
-If you want to get performance estimation or data drift results for a dataset that contains two
-partitions - *reference* and *analysis* (see :term:`Partition`), most likely
-there will be a chunk that contains both of them. We call it transition chunk. All the chunks before belong to
-*reference* period
-and all after, based on *analysis* period, are *actual* results. This is especially important for Performance Estimation
-(# TODO naming?), where *reference* period should be treated like you treat your train set when modelling whereas
-*analysis* is like test - the quality of estimation on the *reference* will most likely be much better than on
-*analysis*.
-
-It may happen that there is no transition chunk, in that case (# TODO)
 
