@@ -14,6 +14,9 @@ Glossary
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
 
+    Data Chunk
+        Placeholder for Links Until Written.
+
     Feature
         A variable used by our machine learning model. A synonym for model input.
 

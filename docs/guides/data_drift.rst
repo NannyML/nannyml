@@ -10,7 +10,7 @@ What is data drift and why is it important?
 Let's study a machine learning model that uses some multidimensional input data
 :math:`\mathbf{X}` and makes predictions :math:`y`.
 
-The model has likely been trained on some data distribution :math:`P(\mathbf{X})`.
+The model has been trained on some data distribution :math:`P(\mathbf{X})`.
 There is data drift when the production data comes from a different distribution
 :math:`P(\mathbf{X'}) \neq P(\mathbf{X})`.
 
@@ -18,18 +18,18 @@ A machine learning model operating on an input distribution different than
 the one it has been trained on will probably underperform. It is therefore crucial to detect
 data drift, in a timely manner, when a model is in production. By further investigating the
 characteristics of the observed drift, the data scientists operating the model
-will able to estimate the impact of the drift on the model's performance.
-
-It is important to note that data drift is not the only change that can happen when there is a
-machine learning model in production. Another change is concept drift, where the distribution
-the model's input data stays the same, but their relationship with the outcome
-changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` while
-:math:`P(\mathbf{X'}) = P(\mathbf{X})`.
+will be able to estimate the impact of the drift on the model's performance.
 
 There is also a special case of data drift called label shift. In this case, the outcome
 distributions between the training and production data are different, meaning
 :math:`P(y') \neq P(y)`. However, the relationship between the population characteristics and
 a specific outcome does not change, namely :math:`P(\mathbf{X'}|y') = P(\mathbf{X}|y)`.
+
+It is important to note that data drift is not the only change that can happen when there is a
+machine learning model in production. Another important change is concept drift, where the
+distribution of the model's input data stays the same, but their relationship with the outcome
+changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` while
+:math:`P(\mathbf{X'}) = P(\mathbf{X})`.
 
 
 Data Partitions
@@ -41,27 +41,37 @@ to compare. NannyML uses the reference partition and the analysis partition for 
 Reference Partition
 -------------------
 
-The reference partition's purpose is to serve as a dataset suitable for the machine learning model
-being monitored. The assumption is that the performance results of the monitored model are available
-for the reference partition and that they are acceptable.
+The reference partition's purpose is to establish a baseline of expectations for the machine
+learning model being monitored. The assumption here is that the model inputs, model outputs as well
+as the performance results of the monitored model are available for the reference partition, have
+been reviewed and are acceptable.
 
-The reference dataset can be the test set used when evaluating the monitored model before
-deploying it to production. Alternatively, it can be a reference (or benchmark) period when the
+The reference dataset can be a reference (or benchmark) period when the
 monitored model has been in production and its performance results where satisfactory.
+Alternatively, it can be the test set used when evaluating the monitored model before
+deploying it to production.
 
 Analysis Partition
 ------------------
 
-The analysis partition's represents the dataset NannyML uses to examine the performance of the
-monitored model. This will usually consist of the latest production data up to a desired point in
-the past, which will be after the point where our reference partition ends.
+The analysis partition is the partition of interest where the data science practitioner wants
+to examine the performance of the monitored model. The analysis partition will usually consist
+of the latest production data up to a desired point in
+the past, which will be after the point where the reference partition ends.
 The analysis partition is not required to have ground truth and associated performance results
 available.
 
-NannyML when performing drift analysis compares periods of the analysis partition, which we
-call chunks internally in NannyML, with the reference data. NannyML will flag any meaningful
-differences as data drift.
+NannyML when performing drift analysis compares :term:`Data Chunk` of the analysis partition
+with the reference data. NannyML will flag any meaningful differences as data drift.
 
+Drift alerts
+============
+
+NannyML uses a statistical approach to issuing alerts. It establishes an expected baseline from
+the reference data and when the drift results for a chunk are unlikely, given the expectations
+from the baseline, then it issues a drift alert. Given this statistical approach, there can be
+cases where the alert is a false positive. However when reviewing the data drift vizualizations
+they will be easy to spot and discard. An example of that will be presented later.
 
 Data Drift in practice
 ======================
@@ -77,6 +87,7 @@ Hence we assume that we have the following objects set up:
 
 .. code-block:: python
 
+    # TODO:Add consicelyway to import data - reference guide for details
     >>> type(md)
     <class 'nannyml.metadata.ModelMetadata'>
     >>> type(reference)
@@ -95,7 +106,8 @@ statistical tests comparing the chunks created from the data provided with the r
 NannyML uses the KS Test for continuous features and the 2 sample
 Chi squared test for categorical features. Both tests provide a statistic where they measure the
 observed drift and a p-value that shows how likely we are to get the observed sample
-if there was no drift.
+under the assumption that there was no drift. If the p-value is less than 0.05 NannyML considers
+the result unlikely and issues an alert for the associated chunk and feature.
 
 The :py:class:`nannyml.drift.univariate_statistical_drift_calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection.
@@ -139,7 +151,6 @@ NannyML can also visualize those results with the following code:
     for itm in md.features:
         fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
         fig.show()
-        fig.write_image(file=f"drift-guide-{itm.label}.svg")
 
 .. image:: ../_static/drift-guide-distance_from_office.svg
 
@@ -169,7 +180,6 @@ stacked bar charts for categorical variables. It does so with the following code
             feature_label=itm.label
         )
         fig.show()
-        fig.write_image(file=f"drift-guide-joyplot-{itm.label}.svg")
 
 .. image:: ../_static/drift-guide-joyplot-distance_from_office.svg
 
@@ -188,7 +198,6 @@ stacked bar charts for categorical variables. It does so with the following code
             feature_label=itm.label
         )
         fig.show()
-        fig.write_image(file=f"drift-guide-stacked-{itm.label}.svg")
 
 .. image:: ../_static/drift-guide-stacked-salary_range.svg
 
@@ -206,14 +215,21 @@ The features ``distance_from_office``, ``salary_range``, ``public_transportation
 Multivariate Drift Detection
 ----------------------------
 
-The univariate approach to data drift detection is very useful. But unfortunately it does not
-tell us the full story. Data living in multidimensional spaces can have complex structures
-whose change may not be visible by just viewing the distributions of each features. There are more
-information on this issue at :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+The univariate approach to data drift detection is powerful, interpretable but limited.
+Data living in multidimensional spaces can have complex structures
+whose change may not be visible by just viewing the distributions of each feature. 
+
+One solution for this problem is to user the reconstruction error for a dataset.
+In general reconstruction error is the error resulting from re-creating
+a dataset after a dimensionality reduction transformation followed by its
+inverse transformation. The error is computed to be the mean of the Euclidean distance
+of all the points in our dataset. We explain the problem and the reasoning behind
+recosntruction error in more detail at
+:ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
 For drift detection purposes the key thing to know is that a change in reconstruction error
 values reflects a change in the structure of the model inputs. NannyML enables monitoring the
-reconstruction error over time for a machine learning models and raising an alert if the
+reconstruction error over time for the monitored model and raises an alert if the
 values get outside the range observed in the reference partition.
 
 The :py:class:`nannyml.drift.data_reconstruction_drift_calcutor.DataReconstructionDriftCalculator`
@@ -259,7 +275,6 @@ NannyML can also visualize multivariate drift results with the following code:
 
     fig = plots.plot_data_reconstruction_drift(rcerror_results)
     fig.show()
-    fig.write_image(file=f"drift-guide-multivariate.svg")
 
 .. image:: ../_static/drift-guide-multivariate.svg
 
