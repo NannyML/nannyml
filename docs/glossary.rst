@@ -4,6 +4,11 @@ Glossary
 
 .. glossary::
 
+    Butterfly dataset
+        A dataset used in :ref:`<data-reconstruction-pca>` to give an example where univariate
+        drift statistics are insufficient in detecting complex data drifts in multidimensional
+        data.
+
     Feature
         A variable used by our machine learning model. A synonym for model input.
 
@@ -17,7 +22,7 @@ Glossary
 
     Identifier
         Usually a single column, but can be multiple columns where necessary. It is used uniquely identify an observation.
-        When providing ``target`` data at a later point in time, this value can help refer back to the original prediction.
+        When providing :term:`Target` data at a later point in time, this value can help refer back to the original prediction.
 
         Being able to uniquely identify each row of data can help reference any particular issues NannyML might identify
         and make resolving issues easier for you. As we add functionality to provide ``target`` data afterwards your data
