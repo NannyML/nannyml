@@ -68,12 +68,14 @@ class CME(BasePerformanceEstimator):
         self.calibrator = calibrator
 
     def _fit(self, reference_data: pd.DataFrame):
-        # Calculate thresholds
         if self.chunker is None:
             raise NotFittedException()
 
         reference_chunks = self.chunker.split(reference_data)
+
         self._lower_alert_threshold, self._upper_alert_threshold = _calculate_alert_thresholds(reference_chunks)
+
+        self._confidence_deviation = _calculate_confidence_deviation(reference_chunks)
 
         # Fit calibrator
         self.calibrator.fit(
@@ -98,6 +100,7 @@ class CME(BasePerformanceEstimator):
             ]
         )
 
+        res['confidence'] = self._confidence_deviation
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)
@@ -122,6 +125,14 @@ def _calculate_alert_thresholds(
     upper_threshold = np.minimum(mean_realised_performance + deviation, upper_limit)
 
     return lower_threshold, upper_threshold
+
+
+def _calculate_confidence_deviation(reference_chunks: List[Chunk]):
+    estimated_reference_performance_chunks = [
+        _calculate_cme(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]) for chunk in reference_chunks
+    ]
+    deviation = np.std(estimated_reference_performance_chunks)
+    return deviation
 
 
 def _calculate_cme(data: pd.Series) -> float:

@@ -348,8 +348,8 @@ class PerformancePlots:
             title='CME - estimated performance',
             y_axis_title='estimated performance',
             v_line_separating_analysis_period=plot_partition_separator,
-            statistically_significant_column_name='alert',
             estimated_column_name='estimated',
+            confidence_column_name='confidence',
         )
 
         return fig
