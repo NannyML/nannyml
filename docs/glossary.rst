@@ -4,10 +4,22 @@ Glossary
 
 .. glossary::
 
+    Alert
+        An alert refers to a variable at a particular chunk that gets flagged for possible data
+        drift. The alert is raised after the drift functionality of NannyML finds the drift
+        characteristics for this variable and chunk to be suspect.
+
     Butterfly dataset
-        A dataset used in :ref:`<data-reconstruction-pca>` to give an example where univariate
+        A dataset used in :ref:`data-reconstruction-pca` to give an example where univariate
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
+
+    Data Chunk
+        Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
+        observations and predictions from single hour, day, month etc. depending on the selected interval. They can
+        be also size-based so that each chunk contains *n* observations. In that case chronology of data is still
+        maintained. Assuming that indices are in chronological order, the largest index in chunk *k* is lower than
+        smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
 
     Feature
         A variable used by our machine learning model. A synonym for model input.
@@ -15,7 +27,8 @@ Glossary
     Latent space
         A space of reduced dimensionality, compared to the model input space, that can
         represent our input data. This space is the result of a representation
-        learning algorithm.
+        learning algorithm. Data points that are close together in the model input space
+        are also close together in the latent space.
 
     Ground truth
         A synonym for :term:`Target`
@@ -98,10 +111,6 @@ Glossary
         Drift Detection steps that use each feature of our model individually
         in order to create appropriate drift measures.
 
-    Data Chunk
-        Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
-        observations and predictions from single hour, day, month etc. depending on the selected interval. They can
-        be also size-based so that each chunk contains *n* observations. In that case chronology of data is still
-        maintained. Assuming that indices are in chronological order, the largest index in chunk *k* is lower than
-        smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
+
+
 

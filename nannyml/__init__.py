@@ -38,7 +38,7 @@ import logging
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from .datasets import load_synthetic_sample
+from .datasets import load_modified_california_housing_dataset, load_synthetic_sample
 from .drift import (
     AlertCountRanking,
     BaseDriftCalculator,
