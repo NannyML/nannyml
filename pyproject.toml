@@ -54,6 +54,7 @@ sphinx-rtd-theme = {version = "^1.0.0", optional = true}
 guzzle_sphinx_theme = {version = "^0.7.11", optional = true}
 jupyterlab = {version = "^3.2.9", optional = true }
 pytest-mock = {version = "^3.7.0", optional = true }
+seaborn = "^0.11.2"
 
 
 [tool.poetry.extras]

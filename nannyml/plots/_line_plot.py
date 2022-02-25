@@ -56,7 +56,7 @@ def _line_plot(
     chunk_labels=None,
     marker_labels=None,
     metric_format='{0:.4f}',
-    hover_date_label_format='%d/%b',
+    hover_date_label_format='%d/%b/%y',
     threshold_value_format='{0:.2f}',
     v_line_separating_analysis_period=True,
     figure=None,

@@ -316,7 +316,7 @@ def _joy_plot(
     chunk_hover_label='Chunk',
     hue_joy_hover_labels=None,
     quartiles_legend_label='Quartiles',
-    date_label_hover_format='%d/%b',
+    date_label_hover_format='%d/%b/%y',
     joy_hover_format='{0:.2f}',
     joy_overlap=1,
     figure=None,
