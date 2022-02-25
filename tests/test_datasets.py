@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 
-"""Testing the NannyML datasets functionality."""
+"""Testing the NannyML datasets.py functionality."""
 
 import pytest
 
