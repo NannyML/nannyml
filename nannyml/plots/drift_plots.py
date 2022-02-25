@@ -26,6 +26,7 @@ class DriftPlots:
         drift_calculator : BaseDriftCalculator
             The drift calculator used to provide the drift results. Required to provide access to `model_metadata`
             and the `chunker` that was used.
+
         """
         self._calculator = drift_calculator
         self._metadata = drift_calculator.model_metadata
@@ -128,9 +129,6 @@ class DriftPlots:
     ) -> go.Figure:
         """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
-        Given either a feature label (check ``model_metadata.features``) or the actual feature column name
-        and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
-        the metric value for the selected feature per chunk.
         Chunks are set on a time-based X-axis by using the period containing their observations.
         Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
         a vertical separation if the drift results contain multiple partitions.
@@ -147,6 +145,7 @@ class DriftPlots:
             using ``fig.show()``.
         """
         plot_partition_separator = len(drift_results.value_counts()) > 1
+        drift_results['thresholds'] = list(zip(drift_results.lower_threshold, drift_results.upper_threshold))
         fig = _line_plot(
             table=drift_results,
             metric_column_name='reconstruction_error',
@@ -292,6 +291,67 @@ class DriftPlots:
             x_axis_title=x_axis_title,
             title=title,
         )
+        return fig
+
+
+class PerformancePlots:
+    """Utility class to generate drift result plots."""
+
+    def __init__(self, model_metadata: ModelMetadata, chunker: Chunker):
+        """Creates a new PerformancePlots instance.
+
+        Parameters
+        ----------
+        model_metadata: ModelMetadata
+            The metadata used during performance estimation.
+        chunker: Chunker
+            The chunker used during performance estimation.
+        """
+        self.model_metadata = model_metadata
+        self.chunker = chunker
+
+    @staticmethod
+    def plot_cbpe_performance_estimation(
+        estimation_results: pd.DataFrame,
+    ) -> go.Figure:
+        """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
+
+        Chunks are set on a time-based X-axis by using the period containing their observations.
+        Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
+        a vertical separation if the drift results contain multiple partitions.
+
+        Parameters
+        ----------
+        estimation_results : pd.DataFrame
+            Results of the data CBPE performance estimation
+
+        Returns
+        -------
+        fig: plotly.graph_objects.Figure
+            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
+            using ``fig.show()``.
+        """
+        estimation_results['thresholds'] = list(
+            zip(estimation_results.lower_threshold, estimation_results.upper_threshold)
+        )
+
+        estimation_results['estimated'] = True
+
+        plot_partition_separator = len(estimation_results.value_counts()) > 1
+
+        fig = _line_plot(
+            table=estimation_results,
+            metric_column_name='estimated_roc_auc',
+            chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
+            drift_column_name='alert',
+            threshold_column_name='thresholds',
+            title='CBPE - estimated performance',
+            y_axis_title='estimated performance',
+            v_line_separating_analysis_period=plot_partition_separator,
+            estimated_column_name='estimated',
+            confidence_column_name='confidence',
+        )
+
         return fig
 
 

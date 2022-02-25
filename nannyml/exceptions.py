@@ -33,3 +33,9 @@ class CalculatorNotFittedException(CalculatorException):
     """An exception indicating a calculator was not fitted before using it in calculations."""
 
     pass
+
+
+class NotFittedException(BaseException):
+    """An exception indicating an object was not fitted before using it."""
+
+    pass
