@@ -16,7 +16,7 @@ results.
 
 
 
-How chunks are splitted?
+How chunks are created?
 ====
 
 Chunks can be created based on:
