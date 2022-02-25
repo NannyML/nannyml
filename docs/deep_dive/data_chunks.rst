@@ -23,7 +23,8 @@ Chunks can be created based on:
 
  - time intervals (a week, month, quarter etc.),
  - required number of observations in chunks,
- - required number of chunks in the monitored data.
+ - required number of chunks in the monitored data,
+ - automatically, in that case chunk size will be equal to three times the size of minimum chunk (read below).
 
 For example implementations check out :ref:`guide on chunking data<chunk-data>`.
 
@@ -65,7 +66,7 @@ Since NannyML is performance-oriented, the minimum chunk size is estimated in or
 of your model *low*. *Low*  is defined by the rule of thumb:
  - For models with ROC AUC below 0.9 we want to have chunks for which standard deviation of ROC AUC on chunks is lower
    than 0.01.
- - For other models, standard deviation of performance on chunks should be below 0.02.
+ - For other models, standard deviation of ROC AUC on chunks should be below 0.02.
 
 Typical way to approach the task of finding minimum chunk size would be to iterate on the monitored data to find the
 smallest chunk size that meets the above requirements. This in some cases could be resource intensive, so instead
@@ -88,8 +89,9 @@ is raised.
 It is easy to imagine two different datasets and models with ROC AUC scores and class balances that are the same,
 but dispersions of ROC AUC on samples of the same size that are different. Moreover, the arbitrary limits on standard
 deviation may not fit all the cases. After all, there are situations where the performance actually fluctuates on
-*reference* data (due to e.g. seasonality). Finally, there are cases where only one chunk size makes sens (e.g.
-weekly split). For this reasons, **minimum chunk size should be never treated neither as recommended chunk size nor
+*reference* data (due to e.g. seasonality). Finally, there are cases where only one chunk size is justified from
+business perspective (e.g. quarterly split). For this reasons, **minimum chunk size should be never treated neither as
+recommended chunk size nor
 as a hard limit**. It is just a chunk size, below which performance - actual or estimated - most likely will be
 governed by sampling rather than actual changes. Finally, be aware that sample size affects also calculations related
 to data drift.
