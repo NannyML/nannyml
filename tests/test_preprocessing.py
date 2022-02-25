@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml import MissingMetadataException
+from nannyml.exceptions import MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, extract_metadata
 from nannyml.preprocessing import preprocess
 
