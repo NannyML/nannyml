@@ -311,7 +311,7 @@ class PerformancePlots:
         self.chunker = chunker
 
     @staticmethod
-    def plot_cme_performance_estimation(
+    def plot_cbpe_performance_estimation(
         estimation_results: pd.DataFrame,
     ) -> go.Figure:
         """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
@@ -323,7 +323,7 @@ class PerformancePlots:
         Parameters
         ----------
         estimation_results : pd.DataFrame
-            Results of the data CME performance estimation
+            Results of the data CBPE performance estimation
 
         Returns
         -------
@@ -345,7 +345,7 @@ class PerformancePlots:
             chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
             drift_column_name='alert',
             threshold_column_name='thresholds',
-            title='CME - estimated performance',
+            title='CBPE - estimated performance',
             y_axis_title='estimated performance',
             v_line_separating_analysis_period=plot_partition_separator,
             estimated_column_name='estimated',

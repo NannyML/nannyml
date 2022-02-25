@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Implementation of the CME estimator."""
+"""Implementation of the CBPE estimator."""
 from typing import List, Tuple
 
 import numpy as np
@@ -16,8 +16,8 @@ from nannyml.metadata import NML_METADATA_GROUND_TRUTH_COLUMN_NAME, NML_METADATA
 from nannyml.performance_estimation._base import BasePerformanceEstimator
 
 
-class CME(BasePerformanceEstimator):
-    """Performance estimator using the Confusion Matrix Estimation (CME) technique."""
+class CBPE(BasePerformanceEstimator):
+    """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
 
     def __init__(
         self,
@@ -30,7 +30,7 @@ class CME(BasePerformanceEstimator):
         calibration: str = None,
         calibrator: Calibrator = None,
     ):
-        """Creates a new CME performance estimator.
+        """Creates a new CBPE performance estimator.
 
         Parameters
         ----------

@@ -2,4 +2,4 @@
 #
 #  License: Apache Software License 2.0
 
-"""Unit testing for CME."""
+"""Unit testing for CBPE."""
