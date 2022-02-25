@@ -1,35 +1,14 @@
-.. _data-chunks:
+.. _minimum-chunk-size:
 
-====================
-Data Chunks
-====================
-
-Not sure what data chunk is in the first place? Read about :term:`Data Chunk`.
-
-Why we need chunks?
-====
-NannyML monitors ML model performance and input data changes. Both can be reliably evaluated only on samples
-of data containing a number of observations. These samples are called chunks. All the results generated are
-calculated and presented on the level of chunk i.e. a chunk is a single data point. Go to
-:ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance-estimation>` to see example
-results.
-
-
-
-How chunks are created?
-====
-
-Chunks can be created based on:
-
- - time intervals (a week, month, quarter etc.),
- - required number of observations in chunks,
- - required number of chunks in the monitored data,
- - automatically, in that case chunk size will be equal to three times the size of minimum chunk (read below).
-
-For example implementations check out :ref:`guide on chunking data<chunk-data>`.
-
+======
 Minimum chunk size
 ======
+
+.. note::
+    Not sure what data chunk is in the first place? Read about :term:`Data Chunk` for short explanation or go through
+    the :ref:`guide<chunk-data>` for practical implementations.
+
+
 **In data sciences sample size affects everything, especially when it is small**. NannyML allows to split data
 in chunks in different ways because periods in the data may be meaningful and no one knows it better than
 the owner of the monitored data.
