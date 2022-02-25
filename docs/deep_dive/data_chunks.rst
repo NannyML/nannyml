@@ -1,3 +1,5 @@
+.. _data-chunks:
+
 ====================
 Data Chunks
 ====================
@@ -8,7 +10,9 @@ Why we need chunks?
 ====
 NannyML monitors ML model performance and input data changes. Both can be reliably evaluated only on samples
 of data containing a number of observations. These samples are called chunks. All the results generated are
-calculated and presented on the level of chunk i.e. a chunk is a single data point. Go to 
+calculated and presented on the level of chunk i.e. a chunk is a single data point. Go to
+:ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance_estimation>` to see example
+results.
 
 
 
