@@ -147,6 +147,7 @@ class DriftPlots:
             using ``fig.show()``.
         """
         plot_partition_separator = len(drift_results.value_counts()) > 1
+        drift_results['thresholds'] = list(zip(drift_results.lower_threshold, drift_results.upper_threshold))
         fig = _line_plot(
             table=drift_results,
             metric_column_name='reconstruction_error',

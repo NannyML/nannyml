@@ -98,7 +98,8 @@ class CME(BasePerformanceEstimator):
             ]
         )
 
-        res['thresholds'] = [(self._lower_alert_threshold, self._upper_alert_threshold)] * len(res)
+        res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
+        res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)
         res = res.reset_index(drop=True)
         return res
