@@ -60,9 +60,9 @@ of 100 observations. It is not uncommon to get ROC AUC of 0.65 for some samples.
 
 When there are many chunks, it is easy to spot the noisy nature of fluctuations. However, with only few chunks it
 is difficult to tell whether the effect (the drop) is real. To minimize this risk, NannyML estimates a minimum chunk
-size for the monitored data.
+size for the monitored data and raises a warning if the selected split results in chunks that are too small.
 Since NannyML is performance-oriented, the minimum chunk size is estimated in order to keep variation of performance
-of your model low. We define *low* by the rule of thumb in the following way:
+of your model *low*. *Low*  is defined by the rule of thumb:
  - For models with ROC AUC below 0.9 we want to have chunks for which standard deviation of ROC AUC on chunks is lower
    than 0.01.
  - For other models, standard deviation of performance on chunks should be below 0.02.
