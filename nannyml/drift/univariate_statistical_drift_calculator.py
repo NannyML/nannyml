@@ -66,7 +66,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
         categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
         continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features]
 
-        res = pd.DataFrame()
+        chunk_drifts = []
         # Calculate chunk-wise drift statistics.
         # Append all into resulting DataFrame indexed by chunk key.
         for chunk in chunks:
@@ -103,8 +103,9 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
                 chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
-            res = res.append(pd.DataFrame(chunk_drift))
+            chunk_drifts.append(chunk_drift)
 
+        res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
         res.attrs['nml_drift_calculator'] = __name__
         return res
