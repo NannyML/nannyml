@@ -1,13 +1,14 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
-#  License: Apache Software License 2.0\
+#
+#  License: Apache Software License 2.0
 
 """Contains plots and utilities for plotting drift results."""
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml import BaseDriftCalculator, Chunker, FeatureType, InvalidArgumentsException, ModelMetadata
-from nannyml.exceptions import CalculatorNotFittedException
+from nannyml.chunk import Chunker
+from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import FeatureType, ModelMetadata
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._line_plot import _line_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
@@ -18,26 +19,22 @@ _CHUNK_KEY_COLUMN_NAME = 'key'
 class DriftPlots:
     """Utility class to generate drift result plots."""
 
-    def __init__(self, drift_calculator: BaseDriftCalculator):
+    def __init__(self, model_metadata: ModelMetadata, chunker: Chunker):
         """Creates a new instance of DriftPlots.
 
         Parameters
         ----------
-        drift_calculator : BaseDriftCalculator
-            The drift calculator used to provide the drift results. Required to provide access to `model_metadata`
-            and the `chunker` that was used.
+        model_metadata: ModelMetadata
+            The metadata used during drift calculation.
+        chunker: Chunker
+            The chunker used during drift calculation.
 
         """
-        self._calculator = drift_calculator
-        self._metadata = drift_calculator.model_metadata
+        if chunker is None:
+            raise InvalidArgumentsException("the provided chunker was 'None'")
 
-        if drift_calculator.chunker is None:
-            raise CalculatorNotFittedException(
-                'the chunker for the provided calculator is not set. '
-                'Please ensure your calculator was fit by using `calculator.fit()`'
-            )
-
-        self._chunker = drift_calculator.chunker
+        self.chunker = chunker
+        self.metadata = model_metadata
 
     def plot_univariate_statistical_drift(
         self,
@@ -81,9 +78,9 @@ class DriftPlots:
             raise InvalidArgumentsException("one of 'feature_label' or 'feature_column_name' should be provided.")
 
         feature = (
-            self._metadata.feature(feature=feature_label)
+            self.metadata.feature(feature=feature_label)
             if feature_label
-            else self._metadata.feature(column=feature_column_name)
+            else self.metadata.feature(column=feature_column_name)
         )
 
         if feature is None:
@@ -192,9 +189,9 @@ class DriftPlots:
             raise InvalidArgumentsException("one of 'feature_label' or 'feature_column_name' should be provided.")
 
         feature = (
-            self._metadata.feature(feature=feature_label)
+            self.metadata.feature(feature=feature_label)
             if feature_label
-            else self._metadata.feature(column=feature_column_name)
+            else self.metadata.feature(column=feature_column_name)
         )
 
         if feature is None:
@@ -215,7 +212,7 @@ class DriftPlots:
 
         fig = _joy_plot(
             feature_table=_create_feature_table(
-                data=data, chunker=self._chunker, metadata=self._metadata, feature_column_name=feature_column_name
+                data=data, chunker=self.chunker, metadata=self.metadata, feature_column_name=feature_column_name
             ),
             drift_table=drift_results,
             chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
@@ -259,9 +256,9 @@ class DriftPlots:
             raise InvalidArgumentsException("one of 'feature_label' or 'feature_column_name' should be provided.")
 
         feature = (
-            self._metadata.feature(feature=feature_label)
+            self.metadata.feature(feature=feature_label)
             if feature_label
-            else self._metadata.feature(column=feature_column_name)
+            else self.metadata.feature(column=feature_column_name)
         )
 
         if feature is None:
@@ -282,7 +279,7 @@ class DriftPlots:
 
         fig = _stacked_bar_plot(
             feature_table=_create_feature_table(
-                data=data, chunker=self._chunker, metadata=self._metadata, feature_column_name=feature_column_name
+                data=data, chunker=self.chunker, metadata=self.metadata, feature_column_name=feature_column_name
             ),
             drift_table=drift_results,
             chunk_column_name=_CHUNK_KEY_COLUMN_NAME,

@@ -8,4 +8,4 @@
 
 """Module containing plotting implementations."""
 
-from .drift_plots import DriftPlots, PerformancePlots
+from .plots import DriftPlots, PerformancePlots
