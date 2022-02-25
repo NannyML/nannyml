@@ -99,7 +99,6 @@ plot that clearly shows the resulting data drift:
         palette=[colors.BLUE_SKY_CRAYOLA.value, colors.RED_IMPERIAL.value]
     )
     fig.fig.suptitle('Data Distributions before and after rotation drift')
-    fig.savefig('butterfly-scatterplot.svg')
 
 .. image:: ../_static/butterfly-scatterplot.svg
 
@@ -134,7 +133,6 @@ drift statistics produces the following results:
     for itm in md.features:
         fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
         fig.show()
-        fig.write_image(file=f"butterfly-univariate-drift-{itm.label}.svg")
 
 .. image:: ../_static/butterfly-univariate-drift-f1.svg
 
@@ -148,7 +146,6 @@ drift statistics produces the following results:
 
         fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
         fig.show()
-        fig.write_image(file=f"butterfly-univariate-drift-{itm.label}.svg")
 
 .. image:: ../_static/butterfly-univariate-drift-joyplot-f1.svg
 
@@ -156,8 +153,7 @@ drift statistics produces the following results:
 
 .. image:: ../_static/butterfly-univariate-drift-joyplot-f3.svg
 
-These results clearly show that there is no drift present on the distributions of
-the input features. It is clear that the univariate distribution results do not detect any drift.
+These results make it clear that the univariate distribution results do not detect any drift.
 However there is data drift in the butterfly dataset. It has been explicitly created with it.
 A metric that is able to capture this change is needed.
 
@@ -182,16 +178,15 @@ contribute to PCA on equal footing.
 
 The second step is the dimensionality reduction part. NannyML uses PCA to perform this.
 By default it aims to capture 65% of the dataset's variance but this is a parameter that
-can be changed. The PCA algorithm is fitted on the reference dataset.
-It learns a transofrmation from the pre-processed, from the first step,
+can be changed. The PCA algorithm is fitted on the reference dataset and
+learns a transofrmation from the pre-processed, from the first step,
 model input space to a :term:`Latent space`. NannyML then applies this transformation to the data
-being analyzed. This step is crucial. It is key here
-that the representation learning method captures the internal structure of the model input data
+being analyzed. This step is crucial. It is key here that the representation learning
+method captures the internal structure of the model input data
 and ignores any random noise that is usually present.
 
 The third step is to transform the data from the latent space back to the preprocessed
-model input space that was computed at the end of the first step. All that is needed for that
-is to apply the inverse PCA transformation.
+model input space. All that is needed for that is to apply the inverse PCA transformation.
 
 Since the second step in the Reconstruction Error with PCA process is about compressing
 information one cannot expect at the end of step three to have precisely with the data they

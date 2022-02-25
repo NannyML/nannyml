@@ -6,4 +6,3 @@ User Guides
 
     guides/importing_your_data
     guides/data_drift
-    guides/california

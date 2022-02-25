@@ -67,7 +67,7 @@ with the reference data. NannyML will flag any meaningful differences as data dr
 Drift alerts
 ============
 
-NannyML uses a statistical approach to issuing alerts. It establishes an expected baseline from
+NannyML uses a statistical approach to issuing an :term:`Alert`. It establishes an expected baseline from
 the reference data and when the drift results for a chunk are unlikely, given the expectations
 from the baseline, then it issues a drift alert. Given this statistical approach, there can be
 cases where the alert is a false positive. However when reviewing the data drift vizualizations
@@ -82,18 +82,17 @@ Multivariate approach.
 Data Preparation
 ----------------
 
-We use the dataset we imported from :ref:`the import data guide<import-data>`.
-Hence we assume that we have the following objects set up:
+For demonstration purposes the synthetic sample data provided with the NannyML package
+are shown here.
 
 .. code-block:: python
 
-    # TODO:Add consicelyway to import data - reference guide for details
-    >>> type(md)
-    <class 'nannyml.metadata.ModelMetadata'>
-    >>> type(reference)
-    <class 'pandas.core.frame.DataFrame'>
-    >>> type(analysis)
-    <class 'pandas.core.frame.DataFrame'>
+    import nannyml as nml
+
+    reference, analysis, analysis_gt = nml.load_synthetic_sample()
+    md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    md.timestamp_column_name = 'timestamp'
+    md.ground_truth_column_name = 'work_home_actual'
 
 
 .. _data-drift-univariate:
