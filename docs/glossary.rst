@@ -4,7 +4,7 @@ Glossary
 
 .. glossary::
 
-    Alert
+    ALERT
         An alert refers to a variable at a particular chunk that gets flagged for possible data
         drift. The alert is raised after the drift functionality of NannyML finds the drift
         characteristics for this variable and chunk to be suspect.
@@ -15,7 +15,7 @@ Glossary
         data.
 
     Feature
-        A variable used by our machine learning model. A synonym for model input.
+        A variable used by our machine learning model. A synonym for a model input.
 
     Latent space
         A space of reduced dimensionality, compared to the model input space, that can
