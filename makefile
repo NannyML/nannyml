@@ -32,7 +32,7 @@ clean:
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -rf docs/nannyml
-	sphinx-apidoc -o docs/nannyml nannyml tests
+	sphinx-apidoc -o docs/nannyml nannyml tests nannyml/datasets/data
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
@@ -59,7 +59,7 @@ export BROWSER_PYSCRIPT
 
 servedocs: ## generate Sphinx HTML documentation, including API docs
 	rm -rf docs/nannyml
-	sphinx-apidoc -o docs/nannyml nannyml tests
+	sphinx-apidoc -o docs/nannyml nannyml tests nannyml/datasets/data
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	python -c "$$BROWSER_PYSCRIPT"
