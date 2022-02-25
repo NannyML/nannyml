@@ -4,7 +4,7 @@ Glossary
 
 .. glossary::
 
-    ALERT
+    Alert
         An alert refers to a variable at a particular chunk that gets flagged for possible data
         drift. The alert is raised after the drift functionality of NannyML finds the drift
         characteristics for this variable and chunk to be suspect.
@@ -14,8 +14,17 @@ Glossary
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
 
+    Concept Drift
+        A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
+
+    Data Drift
+        A change in joint distribution of :term:`Model Inputs` (P(X).
+
+
+
+
     Feature
-        A variable used by our machine learning model. A synonym for a model input.
+        A variable used by our machine learning model. The model inputs consist of features.
 
     Latent space
         A space of reduced dimensionality, compared to the model input space, that can
@@ -48,7 +57,7 @@ Glossary
         Definition of a model
 
     Model inputs
-        A variable used by our machine learning model.
+        All :term:`Feature`s used by the model
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.
@@ -78,7 +87,10 @@ Glossary
             Please map your own values to them accordingly.
 
     PCA
-        Principal Component Analysis. A method user for dimensionality reduction.
+        Principal Component Analysis. A method used for dimensionality reduction.
+
+    Performance Estimation
+        Estimating performance of a deployed ML model without having access to :term:`Target`.
 
     Predictions
         A synonym for :term:`Model outputs`.
@@ -101,5 +113,5 @@ Glossary
                 - *Unix-epoch* in units of seconds, e.g. ``1513393355``
 
     Univariate Drift Detection
-        Drift Detection steps that use each feature of our model individually
-        in order to create appropriate drift measures.
+        Drift Detection methods that use each feature of our model individually
+        in order to
