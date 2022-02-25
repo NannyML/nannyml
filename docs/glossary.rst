@@ -10,7 +10,7 @@ Glossary
         characteristics for this variable and chunk to be suspect.
 
     Butterfly dataset
-        A dataset used in :ref:`<data-reconstruction-pca>` to give an example where univariate
+        A dataset used in :ref:`data-reconstruction-pca` to give an example where univariate
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
 
