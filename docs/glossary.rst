@@ -4,8 +4,13 @@ Glossary
 
 .. glossary::
 
+    Alert
+        An alert refers to a variable at a particular chunk that gets flagged for possible data
+        drift. The alert is raised after the drift functionality of NannyML finds the drift
+        characteristics for this variable and chunk to be suspect.
+
     Butterfly dataset
-        A dataset used in :ref:`<data-reconstruction-pca>` to give an example where univariate
+        A dataset used in :ref:`data-reconstruction-pca` to give an example where univariate
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
 
@@ -15,8 +20,9 @@ Glossary
     Latent space
         A space of reduced dimensionality, compared to the model input space, that can
         represent our input data. This space is the result of a representation
-        learning algorithm.
-    
+        learning algorithm. Data points that are close together in the model input space
+        are also close together in the latent space.
+
     Ground truth
         A synonym for :term:`Target`
 
@@ -76,7 +82,7 @@ Glossary
 
     Predictions
         A synonym for :term:`Model outputs`.
-    
+
     Target
         The actual outcome of the event the machine learning model is trying to predict.
 
@@ -97,4 +103,3 @@ Glossary
     Univariate Drift Detection
         Drift Detection steps that use each feature of our model individually
         in order to create appropriate drift measures.
-

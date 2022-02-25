@@ -130,8 +130,8 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         )
 
         return (
-            reference_reconstruction_error.mean() + 2 * reference_reconstruction_error.std(),
-            reference_reconstruction_error.mean() - 2 * reference_reconstruction_error.std(),
+            reference_reconstruction_error.mean() + 3 * reference_reconstruction_error.std(),
+            reference_reconstruction_error.mean() - 3 * reference_reconstruction_error.std(),
         )
 
 

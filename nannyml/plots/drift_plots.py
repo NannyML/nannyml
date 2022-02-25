@@ -106,7 +106,7 @@ class DriftPlots:
         plot_partition_separator = len(drift_results.value_counts()) > 1
 
         drift_column_name = f'{feature.column_name}_alert'
-        title = f'{metric_label} for {feature.label}'
+        title = f'{metric_label} evolution for {feature.label}'
 
         fig = _line_plot(
             table=drift_results,
