@@ -19,7 +19,8 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../nannyml'))
+# sys.path.insert(0, os.path.abspath('../nannyml'))
+sys.path.append(os.path.join(os.path.dirname(__name__), '..'))
 
 import nannyml  # noqa: E402
 
