@@ -1,13 +1,14 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
-#  License: Apache Software License 2.0\
+#
+#  License: Apache Software License 2.0
 
 """Contains plots and utilities for plotting drift results."""
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml import BaseDriftCalculator, Chunker, FeatureType, InvalidArgumentsException, ModelMetadata
-from nannyml.exceptions import CalculatorNotFittedException
+from nannyml.chunk import Chunker
+from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import FeatureType, ModelMetadata
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._line_plot import _line_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
@@ -18,25 +19,22 @@ _CHUNK_KEY_COLUMN_NAME = 'key'
 class DriftPlots:
     """Utility class to generate drift result plots."""
 
-    def __init__(self, drift_calculator: BaseDriftCalculator):
+    def __init__(self, model_metadata: ModelMetadata, chunker: Chunker):
         """Creates a new instance of DriftPlots.
 
         Parameters
         ----------
-        drift_calculator : BaseDriftCalculator
-            The drift calculator used to provide the drift results. Required to provide access to `model_metadata`
-            and the `chunker` that was used.
+        model_metadata: ModelMetadata
+            The metadata used during drift calculation.
+        chunker: Chunker
+            The chunker used during drift calculation.
+
         """
-        self._calculator = drift_calculator
-        self._metadata = drift_calculator.model_metadata
+        if chunker is None:
+            raise InvalidArgumentsException("the provided chunker was 'None'")
 
-        if drift_calculator.chunker is None:
-            raise CalculatorNotFittedException(
-                'the chunker for the provided calculator is not set. '
-                'Please ensure your calculator was fit by using `calculator.fit()`'
-            )
-
-        self._chunker = drift_calculator.chunker
+        self.chunker = chunker
+        self.metadata = model_metadata
 
     def plot_univariate_statistical_drift(
         self,
@@ -80,9 +78,9 @@ class DriftPlots:
             raise InvalidArgumentsException("one of 'feature_label' or 'feature_column_name' should be provided.")
 
         feature = (
-            self._metadata.feature(feature=feature_label)
+            self.metadata.feature(feature=feature_label)
             if feature_label
-            else self._metadata.feature(column=feature_column_name)
+            else self.metadata.feature(column=feature_column_name)
         )
 
         if feature is None:
@@ -128,9 +126,6 @@ class DriftPlots:
     ) -> go.Figure:
         """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
-        Given either a feature label (check ``model_metadata.features``) or the actual feature column name
-        and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
-        the metric value for the selected feature per chunk.
         Chunks are set on a time-based X-axis by using the period containing their observations.
         Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
         a vertical separation if the drift results contain multiple partitions.
@@ -147,6 +142,7 @@ class DriftPlots:
             using ``fig.show()``.
         """
         plot_partition_separator = len(drift_results.value_counts()) > 1
+        drift_results['thresholds'] = list(zip(drift_results.lower_threshold, drift_results.upper_threshold))
         fig = _line_plot(
             table=drift_results,
             metric_column_name='reconstruction_error',
@@ -193,9 +189,9 @@ class DriftPlots:
             raise InvalidArgumentsException("one of 'feature_label' or 'feature_column_name' should be provided.")
 
         feature = (
-            self._metadata.feature(feature=feature_label)
+            self.metadata.feature(feature=feature_label)
             if feature_label
-            else self._metadata.feature(column=feature_column_name)
+            else self.metadata.feature(column=feature_column_name)
         )
 
         if feature is None:
@@ -216,7 +212,7 @@ class DriftPlots:
 
         fig = _joy_plot(
             feature_table=_create_feature_table(
-                data=data, chunker=self._chunker, metadata=self._metadata, feature_column_name=feature_column_name
+                data=data, chunker=self.chunker, metadata=self.metadata, feature_column_name=feature_column_name
             ),
             drift_table=drift_results,
             chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
@@ -260,9 +256,9 @@ class DriftPlots:
             raise InvalidArgumentsException("one of 'feature_label' or 'feature_column_name' should be provided.")
 
         feature = (
-            self._metadata.feature(feature=feature_label)
+            self.metadata.feature(feature=feature_label)
             if feature_label
-            else self._metadata.feature(column=feature_column_name)
+            else self.metadata.feature(column=feature_column_name)
         )
 
         if feature is None:
@@ -283,7 +279,7 @@ class DriftPlots:
 
         fig = _stacked_bar_plot(
             feature_table=_create_feature_table(
-                data=data, chunker=self._chunker, metadata=self._metadata, feature_column_name=feature_column_name
+                data=data, chunker=self.chunker, metadata=self.metadata, feature_column_name=feature_column_name
             ),
             drift_table=drift_results,
             chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
@@ -292,6 +288,67 @@ class DriftPlots:
             x_axis_title=x_axis_title,
             title=title,
         )
+        return fig
+
+
+class PerformancePlots:
+    """Utility class to generate drift result plots."""
+
+    def __init__(self, model_metadata: ModelMetadata, chunker: Chunker):
+        """Creates a new PerformancePlots instance.
+
+        Parameters
+        ----------
+        model_metadata: ModelMetadata
+            The metadata used during performance estimation.
+        chunker: Chunker
+            The chunker used during performance estimation.
+        """
+        self.model_metadata = model_metadata
+        self.chunker = chunker
+
+    @staticmethod
+    def plot_cbpe_performance_estimation(
+        estimation_results: pd.DataFrame,
+    ) -> go.Figure:
+        """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
+
+        Chunks are set on a time-based X-axis by using the period containing their observations.
+        Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
+        a vertical separation if the drift results contain multiple partitions.
+
+        Parameters
+        ----------
+        estimation_results : pd.DataFrame
+            Results of the data CBPE performance estimation
+
+        Returns
+        -------
+        fig: plotly.graph_objects.Figure
+            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
+            using ``fig.show()``.
+        """
+        estimation_results['thresholds'] = list(
+            zip(estimation_results.lower_threshold, estimation_results.upper_threshold)
+        )
+
+        estimation_results['estimated'] = True
+
+        plot_partition_separator = len(estimation_results.value_counts()) > 1
+
+        fig = _line_plot(
+            table=estimation_results,
+            metric_column_name='estimated_roc_auc',
+            chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
+            drift_column_name='alert',
+            threshold_column_name='thresholds',
+            title='CBPE - estimated performance',
+            y_axis_title='estimated performance',
+            v_line_separating_analysis_period=plot_partition_separator,
+            estimated_column_name='estimated',
+            confidence_column_name='confidence',
+        )
+
         return fig
 
 

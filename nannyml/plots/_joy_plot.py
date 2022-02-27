@@ -7,8 +7,8 @@ from functools import partial
 import matplotlib
 import numpy as np
 import pandas as pd
-import scipy
 from plotly import graph_objects as go
+from scipy.integrate import cumulative_trapezoid
 from statsmodels import api as sm
 
 from nannyml.plots.colors import Colors
@@ -39,7 +39,7 @@ def _get_kde_density(kde):
 
 def _get_kde_cdf(kde_support, kde_density):
     if len(kde_support) > 0 and len(kde_density) > 0:
-        cdf = scipy.integrate.cumulative_trapezoid(y=kde_density, x=kde_support, initial=0)
+        cdf = cumulative_trapezoid(y=kde_density, x=kde_support, initial=0)
         return cdf
     else:
         return np.array([])
