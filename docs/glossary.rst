@@ -18,10 +18,7 @@ Glossary
         A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
 
     Data Drift
-        A change in joint distribution of :term:`Model Inputs` (P(X).
-
-
-
+        A change in joint distribution of :term:`Model Inputs` (P(X)).
 
     Feature
         A variable used by our machine learning model. The model inputs consist of features.
@@ -54,10 +51,10 @@ Glossary
                 A concatenation of your dataset name and a row number.
 
     Model
-        Definition of a model
+        Definition of a model.
 
     Model inputs
-        All :term:`Feature`s used by the model
+        All :term:`Feature`s used by the model.
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.
@@ -114,4 +111,4 @@ Glossary
 
     Univariate Drift Detection
         Drift Detection methods that use each feature of our model individually
-        in order to
+        in order to detect change in :term:`Model Inputs`.
