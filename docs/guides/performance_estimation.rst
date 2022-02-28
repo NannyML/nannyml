@@ -9,7 +9,8 @@ The guide is based on synthetic dataset where the monitored model is predicting 
 home.
 
 Prepare the data
-====
+================
+
 Let's first load the data and have a quick look:
 
 .. code-block:: python
@@ -44,7 +45,7 @@ Let's first load the data and have a quick look:
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
 
 ``df_ref`` and ``df_ana`` correspond to respectively ``reference`` and ``analysis`` partitions of monitored data. To
-understand what they are read about :ref:`data partitions<data-partitions>`. Let's leave
+understand what they are read about :ref:`data partitions<data-drift-partitions>`. Let's leave
 ``df_ana_gt`` for now, it will be described and used later.
 
 Lets extract the metadata and fill the missing values required:
@@ -59,7 +60,8 @@ Full information on how the data should be prepared can be found in guide on :re
 
 
 Fit estimator and estimate
-====
+==========================
+
 In the next step Confidence-based Performance Estimation (CBPE) estimator is fitted on ``reference`` data. Chunking
 method needs to be specified now. Read more about chunking in relevant :ref:`guide<chunk-data>`.
 
@@ -79,7 +81,7 @@ where the ground truth is actually missing. However, to get a better context it 
 To find out how CBPE estimates performance read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
 
 View and interpret the results
-====
+==============================
 
 The results can be investigated in the form of data:
 
@@ -118,7 +120,7 @@ Results can be also view in the form of plot:
 
 
 Compare with the actual performance
-====
+===================================
 
 When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
 ground truth is given in ``df_ana_gt`` variable. It consists of ``identifier`` that allows to match it with
