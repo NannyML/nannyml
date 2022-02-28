@@ -175,22 +175,22 @@ When chunking method is not indicated, size-based chunks will be created with th
 estimated minimum size for the monitored data and model (see how NannyML estimates minimum chunk size in :ref:`deep
 dive<minimum-chunk-size>`):
 
-    .. code-block:: python
+.. code-block:: python
 
-        >>> cbpe = nml.CBPE(model_metadata=md)
-        >>> cbpe.fit(reference_data=df_ref)
-        >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
-        >>> est_perf.iloc[:3,:5]
+    >>> cbpe = nml.CBPE(model_metadata=md)
+    >>> cbpe.fit(reference_data=df_ref)
+    >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
+    >>> est_perf.iloc[:3,:5]
 
-    +----+-------------+---------------+-------------+---------------------+---------------------+
-    |    | key         |   start_index |   end_index | start_date          | end_date            |
-    +====+=============+===============+=============+=====================+=====================+
-    |  0 | [0:899]     |             0 |         899 | 2014-05-09 00:00:00 | 2014-06-01 23:59:59 |
-    +----+-------------+---------------+-------------+---------------------+---------------------+
-    |  1 | [900:1799]  |           900 |        1799 | 2014-06-01 00:00:00 | 2014-06-23 23:59:59 |
-    +----+-------------+---------------+-------------+---------------------+---------------------+
-    |  2 | [1800:2699] |          1800 |        2699 | 2014-06-23 00:00:00 | 2014-07-15 23:59:59 |
-    +----+-------------+---------------+-------------+---------------------+---------------------+
++----+-------------+---------------+-------------+---------------------+---------------------+
+|    | key         |   start_index |   end_index | start_date          | end_date            |
++====+=============+===============+=============+=====================+=====================+
+|  0 | [0:899]     |             0 |         899 | 2014-05-09 00:00:00 | 2014-06-01 23:59:59 |
++----+-------------+---------------+-------------+---------------------+---------------------+
+|  1 | [900:1799]  |           900 |        1799 | 2014-06-01 00:00:00 | 2014-06-23 23:59:59 |
++----+-------------+---------------+-------------+---------------------+---------------------+
+|  2 | [1800:2699] |          1800 |        2699 | 2014-06-23 00:00:00 | 2014-07-15 23:59:59 |
++----+-------------+---------------+-------------+---------------------+---------------------+
 
 Chunks on plots with results
 ====
@@ -220,13 +220,13 @@ them. Such chunk will be considered as ``analysis`` chunk, even if only one obse
 observations. In the example below chunk which contains observations from 44444 to 55554 is considered analysis but
 indices from 44444 to 49999 point to reference observations:
 
-    .. code-block:: python
+.. code-block:: python
 
-        >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=9)
-        >>> cbpe.fit(reference_data=df_ref)
-        >>> # Estimate on concatenated reference and analysis
-        >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
-        >>> est_perf.iloc[3:5,:7]
+    >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=9)
+    >>> cbpe.fit(reference_data=df_ref)
+    >>> # Estimate on concatenated reference and analysis
+    >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
+    >>> est_perf.iloc[3:5,:7]
 
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
@@ -237,10 +237,10 @@ indices from 44444 to 49999 point to reference observations:
 |  4 | [44444:55554] |         44444 |       55554 | 2017-04-19 00:00:00 | 2018-01-15 23:59:59 | analysis    |            0.968921 |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
 
-    .. code-block:: python
+.. code-block:: python
 
-        >>> df_ref.index.max()
-        49999
+    >>> df_ref.index.max()
+    49999
 
 .. note::
     This is especially important for Performance Estimation where ``reference`` period should be treated like a train
@@ -257,14 +257,14 @@ might so small that results obtained are governed by noise rather than actual si
 size for the monitored data and model provided (see how in :ref:`deep dive<minimum-chunk-size>`). If some of the chunks
 created are smaller than the minimum chunk size, a warning will be raised. For example:
 
-    .. code-block:: python
+.. code-block:: python
 
-        >>> cbpe = nml.CBPE(model_metadata=md, chunk_period="Q")
-        >>> cbpe.fit(reference_data=df_ref)
-        >>> est_perf = cbpe.estimate(df_ana)
-        UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be
-        statistically relevant and might negatively influence the quality of calculations. Please consider splitting
-        your data in a different way or continue at your own risk.
+    >>> cbpe = nml.CBPE(model_metadata=md, chunk_period="Q")
+    >>> cbpe.fit(reference_data=df_ref)
+    >>> est_perf = cbpe.estimate(df_ana)
+    UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be
+    statistically relevant and might negatively influence the quality of calculations. Please consider splitting
+    your data in a different way or continue at your own risk.
 
 When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in above
 sections. When there are more chunks mentioned - the selected splitting method is most likely not suitable.
@@ -278,11 +278,11 @@ period. NannyML calculates thresholds based on variability of metrics on ``refer
 calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
 far from optimum but a reasonable minimum. If there is less than 6 chunks, warning will be raised:
 
-    .. code-block:: python
-        >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
-        >>> cbpe.fit(reference_data=df_ref)
-        >>> est_perf = cbpe.estimate(df_ana)
-        UserWarning: The resulting number of chunks is too low.Please consider splitting your data in a different way or
-        continue at your own risk.
+.. code-block:: python
+    >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
+    >>> cbpe.fit(reference_data=df_ref)
+    >>> est_perf = cbpe.estimate(df_ana)
+    UserWarning: The resulting number of chunks is too low.Please consider splitting your data in a different way or
+    continue at your own risk.
 
 
