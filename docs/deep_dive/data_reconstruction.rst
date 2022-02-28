@@ -27,54 +27,52 @@ Let's see first how we can construct an instance of the Butterfly dataset:
 
 .. code-block:: python
 
-    import numpy as np
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import seaborn as sns
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> import matplotlib.pyplot as plt
+    >>> import seaborn as sns
+    >>> from scipy.spatial.transform import Rotation
+    >>> from sklearn.datasets import make_classification
 
-    from scipy.spatial.transform import Rotation
-    from sklearn.datasets import make_classification
+    >>> # 10 reference periods
+    >>> # 10 analysis periods
+    >>> # Days/week * Hours/day * events/hour
+    >>> DPP = 7*24*12
 
+    >>> np.random.seed(13)
+    >>> s1 = np.random.randn(DPP*20)
+    >>> x1 = s1 + np.random.randn(DPP*20)/8
+    >>> x2 = s1 + np.random.randn(DPP*20)/8
+    >>> x3 = np.random.randn(DPP*20)/8
+    >>> xdat = np.array([x1, x2, x3]).T
 
-    # 10 reference periods
-    # 10 analysis periods
-    # Days/week * Hours/day * events/hour
-    DPP = 7*24*12
+    >>> rot = Rotation.from_euler('z', 90, degrees=True)
 
-    np.random.seed(13)
-    s1 = np.random.randn(DPP*20)
-    x1 = s1 + np.random.randn(DPP*20)/8
-    x2 = s1 + np.random.randn(DPP*20)/8
-    x3 = np.random.randn(DPP*20)/8
-    xdat = np.array([x1, x2, x3]).T
+    >>> # following proper matrix multiplication rules, we need a 3xN data matrix
+    >>> ydat = np.matmul(rot.as_matrix(), xdat.T).T
 
-    rot = Rotation.from_euler('z', 90, degrees=True)
+    >>> # create overall array that has drifted and not drifted subsets.
+    >>> # drift is sudden and affects last 5 weeks
+    >>> dataar = np.concatenate(
+    ...     (xdat[:-5*DPP], ydat[-5*DPP:]),
+    ...     axis=0
+    >>> )
 
-    # following proper matrix multiplication rules, we need a 3xN data matrix
-    ydat = np.matmul(rot.as_matrix(), xdat.T).T
+    >>> # convert data to dataframe
+    >>> datadf = pd.DataFrame(dataar, columns=['f1', 'f2', 'f3'])
 
-    # create overall array that has drifted and not drifted subsets.
-    # drift is sudden and affects last 5 weeks
-    dataar = np.concatenate(
-        (xdat[:-5*DPP], ydat[-5*DPP:]),
-        axis=0
-    )
+    >>> # add "timestamp" column
+    >>> datadf = datadf.assign(ordered = pd.date_range(start='1/6/2020', freq='5min', periods=20*DPP))
 
-    # convert data to dataframe
-    datadf = pd.DataFrame(dataar, columns=['f1', 'f2', 'f3'])
+    >>> # Adding helper column - duplicates date range functionality
+    >>> datadf['week'] = datadf.ordered.dt.isocalendar().week - 1
+    >>> # Adding partition column
+    >>> datadf['partition'] = 'reference'
+    >>> datadf.loc[datadf.week >= 11, ['partition']] = 'analysis'
 
-    # add "timestamp" column
-    datadf = datadf.assign(ordered = pd.date_range(start='1/6/2020', freq='5min', periods=20*DPP))
-
-    # Adding helper column - duplicates date range functionality
-    datadf['week'] = datadf.ordered.dt.isocalendar().week - 1
-    # Adding partition column
-    datadf['partition'] = 'reference'
-    datadf.loc[datadf.week >= 11, ['partition']] = 'analysis'
-
-    # Assign random predictions and targets (we won't be using them but they are needed for NannyML)
-    datadf = datadf.assign(y_pred = np.random.rand(DPP*20))
-    datadf = datadf.assign(y_true = np.random.randint(2, size=DPP*20))
+    >>> # Assign random predictions and targets (we won't be using them but they are needed for NannyML)
+    >>> datadf = datadf.assign(y_pred = np.random.rand(DPP*20))
+    >>> datadf = datadf.assign(y_true = np.random.randint(2, size=DPP*20))
 
 The key feature of the butterfly dataset is the data drift on it's first two features.
 This data drift is a 90 degree rotation across the z-axis. The following code creates a
@@ -82,23 +80,23 @@ plot that clearly shows the resulting data drift:
 
 .. code-block:: python
 
-    # let's construct a dataframe for visuzlization purposes
-    dat1 = datadf.loc[datadf.week == 10, ['f1', 'f2']][:1500]
-    dat1['week'] = 10
-    dat2 = datadf.loc[datadf.week == 16, ['f1', 'f2']][:1500]
-    dat2['week'] = 16
-    data_sample = pd.concat([dat1, dat2], ignore_index=True)
+    >>> # let's construct a dataframe for visuzlization purposes
+    >>> dat1 = datadf.loc[datadf.week == 10, ['f1', 'f2']][:1500]
+    >>> dat1['week'] = 10
+    >>> dat2 = datadf.loc[datadf.week == 16, ['f1', 'f2']][:1500]
+    >>> dat2['week'] = 16
+    >>> data_sample = pd.concat([dat1, dat2], ignore_index=True)
 
-    # let's plot
-    colors = nml.plots.colors.Colors
-    fig = sns.jointplot(
-        data=data_sample,
-        x="f1",
-        y="f2",
-        hue="week",
-        palette=[colors.BLUE_SKY_CRAYOLA.value, colors.RED_IMPERIAL.value]
-    )
-    fig.fig.suptitle('Data Distributions before and after rotation drift')
+    >>> # let's plot
+    >>> colors = nml.plots.colors.Colors
+    >>> fig = sns.jointplot(
+    ...     data=data_sample,
+    ...     x="f1",
+    ...     y="f2",
+    ...     hue="week",
+    ...     palette=[colors.BLUE_SKY_CRAYOLA.value, colors.RED_IMPERIAL.value]
+    >>> )
+    >>> fig.fig.suptitle('Data Distributions before and after rotation drift')
 
 .. image:: ../_static/butterfly-scatterplot.svg
 
@@ -109,30 +107,29 @@ drift statistics produces the following results:
 
 .. code-block:: python
 
-    # Let's first create the analysis and reference datasets NannyML needs.
-    reference = datadf.loc[datadf['partition'] == 'reference'].reset_index(drop=True)
-    reference.drop(['week'], axis=1, inplace=True)
-    analysis = datadf.loc[datadf['partition'] == 'analysis'].reset_index(drop=True)
-    analysis.drop(['y_true', 'week'], axis=1, inplace=True)
+    >>> # Let's first create the analysis and reference datasets NannyML needs.
+    >>> reference = datadf.loc[datadf['partition'] == 'reference'].reset_index(drop=True)
+    >>> reference.drop(['week'], axis=1, inplace=True)
+    >>> analysis = datadf.loc[datadf['partition'] == 'analysis'].reset_index(drop=True)
+    >>> analysis.drop(['y_true', 'week'], axis=1, inplace=True)
 
-    # Let's create the model metadata object
-    md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
-    md.identifier_column_name = 'ordered'
-    md.timestamp_column_name = 'ordered'
-    md.ground_truth_column_name = 'y_true'
+    >>> # Let's create the model metadata object
+    >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> md.identifier_column_name = 'ordered'
+    >>> md.timestamp_column_name = 'ordered'
+    >>> md.ground_truth_column_name = 'y_true'
 
-    # Let's compute univariate drift
-    univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=DPP)
-    univariate_calculator.fit(reference_data=reference)
-    # let's compute (and visualize) results across all the dataset.
-    univariate_results = univariate_calculator.calculate(data=pd.concat([reference, analysis], ignore_index=True))
+    >>> # Let's compute univariate drift
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=DPP)
+    >>> univariate_calculator.fit(reference_data=reference)
+    >>> # let's compute (and visualize) results across all the dataset.
+    >>> univariate_results = univariate_calculator.calculate(data=pd.concat([reference, analysis], ignore_index=True))
 
-    # let's create plot with results
-    plots = nml.DriftPlots(univariate_calculator)
-
-    for itm in md.features:
-        fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
-        fig.show()
+    >>> # let's create plot with results
+    >>> plots = nml.DriftPlots(univariate_calculator)
+    >>> for itm in md.features:
+    ...     fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
+    ...     fig.show()
 
 .. image:: ../_static/butterfly-univariate-drift-f1.svg
 

@@ -262,7 +262,7 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_period="Q")
     >>> cbpe.fit(reference_data=df_ref)
     >>> est_perf = cbpe.estimate(df_ana)
-    UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be
+    UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
     your data in a different way or continue at your own risk.
 
@@ -272,17 +272,17 @@ Investigate that and be aware when analyzing results. See :ref:`deep dive<minimu
 understanding.
 
 Not enough chunks
-~~~~~
+~~~~~~~~~~~~~~~~~
+
 Sometimes selected chunking method may result in not enough chunks being generated in the ``reference``
 period. NannyML calculates thresholds based on variability of metrics on ``reference`` chunks (see how thresholds are
 calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
-far from optimum but a reasonable minimum. If there is less than 6 chunks, warning will be raised:
+far from optimal but a reasonable minimum. If there are less than 6 chunks, a warning will be raised:
 
 .. code-block:: python
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
     >>> cbpe.fit(reference_data=df_ref)
     >>> est_perf = cbpe.estimate(df_ana)
-    UserWarning: The resulting number of chunks is too low.Please consider splitting your data in a different way or
+    UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
     continue at your own risk.
-
 
