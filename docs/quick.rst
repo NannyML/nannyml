@@ -6,8 +6,8 @@ Quick Start Guide
 
 NannyML is a library that makes Model Monitoring easier and more productive.
 
-NannyML provides a sample synthetic dataset, containing a dataset with a binary classification model,
-so you can get started with it faster.
+NannyML provides a sample synthetic dataset, containing a binary classification model,
+so you can get started faster.
 
 
 .. code-block:: python
@@ -30,7 +30,8 @@ For more information about partitions look :ref:`data-drift-partitions`.
 Finding Data Drift
 ==================
 
-NannyML makes it easy to compute and vizualize data drift. For more details refer to :ref:`data-drift-practice`.
+NannyML makes it easy to compute and vizualize data drift for the model inputs.
+For more details refer to :ref:`data-drift-practice`.
 
 
 .. code-block:: python
