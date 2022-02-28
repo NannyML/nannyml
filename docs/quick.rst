@@ -79,4 +79,19 @@ data drift cases. More information can be found at
 .. image:: ../_static/drift-guide-multivariate.svg
 
 We see that our data drift detection results contain data drift. NannyML also investigates
-the performance implications of this data drift.
+the performance implications of this data drift. More information can be found at
+:ref:`performance-estimation`.
+
+    .. code-block:: python
+
+        >>> # fit estimator and estimate
+        >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5000)
+        >>> cbpe.fit(reference_data=df_ref)
+        >>> est_perf = cbpe.estimate(data=data)
+        >>> # show results
+        >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
+        >>> fig = plots.plot_cbpe_performance_estimation(est_perf).show()
+
+.. image:: ../_static/placeholder.svg
+
+We see that the drift we observed will likely cause a significant performance drop!

@@ -217,6 +217,16 @@ The ``tenure`` feature has two alerts that are false positives.
 The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
 ``wfh_prev_workday`` have been rightly identified as exhibiting drift.
 
+Furthermore NannyML can sort features according to how many alerts they have had within the data analyzed
+for data drift. You can chose to view the ranking of all the model inputs or just the ones that have drifted.
+NannyML provides a dataframe with the resulting ranking of features using the code below:
+
+.. code-block:: python
+
+    >>> ranking = nml.AlertCountRanking()
+    >>> ranked_features_drifted = ranking.rank(univariate_results)
+    >>> ranked_features_drifted
+
 .. _data-drift-multivariate:
 
 Multivariate Drift Detection

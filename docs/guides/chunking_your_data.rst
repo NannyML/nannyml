@@ -272,17 +272,18 @@ Investigate that and be aware when analyzing results. See :ref:`deep dive<minimu
 understanding.
 
 Not enough chunks
-~~~~~
+~~~~~~~~~~~~~~~~~
+
 Sometimes selected chunking method may result in not enough chunks being generated in the ``reference``
 period. NannyML calculates thresholds based on variability of metrics on ``reference`` chunks (# TODO links here to
 either deep dives or guides - depending where we describe thresholds for PE and DD). Having 6 chunks is far from
 optimum but a reasonable minimum. If there is less than 6 chunks, warning will be raised:
 
     .. code-block:: python
+
         >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
         >>> cbpe.fit(reference_data=df_ref)
         >>> est_perf = cbpe.estimate(df_ana)
         UserWarning: The resulting number of chunks is too low.Please consider splitting your data in a different way or
         continue at your own risk.
-
 
