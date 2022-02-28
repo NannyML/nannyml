@@ -75,6 +75,9 @@ from the baseline, then it issues a drift alert. Given this statistical approach
 cases where the alert is a false positive. However when reviewing the data drift vizualizations
 they will be easy to spot and discard. An example of that will be presented later.
 
+
+.. _data-drift-practice:
+
 Data Drift in practice
 ======================
 
@@ -89,12 +92,11 @@ are shown here.
 
 .. code-block:: python
 
-    import nannyml as nml
-
-    reference, analysis, analysis_gt = nml.load_synthetic_sample()
-    md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
-    md.timestamp_column_name = 'timestamp'
-    md.ground_truth_column_name = 'work_home_actual'
+    >>> import nannyml as nml
+    >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
+    >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> md.timestamp_column_name = 'timestamp'
+    >>> md.ground_truth_column_name = 'work_home_actual'
 
 
 .. _data-drift-univariate:
@@ -116,15 +118,15 @@ An example using it can be seen below:
 
 .. code-block:: python
 
-    # Let's initialize the object that will perform the Univariate Drift calculations
-    # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> # Let's initialize the object that will perform the Univariate Drift calculations
+    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=5000)
-    # NannyML compares drift versus the full reference dataset.
+    >>> # NannyML compares drift versus the full reference dataset.
     >>> univariate_calculator.fit(reference_data=reference)
-    # let's see drift statistics for all available data
+    >>> # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis])
     >>> univariate_results = univariate_calculator.calculate(data=data)
-    # let's view a small subset of our results:
+    >>> # let's view a small subset of our results:
 
     >>> univariate_results.iloc[:5, :9]
         key             start_index     end_index   start_date  end_date                partition   salary_range_chi2   salary_range_p_value    salary_range_alert
@@ -149,13 +151,12 @@ NannyML can also visualize those results with the following code:
 
 .. code-block:: python
 
-    # Let's initialize the plotting class:
-    plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
-
-    # let's plot drift results for all model inputs
-    for itm in md.features:
-        fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
-        fig.show()
+    >>> # Let's initialize the plotting class:
+    >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
+    >>> # let's plot drift results for all model inputs
+    >>> for itm in md.features:
+    ...     fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
+    ...     fig.show()
 
 .. image:: ../_static/drift-guide-distance_from_office.svg
 
@@ -178,14 +179,14 @@ stacked bar charts for categorical variables. It does so with the following code
 
 .. code-block:: python
 
-    # let's plot distribution drift results for continuous model inputs
-    for itm in md.continuous_features:
-        fig = plots.plot_continuous_feature_distribution_over_time(
-            data=pd.concat([reference, analysis], ignore_index=True),
-            drift_results=univariate_results,
-            feature_label=itm.label
-        )
-        fig.show()
+    >>> # let's plot distribution drift results for continuous model inputs
+    >>> for itm in md.continuous_features:
+    ...     fig = plots.plot_continuous_feature_distribution_over_time(
+    ...         data=pd.concat([reference, analysis], ignore_index=True),
+    ...         drift_results=univariate_results,
+    ...         feature_label=itm.label
+    ...     )
+    ...     fig.show()
 
 .. image:: ../_static/drift-guide-joyplot-distance_from_office.svg
 

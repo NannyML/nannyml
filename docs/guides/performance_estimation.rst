@@ -129,7 +129,8 @@ Apart form chunking and partition-related data, the results data has the followi
 provided. together with ``confidence``.
 
 Results can be also view in the form of plot:
-# TODO, run code and get the plot.
+
+.. image:: ../_static/perf-est-guide-syth-example.svg
 
 
 Compare with the actual performance
