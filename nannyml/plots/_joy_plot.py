@@ -206,7 +206,8 @@ def _create_joy_plot(
         kde_density_scaled = row['kde_density_scaled'] * joy_overlap
         kde_cdf = row['kde_cdf']
         kde_quartiles = [(q[0], q[1] * joy_overlap) for q in row['kde_quartiles_scaled']]
-        color = colors[row['hue']]
+        color = colors[int(row[chunk_type_column_name] == chunk_types[1])]
+        color_drift = colors[row['hue']]
         color_fill = colors_transparent[row['hue']]
         trace_name = hue_joy_hover_labels[row['hue']]
 
@@ -233,6 +234,7 @@ def _create_joy_plot(
                 hovertemplate=hover_template,
                 customdata=hover_data,
                 showlegend=False,
+                hoverlabel = dict(bgcolor=color_drift, font=dict(color='white'))
             )
         )
 
@@ -255,7 +257,7 @@ def _create_joy_plot(
                         x=[kde_quartile[0], kde_quartile[0]],
                         y=[y_date_position, y_date_position + kde_quartile[1] * y_date_height_scaler],
                         mode='lines',
-                        line=dict(color=color, width=1, dash='dot'),
+                        line=dict(color=color_drift, width=1, dash='dot'),
                         hoverinfo='skip',
                         showlegend=False,
                     )
@@ -277,7 +279,7 @@ def _create_joy_plot(
                     x=x,
                     y=y,
                     mode='lines',
-                    line=dict(color=colors[i], width=1),
+                    line=dict(color=colors[i] if i != -1 else 'rgba(0,0,0,0)', width=1),
                     fill='tonexty',
                     fillcolor=colors_transparent[i],
                 ),
