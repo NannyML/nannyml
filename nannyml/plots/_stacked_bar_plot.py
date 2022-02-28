@@ -26,9 +26,10 @@ def _create_value_counts_table(
         top_categories = (
             value_counts_table[feature_column_name].value_counts().index.tolist()[:max_number_of_categories]
         )
-        value_counts_table.loc[
-            ~value_counts_table[feature_column_name].isin(top_categories), feature_column_name
-        ] = 'Other'
+        if len(top_categories) > max_number_of_categories + 1:
+            value_counts_table.loc[
+                ~value_counts_table[feature_column_name].isin(top_categories), feature_column_name
+            ] = 'Other'
 
     categories_ordered = value_counts_table[feature_column_name].value_counts().index.tolist()
     value_counts_table[feature_column_name] = pd.Categorical(
@@ -118,10 +119,10 @@ def _create_stacked_bar_plot(
     
     layout = go.Layout(
         title=title,
-        xaxis=dict(title=xaxis_title, linecolor=colors[2], showgrid=False, mirror=True),
-        yaxis=dict(title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed"),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(title=xaxis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
+        yaxis=dict(title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False),
+        paper_bgcolor='rgba(255,255,255,1)',
+        plot_bgcolor='rgba(255,255,255,1)',
         legend=dict(itemclick=False, itemdoubleclick=False),
         barmode='relative',
     )
