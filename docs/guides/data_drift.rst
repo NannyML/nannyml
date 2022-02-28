@@ -32,6 +32,8 @@ changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` wh
 :math:`P(\mathbf{X'}) = P(\mathbf{X})`.
 
 
+.. _data-drift-partitions:
+
 Data Partitions
 ===============
 
@@ -150,6 +152,7 @@ NannyML can also visualize those results with the following code:
     # Let's initialize the plotting class:
     plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
 
+    # let's plot drift results for all model inputs
     for itm in md.features:
         fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
         fig.show()
@@ -175,6 +178,7 @@ stacked bar charts for categorical variables. It does so with the following code
 
 .. code-block:: python
 
+    # let's plot distribution drift results for continuous model inputs
     for itm in md.continuous_features:
         fig = plots.plot_continuous_feature_distribution_over_time(
             data=pd.concat([reference, analysis], ignore_index=True),
@@ -193,6 +197,7 @@ stacked bar charts for categorical variables. It does so with the following code
 
 .. code-block:: python
 
+    # let's plot distribution drift results for categorical model inputs
     for itm in md.categorical_features:
         fig = plots.plot_categorical_feature_distribution_over_time(
             data=pd.concat([reference, analysis], ignore_index=True),

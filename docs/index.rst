@@ -22,6 +22,7 @@ Welcome to NannyML's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   quick
    guides
    glossary
    deep_dive
