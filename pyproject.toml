@@ -34,7 +34,8 @@ joblib = "^1.1.0"
 category-encoders = "^2.3.0"
 matplotlib = "^3.5.1"
 plotly = "^5.6.0"
-scipy = ">=1.6.0"
+scipy = "^1.7.3"
+seaborn = "^0.11.2"
 
 black  = { version = "^21.5b2", optional = true}
 isort  = { version = "^5.8.0", optional = true}
