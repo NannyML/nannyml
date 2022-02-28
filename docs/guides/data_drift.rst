@@ -147,6 +147,9 @@ NannyML can also visualize those results with the following code:
 
 .. code-block:: python
 
+    # Let's initialize the plotting class:
+    plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
+
     for itm in md.features:
         fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
         fig.show()
