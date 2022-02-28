@@ -3,11 +3,11 @@
 #  License: Apache Software License 2.0
 
 """Module containing functionality to plot stacked bar charts."""
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
-import seaborn as sns
 import plotly.graph_objects as go
+import seaborn as sns
 
 from nannyml.plots.colors import Colors
 
@@ -61,7 +61,7 @@ def _create_stacked_bar_table(
     chunk_column_name,
     drift_column_name,
     chunk_types,
-    date_label_hover_format
+    date_label_hover_format,
 ):
     stacked_bar_table = pd.merge(drift_table, value_counts_table, on=chunk_column_name)
 
@@ -74,9 +74,13 @@ def _create_stacked_bar_table(
 
     stacked_bar_table = stacked_bar_table.sort_values(end_date_column_name, ascending=True).reset_index(drop=True)
     stacked_bar_table['next_end_date'] = stacked_bar_table[end_date_column_name].shift(-1)
-    
-    stacked_bar_table['start_date_label_hover'] = stacked_bar_table[start_date_column_name].dt.strftime(date_label_hover_format)
-    stacked_bar_table['end_date_label_hover'] = stacked_bar_table[end_date_column_name].dt.strftime(date_label_hover_format)
+
+    stacked_bar_table['start_date_label_hover'] = stacked_bar_table[start_date_column_name].dt.strftime(
+        date_label_hover_format
+    )
+    stacked_bar_table['end_date_label_hover'] = stacked_bar_table[end_date_column_name].dt.strftime(
+        date_label_hover_format
+    )
 
     return stacked_bar_table
 
@@ -100,27 +104,32 @@ def _create_stacked_bar_plot(
     alpha_chunk_type,
     colors,
 ):
-    
+
     categories = stacked_bar_table[feature_column_name].cat.categories
     category_colors = list(
-        sns.blend_palette([Colors.INDIGO_PERSIAN, Colors.GRAY, Colors.BLUE_SKY_CRAYOLA], n_colors=len(categories)).as_hex()
+        sns.blend_palette(
+            [Colors.INDIGO_PERSIAN, Colors.GRAY, Colors.BLUE_SKY_CRAYOLA], n_colors=len(categories)
+        ).as_hex()
     )
     category_colors_transparant = [
         'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha)) for color in category_colors
     ]
     colors_transparant = [
-        'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha_chunk_type)) for color in colors
+        'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha_chunk_type))
+        for color in colors
     ]
-    
+
     hover_template = (
         chunk_hover_label
         + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}; (%{customdata[3]}, %{customdata[4]})'
     )
-    
+
     layout = go.Layout(
         title=title,
         xaxis=dict(title=xaxis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
-        yaxis=dict(title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False),
+        yaxis=dict(
+            title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False
+        ),
         paper_bgcolor='rgba(255,255,255,1)',
         plot_bgcolor='rgba(255,255,255,1)',
         legend=dict(itemclick=False, itemdoubleclick=False),
@@ -131,35 +140,41 @@ def _create_stacked_bar_plot(
         fig.update_layout(layout)
     else:
         fig = go.Figure(layout=layout)
-    
+
     # ____Plot elements___#
     # Plot bars
     for i, category in enumerate(categories):
         data = stacked_bar_table.loc[
             stacked_bar_table[feature_column_name] == category,
         ]
-        
+
         hover_data = data[
-            [chunk_column_name, 'start_date_label_hover', 'end_date_label_hover', 'value_counts_normalised', 'value_counts']
+            [
+                chunk_column_name,
+                'start_date_label_hover',
+                'end_date_label_hover',
+                'value_counts_normalised',
+                'value_counts',
+            ]
         ].values
-        
+
         fig.add_trace(
             go.Bar(
                 name=category,
                 x=data['value_counts_normalised'],
                 y=data[start_date_column_name],
                 orientation='h',
-                marker_line_color=data['hue'].apply(lambda hue: colors[hue] if hue==-1 else 'rgba(255,255,255,1)'),
+                marker_line_color=data['hue'].apply(lambda hue: colors[hue] if hue == -1 else 'rgba(255,255,255,1)'),
                 marker_color=category_colors_transparant[i],
-                marker_line_width=data['hue'].apply(lambda hue: 2 if hue==-1 else 1),
+                marker_line_width=data['hue'].apply(lambda hue: 2 if hue == -1 else 1),
                 yperiodalignment="start",
                 offset=0,
                 showlegend=False,
                 customdata=hover_data,
-                hovertemplate=hover_template
+                hovertemplate=hover_template,
             )
         )
-        
+
     # Shade chunk types
     for i, chunk_type in enumerate(chunk_types):
         subset = stacked_bar_table.loc[stacked_bar_table[chunk_type_column_name] == chunk_type]
@@ -171,7 +186,8 @@ def _create_stacked_bar_plot(
             line_color=colors_transparant[i],
             layer='above',
             line_width=2,
-            line=dict(dash='dash')),
+            line=dict(dash='dash'),
+        ),
         fig.add_annotation(
             x=1.025,
             y=subset[start_date_column_name].mean(),
@@ -179,13 +195,13 @@ def _create_stacked_bar_plot(
             font=dict(color=colors[i]),
             align="center",
             textangle=90,
-            showarrow=False
+            showarrow=False,
         )
 
     # ____Add elements to legend___#
     x = [np.nan] * len(data)
     y = data[start_date_column_name]
-    
+
     # Add chunk types
     for i, hue_label in enumerate(chunk_types):
         fig.add_trace(
@@ -198,7 +214,7 @@ def _create_stacked_bar_plot(
                 hoverinfo='skip',
             )
         )
-    
+
     # Add drift
     fig.add_trace(
         go.Bar(
@@ -212,7 +228,7 @@ def _create_stacked_bar_plot(
             hoverinfo='skip',
         )
     )
-    
+
     # Add categories
     for i, category in enumerate(categories):
         fig.add_trace(
@@ -262,7 +278,7 @@ def _stacked_bar_plot(
 ):
     if chunk_types is None:
         chunk_types = ['reference', 'analysis']
-        
+
     if chunk_type_labels is None:
         chunk_type_labels = ['Reference', 'Analysis']
 
@@ -273,7 +289,13 @@ def _stacked_bar_plot(
         colors = [Colors.BLUE_SKY_CRAYOLA, Colors.INDIGO_PERSIAN, Colors.GRAY_DARK, Colors.RED_IMPERIAL]
 
     if category_colors is None:
-        category_colors = ['rgb(107, 0, 236)', 'rgb(204, 163, 255)', 'rgb(0, 67, 239)', 'rgb(0, 200, 229)', 'rgb(128, 228, 242)']
+        category_colors = [
+            'rgb(107, 0, 236)',
+            'rgb(204, 163, 255)',
+            'rgb(0, 67, 239)',
+            'rgb(0, 200, 229)',
+            'rgb(128, 228, 242)',
+        ]
 
     value_counts_table = _create_value_counts_table(
         feature_table,
@@ -292,7 +314,7 @@ def _stacked_bar_plot(
         chunk_column_name,
         drift_column_name,
         chunk_types,
-        date_label_hover_format
+        date_label_hover_format,
     )
 
     fig = _create_stacked_bar_plot(

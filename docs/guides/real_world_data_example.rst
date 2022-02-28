@@ -1,3 +1,4 @@
+=============================
 Example on real world dataset
 =============================
 
@@ -46,6 +47,7 @@ Let's estimate performance for reference and analysis partitions:
 Some chunks are too small, most likely the last one, let's see:
 
 .. code:: ipython3
+
     est_perf.tail(3)
 
 
@@ -90,7 +92,7 @@ CBPE estimates significant performance drop in the chunk corresponding
 to the month of September.
 
 Comparison with the actual performance
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let’s use the ground truth that we have to
 calculate AUROC on relevant chunks and compare:
@@ -222,6 +224,7 @@ chunk. This was expected as the original dataset has observations from
 nearby locations next to each other. Let’s see it on the scatter plot:
 
 .. code:: ipython3
+
     analysis_res = est_perf[est_perf['partition']=='analysis']
     plt.figure(figsize=(8,6))
     for idx in analysis_res.index[:10]:

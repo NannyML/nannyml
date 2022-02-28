@@ -31,7 +31,6 @@ distribution of the model's input data stays the same, but their relationship wi
 changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` while
 :math:`P(\mathbf{X'}) = P(\mathbf{X})`.
 
-.. _data-partitions:
 
 .. _data-drift-partitions:
 

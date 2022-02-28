@@ -185,7 +185,9 @@ def _create_joy_plot(
     layout = go.Layout(
         title=title,
         xaxis=dict(title=x_axis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
-        yaxis=dict(title=y_axis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False),
+        yaxis=dict(
+            title=y_axis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False
+        ),
         paper_bgcolor='rgba(255,255,255,1)',
         plot_bgcolor='rgba(255,255,255,1)',
         legend=dict(itemclick=False, itemdoubleclick=False),
@@ -234,7 +236,7 @@ def _create_joy_plot(
                 hovertemplate=hover_template,
                 customdata=hover_data,
                 showlegend=False,
-                hoverlabel = dict(bgcolor=color_drift, font=dict(color='white'))
+                hoverlabel=dict(bgcolor=color_drift, font=dict(color='white')),
             )
         )
 
