@@ -117,7 +117,59 @@ class DriftPlots:
             v_line_separating_analysis_period=plot_partition_separator,
             statistically_significant_column_name=drift_column_name,
         )
+        return fig
 
+    def plot_univariate_statistical_prediction_drift(
+        self,
+        drift_results: pd.DataFrame,
+        metric: str = 'statistic',
+    ) -> go.Figure:
+        """Renders a line plot for a chosen metric of univariate statistical drift calculation results for  predictions.
+
+        This function will render a line plot displaying the metric value for the model predictions per chunk.
+        Chunks are set on a time-based X-axis by using the period containing their observations.
+        Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
+        a vertical separation if the drift results contain multiple partitions.
+
+        Parameters
+        ----------
+        drift_results : pd.DataFrame
+            Results of the univariate statistical drift calculation
+        metric : str, default=``statistic``
+            The metric to plot. Value must be one of ``statistic`` or ``p_value``
+
+        Returns
+        -------
+        fig: plotly.graph_objects.Figure
+            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
+            using ``fig.show()``.
+
+        """
+        metric_column_name, metric_label, threshold_column_name = None, None, None
+        if metric == 'statistic':
+            metric_column_name = f'{self.metadata.prediction_column_name}_dstat'
+            metric_label = 'd-stat'
+            threshold_column_name = None
+        elif metric == 'p_value':
+            metric_column_name = f'{self.metadata.prediction_column_name}_p_value'
+            metric_label = 'p-value'
+            threshold_column_name = f'{self.metadata.prediction_column_name}_threshold'
+
+        plot_partition_separator = len(drift_results.value_counts()) > 1
+        drift_column_name = f'{self.metadata.prediction_column_name}_alert'
+        title = f'{metric_label} evolution for {self.metadata.prediction_column_name}'
+
+        fig = _line_plot(
+            table=drift_results,
+            metric_column_name=metric_column_name,
+            chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
+            drift_column_name=drift_column_name,
+            threshold_column_name=threshold_column_name,
+            title=title,
+            y_axis_title=metric_label,
+            v_line_separating_analysis_period=plot_partition_separator,
+            statistically_significant_column_name=drift_column_name,
+        )
         return fig
 
     @staticmethod
@@ -209,6 +261,45 @@ class DriftPlots:
         x_axis_title = f'{feature_column_name}'
         drift_column_name = f'{feature_column_name}_alert'
         title = f'{feature_label}: distribution over time'
+
+        fig = _joy_plot(
+            feature_table=_create_feature_table(
+                data=data, chunker=self.chunker, metadata=self.metadata, feature_column_name=feature_column_name
+            ),
+            drift_table=drift_results,
+            chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
+            drift_column_name=drift_column_name,
+            feature_column_name=feature_column_name,
+            x_axis_title=x_axis_title,
+            title=title,
+        )
+        return fig
+
+    def plot_prediction_distribution_over_time(
+        self,
+        data: pd.DataFrame,
+        drift_results: pd.DataFrame,
+    ) -> go.Figure:
+        """Plots the data distribution and associated drift for each chunk of the model predictions.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The original model inputs and outputs
+        drift_results : pd.DataFrame
+            The results of the drift calculation
+
+        Returns
+        -------
+        fig: plotly.graph_objects.Figure
+            A visualization of the data distribution and drift using joy-plots.
+        """
+        data = data.copy(deep=True)
+
+        feature_column_name = self.metadata.prediction_column_name
+        x_axis_title = f'{feature_column_name}'
+        drift_column_name = f'{feature_column_name}_alert'
+        title = f'{feature_column_name}: distribution over time'
 
         fig = _joy_plot(
             feature_table=_create_feature_table(
