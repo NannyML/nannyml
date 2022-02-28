@@ -15,7 +15,11 @@ Glossary
         data.
 
     Data Chunk
-        Placeholder for Links Until Written.
+        Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
+        observations and predictions from single hour, day, month etc. depending on the selected interval. They can
+        be also size-based so that each chunk contains *n* observations. In that case chronology of data is still
+        maintained. Assuming that indices are in chronological order, the largest index in chunk *k* is lower than
+        smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
 
     Feature
         A variable used by our machine learning model. A synonym for a model input.
@@ -113,3 +117,7 @@ Glossary
     Univariate Drift Detection
         Drift Detection steps that use each feature of our model individually
         in order to create appropriate drift measures.
+
+
+
+
