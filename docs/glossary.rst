@@ -4,19 +4,39 @@ Glossary
 
 .. glossary::
 
+    Alert
+        An alert refers to a variable at a particular chunk that gets flagged for possible data
+        drift. The alert is raised after the drift functionality of NannyML finds the drift
+        characteristics for this variable and chunk to be suspect.
+
     Butterfly dataset
-        A dataset used in :ref:`<data-reconstruction-pca>` to give an example where univariate
+        A dataset used in :ref:`data-reconstruction-pca` to give an example where univariate
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
 
+    Concept Drift
+        A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
+
+    Data Drift
+        A change in joint distribution of :term:`Model Inputs` (P(X)).
+        
+    Data Chunk
+        Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
+        observations and predictions from single hour, day, month etc. depending on the selected interval. They can
+        be also size-based so that each chunk contains *n* observations. In that case chronology of data is still
+        maintained. Assuming that indices are in chronological order, the largest index in chunk *k* is lower than
+        smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
+
+
     Feature
-        A variable used by our machine learning model. A synonym for model input.
+        A variable used by our machine learning model. The model inputs consist of features.
 
     Latent space
         A space of reduced dimensionality, compared to the model input space, that can
         represent our input data. This space is the result of a representation
-        learning algorithm.
-    
+        learning algorithm. Data points that are close together in the model input space
+        are also close together in the latent space.
+
     Ground truth
         A synonym for :term:`Target`
 
@@ -39,10 +59,16 @@ Glossary
                 A concatenation of your dataset name and a row number.
 
     Model
-        Definition of a model
+        Definition of a model.
 
     Model inputs
-        A variable used by our machine learning model.
+        All :term:`Feature`s used by the model.
+
+    Model Metadata
+        Additional information regarding the model inputs such as the type of a particular
+        feature (continuous, categorical, nominal, ordinal). Information regarding when a
+        prediction was made as well as which data partition it is assigned to are also considered
+        metadata.
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.
@@ -72,11 +98,14 @@ Glossary
             Please map your own values to them accordingly.
 
     PCA
-        Principal Component Analysis. A method user for dimensionality reduction.
+        Principal Component Analysis. A method used for dimensionality reduction.
+
+    Performance Estimation
+        Estimating performance of a deployed ML model without having access to :term:`Target`.
 
     Predictions
         A synonym for :term:`Model outputs`.
-    
+
     Target
         The actual outcome of the event the machine learning model is trying to predict.
 
@@ -95,6 +124,5 @@ Glossary
                 - *Unix-epoch* in units of seconds, e.g. ``1513393355``
 
     Univariate Drift Detection
-        Drift Detection steps that use each feature of our model individually
-        in order to create appropriate drift measures.
-
+        Drift Detection methods that use each feature of our model individually
+        in order to detect change in :term:`Model Inputs`.

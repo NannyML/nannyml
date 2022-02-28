@@ -4,4 +4,4 @@
 
 """NannyML Dataset module."""
 
-from ._base import load_synthetic_sample
+from .datasets import load_modified_california_housing_dataset, load_synthetic_sample

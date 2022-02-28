@@ -66,7 +66,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
         categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
         continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features]
 
-        res = pd.DataFrame()
+        chunk_drifts = []
         # Calculate chunk-wise drift statistics.
         # Append all into resulting DataFrame indexed by chunk key.
         for chunk in chunks:
@@ -90,21 +90,22 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
                         axis=1,
                     )
                 )
-                chunk_drift[f'{column}_chi2'] = [statistic]
-                chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
-                chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]
+                chunk_drift[f'{column}_chi2'] = statistic
+                chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
+                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
             for column in present_continuous_column_names:
                 statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])  # type: ignore
-                chunk_drift[f'{column}_dstat'] = [statistic]
-                chunk_drift[f'{column}_p_value'] = [np.round(p_value, decimals=3)]
-                chunk_drift[f'{column}_alert'] = [p_value < ALERT_THRESHOLD_P_VALUE]
+                chunk_drift[f'{column}_dstat'] = statistic
+                chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
+                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
-            res = res.append(pd.DataFrame(chunk_drift))
+            chunk_drifts.append(chunk_drift)
 
+        res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
         res.attrs['nml_drift_calculator'] = __name__
         return res

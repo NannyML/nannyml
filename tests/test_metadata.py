@@ -5,7 +5,6 @@
 """Unit tests for metadata module."""
 import datetime
 import math
-import re
 
 import numpy as np
 import pandas as pd
@@ -179,22 +178,6 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
     assert sut.ground_truth_column_name == 'gt'
     assert sut.partition_column_name == 'part'
     assert sut.timestamp_column_name == 'ts'
-
-
-# TODO: fix regexes
-def test_model_metadata_string_representation_contains_all_properties(sample_model_metadata):  # noqa: D103
-    sut = sample_model_metadata.print()
-    assert re.match(rf"Metadata for model\s*{sample_model_metadata.name}", sut)
-    # assert re.match(rf"Model purpose\s*.{'~ UNKNOWN ~'}.*", sut)
-    # assert re.match(rf"Model problem\s*{sample_model_metadata.model_purpose or '~ UNKNOWN ~'}", sut)
-    # assert re.match(rf"Identifier column\s*{sample_model_metadata.identifier_column_name or '~ UNKNOWN ~'}", sut)
-    # assert re.match(rf"Timestamp column\s*{sample_model_metadata.timestamp_column_name or '~ UNKNOWN ~'}", sut)
-    # assert re.match(rf"Partition column\s*{sample_model_metadata.partition_column_name or '~ UNKNOWN ~'}", sut)
-    # assert re.match(rf"Ground truth column\s*{sample_model_metadata.ground_truth_column_name or '~ UNKNOWN ~'}", sut)
-
-    # f = sample_model_metadata.features[0]
-    # assert re.match(
-    #     rf"Name\s*{f.label} Column\s*{f.column_name} Type\s*{f.feature_type} Description\s*{f.description}", sut)
 
 
 def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103

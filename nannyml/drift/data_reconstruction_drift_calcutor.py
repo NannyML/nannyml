@@ -4,7 +4,7 @@
 
 """Drift calculator using Reconstruction Error as a measure of drift."""
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -96,23 +96,25 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
     ) -> pd.DataFrame:
         res = pd.DataFrame()
 
-        for chunk in chunks:
-            chunk_drift: Dict[str, Any] = {
-                'key': chunk.key,
-                'start_index': chunk.start_index,
-                'end_index': chunk.end_index,
-                'start_date': chunk.start_datetime,
-                'end_date': chunk.end_datetime,
-                'partition': 'analysis' if chunk.is_transition else chunk.partition,
-                'reconstruction_error': [
-                    _calculate_reconstruction_error_for_data(
+        res = pd.DataFrame.from_records(
+            [
+                {
+                    'key': chunk.key,
+                    'start_index': chunk.start_index,
+                    'end_index': chunk.end_index,
+                    'start_date': chunk.start_datetime,
+                    'end_date': chunk.end_datetime,
+                    'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                    'reconstruction_error': _calculate_reconstruction_error_for_data(
                         self.selected_features, chunk.data, self._encoder, self._scaler, self._pca
-                    )
-                ],
-            }
-            res = res.append(pd.DataFrame(chunk_drift))
+                    ),
+                }
+                for chunk in chunks
+            ]
+        )
 
-        res['thresholds'] = [(self._lower_alert_threshold, self._upper_alert_threshold)] * len(res)
+        res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
+        res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
         return res
@@ -130,8 +132,8 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         )
 
         return (
-            reference_reconstruction_error.mean() + 2 * reference_reconstruction_error.std(),
-            reference_reconstruction_error.mean() - 2 * reference_reconstruction_error.std(),
+            reference_reconstruction_error.mean() + 3 * reference_reconstruction_error.std(),
+            reference_reconstruction_error.mean() - 3 * reference_reconstruction_error.std(),
         )
 
 

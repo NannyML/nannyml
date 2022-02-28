@@ -314,7 +314,7 @@ class ModelMetadata:
         ]
         for f in self.features:
             strs.append(f"{f.label:20} {f.column_name:20} {f.feature_type or 'NA':15} {f.description}")
-        return str.join('\n', strs)
+        print(str.join('\n', strs))
 
     def __repr__(self):
         """Converts the ModelMetadata instance to a string representation."""

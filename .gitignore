@@ -116,3 +116,6 @@ site/
 # sphinx build artifacts
 docs/_build
 docs/nannyml
+
+# images created from doc notebooks
+docs/examples/*.svg
