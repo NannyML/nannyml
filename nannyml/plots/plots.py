@@ -310,6 +310,7 @@ class PerformancePlots:
     @staticmethod
     def plot_cbpe_performance_estimation(
         estimation_results: pd.DataFrame,
+        realized_performance: pd.DataFrame = None,
     ) -> go.Figure:
         """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
@@ -317,16 +318,24 @@ class PerformancePlots:
         Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
         a vertical separation if the drift results contain multiple partitions.
 
+        If the ``realized_performance`` data is also provided, an extra line shall be plotted to allow an easy
+        comparison of the estimated versus realized performance.
+
         Parameters
         ----------
         estimation_results : pd.DataFrame
             Results of the data CBPE performance estimation
+        realized_performance: pd.Series, default=None
+            A vector that contains the ROC AUC performance score of chunked analysis data.
+            This is only possible when target labels are available for the analysis data, so this functionality
+            is intended to be used for evaluation purposes only.
+            The analysis data must be chunked using the same ``Chunker`` that was used for the estimation.
 
         Returns
         -------
         fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
-            using ``fig.show()``.
+            A ``Figure`` object containing the requested performance estimation plot.
+            Can be saved to disk or shown rendered on screen using ``fig.show()``.
         """
         estimation_results['thresholds'] = list(
             zip(estimation_results.lower_threshold, estimation_results.upper_threshold)
@@ -341,7 +350,9 @@ class PerformancePlots:
             metric_column_name='estimated_roc_auc',
             chunk_column_name=_CHUNK_KEY_COLUMN_NAME,
             drift_column_name='alert',
+            drift_label='Degraded performance',
             threshold_column_name='thresholds',
+            threshold_label='Performance threshold',
             title='CBPE - estimated performance',
             y_axis_title='estimated performance',
             v_line_separating_analysis_period=plot_partition_separator,
