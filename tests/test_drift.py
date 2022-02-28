@@ -147,9 +147,10 @@ def test_base_drift_calculator_given_empty_features_list_should_calculate_for_al
     sut = calc.calculate(data=sample_drift_data)
 
     md = extract_metadata(sample_drift_data, model_name='model')
-    assert len(sut.columns) == len(md.features)
+    assert len(sut.columns) == len(md.features) + 1
     for f in md.features:
         assert f.column_name in sut.columns
+    assert md.prediction_column_name in sut.columns
 
 
 def test_base_drift_calculator_given_non_empty_features_list_should_only_calculate_for_these_features(  # noqa: D103
