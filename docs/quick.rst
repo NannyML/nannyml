@@ -62,6 +62,31 @@ NannyML makes it easy to compute and vizualize data drift. For more details refe
 
 .. image:: ../_static/drift-guide-salary_range.svg
 
+When there are a lot of drifted features NannyML can also rank them, ordering them by the number of alerts they have raised:
+
+.. code-block:: python
+
+    >>> ranker = nml.Ranker(by='alert_count')
+    >>> ranked_features = ranker.rank(univariate_results, only_drifted = False)
+    >>> ranked_features
+
++----+----------------------------+--------------------+--------+
+|    | feature                    |   number_of_alerts |   rank |
++====+============================+====================+========+
+|  0 | wfh_prev_workday           |                  5 |      1 |
++----+----------------------------+--------------------+--------+
+|  1 | salary_range               |                  5 |      2 |
++----+----------------------------+--------------------+--------+
+|  2 | distance_from_office       |                  5 |      3 |
++----+----------------------------+--------------------+--------+
+|  3 | public_transportation_cost |                  5 |      4 |
++----+----------------------------+--------------------+--------+
+|  4 | tenure                     |                  2 |      5 |
++----+----------------------------+--------------------+--------+
+|  5 | workday                    |                  0 |      6 |
++----+----------------------------+--------------------+--------+
+|  6 | gas_price_per_litre        |                  0 |      7 |
++----+----------------------------+--------------------+--------+
 
 NannyML also uses Data Reconstruction with PCA to compute the reconstruction error and detect more complex
 data drift cases. More information can be found at
