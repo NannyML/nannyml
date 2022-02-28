@@ -1,8 +1,8 @@
 .. _minimum-chunk-size:
 
-======
+==================
 Minimum chunk size
-======
+==================
 
 .. note::
     Not sure what data chunk is in the first place? Read about :term:`Data Chunk` for short explanation or go through
@@ -43,9 +43,9 @@ is difficult to tell whether the effect (the drop) is real. To minimize this ris
 size for the monitored data and raises a warning if the selected split results in chunks that are too small.
 Since NannyML is performance-oriented, the minimum chunk size is estimated in order to keep variation of performance
 of your model *low*. *Low*  is defined by the rule of thumb:
- - For models with ROC AUC below 0.9 we want to have chunks for which standard deviation of ROC AUC on chunks is lower
-   than 0.01.
- - For other models, standard deviation of ROC AUC on chunks should be below 0.02.
+- For models with ROC AUC below 0.9 we want to have chunks for which standard deviation of ROC AUC on chunks is lower
+than 0.01.
+- For other models, standard deviation of ROC AUC on chunks should be below 0.02.
 
 Typical way to approach the task of finding minimum chunk size would be to iterate on the monitored data to find the
 smallest chunk size that meets the above requirements. This in some cases could be resource intensive, so instead
@@ -74,5 +74,3 @@ recommended chunk size nor
 as a hard limit**. It is just a chunk size, below which performance - actual or estimated - most likely will be
 governed by sampling rather than actual changes. Finally, be aware that sample size affects also calculations related
 to data drift.
-
-

@@ -1,8 +1,8 @@
 .. _performance-estimation:
 
-====
+======================
 Performance Estimation
-====
+======================
 
 This guide will explain how to use NannyML to estimate performance of monitored model (in absence of ground truth).
 The guide is based on synthetic dataset where the monitored model is predicting whether an employee is working from
@@ -27,7 +27,7 @@ home. Get the full code right away or follow the example step by step below.
 
 
 Prepare the data
-====
+================
 Let's first load the data and have a quick look:
 
 .. code-block:: python
@@ -78,7 +78,7 @@ Full information on how the data should be prepared can be found in guide on :re
 
 
 Fit estimator and estimate
-====
+==========================
 In the next step Confidence-based Performance Estimation (CBPE) estimator is fitted on ``reference`` data. Chunking
 method needs to be specified now. Read more about chunking in relevant :ref:`guide<chunk-data>`.
 
@@ -98,7 +98,7 @@ where the ground truth is actually missing. However, to get a better context it 
 To find out how CBPE estimates performance read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
 
 View and interpret the results
-====
+==============================
 
 The results can be investigated in the form of data:
 
@@ -133,7 +133,7 @@ Results can be also view in the form of plot:
 
 
 Compare with the actual performance
-====
+===================================
 
 When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
 ground truth is given in ``df_ana_gt`` variable. It consists of ``identifier`` that allows to match it with

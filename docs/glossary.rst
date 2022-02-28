@@ -1,3 +1,5 @@
+.. _glossary:
+
 ========
 Glossary
 ========
@@ -117,7 +119,3 @@ Glossary
     Univariate Drift Detection
         Drift Detection steps that use each feature of our model individually
         in order to create appropriate drift measures.
-
-
-
-
