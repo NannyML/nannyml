@@ -97,20 +97,24 @@ The results can be investigated in the form of data:
     |  2 | [10000:14999] |         10000 |       14999 | 2015-01-09 00:00:00 | 2015-05-09 23:59:59 | reference   |            0.968657 |   0.00035752 |           0.97866 |          0.963317 | False   |
     +----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+--------------+-------------------+-------------------+---------+
 
+.. _performance-estimation-thresholds:
+
 Apart form chunking and chunk and partition-related data, the results data has the following columns:
 
  - ``estimated_roc_auc`` - the estimate of performance for specific chunk,
  - ``confidence`` - the width of confidence band. It is equal to 1 standard deviation of performance estimates on
-   `reference` data (hence calculated during ``fit`` phase). 
+   `reference` data (hence calculated during ``fit`` phase).
  - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of monitored model on chunks in
-   ``reference`` partition. These are calculated rugin ``fit`` phase.
+   ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on chunks.
+   They are calculated during ``fit`` phase.
  - ``alert`` - flag indicating potentially severe performance change. ``True`` if estimated performance crosses upper
    or lower threshold.
    provided. together with ``confidence``.
 
 Results can be also view in the form of plot:
-# TODO, run code and get the plot.
+
+.. image:: ../_static/performance_estimation_guide_synth.svg
 
 
 Compare with the actual performance

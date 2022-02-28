@@ -274,9 +274,9 @@ understanding.
 Not enough chunks
 ~~~~~
 Sometimes selected chunking method may result in not enough chunks being generated in the ``reference``
-period. NannyML calculates thresholds based on variability of metrics on ``reference`` chunks (# TODO links here to
-either deep dives or guides - depending where we describe thresholds for PE and DD). Having 6 chunks is far from
-optimum but a reasonable minimum. If there is less than 6 chunks, warning will be raised:
+period. NannyML calculates thresholds based on variability of metrics on ``reference`` chunks (see how thresholds are
+calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
+far from optimum but a reasonable minimum. If there is less than 6 chunks, warning will be raised:
 
     .. code-block:: python
         >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
