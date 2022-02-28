@@ -88,7 +88,7 @@ Adding a Machine Learning Model
     production 0.8224322932364313
 
 Preparing Data for NannyML
-==========================  
+==========================
 
 The data are now being splitted so they can be in a form required by NannyML.
 

@@ -216,7 +216,7 @@ Multivariate Drift Detection
 
 The univariate approach to data drift detection is powerful, interpretable but limited.
 Data living in multidimensional spaces can have complex structures
-whose change may not be visible by just viewing the distributions of each feature. 
+whose change may not be visible by just viewing the distributions of each feature.
 
 One solution for this problem is to user the reconstruction error for a dataset.
 In general reconstruction error is the error resulting from re-creating
