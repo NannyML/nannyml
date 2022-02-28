@@ -16,6 +16,12 @@ Glossary
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
 
+    Concept Drift
+        A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
+
+    Data Drift
+        A change in joint distribution of :term:`Model Inputs` (P(X)).
+        
     Data Chunk
         Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
         observations and predictions from single hour, day, month etc. depending on the selected interval. They can
@@ -23,8 +29,9 @@ Glossary
         maintained. Assuming that indices are in chronological order, the largest index in chunk *k* is lower than
         smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
 
+
     Feature
-        A variable used by our machine learning model. A synonym for a model input.
+        A variable used by our machine learning model. The model inputs consist of features.
 
     Latent space
         A space of reduced dimensionality, compared to the model input space, that can
@@ -54,11 +61,10 @@ Glossary
                 A concatenation of your dataset name and a row number.
 
     Model
-        A Machine Learning model that is used in production and we want to monitor its
-        performance.
+        Definition of a model.
 
     Model inputs
-        The variables used by our machine learning model.
+        All :term:`Feature`s used by the model.
 
     Model Metadata
         Additional information regarding the model inputs such as the type of a particular
@@ -94,7 +100,10 @@ Glossary
             Please map your own values to them accordingly.
 
     PCA
-        Principal Component Analysis. A method user for dimensionality reduction.
+        Principal Component Analysis. A method used for dimensionality reduction.
+
+    Performance Estimation
+        Estimating performance of a deployed ML model without having access to :term:`Target`.
 
     Predictions
         A synonym for :term:`Model outputs`.
@@ -117,5 +126,6 @@ Glossary
                 - *Unix-epoch* in units of seconds, e.g. ``1513393355``
 
     Univariate Drift Detection
-        Drift Detection steps that use each feature of our model individually
-        in order to create appropriate drift measures.
+        Drift Detection methods that use each feature of our model individually
+        in order to detect change in :term:`Model Inputs`.
+        
