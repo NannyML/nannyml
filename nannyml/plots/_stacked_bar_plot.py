@@ -26,9 +26,10 @@ def _create_value_counts_table(
         top_categories = (
             value_counts_table[feature_column_name].value_counts().index.tolist()[:max_number_of_categories]
         )
-        value_counts_table.loc[
-            ~value_counts_table[feature_column_name].isin(top_categories), feature_column_name
-        ] = 'Other'
+        if len(top_categories) > max_number_of_categories + 1:
+            value_counts_table.loc[
+                ~value_counts_table[feature_column_name].isin(top_categories), feature_column_name
+            ] = 'Other'
 
     categories_ordered = value_counts_table[feature_column_name].value_counts().index.tolist()
     value_counts_table[feature_column_name] = pd.Categorical(
