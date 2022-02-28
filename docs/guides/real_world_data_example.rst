@@ -236,8 +236,3 @@ nearby locations next to each other. Let’s see it on the scatter plot:
     plt.ylabel('Longitude')
 
 .. image:: ../_static/example_california_latitude_longitude_scatter.svg
-
-
-
-
-

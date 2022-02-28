@@ -75,5 +75,3 @@ recommended chunk size nor
 as a hard limit**. It is just a chunk size, below which performance - actual or estimated - most likely will be
 governed by sampling rather than actual changes. Finally, be aware that sample size affects also calculations related
 to data drift.
-
-

@@ -295,4 +295,3 @@ far from optimal but a reasonable minimum. If there are less than 6 chunks, a wa
     >>> est_perf = cbpe.estimate(df_ana)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
     continue at your own risk.
-
