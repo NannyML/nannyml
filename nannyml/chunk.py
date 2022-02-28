@@ -219,7 +219,7 @@ class Chunker(abc.ABC):
         if len(chunks) < 6:
             # TODO wording
             warnings.warn(
-                'The resulting number of chunks is too low.'
+                'The resulting number of chunks is too low. '
                 'Please consider splitting your data in a different way or continue at your own risk.'
             )
 
@@ -229,9 +229,9 @@ class Chunker(abc.ABC):
         if len(underpopulated_chunks) > 0:
             # TODO wording
             warnings.warn(
-                f'The resulting list of chunks contains {len(underpopulated_chunks)} underpopulated chunks.'
+                f'The resulting list of chunks contains {len(underpopulated_chunks)} underpopulated chunks. '
                 'They contain too few records to be statistically relevant and might negatively influence '
-                'the quality of calculations.'
+                'the quality of calculations. '
                 'Please consider splitting your data in a different way or continue at your own risk.'
             )
 
