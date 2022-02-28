@@ -98,8 +98,8 @@ def _line_plot(
 
     layout = go.Layout(
         title=title,
-        xaxis=dict(title=x_axis_title, linecolor=colors[2], showgrid=False, mirror=True),
-        yaxis=dict(title=y_axis_title, linecolor=colors[2], showgrid=False, range=y_axis_lim, mirror=True),
+        xaxis=dict(title=x_axis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
+        yaxis=dict(title=y_axis_title, linecolor=colors[2], showgrid=False, range=y_axis_lim, mirror=True, zeroline=False),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(itemclick=False, itemdoubleclick=False),

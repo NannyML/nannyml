@@ -118,8 +118,8 @@ def _create_stacked_bar_plot(
     
     layout = go.Layout(
         title=title,
-        xaxis=dict(title=xaxis_title, linecolor=colors[2], showgrid=False, mirror=True),
-        yaxis=dict(title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed"),
+        xaxis=dict(title=xaxis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
+        yaxis=dict(title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         legend=dict(itemclick=False, itemdoubleclick=False),
