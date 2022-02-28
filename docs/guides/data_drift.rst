@@ -32,6 +32,8 @@ changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` wh
 :math:`P(\mathbf{X'}) = P(\mathbf{X})`.
 
 
+.. _data-drift-partitions:
+
 Data Partitions
 ===============
 
@@ -73,6 +75,9 @@ from the baseline, then it issues a drift alert. Given this statistical approach
 cases where the alert is a false positive. However when reviewing the data drift vizualizations
 they will be easy to spot and discard. An example of that will be presented later.
 
+
+.. _data-drift-practice:
+
 Data Drift in practice
 ======================
 
@@ -87,12 +92,27 @@ are shown here.
 
 .. code-block:: python
 
-    import nannyml as nml
+    >>> import nannyml as nml
+    >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
+    >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> md.timestamp_column_name = 'timestamp'
+    >>> md.ground_truth_column_name = 'work_home_actual'
+    >>> reference.head()
 
-    reference, analysis, analysis_gt = nml.load_synthetic_sample()
-    md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
-    md.timestamp_column_name = 'timestamp'
-    md.ground_truth_column_name = 'work_home_actual'
+
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
+|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |
++====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+
+|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
+|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
+|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
+|  3 |               2.53041  | 20K - 20K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
+|  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 
 
 .. _data-drift-univariate:
@@ -114,30 +134,50 @@ An example using it can be seen below:
 
 .. code-block:: python
 
-    # Let's initialize the object that will perform the Univariate Drift calculations
-    # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> # Let's initialize the object that will perform the Univariate Drift calculations
+    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=5000)
-    # NannyML compares drift versus the full reference dataset.
+    >>> # NannyML compares drift versus the full reference dataset.
     >>> univariate_calculator.fit(reference_data=reference)
-    # let's see drift statistics for all available data
+    >>> # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis])
     >>> univariate_results = univariate_calculator.calculate(data=data)
-    # let's view a small subset of our results:
+    >>> # let's view a small subset of our results:
 
     >>> univariate_results.iloc[:5, :9]
-        key             start_index     end_index   start_date  end_date                partition   salary_range_chi2   salary_range_p_value    salary_range_alert
-    0 	[0:4999]        0               4999        2014-05-09  2014-09-09 23:59:59     reference   2.898781            0.407                   False
-    1 	[5000:9999] 	5000 	        9999 	    2014-09-09 	2015-01-09 23:59:59 	reference   3.144391 	        0.370                   False
-    2 	[10000:14999] 	10000 	        14999 	    2015-01-09 	2015-05-09 23:59:59 	reference   2.451881 	        0.484 	                False
-    3 	[15000:19999] 	15000 	        19999 	    2015-05-09 	2015-09-07 23:59:59 	reference   4.062620 	        0.255 	                False
-    4 	[20000:24999] 	20000 	        24999 	    2015-09-07 	2016-01-08 23:59:59 	reference   2.413988 	        0.491 	                False
+
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   wfh_prev_workday_chi2 |   wfh_prev_workday_p_value | wfh_prev_workday_alert   |
++====+===============+===============+=============+=====================+=====================+=============+=========================+============================+==========================+
+|  5 | [25000:29999] |         25000 |       29999 | 2016-01-08 00:00:00 | 2016-05-09 23:59:59 | reference   |               3.61457   |                      0.057 | False                    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+|  6 | [30000:34999] |         30000 |       34999 | 2016-05-09 00:00:00 | 2016-09-04 23:59:59 | reference   |               0.0757052 |                      0.783 | False                    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+|  7 | [35000:39999] |         35000 |       39999 | 2016-09-04 00:00:00 | 2017-01-03 23:59:59 | reference   |               0.414606  |                      0.52  | False                    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+|  8 | [40000:44999] |         40000 |       44999 | 2017-01-03 00:00:00 | 2017-05-03 23:59:59 | reference   |               0.0126564 |                      0.91  | False                    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+|  9 | [45000:49999] |         45000 |       49999 | 2017-05-03 00:00:00 | 2017-08-31 23:59:59 | reference   |               2.20383   |                      0.138 | False                    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+
+
+.. code-block:: python
+
     >>> univariate_results.iloc[-5:, :9]
-        key             start_index     end_index   start_date  end_date                partition   salary_range_chi2   salary_range_p_value    salary_range_alert
-    15 	[75000:79999] 	75000           79999       2019-04-30  2019-09-01 23:59:59     analysis    455.622094          0.0                     True
-    16 	[80000:84999] 	80000           84999       2019-09-01  2019-12-31 23:59:59     analysis    428.633384          0.0                     True
-    17 	[85000:89999] 	85000           89999       2019-12-31  2020-04-30 23:59:59     analysis    453.247444          0.0                     True
-    18 	[90000:94999] 	90000           94999       2020-04-30  2020-09-01 23:59:59     analysis    438.259970          0.0                     True
-    19 	[95000:99999] 	95000           99999       2020-09-01  2021-01-01 23:59:59     analysis    474.891775          0.0                     True
+
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   wfh_prev_workday_chi2 |   wfh_prev_workday_p_value | wfh_prev_workday_alert   |
++====+===============+===============+=============+=====================+=====================+=============+=========================+============================+==========================+
+| 15 | [75000:79999] |         75000 |       79999 | 2019-04-30 00:00:00 | 2019-09-01 23:59:59 | analysis    |                 1179.9  |                          0 | True                     |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+| 16 | [80000:84999] |         80000 |       84999 | 2019-09-01 00:00:00 | 2019-12-31 23:59:59 | analysis    |                 1162.99 |                          0 | True                     |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+| 17 | [85000:89999] |         85000 |       89999 | 2019-12-31 00:00:00 | 2020-04-30 23:59:59 | analysis    |                 1170.49 |                          0 | True                     |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+| 18 | [90000:94999] |         90000 |       94999 | 2020-04-30 00:00:00 | 2020-09-01 23:59:59 | analysis    |                 1023.35 |                          0 | True                     |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
+| 19 | [95000:99999] |         95000 |       99999 | 2020-09-01 00:00:00 | 2021-01-01 23:59:59 | analysis    |                 1227.54 |                          0 | True                     |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
 
 NannyML produces 3 columns with results for each feature. The first column contains the corresponding test
 statistic. The second column contains the corresponding p-value and the third column says whether there
@@ -147,12 +187,12 @@ NannyML can also visualize those results with the following code:
 
 .. code-block:: python
 
-    # Let's initialize the plotting class:
-    plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
-
-    for itm in md.features:
-        fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
-        fig.show()
+    >>> # Let's initialize the plotting class:
+    >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
+    >>> # let's plot drift results for all model inputs
+    >>> for itm in md.features:
+    ...     fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
+    ...     fig.show()
 
 .. image:: ../_static/drift-guide-distance_from_office.svg
 
@@ -175,13 +215,14 @@ stacked bar charts for categorical variables. It does so with the following code
 
 .. code-block:: python
 
-    for itm in md.continuous_features:
-        fig = plots.plot_continuous_feature_distribution_over_time(
-            data=pd.concat([reference, analysis], ignore_index=True),
-            drift_results=univariate_results,
-            feature_label=itm.label
-        )
-        fig.show()
+    >>> # let's plot distribution drift results for continuous model inputs
+    >>> for itm in md.continuous_features:
+    ...     fig = plots.plot_continuous_feature_distribution_over_time(
+    ...         data=pd.concat([reference, analysis], ignore_index=True),
+    ...         drift_results=univariate_results,
+    ...         feature_label=itm.label
+    ...     )
+    ...     fig.show()
 
 .. image:: ../_static/drift-guide-joyplot-distance_from_office.svg
 
@@ -193,6 +234,7 @@ stacked bar charts for categorical variables. It does so with the following code
 
 .. code-block:: python
 
+    # let's plot distribution drift results for categorical model inputs
     for itm in md.categorical_features:
         fig = plots.plot_categorical_feature_distribution_over_time(
             data=pd.concat([reference, analysis], ignore_index=True),
@@ -211,6 +253,34 @@ NannyML highlights with red the areas with possible data drift.
 The ``tenure`` feature has two alerts that are false positives.
 The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
 ``wfh_prev_workday`` have been rightly identified as exhibiting drift.
+
+Furthermore NannyML can sort features according to how many alerts they have had within the data analyzed
+for data drift. You can chose to view the ranking of all the model inputs or just the ones that have drifted.
+NannyML provides a dataframe with the resulting ranking of features using the code below:
+
+.. code-block:: python
+
+    >>> ranking = nml.AlertCountRanking()
+    >>> ranked_features_drifted = ranking.rank(univariate_results)
+    >>> ranked_features_drifted
+
++----+----------------------------+--------------------+--------+
+|    | feature                    |   number_of_alerts |   rank |
++====+============================+====================+========+
+|  0 | wfh_prev_workday           |                  5 |      1 |
++----+----------------------------+--------------------+--------+
+|  1 | salary_range               |                  5 |      2 |
++----+----------------------------+--------------------+--------+
+|  2 | distance_from_office       |                  5 |      3 |
++----+----------------------------+--------------------+--------+
+|  3 | public_transportation_cost |                  5 |      4 |
++----+----------------------------+--------------------+--------+
+|  4 | tenure                     |                  2 |      5 |
++----+----------------------------+--------------------+--------+
+|  5 | workday                    |                  0 |      6 |
++----+----------------------------+--------------------+--------+
+|  6 | gas_price_per_litre        |                  0 |      7 |
++----+----------------------------+--------------------+--------+
 
 .. _data-drift-multivariate:
 

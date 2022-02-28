@@ -22,9 +22,10 @@ Welcome to NannyML's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   quick
    guides
-   glossary
    deep_dive
+   glossary
    Technical reference <nannyml/modules>
 
 Indices and tables

@@ -1,8 +1,8 @@
 .. _performance-estimation:
 
-====
+======================
 Performance Estimation
-====
+======================
 
 This guide will explain how to use NannyML to estimate performance of monitored model (in absence of ground truth).
 The guide is based on synthetic dataset where the monitored model is predicting whether an employee is working from
@@ -129,7 +129,8 @@ Apart form chunking and partition-related data, the results data has the followi
 provided. together with ``confidence``.
 
 Results can be also view in the form of plot:
-# TODO, run code and get the plot.
+
+.. image:: ../_static/perf-est-guide-syth-example.svg
 
 
 Compare with the actual performance
