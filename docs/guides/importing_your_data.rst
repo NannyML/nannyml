@@ -21,47 +21,49 @@ In this guide you'll learn how to setup NannyML to work on your data. We've prov
 **work_from_home** model. It is a binary classifier trying to predict whether someone will be working from home on
 a given day or not.
 
-You can find the dataset :download:`here <../data/work_from_home_reference.csv>`.
+The dataset is provided by the NannyML package. You can see below how to
+import it and explore it:
 
 A quick exploration of the dataset:
 
 .. code-block:: python
 
-    >>> import pandas as pd
     >>> import nannyml as nml
-    >>> df = pd.read_csv('../data/work_from_home_reference.csv')
-    >>> df
-           identifier nationality  dist_to_office  day_of_the_week  work_home_yest transport_mode  work_home_pred  work_home_actual       industry                 date
-    0           27639          FR      467.420495                7               0            car               1                 1    agriculture  2019-04-05 03:26:32
-    1           62250          BE      446.879715                6               1            car               1                 1       services  2015-08-31 17:23:12
-    2            7140          BE      228.347808                2               1           bike               1                 0       services  2014-03-09 00:13:58
-    3           44561          BE      375.441565                5               0            car               1                 0  manufacturing  2014-09-24 03:34:18
-    4           92985          FR      286.660112                4               0          train               0                 1       services  2015-04-30 04:27:28
-    ...           ...         ...             ...              ...             ...            ...             ...               ...            ...                  ...
-    99995       53343          BE      303.228327                3               0            car               1                 0       services  2013-11-19 12:08:48
-    99996       52819          BE      131.051512                2               1            car               0                 0  manufacturing  2014-03-24 17:12:20
-    99997       79445          BE      135.600934                1               0            car               1                 0  manufacturing  2013-08-18 09:47:08
-    99998       58108          BE      431.322066                5               0            car               1                 1    agriculture  2011-02-14 13:45:01
-    99999       57400          BE      453.808103                7               1            car               0                 1       services  2014-04-21 21:20:28
+    >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
+    >>> reference
+           distance_from_office salary_range  gas_price_per_litre  public_transportation_cost  ...  work_home_actual            timestamp  y_pred_proba  partition
+    0                  5.962247  40K - 60K €             2.119485                    8.568058  ...                 1  2014-05-09 22:27:20          0.99  reference
+    1                  0.535872  40K - 60K €             2.357199                    5.425382  ...                 0  2014-05-09 22:59:32          0.07  reference
+    2                  1.969519  40K - 60K €             2.366849                    8.247158  ...                 1  2014-05-09 23:48:25          1.00  reference
+    3                  2.530410  20K - 20K €             2.318722                    7.944251  ...                 1  2014-05-10 01:12:09          0.98  reference
+    4                  2.253635       60K+ €             2.221265                    8.884478  ...                 1  2014-05-10 02:21:34          0.99  reference
+    ...                     ...          ...                  ...                         ...  ...               ...                  ...           ...        ...
+    49995              2.356053  20K - 20K €             2.344472                    8.763312  ...                 1  2017-08-31 00:32:42          0.99  reference
+    49996              4.897964    0 - 20K €             1.601283                    8.795181  ...                 0  2017-08-31 01:57:54          0.03  reference
+    49997              0.869910  40K - 60K €             2.262292                    8.360564  ...                 1  2017-08-31 02:34:28          0.98  reference
+    49998             10.336794    0 - 20K €             1.516446                    8.733694  ...                 0  2017-08-31 03:10:27          0.00  reference
+    49999              2.815616  20K - 20K €             2.244124                    7.473265  ...                 1  2017-08-31 03:10:29          1.00  reference
 
 On data, metadata and observations
 ==================================
 
-NannyML offers tools to help you monitor your **models** in production.
-To do this it needs to know the predictions your model has made over time.
-This is the actual **data** you provide to NannyML: the **model inputs** (*feature values*)
-and **model scores** (*prediction values*). Think of it as some kind of log on the usage of your model.
+NannyML offers tools to help monitor **models** in production.
+To do this it needs the following information, the monitored model's :term:`Model inputs`,
+:term:`Model predictions` and :term:`Target`. This information over time allows
+NannyML to track the monitored model's performance and raise any issues that arise.
 
-In order to apply the correct analysis on each of your model features NannyML needs some additional information,
-such as the kind of data that a feature might hold (continuous, categorical, ordinal, ...),
-the time the prediction was made etc. The set of this describing information is what we call **model metadata**.
+In order to apply the correct analysis on each of your model inputs NannyML needs some
+additional information, such as the kind of data that a feature might hold
+(continuous, categorical, ordinal, ...) and the time the prediction was made.
+The set of this describing information is what we call :term:`Model metadata`.
 
 .. image:: https://via.placeholder.com/900x300.png?text=model+invocation+process
 
 ..
     TODO: insert illustration showing model invocation and assigning names to everything
 
-Combining model inputs/outputs with metadata results in a set of rows called **observations**.
+Combining model inputs and outputs with metadata results in a set of rows called
+**observations**.
 NannyML will consume a ``pandas.DataFrame`` of these **observations** and turn these into drift
 and performance metrics.
 

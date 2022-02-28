@@ -13,8 +13,8 @@ boundary. This boundary is dependent on the structure of the data within the mod
 space. However the world is not static, and the structure of a model's input data can
 change. This change can then cause our existing decision boundary to be suboptimal.
 
-:ref:`Univariate Drift Detection<data-drift-univariate>` describes how NannyML projects
-model input data to each feature individually and
+:ref:`Univariate Drift Detection<data-drift-univariate>` describes how NannyML analyzes
+each feature individually and
 observes whether there are changes in the resulting feature distributions over time. However
 this is not enough to capture all the changes that may affect a machine learning model.
 The "butterfly" dataset, introduced below, demonstrates this. It does so by having data drift
@@ -82,21 +82,23 @@ plot that clearly shows the resulting data drift:
 
 .. code-block:: python
 
-    sns.scatterplot(
-        x=datadf.loc[datadf.week == 10, 'f1'][:1000],
-        y=datadf.loc[datadf.week == 10, 'f2'][:1000],
-        label='Week 10'
+    # let's construct a dataframe for visuzlization purposes
+    dat1 = datadf.loc[datadf.week == 10, ['f1', 'f2']][:1500]
+    dat1['week'] = 10
+    dat2 = datadf.loc[datadf.week == 16, ['f1', 'f2']][:1500]
+    dat2['week'] = 16
+    data_sample = pd.concat([dat1, dat2], ignore_index=True)
+
+    # let's plot
+    colors = nml.plots.colors.Colors
+    fig = sns.jointplot(
+        data=data_sample,
+        x="f1",
+        y="f2",
+        hue="week",
+        palette=[colors.BLUE_SKY_CRAYOLA.value, colors.RED_IMPERIAL.value]
     )
-    sns.scatterplot(
-        x=datadf.loc[datadf.week == 16, 'f1'][:1000],
-        y=datadf.loc[datadf.week == 16, 'f2'][:1000],
-        label='Week 16'
-    )
-    plt.title('Data Distributions before and after rotation drift')
-    plt.xlabel('f1')
-    plt.ylabel('f2', rotation=0)
-    plt.legend()
-    plt.savefig('butterfly-scatterplot.svg')
+    fig.fig.suptitle('Data Distributions before and after rotation drift')
 
 .. image:: ../_static/butterfly-scatterplot.svg
 
@@ -107,7 +109,7 @@ drift statistics produces the following results:
 
 .. code-block:: python
 
-    # Let's first crete the analysis and reference datasets NannyML needs.
+    # Let's first create the analysis and reference datasets NannyML needs.
     reference = datadf.loc[datadf['partition'] == 'reference'].reset_index(drop=True)
     reference.drop(['week'], axis=1, inplace=True)
     analysis = datadf.loc[datadf['partition'] == 'analysis'].reset_index(drop=True)
@@ -131,7 +133,6 @@ drift statistics produces the following results:
     for itm in md.features:
         fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
         fig.show()
-        fig.write_image(file=f"butterfly-univariate-drift-{itm.label}.svg")
 
 .. image:: ../_static/butterfly-univariate-drift-f1.svg
 
@@ -145,7 +146,6 @@ drift statistics produces the following results:
 
         fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
         fig.show()
-        fig.write_image(file=f"butterfly-univariate-drift-{itm.label}.svg")
 
 .. image:: ../_static/butterfly-univariate-drift-joyplot-f1.svg
 
@@ -153,8 +153,7 @@ drift statistics produces the following results:
 
 .. image:: ../_static/butterfly-univariate-drift-joyplot-f3.svg
 
-These results clearly show that there is no drift present on the distributions of
-the input features. It is clear that the univariate distribution results do not detect any drift.
+These results make it clear that the univariate distribution results do not detect any drift.
 However there is data drift in the butterfly dataset. It has been explicitly created with it.
 A metric that is able to capture this change is needed.
 
@@ -173,26 +172,25 @@ Let's go into more details on how NannyML has implemented this process.
 The process goes through three steps. The first step is data preparation and includes
 frequency encoding and scaling the data. Frequency encoding is used
 to convert all categorical features into numbers. Compared to one-hot encoding this
-approach doesn't increase as much the dataset dimensionality. The next thing we do
-is scale all the features to 0 mean and unit variance. This makes sure that all features
+approach doesn't increase the dataset dimensionality. The next thing we do
+is standardize all features to 0 mean and unit variance. This makes sure that all features
 contribute to PCA on equal footing.
 
 The second step is the dimensionality reduction part. NannyML uses PCA to perform this.
-By default it aims to capture 65% of the dataset's variance but the user can
-change that. The PCA algorithm is fitted on the reference dataset.
-It learns a transofrmation from the pre-processed, from the first step,
-model input space to a :term:`Latent space`. NannyML then applies this transformtion to the data
-being analyzed. This step is very crucial. It is key here
-that the representation learning method captures the internal structure of the model input data
+By default it aims to capture 65% of the dataset's variance but this is a parameter that
+can be changed. The PCA algorithm is fitted on the reference dataset and
+learns a transofrmation from the pre-processed, from the first step,
+model input space to a :term:`Latent space`. NannyML then applies this transformation to the data
+being analyzed. This step is crucial. It is key here that the representation learning
+method captures the internal structure of the model input data
 and ignores any random noise that is usually present.
 
-The third step is to transform our data from the latent space back to the preprocessed
-model input space that was computed at the end of the first step. All that is needed for that
-is to apply the inverse PCA transformation.
+The third step is to transform the data from the latent space back to the preprocessed
+model input space. All that is needed for that is to apply the inverse PCA transformation.
 
 Since the second step in the Reconstruction Error with PCA process is about compressing
-information one cannot expect to end up at the end of step three precisely with the data they
-started. Some information will be lost and this means that the reconstructed data will be slightly
+information one cannot expect at the end of step three to have precisely with the data they
+started with. Some information will be lost and this means that the reconstructed data will be slightly
 different compared to the original. Reconstruction error is a measure of how different
 the reconstructed data are from the original.
 
@@ -213,8 +211,9 @@ Because of the noise present in real world datasets, there will always be some
 variability in reconstruction error results. This variability is used to determine
 a significant change in reconstruction error. NannyMl computes the mean
 and standard deviation of the reconstruction error with PCA on the reference
-dataset. A threshold for significant change is defined as values that
-are more than three standard deviations from the mean.
+dataset based on the different results for each :term:`Data Chunk`.
+A threshold for significant change is defined as values that
+are more than three standard deviations away from the mean.
 
 Reconstruction Error with PCA on the butterfly dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,7 +233,6 @@ what it does on the butterfly dataset.
     # let's create plot with results
     fig = plots.plot_data_reconstruction_drift(rcerror_results)
     fig.show()
-    fig.write_image(file=f"butterfly-multivariate-drift.svg")
 
 
 .. image:: ../_static/butterfly-multivariate-drift.svg

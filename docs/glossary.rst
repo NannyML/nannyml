@@ -4,7 +4,7 @@ Glossary
 
 .. glossary::
 
-    ALERT
+    Alert
         An alert refers to a variable at a particular chunk that gets flagged for possible data
         drift. The alert is raised after the drift functionality of NannyML finds the drift
         characteristics for this variable and chunk to be suspect.
@@ -52,10 +52,17 @@ Glossary
                 A concatenation of your dataset name and a row number.
 
     Model
-        Definition of a model
+        A Machine Learning model that is used in production and we want to monitor its
+        performance.
 
     Model inputs
-        A variable used by our machine learning model.
+        The variables used by our machine learning model.
+
+    Model Metadata
+        Additional information regarding the model inputs such as the type of a particular
+        feature (continuous, categorical, nominal, ordinal). Information regarding when a
+        prediction was made as well as which data partition it is assigned to are also considered
+        metadata.
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.
