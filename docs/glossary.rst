@@ -19,6 +19,14 @@ Glossary
 
     Data Drift
         A change in joint distribution of :term:`Model Inputs` (P(X)).
+        
+    Data Chunk
+        Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
+        observations and predictions from single hour, day, month etc. depending on the selected interval. They can
+        be also size-based so that each chunk contains *n* observations. In that case chronology of data is still
+        maintained. Assuming that indices are in chronological order, the largest index in chunk *k* is lower than
+        smallest index in chunk *k+1*. Read more here (#TODO link to deep dive on chunks).
+
 
     Feature
         A variable used by our machine learning model. The model inputs consist of features.
@@ -55,6 +63,12 @@ Glossary
 
     Model inputs
         All :term:`Feature`s used by the model.
+
+    Model Metadata
+        Additional information regarding the model inputs such as the type of a particular
+        feature (continuous, categorical, nominal, ordinal). Information regarding when a
+        prediction was made as well as which data partition it is assigned to are also considered
+        metadata.
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.
