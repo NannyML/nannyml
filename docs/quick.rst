@@ -15,11 +15,11 @@ NannyML provides a sample synthetic dataset that can be used for testing purpose
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>> chunk_size = 5000
-    >>> data = pd.concat([reference, analysis])
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
     >>> reference.head()
-
+    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> chunk_size = 5000
+    >>> data = pd.concat([reference, analysis])
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |
 +====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+
@@ -108,7 +108,6 @@ An example of using NannyML to compute and visualize data drift for the model in
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=chunk_size)
     >>> univariate_calculator.fit(reference_data=reference)
     >>> univariate_results = univariate_calculator.calculate(data=data)
