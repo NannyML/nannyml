@@ -179,6 +179,8 @@ see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
     >>> rcerror_calculator.fit(reference_data=reference)
     >>> # let's see Reconstruction error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    >>> figure = plots.plot_data_reconstruction_drift(rcerror_results)
+    >>> figure.show()
 
 .. image:: ./_static/drift-guide-multivariate.svg
 
