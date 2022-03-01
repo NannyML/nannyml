@@ -263,8 +263,7 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 
 .. code-block:: python
 
-    >>> ranking = nml.AlertCountRanking()
-    >>> ranked_features_drifted = ranking.rank(univariate_results)
+    >>> ranked_features_drifted = nml.Ranker.by('alert_count').rank(univariate_results, metadata)
     >>> ranked_features_drifted
 
 +----+----------------------------+--------------------+--------+
