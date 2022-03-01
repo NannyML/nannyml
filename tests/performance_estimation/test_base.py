@@ -25,7 +25,7 @@ def sample_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
 @pytest.fixture
 def sample_metadata(sample_data) -> ModelMetadata:  # noqa: D103
     md = extract_metadata(sample_data[0])
-    md.ground_truth_column_name = 'work_home_actual'
+    md.target_column_name = 'work_home_actual'
     return md
 
 

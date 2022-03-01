@@ -115,7 +115,7 @@ calculate ROC AUC on relevant chunks and compare:
     >>> df_all = pd.concat([df_reference, df_analysis_full]).reset_index(drop=True)
     >>> df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
     >>> # calculate actual ROC AUC
-    >>> target_col = md.ground_truth_column_name
+    >>> target_col = md.target_column_name
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
     >>>

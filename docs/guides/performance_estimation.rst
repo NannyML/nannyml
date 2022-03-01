@@ -54,6 +54,7 @@ Let's extract the metadata and complete the missing information:
     >>> md = nml.extract_metadata(df_reference)
     >>> md.ground_truth_column_name = 'work_home_actual'
 
+
 Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
 
 Fit estimator and estimate

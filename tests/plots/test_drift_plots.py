@@ -23,7 +23,7 @@ def sample_data():  # noqa: D103
 def sample_metadata(sample_data):  # noqa: D103
     ref_data, _ = sample_data
     md = extract_metadata(ref_data)
-    md.ground_truth_column_name = 'work_home_actual'
+    md.target_column_name = 'work_home_actual'
     return md
 
 
