@@ -284,7 +284,6 @@ small chunks. Aware of the trade-offs involved pick the most appropriate option 
 
 Not enough chunks
 ~~~~~~~~~~~~~~~~~
-
 Sometimes selected chunking method may result in not enough chunks being generated in the ``reference``
 period. NannyML calculates thresholds based on variability of metrics on ``reference`` chunks (see how thresholds are
 calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is

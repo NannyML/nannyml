@@ -1,3 +1,5 @@
+.. _glossary:
+
 ========
 Glossary
 ========
@@ -130,3 +132,4 @@ Glossary
     Univariate Drift Detection
         Drift Detection methods that use each feature of our model individually
         in order to detect change in :term:`Model Inputs`.
+        
