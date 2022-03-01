@@ -155,28 +155,30 @@ drifted using drift detection on univariate features.
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_period='M')
     >>> univariate_calculator.fit(reference_data=df_ref)
     >>> univariate_results = univariate_calculator.calculate(data=pd.concat([df_ana]))
-    >>> nml.drift.ranking.rank_drifted_features(univariate_results)
+    >>> nml.Ranker.by('alert_count').rank(univariate_results, only_drifting=True)
 
 
-+----+------------+--------------------+--------+
-|    | feature    |   number_of_alerts |   rank |
-+====+============+====================+========+
-|  0 | AveOccup   |                 12 |      1 |
-+----+------------+--------------------+--------+
-|  1 | HouseAge   |                 12 |      2 |
-+----+------------+--------------------+--------+
-|  2 | Latitude   |                 12 |      3 |
-+----+------------+--------------------+--------+
-|  3 | Longitude  |                 12 |      4 |
-+----+------------+--------------------+--------+
-|  4 | MedInc     |                 11 |      5 |
-+----+------------+--------------------+--------+
-|  5 | AveRooms   |                 11 |      6 |
-+----+------------+--------------------+--------+
-|  6 | Population |                  8 |      7 |
-+----+------------+--------------------+--------+
-|  7 | AveBedrms  |                  8 |      8 |
-+----+------------+--------------------+--------+
++----+--------------+--------------------+--------+
+|    | feature      |   number_of_alerts |   rank |
++====+==============+====================+========+
+|  0 | Latitude     |                 12 |      1 |
++----+--------------+--------------------+--------+
+|  1 | AveOccup     |                 12 |      2 |
++----+--------------+--------------------+--------+
+|  2 | Longitude    |                 12 |      3 |
++----+--------------+--------------------+--------+
+|  3 | HouseAge     |                 12 |      4 |
++----+--------------+--------------------+--------+
+|  4 | y_pred_proba |                 11 |      5 |
++----+--------------+--------------------+--------+
+|  5 | MedInc       |                 11 |      6 |
++----+--------------+--------------------+--------+
+|  6 | AveRooms     |                 11 |      7 |
++----+--------------+--------------------+--------+
+|  7 | AveBedrms    |                  8 |      8 |
++----+--------------+--------------------+--------+
+|  8 | Population   |                  8 |      9 |
++----+--------------+--------------------+--------+
 
 
 It looks like there is a lot of drift in this dataset. Since we have 12
