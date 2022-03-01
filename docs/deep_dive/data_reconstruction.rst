@@ -117,7 +117,7 @@ drift statistics produces the following results:
     >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
     >>> md.identifier_column_name = 'ordered'
     >>> md.timestamp_column_name = 'ordered'
-    >>> md.ground_truth_column_name = 'y_true'
+    >>> md.target_column_name = 'y_true'
 
     >>> # Let's compute univariate drift
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=DPP)

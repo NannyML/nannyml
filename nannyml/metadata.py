@@ -14,7 +14,7 @@ from nannyml.exceptions import MissingMetadataException
 
 NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
 NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
-NML_METADATA_GROUND_TRUTH_COLUMN_NAME = 'nml_meta_ground_truth'
+NML_METADATA_TARGET_COLUMN_NAME = 'nml_meta_target'
 NML_METADATA_IDENTIFIER_COLUMN_NAME = 'nml_meta_identifier'
 NML_METADATA_TIMESTAMP_COLUMN_NAME = 'nml_meta_timestamp'
 
@@ -24,7 +24,7 @@ NML_METADATA_ANALYSIS_PARTITION_NAME = 'analysis'
 NML_METADATA_COLUMNS = [
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
-    NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_IDENTIFIER_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 ]
@@ -136,7 +136,7 @@ class ModelMetadata:
     - `identifier_column_name` : name of the column that contains a value that acts as an identifier for the
     observation, i.e. it is unique over all observations.
     - `prediction_column_name` : name of the column that contains the models' predictions
-    - `ground_truth_column_name` : name of the column that contains the ground truth / target / actual.
+    - `target_column_name` : name of the column that contains the ground truth / target / actual.
     - `partition_column_name` : name of the column that contains the partition the observation belongs to.
     Allowed partition values are 'reference' and 'analysis'.
     - `timestamp_column_name` : name of the column that contains the timestamp indicating when the observation occurred.
@@ -151,7 +151,7 @@ class ModelMetadata:
         features: List[Feature] = None,
         identifier_column_name: str = 'id',
         prediction_column_name: str = 'p',
-        ground_truth_column_name: str = 'target',
+        target_column_name: str = 'target',
         partition_column_name: str = 'partition',
         timestamp_column_name: str = 'date',
     ):
@@ -170,7 +170,7 @@ class ModelMetadata:
             observation, i.e. it is unique over all observations. Optional, defaults to `id`
         prediction_column_name : string
             The name of the column that contains the models' predictions. Optional, defaults to `p`.
-        ground_truth_column_name : string
+        target_column_name : string
             The name of the column that contains the ground truth / target / actual. Optional, defaults to `target`
         partition_column_name : string
             The name of the column that contains the partition the observation belongs to.
@@ -190,7 +190,7 @@ class ModelMetadata:
 
         self._identifier_column_name = identifier_column_name
         self._prediction_column_name = prediction_column_name
-        self._ground_truth_column_name = ground_truth_column_name
+        self._target_column_name = target_column_name
         self._partition_column_name = partition_column_name
         self._timestamp_column_name = timestamp_column_name
 
@@ -215,12 +215,12 @@ class ModelMetadata:
         self.__remove_from_features(column_name)
 
     @property
-    def ground_truth_column_name(self):  # noqa: D102
-        return self._ground_truth_column_name
+    def target_column_name(self):  # noqa: D102
+        return self._target_column_name
 
-    @ground_truth_column_name.setter
-    def ground_truth_column_name(self, column_name: str):  # noqa: D102
-        self._ground_truth_column_name = column_name
+    @target_column_name.setter
+    def target_column_name(self, column_name: str):  # noqa: D102
+        self._target_column_name = column_name
         self.__remove_from_features(column_name)
 
     @property
@@ -247,7 +247,7 @@ class ModelMetadata:
             'identifier_column_name': self.identifier_column_name,
             'timestamp_column_name': self.timestamp_column_name,
             'partition_column_name': self.partition_column_name,
-            'ground_truth_column_name': self.ground_truth_column_name,
+            'target_column_name': self.target_column_name,
             'prediction_column_name': self.prediction_column_name,
             'features': repr(self.features),
         }
@@ -275,8 +275,8 @@ class ModelMetadata:
                     'description': 'partition',
                 },
                 {
-                    'label': 'ground_truth_column_name',
-                    'column_name': self.ground_truth_column_name,
+                    'label': 'target_column_name',
+                    'column_name': self.target_column_name,
                     'type': FeatureType.CATEGORICAL.value,
                     'description': 'target',
                 },
@@ -306,7 +306,7 @@ class ModelMetadata:
             f"{'Timestamp column':25} {self.timestamp_column_name or UNKNOWN:25}",
             f"{'Partition column':25} {self.partition_column_name or UNKNOWN:25}",
             f"{'Prediction column':25} {self.prediction_column_name or UNKNOWN:25}",
-            f"{'Ground truth column':25} {self.ground_truth_column_name or UNKNOWN:25}",
+            f"{'Ground truth column':25} {self.target_column_name or UNKNOWN:25}",
             '',
             'Features',
             '',
@@ -379,10 +379,10 @@ class ModelMetadata:
         data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
         data[NML_METADATA_PREDICTION_COLUMN_NAME] = data[self.prediction_column_name]
         data[NML_METADATA_PARTITION_COLUMN_NAME] = data[self.partition_column_name]
-        if self.ground_truth_column_name in data.columns:
-            data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = data[self.ground_truth_column_name]
+        if self.target_column_name in data.columns:
+            data[NML_METADATA_TARGET_COLUMN_NAME] = data[self.target_column_name]
         else:
-            data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = np.NaN
+            data[NML_METADATA_TARGET_COLUMN_NAME] = np.NaN
 
         return data
 
@@ -421,7 +421,7 @@ class ModelMetadata:
         props_to_check = [
             'prediction_column_name',
             'timestamp_column_name',
-            'ground_truth_column_name',
+            'target_column_name',
             'timestamp_column_name',
             'partition_column_name',
         ]
@@ -480,9 +480,9 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
     check_for_nan(predictions)
     metadata.prediction_column_name = None if len(predictions) == 0 else predictions[0]  # type: ignore
 
-    ground_truths = _guess_ground_truths(data)
-    check_for_nan(ground_truths)
-    metadata.ground_truth_column_name = None if len(ground_truths) == 0 else ground_truths[0]  # type: ignore
+    targets = _guess_targets(data)
+    check_for_nan(targets)
+    metadata.target_column_name = None if len(targets) == 0 else targets[0]  # type: ignore
 
     partitions = _guess_partitions(data)
     check_for_nan(partitions)
@@ -518,7 +518,7 @@ def _guess_predictions(data: pd.DataFrame) -> List[str]:
     return [col for col in data.columns if _guess_if_prediction(data[col])]
 
 
-def _guess_ground_truths(data: pd.DataFrame) -> List[str]:
+def _guess_targets(data: pd.DataFrame) -> List[str]:
     def _guess_if_ground_truth(col: pd.Series) -> bool:
         return col.name in ['target', 'ground_truth', 'actual', 'actuals']
 
@@ -540,7 +540,7 @@ def _guess_features(data: pd.DataFrame) -> List[str]:
             + _guess_partitions(data)
             + _guess_predictions(data)
             + _guess_timestamps(data)
-            + _guess_ground_truths(data)
+            + _guess_targets(data)
         ) and (col.name not in NML_METADATA_COLUMNS)
 
     return [col for col in data.columns if _guess_if_feature(data[col])]

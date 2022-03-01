@@ -17,7 +17,7 @@ so you can get started faster.
     >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
     >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
     >>> md.timestamp_column_name = 'timestamp'
-    >>> md.ground_truth_column_name = 'work_home_actual'
+    >>> md.target_column_name = 'work_home_actual'
 
 For help with using NannyML on other data look at :ref:`import-data`.
 

@@ -19,10 +19,10 @@ from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
-    NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_REFERENCE_PARTITION_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
 
@@ -86,7 +86,7 @@ def _minimum_chunk_size(
     data: pd.DataFrame,
     partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-    ground_truth_column_name: str = NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
+    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     lower_threshold: int = 300,
 ) -> int:
     def get_prediction(X):
@@ -113,9 +113,9 @@ def _minimum_chunk_size(
 
         return prediction
 
-    class_balance = np.mean(data[ground_truth_column_name])
+    class_balance = np.mean(data[target_column_name])
     auc = roc_auc_score(
-        data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, ground_truth_column_name],
+        data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name],
         data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name],
     )
     chunk_size = get_prediction([[class_balance, auc]])

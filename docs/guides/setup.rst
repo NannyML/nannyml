@@ -45,15 +45,11 @@ such as a timestamp or partition data.
 The information describing the features, prediction, target and the columns
 where to find required data is called :term:`Model Metadata`.
 
-.. image:: https://via.placeholder.com/900x300.png?text=model+invocation+process
-
 ..
     TODO: insert illustration showing model invocation and assigning names to everything
 
 When NannyML is used on a dataset it treats each row of that set as an *observation*: a combination of metadata,
 feature inputs, the model output and target.
-
-.. image:: https://via.placeholder.com/900x300.png?text=annotated+tabular+data
 
 ..
     TODO: insert illustration that shows all data in tabular form with annotations
@@ -164,7 +160,7 @@ and data. It returns a prepopulated instance of the :class:`ModelMetadata<nannym
 
     >>> metadata = nml.extract_metadata(data=reference)
     >>> metadata
-    Metadata({'identifier_column_name': 'identifier', 'timestamp_column_name': 'timestamp', 'partition_column_name': 'partition', 'ground_truth_column_name': None, 'prediction_column_name': 'y_pred_proba', 'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"})
+    Metadata({'identifier_column_name': 'identifier', 'timestamp_column_name': 'timestamp', 'partition_column_name': 'partition', 'target_column_name': None, 'prediction_column_name': 'y_pred_proba', 'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"})
 
 The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata.print` method or returned as a
 ``dictionary`` or a ``DataFrame``.
@@ -198,7 +194,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     {'identifier_column_name': 'identifier',
      'timestamp_column_name': 'timestamp',
      'partition_column_name': 'partition',
-     'ground_truth_column_name': None,
+     'target_column_name': None,
      'prediction_column_name': 'y_pred_proba',
      'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"}
 
@@ -207,7 +203,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     0       identifier_column_name  ...                                     identifier
     1        timestamp_column_name  ...                                      timestamp
     2        partition_column_name  ...                                      partition
-    3     ground_truth_column_name  ...                                         target
+    3           target_column_name  ...                                         target
     4       prediction_column_name  ...                   prediction score/probability
     5         distance_from_office  ...        extracted feature: distance_from_office
     6                 salary_range  ...                extracted feature: salary_range
@@ -230,12 +226,12 @@ The :meth:`nannyml.metadata.Metadata.is_complete` method will check a :class:`Mo
 instance and return a tuple. The first element - a boolean - is the answer to the *is complete* question.
 The second element - an array - represents the properties that are still missing.
 
-We can see in our example that we are currently missing the ``ground_truth_column_name``.
+We can see in our example that we are currently missing the ``target_column_name``.
 
 .. code-block:: python
 
     >>> metadata.is_complete()
-    (False, ['ground_truth_column_name'])
+    (False, ['target_column_name'])
 
 Updating metadata
 -----------------
@@ -244,7 +240,7 @@ The metadata can be completed by providing the missing value.
 
 .. code-block:: python
 
-    >>> metadata.ground_truth_column_name = 'work_home_actual'
+    >>> metadata.target_column_name = 'work_home_actual'
     >>> metadata.is_complete()
     (True, [])  # yay, our metadata is all good to go!
 
