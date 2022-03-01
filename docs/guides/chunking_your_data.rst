@@ -10,17 +10,20 @@ Chunking data
 Why we need chunks?
 ===================
 
-NannyML monitors ML model performance and input data changes. Both can be reliably evaluated only on samples
-of data containing a number of observations. These samples are called chunks. All the results generated are
-calculated and presented on the level of chunk i.e. a chunk is a single data point. Go to
-:ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance-estimation>` to see example
-results.
+
+NannyML's monitors ML models in production by doing data drift detection, and performance estimation or monitoring.
+This functionality relies on aggregate metrics that are evaluated on samples of production data.
+These samples are called chunks. All the results generated are
+calculated and presented on the level of chunk i.e. a chunk is a single data point on the monitoring results. You
+can refer to :ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance-estimation>`
+to review example results.
 
 
 Creating chunks
 ===============
-
-The examples provided will explain how chunks are created depending on the instructions provided. The examples will be run based on performance estimation flow on NannyML synthetic dataset. Set up first with:
+To allow for flexibility there are many ways to create chunks. The examples provided will explain how chunks are
+created depending on the instructions provided. The examples will be run based on the performance estimation flow on
+synthetic dataset provided by NannyML. Set up first with:
 
 .. code-block:: python
 
@@ -30,13 +33,12 @@ The examples provided will explain how chunks are created depending on the instr
     >>> md.ground_truth_column_name = 'work_home_actual'
 
 
-
 Time-based chunking
 ~~~~~~~~~~~~~~~~~~~
 
 Time-based chunking is simply creating chunks based on time intervals. One chunk can contain all the observations
-from single hour, day, week, month etc. In most cases such chunks will vary in length. Specify ``chunk_period`` argument
-to get required split. See the example below that chunks data quarterly:
+from a single hour, day, week, month etc. In most cases such chunks will vary in length. Specify ``chunk_period``
+argument to get appropriate split. See the example below that chunks data quarterly:
 
 .. code-block:: python
 
@@ -251,11 +253,10 @@ indices from 44444 to 49999 point to reference observations:
     49999
 
 .. note::
-    This is especially important for Performance Estimation where ``reference`` period should be treated like a train
-    set is treated when developing ML model, whereas ``analysis`` is like test. Performance Estimation on
-    ``reference`` will be in most cases much more accurate then on ``analysis``. First chunk of ``analysis`` which
-    contains some of the ``reference`` observations will be affected by this. Be aware when interpreting the
-    results.
+    This is especially important for Performance Estimation. Since the Performance Estimation algorithm is calibrated
+    on the ``reference`` dataset (see :ref:`PE deep dive <performance-estimation-deep-dive>`), it will perform better on
+    it. If the first ``analysis`` chunk contains ``reference`` data, the performance estimation may perform better on this
+    chunk as well. Keep this in mind when interpreting the results.
 
 
 Underpopulated chunks
@@ -277,8 +278,9 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
 
 When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in above
 sections. When there are more chunks mentioned - the selected splitting method is most likely not suitable.
-Investigate that and be aware when analyzing results. See :ref:`deep dive<minimum-chunk-size>` to get a better
-understanding.
+Look at the :ref:`deep dive on minimum chunk size <minimum-chunk-size>` to get more information about the effect of
+small chunks. Aware of the trade-offs involved pick the most appropriate option for the use case.
+
 
 Not enough chunks
 ~~~~~~~~~~~~~~~~~
