@@ -112,6 +112,9 @@ Glossary
     Predictions
         A synonym for :term:`Model outputs`.
 
+    Reconstruction Error
+        The average euclidean distance between the original and the reconstructed data points in a dataset.
+
     Target
         The actual outcome of the event the machine learning model is trying to predict.
 
