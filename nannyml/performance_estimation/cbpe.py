@@ -12,7 +12,7 @@ from sklearn.metrics import auc, roc_auc_score
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory
 from nannyml.exceptions import NotFittedException
-from nannyml.metadata import NML_METADATA_GROUND_TRUTH_COLUMN_NAME, NML_METADATA_PREDICTION_COLUMN_NAME
+from nannyml.metadata import NML_METADATA_PREDICTION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
 from nannyml.performance_estimation._base import BasePerformanceEstimator
 
 
@@ -79,7 +79,7 @@ class CBPE(BasePerformanceEstimator):
 
         # Fit calibrator
         self.calibrator.fit(
-            reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME]
+            reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
         )
 
     def _estimate(self, chunks: List[Chunk]) -> pd.DataFrame:
@@ -113,9 +113,7 @@ def _calculate_alert_thresholds(
 ) -> Tuple[float, float]:
 
     realised_performance_chunks = [
-        roc_auc_score(
-            chunk.data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME], chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
-        )
+        roc_auc_score(chunk.data[NML_METADATA_TARGET_COLUMN_NAME], chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
         for chunk in reference_chunks
     ]
 

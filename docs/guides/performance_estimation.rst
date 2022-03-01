@@ -54,7 +54,7 @@ Let's extract the metadata and fill the missing values required:
 
     >>> df_ana.head(3)
     >>> md = nml.extract_metadata(df_ref)
-    >>> md.ground_truth_column_name = 'work_home_actual'
+    >>> md.target_column_name = 'work_home_actual'
 
 Full information on how the data should be prepared can be found in guide on :ref:`importing data<import-data>`.
 

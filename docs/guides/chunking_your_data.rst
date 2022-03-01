@@ -30,7 +30,7 @@ synthetic dataset provided by NannyML. Set up first with:
     >>> import nannyml as nml
     >>> df_ref, df_ana, _ = nml.datasets.load_synthetic_sample()
     >>> imd = nml.extract_metadata(df_ref)
-    >>> md.ground_truth_column_name = 'work_home_actual'
+    >>> md.target_column_name = 'work_home_actual'
 
 
 Time-based chunking

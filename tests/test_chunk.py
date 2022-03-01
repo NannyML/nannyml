@@ -22,9 +22,9 @@ from nannyml.chunk import (
 )
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
-    NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
 
@@ -56,7 +56,7 @@ def sample_chunk_data() -> pd.DataFrame:  # noqa: D103
     data['f3'] = np.random.randint(4, size=data.shape[0])
     data['f4'] = np.random.randint(20, size=data.shape[0])
     data[NML_METADATA_PREDICTION_COLUMN_NAME] = np.random.randint(2, size=data.shape[0])
-    data[NML_METADATA_GROUND_TRUTH_COLUMN_NAME] = np.random.randint(2, size=data.shape[0])
+    data[NML_METADATA_TARGET_COLUMN_NAME] = np.random.randint(2, size=data.shape[0])
     data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data['ordered_at']
 
     # Rule 1b is the shifted feature, 75% 0 instead of 50%

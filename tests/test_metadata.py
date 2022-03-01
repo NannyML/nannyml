@@ -12,19 +12,19 @@ import pytest
 
 from nannyml.exceptions import MissingMetadataException
 from nannyml.metadata import (
-    NML_METADATA_GROUND_TRUTH_COLUMN_NAME,
     NML_METADATA_IDENTIFIER_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
     Feature,
     FeatureType,
     ModelMetadata,
     _guess_features,
-    _guess_ground_truths,
     _guess_identifiers,
     _guess_partitions,
     _guess_predictions,
+    _guess_targets,
     _guess_timestamps,
     _predict_feature_types,
     extract_metadata,
@@ -150,7 +150,7 @@ def test_model_metadata_creation_with_defaults_has_correct_properties():  # noqa
     assert len(sut.features) == 0
     assert sut.identifier_column_name == 'id'
     assert sut.prediction_column_name == 'p'
-    assert sut.ground_truth_column_name == 'target'
+    assert sut.target_column_name == 'target'
     assert sut.partition_column_name == 'partition'
     assert sut.timestamp_column_name == 'date'
 
@@ -162,7 +162,7 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
         features=[sample_feature],
         identifier_column_name='ident',
         prediction_column_name='pred',
-        ground_truth_column_name='gt',
+        target_column_name='gt',
         partition_column_name='part',
         timestamp_column_name='ts',
     )
@@ -175,7 +175,7 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
     assert sut.features[0].feature_type == FeatureType.CATEGORICAL
     assert sut.identifier_column_name == 'ident'
     assert sut.prediction_column_name == 'pred'
-    assert sut.ground_truth_column_name == 'gt'
+    assert sut.target_column_name == 'gt'
     assert sut.partition_column_name == 'part'
     assert sut.timestamp_column_name == 'ts'
 
@@ -186,7 +186,7 @@ def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
     assert sut['prediction_column_name'] == 'p'
     assert sut['partition_column_name'] == 'partition'
     assert sut['timestamp_column_name'] == 'date'
-    assert sut['ground_truth_column_name'] == 'target'
+    assert sut['target_column_name'] == 'target'
 
 
 def test_to_pd_contains_all_properties(sample_model_metadata):  # noqa: D103
@@ -195,7 +195,7 @@ def test_to_pd_contains_all_properties(sample_model_metadata):  # noqa: D103
     assert sut.loc[sut['label'] == 'prediction_column_name', 'column_name'].iloc[0] == 'p'
     assert sut.loc[sut['label'] == 'partition_column_name', 'column_name'].iloc[0] == 'partition'
     assert sut.loc[sut['label'] == 'timestamp_column_name', 'column_name'].iloc[0] == 'date'
-    assert sut.loc[sut['label'] == 'ground_truth_column_name', 'column_name'].iloc[0] == 'target'
+    assert sut.loc[sut['label'] == 'target_column_name', 'column_name'].iloc[0] == 'target'
 
 
 def test_feature_filtering_by_index_delivers_correct_result(sample_model_metadata):  # noqa: D103
@@ -282,7 +282,7 @@ def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names
     assert sut is not None
     assert sut.identifier_column_name == 'identity'
     assert sut.prediction_column_name == 'prediction'
-    assert sut.ground_truth_column_name == 'actual'
+    assert sut.target_column_name == 'actual'
     assert sut.partition_column_name == 'partition'
     assert sut.timestamp_column_name == 'ts'
 
@@ -301,7 +301,7 @@ def test_extract_metadata_without_matching_columns_should_set_them_to_none():  #
     sut = extract_metadata(data)
     assert sut.identifier_column_name is None
     assert sut.prediction_column_name is None
-    assert sut.ground_truth_column_name is None
+    assert sut.target_column_name is None
     assert sut.partition_column_name is None
     assert sut.timestamp_column_name is None
 
@@ -381,7 +381,7 @@ def test_guess_predictions_yields_correct_results(col, expected):  # noqa: D103
     'col,expected', [('target', True), ('ground_truth', True), ('actual', True), ('actuals', True), ('nope', False)]
 )
 def test_guess_ground_truths_yields_correct_results(col, expected):  # noqa: D103
-    sut = _guess_ground_truths(data=pd.DataFrame(columns=[col]))
+    sut = _guess_targets(data=pd.DataFrame(columns=[col]))
     assert col == sut[0] if expected else len(sut) == 0
 
 
@@ -439,7 +439,7 @@ def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
     assert NML_METADATA_IDENTIFIER_COLUMN_NAME in sut
     assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
-    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in sut
+    assert NML_METADATA_TARGET_COLUMN_NAME in sut
     assert NML_METADATA_PARTITION_COLUMN_NAME in sut
 
 
@@ -455,7 +455,7 @@ def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
     assert NML_METADATA_IDENTIFIER_COLUMN_NAME in sut
     assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
-    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in sut
+    assert NML_METADATA_TARGET_COLUMN_NAME in sut
     assert NML_METADATA_PARTITION_COLUMN_NAME in sut
     assert 'identity' in sut
     assert 'prediction' in sut
@@ -467,10 +467,10 @@ def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
 
 def test_enrich_adds_nan_ground_truth_column_if_no_ground_truth_in_original_data(sample_data):  # noqa: D103
     md = extract_metadata(sample_data)
-    analysis_data = sample_data.drop(columns=[md.ground_truth_column_name])
+    analysis_data = sample_data.drop(columns=[md.target_column_name])
     sut = md.enrich(analysis_data)
-    assert NML_METADATA_GROUND_TRUTH_COLUMN_NAME in sut.columns
-    assert sut[NML_METADATA_GROUND_TRUTH_COLUMN_NAME].isna().all()
+    assert NML_METADATA_TARGET_COLUMN_NAME in sut.columns
+    assert sut[NML_METADATA_TARGET_COLUMN_NAME].isna().all()
 
 
 def test_categorical_features_returns_only_nominal_features(sample_model_metadata):  # noqa: D103

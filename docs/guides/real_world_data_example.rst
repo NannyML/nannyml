@@ -39,7 +39,7 @@ Let's load the dataset from NannyML datasets:
 
     >>> # extract metadata, add gt column name
     >>> md = nml.extract_metadata(df_ref)
-    >>> md.ground_truth_column_name = 'clf_target'
+    >>> md.target_column_name = 'clf_target'
     >>> md.timestamp_column_name = 'timestamp'
 
 Performance Estimation
@@ -119,7 +119,7 @@ calculate AUROC on relevant chunks and compare:
     >>> df_all = pd.concat([df_ref, df_ana_full]).reset_index(drop=True)
     >>> df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
     >>> # calculate actual ROC AUC
-    >>> target_col = md.ground_truth_column_name
+    >>> target_col = md.target_column_name
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
     >>>
