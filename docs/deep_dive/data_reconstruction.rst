@@ -7,18 +7,19 @@ Data Reconstruction with PCA
 Data Drift in Multidimensional data
 -----------------------------------
 
-Machine Learning models have multidimensional input spaces. In binary
-classification problems models are trained in order to find the optimal classification
-boundary. This boundary is dependent on the structure of the data within the model input
+Machine Learning models typically have a multidimensional input space. In binary
+classification problems, models are trained to find the optimal classification
+boundary. This boundary depends on the structure of the data within the model input
 space. However the world is not static, and the structure of a model's input data can
 change. This change can then cause our existing decision boundary to be suboptimal.
 
 :ref:`Univariate Drift Detection<data-drift-univariate>` describes how NannyML analyzes
 each feature individually and
-observes whether there are changes in the resulting feature distributions over time. However
+observes whether there are changes in the resulting feature distributions over time. However,
 this is not enough to capture all the changes that may affect a machine learning model.
-The "butterfly" dataset, introduced below, demonstrates this. It does so by having data drift
-induced by rotating some data.
+The changes in correlations and more complex changes in relationships between model inputs might have
+a significant impact on model performance without changing univariate distributions of features.
+The "butterfly" dataset, introduced below, demonstrates this.
 
 "Butterfly" Dataset
 ~~~~~~~~~~~~~~~~~~~
@@ -48,7 +49,7 @@ Let's see first how we can construct an instance of the Butterfly dataset:
 
     >>> rot = Rotation.from_euler('z', 90, degrees=True)
 
-    >>> # following proper matrix multiplication rules, we need a 3xN data matrix
+    >>> # following matrix multiplication implementation, we need a 3xN data matrix hence we transpose
     >>> ydat = np.matmul(rot.as_matrix(), xdat.T).T
 
     >>> # create overall array that has drifted and not drifted subsets.
@@ -74,8 +75,8 @@ Let's see first how we can construct an instance of the Butterfly dataset:
     >>> datadf = datadf.assign(y_pred = np.random.rand(DPP*20))
     >>> datadf = datadf.assign(y_true = np.random.randint(2, size=DPP*20))
 
-The key feature of the butterfly dataset is the data drift on it's first two features.
-This data drift is a 90 degree rotation across the z-axis. The following code creates a
+The key feature of the butterfly dataset is the data drift on its first two features.
+This data drift is introduced by a 90 degree rotation across the z-axis. The following code creates a
 plot that clearly shows the resulting data drift:
 
 .. code-block:: python
@@ -154,42 +155,36 @@ These results make it clear that the univariate distribution results do not dete
 However there is data drift in the butterfly dataset. It has been explicitly created with it.
 A metric that is able to capture this change is needed.
 
-Reconstruction Error with PCA
------------------------------
+Data Reconstruction with PCA
+----------------------------
 
 The solution to the problem posed with univariate drift statistics and the butterfly dataset
-is to use the Reconstruction Error with PCA metric. This method is able to capture
-complex changes in our data. Let's describe this method first.
-In general reconstruction error is the error resulting from re-creating
-a dataset after a dimensionality reduction transformation followed by its
-inverse transformation. The error is computed to be the mean of the Euclidean distance
-of all the points in our dataset.
+is to use the Data Reconstruction with PCA. This method is able to capture
+complex changes in our data. The algorithm implementing Data Reconstruction with PCA
+works in three steps described below.
 
-Let's go into more details on how NannyML has implemented this process.
-The process goes through three steps. The first step is data preparation and includes
+The first step is data preparation and includes
 frequency encoding and scaling the data. Frequency encoding is used
 to convert all categorical features into numbers. Compared to one-hot encoding this
 approach doesn't increase the dataset dimensionality. The next thing we do
 is standardize all features to 0 mean and unit variance. This makes sure that all features
 contribute to PCA on equal footing.
 
-The second step is the dimensionality reduction part. NannyML uses PCA to perform this.
+The second step is the dimensionality reduction part by using the PCA algorithm.
 By default it aims to capture 65% of the dataset's variance but this is a parameter that
 can be changed. The PCA algorithm is fitted on the reference dataset and
-learns a transofrmation from the pre-processed, from the first step,
-model input space to a :term:`Latent space`. NannyML then applies this transformation to the data
-being analyzed. This step is crucial. It is key here that the representation learning
-method captures the internal structure of the model input data
-and ignores any random noise that is usually present.
+learns a transformation from the pre-processed model input space to a :term:`Latent space`.
+NannyML then applies this transformation to the data
+being analyzed. It is important that the PCA method captures the internal structure of the
+model input data and ignores any random noise that is usually present.
+
 
 The third step is to transform the data from the latent space back to the preprocessed
 model input space. All that is needed for that is to apply the inverse PCA transformation.
+The euclidean distance between the original data points and their re-cosntructed counterparts
+is computed. The resulting distances are then aggregated to get their average. The resulting
+number is called :term:`Reconstruction Error`.
 
-Since the second step in the Reconstruction Error with PCA process is about compressing
-information one cannot expect at the end of step three to have precisely with the data they
-started with. Some information will be lost and this means that the reconstructed data will be slightly
-different compared to the original. Reconstruction error is a measure of how different
-the reconstructed data are from the original.
 
 Understanding Reconstruction Error with PCA
 -------------------------------------------
@@ -197,20 +192,30 @@ Understanding Reconstruction Error with PCA
 :ref:`Multivariate Drift Detection<data-drift-multivariate>` shows how one can compute
 Reconstruction Error with PCA. Let's go a bit deeper in what it means.
 
-The key thing is that reconstruction error on it's own doesn't convey
-information. It is the change in reconstruction error values over time that does so.
-It tells us whether there is data drift or not. This is because, when there is significant
+Since the second step in the Data Reconstruction with PCA method is about compressing
+information one cannot expect at the end of step three to have precisely with the data they
+started with. Some information will be lost and this means that the reconstructed data will be slightly
+different compared to the original. Reconstruction error is therefore a measure of how different
+the reconstructed data are from the original.
+
+The reconstruction error on it's own doesn't convey much information.
+One cannot draw conclusions by knowing that a specific dataset has reconstruction error of 0.25 units.
+It is the change in reconstruction error values over time that has valuable insight.
+It tells us whether there is data drift or not. This is because, when there is
 data drift, the principal compoments of the model input data, that the PCA method has learnt,
-are now slightly different. This will result in worse reconstruction of the new data and
+are now different. This will result in worse reconstruction of the new data and
 therefore increased reconstruction error.
 
+As described above a change in reconstruction error implies that the internal structure of a dataset
+has changed. But the change in reconstruction error needed to draw that conclusion has not been quantified.
 Because of the noise present in real world datasets, there will always be some
 variability in reconstruction error results. This variability is used to determine
 a significant change in reconstruction error. NannyMl computes the mean
 and standard deviation of the reconstruction error with PCA on the reference
-dataset based on the different results for each :term:`Data Chunk`.
-A threshold for significant change is defined as values that
-are more than three standard deviations away from the mean.
+dataset based on the different results for each :term:`Data Chunk`. This establishes
+a range of expected values of reconstruction error. A threshold for significant change
+in NannyML is defined as values that are more than three standard deviations away from the mean
+of the reference data.
 
 Reconstruction Error with PCA on the butterfly dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
