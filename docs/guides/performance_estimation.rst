@@ -4,9 +4,7 @@
 Performance Estimation
 ======================
 
-This guide will explain how to use NannyML to estimate performance of monitored model (in absence of ground truth).
-The guide is based on synthetic dataset where the monitored model is predicting whether an employee is working from
-home.
+This guide explains how to use NannyML to estimate the performance of a monitored model (in absence of ground truth). The guide is based on a synthetic dataset where the monitored model predicts whether an employee will work from home.
 
 Prepare the data
 ================
@@ -17,8 +15,8 @@ Let's first load the data and have a quick look:
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>> df_ref, df_ana, df_ana_gt = nml.datasets.load_synthetic_sample()
-    >>> df_ref.head(3)
+    >>> df_reference, df_analysis, df_analysis_gt = nml.datasets.load_synthetic_sample()
+    >>> df_reference.head(3)
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |
@@ -32,7 +30,7 @@ Let's first load the data and have a quick look:
 
 .. code-block:: python
 
-    >>> df_ana.head(3)
+    >>> df_analysis.head(3)
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier | timestamp           |   y_pred_proba | partition   |
@@ -44,19 +42,19 @@ Let's first load the data and have a quick look:
 |  2 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    |  4.58895 |        50002 | 2017-08-31 05:56:44 |           0.98 | analysis    |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
 
-``df_ref`` and ``df_ana`` correspond to respectively ``reference`` and ``analysis`` partitions of monitored data. To
-understand what they are read about :ref:`data partitions<data-drift-partitions>`. Let's leave
-``df_ana_gt`` for now, it will be described and used later.
+``df_reference`` and ``df_analysis`` correspond to ``reference`` and ``analysis`` partitions of the monitored data. To
+understand what they are read :ref:`data partitions<data-drift-partitions>`. Let's leave
+``df_analysis_gt`` for now, it will be described and used later.
 
-Let's extract the metadata and fill the missing values required:
+Let's extract the metadata and complete the missing information:
 
 .. code-block:: python
 
-    >>> df_ana.head(3)
-    >>> md = nml.extract_metadata(df_ref)
+    >>> df_analysis.head(3)
+    >>> md = nml.extract_metadata(df_reference)
     >>> md.ground_truth_column_name = 'work_home_actual'
 
-Full information on how the data should be prepared can be found in guide on :ref:`importing data<import-data>`.
+Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
 
 Fit estimator and estimate
 ==========================
@@ -67,23 +65,22 @@ method needs to be specified now. Read more about chunking in relevant :ref:`gui
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5000)
-    >>> cbpe.fit(reference_data=df_ref)
+    >>> cbpe.fit(reference_data=df_reference)
 
-Fitted ``cbpe`` can be used to estimate performance on other data. Typically this would be used on the
-latest production data where ground truth is missing (i.e. the ``analysis`` partition).
-However, to get a better context it can be also used on combined
-``reference`` and ``analysis`` data:
+The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
+Typically, this would be used on the latest production data where ground truth is missing (i.e. the ``analysis``
+partition). However, it can be also used on combined ``reference`` and ``analysis`` data:
 
 .. code-block:: python
 
-    >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
+    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
 
-To find out how CBPE estimates performance read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
+To find out how CBPE estimates performance, read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
 
 View the results
 ==============================
 
-The results can be investigated in the form of data:
+To get the data frame with results:
 
 .. code-block:: python
 
@@ -103,7 +100,7 @@ The results can be investigated in the form of data:
 
 Apart from chunking and chunk and partition-related data, the results data have the following columns:
 
- - ``estimated_roc_auc`` - the estimate of performance for specific chunk,
+ - ``estimated_roc_auc`` - the estimate of ROC AUC for a specific chunk,
  - ``confidence`` - the width of the confidence band. It is equal to 1 standard deviation of performance estimates on
    `reference` data (hence calculated during ``fit`` phase).
  - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
@@ -115,7 +112,7 @@ Apart from chunking and chunk and partition-related data, the results data have 
    upper or lower threshold.
 
 
-Results can be also view in the form of plot:
+The results can be also plotted:
 
 .. image:: ../_static/performance_estimation_guide_synth.svg
 
@@ -124,12 +121,12 @@ Compare with the actual performance
 ===================================
 
 When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
-ground truth is given in ``df_ana_gt`` variable. It consists of ``identifier`` that allows to match it with
+ground truth is given in ``df_analysis_gt`` variable. It consists of ``identifier`` that allows to match it with
 ``analysis`` data and the target for monitored model - ``work_home_actual``:
 
 .. code-block:: python
 
-    >>> df_ana_gt.head(3)
+    >>> df_analysis_gt.head(3)
 
 
 +----+--------------+--------------------+
@@ -147,8 +144,8 @@ ground truth is given in ``df_ana_gt`` variable. It consists of ``identifier`` t
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
     >>>
-    >>> df_ana_full = pd.merge(df_ana, df_ana_gt, on = 'identifier')
-    >>> df_all = pd.concat([df_ref, df_ana_full]).reset_index(drop=True)
+    >>> df_analysis_full = pd.merge(df_analysis, df_analysis_gt, on = 'identifier')
+    >>> df_all = pd.concat([df_reference, df_analysis_full]).reset_index(drop=True)
     >>>
     >>> target_col = 'work_home_actual'
     >>> pred_score_col = 'y_pred_proba'
