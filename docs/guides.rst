@@ -4,7 +4,7 @@ User Guides
 .. toctree::
     :maxdepth: 2
 
-    guides/importing_your_data
+    guides/setup
     guides/chunking_your_data
     guides/data_drift
     guides/performance_estimation
