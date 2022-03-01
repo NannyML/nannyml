@@ -64,7 +64,9 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
     ) -> pd.DataFrame:
         # Get lists of categorical <-> categorical features
         categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
-        continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features]
+        continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features] + [
+            self.model_metadata.prediction_column_name
+        ]
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.

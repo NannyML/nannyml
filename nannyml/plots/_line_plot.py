@@ -56,7 +56,7 @@ def _line_plot(
     chunk_labels=None,
     marker_labels=None,
     metric_format='{0:.4f}',
-    hover_date_label_format='%d/%b',
+    hover_date_label_format='%d/%b/%y',
     threshold_value_format='{0:.2f}',
     v_line_separating_analysis_period=True,
     figure=None,
@@ -98,10 +98,12 @@ def _line_plot(
 
     layout = go.Layout(
         title=title,
-        xaxis=dict(title=x_axis_title, linecolor=colors[2], showgrid=False, mirror=True),
-        yaxis=dict(title=y_axis_title, linecolor=colors[2], showgrid=False, range=y_axis_lim, mirror=True),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(title=x_axis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
+        yaxis=dict(
+            title=y_axis_title, linecolor=colors[2], showgrid=False, range=y_axis_lim, mirror=True, zeroline=False
+        ),
+        paper_bgcolor='rgba(255,255,255,1)',
+        plot_bgcolor='rgba(255,255,255,1)',
         legend=dict(itemclick=False, itemdoubleclick=False),
     )
 

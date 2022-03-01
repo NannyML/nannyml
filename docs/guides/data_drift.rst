@@ -31,7 +31,6 @@ distribution of the model's input data stays the same, but their relationship wi
 changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` while
 :math:`P(\mathbf{X'}) = P(\mathbf{X})`.
 
-.. _data-partitions:
 
 .. _data-drift-partitions:
 
@@ -282,6 +281,23 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 +----+----------------------------+--------------------+--------+
 |  6 | gas_price_per_litre        |                  0 |      7 |
 +----+----------------------------+--------------------+--------+
+
+Drift Detection for Model Outputs
+---------------------------------
+
+NannyML allows for monitoring :term:`Model Outputs` for data drift. It uses the same methodology as it would for a continuous feature.
+The results are actually already computed in our ``univariate_results`` object. We can visualize them with:
+
+.. code-block:: python
+
+    >>> fig = plots.plot_univariate_statistical_prediction_drift(univariate_results, metric='statistic')
+    >>> fig.show()
+
+.. image:: ../_static/drift-guide-predictions.svg
+
+Looking at the results we see that we have a false alert on the first chunk of the analysis data. This
+can happen when the statistical tests consider significant a small change in the distribtion of a variable
+in the chunks.
 
 .. _data-drift-multivariate:
 

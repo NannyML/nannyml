@@ -1,11 +1,11 @@
 .. _performance-estimation-deep-dive:
 
-======================
-Performance Estimation
-======================
-
+=======================================
 Confidence-based Performance Estimation
-===========================================
+=======================================
+
+Introduction
+============
 
 A binary classification model for each predictions returns two outputs - class (binary) and class probability
 estimate (sometimes referred to as *score*).

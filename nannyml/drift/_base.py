@@ -36,7 +36,9 @@ class DriftCalculator(abc.ABC):
         """
         self.model_metadata = model_metadata
         if not features:
-            features = [f.column_name for f in self.model_metadata.features]
+            features = [f.column_name for f in self.model_metadata.features] + [
+                self.model_metadata.prediction_column_name
+            ]
         self.selected_features = features
 
     def fit(self, reference_data: pd.DataFrame):
@@ -81,7 +83,7 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             Metadata telling the DriftCalculator what columns are required for drift calculation.
         features: List[str]
             An optional list of feature column names. When set only these columns will be included in the
-            drift calculation. If not set it will default to all feature column names.
+            drift calculation. If not set it will default to all feature column names and the model prediction.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.

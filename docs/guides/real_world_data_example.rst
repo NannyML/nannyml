@@ -1,3 +1,4 @@
+=============================
 Example on real world dataset
 =============================
 
@@ -40,12 +41,12 @@ Let's estimate performance for reference and analysis partitions:
 
 .. parsed-literal::
 
-    C:\Users\jakub\anaconda3\envs\p38nml\lib\site-packages\nannyml\chunk.py:231: UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be statistically relevant and might negatively influence the quality of calculations.Please consider splitting your data in a different way or continue at your own risk.
-      warnings.warn(
+    UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be statistically relevant and might negatively influence the quality of calculations.Please consider splitting your data in a different way or continue at your own risk.
 
 Some chunks are too small, most likely the last one, let's see:
 
 .. code:: ipython3
+
     est_perf.tail(3)
 
 
@@ -90,7 +91,7 @@ CBPE estimates significant performance drop in the chunk corresponding
 to the month of September.
 
 Comparison with the actual performance
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let’s use the ground truth that we have to
 calculate AUROC on relevant chunks and compare:
@@ -222,6 +223,7 @@ chunk. This was expected as the original dataset has observations from
 nearby locations next to each other. Let’s see it on the scatter plot:
 
 .. code:: ipython3
+
     analysis_res = est_perf[est_perf['partition']=='analysis']
     plt.figure(figsize=(8,6))
     for idx in analysis_res.index[:10]:
@@ -233,8 +235,3 @@ nearby locations next to each other. Let’s see it on the scatter plot:
     plt.ylabel('Longitude')
 
 .. image:: ../_static/example_california_latitude_longitude_scatter.svg
-
-
-
-
-

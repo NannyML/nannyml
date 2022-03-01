@@ -61,7 +61,7 @@ class CalibratorFactory:
 
         Examples
         --------
-        >>> CalibratorFactory.create('isotonic', lambda kwargs: IsotonicCalibrator())
+        >>> CalibratorFactory.register_calibrator('isotonic', lambda kwargs: IsotonicCalibrator())
         """
         cls._calibrators[key] = create_calibrator
 

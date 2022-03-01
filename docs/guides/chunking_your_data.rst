@@ -9,6 +9,7 @@ Chunking data
 
 Why we need chunks?
 ===================
+
 NannyML monitors ML model performance and input data changes. Both can be reliably evaluated only on samples
 of data containing a number of observations. These samples are called chunks. All the results generated are
 calculated and presented on the level of chunk i.e. a chunk is a single data point. Go to
@@ -32,6 +33,7 @@ The examples provided will explain how chunks are created depending on the instr
 
 Time-based chunking
 ~~~~~~~~~~~~~~~~~~~
+
 Time-based chunking is simply creating chunks based on time intervals. One chunk can contain all the observations
 from single hour, day, week, month etc. In most cases such chunks will vary in length. Specify ``chunk_period`` argument
 to get required split. See the example below that chunks data quarterly:
@@ -84,6 +86,7 @@ Possible time offsets are listed in the table below:
 
 Size-based chunking
 ~~~~~~~~~~~~~~~~~~~
+
 Chunks can be of fixed size i.e. each chunk contains the same number of observations. Set this up by specifying
 ``chunk_size`` parameter:
 
@@ -131,6 +134,7 @@ Chunks can be of fixed size i.e. each chunk contains the same number of observat
 
 Number-based chunking
 ~~~~~~~~~~~~~~~~~~~~~
+
 The total number of chunks can be fixed by ``chunk_number`` parameter:
 
 .. code-block:: python
@@ -195,6 +199,7 @@ dive<minimum-chunk-size>`):
 
 Chunks on plots with results
 ============================
+
 Finally, once the chunking method is selected, the full performance estimation can be run:
 
     .. code-block:: python
@@ -213,8 +218,10 @@ pointer is hoovered over a marker, information about the chunk period will be sh
 
 Additional considerations
 =========================
+
 Different partitions within one chunk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 If you want to get performance estimation or data drift results for a dataset that contains two
 partitions - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
 them. Such chunk will be considered as ``analysis`` chunk, even if only one observation belongs to ``analysis``
@@ -253,6 +260,7 @@ indices from 44444 to 49999 point to reference observations:
 
 Underpopulated chunks
 ~~~~~~~~~~~~~~~~~~~~~
+
 Depending on the selected chunking method and the provided datasets, some chunks may be very small. In fact, they
 might so small that results obtained are governed by noise rather than actual signal. NannyML estimates minimum chunk
 size for the monitored data and model provided (see how in :ref:`deep dive<minimum-chunk-size>`). If some of the chunks
@@ -280,6 +288,7 @@ calculated for :ref:`performance estimation<performance-estimation-thresholds>`)
 far from optimal but a reasonable minimum. If there are less than 6 chunks, a warning will be raised:
 
 .. code-block:: python
+
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
     >>> cbpe.fit(reference_data=df_ref)
     >>> est_perf = cbpe.estimate(df_ana)

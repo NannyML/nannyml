@@ -131,14 +131,14 @@ class ModelMetadata:
     - `model_name` : a human-readable name for the model
     - `model_purpose` : an optional description of the use for your model
     - `model_problem` : the kind of problem your model is trying to solve.
-        We currently only support `binary_classification` problems but are planning to support more very soon!
+    We currently only support `binary_classification` problems but are planning to support more very soon!
     - `features` : the list of Features for the model
     - `identifier_column_name` : name of the column that contains a value that acts as an identifier for the
-        observation, i.e. it is unique over all observations.
+    observation, i.e. it is unique over all observations.
     - `prediction_column_name` : name of the column that contains the models' predictions
     - `ground_truth_column_name` : name of the column that contains the ground truth / target / actual.
     - `partition_column_name` : name of the column that contains the partition the observation belongs to.
-        Allowed partition values are 'reference' and 'analysis'.
+    Allowed partition values are 'reference' and 'analysis'.
     - `timestamp_column_name` : name of the column that contains the timestamp indicating when the observation occurred.
 
     """

@@ -10,6 +10,7 @@ home.
 
 Prepare the data
 ================
+
 Let's first load the data and have a quick look:
 
 .. code-block:: python
@@ -44,7 +45,7 @@ Let's first load the data and have a quick look:
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
 
 ``df_ref`` and ``df_ana`` correspond to respectively ``reference`` and ``analysis`` partitions of monitored data. To
-understand what they are read about :ref:`data partitions<data-partitions>`. Let's leave
+understand what they are read about :ref:`data partitions<data-drift-partitions>`. Let's leave
 ``df_ana_gt`` for now, it will be described and used later.
 
 Lets extract the metadata and fill the missing values required:
@@ -60,6 +61,7 @@ Full information on how the data should be prepared can be found in guide on :re
 
 Fit estimator and estimate
 ==========================
+
 In the next step Confidence-based Performance Estimation (CBPE) estimator is fitted on ``reference`` data. Chunking
 method needs to be specified now. Read more about chunking in relevant :ref:`guide<chunk-data>`.
 

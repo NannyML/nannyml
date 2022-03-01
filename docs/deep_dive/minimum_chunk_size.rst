@@ -44,7 +44,7 @@ size for the monitored data and raises a warning if the selected split results i
 Since NannyML is performance-oriented, the minimum chunk size is estimated in order to keep variation of performance
 of your model *low*. *Low*  is defined by the rule of thumb:
 - For models with ROC AUC below 0.9 we want to have chunks for which standard deviation of ROC AUC on chunks is lower
-than 0.01.
+  than 0.01.
 - For other models, standard deviation of ROC AUC on chunks should be below 0.02.
 
 Typical way to approach the task of finding minimum chunk size would be to iterate on the monitored data to find the

@@ -9,4 +9,3 @@ User Guides
     guides/data_drift
     guides/performance_estimation
     guides/real_world_data_example
-    guides/california

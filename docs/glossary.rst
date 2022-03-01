@@ -21,7 +21,7 @@ Glossary
 
     Data Drift
         A change in joint distribution of :term:`Model Inputs` (P(X)).
-        
+
     Data Chunk
         Data chunk is simply a subset of data. Chunks are usually created based on time periods - they contain all the
         observations and predictions from single hour, day, month etc. depending on the selected interval. They can
@@ -64,7 +64,7 @@ Glossary
         Definition of a model.
 
     Model inputs
-        All :term:`Feature`s used by the model.
+        Every :term:`Feature` used by the model.
 
     Model Metadata
         Additional information regarding the model inputs such as the type of a particular
