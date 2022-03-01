@@ -186,4 +186,4 @@ see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
 Putting everything together, we see that 4 features exhibit data drift during late 2019. They are
 ``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
-This drift is responsible for the potential negative impact in performance that we observed. 
+This drift is responsible for the potential negative impact in performance that we observed.

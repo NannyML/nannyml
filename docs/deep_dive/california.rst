@@ -4,15 +4,15 @@
 California Housing Dataset
 ==========================
 
-We are usng the `California Housing Dataset`_ to create a real data example dataset for
+We are using the `California Housing Dataset`_ to create a real data example dataset for
 NannyML. There are three steps needed for this process:
 
-- Enrich the data so they have the proper context for NannyML's usecase.
-- Train a model from those data to play the role of the monitored model.
-- Prepare the data
+- Enriching the data
+- Training a Machine Learning Model
+- Meeting NannyML Data Requirements
 
 
-Before this however the data need to be acquired first:
+Let’s start by loading the dataset:
 
 .. code-block:: python
 
@@ -36,15 +36,15 @@ Before this however the data need to be acquired first:
 Enriching the data
 ==================
 
-The things needed to be added to the dataset are:
+The things that need to be added to the dataset are:
 
-- A time aspect
-- Partitioning the data
-- Specifying a target to make the problem a classification problem
+- A time dimension
+- Splitting the data into reference and analysis sets
+- A binary classification target
 
 .. code-block:: python
 
-    # add artificiacl timestamp
+    # add artificial timestamp
     timestamps = [dt.datetime(2020,1,1) + dt.timedelta(hours=x/2) for x in df.index]
     df['timestamp'] = timestamps
 
@@ -63,8 +63,8 @@ The things needed to be added to the dataset are:
     df = df.drop('MedHouseVal', axis=1)
     del df_train
 
-Adding a Machine Learning Model
-===============================
+Training a Machine Learning Model
+=================================
 
 .. code-block:: python
 
@@ -80,15 +80,15 @@ Adding a Machine Learning Model
     clf.fit(df_train[features], df_train[target])
     df['y_pred_proba'] = clf.predict_proba(df[features])[:,1]
 
-    # Check roc auc scores
+    # Check roc auc score
     for partition_name, partition_data in df.groupby('partition', sort=False):
         print(partition_name, roc_auc_score(partition_data[target], partition_data['y_pred_proba']))
     train 1.0
     test 0.8737681614409617
     production 0.8224322932364313
 
-Preparing Data for NannyML
-==========================
+Meeting NannyML Data Requirements
+=================================
 
 The data are now being splitted so they can be in a form required by NannyML.
 
@@ -98,13 +98,13 @@ The data are now being splitted so they can be in a form required by NannyML.
     df_for_nanny['partition'] = df_for_nanny['partition'].map({'test':'reference', 'production':'analysis'})
     df_for_nanny['identifier'] = df_for_nanny.index
 
-    df_ref = df_for_nanny[df_for_nanny['partition']=='reference'].copy()
-    df_ana = df_for_nanny[df_for_nanny['partition']=='analysis'].copy()
-    df_gt = df_ana[['identifier', 'clf_target']].copy()
-    df_ana = df_ana.drop('clf_target', axis=1)
+    reference = df_for_nanny[df_for_nanny['partition']=='reference'].copy()
+    analysis = df_for_nanny[df_for_nanny['partition']=='analysis'].copy()
+    analysis_target = analysis[['identifier', 'clf_target']].copy()
+    analysis = analysis.drop('clf_target', axis=1)
 
-The ``df_ref`` dataframe represents the reference :term:`Partition` and the ``df_ana``
-dataframe represents the analysis partition. The ``df_gt`` dataframe contains the targets
+The ``reference`` dataframe represents the reference :term:`Partition` and the ``analysis``
+dataframe represents the analysis partition. The ``analysis_target`` dataframe contains the targets
 for the analysis partition that is provided separately.
 
 
