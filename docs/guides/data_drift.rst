@@ -297,7 +297,7 @@ The results are actually already computed in our ``univariate_results`` object. 
 
 NannyML can also show how the distributions of the model predictions evolved over time:
 
-.. image:: ../_static/placeholder.svg
+.. image:: ../_static/drift-guide-predictions-joyplot.svg
 
 
 Looking at the results we see that we have a false alert on the first chunk of the analysis data. This

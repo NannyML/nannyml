@@ -36,6 +36,7 @@ Let's load the dataset from NannyML datasets:
 
 
 .. code:: python
+
     >>> # extract metadata, add gt column name
     >>> md = nml.extract_metadata(df_ref)
     >>> md.ground_truth_column_name = 'clf_target'
