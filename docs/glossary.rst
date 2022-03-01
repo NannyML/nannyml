@@ -62,7 +62,7 @@ Glossary
         Definition of a model.
 
     Model inputs
-        All :term:`Feature`s used by the model.
+        Every :term:`Feature` used by the model.
 
     Model Metadata
         Additional information regarding the model inputs such as the type of a particular
