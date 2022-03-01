@@ -184,7 +184,9 @@ def _create_joy_plot(
 
     layout = go.Layout(
         title=title,
-        xaxis=dict(title=x_axis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
+        xaxis=dict(
+            title=x_axis_title, linecolor=colors[2], range=x_axis_lim, showgrid=False, mirror=True, zeroline=False
+        ),
         yaxis=dict(
             title=y_axis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False
         ),
