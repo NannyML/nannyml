@@ -26,11 +26,9 @@ distributions between the training and production data are different, meaning
 a specific outcome does not change, namely :math:`P(\mathbf{X'}|y') = P(\mathbf{X}|y)`.
 
 It is important to note that data drift is not the only change that can happen when there is a
-machine learning model in production. Another important change is concept drift, where the
-distribution of the model's input data stays the same, but their relationship with the outcome
-changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})` while
-:math:`P(\mathbf{X'}) = P(\mathbf{X})`. In production it can happen that a model
-experiences data drift and concept drift simultaneously.
+machine learning model in production. Another important change is concept drift, where the relationship 
+between the model inputs and the target changes. In this case we have: :math:`P(y'|\mathbf{X'}) \neq P(y|\mathbf{X})`.
+In production it can happen that a model experiences data drift and concept drift simultaneously.
 
 
 .. _data-drift-partitions:
@@ -250,8 +248,8 @@ stacked bar charts for categorical variables. It does so with the following code
 .. image:: ../_static/drift-guide-stacked-workday.svg
 
 NannyML highlights the areas with possible data drift.
-Here, the ``tenure`` feature has two alerts that are false positives. That is so
-because the measure of the drift, as shown by the KS d-statistic is very low. This is
+Here, the ``tenure`` feature has two alerts that are false positives, from a model monitoring
+point of view. That is so because the measure of the drift, as shown by the KS d-statistic is very low. This is
 in conrast to the alerts for the ``public_transportation_cost`` for example, where
 the KS d-statistc grows significantly.
 The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
