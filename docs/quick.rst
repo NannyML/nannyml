@@ -174,7 +174,6 @@ see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=md, chunk_size=5000)
     >>> # NannyML compares drift versus the full reference dataset.
     >>> rcerror_calculator.fit(reference_data=reference)
