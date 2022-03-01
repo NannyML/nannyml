@@ -194,7 +194,7 @@ that the learned structure no longer accurately approximates the current data st
 Reconstruction Error with PCA.
 
 Applying PCA as part of the Data Reconstruction with PCA means that we lose some information about our dataset.
-This means that the reconstructed data will be slightly different compared to the original and reconstruction 
+This means that the reconstructed data will be slightly different compared to the original and reconstruction
 error reflects that. However the change in reconstruction error values over time has valuable insight.
 It tells us whether there is data drift or not. This is because, when there is
 data drift, the principal compoments of the model input data, that the PCA method has learnt,
