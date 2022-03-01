@@ -129,7 +129,7 @@ ground truth is given in ``df_ana_gt`` variable. It consists of ``identifier`` t
 
 .. code-block:: python
 
-    >>> est_perf.head(3)
+    >>> df_ana_gt.head(3)
 
 
 +----+--------------+--------------------+
