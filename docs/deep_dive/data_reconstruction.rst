@@ -165,8 +165,7 @@ works in three steps described below.
 
 The first step is data preparation and includes
 frequency encoding and scaling the data. Frequency encoding is used
-to convert all categorical features into numbers. Compared to one-hot encoding this
-approach doesn't increase the dataset dimensionality. The next thing we do
+to convert all categorical features into numbers. The next thing we do
 is standardize all features to 0 mean and unit variance. This makes sure that all features
 contribute to PCA on equal footing.
 
@@ -180,7 +179,7 @@ model input data and ignores any random noise that is usually present.
 
 
 The third step is to transform the data from the latent space back to the preprocessed
-model input space. All that is needed for that is to apply the inverse PCA transformation.
+model input space, using the inverse PCA transformation.
 The euclidean distance between the original data points and their re-cosntructed counterparts
 is computed. The resulting distances are then aggregated to get their average. The resulting
 number is called :term:`Reconstruction Error`.
@@ -189,25 +188,19 @@ number is called :term:`Reconstruction Error`.
 Understanding Reconstruction Error with PCA
 -------------------------------------------
 
+As PCA learns the internal structure of the data, a significant change in the reconstruction error means
+that the learned structure no longer accurately approximates the current data structure. This indicates data drift.
 :ref:`Multivariate Drift Detection<data-drift-multivariate>` shows how one can compute
-Reconstruction Error with PCA. Let's go a bit deeper in what it means.
+Reconstruction Error with PCA.
 
-Since the second step in the Data Reconstruction with PCA method is about compressing
-information one cannot expect at the end of step three to have precisely with the data they
-started with. Some information will be lost and this means that the reconstructed data will be slightly
-different compared to the original. Reconstruction error is therefore a measure of how different
-the reconstructed data are from the original.
-
-The reconstruction error on it's own doesn't convey much information.
-One cannot draw conclusions by knowing that a specific dataset has reconstruction error of 0.25 units.
-It is the change in reconstruction error values over time that has valuable insight.
+Applying PCA as part of the Data Reconstruction with PCA means that we lose some information about our dataset.
+This means that the reconstructed data will be slightly different compared to the original and reconstruction
+error reflects that. However the change in reconstruction error values over time has valuable insight.
 It tells us whether there is data drift or not. This is because, when there is
 data drift, the principal compoments of the model input data, that the PCA method has learnt,
 are now different. This will result in worse reconstruction of the new data and
 therefore increased reconstruction error.
 
-As described above a change in reconstruction error implies that the internal structure of a dataset
-has changed. But the change in reconstruction error needed to draw that conclusion has not been quantified.
 Because of the noise present in real world datasets, there will always be some
 variability in reconstruction error results. This variability is used to determine
 a significant change in reconstruction error. NannyMl computes the mean
