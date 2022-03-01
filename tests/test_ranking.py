@@ -27,7 +27,7 @@ def sample_drift_result() -> pd.DataFrame:  # noqa: D103
 
 
 @pytest.fixture
-def sample_metadata(sample_drift_result):
+def sample_metadata(sample_drift_result):  # noqa: D103
     md = nannyml.metadata.extract_metadata(sample_drift_result)
     md.prediction_column_name = 'prediction'
     return md
