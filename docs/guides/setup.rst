@@ -217,7 +217,58 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
 .. warning::
     Because the extraction is based on simple rules the results are never guaranteed to be completely correct.
     It is strongly advised to review the results of :func:`extract_metadata<nannyml.metadata.extract_metadata>`
-    and adapt the values where needed.
+    and update the values where needed.
+
+Heuristics
+----------
+
+NannyML uses some simple heuristics to detect metadata, often by naming convention. By using the right column names,
+NannyML can extract all required metadata automatically.
+
+These metadata properties follow simple naming conventions for discovery:
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Metadata property
+     - Naming convention
+   * - ``identifier_column_name``
+     - ``column_name in ['id', 'ident', 'identity', 'identifier', 'uid', 'uuid']``
+   * - ``timestamp_column_name``
+     - ``column_name in ['date', 'timestamp', 'ts', 'date', 'time']``
+   * - ``prediction_column_name``
+     - ``column_name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred', 'y_pred_proba']``
+   * - ``target_column_name``
+     - ``column_name in ['target', 'ground_truth', 'actual', 'actuals']``
+   * - ``partition_column_name``
+     - ``column_name in ['partition']``
+
+Any column not flagged as one of the above is considered to be a feature. To assign the appropriate
+:class:`feature type<nannyml.metadata.FeatureType>` NannyML will evaluate the feature values and apply
+the following heuristic:
+
+.. code-block:: python
+
+    # When there are is not enough data to deduce anything
+    if row_count < INFERENCE_NUM_ROWS_THRESHOLD:
+        return FeatureType.UNKNOWN
+
+    # If the values are floats, the feature is likely continuous
+    if data_type == 'float64':
+        return FeatureType.CONTINUOUS
+
+    # If a high number of all values are unique, the feature is likely continuous
+    if unique_fraction >= INFERENCE_HIGH_CARDINALITY_THRESHOLD:
+        return FeatureType.CONTINUOUS
+
+    # If a low enough number of the values are unique, the feature is likely categorical
+    elif INFERENCE_LOW_CARDINALITY_THRESHOLD <= unique_fraction <= INFERENCE_MEDIUM_CARDINALITY_THRESHOLD:
+        return FeatureType.CATEGORICAL
+
+    # In any other case any there is not enough certainty
+    else:
+        return FeatureType.UNKNOWN
 
 NannyML will raise exceptions when trying to run calculations with incomplete metadata, i.e. when not all properties
 were provided. NannyML includes a quick way to check if the metadata is fully completed.
