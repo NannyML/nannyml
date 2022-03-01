@@ -295,6 +295,11 @@ The results are actually already computed in our ``univariate_results`` object. 
 
 .. image:: ../_static/drift-guide-predictions.svg
 
+NannyML can also show how the distributions of the model predictions evolved over time:
+
+.. image:: ../_static/placeholder.svg
+
+
 Looking at the results we see that we have a false alert on the first chunk of the analysis data. This
 can happen when the statistical tests consider significant a small change in the distribtion of a variable
 in the chunks.
