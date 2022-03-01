@@ -89,6 +89,15 @@ When there are a lot of drifted features NannyML can also rank them, ordering th
 |  6 | gas_price_per_litre        |                  0 |      7 |
 +----+----------------------------+--------------------+--------+
 
+NannyML can also look for drift in the model outputs:
+
+.. code-block:: python
+
+    >>> fig = plots.plot_univariate_statistical_prediction_drift(univariate_results, metric='statistic')
+    >>> fig.show()
+
+.. image:: ../_static/drift-guide-predictions.svg
+
 NannyML also uses Data Reconstruction with PCA to compute the reconstruction error and detect more complex
 data drift cases. More information can be found at
 :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
@@ -104,7 +113,10 @@ data drift cases. More information can be found at
     >>> # let's see RC error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
 
-.. image:: ../_static/drift-guide-multivariate.svg
+.. image:: _static/drift-guide-multivariate.svg
+
+Putting everything together we see that we have some false alerts for the early analysis data
+and some true alerts for the late analysis data!
 
 Estimating Performance Impact
 =============================
