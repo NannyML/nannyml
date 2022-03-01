@@ -46,19 +46,38 @@ The next step is to have NannyML deduce some information about the model from th
     >>> md.timestamp_column_name = 'timestamp'
     >>> md.target_column_name = 'work_home_actual'
 
-For help with using NannyML on other data see :ref:`import-data`.
-
 The data are already split into a reference and an analysis partition. NannyML uses the reference partition to
 establish a baseline for expected model performance and the analysis partition to check whether
 the monitored model keeps performing as expected.
-For more information about partitions look :ref:`data-drift-partitions`.
+For more information about partitions look :ref:`data-drift-partitions`. The key thing to note is that we don't expect the analysis partition to contain
+information about the :term:`Target`. This is why on the synthetic dataset it is provided in a separate object.
+
+.. code-block:: python
+
+    >>> analysis.head()
+
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
+|       |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier | timestamp           |   y_pred_proba | partition   |
++=======+========================+================+=======================+==============================+====================+===========+==========+==============+=====================+================+=============+
+| 49995 |                6.04391 | 0 - 20K €      |               1.98303 |                      5.89122 | True               | Thursday  |  6.41158 |        99995 | 2021-01-01 02:42:38 |           0.17 | analysis    |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
+| 49996 |                5.67666 | 20K - 20K €    |               2.04855 |                      7.5841  | True               | Wednesday |  3.86351 |        99996 | 2021-01-01 04:04:01 |           0.55 | analysis    |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
+| 49997 |                3.14311 | 0 - 20K €      |               2.2082  |                      6.57467 | True               | Tuesday   |  6.46297 |        99997 | 2021-01-01 04:12:57 |           0.22 | analysis    |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
+| 49998 |                8.33514 | 40K - 60K €    |               2.39448 |                      5.25745 | True               | Monday    |  6.40706 |        99998 | 2021-01-01 04:17:41 |           0.02 | analysis    |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
+| 49999 |                8.26605 | 0 - 20K €      |               1.41597 |                      8.10898 | False              | Friday    |  6.90411 |        99999 | 2021-01-01 04:29:32 |           0.02 | analysis    |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
+
+This quick start guide will walk you through running NannyML, viewing the estimated performance of your model, and exploring the data drift detection.
+This is assuming you are using data which is already formatted according to the :ref:`NannyML data formatting requirements<import-data>`.
 
 Estimating Performance without Targets
 ======================================
 
-We see that our data drift detection results contain data drift. NannyML also investigates
-the performance implications of this data drift. More information can be found at
-:ref:`performance-estimation`.
+NannyML can estimate the performance on a Machine Learning model in production
+without access to it's :term:`Target`. To find out how, see :ref:`performance-estimation`.
 
 .. code-block:: python
 
@@ -73,13 +92,16 @@ the performance implications of this data drift. More information can be found a
 
 .. image:: ./_static/perf-est-guide-syth-example.svg
 
-We see that the drift we observed is likely to have a negative impact on performance.
+The results indicate that the model's performance is likely to be negatively impacted at the second half
+of 2019.
 
 Detecting Data Drift
 ====================
 
-NannyML makes it easy to compute and visualize data drift for the model inputs.
-See :ref:`data-drift-practice`.
+NannyML allows for further investigation into potential peformance issues with it's data drift detection
+functionality. See :ref:`data-drift-practice` for more details.
+
+An example of using NannyML to compute and visualize data drift for the model inputs can be seen below:
 
 
 .. code-block:: python
@@ -162,5 +184,6 @@ see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
 .. image:: ./_static/drift-guide-multivariate.svg
 
-Putting everything together, we see that we have some false alerts for the early analysis data
-and some true alerts for the late analysis data!
+Putting everything together, we see that 4 features exhibit data drift during late 2019. They are
+``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
+This drift is responsible for the potential negative impact in performance that we observed. 
