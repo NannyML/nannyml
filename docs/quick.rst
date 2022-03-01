@@ -15,6 +15,8 @@ NannyML provides a sample synthetic dataset that can be used for testing purpose
 
     >>> import pandas as pd
     >>> import nannyml as nml
+    >>> chunk_size = 5000
+    >>> data = pd.concat([reference, analysis])
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
     >>> reference.head()
 
@@ -42,8 +44,7 @@ The next step is to have NannyML deduce some information about the model from th
 
 .. code-block:: python
 
-    >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
-    >>> md.timestamp_column_name = 'timestamp'
+    >>> md = nml.extract_metadata(data = reference)
     >>> md.target_column_name = 'work_home_actual'
 
 The data are already split into a reference and an analysis partition. NannyML uses the reference partition to
@@ -82,8 +83,8 @@ without access to it's :term:`Target`. To find out how, see :ref:`performance-es
 .. code-block:: python
 
     >>> # fit estimator and estimate
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5000)
-    >>> cbpe.fit(reference_data=df_ref)
+    >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=chunk_size)
+    >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(data=data)
     >>> # show results
     >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
@@ -108,9 +109,8 @@ An example of using NannyML to compute and visualize data drift for the model in
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=5000)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=chunk_size)
     >>> univariate_calculator.fit(reference_data=reference)
-    >>> data = pd.concat([reference, analysis])
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # Let's initialize the plotting class:
     >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
@@ -138,7 +138,7 @@ When there are a lot of drifted features, NannyML can also rank them by the numb
 .. code-block:: python
 
     >>> ranker = nml.Ranker.by('alert_count')
-    >>> ranked_features = ranker.rank(univariate_results, only_drifted = False)
+    >>> ranked_features = ranker.rank(univariate_results, model_metadata=md, only_drifting = False)
     >>> ranked_features
 
 +----+----------------------------+--------------------+--------+
