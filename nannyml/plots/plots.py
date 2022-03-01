@@ -310,7 +310,7 @@ class DriftPlots:
             drift_column_name=drift_column_name,
             feature_column_name=feature_column_name,
             x_axis_title=x_axis_title,
-            x_axis_lim=[0, 1],
+            post_kde_clip=(0, 1),
             title=title,
         )
         return fig
