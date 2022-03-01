@@ -2,11 +2,8 @@
 Example on real world dataset
 =============================
 
-Below one can find an example usage of NannyML on modified California
-Housing Prices dataset. Even though the original dataset does not fit the use case directly as
-it is a regression task, its popularity and its size (small enough to be
-quickly fetched yet large enough to show and interpret results) made it
-suitable for quick example.
+This document outlines a typical workflow for estimating performance of a model without access to ground truth, detecting performance issues and identifying potential root causes for these issues.
+Below, one can find an example use of NannyML on the modified California Housing Prices dataset.
 
 See what modifications were made to the data to make it suitable for the
 use case :ref:`here<california-housing>`.
@@ -21,8 +18,8 @@ Let's load the dataset from NannyML datasets:
     >>> import nannyml as nml
     >>>
     >>> # load data
-    >>> df_ref, df_ana, df_ana_gt = nml.datasets.load_modified_california_housing_dataset()
-    >>> df_ref.head(3)
+    >>> df_reference, df_analysis, df_analysis_gt = nml.datasets.load_modified_california_housing_dataset()
+    >>> df_reference.head(3)
 
 +----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+
 |    |   MedInc |   HouseAge |   AveRooms |   AveBedrms |   Population |   AveOccup |   Latitude |   Longitude | timestamp           | partition   |   clf_target |   y_pred_proba |   identifier |
@@ -38,8 +35,8 @@ Let's load the dataset from NannyML datasets:
 .. code:: python
 
     >>> # extract metadata, add gt column name
-    >>> md = nml.extract_metadata(df_ref)
-    >>> md.target_column_name = 'clf_target'
+    >>> md = nml.extract_metadata(df_reference)
+    >>> md.ground_truth_column_name = 'clf_target'
     >>> md.timestamp_column_name = 'timestamp'
 
 Performance Estimation
@@ -50,8 +47,8 @@ Let's estimate performance for reference and analysis partitions:
 
     >>> # fit performance estimator and estimate for combined reference and analysis
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_period='M')
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
+    >>> cbpe.fit(reference_data=df_reference)
+    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
 
 .. parsed-literal::
 
@@ -74,8 +71,7 @@ Some chunks are too small, most likely the last one, let's see:
 +----+---------+---------------+-------------+---------------------+---------------------+-------------+---------------------+--------------+-------------------+-------------------+---------+
 
 
-Indeed, the last one is smaller than other due to selected chunking method. Let's remove it for clarity of
-visualizations.
+Indeed, the last one is smaller than the others due to the selected chunking method. Let's remove it for clarity of visualizations.
 
 .. code:: python
 
@@ -100,14 +96,14 @@ Let's plot the estimated performance:
 
 .. image:: ../_static/example_california_performance.svg
 
-CBPE estimates significant performance drop in the chunk corresponding
+CBPE estimates a significant performance drop in the chunk corresponding
 to the month of September.
 
 Comparison with the actual performance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let’s use the ground truth that we have to
-calculate AUROC on relevant chunks and compare:
+calculate ROC AUC on relevant chunks and compare:
 
 .. code:: python
 
@@ -115,8 +111,8 @@ calculate AUROC on relevant chunks and compare:
     >>> import matplotlib.pyplot as plt
     >>>
     >>> # add ground truth to analysis
-    >>> df_ana_full = pd.merge(df_ana,df_ana_gt, on = 'identifier')
-    >>> df_all = pd.concat([df_ref, df_ana_full]).reset_index(drop=True)
+    >>> df_analysis_full = pd.merge(df_analysis,df_analysis_gt, on = 'identifier')
+    >>> df_all = pd.concat([df_reference, df_analysis_full]).reset_index(drop=True)
     >>> df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
     >>> # calculate actual ROC AUC
     >>> target_col = md.target_column_name
@@ -142,20 +138,20 @@ calculate AUROC on relevant chunks and compare:
 
 The significant drop at the first few chunks of the analysis period was
 estimated accurately. After that the overall trend seems to be well
-represented. The estimation of performance has lower variance than
-actual performance. This is expected.
+represented. The estimation of performance has a lower variance than
+actual performance.
 
 Drift detection
 ~~~~~~~~~~~~~~~
 
-Let’s search for the reasons of this performance drop and investigate what
-drifted using drift detection on univariate features.
+The next step is to dig deeper to find out what might be responsible for this drop in ROC AUC. Let’s do it using
+univariate drift detection.
 
 .. code:: python
 
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_period='M')
-    >>> univariate_calculator.fit(reference_data=df_ref)
-    >>> univariate_results = univariate_calculator.calculate(data=pd.concat([df_ana]))
+    >>> univariate_calculator.fit(reference_data=df_reference)
+    >>> univariate_results = univariate_calculator.calculate(data=pd.concat([df_analysis]))
     >>> nml.Ranker.by('alert_count').rank(univariate_results, only_drifting=True)
 
 
@@ -170,22 +166,17 @@ drifted using drift detection on univariate features.
 +----+--------------+--------------------+--------+
 |  3 | HouseAge     |                 12 |      4 |
 +----+--------------+--------------------+--------+
-|  4 | y_pred_proba |                 11 |      5 |
+|  4 | MedInc       |                 11 |      5 |
 +----+--------------+--------------------+--------+
-|  5 | MedInc       |                 11 |      6 |
+|  5 | AveRooms     |                 11 |      6 |
 +----+--------------+--------------------+--------+
-|  6 | AveRooms     |                 11 |      7 |
+|  6 | AveBedrms    |                  8 |      7 |
 +----+--------------+--------------------+--------+
-|  7 | AveBedrms    |                  8 |      8 |
-+----+--------------+--------------------+--------+
-|  8 | Population   |                  8 |      9 |
+|  7 | Population   |                  8 |      8 |
 +----+--------------+--------------------+--------+
 
 
-It looks like there is a lot of drift in this dataset. Since we have 12
-chunks in analysis period, top 4 features drifted in all analyzed
-chunks. Let’s look at the intensity of this drift by looking at KS
-distance statistics.
+It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period, top 4 features drifted in all analyzed chunks. Let’s look at the magnitude of this drift by looking at the KS distance statistics.
 
 .. code:: python
 
@@ -221,7 +212,7 @@ distributions for the analysis period.
     >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
     >>> for label in ['Longitude', 'Latitude']:
     >>>     fig = plots.plot_continuous_feature_distribution_over_time(
-    >>>         data=df_ana,
+    >>>         data=df_analysis,
     >>>         drift_results=univariate_results,
     >>>         feature_label=label)
     >>>     fig.show()
@@ -232,7 +223,7 @@ distributions for the analysis period.
 .. image:: ../_static/example_california_performance_distribution_Latitude.svg
 
 Indeed, distributions of these variables are completely different in each
-chunk. This was expected as the original dataset has observations from
+chunk. This was expected, as the original dataset has observations from
 nearby locations next to each other. Let’s see it on a scatter plot:
 
 .. code:: python
@@ -248,3 +239,7 @@ nearby locations next to each other. Let’s see it on a scatter plot:
     >>> plt.ylabel('Longitude')
 
 .. image:: ../_static/example_california_latitude_longitude_scatter.svg
+
+In summary, NannyML estimated the performance (ROC AUC) of a model without accessing the target data. The estimate is
+quite accurate. Next, the potential root causes of the drop in performance were indicated by
+detecting data drift. This was achieved using univariate methods that identify features which drifted the most.

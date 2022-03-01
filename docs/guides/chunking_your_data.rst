@@ -7,14 +7,14 @@ Chunking data
 .. note::
     Not sure what data chunk is in the first place? Read about :term:`Data Chunk`.
 
-Why we need chunks?
+Why do we need chunks?
 ===================
 
 
-NannyML's monitors ML models in production by doing data drift detection, and performance estimation or monitoring.
+NannyML monitors ML models in production by doing data drift detection and performance estimation or monitoring.
 This functionality relies on aggregate metrics that are evaluated on samples of production data.
 These samples are called chunks. All the results generated are
-calculated and presented on the level of chunk i.e. a chunk is a single data point on the monitoring results. You
+calculated and presented per chunk i.e. a chunk is a single data point on the monitoring results. You
 can refer to :ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance-estimation>`
 to review example results.
 
@@ -28,23 +28,23 @@ synthetic dataset provided by NannyML. Set up first with:
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> df_ref, df_ana, _ = nml.datasets.load_synthetic_sample()
-    >>> imd = nml.extract_metadata(df_ref)
-    >>> md.target_column_name = 'work_home_actual'
+    >>> df_reference, df_analysis, _ = nml.datasets.load_synthetic_sample()
+    >>> imd = nml.extract_metadata(df_reference)
+    >>> md.ground_truth_column_name = 'work_home_actual'
 
 
 Time-based chunking
 ~~~~~~~~~~~~~~~~~~~
 
-Time-based chunking is simply creating chunks based on time intervals. One chunk can contain all the observations
-from a single hour, day, week, month etc. In most cases such chunks will vary in length. Specify ``chunk_period``
+Time-based chunking creates chunks based on time intervals. One chunk can contain all the observations
+from a single hour, day, week, month etc. In most cases, such chunks will vary in length. Specify ``chunk_period``
 argument to get appropriate split. See the example below that chunks data quarterly:
 
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_period="Q")
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(df_ana)
+    >>> cbpe.fit(reference_data=df_reference)
+    >>> est_perf = cbpe.estimate(df_analysis)
     >>> est_perf.iloc[:3,:5]
 
 +----+--------+---------------+-------------+---------------------+---------------------+
@@ -60,7 +60,7 @@ argument to get appropriate split. See the example below that chunks data quarte
 .. note::
     Notice that each calendar quarter was taken into account, even if it was not fully covered with records.
     This makes some chunks smaller (usually the last and the first). See the first row above - Q3 is July-September,
-    but the first record in the data is from last day of August. First chunk has ~1.2k of observations while the 2nd
+    but the first record in the data is from the last day of August. First chunk has ~1.2k of observations while the 2nd
     and 3rd above 3k.
 
 Possible time offsets are listed in the table below:
@@ -89,14 +89,14 @@ Possible time offsets are listed in the table below:
 Size-based chunking
 ~~~~~~~~~~~~~~~~~~~
 
-Chunks can be of fixed size i.e. each chunk contains the same number of observations. Set this up by specifying
+Chunks can be of fixed size, i.e. each chunk contains the same number of observations. Set this up by specifying
 ``chunk_size`` parameter:
 
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=3500)
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(df_ana)
+    >>> cbpe.fit(reference_data=df_reference)
+    >>> est_perf = cbpe.estimate(df_analysis)
     >>> est_perf.iloc[:3,:5]
 
 +----+--------------+---------------+-------------+---------------------+---------------------+
@@ -112,7 +112,7 @@ Chunks can be of fixed size i.e. each chunk contains the same number of observat
 
 .. note::
     If the number of observations is not divisible by the chunk size required, the number of rows equal to the
-    reminder of a division will be dropped. This ensures that each chunk has indeed the same size, but in worst case
+    remainder of a division will be dropped. This ensures that each chunk has the same size, but in worst case
     scenario it results in dropping ``chunk_size-1`` rows. Notice that the last index in last chunk is 48999 while
     the last index in raw data is 49999:
 
@@ -130,7 +130,7 @@ Chunks can be of fixed size i.e. each chunk contains the same number of observat
 
     .. code-block:: python
 
-        >>> df_ana.index.max()
+        >>> df_analysis.index.max()
         49999
 
 
@@ -142,14 +142,14 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=9)
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(df_ana)
+    >>> cbpe.fit(reference_data=df_reference)
+    >>> est_perf = cbpe.estimate(df_analysis)
     >>> len(est_perf)
     >>> 9
 
 .. note::
-    Created chunks will be equal in size. If number of observations is not divisible by ``chunk_number`` then the
-    number of observations equal to the residual of the division will be dropped. See:
+    Created chunks will be equal in size. If the number of observations is not divisible by the ``chunk_number`` then
+    the number of observations equal to the residual of the division will be dropped. See:
 
     .. code-block:: python
 
@@ -165,12 +165,12 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
 
     .. code-block:: python
 
-        >>> df_ana.index.max()
+        >>> df_analysis.index.max()
         49999
 
 .. note::
-    The same splitting rule is always applied to the dataset used to fitting (``reference``) and the dataset of
-    interest (in the presented case - ``analysis``). Unless these two data sets are of the same size, the chunk sizes
+    The same splitting rule is always applied to the dataset used for fitting (``reference``) and the dataset of
+    interest (in the presented case - ``analysis``). Unless these two datasets are of the same size, the chunk sizes
     can be considerably different. Additionally, if the data drift or performance estimation is calculated on
     combined ``reference`` and ``analysis`` the results presented for ``reference`` will be calculated on different
     chunks than they were fitted.
@@ -178,15 +178,15 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
 Automatic chunking
 ~~~~~~~~~~~~~~~~~~
 
-When chunking method is not indicated, size-based chunks will be created with the size being three times the
+The default chunking method is size-based, with the size being three times the
 estimated minimum size for the monitored data and model (see how NannyML estimates minimum chunk size in :ref:`deep
 dive<minimum-chunk-size>`):
 
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md)
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
+    >>> cbpe.fit(reference_data=df_reference)
+    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
     >>> est_perf.iloc[:3,:5]
 
 +----+-------------+---------------+-------------+---------------------+---------------------+
@@ -207,16 +207,14 @@ Finally, once the chunking method is selected, the full performance estimation c
     .. code-block:: python
 
         >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5_000)
-        >>> cbpe.fit(reference_data=df_ref)
-        >>> est_perf = cbpe.estimate(df_ana)
+        >>> cbpe.fit(reference_data=df_reference)
+        >>> est_perf = cbpe.estimate(df_analysis)
         >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
         >>> plots.plot_cbpe_performance_estimation(est_perf).show()
 
 .. image:: ../_static/guide-chunking_your_data-pe_plot.svg
 
-Each marker on the plot represents estimated performance for single chunk (y axis). Markers are placed at the end of
-period covered by chunk i.e. they indicate last timestamp in the chunk (x axis). Plots are interactive - when the
-pointer is hoovered over a marker, information about the chunk period will be shown.
+Each marker on the plot represents estimated performance for a single chunk (y axis). Markers are placed at the end of the period covered by the chunk i.e. they indicate the last timestamp in the chunk (x axis). Plots are interactive - hovering over the marker will display the information about the period.
 
 Additional considerations
 =========================
@@ -226,16 +224,16 @@ Different partitions within one chunk
 
 If you want to get performance estimation or data drift results for a dataset that contains two
 partitions - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
-them. Such chunk will be considered as ``analysis`` chunk, even if only one observation belongs to ``analysis``
-observations. In the example below chunk which contains observations from 44444 to 55554 is considered analysis but
-indices from 44444 to 49999 point to reference observations:
+them. Such a chunk will be considered as an ``analysis`` chunk, even if only one observation belongs to ``analysis``
+observations. In the example below, chunk which contains observations from 44444 to 55554 is considered an analysis
+chunk but indices from 44444 to 49999 point to reference observations:
 
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=9)
-    >>> cbpe.fit(reference_data=df_ref)
+    >>> cbpe.fit(reference_data=df_reference)
     >>> # Estimate on concatenated reference and analysis
-    >>> est_perf = cbpe.estimate(pd.concat([df_ref, df_ana]))
+    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
     >>> est_perf.iloc[3:5,:7]
 
 
@@ -249,7 +247,7 @@ indices from 44444 to 49999 point to reference observations:
 
 .. code-block:: python
 
-    >>> df_ref.index.max()
+    >>> df_reference.index.max()
     49999
 
 .. note::
@@ -262,16 +260,16 @@ indices from 44444 to 49999 point to reference observations:
 Underpopulated chunks
 ~~~~~~~~~~~~~~~~~~~~~
 
-Depending on the selected chunking method and the provided datasets, some chunks may be very small. In fact, they
-might so small that results obtained are governed by noise rather than actual signal. NannyML estimates minimum chunk
+Depending on the selected chunking method and the provided datasets, some chunks may be tiny. In fact, they
+might be so small that results obtained are governed by noise rather than actual signal. NannyML estimates minimum chunk
 size for the monitored data and model provided (see how in :ref:`deep dive<minimum-chunk-size>`). If some of the chunks
 created are smaller than the minimum chunk size, a warning will be raised. For example:
 
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_period="Q")
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(df_ana)
+    >>> cbpe.fit(reference_data=df_reference)
+    >>> est_perf = cbpe.estimate(df_analysis)
     UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
     your data in a different way or continue at your own risk.
@@ -279,20 +277,20 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
 When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in above
 sections. When there are more chunks mentioned - the selected splitting method is most likely not suitable.
 Look at the :ref:`deep dive on minimum chunk size <minimum-chunk-size>` to get more information about the effect of
-small chunks. Aware of the trade-offs involved pick the most appropriate option for the use case.
+small chunks. Beware of the trade-offs involved, when selecting the chunking method.
 
 
 Not enough chunks
 ~~~~~~~~~~~~~~~~~
-Sometimes selected chunking method may result in not enough chunks being generated in the ``reference``
-period. NannyML calculates thresholds based on variability of metrics on ``reference`` chunks (see how thresholds are
-calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
+Sometimes the selected chunking method may result in not enough chunks being generated in the ``reference``
+period. NannyML calculates thresholds based on variability of metrics on the ``reference`` chunks (see how thresholds
+are calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
 far from optimal but a reasonable minimum. If there are less than 6 chunks, a warning will be raised:
 
 .. code-block:: python
 
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(df_ana)
+    >>> cbpe.fit(reference_data=df_reference)
+    >>> est_perf = cbpe.estimate(df_analysis)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
     continue at your own risk.
