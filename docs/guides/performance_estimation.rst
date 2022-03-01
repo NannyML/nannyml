@@ -48,7 +48,7 @@ Let's first load the data and have a quick look:
 understand what they are read about :ref:`data partitions<data-drift-partitions>`. Let's leave
 ``df_ana_gt`` for now, it will be described and used later.
 
-Lets extract the metadata and fill the missing values required:
+Let's extract the metadata and fill the missing values required:
 
 .. code-block:: python
 
@@ -57,7 +57,6 @@ Lets extract the metadata and fill the missing values required:
     >>> md.ground_truth_column_name = 'work_home_actual'
 
 Full information on how the data should be prepared can be found in guide on :ref:`importing data<import-data>`.
-
 
 Fit estimator and estimate
 ==========================
@@ -70,8 +69,9 @@ method needs to be specified now. Read more about chunking in relevant :ref:`gui
     >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5000)
     >>> cbpe.fit(reference_data=df_ref)
 
-Now we can use the ``cbpe`` to estimate performance on other data. Typically this would be used on ``analysis`` data
-where the ground truth is actually missing. However, to get a better context it can be also used on combined
+Fitted ``cbpe`` can be used to estimate performance on other data. Typically this would be used on the
+latest production data where ground truth is missing (i.e. the ``analysis`` partition).
+However, to get a better context it can be also used on combined
 ``reference`` and ``analysis`` data:
 
 .. code-block:: python
@@ -80,7 +80,7 @@ where the ground truth is actually missing. However, to get a better context it 
 
 To find out how CBPE estimates performance read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
 
-View and interpret the results
+View the results
 ==============================
 
 The results can be investigated in the form of data:
@@ -101,18 +101,19 @@ The results can be investigated in the form of data:
 
 .. _performance-estimation-thresholds:
 
-Apart form chunking and chunk and partition-related data, the results data has the following columns:
+Apart from chunking and chunk and partition-related data, the results data have the following columns:
 
  - ``estimated_roc_auc`` - the estimate of performance for specific chunk,
- - ``confidence`` - the width of confidence band. It is equal to 1 standard deviation of performance estimates on
+ - ``confidence`` - the width of the confidence band. It is equal to 1 standard deviation of performance estimates on
    `reference` data (hence calculated during ``fit`` phase).
  - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
-   performance change. The thresholds are calculated based on the actual performance of monitored model on chunks in
-   ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on chunks.
+   performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
+   the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   chunks.
    They are calculated during ``fit`` phase.
- - ``alert`` - flag indicating potentially severe performance change. ``True`` if estimated performance crosses upper
-   or lower threshold.
-   provided. together with ``confidence``.
+ - ``alert`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
+   upper or lower threshold.
+
 
 Results can be also view in the form of plot:
 
@@ -159,10 +160,10 @@ ground truth is given in ``df_ana_gt`` variable. It consists of ``identifier`` t
     >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
     >>>     est_perf.loc[idx, 'actual_roc_auc'] = actual_perf
     >>>
-    >>>     est_perf[['estimated_roc_auc', 'actual_roc_auc']].plot()
-    >>>     plt.xlabel('chunk')
-    >>>     plt.ylabel('ROC AUC')
-    >>>     plt.show()
+    >>> est_perf[['estimated_roc_auc', 'actual_roc_auc']].plot()
+    >>> plt.xlabel('chunk')
+    >>> plt.ylabel('ROC AUC')
+    >>> plt.show()
 
 
 .. image:: ../_static/guide-performance_estimation_tmp.svg
