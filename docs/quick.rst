@@ -49,19 +49,19 @@ For more details refer to :ref:`data-drift-practice`.
     ...     fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
     ...     fig.show()
 
-.. image:: ../_static/drift-guide-distance_from_office.svg
+.. image:: ./_static/drift-guide-distance_from_office.svg
 
-.. image:: ../_static/drift-guide-gas_price_per_litre.svg
+.. image:: ./_static/drift-guide-gas_price_per_litre.svg
 
-.. image:: ../_static/drift-guide-tenure.svg
+.. image:: ./_static/drift-guide-tenure.svg
 
-.. image:: ../_static/drift-guide-wfh_prev_workday.svg
+.. image:: ./_static/drift-guide-wfh_prev_workday.svg
 
-.. image:: ../_static/drift-guide-workday.svg
+.. image:: ./_static/drift-guide-workday.svg
 
-.. image:: ../_static/drift-guide-public_transportation_cost.svg
+.. image:: ./_static/drift-guide-public_transportation_cost.svg
 
-.. image:: ../_static/drift-guide-salary_range.svg
+.. image:: ./_static/drift-guide-salary_range.svg
 
 When there are a lot of drifted features NannyML can also rank them, ordering them by the number of alerts they have raised:
 
@@ -96,7 +96,7 @@ NannyML can also look for drift in the model outputs:
     >>> fig = plots.plot_univariate_statistical_prediction_drift(univariate_results, metric='statistic')
     >>> fig.show()
 
-.. image:: ../_static/drift-guide-predictions.svg
+.. image:: ./_static/drift-guide-predictions.svg
 
 NannyML also uses Data Reconstruction with PCA to compute the reconstruction error and detect more complex
 data drift cases. More information can be found at
@@ -113,7 +113,7 @@ data drift cases. More information can be found at
     >>> # let's see RC error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
 
-.. image:: _static/drift-guide-multivariate.svg
+.. image:: ./_static/drift-guide-multivariate.svg
 
 Putting everything together we see that we have some false alerts for the early analysis data
 and some true alerts for the late analysis data!
@@ -136,6 +136,6 @@ the performance implications of this data drift. More information can be found a
     >>> fig = plots.plot_cbpe_performance_estimation(est_perf)
     >>> fig.show()
 
-.. image:: ../_static/perf-est-guide-syth-example.svg
+.. image:: ./_static/perf-est-guide-syth-example.svg
 
 We see that the drift we observed will likely cause a significant performance drop!
