@@ -7,11 +7,11 @@ Confidence-based Performance Estimation
 Introduction
 ============
 
-A binary classification model for each predictions returns two outputs - class (binary) and class probability
+A binary classification model for each prediction returns two outputs - class (binary) and class probability
 estimate (sometimes referred to as *score*).
 Score provides information on
 confidence of the prediction. The qualitative rule is that closer the score is to its lower or upper limit (usually 0
-or 1), the higher the probability that a classifier is correct with its prediction. When this score is an actual
+and 1), the higher the probability that a classifier's prediction is correct. When this score is an actual
 probability, it can be directly used to calculate the probability of making an error. For instance, imagine a
 high-performing model which for large set of observations returned prediction of 1 (positive class) with probability
 of 0.9. It means that for approximately 90% of these observations model is correct (true
@@ -28,10 +28,9 @@ In order to accurately estimate performance from scores, these need to be well c
 probabilities
 are well calibrated when the fraction of positive observations among the observations to which a binary classifier
 assigned
-specific value of probability is approximately equal to that probability. Predictive models focus rather on
-performance than on probability estimation, therefore scores of most of them are not calibrated. Examples of different
-models
-and their calibration curves are shown below [1]_:
+specific value of probability is approximately equal to that assigned probability. Predictive models focus rather on
+performance than on probability estimation, therefore their scores are rearely calibrated. Examples of
+different models and their calibration curves are shown below [1]_:
 
 .. image:: ../_static/deep_dive_performance_estimation_calibration_curves.png
 
@@ -45,7 +44,7 @@ are probabilistic and their probabilities are calibrated by design, first NannyM
 3. Quality of calibration is evaluated by comparing Expected Calibration Error (ECE) [4]_ for raw and calibrated
    (predicted) probabilities on test:
 
-    - If in any of the folds ECE score is higher after calibration (i.e. our calibration makes things worse)
+    - If in any of the folds ECE score is higher after post processing (i.e. calibration curve is worse)
       calibration will not be performed.
 
     - If in each fold post processing improves the quality of calibration, calibrator is fitted on whole reference set
