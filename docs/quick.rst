@@ -53,8 +53,30 @@ establish a baseline for expected model performance and the analysis partition t
 the monitored model keeps performing as expected.
 For more information about partitions look :ref:`data-drift-partitions`.
 
-Finding Data Drift
-==================
+Estimating Performance without Targets
+======================================
+
+We see that our data drift detection results contain data drift. NannyML also investigates
+the performance implications of this data drift. More information can be found at
+:ref:`performance-estimation`.
+
+.. code-block:: python
+
+    >>> # fit estimator and estimate
+    >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5000)
+    >>> cbpe.fit(reference_data=df_ref)
+    >>> est_perf = cbpe.estimate(data=data)
+    >>> # show results
+    >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
+    >>> figure = plots.plot_cbpe_performance_estimation(est_perf)
+    >>> figure.show()
+
+.. image:: ./_static/perf-est-guide-syth-example.svg
+
+We see that the drift we observed is likely to have a negative impact on performance.
+
+Detecting Data Drift
+====================
 
 NannyML makes it easy to compute and visualize data drift for the model inputs.
 See :ref:`data-drift-practice`.
@@ -142,25 +164,3 @@ see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
 Putting everything together, we see that we have some false alerts for the early analysis data
 and some true alerts for the late analysis data!
-
-Estimating Performance without Targets
-======================================
-
-We see that our data drift detection results contain data drift. NannyML also investigates
-the performance implications of this data drift. More information can be found at
-:ref:`performance-estimation`.
-
-.. code-block:: python
-
-    >>> # fit estimator and estimate
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5000)
-    >>> cbpe.fit(reference_data=df_ref)
-    >>> est_perf = cbpe.estimate(data=data)
-    >>> # show results
-    >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
-    >>> figure = plots.plot_cbpe_performance_estimation(est_perf)
-    >>> figure.show()
-
-.. image:: ./_static/perf-est-guide-syth-example.svg
-
-We see that the drift we observed is likely to have a negative impact on performance.
