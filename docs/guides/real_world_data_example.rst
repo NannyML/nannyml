@@ -41,8 +41,7 @@ Let's estimate performance for reference and analysis partitions:
 
 .. parsed-literal::
 
-    C:\Users\jakub\anaconda3\envs\p38nml\lib\site-packages\nannyml\chunk.py:231: UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be statistically relevant and might negatively influence the quality of calculations.Please consider splitting your data in a different way or continue at your own risk.
-      warnings.warn(
+    UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be statistically relevant and might negatively influence the quality of calculations.Please consider splitting your data in a different way or continue at your own risk.
 
 Some chunks are too small, most likely the last one, let's see:
 
