@@ -52,7 +52,7 @@ Let's extract the metadata and complete the missing information:
 
     >>> df_analysis.head(3)
     >>> md = nml.extract_metadata(df_reference)
-    >>> md.ground_truth_column_name = 'work_home_actual'
+    >>> md.target_column_name = 'work_home_actual'
 
 
 Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
@@ -115,6 +115,13 @@ Apart from chunking and chunk and partition-related data, the results data have 
 
 The results can be also plotted:
 
+.. code-block:: python
+
+    >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
+    >>> fig = plots.plot_cbpe_performance_estimation(est_perf)
+    >>> fig.show()
+
+
 .. image:: ../_static/performance_estimation_guide_synth.svg
 
 
@@ -144,20 +151,18 @@ ground truth is given in ``df_analysis_gt`` variable. It consists of ``identifie
 
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
-    >>>
+    >>> # merge gt to analysis
     >>> df_analysis_full = pd.merge(df_analysis, df_analysis_gt, on = 'identifier')
     >>> df_all = pd.concat([df_reference, df_analysis_full]).reset_index(drop=True)
-    >>>
     >>> target_col = 'work_home_actual'
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
-    >>>
     >>> for idx in est_perf.index:
     >>>     start_index, end_index = est_perf.loc[idx, 'start_index'], est_perf.loc[idx, 'end_index']
     >>>     sub = df_all.loc[start_index:end_index]
     >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
     >>>     est_perf.loc[idx, 'actual_roc_auc'] = actual_perf
-    >>>
+    >>> # plot
     >>> est_perf[['estimated_roc_auc', 'actual_roc_auc']].plot()
     >>> plt.xlabel('chunk')
     >>> plt.ylabel('ROC AUC')
