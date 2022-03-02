@@ -32,6 +32,7 @@ Let's see first how we can construct an instance of the Butterfly dataset:
     >>> import pandas as pd
     >>> import matplotlib.pyplot as plt
     >>> import seaborn as sns
+    >>> import nannyml as nml
     >>> from scipy.spatial.transform import Rotation
     >>> from sklearn.datasets import make_classification
 
@@ -40,7 +41,7 @@ Let's see first how we can construct an instance of the Butterfly dataset:
     >>> # Days/week * Hours/day * events/hour
     >>> DPP = 7*24*12
 
-    >>> np.random.seed(13)
+    >>> np.random.seed(23)
     >>> s1 = np.random.randn(DPP*20)
     >>> x1 = s1 + np.random.randn(DPP*20)/8
     >>> x2 = s1 + np.random.randn(DPP*20)/8
@@ -90,14 +91,14 @@ plot that clearly shows the resulting data drift:
 
     >>> # let's plot
     >>> colors = nml.plots.colors.Colors
-    >>> fig = sns.jointplot(
+    >>> figure = sns.jointplot(
     ...     data=data_sample,
     ...     x="f1",
     ...     y="f2",
     ...     hue="week",
     ...     palette=[colors.BLUE_SKY_CRAYOLA.value, colors.RED_IMPERIAL.value]
     >>> )
-    >>> fig.fig.suptitle('Data Distributions before and after rotation drift')
+    >>> figure.fig.suptitle('Data Distributions before and after rotation drift')
 
 .. image:: ../_static/butterfly-scatterplot.svg
 
@@ -113,24 +114,25 @@ drift statistics produces the following results:
     >>> reference.drop(['week'], axis=1, inplace=True)
     >>> analysis = datadf.loc[datadf['partition'] == 'analysis'].reset_index(drop=True)
     >>> analysis.drop(['y_true', 'week'], axis=1, inplace=True)
+    >>> data = pd.concat([reference, analysis], ignore_index=True)
 
     >>> # Let's create the model metadata object
-    >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
-    >>> md.identifier_column_name = 'ordered'
-    >>> md.timestamp_column_name = 'ordered'
-    >>> md.target_column_name = 'y_true'
+    >>> metadata = nml.extract_metadata(data = reference, model_name='3d_rotation')
+    >>> metadata.identifier_column_name = 'ordered'
+    >>> metadata.timestamp_column_name = 'ordered'
+    >>> metadata.target_column_name = 'y_true'
 
     >>> # Let's compute univariate drift
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=DPP)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=DPP)
     >>> univariate_calculator.fit(reference_data=reference)
     >>> # let's compute (and visualize) results across all the dataset.
-    >>> univariate_results = univariate_calculator.calculate(data=pd.concat([reference, analysis], ignore_index=True))
+    >>> univariate_results = univariate_calculator.calculate(data=data)
 
     >>> # let's create plot with results
-    >>> plots = nml.DriftPlots(univariate_calculator)
-    >>> for itm in md.features:
-    ...     fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
-    ...     fig.show()
+    >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
+    >>> for feature in metadata.features:
+    ...     figure = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=feature.label)
+    ...     figure.show()
 
 .. image:: ../_static/butterfly-univariate-drift-f1.svg
 
@@ -140,10 +142,13 @@ drift statistics produces the following results:
 
 .. code-block:: python
 
-    for itm in md.features:
-
-        fig = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=itm.label)
-        fig.show()
+    >>> for feature in metadata.continuous_features:
+    ...     figure = plots.plot_continuous_feature_distribution_over_time(
+    ...         data=data,
+    ...         drift_results=univariate_results,
+    ...         feature_label=feature.label
+    ...     )
+    ...     figure.show()
 
 .. image:: ../_static/butterfly-univariate-drift-joyplot-f1.svg
 
@@ -220,14 +225,14 @@ what it does on the butterfly dataset.
 .. code-block:: python
 
     # Let's compute univariate drift
-    rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=md, chunk_size=DPP)
+    rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=DPP)
     rcerror_calculator.fit(reference_data=reference)
     # let's compute (and visualize) results across all the dataset.
-    rcerror_results = rcerror_calculator.calculate(data=pd.concat([reference, analysis], ignore_index=True))
+    rcerror_results = rcerror_calculator.calculate(data=data)
 
     # let's create plot with results
-    fig = plots.plot_data_reconstruction_drift(rcerror_results)
-    fig.show()
+    figure = plots.plot_data_reconstruction_drift(rcerror_results)
+    figure.show()
 
 
 .. image:: ../_static/butterfly-multivariate-drift.svg
