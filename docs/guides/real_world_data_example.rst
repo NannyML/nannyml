@@ -16,7 +16,6 @@ Let's load the dataset from NannyML datasets:
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>>
     >>> # load data
     >>> df_reference, df_analysis, df_analysis_gt = nml.datasets.load_modified_california_housing_dataset()
     >>> df_reference.head(3)
@@ -36,7 +35,7 @@ Let's load the dataset from NannyML datasets:
 
     >>> # extract metadata, add gt column name
     >>> md = nml.extract_metadata(df_reference)
-    >>> md.ground_truth_column_name = 'clf_target'
+    >>> md.target_column_name = 'clf_target'
     >>> md.timestamp_column_name = 'timestamp'
 
 Performance Estimation
@@ -109,7 +108,6 @@ calculate ROC AUC on relevant chunks and compare:
 
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
-    >>>
     >>> # add ground truth to analysis
     >>> df_analysis_full = pd.merge(df_analysis,df_analysis_gt, on = 'identifier')
     >>> df_all = pd.concat([df_reference, df_analysis_full]).reset_index(drop=True)
@@ -118,10 +116,9 @@ calculate ROC AUC on relevant chunks and compare:
     >>> target_col = md.target_column_name
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
-    >>>
     >>> for idx in est_perf.index:
     >>>     start_date, end_date = est_perf.loc[idx, 'start_date'], est_perf.loc[idx, 'end_date']
-    >>>      sub = df_all[df_all['timestamp'].between(start_date, end_date)]
+    >>>     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
     >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
     >>>     est_perf.loc[idx, 'actual_roc_auc'] = actual_perf
     >>> # plot
@@ -152,7 +149,7 @@ univariate drift detection.
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_period='M')
     >>> univariate_calculator.fit(reference_data=df_reference)
     >>> univariate_results = univariate_calculator.calculate(data=pd.concat([df_analysis]))
-    >>> nml.Ranker.by('alert_count').rank(univariate_results, only_drifting=True)
+    >>> nml.Ranker.by('alert_count').rank(univariate_results, md)
 
 
 +----+--------------+--------------------+--------+
