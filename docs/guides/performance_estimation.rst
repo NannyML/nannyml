@@ -15,8 +15,8 @@ Let's first load the data and have a quick look:
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>> df_reference, df_analysis, df_analysis_gt = nml.datasets.load_synthetic_sample()
-    >>> df_reference.head(3)
+    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_sample()
+    >>> reference.head(3)
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |
@@ -30,7 +30,7 @@ Let's first load the data and have a quick look:
 
 .. code-block:: python
 
-    >>> df_analysis.head(3)
+    >>> analysis.head(3)
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier | timestamp           |   y_pred_proba | partition   |
@@ -42,17 +42,17 @@ Let's first load the data and have a quick look:
 |  2 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    |  4.58895 |        50002 | 2017-08-31 05:56:44 |           0.98 | analysis    |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+
 
-``df_reference`` and ``df_analysis`` correspond to ``reference`` and ``analysis`` partitions of the monitored data. To
+``reference`` and ``analysis`` correspond to ``reference`` and ``analysis`` partitions of the monitored data. To
 understand what they are read :ref:`data partitions<data-drift-partitions>`. Let's leave
-``df_analysis_gt`` for now, it will be described and used later.
+``analysis_gt`` for now, it will be described and used later.
 
 Let's extract the metadata and complete the missing information:
 
 .. code-block:: python
 
-    >>> df_analysis.head(3)
-    >>> md = nml.extract_metadata(df_reference)
-    >>> md.ground_truth_column_name = 'work_home_actual'
+    >>> analysis.head(3)
+    >>> metadata = nml.extract_metadata(reference)
+    >>> metadata.target_column_name = 'work_home_actual'
 
 
 Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
@@ -65,8 +65,8 @@ method needs to be specified now. Read more about chunking in relevant :ref:`gui
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5000)
-    >>> cbpe.fit(reference_data=df_reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5000)
+    >>> cbpe.fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where ground truth is missing (i.e. the ``analysis``
@@ -74,7 +74,7 @@ partition). However, it can be also used on combined ``reference`` and ``analysi
 
 .. code-block:: python
 
-    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
 
 To find out how CBPE estimates performance, read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
 
@@ -115,6 +115,13 @@ Apart from chunking and chunk and partition-related data, the results data have 
 
 The results can be also plotted:
 
+.. code-block:: python
+
+    >>> plots = nml.PerformancePlots(model_metadata=metadata, chunker=cbpe.chunker)
+    >>> fig = plots.plot_cbpe_performance_estimation(est_perf)
+    >>> fig.show()
+
+
 .. image:: ../_static/performance_estimation_guide_synth.svg
 
 
@@ -122,12 +129,12 @@ Compare with the actual performance
 ===================================
 
 When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
-ground truth is given in ``df_analysis_gt`` variable. It consists of ``identifier`` that allows to match it with
+ground truth is given in ``analysis_gt`` variable. It consists of ``identifier`` that allows to match it with
 ``analysis`` data and the target for monitored model - ``work_home_actual``:
 
 .. code-block:: python
 
-    >>> df_analysis_gt.head(3)
+    >>> analysis_gt.head(3)
 
 
 +----+--------------+--------------------+
@@ -144,20 +151,18 @@ ground truth is given in ``df_analysis_gt`` variable. It consists of ``identifie
 
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
-    >>>
-    >>> df_analysis_full = pd.merge(df_analysis, df_analysis_gt, on = 'identifier')
-    >>> df_all = pd.concat([df_reference, df_analysis_full]).reset_index(drop=True)
-    >>>
+    >>> # merge gt to analysis
+    >>> analysis_full = pd.merge(analysis, analysis_gt, on = 'identifier')
+    >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
     >>> target_col = 'work_home_actual'
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
-    >>>
     >>> for idx in est_perf.index:
     >>>     start_index, end_index = est_perf.loc[idx, 'start_index'], est_perf.loc[idx, 'end_index']
     >>>     sub = df_all.loc[start_index:end_index]
     >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
     >>>     est_perf.loc[idx, 'actual_roc_auc'] = actual_perf
-    >>>
+    >>> # plot
     >>> est_perf[['estimated_roc_auc', 'actual_roc_auc']].plot()
     >>> plt.xlabel('chunk')
     >>> plt.ylabel('ROC AUC')

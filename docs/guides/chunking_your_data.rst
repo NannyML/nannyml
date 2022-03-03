@@ -27,10 +27,11 @@ synthetic dataset provided by NannyML. Set up first with:
 
 .. code-block:: python
 
+    >>> import pandas as pd
     >>> import nannyml as nml
-    >>> df_reference, df_analysis, _ = nml.datasets.load_synthetic_sample()
-    >>> imd = nml.extract_metadata(df_reference)
-    >>> md.ground_truth_column_name = 'work_home_actual'
+    >>> reference, analysis, _ = nml.datasets.load_synthetic_sample()
+    >>> metadata = nml.extract_metadata(reference)
+    >>> metadata.target_column_name = 'work_home_actual'
 
 
 Time-based chunking
@@ -42,9 +43,9 @@ argument to get appropriate split. See the example below that chunks data quarte
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_period="Q")
-    >>> cbpe.fit(reference_data=df_reference)
-    >>> est_perf = cbpe.estimate(df_analysis)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q")
+    >>> cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
     >>> est_perf.iloc[:3,:5]
 
 +----+--------+---------------+-------------+---------------------+---------------------+
@@ -94,9 +95,9 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=3500)
-    >>> cbpe.fit(reference_data=df_reference)
-    >>> est_perf = cbpe.estimate(df_analysis)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3500)
+    >>> cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
     >>> est_perf.iloc[:3,:5]
 
 +----+--------------+---------------+-------------+---------------------+---------------------+
@@ -130,7 +131,7 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 
     .. code-block:: python
 
-        >>> df_analysis.index.max()
+        >>> analysis.index.max()
         49999
 
 
@@ -141,11 +142,11 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=9)
-    >>> cbpe.fit(reference_data=df_reference)
-    >>> est_perf = cbpe.estimate(df_analysis)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9)
+    >>> cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
     >>> len(est_perf)
-    >>> 9
+    9
 
 .. note::
     Created chunks will be equal in size. If the number of observations is not divisible by the ``chunk_number`` then
@@ -165,7 +166,7 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
 
     .. code-block:: python
 
-        >>> df_analysis.index.max()
+        >>> analysis.index.max()
         49999
 
 .. note::
@@ -184,9 +185,9 @@ dive<minimum-chunk-size>`):
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md)
-    >>> cbpe.fit(reference_data=df_reference)
-    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
+    >>> cbpe = nml.CBPE(model_metadata=metadata)
+    >>> cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
     >>> est_perf.iloc[:3,:5]
 
 +----+-------------+---------------+-------------+---------------------+---------------------+
@@ -206,10 +207,10 @@ Finally, once the chunking method is selected, the full performance estimation c
 
     .. code-block:: python
 
-        >>> cbpe = nml.CBPE(model_metadata=md, chunk_size=5_000)
-        >>> cbpe.fit(reference_data=df_reference)
-        >>> est_perf = cbpe.estimate(df_analysis)
-        >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
+        >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5_000)
+        >>> cbpe.fit(reference_data=reference)
+        >>> est_perf = cbpe.estimate(analysis)
+        >>> plots = nml.PerformancePlots(model_metadata=metadata, chunker=cbpe.chunker)
         >>> plots.plot_cbpe_performance_estimation(est_perf).show()
 
 .. image:: ../_static/guide-chunking_your_data-pe_plot.svg
@@ -230,10 +231,10 @@ chunk but indices from 44444 to 49999 point to reference observations:
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=9)
-    >>> cbpe.fit(reference_data=df_reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9)
+    >>> cbpe.fit(reference_data=reference)
     >>> # Estimate on concatenated reference and analysis
-    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
     >>> est_perf.iloc[3:5,:7]
 
 
@@ -247,7 +248,7 @@ chunk but indices from 44444 to 49999 point to reference observations:
 
 .. code-block:: python
 
-    >>> df_reference.index.max()
+    >>> reference.index.max()
     49999
 
 .. note::
@@ -267,9 +268,9 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_period="Q")
-    >>> cbpe.fit(reference_data=df_reference)
-    >>> est_perf = cbpe.estimate(df_analysis)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q")
+    >>> cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
     UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
     your data in a different way or continue at your own risk.
@@ -289,8 +290,8 @@ far from optimal but a reasonable minimum. If there are less than 6 chunks, a wa
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_number=5)
-    >>> cbpe.fit(reference_data=df_reference)
-    >>> est_perf = cbpe.estimate(df_analysis)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=5)
+    >>> cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
     continue at your own risk.
