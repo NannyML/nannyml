@@ -17,8 +17,8 @@ Let's load the dataset from NannyML datasets:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> # load data
-    >>> df_reference, df_analysis, df_analysis_gt = nml.datasets.load_modified_california_housing_dataset()
-    >>> df_reference.head(3)
+    >>> reference, analysis, analysis_gt = nml.datasets.load_modified_california_housing_dataset()
+    >>> reference.head(3)
 
 +----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+
 |    |   MedInc |   HouseAge |   AveRooms |   AveBedrms |   Population |   AveOccup |   Latitude |   Longitude | timestamp           | partition   |   clf_target |   y_pred_proba |   identifier |
@@ -34,9 +34,9 @@ Let's load the dataset from NannyML datasets:
 .. code:: python
 
     >>> # extract metadata, add gt column name
-    >>> md = nml.extract_metadata(df_reference)
-    >>> md.target_column_name = 'clf_target'
-    >>> md.timestamp_column_name = 'timestamp'
+    >>> metadata = nml.extract_metadata(reference)
+    >>> metadata.target_column_name = 'clf_target'
+    >>> metadata.timestamp_column_name = 'timestamp'
 
 Performance Estimation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -45,9 +45,9 @@ Let's estimate performance for reference and analysis partitions:
 .. code:: python
 
     >>> # fit performance estimator and estimate for combined reference and analysis
-    >>> cbpe = nml.CBPE(model_metadata=md, chunk_period='M')
-    >>> cbpe.fit(reference_data=df_reference)
-    >>> est_perf = cbpe.estimate(pd.concat([df_reference, df_analysis]))
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period='M')
+    >>> cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
 
 .. parsed-literal::
 
@@ -89,7 +89,7 @@ Let's plot the estimated performance:
 
 .. code:: python
 
-    >>> plots = nml.PerformancePlots(model_metadata=md, chunker=cbpe.chunker)
+    >>> plots = nml.PerformancePlots(model_metadata=metadata, chunker=cbpe.chunker)
     >>> fig = plots.plot_cbpe_performance_estimation(est_perf)
     >>> fig.show()
 
@@ -109,11 +109,11 @@ calculate ROC AUC on relevant chunks and compare:
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
     >>> # add ground truth to analysis
-    >>> df_analysis_full = pd.merge(df_analysis,df_analysis_gt, on = 'identifier')
-    >>> df_all = pd.concat([df_reference, df_analysis_full]).reset_index(drop=True)
+    >>> analysis_full = pd.merge(analysis,analysis_gt, on = 'identifier')
+    >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
     >>> df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
     >>> # calculate actual ROC AUC
-    >>> target_col = md.target_column_name
+    >>> target_col = metadata.target_column_name
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
     >>> for idx in est_perf.index:
@@ -146,10 +146,10 @@ univariate drift detection.
 
 .. code:: python
 
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_period='M')
-    >>> univariate_calculator.fit(reference_data=df_reference)
-    >>> univariate_results = univariate_calculator.calculate(data=pd.concat([df_analysis]))
-    >>> nml.Ranker.by('alert_count').rank(univariate_results, md)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='M')
+    >>> univariate_calculator.fit(reference_data=reference)
+    >>> univariate_results = univariate_calculator.calculate(data=pd.concat([analysis]))
+    >>> nml.Ranker.by('alert_count').rank(univariate_results, metadata)
 
 
 +----+--------------+--------------------+--------+
@@ -209,7 +209,7 @@ distributions for the analysis period.
     >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
     >>> for label in ['Longitude', 'Latitude']:
     >>>     fig = plots.plot_continuous_feature_distribution_over_time(
-    >>>         data=df_analysis,
+    >>>         data=analysis,
     >>>         drift_results=univariate_results,
     >>>         feature_label=label)
     >>>     fig.show()
