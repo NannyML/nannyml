@@ -182,8 +182,6 @@ It looks like there is a lot of drift in this dataset. Since we have 12 chunks i
     >>> univariate_results[d_stat_cols].mean().sort_values(ascending=False)
 
 +------------------+-----------+
-|                  |         0 |
-+==================+===========+
 | Longitude_dstat  | 0.836534  |
 +------------------+-----------+
 | Latitude_dstat   | 0.799592  |

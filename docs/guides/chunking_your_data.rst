@@ -146,7 +146,7 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
     >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> len(est_perf)
-    >>> 9
+    9
 
 .. note::
     Created chunks will be equal in size. If the number of observations is not divisible by the ``chunk_number`` then
