@@ -406,7 +406,7 @@ class SizeBasedChunker(Chunker):
 
 
 class CountBasedChunker(Chunker):
-    """A Chunker that will split data into chunks based on the preferred number of observations per chunk.
+    """A Chunker that will split data into chunks based on the preferred number of total chunks.
 
     Examples
     --------
