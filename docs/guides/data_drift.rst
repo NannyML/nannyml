@@ -91,10 +91,10 @@ Let’s start with loading some synthetic data provided by the NannyML package.
 .. code-block:: python
 
     >>> import nannyml as nml
+    >>> import pandas as pd
     >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
-    >>> md = nml.extract_metadata(data = reference, model_name='wfh_predictor')
-    >>> md.timestamp_column_name = 'timestamp'
-    >>> md.target_column_name = 'work_home_actual'
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata.target_column_name = 'work_home_actual'
     >>> reference.head()
 
 
@@ -134,14 +134,13 @@ An example using it can be seen below:
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=md, chunk_size=5000)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
     >>> # NannyML compares drift versus the full reference dataset.
     >>> univariate_calculator.fit(reference_data=reference)
     >>> # let's see drift statistics for all available data
-    >>> data = pd.concat([reference, analysis])
+    >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's view a small subset of our results:
-
     >>> univariate_results.iloc[:5, :9]
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
@@ -188,7 +187,7 @@ NannyML can also visualize those results with the following code:
     >>> # Let's initialize the plotting class:
     >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
     >>> # let's plot drift results for all model inputs
-    >>> for feature in md.features:
+    >>> for feature in metadata.features:
     ...     figure = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=feature.label)
     ...     figure.show()
 
@@ -214,7 +213,7 @@ stacked bar charts for categorical variables. It does so with the following code
 .. code-block:: python
 
     >>> # let's plot distribution drift results for continuous model inputs
-    >>> for feature in md.continuous_features:
+    >>> for feature in metadata.continuous_features:
     ...     figure = plots.plot_continuous_feature_distribution_over_time(
     ...         data=pd.concat([reference, analysis], ignore_index=True),
     ...         drift_results=univariate_results,
@@ -232,14 +231,14 @@ stacked bar charts for categorical variables. It does so with the following code
 
 .. code-block:: python
 
-    # let's plot distribution drift results for categorical model inputs
-    for feature in md.categorical_features:
-        figure = plots.plot_categorical_feature_distribution_over_time(
-            data=pd.concat([reference, analysis], ignore_index=True),
-            drift_results=univariate_results,
-            feature_label=feature.label
-        )
-        figure.show()
+    >>> # let's plot distribution drift results for categorical model inputs
+    >>> for feature in metadata.categorical_features:
+    ...     figure = plots.plot_categorical_feature_distribution_over_time(
+    ...         data=pd.concat([reference, analysis], ignore_index=True),
+    ...         drift_results=univariate_results,
+    ...         feature_label=feature.label
+    ...     )
+    ...     figure.show()
 
 .. image:: ../_static/drift-guide-stacked-salary_range.svg
 
@@ -261,8 +260,9 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 
 .. code-block:: python
 
-    >>> ranked_features_drifted = nml.Ranker.by('alert_count').rank(univariate_results, metadata)
-    >>> ranked_features_drifted
+    >>> ranker = nml.Ranker.by('alert_count')
+    >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
+    >>> ranked_features
 
 +----+----------------------------+--------------------+--------+
 |    | feature                    |   number_of_alerts |   rank |
@@ -329,43 +329,65 @@ module implements this functionality. An example of us using it can be seen belo
 
 .. code-block:: python
 
-    # Let's initialize the object that will perform Data Reconstruction with PCA
-    # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=md, chunk_size=5000)
-    # NannyML compares drift versus the full reference dataset.
+    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
+    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> # NannyML compares drift versus the full reference dataset.
     >>> rcerror_calculator.fit(reference_data=reference)
-    # let's see RC error statistics for all available data
+    >>> # let's see RC error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
     >>> rcerror_results
 
-        key             start_index end_index   start_date  end_date                partition 	reconstruction_error    alert
-    0   [0:4999]        0           4999        2014-05-09  2014-09-09 23:59:59     reference   1.120961                False
-    1   [5000:9999]     5000        9999        2014-09-09  2015-01-09 23:59:59     reference   1.118071                False
-    2   [10000:14999]   10000       14999       2015-01-09  2015-05-09 23:59:59     reference   1.117237                False
-    3   [15000:19999]   15000       19999       2015-05-09  2015-09-07 23:59:59     reference   1.125514                False
-    4   [20000:24999]   20000       24999       2015-09-07  2016-01-08 23:59:59     reference   1.109446                False
-    5   [25000:29999]   25000       29999       2016-01-08  2016-05-09 23:59:59     reference   1.122759                False
-    6   [30000:34999]   30000       34999       2016-05-09  2016-09-04 23:59:59     reference   1.107138                False
-    7   [35000:39999]   35000       39999       2016-09-04  2017-01-03 23:59:59     reference   1.127134                False
-    8   [40000:44999]   40000       44999       2017-01-03  2017-05-03 23:59:59     reference   1.114237                False
-    9   [45000:49999]   45000       49999       2017-05-03  2017-08-31 23:59:59     reference   1.110450                False
-    10  [50000:54999]   50000       54999       2017-08-31  2018-01-02 23:59:59     analysis    1.118536                False
-    11  [55000:59999]   55000       59999       2018-01-02  2018-05-01 23:59:59     analysis    1.115044                False
-    12  [60000:64999]   60000       64999       2018-05-01  2018-09-01 23:59:59     analysis    1.125460                False
-    13  [65000:69999]   65000       69999       2018-09-01  2018-12-31 23:59:59     analysis    1.128453                False
-    14  [70000:74999]   70000       74999       2018-12-31  2019-04-30 23:59:59     analysis    1.122892                False
-    15  [75000:79999]   75000       79999       2019-04-30  2019-09-01 23:59:59     analysis    1.228393                True
-    16  [80000:84999]   80000       84999       2019-09-01  2019-12-31 23:59:59     analysis    1.220028                True
-    17  [85000:89999]   85000       89999       2019-12-31  2020-04-30 23:59:59     analysis    1.237394                True
-    18  [90000:94999]   90000       94999       2020-04-30  2020-09-01 23:59:59     analysis    1.206051                True
-    19  [95000:99999]   95000       99999       2020-09-01  2021-01-01 23:59:59     analysis    1.242579                True
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   reconstruction_error |   lower_threshold |   upper_threshold | alert   |
++====+===============+===============+=============+=====================+=====================+=============+========================+===================+===================+=========+
+|  0 | [0:4999]      |             0 |        4999 | 2014-05-09 00:00:00 | 2014-09-09 23:59:59 | reference   |                1.26649 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  1 | [5000:9999]   |          5000 |        9999 | 2014-09-09 00:00:00 | 2015-01-09 23:59:59 | reference   |                1.26437 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  2 | [10000:14999] |         10000 |       14999 | 2015-01-09 00:00:00 | 2015-05-09 23:59:59 | reference   |                1.26644 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  3 | [15000:19999] |         15000 |       19999 | 2015-05-09 00:00:00 | 2015-09-07 23:59:59 | reference   |                1.27495 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  4 | [20000:24999] |         20000 |       24999 | 2015-09-07 00:00:00 | 2016-01-08 23:59:59 | reference   |                1.25592 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  5 | [25000:29999] |         25000 |       29999 | 2016-01-08 00:00:00 | 2016-05-09 23:59:59 | reference   |                1.26942 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  6 | [30000:34999] |         30000 |       34999 | 2016-05-09 00:00:00 | 2016-09-04 23:59:59 | reference   |                1.26149 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  7 | [35000:39999] |         35000 |       39999 | 2016-09-04 00:00:00 | 2017-01-03 23:59:59 | reference   |                1.27999 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  8 | [40000:44999] |         40000 |       44999 | 2017-01-03 00:00:00 | 2017-05-03 23:59:59 | reference   |                1.26191 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+|  9 | [45000:49999] |         45000 |       49999 | 2017-05-03 00:00:00 | 2017-08-31 23:59:59 | reference   |                1.26142 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 10 | [50000:54999] |         50000 |       54999 | 2017-08-31 00:00:00 | 2018-01-02 23:59:59 | analysis    |                1.27592 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 11 | [55000:59999] |         55000 |       59999 | 2018-01-02 00:00:00 | 2018-05-01 23:59:59 | analysis    |                1.26335 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 12 | [60000:64999] |         60000 |       64999 | 2018-05-01 00:00:00 | 2018-09-01 23:59:59 | analysis    |                1.27156 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 13 | [65000:69999] |         65000 |       69999 | 2018-09-01 00:00:00 | 2018-12-31 23:59:59 | analysis    |                1.27948 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 14 | [70000:74999] |         70000 |       74999 | 2018-12-31 00:00:00 | 2019-04-30 23:59:59 | analysis    |                1.26596 |           1.24504 |           1.28744 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 15 | [75000:79999] |         75000 |       79999 | 2019-04-30 00:00:00 | 2019-09-01 23:59:59 | analysis    |                1.34183 |           1.24504 |           1.28744 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 16 | [80000:84999] |         80000 |       84999 | 2019-09-01 00:00:00 | 2019-12-31 23:59:59 | analysis    |                1.34107 |           1.24504 |           1.28744 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 17 | [85000:89999] |         85000 |       89999 | 2019-12-31 00:00:00 | 2020-04-30 23:59:59 | analysis    |                1.33609 |           1.24504 |           1.28744 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 18 | [90000:94999] |         90000 |       94999 | 2020-04-30 00:00:00 | 2020-09-01 23:59:59 | analysis    |                1.32801 |           1.24504 |           1.28744 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
+| 19 | [95000:99999] |         95000 |       99999 | 2020-09-01 00:00:00 | 2021-01-01 23:59:59 | analysis    |                1.34045 |           1.24504 |           1.28744 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
 
 NannyML can also visualize multivariate drift results with the following code:
 
 .. code-block:: python
 
-    figure = plots.plot_data_reconstruction_drift(rcerror_results)
-    figure.show()
+    >>> figure = plots.plot_data_reconstruction_drift(rcerror_results)
+    >>> figure.show()
 
 .. image:: ../_static/drift-guide-multivariate.svg
 
