@@ -9,6 +9,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.impute import SimpleImputer
 
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
@@ -182,6 +183,42 @@ def test_baser_drift_calculator_raises_calculator_not_fitted_exception_when_calc
     calc = SimpleDriftCalculator(sample_drift_metadata, chunk_size=1000)
     with pytest.raises(CalculatorNotFittedException, match='chunker has not been set.'):
         _ = calc.calculate(data=sample_drift_data)
+
+
+def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_object_raises_typeerror(  # noqa: D103
+    sample_drift_data_with_nans, sample_drift_metadata
+):
+    with pytest.raises(TypeError):
+        DataReconstructionDriftCalculator(
+            model_metadata=sample_drift_metadata,
+            chunk_period='W',
+            imputer_categorical=5,
+            imputer_continuous=SimpleImputer(missing_values=np.nan, strategy='mean'),
+        )
+
+
+def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_strategy_raises_valueerror(  # noqa: D103
+    sample_drift_data_with_nans, sample_drift_metadata
+):
+    with pytest.raises(ValueError):
+        DataReconstructionDriftCalculator(
+            model_metadata=sample_drift_metadata,
+            chunk_period='W',
+            imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='median'),
+            imputer_continuous=SimpleImputer(missing_values=np.nan, strategy='mean'),
+        )
+
+
+def test_data_reconstruction_drift_calculator_given_wrong_cont_imputer_object_raises_typeerror(  # noqa: D103
+    sample_drift_data_with_nans, sample_drift_metadata
+):
+    with pytest.raises(TypeError):
+        DataReconstructionDriftCalculator(
+            model_metadata=sample_drift_metadata,
+            chunk_period='W',
+            imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='most_frequent'),
+            imputer_continuous=5,
+        )
 
 
 def test_base_drift_calculator_uses_size_based_chunker_when_given_chunk_size(  # noqa: D103
