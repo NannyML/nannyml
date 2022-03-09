@@ -103,6 +103,16 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
 
 
 @pytest.fixture
+def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D103
+    data = sample_drift_data.copy(deep=True)
+    nan_pick1 = set(sample_drift_data.id.sample(frac=0.11, random_state=13))
+    nan_pick2 = set(sample_drift_data.id.sample(frac=0.11, random_state=14))
+    data.loc[data.id.isin(nan_pick1), 'f1'] = np.NaN
+    data.loc[data.id.isin(nan_pick2), 'f4'] = np.NaN
+    return data
+
+
+@pytest.fixture
 def sample_drift_metadata(sample_drift_data):  # noqa: D103
     return extract_metadata(sample_drift_data, model_name='model')
 
@@ -357,6 +367,19 @@ def test_data_reconstruction_drift_calculator_with_default_params_should_not_fai
     calc.fit(ref_data)
     try:
         drift = calc.calculate(data=sample_drift_data)
+        print(drift)
+    except Exception:
+        pytest.fail()
+
+
+def test_data_reconstruction_drift_calculator_with_default_params_should_not_fail_w_nans(  # noqa: D103
+    sample_drift_data_with_nans, sample_drift_metadata
+):
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata, chunk_period='W')
+    ref_data = sample_drift_data_with_nans.loc[sample_drift_data_with_nans['partition'] == 'reference']
+    calc.fit(ref_data)
+    try:
+        drift = calc.calculate(data=sample_drift_data_with_nans)
         print(drift)
     except Exception:
         pytest.fail()

@@ -161,7 +161,7 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
 
         """
         if data.empty:
-            raise InvalidArgumentsException('data contains no rows. Provide a valid data set.')
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         # Preprocess data
         data = preprocess(data=data, model_metadata=self.model_metadata)
