@@ -53,6 +53,8 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
             model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
         )
 
+        self.selected_features = self.selected_features + [self.model_metadata.prediction_column_name]
+
         self._reference_data = None
 
     def _fit(self, reference_data: pd.DataFrame):

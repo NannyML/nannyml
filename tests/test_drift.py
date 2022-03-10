@@ -147,10 +147,9 @@ def test_base_drift_calculator_given_empty_features_list_should_calculate_for_al
     sut = calc.calculate(data=sample_drift_data)
 
     md = extract_metadata(sample_drift_data, model_name='model')
-    assert len(sut.columns) == len(md.features) + 1
+    assert len(sut.columns) == len(md.features)
     for f in md.features:
         assert f.column_name in sut.columns
-    assert md.prediction_column_name in sut.columns
 
 
 def test_base_drift_calculator_given_non_empty_features_list_should_only_calculate_for_these_features(  # noqa: D103
@@ -323,6 +322,7 @@ def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value
         else:
             assert f'{f.column_name}_chi2' in sut
         assert f'{f.column_name}_p_value' in sut
+    assert f'{sample_drift_metadata.prediction_column_name}_dstat' in sut
 
 
 def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
@@ -414,7 +414,7 @@ def test_data_reconstruction_drift_calculator_should_not_fail_when_using_feature
 
 
 def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data, sample_drift_metadata):  # noqa: D103
-    calc = DataReconstructionDriftCalculator(sample_drift_metadata, features=['f1', 'f2', 'f3', 'f4'], chunk_period='W')
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata, chunk_period='W')
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     drift = calc.calculate(data=sample_drift_data)
@@ -466,6 +466,4 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data,
             ],
         }
     )
-    print(sample_drift_data.head())
-    print(drift[['key', 'reconstruction_error']])
     pd.testing.assert_frame_equal(expected_drift, drift[['key', 'reconstruction_error']])
