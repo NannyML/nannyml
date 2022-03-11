@@ -43,6 +43,7 @@ from .drift import (
     AlertCountRanking,
     BaseDriftCalculator,
     DataReconstructionDriftCalculator,
+    DataReconstructionDriftCalculatorResult,
     DriftCalculator,
     Ranker,
     Ranking,

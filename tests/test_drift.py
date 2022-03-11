@@ -371,7 +371,7 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
 
     drift = calc.calculate(data=sample_drift_data)
 
-    sut = drift.columns
+    sut = drift.data.columns
     assert len(sut) == 10
     assert 'key' in sut
     assert 'start_index' in sut
@@ -396,7 +396,7 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
 
     sample_drift_data = sample_drift_metadata.enrich(sample_drift_data)
     expected = len(PeriodBasedChunker(offset='W', minimum_chunk_size=1).split(sample_drift_data))
-    sut = len(drift)
+    sut = len(drift.data)
     assert sut == expected
 
 
@@ -466,4 +466,4 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data,
             ],
         }
     )
-    pd.testing.assert_frame_equal(expected_drift, drift[['key', 'reconstruction_error']])
+    pd.testing.assert_frame_equal(expected_drift, drift.data[['key', 'reconstruction_error']])
