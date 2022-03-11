@@ -64,6 +64,9 @@ Glossary
                 A hash of some (or all) of your column values, using a hashing function with appropriate collision properties, e.g. the SHA-2 and SHA-3 families.
                 A concatenation of your dataset name and a row number.
 
+    Imputation
+        The process of substituting missing values with actual values on a dataset.
+
     Model
         Definition of a model.
 

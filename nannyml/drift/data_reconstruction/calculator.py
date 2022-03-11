@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from category_encoders import CountEncoder
 from sklearn.decomposition import PCA
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
 from nannyml.chunk import Chunk, Chunker
@@ -30,6 +31,8 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
+        imputer_categorical: SimpleImputer = None,
+        imputer_continuous: SimpleImputer = None,
     ):
         """Creates a new DataReconstructionDriftCalculator instance.
 
@@ -54,6 +57,10 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+        imputer_categorical: SimpleImputer
+            The SimpleImputer used to impute categorical features in the data. Defaults to using most_frequent value.
+        imputer_continuous: SimpleImputer
+            The SimpleImputer used to impute continuous features in the data. Defaults to using mean value.
         """
         super(DataReconstructionDriftCalculator, self).__init__(
             model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
@@ -67,14 +74,44 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         self._upper_alert_threshold: Optional[float] = None
         self._lower_alert_threshold: Optional[float] = None
 
+        if imputer_categorical:
+            if not isinstance(imputer_categorical, SimpleImputer):
+                raise TypeError("imputer_categorical needs to be an instantiated SimpleImputer object.")
+            if imputer_categorical.strategy not in ["most_frequent", "constant"]:
+                raise ValueError("Please use a SimpleImputer strategy appropriate for categorical features.")
+        else:
+            imputer_categorical = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+        self._imputer_categorical = imputer_categorical
+
+        if imputer_continuous:
+            if not isinstance(imputer_continuous, SimpleImputer):
+                raise TypeError("imputer_continuous needs to be an instantiated SimpleImputer object.")
+        else:
+            imputer_continuous = SimpleImputer(missing_values=np.nan, strategy='mean')
+        self._imputer_continuous = imputer_continuous
+
     def _fit(self, reference_data: pd.DataFrame):
         selected_categorical_column_names = _get_selected_feature_names(
             self.selected_features, self.model_metadata.categorical_features
         )
+        selected_continuous_column_names = _get_selected_feature_names(
+            self.selected_features, self.model_metadata.continuous_features
+        )
+
+        # TODO: We duplicate the reference data 3 times, here. Improve to something more memory efficient?
+        imputed_reference_data = reference_data.copy(deep=True)
+        imputed_reference_data[selected_categorical_column_names] = self._imputer_categorical.fit_transform(
+            imputed_reference_data[selected_categorical_column_names]
+        )
+        imputed_reference_data[selected_continuous_column_names] = self._imputer_continuous.fit_transform(
+            imputed_reference_data[selected_continuous_column_names]
+        )
 
         encoder = CountEncoder(cols=selected_categorical_column_names, normalize=True)
-        encoded_reference_data = reference_data.copy(deep=True)
-        encoded_reference_data[self.selected_features] = encoder.fit_transform(reference_data[self.selected_features])
+        encoded_reference_data = imputed_reference_data.copy(deep=True)
+        encoded_reference_data[self.selected_features] = encoder.fit_transform(
+            encoded_reference_data[self.selected_features]
+        )
 
         scaler = StandardScaler()
         scaled_reference_data = pd.DataFrame(
@@ -95,6 +132,15 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         self,
         chunks: List[Chunk],
     ) -> DataReconstructionDriftCalculatorResult:
+
+        selected_categorical_column_names = _get_selected_feature_names(
+            self.selected_features, self.model_metadata.categorical_features
+        )
+        selected_continuous_column_names = _get_selected_feature_names(
+            self.selected_features, self.model_metadata.continuous_features
+        )
+        res = pd.DataFrame()
+
         res = pd.DataFrame.from_records(
             [
                 {
@@ -105,7 +151,15 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
                     'end_date': chunk.end_datetime,
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
-                        self.selected_features, chunk.data, self._encoder, self._scaler, self._pca
+                        selected_features=self.selected_features,
+                        selected_categorical_features=selected_categorical_column_names,
+                        selected_continuous_features=selected_continuous_column_names,
+                        data=chunk.data,
+                        encoder=self._encoder,
+                        scaler=self._scaler,
+                        pca=self._pca,
+                        imputer_categorical=self._imputer_categorical,
+                        imputer_continuous=self._imputer_continuous,
                     ),
                 }
                 for chunk in chunks
@@ -122,11 +176,25 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
         reference_chunks = self.chunker.split(reference_data)  # type: ignore
+        selected_categorical_column_names = _get_selected_feature_names(
+            self.selected_features, self.model_metadata.categorical_features
+        )
+        selected_continuous_column_names = _get_selected_feature_names(
+            self.selected_features, self.model_metadata.continuous_features
+        )
 
         reference_reconstruction_error = pd.Series(
             [
                 _calculate_reconstruction_error_for_data(
-                    self.selected_features, chunk.data, self._encoder, self._scaler, self._pca
+                    selected_features=self.selected_features,
+                    selected_categorical_features=selected_categorical_column_names,
+                    selected_continuous_features=selected_continuous_column_names,
+                    data=chunk.data,
+                    encoder=self._encoder,
+                    scaler=self._scaler,
+                    pca=self._pca,
+                    imputer_categorical=self._imputer_categorical,
+                    imputer_continuous=self._imputer_continuous,
                 )
                 for chunk in reference_chunks
             ]
@@ -139,7 +207,15 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
 
 
 def _calculate_reconstruction_error_for_data(
-    selected_features: List[str], data: pd.DataFrame, encoder: CountEncoder, scaler: StandardScaler, pca: PCA
+    selected_features: List[str],
+    selected_categorical_features: List[str],
+    selected_continuous_features: List[str],
+    data: pd.DataFrame,
+    encoder: CountEncoder,
+    scaler: StandardScaler,
+    pca: PCA,
+    imputer_categorical: SimpleImputer,
+    imputer_continuous: SimpleImputer,
 ) -> pd.DataFrame:
     """Calculates reconstruction error for a single Chunk.
 
@@ -147,6 +223,10 @@ def _calculate_reconstruction_error_for_data(
     ----------
     selected_features : List[str]
         Subset of features to be included in calculation.
+    selected_categorical_features : List[str]
+        Subset of categorical features to be included in calculation.
+    selected_continuous_features : List[str]
+        Subset of continuous features to be included in calculation.
     data : pd.DataFrame
         The dataset to calculate reconstruction error on
     encoder : category_encoders.CountEncoder
@@ -156,6 +236,10 @@ def _calculate_reconstruction_error_for_data(
     pca : sklearn.decomposition.PCA
         Linear dimensionality reduction using Singular Value Decomposition of the
         data to project it to a lower dimensional space.
+    imputer_categorical: SimpleImputer
+        The SimpleImputer fitted to impute categorical features in the data.
+    imputer_continuous: SimpleImputer
+        The SimpleImputer fitted to impute continuous features in the data.
 
     Returns
     -------
@@ -165,6 +249,11 @@ def _calculate_reconstruction_error_for_data(
     """
     # encode categorical features
     data = data.reset_index(drop=True)
+
+    # Impute missing values
+    data[selected_categorical_features] = imputer_categorical.transform(data[selected_categorical_features])
+    data[selected_continuous_features] = imputer_continuous.transform(data[selected_continuous_features])
+
     data[selected_features] = encoder.transform(data[selected_features])
 
     # scale all features
