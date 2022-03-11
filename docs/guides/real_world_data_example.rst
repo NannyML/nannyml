@@ -57,7 +57,7 @@ Some chunks are too small, most likely the last one, let's see:
 
 .. code:: python
 
-    >>> est_perf.tail(3)
+    >>> est_perf.data.tail(3)
 
 +----+---------+---------------+-------------+---------------------+---------------------+-------------+---------------------+--------------+-------------------+-------------------+---------+
 |    | key     |   start_index |   end_index | start_date          | end_date            | partition   |   estimated_roc_auc |   confidence |   upper_threshold |   lower_threshold | alert   |
@@ -74,8 +74,8 @@ Indeed, the last one is smaller than the others due to the selected chunking met
 
 .. code:: python
 
-    >>> est_perf = est_perf[:-1].copy()
-    >>> est_perf.tail(2)
+    >>> est_perf.data = est_perf[:-1].copy()
+    >>> est_perf.data.tail(2)
 
 +----+---------+---------------+-------------+---------------------+---------------------+-------------+---------------------+--------------+-------------------+-------------------+---------+---------------------------+-------------+------------------+
 |    | key     |   start_index |   end_index | start_date          | end_date            | partition   |   estimated_roc_auc |   confidence |   upper_threshold |   lower_threshold | alert   | thresholds                | estimated   |   actual_roc_auc |
@@ -89,8 +89,7 @@ Let's plot the estimated performance:
 
 .. code:: python
 
-    >>> plots = nml.PerformancePlots(model_metadata=metadata, chunker=cbpe.chunker)
-    >>> fig = plots.plot_cbpe_performance_estimation(est_perf)
+    >>> fig = est_perf.plot(kind='performance')
     >>> fig.show()
 
 .. image:: ../_static/example_california_performance.svg
@@ -116,15 +115,15 @@ calculate ROC AUC on relevant chunks and compare:
     >>> target_col = metadata.target_column_name
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
-    >>> for idx in est_perf.index:
-    >>>     start_date, end_date = est_perf.loc[idx, 'start_date'], est_perf.loc[idx, 'end_date']
+    >>> for idx in est_perf.data.index:
+    >>>     start_date, end_date = est_perf.data.loc[idx, 'start_date'], est_perf.data.loc[idx, 'end_date']
     >>>     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
     >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    >>>     est_perf.loc[idx, 'actual_roc_auc'] = actual_perf
+    >>>     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
     >>> # plot
-    >>> first_analysis = est_perf[est_perf['partition']=='analysis']['key'].values[0]
-    >>> plt.plot(est_perf['key'], est_perf['estimated_roc_auc'], label='estimated AUC')
-    >>> plt.plot(est_perf['key'], est_perf['actual_roc_auc'], label='actual ROC AUC')
+    >>> first_analysis = est_perf.data[est_perf.data['partition']=='analysis']['key'].values[0]
+    >>> plt.plot(est_perf.data['key'], est_perf.data['estimated_roc_auc'], label='estimated AUC')
+    >>> plt.plot(est_perf.data['key'], est_perf.data['actual_roc_auc'], label='actual ROC AUC')
     >>> plt.xticks(rotation=90)
     >>> plt.axvline(x=first_analysis, label='First analysis chunk', linestyle=':', color='grey')
     >>> plt.ylabel('ROC AUC')
@@ -178,8 +177,8 @@ It looks like there is a lot of drift in this dataset. Since we have 12 chunks i
 .. code:: python
 
     >>> # get columns with d statistics only
-    >>> d_stat_cols = [x for x in univariate_results if 'dstat' in x]
-    >>> univariate_results[d_stat_cols].mean().sort_values(ascending=False)
+    >>> d_stat_cols = [x for x in univariate_results.data if 'dstat' in x]
+    >>> univariate_results.data[d_stat_cols].mean().sort_values(ascending=False)
 
 +------------------+-----------+
 | Longitude_dstat  | 0.836534  |
@@ -204,11 +203,9 @@ distributions for the analysis period.
 
 .. code:: python
 
-    >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
     >>> for label in ['Longitude', 'Latitude']:
-    >>>     fig = plots.plot_continuous_feature_distribution_over_time(
-    >>>         data=analysis,
-    >>>         drift_results=univariate_results,
+    >>>     fig = univariate_results.plot(
+    >>>         kind='feature_distribution',
     >>>         feature_label=label)
     >>>     fig.show()
 
@@ -223,7 +220,7 @@ nearby locations next to each other. Let’s see it on a scatter plot:
 
 .. code:: python
 
-    >>> analysis_res = est_perf[est_perf['partition']=='analysis']
+    >>> analysis_res = est_perf.data[est_perf.data['partition']=='analysis']
     >>> plt.figure(figsize=(8,6))
     >>> for idx in analysis_res.index[:10]:
     >>>     start_date, end_date = analysis_res.loc[idx, 'start_date'], analysis_res.loc[idx, 'end_date']

@@ -85,7 +85,7 @@ To get the data frame with results:
 
 .. code-block:: python
 
-    >>> est_perf.head(3)
+    >>> est_perf.data.head(3)
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+--------------+-------------------+-------------------+---------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   estimated_roc_auc |   confidence |   upper_threshold |   lower_threshold | alert   |
@@ -117,8 +117,7 @@ The results can be also plotted:
 
 .. code-block:: python
 
-    >>> plots = nml.PerformancePlots(model_metadata=metadata, chunker=cbpe.chunker)
-    >>> fig = plots.plot_cbpe_performance_estimation(est_perf)
+    >>> fig = est_perf.plot(kind='performance')
     >>> fig.show()
 
 
@@ -157,13 +156,13 @@ ground truth is given in ``analysis_gt`` variable. It consists of ``identifier``
     >>> target_col = 'work_home_actual'
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
-    >>> for idx in est_perf.index:
-    >>>     start_index, end_index = est_perf.loc[idx, 'start_index'], est_perf.loc[idx, 'end_index']
+    >>> for idx in est_perf.data.index:
+    >>>     start_index, end_index = est_perf.data.loc[idx, 'start_index'], est_perf.data.loc[idx, 'end_index']
     >>>     sub = df_all.loc[start_index:end_index]
     >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    >>>     est_perf.loc[idx, 'actual_roc_auc'] = actual_perf
+    >>>     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
     >>> # plot
-    >>> est_perf[['estimated_roc_auc', 'actual_roc_auc']].plot()
+    >>> est_perf.data[['estimated_roc_auc', 'actual_roc_auc']].plot()
     >>> plt.xlabel('chunk')
     >>> plt.ylabel('ROC AUC')
     >>> plt.show()
