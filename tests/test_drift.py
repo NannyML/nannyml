@@ -8,11 +8,13 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects
 import pytest
 from sklearn.impute import SimpleImputer
 
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
+from nannyml.drift.base import DriftResult
 from nannyml.drift.data_reconstruction.calculator import DataReconstructionDriftCalculator
 from nannyml.drift.univariate_statistical.calculator import UnivariateStatisticalDriftCalculator
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
@@ -118,6 +120,13 @@ def sample_drift_metadata(sample_drift_data):  # noqa: D103
     return extract_metadata(sample_drift_data, model_name='model')
 
 
+class SimpleDriftResult(DriftResult):
+    """Dummy DriftResult implementation."""
+
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+        pass
+
+
 class SimpleDriftCalculator(BaseDriftCalculator):
     """Dummy DriftCalculator implementation that returns a DataFrame with the selected feature columns, no rows."""
 
@@ -127,9 +136,11 @@ class SimpleDriftCalculator(BaseDriftCalculator):
     def _calculate_drift(
         self,
         chunks: List[Chunk],
-    ) -> pd.DataFrame:
+    ) -> SimpleDriftResult:
         df = chunks[0].data.drop(columns=NML_METADATA_COLUMNS)
-        return pd.DataFrame(columns=df.columns)
+        return SimpleDriftResult(
+            analysis_data=chunks, drift_data=pd.DataFrame(columns=df.columns), model_metadata=self.model_metadata
+        )
 
 
 def test_base_drift_calculator_given_empty_reference_data_should_raise_invalid_args_exception(  # noqa: D103
@@ -158,9 +169,9 @@ def test_base_drift_calculator_given_empty_features_list_should_calculate_for_al
     sut = calc.calculate(data=sample_drift_data)
 
     md = extract_metadata(sample_drift_data, model_name='model')
-    assert len(sut.columns) == len(md.features)
+    assert len(sut.data.columns) == len(md.features)
     for f in md.features:
-        assert f.column_name in sut.columns
+        assert f.column_name in sut.data.columns
 
 
 def test_base_drift_calculator_given_non_empty_features_list_should_only_calculate_for_these_features(  # noqa: D103
@@ -172,9 +183,9 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     _ = calc.calculate(data=sample_drift_data)
     sut = calc.calculate(data=sample_drift_data)
 
-    assert len(sut.columns) == 2
-    assert 'f1' in sut.columns
-    assert 'f3' in sut.columns
+    assert len(sut.data.columns) == 2
+    assert 'f1' in sut.data.columns
+    assert 'f3' in sut.data.columns
 
 
 def test_baser_drift_calculator_raises_calculator_not_fitted_exception_when_calculating_with_none_chunker(  # noqa: D103
@@ -526,4 +537,4 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data,
             ],
         }
     )
-    pd.testing.assert_frame_equal(expected_drift, drift[['key', 'reconstruction_error']])
+    pd.testing.assert_frame_equal(expected_drift, drift.data[['key', 'reconstruction_error']])
