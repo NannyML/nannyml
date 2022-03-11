@@ -14,27 +14,85 @@ the probability that a classifier’s prediction is correct. When this score is 
 directly used to calculate the probability of making an error. For instance, imagine a high-performing model which,
 for a large set of observations, returns a prediction of 1 (positive class) with probability of 0.9. It means that
 for approximately 90% of these observations, the model is correct while for the other 10% the model is wrong.
-Assuming properly calibrated probabilities, NannyML reconstructs the whole confusion matrix as follows:
+Assuming properly calibrated probabilities, NannyML reconstructs the whole confusion matrix and calculates ROC AUC
+for a set of :math:`n` predictions according to following algorithm:
 
-    1. Threshold all the probability outputs to get binary predictions for all the observations. If the probability
-       assigned to a single observation is greater or equal to the threshold, it is a **positive** prediction. If
-       it is lower - it is a **negative** prediction.
-    2. The probability that the prediction is false - **P(F) = abs(predicted class - predicted probability)**.
-       Then **P(T)= 1 - P(F)**.
-    3. The probability of True Positive, False Positive, True Negative and False negative is calculated.
+    Let’s denote:
 
-For example, for probability equal to 0.9 and threshold being 0.5, the prediction is:
+    :math:`\hat{p} = Pr(y=1)` - monitored model probability estimate,
 
-    - positive as 0.9 > 0.5,
-    - false (False Positive) with 0.1 (1-0.9) probability,
-    - true (True Positive) with 0.9 probability,
-    - True Negative and False Negative with 0 probability.
+    :math:`y` - target label, :math:`y\in{\{0,1\}}`,
 
-Summing these values for all observations in a chunk gives the expected confusion matrix for a selected threshold. This
-can be done for all the thresholds (all the model output probabilities) and then used to calculate the estimated ROC
-AUC. Using simple modifications, the future versions of NannyML will estimate any metric for any supervised learning problem.
+    :math:`\hat{y}` - predicted label, :math:`\hat{y}\in{\{0,1\}}`.
 
-Since the probability returned by the model contains information about its confidence in prediction, this family of methods is called Confidence-based Performance Estimation (CBPE).
+    To calculate ROC AUC one needs values of confusion matrix elements (True Positives, False Positives, True Negatives, False Negatives)
+    for a set of all thresholds :math:`t`. This set is obtained by selecting subset of :math:`m`
+    unique values from the set of probability predictions
+    :math:`\mathbf{\hat{p}}` and sorting them increasingly.
+    Therefore :math:`\mathbf{t}=\{\hat{p_1}, \hat{p_2}, ..., \hat{p_m}\}` and
+    :math:`\hat{p_1} < \hat{p_2} < ... < \hat{p_m}` (notice that in some cases :math:`m=n`).
+
+    The algorithm runs as follows:
+
+    1. Get :math:`i`-*th* threshold from :math:`\mathbf{t}`,  denote :math:`t_i`.
+    2. Get :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote :math:`p_j`.
+    3. Get binary prediction by thresholding probability estimate:
+
+    .. math::
+        \hat{p}_{i,j}=\begin{cases}1,\qquad  \hat{p}_j \geq t_i \\ 0,\qquad  \hat{p}_j < t_i \end{cases}
+
+    4. Calculate the estimated probability that the prediction is false:
+
+    .. math::
+        P(\hat{y} \neq y)_{i,j} = |\hat{y}_{i,j} -  \hat{p}_{i,j}|
+
+    5. Calculate the estimated probability that the prediction is correct:
+
+    .. math::
+        P(\hat{y} = y)_{i,j}=1-P(\hat{y} \neq y)_{i,j}
+
+    6. Calculate the confusion matrix elements probability:
+
+    .. math::
+        TP_{i,j}=\begin{cases}P(\hat{y} = y)_{i,j},\qquad  y_{i,j}=1  \\  0,\qquad \qquad \qquad \thinspace  y_{i,j}=0 \end{cases}
+
+    .. math::
+        FP_{i,j}=\begin{cases}P(\hat{y} \neq y)_{i,j},\qquad  y_{i,j}=1  \\  0,\qquad \qquad \qquad \thinspace  y_{i,j}=0
+        \end{cases}
+
+    .. math::
+        TN_{i,j}=\begin{cases} 0,\qquad \qquad \qquad \thinspace  y_{i,j}=1 \\ P(\hat{y} = y)_{i,j},\qquad y_{i,j}=0\end{cases}
+
+    .. math::
+        FN_{i,j}=\begin{cases} 0,\qquad \qquad \qquad \thinspace  y_{i,j}=1 \\ P(\hat{y} \neq y)_{i,j},\qquad y_{i,j}=0\end{cases}
+
+    .. math::
+
+    7. Calculate steps 2-6 for all predictions in :math:`\hat{\mathbf{p}}`
+       (i.e. for all :math:`j` from 1 to :math:`n`) so
+       that confusion matrix elements are calculated for each prediction.
+
+    8. Get estimated confusion matrix elements for the whole set of predictions, e.g. for True Positives:
+
+    .. math::
+        {TP}_i = \sum_{j}^{n} {TP}_{i,j}
+
+    9. Calculate estimated true positive rate and false positive rate:
+
+    .. math::
+        {TPR}_i = \frac{{TP}_i}{{TP}_i + {FN}_i}
+    .. math::
+        {FPR}_i = \frac{{FP}_i}{{FP}_i + {TN}_i}
+
+    10. Repeat steps 1-9 to get :math:`TPR` and :math:`FPR` for all thresholds :math:`\mathbf{t}` (i.e. for
+        :math:`i` from 1 to :math:`m`). As a result, get vectors of decreasing true positive rates and true
+        negative rates, e.g.:
+
+    .. math::
+        \mathbf{TPR} = ({TPR}_1, {TPR}_2, ..., {TPR}_m)
+
+    11. Calculate ROC AUC.
+
 
 Probability calibration
 =======================
