@@ -168,9 +168,9 @@ is to use the Data Reconstruction with PCA. This method is able to capture
 complex changes in our data. The algorithm implementing Data Reconstruction with PCA
 works in three steps described below.
 
-The first step is data preparation and includes
-frequency encoding and scaling the data. Frequency encoding is used
-to convert all categorical features into numbers. The next thing we do
+The first step is data preparation and includes missing values :term:`Imputation`,
+frequency encoding and scaling the data. Missing values need to be imputed because using PCA requires it.
+Frequency encoding is used to convert all categorical features into numbers. The next thing to do
 is standardize all features to 0 mean and unit variance. This makes sure that all features
 contribute to PCA on equal footing.
 

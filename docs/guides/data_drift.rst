@@ -324,7 +324,8 @@ reconstruction error over time for the monitored model and raises an alert if th
 values get outside the range observed in the reference partition.
 
 The :py:class:`nannyml.drift.data_reconstruction_drift_calcutor.DataReconstructionDriftCalculator`
-module implements this functionality. An example of us using it can be seen below:
+module implements this functionality.
+An example of us using it can be seen below:
 
 
 .. code-block:: python
@@ -336,6 +337,36 @@ module implements this functionality. An example of us using it can be seen belo
     >>> rcerror_calculator.fit(reference_data=reference)
     >>> # let's see RC error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
+
+
+An important detail is that :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>` cannot process missing values,
+therefore they need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
+the most frequent value for categorical features and the mean for continuous features. It takes place if the relevant optional
+arguments are not specified. If needed they can be specified with an instannce of `SimpleImputer`_ class
+in which cases NannyML will perform the imputation as instructed. An example where custom imputation strategies are used can be seen below:
+
+
+.. code-block:: python
+
+    >>> from sklearn.impute import SimpleImputer
+    >>>
+    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(
+    >>>     model_metadata=metadata,
+    >>>     chunk_size=5000,
+    >>>     imputer_categorical=SimpleImputer(strategy='constant', fill_value='missing'),
+    >>>     imputer_continuous=SimpleImputer(strategy='median')
+    >>> )
+    >>> # NannyML compares drift versus the full reference dataset.
+    >>> rcerror_calculator.fit(reference_data=reference)
+    >>> # let's see RC error statistics for all available data
+    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+
+
+Because our synthetic dataset does not have missing values, the results are the same in both cases:
+
+.. code-block:: python
+
     >>> rcerror_results
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
@@ -393,3 +424,5 @@ NannyML can also visualize multivariate drift results with the following code:
 
 The mutlrivariate drift results provide a consice summary of where data drift
 is happening in our input data.
+
+.. _SimpleImputer: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
