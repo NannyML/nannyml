@@ -13,7 +13,8 @@ from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory
 from nannyml.exceptions import NotFittedException
 from nannyml.metadata import NML_METADATA_PREDICTION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
-from nannyml.performance_estimation._base import BasePerformanceEstimator
+from nannyml.performance_estimation.base import BasePerformanceEstimator, PerformanceEstimatorResult
+from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
 
 
 class CBPE(BasePerformanceEstimator):
@@ -82,7 +83,7 @@ class CBPE(BasePerformanceEstimator):
             reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
         )
 
-    def _estimate(self, chunks: List[Chunk]) -> pd.DataFrame:
+    def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
         res = pd.DataFrame.from_records(
             [
                 {
@@ -105,7 +106,7 @@ class CBPE(BasePerformanceEstimator):
         res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)
         res = res.reset_index(drop=True)
-        return res
+        return CBPEPerformanceEstimatorResult(estimated_data=res, model_metadata=self.model_metadata)
 
 
 def _calculate_alert_thresholds(

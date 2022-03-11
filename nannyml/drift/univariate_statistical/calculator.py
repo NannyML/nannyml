@@ -10,7 +10,9 @@ import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.chunk import Chunk, Chunker
-from nannyml.drift._base import BaseDriftCalculator
+from nannyml.drift.base import BaseDriftCalculator
+from nannyml.drift.univariate_statistical.results import UnivariateDriftResult
+from nannyml.exceptions import CalculatorNotFittedException
 from nannyml.metadata import ModelMetadata
 
 ALERT_THRESHOLD_P_VALUE = 0.05
@@ -61,7 +63,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
     def _calculate_drift(
         self,
         chunks: List[Chunk],
-    ) -> pd.DataFrame:
+    ) -> UnivariateDriftResult:
         # Get lists of categorical <-> categorical features
         categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
         continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features] + [
@@ -110,4 +112,12 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
         res.attrs['nml_drift_calculator'] = __name__
-        return res
+
+        if self.chunker is None:
+            raise CalculatorNotFittedException(
+                'chunker has not been set. '
+                'Please ensure you run ``calculator.fit()`` '
+                'before running ``calculator.calculate()``'
+            )
+
+        return UnivariateDriftResult(analysis_data=chunks, drift_data=res, model_metadata=self.model_metadata)
