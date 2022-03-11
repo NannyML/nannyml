@@ -4,5 +4,5 @@
 
 """Contains all performance estimation implementations and utilities."""
 
-from ._base import BasePerformanceEstimator
-from .cbpe import CBPE
+from .base import BasePerformanceEstimator
+from .confidence_based import CBPE

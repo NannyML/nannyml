@@ -15,6 +15,7 @@ from sklearn.preprocessing import StandardScaler
 
 from nannyml.chunk import Chunk, Chunker
 from nannyml.drift import BaseDriftCalculator
+from nannyml.drift.data_reconstruction.results import DataReconstructionDriftCalculatorResult
 from nannyml.metadata import Feature
 
 
@@ -130,7 +131,7 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
     def _calculate_drift(
         self,
         chunks: List[Chunk],
-    ) -> pd.DataFrame:
+    ) -> DataReconstructionDriftCalculatorResult:
 
         selected_categorical_column_names = _get_selected_feature_names(
             self.selected_features, self.model_metadata.categorical_features
@@ -169,7 +170,9 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
-        return res
+        return DataReconstructionDriftCalculatorResult(
+            analysis_data=chunks, drift_data=res, model_metadata=self.model_metadata
+        )
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
         reference_chunks = self.chunker.split(reference_data)  # type: ignore

@@ -13,7 +13,7 @@ This module currently contains the following implementations of drift calculatio
 
 """
 
-from ._base import BaseDriftCalculator, DriftCalculator
-from .data_reconstruction_drift_calcutor import DataReconstructionDriftCalculator
+from .base import BaseDriftCalculator, DriftCalculator
+from .data_reconstruction import DataReconstructionDriftCalculator, DataReconstructionDriftCalculatorResult
 from .ranking import AlertCountRanking, Ranker, Ranking
-from .univariate_statistical_drift_calculator import UnivariateStatisticalDriftCalculator
+from .univariate_statistical import UnivariateDriftResult, UnivariateStatisticalDriftCalculator

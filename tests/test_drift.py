@@ -13,8 +13,8 @@ from sklearn.impute import SimpleImputer
 
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
-from nannyml.drift.data_reconstruction_drift_calcutor import DataReconstructionDriftCalculator
-from nannyml.drift.univariate_statistical_drift_calculator import UnivariateStatisticalDriftCalculator
+from nannyml.drift.data_reconstruction.calculator import DataReconstructionDriftCalculator
+from nannyml.drift.univariate_statistical.calculator import UnivariateStatisticalDriftCalculator
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
 
@@ -331,10 +331,10 @@ def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_an
     sut = calc.calculate(data=sample_drift_data)
 
     chunks = chunker.split(sample_drift_metadata.enrich(sample_drift_data))
-    assert len(chunks) == sut.shape[0]
+    assert len(chunks) == sut.data.shape[0]
     chunk_keys = [c.key for c in chunks]
-    assert 'key' in sut.columns
-    assert sorted(chunk_keys) == sorted(sut['key'].values)
+    assert 'key' in sut.data.columns
+    assert sorted(chunk_keys) == sorted(sut.data['key'].values)
 
 
 def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103
@@ -346,7 +346,7 @@ def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  
 
     drift = calc.calculate(data=sample_drift_data)
 
-    sut = drift.columns
+    sut = drift.data.columns
     assert 'key' in sut
     assert 'start_index' in sut
     assert 'start_date' in sut
@@ -361,7 +361,7 @@ def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=1000)
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).columns
+    sut = calc.calculate(data=sample_drift_data).data.columns
 
     for f in sample_drift_metadata.features:
         if f.feature_type == FeatureType.CONTINUOUS:
@@ -431,7 +431,7 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
 
     drift = calc.calculate(data=sample_drift_data)
 
-    sut = drift.columns
+    sut = drift.data.columns
     assert len(sut) == 10
     assert 'key' in sut
     assert 'start_index' in sut
@@ -456,7 +456,7 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
 
     sample_drift_data = sample_drift_metadata.enrich(sample_drift_data)
     expected = len(PeriodBasedChunker(offset='W', minimum_chunk_size=1).split(sample_drift_data))
-    sut = len(drift)
+    sut = len(drift.data)
     assert sut == expected
 
 
