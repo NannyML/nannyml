@@ -51,6 +51,5 @@ from .drift import (
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
 from .performance_estimation import CBPE, BasePerformanceEstimator
-from .plots import DriftPlots, PerformancePlots
 
 logger = logging.getLogger(__name__)
