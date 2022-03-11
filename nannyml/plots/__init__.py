@@ -8,4 +8,4 @@
 
 """Module containing plotting implementations."""
 
-from .plots import DriftPlots, PerformancePlots
+CHUNK_KEY_COLUMN_NAME = 'key'

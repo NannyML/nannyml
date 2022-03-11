@@ -9,6 +9,7 @@ from typing import Dict, Optional
 
 import pandas as pd
 
+from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import ModelMetadata
 
@@ -17,7 +18,10 @@ class Ranking(abc.ABC):
     """Used to rank drifting features according to impact."""
 
     def rank(
-        self, drift_calculation_result: pd.DataFrame, model_metadata: ModelMetadata, only_drifting: bool = False
+        self,
+        drift_calculation_result: DriftResult,
+        model_metadata: ModelMetadata,
+        only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Ranks the features within a drift calculation according to impact.
 
@@ -45,7 +49,10 @@ class AlertCountRanking(Ranking):
     ALERT_COLUMN_SUFFIX = '_alert'
 
     def rank(
-        self, drift_calculation_result: pd.DataFrame, model_metadata: ModelMetadata, only_drifting: bool = False
+        self,
+        drift_calculation_result: DriftResult,
+        model_metadata: ModelMetadata,
+        only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Compares the number of alerts for each feature and uses that for ranking.
 
@@ -81,19 +88,19 @@ class AlertCountRanking(Ranking):
 
 
         """
-        if drift_calculation_result.empty:
+        if drift_calculation_result.data.empty:
             raise InvalidArgumentsException('drift results contain no data to use for ranking')
 
         alert_column_names = [
             column_name
-            for column_name in drift_calculation_result.columns
+            for column_name in drift_calculation_result.data.columns
             if (self.ALERT_COLUMN_SUFFIX in column_name) and (model_metadata.prediction_column_name not in column_name)
         ]
 
         if len(alert_column_names) == 0:
-            raise InvalidArgumentsException('drift results are not univariate drift results.')
+            raise InvalidArgumentsException('drift results are not univariate_statistical drift results.')
 
-        ranking = pd.DataFrame(drift_calculation_result[alert_column_names].sum()).reset_index()
+        ranking = pd.DataFrame(drift_calculation_result.data[alert_column_names].sum()).reset_index()
         ranking.columns = ['feature', 'number_of_alerts']
         ranking['feature'] = ranking['feature'].str.replace(self.ALERT_COLUMN_SUFFIX, '')
         ranking = ranking.sort_values('number_of_alerts', ascending=False, ignore_index=True)

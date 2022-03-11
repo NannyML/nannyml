@@ -7,28 +7,33 @@
 import pandas as pd
 import pytest
 
-import nannyml.metadata
+from nannyml.drift import UnivariateDriftResult
 from nannyml.drift.ranking import AlertCountRanking
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import ModelMetadata, extract_metadata
 
 
 @pytest.fixture
-def sample_drift_result() -> pd.DataFrame:  # noqa: D103
-    return pd.DataFrame(
-        {
-            'f1_alert': [0, 0, 0, 0, 1, 1],
-            'f2_alert': [0, 0, 0, 1, 1, 1],
-            'f3_alert': [0, 0, 0, 1, 0, 1],
-            'f4_alert': [0, 0, 0, 0, 0, 0],
-            'f1': [0, 0, 0, 0, 0, 0],
-            'f2': [1, 1, 1, 1, 1, 1],
-        }
+def sample_drift_result() -> UnivariateDriftResult:  # noqa: D103
+    return UnivariateDriftResult(
+        analysis_data=[],
+        model_metadata=ModelMetadata(),
+        drift_data=pd.DataFrame(
+            {
+                'f1_alert': [0, 0, 0, 0, 1, 1],
+                'f2_alert': [0, 0, 0, 1, 1, 1],
+                'f3_alert': [0, 0, 0, 1, 0, 1],
+                'f4_alert': [0, 0, 0, 0, 0, 0],
+                'f1': [0, 0, 0, 0, 0, 0],
+                'f2': [1, 1, 1, 1, 1, 1],
+            }
+        ),
     )
 
 
 @pytest.fixture
 def sample_metadata(sample_drift_result):  # noqa: D103
-    md = nannyml.metadata.extract_metadata(sample_drift_result)
+    md = extract_metadata(sample_drift_result.data)
     md.prediction_column_name = 'prediction'
     return md
 
@@ -38,7 +43,12 @@ def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_resul
 ):
     ranking = AlertCountRanking()
     with pytest.raises(InvalidArgumentsException, match='drift results contain no data to use for ranking'):
-        ranking.rank(pd.DataFrame(columns=['f1', 'f1_alert']), sample_metadata)
+        ranking.rank(
+            UnivariateDriftResult(
+                analysis_data=[], drift_data=pd.DataFrame(columns=['f1', 'f1_alert']), model_metadata=sample_metadata
+            ),
+            sample_metadata,
+        )
 
 
 def test_alert_count_ranking_contains_rank_column(sample_drift_result, sample_metadata):  # noqa: D103
@@ -69,5 +79,12 @@ def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_opt
 def test_alert_count_ranking_should_raise_invalid_arguments_exception_when_given_wrong_drift_results(  # noqa: D103
     sample_metadata,
 ):
-    with pytest.raises(InvalidArgumentsException, match="drift results are not univariate drift results."):
-        _ = AlertCountRanking().rank(pd.DataFrame({'alert': [False, False, True]}), sample_metadata)
+    with pytest.raises(InvalidArgumentsException, match="drift results are not univariate_statistical drift results."):
+        _ = AlertCountRanking().rank(
+            UnivariateDriftResult(
+                analysis_data=[],
+                drift_data=pd.DataFrame({'alert': [False, False, True]}),
+                model_metadata=sample_metadata,
+            ),
+            sample_metadata,
+        )

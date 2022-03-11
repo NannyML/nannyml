@@ -141,7 +141,7 @@ An example using it can be seen below:
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's view a small subset of our results:
-    >>> univariate_results.iloc[:5, :9]
+    >>> univariate_results.data.iloc[:5, :9]
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   wfh_prev_workday_chi2 |   wfh_prev_workday_p_value | wfh_prev_workday_alert   |
@@ -160,7 +160,7 @@ An example using it can be seen below:
 
 .. code-block:: python
 
-    >>> univariate_results.iloc[-5:, :9]
+    >>> univariate_results.data.iloc[-5:, :9]
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   wfh_prev_workday_chi2 |   wfh_prev_workday_p_value | wfh_prev_workday_alert   |
@@ -184,11 +184,9 @@ NannyML can also visualize those results with the following code:
 
 .. code-block:: python
 
-    >>> # Let's initialize the plotting class:
-    >>> plots = nml.DriftPlots(model_metadata=univariate_calculator.model_metadata, chunker=univariate_calculator.chunker)
     >>> # let's plot drift results for all model inputs
     >>> for feature in metadata.features:
-    ...     figure = plots.plot_univariate_statistical_drift(univariate_results, metric='statistic', feature_label=feature.label)
+    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
     ...     figure.show()
 
 .. image:: ../_static/drift-guide-distance_from_office.svg
@@ -214,9 +212,8 @@ stacked bar charts for categorical variables. It does so with the following code
 
     >>> # let's plot distribution drift results for continuous model inputs
     >>> for feature in metadata.continuous_features:
-    ...     figure = plots.plot_continuous_feature_distribution_over_time(
-    ...         data=pd.concat([reference, analysis], ignore_index=True),
-    ...         drift_results=univariate_results,
+    ...     figure = univariate_results.plot(
+    ...         kind='feature_distribution',
     ...         feature_label=feature.label
     ...     )
     ...     figure.show()
@@ -233,9 +230,8 @@ stacked bar charts for categorical variables. It does so with the following code
 
     >>> # let's plot distribution drift results for categorical model inputs
     >>> for feature in metadata.categorical_features:
-    ...     figure = plots.plot_categorical_feature_distribution_over_time(
-    ...         data=pd.concat([reference, analysis], ignore_index=True),
-    ...         drift_results=univariate_results,
+    ...     figure = univariate_results.plot(
+    ...         kind='feature_distribution'
     ...         feature_label=feature.label
     ...     )
     ...     figure.show()
@@ -290,7 +286,7 @@ The results are in our ``univariate_results`` object. We can visualize them with
 
 .. code-block:: python
 
-    >>> figure = plots.plot_univariate_statistical_prediction_drift(univariate_results, metric='statistic')
+    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
     >>> figure.show()
 
 .. image:: ../_static/drift-guide-predictions.svg
@@ -386,7 +382,7 @@ NannyML can also visualize multivariate drift results with the following code:
 
 .. code-block:: python
 
-    >>> figure = plots.plot_data_reconstruction_drift(rcerror_results)
+    >>> figure = rcerror_results.plot(kind='drift')
     >>> figure.show()
 
 .. image:: ../_static/drift-guide-multivariate.svg

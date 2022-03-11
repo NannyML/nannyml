@@ -1,10 +1,14 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Module containing base classes for drift calculation."""
+
 import abc
 from typing import List
 
 import pandas as pd
+import plotly.graph_objects
 
 from nannyml.chunk import (
     Chunk,
@@ -18,6 +22,38 @@ from nannyml.chunk import (
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 from nannyml.preprocessing import preprocess
+
+
+class DriftResult(abc.ABC):
+    """Contains the results of a drift calculation and provides additional functionality such as plotting.
+
+    The result of the :meth:`~nannyml.drift.base.DriftCalculator.calculate` method of a
+    :class:`~nannyml.drift.base.DriftCalculator`.
+
+    It is an abstract class containing shared properties and methods across implementations.
+    For each :class:`~nannyml.drift.base.DriftCalculator` class there will be an associated
+    :class:`~nannyml.drift.base.DriftResult` implementation.
+    """
+
+    def __init__(self, analysis_data: List[Chunk], drift_data: pd.DataFrame, model_metadata: ModelMetadata):
+        """Creates a new DriftResult instance.
+
+        Parameters
+        ----------
+        analysis_data: List[Chunk]
+            The data that was provided to calculate drift on. This is required in order to plot distributions.
+        drift_data: pd.DataFrame
+            The results of the drift calculation.
+        model_metadata: ModelMetadata
+            The metadata describing the monitored model. Used to
+        """
+        self._analysis_data = analysis_data
+        self.data = drift_data.copy(deep=True)
+        self.metadata = model_metadata
+
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+        """Plot drift results."""
+        raise NotImplementedError
 
 
 class DriftCalculator(abc.ABC):
@@ -133,7 +169,7 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
     def _fit(self, reference_data: pd.DataFrame):
         raise NotImplementedError
 
-    def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
+    def calculate(self, data: pd.DataFrame) -> DriftResult:
         """Performs validations and transformations before delegating the calculation to implementing classes.
 
         Steps taken in this function are:
@@ -181,5 +217,5 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
     def _calculate_drift(
         self,
         chunks: List[Chunk],
-    ) -> pd.DataFrame:
+    ) -> DriftResult:
         raise NotImplementedError

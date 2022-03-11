@@ -7,6 +7,7 @@ import abc
 from typing import List
 
 import pandas as pd
+import plotly.graph_objects as go
 
 from nannyml.chunk import (
     Chunk,
@@ -20,6 +21,27 @@ from nannyml.chunk import (
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 from nannyml.preprocessing import preprocess
+
+
+class PerformanceEstimatorResult(abc.ABC):
+    """Contains performance estimation results and provides additional functionality on them."""
+
+    def __init__(self, estimated_data: pd.DataFrame, model_metadata: ModelMetadata):
+        """Creates a new DriftResult instance.
+
+        Parameters
+        ----------
+        estimated_data: pd.DataFrame
+            The results of the :meth:`~nannyml.performance_estimation.base.PerformanceEstimator.estimate` call.
+        model_metadata: ModelMetadata
+            The metadata describing the monitored model.
+        """
+        self.data = estimated_data.copy(deep=True)
+        self.metadata = model_metadata
+
+    def plot(self, *args, **kwargs) -> go.Figure:
+        """Plot drift results."""
+        raise NotImplementedError
 
 
 class PerformanceEstimator(abc.ABC):
@@ -36,7 +58,7 @@ class PerformanceEstimator(abc.ABC):
         """Fits the data on a reference data set."""
         raise NotImplementedError
 
-    def estimate(self, data: pd.DataFrame):
+    def estimate(self, data: PerformanceEstimatorResult):
         """Estimate performance given a data set lacking ground truth."""
         raise NotImplementedError
 
@@ -116,7 +138,7 @@ class BasePerformanceEstimator(PerformanceEstimator):
     def _fit(self, reference_data: pd.DataFrame):
         raise NotImplementedError
 
-    def estimate(self, data: pd.DataFrame) -> pd.DataFrame:
+    def estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
         """Performs validations and transformations before delegating the estimation to implementing classes.
 
         Steps taken in this function are:
@@ -155,5 +177,5 @@ class BasePerformanceEstimator(PerformanceEstimator):
 
         return self._estimate(chunks=chunks)
 
-    def _estimate(self, chunks: List[Chunk]) -> pd.DataFrame:
+    def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
         raise NotImplementedError
