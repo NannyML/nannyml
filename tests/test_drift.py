@@ -147,10 +147,9 @@ def test_base_drift_calculator_given_empty_features_list_should_calculate_for_al
     sut = calc.calculate(data=sample_drift_data)
 
     md = extract_metadata(sample_drift_data, model_name='model')
-    assert len(sut.columns) == len(md.features) + 1
+    assert len(sut.columns) == len(md.features)
     for f in md.features:
         assert f.column_name in sut.columns
-    assert md.prediction_column_name in sut.columns
 
 
 def test_base_drift_calculator_given_non_empty_features_list_should_only_calculate_for_these_features(  # noqa: D103
@@ -323,6 +322,7 @@ def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value
         else:
             assert f'{f.column_name}_chi2' in sut
         assert f'{f.column_name}_p_value' in sut
+    assert f'{sample_drift_metadata.prediction_column_name}_dstat' in sut
 
 
 def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
@@ -411,3 +411,59 @@ def test_data_reconstruction_drift_calculator_should_not_fail_when_using_feature
         calc.calculate(sample_drift_data)
     except Exception as exc:
         pytest.fail(f"should not have failed but got {exc}")
+
+
+def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data, sample_drift_metadata):  # noqa: D103
+    calc = DataReconstructionDriftCalculator(sample_drift_metadata, chunk_period='W')
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    calc.fit(ref_data)
+    drift = calc.calculate(data=sample_drift_data)
+    expected_drift = pd.DataFrame.from_dict(
+        {
+            'key': [
+                '2020-01-06/2020-01-12',
+                '2020-01-13/2020-01-19',
+                '2020-01-20/2020-01-26',
+                '2020-01-27/2020-02-02',
+                '2020-02-03/2020-02-09',
+                '2020-02-10/2020-02-16',
+                '2020-02-17/2020-02-23',
+                '2020-02-24/2020-03-01',
+                '2020-03-02/2020-03-08',
+                '2020-03-09/2020-03-15',
+                '2020-03-16/2020-03-22',
+                '2020-03-23/2020-03-29',
+                '2020-03-30/2020-04-05',
+                '2020-04-06/2020-04-12',
+                '2020-04-13/2020-04-19',
+                '2020-04-20/2020-04-26',
+                '2020-04-27/2020-05-03',
+                '2020-05-04/2020-05-10',
+                '2020-05-11/2020-05-17',
+                '2020-05-18/2020-05-24',
+            ],
+            'reconstruction_error': [
+                0.795939312162986,
+                0.7840110463966236,
+                0.8119098730091425,
+                0.7982130082187159,
+                0.807815521612754,
+                0.8492042669464963,
+                0.7814127409090083,
+                0.8022621626300768,
+                0.8104742129966831,
+                0.7703901270625767,
+                0.8007070128606296,
+                0.7953169982962172,
+                0.7862784182468701,
+                0.838376989270861,
+                0.8019280640410021,
+                0.7154339372837247,
+                0.7171169593894968,
+                0.7255999561968017,
+                0.73493013255886,
+                0.7777717388501538,
+            ],
+        }
+    )
+    pd.testing.assert_frame_equal(expected_drift, drift[['key', 'reconstruction_error']])
