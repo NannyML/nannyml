@@ -72,9 +72,7 @@ class DriftCalculator(abc.ABC):
         """
         self.model_metadata = model_metadata
         if not features:
-            features = [f.column_name for f in self.model_metadata.features] + [
-                self.model_metadata.prediction_column_name
-            ]
+            features = [f.column_name for f in self.model_metadata.features]
         self.selected_features = features
 
     def fit(self, reference_data: pd.DataFrame):
