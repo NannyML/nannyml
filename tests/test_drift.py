@@ -123,7 +123,7 @@ def sample_drift_metadata(sample_drift_data):  # noqa: D103
 class SimpleDriftResult(DriftResult):
     """Dummy DriftResult implementation."""
 
-    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:  # noqa: D103
         pass
 
 
