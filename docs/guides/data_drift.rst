@@ -141,6 +141,7 @@ An example using it can be seen below:
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's view a small subset of our results:
+    >>> # We use the data property of the results class to view the relevant data.
     >>> univariate_results.data.iloc[:5, :9]
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+-------------------------+----------------------------+--------------------------+
@@ -293,6 +294,11 @@ The results are in our ``univariate_results`` object. We can visualize them with
 
 NannyML can also show how the distributions of the model predictions evolved over time:
 
+.. code-block:: python
+
+    >>> figure = univariate_results.plot(kind='prediction_distribution', metric='statistic')
+    >>> figure.show()
+
 .. image:: ../_static/drift-guide-predictions-joyplot.svg
 
 
@@ -363,7 +369,8 @@ Because our synthetic dataset does not have missing values, the results are the 
 
 .. code-block:: python
 
-    >>> rcerror_results
+    >>> # We use the data property of the results class to view the relevant data.
+    >>> rcerror_results.data
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   reconstruction_error |   lower_threshold |   upper_threshold | alert   |
