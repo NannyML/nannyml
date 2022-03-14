@@ -117,5 +117,9 @@ site/
 docs/_build
 docs/nannyml
 
+# temp docs container artifacts
+docs/Dockerfile
+docs/index.html
+
 # images created from doc notebooks
 docs/examples/*.svg
