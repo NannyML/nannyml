@@ -66,8 +66,6 @@ for a set of :math:`n` predictions according to following algorithm:
     .. math::
         FN_{i,j}=\begin{cases} 0,\qquad \qquad \qquad \thinspace  y_{i,j}=1 \\ P(\hat{y} \neq y)_{i,j},\qquad y_{i,j}=0\end{cases}
 
-    .. math::
-
     7. Calculate steps 2-6 for all predictions in :math:`\hat{\mathbf{p}}`
        (i.e. for all :math:`j` from 1 to :math:`n`) so
        that confusion matrix elements are calculated for each prediction.
