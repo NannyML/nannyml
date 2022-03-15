@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+### Fixed
+- Data reconstruction drift calculation failing when there are no categorical or continuous features
+  [(#36)](https://github.com/NannyML/nannyml/issues/36)
 
 ## [0.2.0] - 2022-03-03
 ### Added
