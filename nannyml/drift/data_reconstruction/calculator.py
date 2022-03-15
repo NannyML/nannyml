@@ -100,12 +100,14 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
 
         # TODO: We duplicate the reference data 3 times, here. Improve to something more memory efficient?
         imputed_reference_data = reference_data.copy(deep=True)
-        imputed_reference_data[selected_categorical_column_names] = self._imputer_categorical.fit_transform(
-            imputed_reference_data[selected_categorical_column_names]
-        )
-        imputed_reference_data[selected_continuous_column_names] = self._imputer_continuous.fit_transform(
-            imputed_reference_data[selected_continuous_column_names]
-        )
+        if len(selected_categorical_column_names) > 0:
+            imputed_reference_data[selected_categorical_column_names] = self._imputer_categorical.fit_transform(
+                imputed_reference_data[selected_categorical_column_names]
+            )
+        if len(selected_continuous_column_names) > 0:
+            imputed_reference_data[selected_continuous_column_names] = self._imputer_continuous.fit_transform(
+                imputed_reference_data[selected_continuous_column_names]
+            )
 
         encoder = CountEncoder(cols=selected_categorical_column_names, normalize=True)
         encoded_reference_data = imputed_reference_data.copy(deep=True)
@@ -251,8 +253,10 @@ def _calculate_reconstruction_error_for_data(
     data = data.reset_index(drop=True)
 
     # Impute missing values
-    data[selected_categorical_features] = imputer_categorical.transform(data[selected_categorical_features])
-    data[selected_continuous_features] = imputer_continuous.transform(data[selected_continuous_features])
+    if len(selected_categorical_features) > 0:
+        data[selected_categorical_features] = imputer_categorical.transform(data[selected_categorical_features])
+    if len(selected_continuous_features) > 0:
+        data[selected_continuous_features] = imputer_continuous.transform(data[selected_continuous_features])
 
     data[selected_features] = encoder.transform(data[selected_features])
 
