@@ -17,9 +17,6 @@ NannyML provides a sample synthetic dataset that can be used for testing purpose
     >>> import nannyml as nml
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
     >>> reference.head()
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> chunk_size = 5000
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |
@@ -41,12 +38,15 @@ working from home is included in the ``y_pred_proba`` column. The model inputs a
 ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and
 ``tenure``. ``identifier`` is the :term:`Identifier` column and ``timestamp`` is the :term:`Timestamp` column.
 
-The next step is to have NannyML deduce some information about the model from the dataset.
+The next step is to have NannyML deduce some information about the model from the dataset and make a choice about way we will split our data in :term:`Data Chunks<Data Chunk>`.
 
 .. code-block:: python
 
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
     >>> metadata.target_column_name = 'work_home_actual'
+    >>> data = pd.concat([reference, analysis], ignore_index=True)
+    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> chunk_size = 5000
 
 The data are already split into a reference and an analysis partition. NannyML uses the reference partition to
 establish a baseline for expected model performance and the analysis partition to check whether
