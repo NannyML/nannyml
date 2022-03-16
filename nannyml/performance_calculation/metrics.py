@@ -1,0 +1,132 @@
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  #
+#  License: Apache Software License 2.0
+
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
+#
+#  License: Apache Software License 2.0
+
+"""Module containing metric utilities and implementations."""
+from typing import Callable, Dict, Union
+
+import numpy as np
+import pandas as pd
+from sklearn.metrics import f1_score, roc_auc_score
+
+from nannyml import ModelMetadata
+from nannyml.exceptions import InvalidArgumentsException
+
+
+class Metric:
+    """Represents a performance metric."""
+
+    def __init__(
+        self,
+        display_name: str,
+        calculation_function: Callable,
+        upper_threshold: float = None,
+        lower_threshold: float = None,
+    ):
+        """Creates a new Metric instance.
+
+        Parameters
+        ----------
+        display_name : str
+            The name of the metric. Used to display in plots. If not given this name will be derived from the
+            ``calculation_function``.
+        calculation_function : Callable
+            A function that will calculate a performance metric.
+        upper_threshold : float, default=None
+            An optional upper threshold for the performance metric.
+        lower_threshold : float, default=None
+            An optional lower threshold for the performance metric.
+        """
+        self.display_name = display_name
+        self.calculation_function = calculation_function
+        self.lower_threshold = lower_threshold
+        self.upper_threshold = upper_threshold
+
+    def __eq__(self, other):
+        """Establishes equality by comparing all properties."""
+        return (
+            self.display_name == other.display_name
+            and self.upper_threshold == other.upper_threshold
+            and self.lower_threshold == other.lower_threshold
+            and self.calculation_function == other.calculation_function
+        )
+
+
+class AUROC(Metric):
+    """Area under Receiver Operating Curve metric."""
+
+    def __init__(self):
+        """Creates a new AUROC instance."""
+        super().__init__(display_name='ROC_AUC', calculation_function=_roc_auc)
+
+
+def _roc_auc(y_true, y_pred):
+    """
+    Redefine to handle NaNs and edge cases.
+    """
+    y_true, y_pred = (
+        pd.Series(y_true).reset_index(drop=True),
+        pd.Series(y_pred).reset_index(drop=True),
+    )
+    y_true = y_true[~y_pred.isna()]
+    y_pred.dropna(inplace=True)
+
+    if y_true.nunique() <= 1:
+        return np.nan
+    else:
+        return roc_auc_score(y_true, y_pred)
+
+
+class F1(Metric):
+    """F1 score metric."""
+
+    def __init__(self):
+        """Creates a new F1 instance."""
+        super().__init__(display_name='F1', calculation_function=_f1)
+
+
+def _f1(data, metadata: ModelMetadata):
+    """
+    Redefine to handle NaNs and edge cases.
+    """
+    y_true = data[metadata.target_column_name]
+    y_pred = data[metadata.prediction_column_name]
+    y_true, y_pred = (
+        pd.Series(y_true).reset_index(drop=True),
+        pd.Series(y_pred).reset_index(drop=True),
+    )
+    y_true = y_true[~y_pred.isna()]
+    y_pred.dropna(inplace=True)
+
+    if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+        return np.nan
+    else:
+        return f1_score(y_true, y_pred)
+
+
+class MetricFactory:
+    """A factory class that produces Metric instances based on a given magic string or a metric calculation function."""
+
+    _str_to_metric: Dict[str, Metric] = {'roc_auc': AUROC(), 'f1': F1()}
+
+    @classmethod
+    def create(cls, key: Union[str, Metric]) -> Metric:
+        """Returns a Metric instance for a given key."""
+        if isinstance(key, str):
+            return cls._create_from_str(key)
+        elif isinstance(key, Metric):
+            return key
+        else:
+            raise InvalidArgumentsException(
+                f"cannot create metric given a '{type(key)}'" "Please provide a string, function or Metric"
+            )
+
+    @classmethod
+    def _create_from_str(cls, key: str) -> Metric:
+        if key not in cls._str_to_metric:
+            raise InvalidArgumentsException(f"unknown metric key '{key}' given. " "Should be one of ['roc_auc'].")
+        return cls._str_to_metric[key]
