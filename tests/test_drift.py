@@ -544,12 +544,15 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data,
 def test_data_reconstruction_drift_calculator_with_only_numeric_should_not_fail(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = DataReconstructionDriftCalculator(sample_drift_metadata, chunk_period='W', features=['f1', 'f2'])
+    calc = DataReconstructionDriftCalculator(
+        sample_drift_metadata,
+        chunk_period='W',
+        features=[el.column_name for el in sample_drift_metadata.continuous_features],
+    )
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     try:
-        drift = calc.calculate(data=sample_drift_data)
-        print(drift)
+        calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
 
@@ -557,11 +560,14 @@ def test_data_reconstruction_drift_calculator_with_only_numeric_should_not_fail(
 def test_data_reconstruction_drift_calculator_with_only_categorical_should_not_fail(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = DataReconstructionDriftCalculator(sample_drift_metadata, chunk_period='W', features=['f3', 'f4'])
+    calc = DataReconstructionDriftCalculator(
+        sample_drift_metadata,
+        chunk_period='W',
+        features=[el.column_name for el in sample_drift_metadata.categorical_features],
+    )
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     try:
-        drift = calc.calculate(data=sample_drift_data)
-        print(drift)
+        calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
