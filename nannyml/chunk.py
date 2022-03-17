@@ -114,10 +114,19 @@ def _minimum_chunk_size(
         return prediction
 
     class_balance = np.mean(data[target_column_name])
-    auc = roc_auc_score(
-        data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name],
-        data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name],
-    )
+
+    # Clean up NaN values
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+
+    y_true = y_true[~y_pred.isna()]
+    y_pred.dropna(inplace=True)
+
+    y_pred = y_pred[~y_true.isna()]
+    y_true.dropna(inplace=True)
+
+    auc = roc_auc_score(y_true=y_true, y_score=y_pred)
+
     chunk_size = get_prediction([[class_balance, auc]])
     chunk_size = np.maximum(lower_threshold, chunk_size)
     chunk_size = np.round(chunk_size, -2)
