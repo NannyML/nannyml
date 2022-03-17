@@ -1,8 +1,4 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
-#  License: Apache Software License 2.0
-
-#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
 
@@ -34,9 +30,17 @@ def metadata(data) -> ModelMetadata:  # noqa: D103
     return md
 
 
+class DummyMetric(Metric):
+    def __init__(self):
+        super().__init__(display_name='dummy_metric')
+
+    def _calculate(self, data: pd.DataFrame):
+        return 0.5
+
+
 @pytest.fixture
 def dummy_metric() -> Metric:
-    return Metric(display_name='dummy metric', calculation_function=lambda y_true, y_pred: 0.5)
+    return DummyMetric()
 
 
 def test_calculator_init_with_empty_metrics_should_not_fail(metadata):  # noqa: D103
@@ -70,7 +74,7 @@ def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target
 
 
 def test_calculator_calculate_should_include_chunk_information_columns(data, metadata, dummy_metric):  # noqa: D103
-    calc = PerformanceCalculator(model_metadata=metadata, metrics=[dummy_metric, 'roc_auc'], chunk_size=5000)
+    calc = PerformanceCalculator(model_metadata=metadata, metrics=[dummy_metric], chunk_size=5000)
     calc.fit(reference_data=data[0])
     ref_with_tgt = data[0].join(data[2], on='identifier', rsuffix='_r')
     sut = calc.calculate(analysis_data=ref_with_tgt)

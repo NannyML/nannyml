@@ -20,7 +20,7 @@ from nannyml.chunk import (
     _minimum_chunk_size,
 )
 from nannyml.exceptions import CalculatorNotFittedException
-from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_PREDICTION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
+from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_TARGET_COLUMN_NAME
 from nannyml.performance_calculation.metrics import Metric, MetricFactory
 from nannyml.preprocessing import preprocess
 
@@ -168,10 +168,4 @@ class PerformanceCalculator:
         return PerformanceCalculatorResult(performance_data=res, model_metadata=self.metadata)
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
-        return {
-            m.display_name: m.calculation_function(
-                y_true=chunk.data[NML_METADATA_TARGET_COLUMN_NAME],
-                y_pred=chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME],
-            )
-            for m in self.metrics
-        }
+        return {m.display_name: m.calculate(chunk.data) for m in self.metrics}
