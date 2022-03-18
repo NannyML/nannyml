@@ -42,6 +42,7 @@ def simple_estimator(sample_metadata) -> BasePerformanceEstimator:  # noqa: D103
 
 class SimpleEstimator(BasePerformanceEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame):
+        self._suggested_minimum_chunk_size = 50
         pass
 
     def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
@@ -133,7 +134,7 @@ def test_base_estimator_uses_default_chunker_when_no_chunker_specified(sample_da
     simple_estimator.fit(sample_data[0])
     sut = simple_estimator.estimate(sample_data[1]).data['key']
 
-    expected = [c.key for c in DefaultChunker().split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=300)]
+    expected = [c.key for c in DefaultChunker().split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=50)]
 
     assert len(expected) == len(sut)
     assert sorted(expected) == sorted(sut)

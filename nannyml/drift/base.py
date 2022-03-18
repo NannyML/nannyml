@@ -139,13 +139,7 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         else:
             self.chunker = chunker  # type: ignore
 
-    def _minimum_chunk_size(self, data: pd.DataFrame):
-        """Default behavior for minimum chunk size, unless a more suitable approach is provided by inherited classes."""
-        # Note: data argument is included and used to allow compatibility with how function is called.
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError('data needs to be a pandas dataframe')
-
-        return 500
+        self._suggested_minimum_chunk_size: int = 500  # type: ignore
 
     def fit(self, reference_data: pd.DataFrame):
         """Calibrates a DriftCalculator using a reference dataset.
@@ -205,7 +199,9 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
+        chunks = self.chunker.split(
+            data, columns=features_and_metadata, minimum_chunk_size=self._suggested_minimum_chunk_size
+        )
 
         return self._calculate_drift(chunks=chunks)
 

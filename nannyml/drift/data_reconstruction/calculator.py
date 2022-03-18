@@ -90,6 +90,13 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
             imputer_continuous = SimpleImputer(missing_values=np.nan, strategy='mean')
         self._imputer_continuous = imputer_continuous
 
+    def _suggest_minimum_chunk_size(
+        self,
+        features: List[str] = None,
+    ) -> int:
+
+        return int(20 * np.power(len(features), 5 / 6))  # type: ignore
+
     def _fit(self, reference_data: pd.DataFrame):
         selected_categorical_column_names = _get_selected_feature_names(
             self.selected_features, self.model_metadata.categorical_features
@@ -97,6 +104,8 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         selected_continuous_column_names = _get_selected_feature_names(
             self.selected_features, self.model_metadata.continuous_features
         )
+
+        self._suggested_minimum_chunk_size = self._suggest_minimum_chunk_size(self.selected_features)
 
         # TODO: We duplicate the reference data 3 times, here. Improve to something more memory efficient?
         imputed_reference_data = reference_data.copy(deep=True)

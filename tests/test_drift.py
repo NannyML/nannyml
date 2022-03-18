@@ -254,6 +254,7 @@ def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(
 ):
     class TestDriftCalculator(BaseDriftCalculator):
         def _fit(self, reference_data: pd.DataFrame):
+            self._suggested_minimum_chunk_size = 50
             pass
 
         def _calculate_drift(
@@ -565,3 +566,16 @@ def test_data_reconstruction_drift_calculator_with_only_categorical_should_not_f
         calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
+
+
+def test_data_reconstruction_drift_calculator_minimum_chunk_size(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    calc = DataReconstructionDriftCalculator(
+        sample_drift_metadata,
+        chunk_period='W',
+        features=[el.column_name for el in sample_drift_metadata.features],
+    )
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    calc.fit(ref_data)
+    assert calc._suggested_minimum_chunk_size == 63
