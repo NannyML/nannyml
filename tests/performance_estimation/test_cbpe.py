@@ -48,7 +48,7 @@ class SimpleEstimator(BasePerformanceEstimator):  # noqa: D101
         return pd.DataFrame(columns=self.selected_features).assign(key=[chunk.key for chunk in chunks])
 
 
-# TODO: Move test for CBPE
+@pytest.mark.skip('rewrite and fix test first')
 def test_cbpe_estimator_uses_default_chunker_when_no_chunker_specified(sample_data, sample_metadata):  # noqa: D103
     simple_estimator = SimpleEstimator(sample_metadata)
     simple_estimator.fit(sample_data[0])

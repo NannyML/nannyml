@@ -11,13 +11,7 @@ import plotly.graph_objects as go
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
-from nannyml.metadata import (
-    NML_METADATA_COLUMNS,
-    NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
-    NML_METADATA_TARGET_COLUMN_NAME,
-    ModelMetadata,
-)
+from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 from nannyml.preprocessing import preprocess
 
 
@@ -96,13 +90,10 @@ class BasePerformanceEstimator(PerformanceEstimator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-
         """
         super(BasePerformanceEstimator, self).__init__(model_metadata, features)
 
         if chunker is None:
-            # Note:
-            # minimum chunk size is only needed if a chunker with a user specified minimum chunk size is not provided
             if chunk_size:
                 self.chunker = SizeBasedChunker(chunk_size=chunk_size)  # type: ignore
             elif chunk_number:
@@ -114,20 +105,7 @@ class BasePerformanceEstimator(PerformanceEstimator):
         else:
             self.chunker = chunker  # type: ignore
 
-    def _minimum_chunk_size(
-        self,
-        data: pd.DataFrame,
-        partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
-        prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-        target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-        lower_threshold: int = 300,
-    ):
-        """Default behavior for minimum chunk size, unless a more suitable approach is provided by inherited classes."""
-        # Note: data argument is included and used to allow compatibility with how function is called.
-        if not isinstance(data, pd.DataFrame):
-            raise TypeError('data needs to be a pandas dataframe')
-        print('c1')
-        return 500
+        self._suggested_minimum_chunk_size: int = 300  # type: ignore
 
     def fit(self, reference_data: pd.DataFrame):
         """Fits the estimator on a reference data set.
@@ -181,7 +159,9 @@ class BasePerformanceEstimator(PerformanceEstimator):
                 'Please ensure you run ``estimator.fit()`` '
                 'before running ``estimator.estimate()``'
             )
-        chunks = self.chunker.split(data, columns=features_and_metadata)
+        chunks = self.chunker.split(
+            data, columns=features_and_metadata, minimum_chunk_size=self._suggested_minimum_chunk_size
+        )
 
         return self._estimate(chunks=chunks)
 

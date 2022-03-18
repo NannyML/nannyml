@@ -236,7 +236,7 @@ class Chunker(abc.ABC):
                 # TODO wording
                 warnings.warn(
                     f'The resulting list of chunks contains {len(underpopulated_chunks)} underpopulated chunks. '
-                    'They contain too few records to be statistically relevant and might negatively influence '
+                    'They contain too few records to be statistically robust and might negatively influence '
                     'the quality of calculations. '
                     'Please consider splitting your data in a different way or continue at your own risk.'
                 )
@@ -484,7 +484,7 @@ class DefaultChunker(Chunker):
 
     def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
         if not minimum_chunk_size:
-            raise InvalidArgumentsException("could not create DefaultChunker: 'minimum_chunk_size' should be specified")
+            raise InvalidArgumentsException("could not use DefaultChunker: 'minimum_chunk_size' should be specified")
         chunk_size = minimum_chunk_size * 3
         chunks = SizeBasedChunker(chunk_size).split(data, minimum_chunk_size=minimum_chunk_size)
         return chunks

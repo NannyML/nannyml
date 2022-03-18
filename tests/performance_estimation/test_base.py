@@ -127,13 +127,13 @@ def test_base_estimator_uses_period_based_chunker_when_given_chunk_period(sample
     assert len(sut) == len(expected)
 
 
-@pytest.mark.skip('should confirm default minimum chunk size to test this')
+# @pytest.mark.skip('should confirm default minimum chunk size to test this')
 def test_base_estimator_uses_default_chunker_when_no_chunker_specified(sample_data, sample_metadata):  # noqa: D103
     simple_estimator = SimpleEstimator(sample_metadata)
     simple_estimator.fit(sample_data[0])
     sut = simple_estimator.estimate(sample_data[1]).data['key']
 
-    expected = [c.key for c in DefaultChunker().split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=500)]
+    expected = [c.key for c in DefaultChunker().split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=300)]
 
     assert len(expected) == len(sut)
     assert sorted(expected) == sorted(sut)
