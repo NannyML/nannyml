@@ -317,7 +317,7 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  
     calc.fit(ref_data)
     sut = calc.calculate(sample_drift_data)['keys']
     expected = [
-        c.key for c in DefaultChunker(minimum_chunk_size=300).split(sample_drift_metadata.enrich(sample_drift_data))
+        c.key for c in DefaultChunker(minimum_chunk_size=500).split(sample_drift_metadata.enrich(sample_drift_data))
     ]
 
     assert len(expected) == len(sut)

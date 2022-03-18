@@ -303,7 +303,8 @@ class PeriodBasedChunker(Chunker):
         ----------
         minimum_chunk_size: int
             The minimum amount of observations a Chunk should hold.
-            Usually intelligently determined by using the `_minimum_chunk_size` function.
+            Can be intelligently determined by using the `_minimum_chunk_size` function of
+            the appropriate monitoring operation.
         date_column_name: string
             The name of the column in the DataFrame that contains the date used for chunking.
             Defaults to the metadata timestamp column added by the `ModelMetadata.extract_metadata` function.
@@ -369,7 +370,8 @@ class SizeBasedChunker(Chunker):
             The preferred size of the resulting Chunks, i.e. the number of observations in each Chunk.
         minimum_chunk_size: int
             The minimum amount of observations a Chunk should hold.
-            Usually intelligently determined by using the `_minimum_chunk_size` function.
+            Can be intelligently determined by using the `_minimum_chunk_size` function of
+            the appropriate monitoring operation.
 
         Returns
         -------
@@ -429,7 +431,8 @@ class CountBasedChunker(Chunker):
             The amount of chunks to split the data in.
         minimum_chunk_size: int
             The minimum amount of observations a Chunk should hold.
-            Usually intelligently determined by using the `_minimum_chunk_size` function.
+            Can be intelligently determined by using the `_minimum_chunk_size` function of the
+            appropriate monitoring operation.
 
         Returns
         -------
@@ -487,7 +490,8 @@ class DefaultChunker(Chunker):
         ----------
         minimum_chunk_size: int
             The minimum amount of observations a Chunk should hold.
-            Usually intelligently determined by using the `_minimum_chunk_size` function.
+            Usually intelligently determined by using the `_minimum_chunk_size` function of
+            the appropriate monitoring operation.
         """
         super(DefaultChunker, self).__init__(minimum_chunk_size)
 
