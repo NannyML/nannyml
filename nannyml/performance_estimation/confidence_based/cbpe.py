@@ -11,6 +11,7 @@ from sklearn.metrics import auc, roc_auc_score
 
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory
+from nannyml.chunk import _minimum_chunk_size
 from nannyml.exceptions import NotFittedException
 from nannyml.metadata import (
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -72,7 +73,7 @@ class CBPE(BasePerformanceEstimator):
             calibrator = CalibratorFactory.create(calibration)
         self.calibrator = calibrator
 
-    def _minimum_chunk_size(
+    def _suggest_minimum_chunk_size(
         self,
         data: pd.DataFrame,
         partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
@@ -80,21 +81,23 @@ class CBPE(BasePerformanceEstimator):
         target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
         lower_threshold: int = 300,
     ) -> int:
-        print('c2')
-        return 350
-        # return _minimum_chunk_size(
-        #     data=data,
-        #     partition_column_name=partition_column_name,
-        #     prediction_column_name=prediction_column_name,
-        #     target_column_name=target_column_name,
-        #     lower_threshold=lower_threshold,
-        # )
+
+        return _minimum_chunk_size(
+            data=data,
+            partition_column_name=partition_column_name,
+            prediction_column_name=prediction_column_name,
+            target_column_name=target_column_name,
+            lower_threshold=lower_threshold,
+        )
 
     def _fit(self, reference_data: pd.DataFrame):
         if self.chunker is None:
             raise NotFittedException()
 
-        reference_chunks = self.chunker.split(reference_data)
+        self._suggested_minimum_chunk_size = self._suggest_minimum_chunk_size(
+            data=reference_data,
+        )
+        reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=self._suggested_minimum_chunk_size)
 
         self._lower_alert_threshold, self._upper_alert_threshold = _calculate_alert_thresholds(reference_chunks)
 
