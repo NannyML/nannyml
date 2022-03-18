@@ -11,7 +11,11 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import NML_METADATA_PREDICTION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
+from nannyml.metadata import (
+    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
+)
 
 
 class Metric(abc.ABC):
@@ -30,8 +34,6 @@ class Metric(abc.ABC):
         display_name : str
             The name of the metric. Used to display in plots. If not given this name will be derived from the
             ``calculation_function``.
-        calculation_function : Callable
-            A function that will calculate a performance metric.
         upper_threshold : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold : float, default=None
@@ -45,7 +47,10 @@ class Metric(abc.ABC):
         if NML_METADATA_TARGET_COLUMN_NAME not in data.columns:
             raise RuntimeError('data does not contain target column')
 
-        if NML_METADATA_PREDICTION_COLUMN_NAME not in data.columns:
+        if (
+            NML_METADATA_PREDICTION_COLUMN_NAME not in data.columns
+            and NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME not in data.columns
+        ):
             raise RuntimeError('data does contains neither prediction column or predicted probabilities column')
 
         return self._calculate(data)
@@ -70,12 +75,10 @@ class AUROC(Metric):
         super().__init__(display_name='ROC_AUC')
 
     def _calculate(self, data: pd.DataFrame):
-        """
-        Redefine to handle NaNs and edge cases.
-        """
+        """Redefine to handle NaNs and edge cases."""
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]  # TODO: this should be predicted_probabilities
+        y_pred = data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]  # TODO: this should be predicted_probabilities
 
         _common_data_cleaning(y_true, y_pred)
 

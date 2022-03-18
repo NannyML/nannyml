@@ -151,8 +151,8 @@ class ModelMetadata:
         model_problem: str = 'binary_classification',
         features: List[Feature] = None,
         identifier_column_name: str = 'id',
-        prediction_column_name: str = 'p',
-        predicted_probability_column_name: str = 'y_pred_proba',
+        prediction_column_name: str = None,
+        predicted_probability_column_name: str = None,
         target_column_name: str = 'target',
         partition_column_name: str = 'partition',
         timestamp_column_name: str = 'date',
@@ -171,10 +171,10 @@ class ModelMetadata:
             The name of the column that contains a value that acts as an identifier for the
             observation, i.e. it is unique over all observations. Optional, defaults to `id`
         prediction_column_name : string
-            The name of the column that contains the models' predictions. Optional, defaults to ``y_pred``.
+            The name of the column that contains the models' predictions. Optional, defaults to ``None``.
         predicted_probability_column_name: string
             The name of the column that contains the models' predicted probabilities.
-            Optional, defaults to ``y_pred_proba``.
+            Optional, defaults to ``None``.
         target_column_name : string
             The name of the column that contains the ground truth / target / actual. Optional, defaults to `target`
         partition_column_name : string
@@ -558,7 +558,7 @@ def _guess_timestamps(data: pd.DataFrame) -> List[str]:
 
 def _guess_predictions(data: pd.DataFrame) -> List[str]:
     def _guess_if_prediction(col: pd.Series) -> bool:
-        return col.name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred', 'y_pred_proba']
+        return col.name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred']
 
     return [col for col in data.columns if _guess_if_prediction(data[col])]
 
