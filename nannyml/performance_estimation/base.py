@@ -9,15 +9,7 @@ from typing import List
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.chunk import (
-    Chunk,
-    Chunker,
-    CountBasedChunker,
-    DefaultChunker,
-    PeriodBasedChunker,
-    SizeBasedChunker,
-    _minimum_chunk_size,
-)
+from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 from nannyml.preprocessing import preprocess
@@ -107,6 +99,14 @@ class BasePerformanceEstimator(PerformanceEstimator):
         self._chunk_number = chunk_number
         self._chunk_period = chunk_period
 
+    def _minimum_chunk_size(self, data: pd.DataFrame):
+        """Default behavior for minimum chunk size, unless a more suitable approach is provided by inherited classes."""
+        # Note: data argument is included and used to allow compatibility with how function is called.
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError('data needs to be a pandas dataframe')
+
+        return 500
+
     def fit(self, reference_data: pd.DataFrame):
         """Fits the estimator on a reference data set.
 
@@ -119,11 +119,10 @@ class BasePerformanceEstimator(PerformanceEstimator):
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
         reference_data = preprocess(data=reference_data, model_metadata=self.model_metadata)
 
-        # Calculate minimum chunk size based on reference data (we need y_pred_proba and y_true for this)
-        # Store for DefaultChunker init during calculation
-        # TODO: refactor as factory function in chunk module
-        minimum_chunk_size = _minimum_chunk_size(data=reference_data)
         if self.chunker is None:
+            # Note:
+            # minimum chunk size is only needed if a chunker with a user specified minimum chunk size is not provided
+            minimum_chunk_size = self._minimum_chunk_size(data=reference_data)
             if self._chunk_size:
                 self.chunker = SizeBasedChunker(chunk_size=self._chunk_size, minimum_chunk_size=minimum_chunk_size)
             elif self._chunk_number:

@@ -82,6 +82,7 @@ class Chunk:
         return self.data.shape[0]
 
 
+# TODO: The function is probably worth moving to another common location.
 def _minimum_chunk_size(
     data: pd.DataFrame,
     partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,

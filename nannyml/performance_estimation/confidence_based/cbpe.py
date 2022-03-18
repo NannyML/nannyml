@@ -11,6 +11,8 @@ from sklearn.metrics import auc, roc_auc_score
 
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory
+
+# from nannyml.chunk import _minimum_chunk_size
 from nannyml.exceptions import NotFittedException
 from nannyml.metadata import NML_METADATA_PREDICTION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
 from nannyml.performance_estimation.base import BasePerformanceEstimator, PerformanceEstimatorResult
