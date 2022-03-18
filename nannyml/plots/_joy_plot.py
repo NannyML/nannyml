@@ -98,9 +98,7 @@ def _create_kde_table(
         axis=1,
     )
     data['kde_density_local_max'] = data['kde_density'].apply(lambda x: max(x) if len(x) > 0 else 0)
-    data['kde_density_global_max'] = data[chunk_column_name].map(
-        data.groupby(chunk_column_name)['kde_density_local_max'].max()
-    )
+    data['kde_density_global_max'] = data.groupby(chunk_column_name)['kde_density_local_max'].max().max()
     data['kde_density_scaled'] = data[['kde_density', 'kde_density_global_max']].apply(
         lambda row: np.divide(np.array(row['kde_density']), row['kde_density_global_max']), axis=1
     )
