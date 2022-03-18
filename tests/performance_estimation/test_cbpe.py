@@ -59,7 +59,7 @@ def test_cbpe_estimator_uses_default_chunker_when_no_chunker_specified(sample_da
 
     min_chunk_size = _minimum_chunk_size(data=sample_metadata.enrich(sample_data[0]))
     expected = [
-        c.key for c in DefaultChunker(minimum_chunk_size=min_chunk_size).split(sample_metadata.enrich(sample_data[1]))
+        c.key for c in DefaultChunker().split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=min_chunk_size)
     ]
 
     assert len(expected) == len(sut)

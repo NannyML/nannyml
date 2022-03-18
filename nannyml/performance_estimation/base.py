@@ -13,10 +13,10 @@ from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, Per
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.metadata import (
     NML_METADATA_COLUMNS,
-    ModelMetadata,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
+    ModelMetadata,
 )
 from nannyml.preprocessing import preprocess
 
@@ -100,10 +100,19 @@ class BasePerformanceEstimator(PerformanceEstimator):
         """
         super(BasePerformanceEstimator, self).__init__(model_metadata, features)
 
-        self.chunker = chunker
-        self._chunk_size = chunk_size
-        self._chunk_number = chunk_number
-        self._chunk_period = chunk_period
+        if chunker is None:
+            # Note:
+            # minimum chunk size is only needed if a chunker with a user specified minimum chunk size is not provided
+            if chunk_size:
+                self.chunker = SizeBasedChunker(chunk_size=chunk_size)  # type: ignore
+            elif chunk_number:
+                self.chunker = CountBasedChunker(chunk_count=chunk_number)  # type: ignore
+            elif chunk_period:
+                self.chunker = PeriodBasedChunker(offset=chunk_period)  # type: ignore
+            else:
+                self.chunker = DefaultChunker()  # type: ignore
+        else:
+            self.chunker = chunker  # type: ignore
 
     def _minimum_chunk_size(
         self,
@@ -131,19 +140,6 @@ class BasePerformanceEstimator(PerformanceEstimator):
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
         reference_data = preprocess(data=reference_data, model_metadata=self.model_metadata)
-
-        if self.chunker is None:
-            # Note:
-            # minimum chunk size is only needed if a chunker with a user specified minimum chunk size is not provided
-            minimum_chunk_size = self._minimum_chunk_size(data=reference_data)
-            if self._chunk_size:
-                self.chunker = SizeBasedChunker(chunk_size=self._chunk_size, minimum_chunk_size=minimum_chunk_size)
-            elif self._chunk_number:
-                self.chunker = CountBasedChunker(chunk_count=self._chunk_number, minimum_chunk_size=minimum_chunk_size)
-            elif self._chunk_period:
-                self.chunker = PeriodBasedChunker(offset=self._chunk_period, minimum_chunk_size=minimum_chunk_size)
-            else:
-                self.chunker = DefaultChunker(minimum_chunk_size=minimum_chunk_size)
 
         self._fit(reference_data)
 
