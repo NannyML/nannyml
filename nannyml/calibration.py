@@ -8,6 +8,7 @@ import abc
 from typing import Any, Callable, List, Optional, Tuple
 
 import numpy as np
+import pandas as pd
 from sklearn.isotonic import IsotonicRegression
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -199,7 +200,7 @@ def _calculate_expected_calibration_error(
 
 
 def needs_calibration(
-    y_true: np.ndarray, y_pred_proba: np.ndarray, calibrator: Calibrator, bin_count: int = 2, split_count: int = 3
+    y_true: pd.Series, y_pred_proba: pd.Series, calibrator: Calibrator, bin_count: int = 2, split_count: int = 3
 ) -> bool:
     """Returns whether a series of prediction scores benefits from additional calibration or not.
 
@@ -213,9 +214,9 @@ def needs_calibration(
     ----------
     calibrator : Calibrator
         The Calibrator to use during testing.
-    y_true : numpy.ndarray
+    y_true : pd.Series
         Vector with reference binary targets - ``0`` or ``1``. Shape ``(n,)``.
-    y_pred_proba :
+    y_pred_proba : pd.Series
         Vector of continuous reference scores/probabilities. Has to be the same shape as ``y_true``.
     bin_count : int
         Desired amount of bins to calculate ECE on.
@@ -248,6 +249,10 @@ def needs_calibration(
             'predicted probabilities contain NaN. '
             'Please ensure reference predicted probabilities do not contain NaN values.'
         )
+
+    # Reset indices to deal with subsetting vs. index results from stratified shuffle split
+    y_pred_proba = y_pred_proba.reset_index(drop=True)
+    y_true = y_true.reset_index(drop=True)
 
     if roc_auc_score(y_true, y_pred_proba) == 1:
         return False
