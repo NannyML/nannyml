@@ -11,7 +11,13 @@ import plotly.graph_objects as go
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
-from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
+from nannyml.metadata import (
+    NML_METADATA_COLUMNS,
+    ModelMetadata,
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
+)
 from nannyml.preprocessing import preprocess
 
 
@@ -99,12 +105,19 @@ class BasePerformanceEstimator(PerformanceEstimator):
         self._chunk_number = chunk_number
         self._chunk_period = chunk_period
 
-    def _minimum_chunk_size(self, data: pd.DataFrame):
+    def _minimum_chunk_size(
+        self,
+        data: pd.DataFrame,
+        partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+        prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+        target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+        lower_threshold: int = 300,
+    ):
         """Default behavior for minimum chunk size, unless a more suitable approach is provided by inherited classes."""
         # Note: data argument is included and used to allow compatibility with how function is called.
         if not isinstance(data, pd.DataFrame):
             raise TypeError('data needs to be a pandas dataframe')
-
+        print('c1')
         return 500
 
     def fit(self, reference_data: pd.DataFrame):

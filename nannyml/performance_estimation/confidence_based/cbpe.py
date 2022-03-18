@@ -11,10 +11,13 @@ from sklearn.metrics import auc, roc_auc_score
 
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory
-
-# from nannyml.chunk import _minimum_chunk_size
+from nannyml.chunk import _minimum_chunk_size as min_chunk
 from nannyml.exceptions import NotFittedException
-from nannyml.metadata import NML_METADATA_PREDICTION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
+from nannyml.metadata import (
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
+)
 from nannyml.performance_estimation.base import BasePerformanceEstimator, PerformanceEstimatorResult
 from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
 
@@ -69,6 +72,24 @@ class CBPE(BasePerformanceEstimator):
         if calibrator is None:
             calibrator = CalibratorFactory.create(calibration)
         self.calibrator = calibrator
+
+    def _minimum_chunk_size(
+        self,
+        data: pd.DataFrame,
+        partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+        prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+        target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+        lower_threshold: int = 300,
+    ) -> int:
+        print('c2')
+        return 350
+        # return _minimum_chunk_size(
+        #     data=data,
+        #     partition_column_name=partition_column_name,
+        #     prediction_column_name=prediction_column_name,
+        #     target_column_name=target_column_name,
+        #     lower_threshold=lower_threshold,
+        # )
 
     def _fit(self, reference_data: pd.DataFrame):
         if self.chunker is None:

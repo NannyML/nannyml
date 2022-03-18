@@ -139,18 +139,3 @@ def test_base_estimator_uses_default_chunker_when_no_chunker_specified(sample_da
 
     assert len(expected) == len(sut)
     assert sorted(expected) == sorted(sut)
-
-
-# TODO: Move test for CBPE
-# def test_base_estimator_uses_default_chunker_when_no_chunker_specified(sample_data, sample_metadata):  # noqa: D103
-#     simple_estimator = SimpleEstimator(sample_metadata)
-#     simple_estimator.fit(sample_data[0])
-#     sut = simple_estimator.estimate(sample_data[1])['key']
-
-#     min_chunk_size = _minimum_chunk_size(data=sample_metadata.enrich(sample_data[0]))
-#     expected = [
-#         c.key for c in DefaultChunker(minimum_chunk_size=min_chunk_size).split(sample_metadata.enrich(sample_data[1]))
-#     ]
-
-#     assert len(expected) == len(sut)
-#     assert sorted(expected) == sorted(sut)
