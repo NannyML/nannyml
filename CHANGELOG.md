@@ -11,8 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [(#36)](https://github.com/NannyML/nannyml/issues/36)
 - Incorrect scaling on continuous feature distribution plot [(#39)](https://github.com/NannyML/nannyml/issues/39)
 - Missing ``needs_calibration`` checks before performing score calibration in CBPE
-- Allow calculators/estimators to provide appropriate ``min_chunk_size`` upon splitting into ``chunks``.
 - Fix crash on chunking when missing target values in reference data
+
+### Changed
+- Allow calculators/estimators to provide appropriate ``min_chunk_size`` upon splitting into ``chunks``.
+
 
 ## [0.2.0] - 2022-03-03
 ### Added
