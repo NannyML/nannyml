@@ -4,20 +4,18 @@
 
 """Tests for Drift package."""
 
-from typing import List
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects
 import pytest
 from sklearn.impute import SimpleImputer
 
-from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift.base import DriftResult
-from nannyml.drift.data_reconstruction.calculator import DataReconstructionDriftCalculator
+from nannyml.drift.data_reconstruction.calculator import DataReconstructionDriftCalculator, _minimum_chunk_size
 from nannyml.drift.univariate_statistical.calculator import UnivariateStatisticalDriftCalculator
-from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
 
 
@@ -136,8 +134,10 @@ class SimpleDriftCalculator(BaseDriftCalculator):
 
     def _calculate_drift(
         self,
-        chunks: List[Chunk],
+        data: pd.DataFrame,
     ) -> SimpleDriftResult:
+        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
         df = chunks[0].data.drop(columns=NML_METADATA_COLUMNS)
         return SimpleDriftResult(
             analysis_data=chunks, drift_data=pd.DataFrame(columns=df.columns), model_metadata=self.model_metadata
@@ -189,14 +189,6 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     assert 'f3' in sut.data.columns
 
 
-def test_baser_drift_calculator_raises_calculator_not_fitted_exception_when_calculating_with_none_chunker(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    calc = SimpleDriftCalculator(sample_drift_metadata, chunk_size=1000)
-    with pytest.raises(CalculatorNotFittedException, match='chunker has not been set.'):
-        _ = calc.calculate(data=sample_drift_data)
-
-
 def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_object_raises_typeerror(  # noqa: D103
     sample_drift_data_with_nans, sample_drift_metadata
 ):
@@ -240,7 +232,9 @@ def test_base_drift_calculator_uses_size_based_chunker_when_given_chunk_size(  #
         def _fit(self, reference_data: pd.DataFrame):
             pass
 
-        def _calculate_drift(self, chunks: List[Chunk]) -> pd.DataFrame:
+        def _calculate_drift(self, data: pd.DataFrame) -> pd.DataFrame:
+            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
@@ -250,7 +244,7 @@ def test_base_drift_calculator_uses_size_based_chunker_when_given_chunk_size(  #
     sut = calc.calculate(sample_drift_data)['keys']
     expected = [
         c.key
-        for c in SizeBasedChunker(1000, minimum_chunk_size=1).split(sample_drift_metadata.enrich(sample_drift_data))
+        for c in SizeBasedChunker(1000).split(sample_drift_metadata.enrich(sample_drift_data), minimum_chunk_size=1)
     ]
 
     assert len(expected) == len(sut)
@@ -262,12 +256,12 @@ def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(
 ):
     class TestDriftCalculator(BaseDriftCalculator):
         def _fit(self, reference_data: pd.DataFrame):
+            self._suggested_minimum_chunk_size = 50
             pass
 
-        def _calculate_drift(
-            self,
-            chunks: List[Chunk],
-        ) -> pd.DataFrame:
+        def _calculate_drift(self, data: pd.DataFrame) -> pd.DataFrame:
+            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
@@ -286,7 +280,9 @@ def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period
         def _fit(self, reference_data: pd.DataFrame):
             pass
 
-        def _calculate_drift(self, chunks: List[Chunk]) -> pd.DataFrame:
+        def _calculate_drift(self, data: pd.DataFrame) -> pd.DataFrame:
+            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
@@ -305,10 +301,9 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  
         def _fit(self, reference_data: pd.DataFrame):
             pass
 
-        def _calculate_drift(
-            self,
-            chunks: List[Chunk],
-        ) -> pd.DataFrame:
+        def _calculate_drift(self, data: pd.DataFrame) -> pd.DataFrame:
+            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
@@ -317,7 +312,7 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  
     calc.fit(ref_data)
     sut = calc.calculate(sample_drift_data)['keys']
     expected = [
-        c.key for c in DefaultChunker(minimum_chunk_size=300).split(sample_drift_metadata.enrich(sample_drift_data))
+        c.key for c in DefaultChunker().split(sample_drift_metadata.enrich(sample_drift_data), minimum_chunk_size=500)
     ]
 
     assert len(expected) == len(sut)
@@ -327,10 +322,10 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  
 @pytest.mark.parametrize(
     'chunker',
     [
-        (PeriodBasedChunker(offset='W', minimum_chunk_size=1)),
-        (PeriodBasedChunker(offset='M', minimum_chunk_size=1)),
-        (SizeBasedChunker(chunk_size=1000, minimum_chunk_size=1)),
-        CountBasedChunker(chunk_count=25, minimum_chunk_size=1),
+        (PeriodBasedChunker(offset='W')),
+        (PeriodBasedChunker(offset='M')),
+        (SizeBasedChunker(chunk_size=1000)),
+        CountBasedChunker(chunk_count=25),
     ],
     ids=['chunk_period_weekly', 'chunk_period_monthly', 'chunk_size_1000', 'chunk_count_25'],
 )
@@ -467,7 +462,7 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
     drift = calc.calculate(data=sample_drift_data)
 
     sample_drift_data = sample_drift_metadata.enrich(sample_drift_data)
-    expected = len(PeriodBasedChunker(offset='W', minimum_chunk_size=1).split(sample_drift_data))
+    expected = len(PeriodBasedChunker(offset='W').split(sample_drift_data, minimum_chunk_size=1))
     sut = len(drift.data)
     assert sut == expected
 
@@ -476,7 +471,9 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
 def test_data_reconstruction_drift_calculator_should_not_fail_when_using_feature_subset(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    calc = DataReconstructionDriftCalculator(model_metadata=sample_drift_metadata, features=['f1', 'f4'])
+    calc = DataReconstructionDriftCalculator(
+        model_metadata=sample_drift_metadata, features=['f1', 'f4'], chunk_period='W'
+    )
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     try:
         calc.fit(ref_data)
@@ -571,3 +568,17 @@ def test_data_reconstruction_drift_calculator_with_only_categorical_should_not_f
         calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
+
+
+def test_data_reconstruction_drift_calculator_minimum_chunk_size_yields_correct_result(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    features = [el.column_name for el in sample_drift_metadata.features]
+    calc = DataReconstructionDriftCalculator(
+        sample_drift_metadata,
+        chunk_period='W',
+        features=features,
+    )
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    calc.fit(ref_data)
+    assert _minimum_chunk_size(features) == 63

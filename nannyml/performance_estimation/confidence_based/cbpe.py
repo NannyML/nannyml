@@ -8,11 +8,18 @@ from typing import List, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.metrics import auc, roc_auc_score
+from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory, needs_calibration
 from nannyml.exceptions import NotFittedException
-from nannyml.metadata import NML_METADATA_PREDICTION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
+from nannyml.metadata import (
+    NML_METADATA_COLUMNS,
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_REFERENCE_PARTITION_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
+)
 from nannyml.performance_estimation.base import BasePerformanceEstimator, PerformanceEstimatorResult
 from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
 
@@ -68,15 +75,19 @@ class CBPE(BasePerformanceEstimator):
             calibrator = CalibratorFactory.create(calibration)
         self.calibrator = calibrator
 
+        self.minimum_chunk_size: int = None  # type: ignore
+
     def _fit(self, reference_data: pd.DataFrame):
         if self.chunker is None:
             raise NotFittedException()
 
-        reference_chunks = self.chunker.split(reference_data)
+        reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=300)
 
         self._lower_alert_threshold, self._upper_alert_threshold = _calculate_alert_thresholds(reference_chunks)
 
         self._confidence_deviation = _calculate_confidence_deviation(reference_chunks)
+
+        self.minimum_chunk_size = _minimum_chunk_size(reference_data)
 
         # Fit calibrator if calibration is needed
         self.needs_calibration = needs_calibration(
@@ -90,7 +101,10 @@ class CBPE(BasePerformanceEstimator):
                 reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
             )
 
-    def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
+        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=self.minimum_chunk_size)
+
         res = pd.DataFrame.from_records(
             [
                 {
@@ -191,3 +205,56 @@ def _add_alert_flag(estimated_performance: pd.DataFrame, upper_threshold: float,
     )
 
     return alert
+
+
+def _minimum_chunk_size(
+    data: pd.DataFrame,
+    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+    lower_threshold: int = 300,
+) -> int:
+    def get_prediction(X):
+        # model data
+        h_coefs = [
+            0.00000000e00,
+            -3.46098897e04,
+            2.65871679e04,
+            3.46098897e04,
+            2.29602791e04,
+            -4.96886646e04,
+            -1.12777343e-10,
+            -2.29602791e04,
+            3.13775672e-10,
+            2.48718826e04,
+        ]
+        h_intercept = 1421.9522967076875
+        transformation = PolynomialFeatures(3)
+        #
+
+        inputs = np.asarray(X)
+        transformed_inputs = transformation.fit_transform(inputs)
+        prediction = np.dot(transformed_inputs, h_coefs)[0] + h_intercept
+
+        return prediction
+
+    class_balance = np.mean(data[target_column_name])
+
+    # Clean up NaN values
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+
+    y_true = y_true[~y_pred.isna()]
+    y_pred.dropna(inplace=True)
+
+    y_pred = y_pred[~y_true.isna()]
+    y_true.dropna(inplace=True)
+
+    auc = roc_auc_score(y_true=y_true, y_score=y_pred)
+
+    chunk_size = get_prediction([[class_balance, auc]])
+    chunk_size = np.maximum(lower_threshold, chunk_size)
+    chunk_size = np.round(chunk_size, -2)
+    minimum_chunk_size = int(chunk_size)
+
+    return minimum_chunk_size

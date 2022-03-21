@@ -11,9 +11,18 @@ Minimum chunk size
 
 Small sample size strongly affects the reliability of any ML or statistical analysis, including data drift detection
 and performance estimation. NannyML allows splitting data in chunks in different ways to let users choose chunks that
-are meaningful for them. However, when the chunks are too small, **what looks like a significant drop in performance
-of the monitored model may be only a sampling effect**. To better understand that, have a look at the histogram below
-. It shows dispersion of ROC AUC for a random model predicting a random binary target (which by definition should be 0.5) for a sample of 100 observations. It is not uncommon to get ROC AUC of 0.65 for some samples.
+are meaningful for them. However, when the chunks are too small, statistical results may become unreliable.
+In this case NannyML will issue a warning. The user can then chose to ignore it and continue or use a chunking
+method that will result in bigger chunks.
+
+Minimum Chunk for Performance Estimation
+========================================
+
+When the chunk size is small
+**what looks like a significant drop in performance of the monitored model may be only a sampling effect**.
+To better understand that, have a look at the histogram below.
+It shows dispersion of ROC AUC for a random model predicting a random binary target (which by definition should be 0.5) for
+a sample of 100 observations. It is not uncommon to get ROC AUC of 0.65 for some samples.
 
 .. code-block:: python
 
@@ -54,3 +63,26 @@ many times and the standard deviation was calculated. Then, the experiments that
 
 This solution has a few shortcomings. It is easy to imagine two different datasets and models with ROC AUC scores and
 class balances that are the same, but dispersions of ROC AUC on samples of the same size that are different. Moreover, the arbitrary limits on standard deviation may not fit all cases. After all, there are situations where the performance actually fluctuates on reference data (due to e.g. seasonality). Finally, there are cases where only one chunk size is justified from business perspective (e.g. quarterly split). For these reasons, minimum chunk size should not be treated as recommended chunk size nor as a hard limit. It is just a chunk size, below which performance - actual or estimated - most likely will be governed by sampling effects rather than actual changes. Finally, be aware that sample size also affects calculations related to data drift.
+
+
+Minimum Chunk for Data Reconstruction
+=====================================
+
+To ensure that there is no significant noise present in data recontruction results NannyML suggests a minimum chunk size
+based on the number of features user to perform data reconstruction according to this function:
+
+.. math::
+
+    f(x) = \textrm{Int}( 20 * x ^ {\frac{5}{6}})
+
+The result based on internal testing. It is merely a suggestion because multidimensional data can have difficult to foresee
+instabilities. A better suggestion could be derived by inspecting the data used to look for
+:ref:`multivariate drift<data-drift-multivariate>` but at the cost of increased computation time.
+
+Minimum Chunk for Univariate Drift
+==================================
+
+To ensure that there is no significant noise present in :ref:`Univariate Drift Detection<data-drift-univariate>`
+the recommended minimum chunk size is 500. It is a rule of thumb
+choice that should cover most common cases. A better suggestion could be derived by inspecting the data used
+for Univariate Drift detection but at the cost of increased computation time.
