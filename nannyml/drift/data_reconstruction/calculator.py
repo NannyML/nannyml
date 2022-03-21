@@ -13,10 +13,10 @@ from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
-from nannyml.chunk import Chunk, Chunker
+from nannyml.chunk import Chunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift.data_reconstruction.results import DataReconstructionDriftCalculatorResult
-from nannyml.metadata import Feature
+from nannyml.metadata import NML_METADATA_COLUMNS, Feature
 
 
 class DataReconstructionDriftCalculator(BaseDriftCalculator):
@@ -132,7 +132,7 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
 
     def _calculate_drift(
         self,
-        chunks: List[Chunk],
+        data: pd.DataFrame,
     ) -> DataReconstructionDriftCalculatorResult:
 
         selected_categorical_column_names = _get_selected_feature_names(
@@ -141,7 +141,11 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         selected_continuous_column_names = _get_selected_feature_names(
             self.selected_features, self.model_metadata.continuous_features
         )
-        res = pd.DataFrame()
+
+        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        chunks = self.chunker.split(
+            data, columns=features_and_metadata, minimum_chunk_size=_minimum_chunk_size(self.selected_features)
+        )
 
         res = pd.DataFrame.from_records(
             [
@@ -310,3 +314,10 @@ def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_th
     )
 
     return alert
+
+
+def _minimum_chunk_size(
+    features: List[str] = None,
+) -> int:
+
+    return int(20 * np.power(len(features), 5 / 6))  # type: ignore
