@@ -68,9 +68,12 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Fi
 
     plot_partition_separator = len(estimation_results['partition'].value_counts()) > 1
 
-    # TODO: hack, assembling single results column to pass to plotting
+    # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
     estimation_results['plottable'] = estimation_results.apply(
         lambda r: r['estimated_roc_auc'] if r['partition'] == 'analysis' else r['realized_roc_auc'], axis=1
+    )
+    estimation_results['alert'] = estimation_results.apply(
+        lambda r: r['alert'] if r['partition'] == 'analysis' else False, axis=1
     )
 
     # Plot estimated performance
