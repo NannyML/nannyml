@@ -64,7 +64,7 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Fi
 
     estimation_results['estimated'] = True
 
-    plot_partition_separator = len(estimation_results.value_counts()) > 1
+    plot_partition_separator = len(estimation_results['partition'].value_counts()) > 1
 
     fig = _line_plot(
         table=estimation_results,

@@ -99,6 +99,10 @@ class CBPE(BasePerformanceEstimator):
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                    'calibrated': _calculate_cbpe(
+                        self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
+                    ),
+                    'uncalibrated': _calculate_cbpe(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]),
                     'estimated_roc_auc': _calculate_cbpe(
                         self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
                         if self.needs_calibration

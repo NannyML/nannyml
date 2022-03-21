@@ -254,7 +254,7 @@ def needs_calibration(
     y_pred_proba = y_pred_proba.reset_index(drop=True)
     y_true = y_true.reset_index(drop=True)
 
-    if roc_auc_score(y_true, y_pred_proba) == 1:
+    if roc_auc_score(y_true, y_pred_proba) > 0.999:
         return False
 
     sss = StratifiedShuffleSplit(n_splits=split_count, test_size=0.4, random_state=42)
