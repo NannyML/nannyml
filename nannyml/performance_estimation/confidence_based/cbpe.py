@@ -84,10 +84,10 @@ class CBPE(BasePerformanceEstimator):
             y_pred_proba=reference_data[NML_METADATA_PREDICTION_COLUMN_NAME],
             calibrator=self.calibrator,
         )
-        if self.needs_calibration:
-            self.calibrator.fit(
-                reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
-            )
+
+        self.calibrator.fit(
+            reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
+        )
 
     def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
         res = pd.DataFrame.from_records(
