@@ -85,9 +85,10 @@ class CBPE(BasePerformanceEstimator):
             calibrator=self.calibrator,
         )
 
-        self.calibrator.fit(
-            reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
-        )
+        if self.needs_calibration:
+            self.calibrator.fit(
+                reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
+            )
 
     def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
         res = pd.DataFrame.from_records(
@@ -99,10 +100,7 @@ class CBPE(BasePerformanceEstimator):
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
-                    'calibrated': _calculate_cbpe(
-                        self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
-                    ),
-                    'uncalibrated': _calculate_cbpe(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]),
+                    'realized_roc_auc': _calculate_realized_performance(chunk),
                     'estimated_roc_auc': _calculate_cbpe(
                         self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
                         if self.needs_calibration
@@ -125,10 +123,7 @@ def _calculate_alert_thresholds(
     reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
 ) -> Tuple[float, float]:
 
-    realised_performance_chunks = [
-        roc_auc_score(chunk.data[NML_METADATA_TARGET_COLUMN_NAME], chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
-        for chunk in reference_chunks
-    ]
+    realised_performance_chunks = [_calculate_realized_performance(chunk) for chunk in reference_chunks]
 
     deviation = np.std(realised_performance_chunks) * std_num
     mean_realised_performance = np.mean(realised_performance_chunks)
@@ -144,6 +139,22 @@ def _calculate_confidence_deviation(reference_chunks: List[Chunk]):
     ]
     deviation = np.std(estimated_reference_performance_chunks)
     return deviation
+
+
+def _calculate_realized_performance(chunk: Chunk):
+    if chunk.is_transition or chunk.partition == 'analysis':
+        return np.NaN
+
+    y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
+    y_pred_proba = chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
+
+    y_true = y_true[~y_pred_proba.isna()]
+    y_pred_proba.dropna(inplace=True)
+
+    y_pred_proba = y_pred_proba[~y_true.isna()]
+    y_true.dropna(inplace=True)
+
+    return roc_auc_score(y_true, y_pred_proba)
 
 
 def _calculate_cbpe(data: pd.Series) -> float:
