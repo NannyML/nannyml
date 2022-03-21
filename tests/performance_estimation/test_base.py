@@ -4,16 +4,17 @@
 
 """Unit tests for performance estimation."""
 
-from typing import List, Tuple
+from typing import Tuple
 
 import pandas as pd
 import pytest
 
-from nannyml.chunk import Chunk, DefaultChunker, PeriodBasedChunker, SizeBasedChunker, _minimum_chunk_size
+from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker  # , _minimum_chunk_size
 from nannyml.datasets import load_synthetic_sample
-from nannyml.exceptions import InvalidArgumentsException, NotFittedException
-from nannyml.metadata import ModelMetadata, extract_metadata
+from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
 from nannyml.performance_estimation import BasePerformanceEstimator
+from nannyml.performance_estimation.base import PerformanceEstimatorResult
 
 
 @pytest.fixture
@@ -43,8 +44,13 @@ class SimpleEstimator(BasePerformanceEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame):
         pass
 
-    def _estimate(self, chunks: List[Chunk]) -> pd.DataFrame:
-        return pd.DataFrame(columns=self.selected_features).assign(key=[chunk.key for chunk in chunks])
+    def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
+        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=50)
+        return PerformanceEstimatorResult(
+            model_metadata=self.model_metadata,
+            estimated_data=pd.DataFrame(columns=self.selected_features).assign(key=[chunk.key for chunk in chunks]),
+        )
 
 
 def test_base_estimator_given_empty_reference_data_should_raise_invalid_args_exception(  # noqa: D103
@@ -69,9 +75,9 @@ def test_base_estimator_given_empty_features_list_should_calculate_for_all_featu
     simple_estimator.fit(ref_data)
     sut = simple_estimator.estimate(data=ana_data)
 
-    assert len(sut.columns) == len(sample_metadata.features) + 1
+    assert len(sut.data.columns) == len(sample_metadata.features) + 1
     for f in sample_metadata.features:
-        assert f.column_name in sut.columns
+        assert f.column_name in sut.data.columns
 
 
 def test_base_estimator_given_non_empty_features_list_only_calculates_for_these_features(  # noqa: D103
@@ -84,25 +90,18 @@ def test_base_estimator_given_non_empty_features_list_only_calculates_for_these_
     simple_estimator.fit(ref_data)
     sut = simple_estimator.estimate(data=ana_data)
 
-    assert len(sut.columns) == 3
-    assert 'key' in sut.columns
-    assert 'salary_range' in sut.columns
-    assert 'distance_from_office' in sut.columns
-
-
-def test_base_estimator_raises_calculator_not_fitted_exc_when_calculating_with_none_chunker(  # noqa: D103
-    simple_estimator, sample_data, sample_metadata
-):
-    with pytest.raises(NotFittedException, match='chunker has not been set.'):
-        _ = simple_estimator.estimate(data=sample_data[0])
+    assert len(sut.data.columns) == 3
+    assert 'key' in sut.data.columns
+    assert 'salary_range' in sut.data.columns
+    assert 'distance_from_office' in sut.data.columns
 
 
 def test_base_estimator_uses_size_based_chunker_when_given_chunk_size(sample_data, sample_metadata):  # noqa: D103
     simple_estimator = SimpleEstimator(sample_metadata, chunk_size=1000)
     simple_estimator.fit(sample_data[0])
-    sut = simple_estimator.estimate(sample_data[1])['key']
+    sut = simple_estimator.estimate(sample_data[1]).data['key']
     expected = [
-        c.key for c in SizeBasedChunker(1000, minimum_chunk_size=1).split(sample_metadata.enrich(sample_data[1]))
+        c.key for c in SizeBasedChunker(1000).split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=1)
     ]
 
     assert len(expected) == len(sut)
@@ -112,7 +111,7 @@ def test_base_estimator_uses_size_based_chunker_when_given_chunk_size(sample_dat
 def test_base_estimator_uses_count_based_chunker_when_given_chunk_number(sample_data, sample_metadata):  # noqa: D103
     simple_estimator = SimpleEstimator(sample_metadata, chunk_number=100)
     simple_estimator.fit(sample_data[0])
-    sut = simple_estimator.estimate(sample_data[1])['key']
+    sut = simple_estimator.estimate(sample_data[1]).data['key']
 
     assert 100 == len(sut)
 
@@ -120,25 +119,23 @@ def test_base_estimator_uses_count_based_chunker_when_given_chunk_number(sample_
 def test_base_estimator_uses_period_based_chunker_when_given_chunk_period(sample_data, sample_metadata):  # noqa: D103
     simple_estimator = SimpleEstimator(sample_metadata, chunk_period='W')
     simple_estimator.fit(sample_data[0])
-    sut = simple_estimator.estimate(sample_data[1])['key']
+    sut = simple_estimator.estimate(sample_data[1]).data['key']
 
     expected = [
         c.key
-        for c in PeriodBasedChunker(offset='W', minimum_chunk_size=1).split(sample_metadata.enrich(sample_data[1]))
+        for c in PeriodBasedChunker(offset='W').split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=1)
     ]
 
     assert len(sut) == len(expected)
 
 
+# @pytest.mark.skip('should confirm default minimum chunk size to test this')
 def test_base_estimator_uses_default_chunker_when_no_chunker_specified(sample_data, sample_metadata):  # noqa: D103
     simple_estimator = SimpleEstimator(sample_metadata)
     simple_estimator.fit(sample_data[0])
-    sut = simple_estimator.estimate(sample_data[1])['key']
+    sut = simple_estimator.estimate(sample_data[1]).data['key']
 
-    min_chunk_size = _minimum_chunk_size(data=sample_metadata.enrich(sample_data[0]))
-    expected = [
-        c.key for c in DefaultChunker(minimum_chunk_size=min_chunk_size).split(sample_metadata.enrich(sample_data[1]))
-    ]
+    expected = [c.key for c in DefaultChunker().split(sample_metadata.enrich(sample_data[1]), minimum_chunk_size=50)]
 
     assert len(expected) == len(sut)
     assert sorted(expected) == sorted(sut)
