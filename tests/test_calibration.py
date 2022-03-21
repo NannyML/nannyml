@@ -4,6 +4,7 @@
 
 """Unit tests for the calibration module."""
 import numpy as np
+import pandas as pd
 import pytest
 
 from nannyml.calibration import IsotonicCalibrator, _get_bin_index_edges, needs_calibration
@@ -33,7 +34,7 @@ def test_get_bin_edges_works_correctly(vector_length, bin_count, edges):  # noqa
 
 
 def test_needs_calibration_returns_false_when_calibration_does_not_always_improves_ece():  # noqa: D103
-    y_true = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    y_true = pd.Series([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
     y_pred_proba = y_true
     shuffled_indexes = np.random.permutation(len(y_true))
     y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
@@ -42,9 +43,30 @@ def test_needs_calibration_returns_false_when_calibration_does_not_always_improv
 
 
 def test_needs_calibration_returns_true_when_calibration_always_improves_ece():  # noqa: D103
-    y_true = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    y_true = pd.Series([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
     y_pred_proba = abs(1 - y_true)
     shuffled_indexes = np.random.permutation(len(y_true))
     y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
-    sut = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator(), bin_count=2, split_count=3)
+    sut = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator())
     assert sut
+
+
+def test_needs_calibration_raises_invalid_args_exception_when_y_true_contains_nan():  # noqa: D103
+    y_true = pd.Series([0, 0, 0, 0, 0, np.NaN, 1, 1, 1, 1, 1, 1])
+    y_pred_proba = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    with pytest.raises(InvalidArgumentsException, match='target values contain NaN.'):
+        _ = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator())
+
+
+def test_needs_calibration_raises_invalid_args_exception_when_y_pred_proba_contains_nan():  # noqa: D103
+    y_true = pd.Series([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    y_pred_proba = np.asarray([0, 0, 0, np.NaN, 0, 0, 1, 1, 1, 1, 1, 1])
+    with pytest.raises(InvalidArgumentsException, match='predicted probabilities contain NaN.'):
+        _ = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator())
+
+
+def test_needs_calibration_returns_false_when_roc_auc_score_equals_one():  # noqa: D103
+    y_true = pd.Series([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+    y_pred_proba = y_true
+    sut = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator())
+    assert sut is False
