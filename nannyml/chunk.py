@@ -11,20 +11,11 @@ import warnings
 from datetime import datetime
 from typing import List
 
-import numpy as np
 import pandas as pd
 from dateutil.parser import ParserError  # type: ignore
-from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata import (
-    NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
-    NML_METADATA_REFERENCE_PARTITION_NAME,
-    NML_METADATA_TARGET_COLUMN_NAME,
-    NML_METADATA_TIMESTAMP_COLUMN_NAME,
-)
+from nannyml.metadata import NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TIMESTAMP_COLUMN_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -80,60 +71,6 @@ class Chunk:
 
         """
         return self.data.shape[0]
-
-
-# TODO: The function is probably worth moving to another common location.
-def _minimum_chunk_size(
-    data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
-    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-    lower_threshold: int = 300,
-) -> int:
-    def get_prediction(X):
-        # model data
-        h_coefs = [
-            0.00000000e00,
-            -3.46098897e04,
-            2.65871679e04,
-            3.46098897e04,
-            2.29602791e04,
-            -4.96886646e04,
-            -1.12777343e-10,
-            -2.29602791e04,
-            3.13775672e-10,
-            2.48718826e04,
-        ]
-        h_intercept = 1421.9522967076875
-        transformation = PolynomialFeatures(3)
-        #
-
-        inputs = np.asarray(X)
-        transformed_inputs = transformation.fit_transform(inputs)
-        prediction = np.dot(transformed_inputs, h_coefs)[0] + h_intercept
-
-        return prediction
-
-    class_balance = np.mean(data[target_column_name])
-
-    # Clean up NaN values
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
-
-    y_true = y_true[~y_pred.isna()]
-    y_pred.dropna(inplace=True)
-
-    y_pred = y_pred[~y_true.isna()]
-    y_true.dropna(inplace=True)
-
-    auc = roc_auc_score(y_true=y_true, y_score=y_pred)
-
-    chunk_size = get_prediction([[class_balance, auc]])
-    chunk_size = np.maximum(lower_threshold, chunk_size)
-    chunk_size = np.round(chunk_size, -2)
-    minimum_chunk_size = int(chunk_size)
-
-    return minimum_chunk_size
 
 
 def _get_partition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME):

@@ -4,15 +4,15 @@
 
 """Unit tests for performance estimation."""
 
-from typing import List, Tuple
+from typing import Tuple
 
 import pandas as pd
 import pytest
 
-from nannyml.chunk import Chunk, DefaultChunker, PeriodBasedChunker, SizeBasedChunker  # , _minimum_chunk_size
+from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker  # , _minimum_chunk_size
 from nannyml.datasets import load_synthetic_sample
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import ModelMetadata, extract_metadata
+from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
 from nannyml.performance_estimation import BasePerformanceEstimator
 from nannyml.performance_estimation.base import PerformanceEstimatorResult
 
@@ -42,10 +42,11 @@ def simple_estimator(sample_metadata) -> BasePerformanceEstimator:  # noqa: D103
 
 class SimpleEstimator(BasePerformanceEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame):
-        self._suggested_minimum_chunk_size = 50
         pass
 
-    def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
+        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=50)
         return PerformanceEstimatorResult(
             model_metadata=self.model_metadata,
             estimated_data=pd.DataFrame(columns=self.selected_features).assign(key=[chunk.key for chunk in chunks]),

@@ -9,9 +9,9 @@ from typing import List
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.exceptions import InvalidArgumentsException, NotFittedException
-from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
+from nannyml.chunk import Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import ModelMetadata
 from nannyml.preprocessing import preprocess
 
 
@@ -105,8 +105,6 @@ class BasePerformanceEstimator(PerformanceEstimator):
         else:
             self.chunker = chunker  # type: ignore
 
-        self._suggested_minimum_chunk_size: int = 300  # type: ignore
-
     def fit(self, reference_data: pd.DataFrame):
         """Fits the estimator on a reference data set.
 
@@ -151,19 +149,7 @@ class BasePerformanceEstimator(PerformanceEstimator):
         # Preprocess data
         data = preprocess(data=data, model_metadata=self.model_metadata)
 
-        # Generate chunks
-        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-        if self.chunker is None:
-            raise NotFittedException(
-                'chunker has not been set. '
-                'Please ensure you run ``estimator.fit()`` '
-                'before running ``estimator.estimate()``'
-            )
-        chunks = self.chunker.split(
-            data, columns=features_and_metadata, minimum_chunk_size=self._suggested_minimum_chunk_size
-        )
+        return self._estimate(data=data)
 
-        return self._estimate(chunks=chunks)
-
-    def _estimate(self, chunks: List[Chunk]) -> PerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
         raise NotImplementedError

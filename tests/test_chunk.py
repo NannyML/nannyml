@@ -11,15 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.chunk import (
-    Chunk,
-    Chunker,
-    CountBasedChunker,
-    DefaultChunker,
-    PeriodBasedChunker,
-    SizeBasedChunker,
-    _minimum_chunk_size,
-)
+from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -421,9 +413,9 @@ def test_count_based_chunker_assigns_observation_range_to_chunk_keys(sample_chun
 
 
 def test_default_chunker_uses_3_times_minimum_chunk_size_for_size(sample_chunk_data):  # noqa: D103
-    # sut = DefaultChunker(minimum_chunk_size=300).split(sample_chunk_data)
-    sut = DefaultChunker().split(sample_chunk_data, minimum_chunk_size=300)
-    expected = _minimum_chunk_size(sample_chunk_data) * 3
+    minimum_chunk_size = 300
+    sut = DefaultChunker().split(sample_chunk_data, minimum_chunk_size=minimum_chunk_size)
+    expected = minimum_chunk_size * 3
     assert len(sut) == sample_chunk_data.shape[0] // expected
     assert len(sut[0]) == expected
     assert len(sut[1]) == expected
