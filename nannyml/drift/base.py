@@ -11,8 +11,8 @@ import pandas as pd
 import plotly.graph_objects
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
-from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
+from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import ModelMetadata
 from nannyml.preprocessing import preprocess
 
 
@@ -139,8 +139,6 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         else:
             self.chunker = chunker  # type: ignore
 
-        self._suggested_minimum_chunk_size: int = 500  # type: ignore
-
     def fit(self, reference_data: pd.DataFrame):
         """Calibrates a DriftCalculator using a reference dataset.
 
@@ -191,22 +189,10 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         # Preprocess data
         data = preprocess(data=data, model_metadata=self.model_metadata)
 
-        # Generate chunks
-        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-        if self.chunker is None:
-            raise CalculatorNotFittedException(
-                'chunker has not been set. '
-                'Please ensure you run ``calculator.fit()`` '
-                'before running ``calculator.calculate()``'
-            )
-        chunks = self.chunker.split(
-            data, columns=features_and_metadata, minimum_chunk_size=self._suggested_minimum_chunk_size
-        )
-
-        return self._calculate_drift(chunks=chunks)
+        return self._calculate_drift(data)
 
     def _calculate_drift(
         self,
-        chunks: List[Chunk],
+        data: pd.DataFrame,
     ) -> DriftResult:
         raise NotImplementedError
