@@ -1906,7 +1906,7 @@ test = ["pytest", "pytest-mock", "black", "isort", "mypy", "flake8", "flake8-doc
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.1,<3.11>"
-content-hash = "a30330db086aa0ce02c19eb8ff16a138d725726e436d454addf7a2b0ab3e35c9"
+content-hash = "d0e8ff604e6de45548b9796a4a68eeb6a8f462d8815d4cb897af6d4c9c58cbe0"
 
 [metadata.files]
 alabaster = [
