@@ -4,13 +4,14 @@
 
 """Module containing metric utilities and implementations."""
 import abc
-from typing import Dict, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.preprocessing import PolynomialFeatures
 
+from nannyml import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import (
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -46,8 +47,15 @@ class Metric(abc.ABC):
         self.lower_threshold = lower_threshold
         self.upper_threshold = upper_threshold
 
-    def fit(self, reference_data: pd.DataFrame):
-        return self._fit(reference_data)
+    def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
+        self._fit(reference_data)
+
+        # Calculate alert thresholds
+        if self.upper_threshold is None and self.lower_threshold is None:
+            reference_chunks = chunker.split(reference_data, minimum_chunk_size=self.minimum_chunk_size())
+            self.lower_threshold, self.upper_threshold = self._calculate_alert_thresholds(reference_chunks)
+
+        return
 
     def _fit(self, reference_data: pd.DataFrame):
         raise NotImplementedError
@@ -69,6 +77,16 @@ class Metric(abc.ABC):
 
     def minimum_chunk_size(self) -> int:
         raise NotImplementedError
+
+    def _calculate_alert_thresholds(
+        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+    ) -> Tuple[float, float]:
+        chunked_reference_metric = [self.calculate(chunk.data) for chunk in reference_chunks]
+        deviation = np.std(chunked_reference_metric) * std_num
+        mean_reference_metric = np.mean(chunked_reference_metric)
+        lower_threshold = np.maximum(mean_reference_metric - deviation, lower_limit)
+        upper_threshold = np.minimum(mean_reference_metric + deviation, upper_limit)
+        return lower_threshold, upper_threshold
 
     def __eq__(self, other):
         """Establishes equality by comparing all properties."""
@@ -139,7 +157,7 @@ class AUROC(Metric):
 
     def __init__(self):
         """Creates a new AUROC instance."""
-        super().__init__(display_name='ROC_AUC')
+        super().__init__(display_name='roc_auc')
         self._minimum_chunk_size = None
 
     def minimum_chunk_size(self) -> int:
@@ -154,7 +172,7 @@ class AUROC(Metric):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]  # TODO: this should be predicted_probabilities
 
-        _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if y_true.nunique() <= 1:
             return np.nan
@@ -182,7 +200,7 @@ class F1(Metric):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
-        _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -206,7 +224,7 @@ class Precision(Metric):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
-        _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -228,7 +246,7 @@ class Recall(Metric):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
-        _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -250,7 +268,12 @@ class Specificity(Metric):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
-        _common_data_cleaning(y_true, y_pred)
+        if y_pred.isna().all():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+            )
+
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -273,7 +296,12 @@ class Sensitivity(Metric):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
-        _common_data_cleaning(y_true, y_pred)
+        if y_pred.isna().all():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+            )
+
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -296,13 +324,18 @@ class Accuracy(Metric):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
-        _common_data_cleaning(y_true, y_pred)
+        if y_pred.isna().all():
+            raise InvalidArgumentsException(
+                f"could not calculate metric '{self.display_name}': " "prediction column contains no data"
+            )
+
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
             tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-            return tp + tn / (tp + tn + fp + fn)
+            return (tp + tn) / (tp + tn + fp + fn)
 
 
 def _common_data_cleaning(y_true, y_pred):
@@ -315,6 +348,8 @@ def _common_data_cleaning(y_true, y_pred):
 
     y_pred = y_pred[~y_true.isna()]
     y_true.dropna(inplace=True)
+
+    return y_true, y_pred
 
 
 class MetricFactory:

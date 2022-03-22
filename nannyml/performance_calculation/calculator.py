@@ -4,7 +4,6 @@
 
 """Module containing base classes for performance calculation."""
 
-import abc
 from typing import Dict, List, Union
 
 import numpy as np
@@ -15,30 +14,10 @@ from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedC
 from nannyml.exceptions import CalculatorNotFittedException
 from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_TARGET_COLUMN_NAME
 from nannyml.performance_calculation.metrics import Metric, MetricFactory
+from nannyml.performance_calculation.result import PerformanceCalculatorResult
 from nannyml.preprocessing import preprocess
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
-
-
-class PerformanceCalculatorResult(abc.ABC):
-    """Contains the results of performance calculation and adds plotting functionality."""
-
-    def __init__(
-        self,
-        performance_data: pd.DataFrame,
-        model_metadata: ModelMetadata,
-    ):
-        """Creates a new PerformanceCalculatorResult instance.
-
-        Parameters
-        ----------
-        performance_data : pd.DataFrame
-            The results of the performance calculation.
-        model_metadata :
-            The metadata describing the monitored model.
-        """
-        self.data = performance_data
-        self.metadata = model_metadata
 
 
 class PerformanceCalculator:
@@ -103,7 +82,7 @@ class PerformanceCalculator:
         reference_data = preprocess(data=reference_data, model_metadata=self.metadata)
 
         for metric in self.metrics:
-            metric.fit(reference_data)
+            metric.fit(reference_data, self.chunker)
 
         self._minimum_chunk_size = np.max([metric.minimum_chunk_size() for metric in self.metrics])
 
@@ -160,4 +139,12 @@ class PerformanceCalculator:
         return PerformanceCalculatorResult(performance_data=res, model_metadata=self.metadata)
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
-        return {m.display_name: m.calculate(chunk.data) for m in self.metrics}
+        metrics_results = {}
+        for metric in self.metrics:
+            chunk_metric = metric.calculate(chunk.data)
+            metrics_results[metric.display_name] = chunk_metric
+            metrics_results[f'{metric.display_name}_thresholds'] = (metric.lower_threshold, metric.upper_threshold)
+            metrics_results[f'{metric.display_name}_alert'] = (
+                metric.lower_threshold > chunk_metric > metric.upper_threshold
+            )
+        return metrics_results
