@@ -38,7 +38,7 @@ def test_estimator_will_calibrate_scores_when_needed(metadata, data):  # noqa: D
 def test_estimator_will_not_calibrate_scores_when_not_needed(metadata, data):  # noqa: D103
     ref_df = data[0]
     # If predictions equal targets no calibration will be required
-    ref_df[metadata.prediction_column_name] = ref_df[metadata.target_column_name]
+    ref_df[metadata.predicted_probability_column_name] = ref_df[metadata.target_column_name]
 
     sut = CBPE(model_metadata=metadata)
     sut.fit(ref_df)
