@@ -232,7 +232,7 @@ stacked bar charts for categorical variables. It does so with the following code
     >>> # let's plot distribution drift results for categorical model inputs
     >>> for feature in metadata.categorical_features:
     ...     figure = univariate_results.plot(
-    ...         kind='feature_distribution'
+    ...         kind='feature_distribution',
     ...         feature_label=feature.label
     ...     )
     ...     figure.show()
