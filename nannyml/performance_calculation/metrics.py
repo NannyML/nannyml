@@ -48,6 +48,18 @@ class Metric(abc.ABC):
         self.upper_threshold = upper_threshold
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
+        """Fits a Metric on reference data.
+
+        Parameters
+        ----------
+        reference_data: pd.DataFrame
+            The reference data used for fitting. Must have target data available.
+        chunker: Chunker
+            The :class:`~nannyml.chunk.Chunker` used to split the reference data into chunks.
+            This value is provided by the calling
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`.
+
+        """
         self._fit(reference_data)
 
         # Calculate alert thresholds
@@ -61,6 +73,14 @@ class Metric(abc.ABC):
         raise NotImplementedError
 
     def calculate(self, data: pd.DataFrame):
+        """Calculates performance metrics on data.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate performance metrics on. Requires presence of either the predicted labels or
+            prediction scores/probabilities (depending on the metric to be calculated), as well as the target data.
+        """
         if NML_METADATA_TARGET_COLUMN_NAME not in data.columns:
             raise RuntimeError('data does not contain target column')
 
@@ -76,6 +96,10 @@ class Metric(abc.ABC):
         raise NotImplementedError
 
     def minimum_chunk_size(self) -> int:
+        """Determines the minimum number of observations a chunk should ideally for this metric to be trustworthy."""
+        return self._minimum_chunk_size()
+
+    def _minimum_chunk_size(self):
         raise NotImplementedError
 
     def _calculate_alert_thresholds(
@@ -158,17 +182,16 @@ class AUROC(Metric):
     def __init__(self):
         """Creates a new AUROC instance."""
         super().__init__(display_name='roc_auc')
-        self._minimum_chunk_size = None
+        self._min_chunk_size = None
 
-    def minimum_chunk_size(self) -> int:
-        return self._minimum_chunk_size
+    def _minimum_chunk_size(self) -> int:
+        return self._min_chunk_size
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._minimum_chunk_size = _minimum_roc_auc_based_chunk_size(reference_data)
+        self._min_chunk_size = _minimum_roc_auc_based_chunk_size(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]  # TODO: this should be predicted_probabilities
 
@@ -187,16 +210,14 @@ class F1(Metric):
         """Creates a new F1 instance."""
         super().__init__(display_name='F1')
 
-    def minimum_chunk_size(self) -> int:
+    def _minimum_chunk_size(self) -> int:
         return 300
 
     def _fit(self, reference_data: pd.DataFrame):
         pass
 
     def _calculate(self, data: pd.DataFrame):
-        """
-        Redefine to handle NaNs and edge cases.
-        """
+        """Redefine to handle NaNs and edge cases."""
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -212,9 +233,10 @@ class Precision(Metric):
     """Precision metric."""
 
     def __init__(self):
+        """Creates a new Precision instance."""
         super().__init__(display_name='precision')
 
-    def minimum_chunk_size(self) -> int:
+    def _minimum_chunk_size(self) -> int:
         return 300
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -233,10 +255,13 @@ class Precision(Metric):
 
 
 class Recall(Metric):
+    """Recall metric."""
+
     def __init__(self):
+        """Creates a new Recall instance."""
         super().__init__(display_name='recall')
 
-    def minimum_chunk_size(self) -> int:
+    def _minimum_chunk_size(self) -> int:
         return 300
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -255,10 +280,13 @@ class Recall(Metric):
 
 
 class Specificity(Metric):
+    """Specificity metric."""
+
     def __init__(self):
+        """Creates a new F1 instance."""
         super().__init__(display_name='specificity')
 
-    def minimum_chunk_size(self) -> int:
+    def _minimum_chunk_size(self) -> int:
         return 300
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -283,10 +311,13 @@ class Specificity(Metric):
 
 
 class Sensitivity(Metric):
+    """Sensitivity metric."""
+
     def __init__(self):
+        """Creates a new Sensitivity instance."""
         super().__init__(display_name='sensitivity')
 
-    def minimum_chunk_size(self) -> int:
+    def _minimum_chunk_size(self) -> int:
         return 300
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -311,10 +342,13 @@ class Sensitivity(Metric):
 
 
 class Accuracy(Metric):
+    """Accuracy metric."""
+
     def __init__(self):
+        """Creates a new Accuracy instance."""
         super().__init__(display_name='accuracy')
 
-    def minimum_chunk_size(self) -> int:
+    def _minimum_chunk_size(self) -> int:
         return 300
 
     def _fit(self, reference_data: pd.DataFrame):

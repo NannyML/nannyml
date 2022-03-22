@@ -327,7 +327,7 @@ class SizeBasedChunker(Chunker):
         super().__init__()
 
         # TODO wording
-        if not isinstance(chunk_size, (int, np.int, np.int64)):
+        if not isinstance(chunk_size, (int, np.int64)):
             raise InvalidArgumentsException(
                 f"given chunk_size is of type {type(chunk_size)} but should be an int."
                 f"Please provide an integer as a chunk size"
