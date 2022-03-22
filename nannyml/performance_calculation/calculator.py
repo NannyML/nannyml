@@ -145,6 +145,6 @@ class PerformanceCalculator:
             metrics_results[metric.display_name] = chunk_metric
             metrics_results[f'{metric.display_name}_thresholds'] = (metric.lower_threshold, metric.upper_threshold)
             metrics_results[f'{metric.display_name}_alert'] = (
-                metric.lower_threshold > chunk_metric > metric.upper_threshold
+                metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
             )
         return metrics_results
