@@ -14,6 +14,7 @@ from nannyml.exceptions import MissingMetadataException
 
 NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
 NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
+NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME = 'nml_meta_predicted_proba'
 NML_METADATA_TARGET_COLUMN_NAME = 'nml_meta_target'
 NML_METADATA_IDENTIFIER_COLUMN_NAME = 'nml_meta_identifier'
 NML_METADATA_TIMESTAMP_COLUMN_NAME = 'nml_meta_timestamp'
@@ -24,6 +25,7 @@ NML_METADATA_ANALYSIS_PARTITION_NAME = 'analysis'
 NML_METADATA_COLUMNS = [
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_IDENTIFIER_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
@@ -150,7 +152,8 @@ class ModelMetadata:
         model_problem: str = 'binary_classification',
         features: List[Feature] = None,
         identifier_column_name: str = 'id',
-        prediction_column_name: str = 'p',
+        prediction_column_name: str = None,
+        predicted_probability_column_name: str = None,
         target_column_name: str = 'target',
         partition_column_name: str = 'partition',
         timestamp_column_name: str = 'date',
@@ -169,7 +172,10 @@ class ModelMetadata:
             The name of the column that contains a value that acts as an identifier for the
             observation, i.e. it is unique over all observations. Optional, defaults to `id`
         prediction_column_name : string
-            The name of the column that contains the models' predictions. Optional, defaults to `p`.
+            The name of the column that contains the models' predictions. Optional, defaults to ``None``.
+        predicted_probability_column_name: string
+            The name of the column that contains the models' predicted probabilities.
+            Optional, defaults to ``None``.
         target_column_name : string
             The name of the column that contains the ground truth / target / actual. Optional, defaults to `target`
         partition_column_name : string
@@ -190,6 +196,7 @@ class ModelMetadata:
 
         self._identifier_column_name = identifier_column_name
         self._prediction_column_name = prediction_column_name
+        self._predicted_probability_column_name = predicted_probability_column_name
         self._target_column_name = target_column_name
         self._partition_column_name = partition_column_name
         self._timestamp_column_name = timestamp_column_name
@@ -212,6 +219,15 @@ class ModelMetadata:
     @prediction_column_name.setter
     def prediction_column_name(self, column_name: str):  # noqa: D102
         self._prediction_column_name = column_name
+        self.__remove_from_features(column_name)
+
+    @property
+    def predicted_probability_column_name(self):  # noqa: D102
+        return self._predicted_probability_column_name
+
+    @predicted_probability_column_name.setter
+    def predicted_probability_column_name(self, column_name: str):  # noqa: D102
+        self._predicted_probability_column_name = column_name
         self.__remove_from_features(column_name)
 
     @property
@@ -249,6 +265,7 @@ class ModelMetadata:
             'partition_column_name': self.partition_column_name,
             'target_column_name': self.target_column_name,
             'prediction_column_name': self.prediction_column_name,
+            'predicted_probability_column_name': self.predicted_probability_column_name,
             'features': repr(self.features),
         }
 
@@ -284,14 +301,20 @@ class ModelMetadata:
                     'label': 'prediction_column_name',
                     'column_name': self.prediction_column_name,
                     'type': FeatureType.CONTINUOUS.value,
-                    'description': 'prediction score/probability',
+                    'description': 'predicted label',
+                },
+                {
+                    'label': 'predicted_probability_column_name',
+                    'column_name': self.predicted_probability_column_name,
+                    'type': FeatureType.CONTINUOUS.value,
+                    'description': 'predicted score/probability',
                 },
             ]
             + [feature.to_dict() for feature in self.features],
             columns=['label', 'column_name', 'type', 'description'],
         )
 
-    def print(self):
+    def print(self):  # pragma: no cover
         """Returns a string representation of a ModelMetadata instance."""
         UNKNOWN = "~ UNKNOWN ~"
         strs = [
@@ -300,20 +323,21 @@ class ModelMetadata:
             '# Warning - unable to identify all essential data',
             f'# Please identify column names for all \'{UNKNOWN}\' values',  # TODO: add link to relevant docs
             '',
-            f"{'Model problem':25} {self.model_problem or UNKNOWN:25}",
+            f"{'Model problem':35} {self.model_problem or UNKNOWN:35}",
             '',
-            f"{'Identifier column':25} {self.identifier_column_name or UNKNOWN:25}",
-            f"{'Timestamp column':25} {self.timestamp_column_name or UNKNOWN:25}",
-            f"{'Partition column':25} {self.partition_column_name or UNKNOWN:25}",
-            f"{'Prediction column':25} {self.prediction_column_name or UNKNOWN:25}",
-            f"{'Ground truth column':25} {self.target_column_name or UNKNOWN:25}",
+            f"{'Identifier column':35} {self.identifier_column_name or UNKNOWN:35}",
+            f"{'Timestamp column':35} {self.timestamp_column_name or UNKNOWN:35}",
+            f"{'Partition column':35} {self.partition_column_name or UNKNOWN:35}",
+            f"{'Prediction column':35} {self.prediction_column_name or UNKNOWN:35}",
+            f"{'Predicted probability column':35} {self.predicted_probability_column_name or UNKNOWN:35}",
+            f"{'Ground truth column':35} {self.target_column_name or UNKNOWN:35}",
             '',
             'Features',
             '',
-            f"{'Name':20} {'Column':20} {'Type':15} {'Description'}",
+            f"{'Name':35} {'Column':35} {'Type':15} {'Description'}",
         ]
         for f in self.features:
-            strs.append(f"{f.label:20} {f.column_name:20} {f.feature_type or 'NA':15} {f.description}")
+            strs.append(f"{f.label:35} {f.column_name:35} {f.feature_type or 'NA':15} {f.description}")
         print(str.join('\n', strs))
 
     def __repr__(self):
@@ -377,7 +401,14 @@ class ModelMetadata:
 
         data[NML_METADATA_IDENTIFIER_COLUMN_NAME] = data[self.identifier_column_name]
         data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
-        data[NML_METADATA_PREDICTION_COLUMN_NAME] = data[self.prediction_column_name]
+        if self.prediction_column_name in data.columns:
+            data[NML_METADATA_PREDICTION_COLUMN_NAME] = data[self.prediction_column_name]
+        else:
+            data[NML_METADATA_PREDICTION_COLUMN_NAME] = np.NaN
+        if self.predicted_probability_column_name in data.columns:
+            data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME] = data[self.predicted_probability_column_name]
+        else:
+            data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME] = np.NaN
         data[NML_METADATA_PARTITION_COLUMN_NAME] = data[self.partition_column_name]
         if self.target_column_name in data.columns:
             data[NML_METADATA_TARGET_COLUMN_NAME] = data[self.target_column_name]
@@ -419,15 +450,24 @@ class ModelMetadata:
             A list of all missing properties. Empty when metadata is complete.
         """
         props_to_check = [
-            'prediction_column_name',
             'timestamp_column_name',
             'target_column_name',
             'timestamp_column_name',
             'partition_column_name',
         ]
+        complete = True
+        missing = []
 
-        complete = all([self.__getattribute__(attr) is not None for attr in props_to_check])
-        missing = [attr for attr in props_to_check if self.__getattribute__(attr) is None]
+        for attr in props_to_check:
+            if self.__getattribute__(attr) is None:
+                missing.append(attr)
+                complete = False
+
+        if self.prediction_column_name is None and self.predicted_probability_column_name is None:
+            complete = False
+            missing.append('predicted_probability_column_name')
+            missing.append('prediction_column_name')
+
         return complete, missing
 
     def __remove_from_features(self, column_name: str):
@@ -480,6 +520,12 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
     check_for_nan(predictions)
     metadata.prediction_column_name = None if len(predictions) == 0 else predictions[0]  # type: ignore
 
+    predicted_probabilities = _guess_predicted_probabilities(data)
+    check_for_nan(predicted_probabilities)
+    metadata.predicted_probability_column_name = (
+        None if len(predicted_probabilities) == 0 else predicted_probabilities[0]
+    )
+
     targets = _guess_targets(data)
     check_for_nan(targets)
     metadata.target_column_name = None if len(targets) == 0 else targets[0]  # type: ignore
@@ -513,7 +559,14 @@ def _guess_timestamps(data: pd.DataFrame) -> List[str]:
 
 def _guess_predictions(data: pd.DataFrame) -> List[str]:
     def _guess_if_prediction(col: pd.Series) -> bool:
-        return col.name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred', 'y_pred_proba']
+        return col.name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred']
+
+    return [col for col in data.columns if _guess_if_prediction(data[col])]
+
+
+def _guess_predicted_probabilities(data: pd.DataFrame) -> List[str]:
+    def _guess_if_prediction(col: pd.Series) -> bool:
+        return col.name in ['y_pred_proba']
 
     return [col for col in data.columns if _guess_if_prediction(data[col])]
 
