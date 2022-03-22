@@ -16,7 +16,7 @@ from nannyml.exceptions import NotFittedException
 from nannyml.metadata import (
     NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
+    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
 )
@@ -92,13 +92,14 @@ class CBPE(BasePerformanceEstimator):
         # Fit calibrator if calibration is needed
         self.needs_calibration = needs_calibration(
             y_true=reference_data[NML_METADATA_TARGET_COLUMN_NAME],
-            y_pred_proba=reference_data[NML_METADATA_PREDICTION_COLUMN_NAME],
+            y_pred_proba=reference_data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
             calibrator=self.calibrator,
         )
 
         if self.needs_calibration:
             self.calibrator.fit(
-                reference_data[NML_METADATA_PREDICTION_COLUMN_NAME], reference_data[NML_METADATA_TARGET_COLUMN_NAME]
+                reference_data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+                reference_data[NML_METADATA_TARGET_COLUMN_NAME],
             )
 
     def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
@@ -116,9 +117,9 @@ class CBPE(BasePerformanceEstimator):
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
                     'realized_roc_auc': _calculate_realized_performance(chunk),
                     'estimated_roc_auc': _calculate_cbpe(
-                        self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
+                        self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME])
                         if self.needs_calibration
-                        else chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
+                        else chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
                     ),
                 }
                 for chunk in chunks
@@ -149,7 +150,7 @@ def _calculate_alert_thresholds(
 
 def _calculate_confidence_deviation(reference_chunks: List[Chunk]):
     estimated_reference_performance_chunks = [
-        _calculate_cbpe(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]) for chunk in reference_chunks
+        _calculate_cbpe(chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]) for chunk in reference_chunks
     ]
     deviation = np.std(estimated_reference_performance_chunks)
     return deviation
@@ -160,7 +161,7 @@ def _calculate_realized_performance(chunk: Chunk):
         return np.NaN
 
     y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
-    y_pred_proba = chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
+    y_pred_proba = chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
 
     y_true = y_true[~y_pred_proba.isna()]
     y_pred_proba.dropna(inplace=True)
@@ -210,7 +211,7 @@ def _add_alert_flag(estimated_performance: pd.DataFrame, upper_threshold: float,
 def _minimum_chunk_size(
     data: pd.DataFrame,
     partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
-    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+    prediction_column_name: str = NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     lower_threshold: int = 300,
 ) -> int:

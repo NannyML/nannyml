@@ -33,6 +33,12 @@ def metadata(data) -> ModelMetadata:  # noqa: D103
 class DummyMetric(Metric):
     """Dummy metric for testing."""
 
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def minimum_chunk_size(self) -> int:
+        return 100
+
     def __init__(self):  # noqa: D107
         super().__init__(display_name='dummy_metric')
 

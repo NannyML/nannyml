@@ -151,7 +151,8 @@ def test_model_metadata_creation_with_defaults_has_correct_properties():  # noqa
     assert sut.features is not None
     assert len(sut.features) == 0
     assert sut.identifier_column_name == 'id'
-    assert sut.prediction_column_name == 'p'
+    assert sut.prediction_column_name is None
+    assert sut.predicted_probability_column_name is None
     assert sut.target_column_name == 'target'
     assert sut.partition_column_name == 'partition'
     assert sut.timestamp_column_name == 'date'
@@ -187,8 +188,8 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
 def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_dict()
     assert sut['identifier_column_name'] == 'id'
-    assert sut['prediction_column_name'] == 'p'
-    assert sut['predicted_probability_column_name'] == 'y_pred_proba'
+    assert sut['prediction_column_name'] is None
+    assert sut['predicted_probability_column_name'] is None
     assert sut['partition_column_name'] == 'partition'
     assert sut['timestamp_column_name'] == 'date'
     assert sut['target_column_name'] == 'target'
@@ -197,8 +198,8 @@ def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
 def test_to_pd_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_df()
     assert sut.loc[sut['label'] == 'identifier_column_name', 'column_name'].iloc[0] == 'id'
-    assert sut.loc[sut['label'] == 'prediction_column_name', 'column_name'].iloc[0] == 'p'
-    assert sut.loc[sut['label'] == 'predicted_probability_column_name', 'column_name'].iloc[0] == 'y_pred_proba'
+    assert sut.loc[sut['label'] == 'prediction_column_name', 'column_name'].iloc[0] is None
+    assert sut.loc[sut['label'] == 'predicted_probability_column_name', 'column_name'].iloc[0] is None
     assert sut.loc[sut['label'] == 'partition_column_name', 'column_name'].iloc[0] == 'partition'
     assert sut.loc[sut['label'] == 'timestamp_column_name', 'column_name'].iloc[0] == 'date'
     assert sut.loc[sut['label'] == 'target_column_name', 'column_name'].iloc[0] == 'target'
@@ -532,6 +533,7 @@ def test_complete_returns_all_missing_properties_when_metadata_is_incomplete(sam
 def test_complete_returns_complete_if_prediction_is_none_but_predicted_probabilities_are_not(sample_data):  # noqa: D103
     md = extract_metadata(sample_data)
     md.prediction_column_name = None
+    md.predicted_probability_column_name = 'y_pred_proba'
     sut = md.is_complete()
     assert sut[0] is True
     assert 'prediction_column_name' not in sut[1]
@@ -540,6 +542,7 @@ def test_complete_returns_complete_if_prediction_is_none_but_predicted_probabili
 
 def test_complete_returns_complete_if_predicted_probabilities_is_none_but_prediction_is_not(sample_data):  # noqa: D103
     md = extract_metadata(sample_data)
+    md.prediction_column_name = 'y_pred'
     md.predicted_probability_column_name = None
     sut = md.is_complete()
     assert sut[0] is True

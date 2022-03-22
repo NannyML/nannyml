@@ -11,14 +11,7 @@ import numpy as np
 import pandas as pd
 
 from nannyml import Chunker, InvalidArgumentsException, ModelMetadata
-from nannyml.chunk import (
-    Chunk,
-    CountBasedChunker,
-    DefaultChunker,
-    PeriodBasedChunker,
-    SizeBasedChunker,
-    _minimum_chunk_size,
-)
+from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import CalculatorNotFittedException
 from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_TARGET_COLUMN_NAME
 from nannyml.performance_calculation.metrics import Metric, MetricFactory
@@ -83,11 +76,19 @@ class PerformanceCalculator:
         """
         self.metadata = model_metadata
         self.metrics = [MetricFactory.create(m) for m in metrics]
+        self._minimum_chunk_size = None
 
-        self.chunker = chunker
-        self._chunk_size = chunk_size
-        self._chunk_number = chunk_number
-        self._chunk_period = chunk_period
+        if chunker is None:
+            if chunk_size:
+                self.chunker = SizeBasedChunker(chunk_size=chunk_size)  # type: ignore
+            elif chunk_number:
+                self.chunker = CountBasedChunker(chunk_count=chunk_number)  # type: ignore
+            elif chunk_period:
+                self.chunker = PeriodBasedChunker(offset=chunk_period)  # type: ignore
+            else:
+                self.chunker = DefaultChunker()  # type: ignore
+        else:
+            self.chunker = chunker  # type: ignore
 
     def fit(self, reference_data: pd.DataFrame):
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset.
@@ -101,19 +102,10 @@ class PerformanceCalculator:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
         reference_data = preprocess(data=reference_data, model_metadata=self.metadata)
 
-        # Calculate minimum chunk size based on reference data (we need y_pred_proba and y_true for this)
-        # Store for DefaultChunker init during calculation
-        # TODO: refactor as factory function in chunk module
-        minimum_chunk_size = _minimum_chunk_size(data=reference_data)
-        if self.chunker is None:
-            if self._chunk_size:
-                self.chunker = SizeBasedChunker(chunk_size=self._chunk_size, minimum_chunk_size=minimum_chunk_size)
-            elif self._chunk_number:
-                self.chunker = CountBasedChunker(chunk_count=self._chunk_number, minimum_chunk_size=minimum_chunk_size)
-            elif self._chunk_period:
-                self.chunker = PeriodBasedChunker(offset=self._chunk_period, minimum_chunk_size=minimum_chunk_size)
-            else:
-                self.chunker = DefaultChunker(minimum_chunk_size=minimum_chunk_size)
+        for metric in self.metrics:
+            metric.fit(reference_data)
+
+        self._minimum_chunk_size = np.max([metric.minimum_chunk_size() for metric in self.metrics])
 
     def calculate(self, analysis_data: pd.DataFrame) -> PerformanceCalculatorResult:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation.
@@ -145,7 +137,7 @@ class PerformanceCalculator:
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(data, columns=features_and_metadata)
+        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=self._minimum_chunk_size)
 
         # Construct result frame
         res = pd.DataFrame.from_records(
