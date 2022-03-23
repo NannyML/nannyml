@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from nannyml import InvalidArgumentsException
 from nannyml.metadata import ModelMetadata
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
-from nannyml.plots._line_plot import _line_plot
+from nannyml.plots._step_plot import _step_plot
 
 
 class PerformanceCalculatorResult:
@@ -98,14 +98,14 @@ def _plot_performance_metric(performance_calculation_results: pd.DataFrame, metr
     plot_partition_separator = len(performance_calculation_results['partition'].value_counts()) > 1
 
     # Plot metric performance
-    fig = _line_plot(
+    fig = _step_plot(
         table=performance_calculation_results,
         metric_column_name=metric,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=f'{metric}_alert',
-        drift_label='Degraded performance',
+        drift_legend_label='Degraded performance',
         threshold_column_name=f'{metric}_thresholds',
-        threshold_label='Performance threshold',
+        threshold_legend_label='Performance threshold',
         title=f'Realized performance: {metric}',
         y_axis_title='Realized performance',
         v_line_separating_analysis_period=plot_partition_separator,
