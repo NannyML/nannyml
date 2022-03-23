@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
-from nannyml.plots._line_plot import _line_plot
+from nannyml.plots._step_plot import _step_plot
 
 
 class DataReconstructionDriftCalculatorResult(DriftResult):
@@ -49,7 +49,7 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
 def _plot_drift(data: pd.DataFrame, *args, **kwargs) -> go.Figure:
     plot_partition_separator = len(data.value_counts()) > 1
     data['thresholds'] = list(zip(data.lower_threshold, data.upper_threshold))
-    fig = _line_plot(
+    fig = _step_plot(
         table=data,
         metric_column_name='reconstruction_error',
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,

@@ -10,7 +10,7 @@ from plotly import graph_objects as go
 from nannyml import InvalidArgumentsException
 from nannyml.performance_estimation.base import PerformanceEstimatorResult
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
-from nannyml.plots._line_plot import _line_plot
+from nannyml.plots._step_plot import _step_plot
 
 
 class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
@@ -77,14 +77,14 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Fi
     )
 
     # Plot estimated performance
-    fig = _line_plot(
+    fig = _step_plot(
         table=estimation_results,
         metric_column_name='plottable',
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name='alert',
-        drift_label='Degraded performance',
+        drift_legend_label='Degraded performance',
         threshold_column_name='thresholds',
-        threshold_label='Performance threshold',
+        threshold_legend_label='Performance threshold',
         title='CBPE - estimated performance',
         y_axis_title='estimated performance',
         v_line_separating_analysis_period=plot_partition_separator,

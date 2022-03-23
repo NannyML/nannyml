@@ -7,11 +7,13 @@
 #  License: Apache Software License 2.0
 
 """Module containing plotting logic."""
+from typing import List
+
+import matplotlib
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import matplotlib
-from typing import List
+
 from .colors import Colors
 
 
@@ -25,26 +27,26 @@ def _data_prep_step_plot(
     hover_date_label_format='%b-%d-%Y',
 ):
     data = data.copy()
-    data['mid_point_date'] = data[start_date_column_name] + (data[end_date_column_name] - data[start_date_column_name]) / 2
+    data['mid_point_date'] = (
+        data[start_date_column_name] + (data[end_date_column_name] - data[start_date_column_name]) / 2
+    )
     data['metric_label'] = data[metric_column_name].apply(lambda x: hover_metric_format.format(x))
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
-    
+
     if partial_target_column_name and partial_target_column_name in data:
-        data['incomplete_target_percentage'] = (data[partial_target_column_name] * 100).astype(int)  
+        data['incomplete_target_percentage'] = (data[partial_target_column_name] * 100).astype(int)
     return data
 
-def _add_artificial_end_point(
-    data: pd.DataFrame,
-    start_date_column_name: str,
-    end_date_column_name: str
-):
+
+def _add_artificial_end_point(data: pd.DataFrame, start_date_column_name: str, end_date_column_name: str):
     data_point_hack = data.tail(1).copy()
     data_point_hack[start_date_column_name] = data_point_hack[end_date_column_name]
     data_point_hack[end_date_column_name] = pd.NaT
     data_point_hack['mid_point_date'] = pd.NaT
     data_point_hack.index = data_point_hack.index + 1
     return pd.concat([data, data_point_hack], axis=0)
+
 
 def _step_plot(
     table,
@@ -59,23 +61,18 @@ def _step_plot(
     start_date_column_name='start_date',
     end_date_column_name='end_date',
     chunk_type_column_name='partition',
-    
     chunk_types=None,
-    
     confidence_legend_label='Confidence band',
     threshold_legend_label='Data drift threshold',
     statistically_significant_legend_label='P-value is signficant',
     drift_legend_label='Probable data drift',
     chunk_legend_labels=None,
     partial_target_legend_label='Incomplete target data',
-    
     hover_marker_labels=None,
     hover_labels=None,
     hover_date_label_format='%b-%d-%Y',
     hover_metric_format='{0:.4f}',
-    
     threshold_value_format='{0:.2f}',
-    
     v_line_separating_analysis_period=True,
     figure=None,
     title='Metric over time',
@@ -93,7 +90,7 @@ def _step_plot(
 
     if hover_marker_labels is None:
         hover_marker_labels = ['Reference', 'No data drift', 'Data drift']
-    
+
     if hover_labels is None:
         hover_labels = ['Chunk', 'Metric', 'Target data']
 
@@ -115,22 +112,25 @@ def _step_plot(
     ]
 
     hover_template = (
-        hover_labels[0] + ': <b>%{customdata[0]}</b>&nbsp;&nbsp;&nbsp;&nbsp;' +
-        'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b>&nbsp;&nbsp;&nbsp;&nbsp;' +
-        hover_labels[1] + ': <b>%{customdata[3]}</b>'
-        
+        hover_labels[0]
+        + ': <b>%{customdata[0]}</b>&nbsp;&nbsp;&nbsp;&nbsp;'
+        + 'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b>&nbsp;&nbsp;&nbsp;&nbsp;'
+        + hover_labels[1]
+        + ': <b>%{customdata[3]}</b>'
     )
-    
-    custom_data_columns=[chunk_column_name, 'start_date_label', 'end_date_label', 'metric_label']
-    
+
+    custom_data_columns = [chunk_column_name, 'start_date_label', 'end_date_label', 'metric_label']
+
     if partial_target_column_name and partial_target_column_name in data:
-        hover_template += '&nbsp;&nbsp;&nbsp;&nbsp;'+ hover_labels[2] + ': <b>%{customdata[4]}% complete</b>'
-        custom_data_columns += ['incomplete_target_percentage']        
+        hover_template += '&nbsp;&nbsp;&nbsp;&nbsp;' + hover_labels[2] + ': <b>%{customdata[4]}% complete</b>'
+        custom_data_columns += ['incomplete_target_percentage']
 
     layout = go.Layout(
         title=title,
         xaxis=dict(title=x_axis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
-        yaxis=dict(title=y_axis_title, linecolor=colors[2], showgrid=False, range=y_axis_lim, mirror=True, zeroline=False),
+        yaxis=dict(
+            title=y_axis_title, linecolor=colors[2], showgrid=False, range=y_axis_lim, mirror=True, zeroline=False
+        ),
         paper_bgcolor='rgba(255,255,255,1)',
         plot_bgcolor='rgba(255,255,255,1)',
         legend=dict(itemclick=False, itemdoubleclick=False),
@@ -189,9 +189,9 @@ def _step_plot(
         chunk_types,
         start_date_column_name,
         end_date_column_name,
-        partial_target_column_name
+        partial_target_column_name,
     )
-    
+
     # Plot metric if partial target in analysis period
     _plot_metric_partial_target(
         fig,
@@ -203,7 +203,7 @@ def _step_plot(
         start_date_column_name,
         end_date_column_name,
         partial_target_column_name,
-        partial_target_legend_label
+        partial_target_legend_label,
     )
 
     # Plot reference and analysis markers that did not drift
@@ -239,7 +239,7 @@ def _step_plot(
     )
 
     # ____Add elements to legend, order matters___#
-    
+
     x = [data['mid_point_date'].head(1).values, data['mid_point_date'].tail(1).values]
     y = [np.nan, np.nan]
 
@@ -326,6 +326,7 @@ def _step_plot(
 
     return fig
 
+
 def _plot_metric(
     fig,
     data,
@@ -343,30 +344,26 @@ def _plot_metric(
         subset = data.loc[data[partial_target_column_name] == 1]
     else:
         subset = data.copy()
-    
+
     for i, chunk_type in enumerate(chunk_types):
         data_subset = subset.loc[subset[chunk_type_column_name] == chunk_type]
         data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
-        dash=None
+        dash = None
         if estimated_column_name and estimated_column_name in data.columns:
             if data_subset[estimated_column_name].head(1).values[0]:
-                dash='dot'
+                dash = 'dot'
         fig.add_trace(
             go.Scatter(
                 name=chunk_legend_labels[i],
                 mode='lines',
                 x=data_subset[start_date_column_name],
                 y=data_subset[metric_column_name],
-                line=dict(
-                    shape='hv',
-                    color=colors[i],
-                    width=2,
-                    dash=dash
-                ),
+                line=dict(shape='hv', color=colors[i], width=2, dash=dash),
                 hoverinfo='skip',
-                legendgroup=1
+                legendgroup=1,
             )
         )
+
 
 def _plot_metric_partial_target(
     fig,
@@ -378,7 +375,7 @@ def _plot_metric_partial_target(
     start_date_column_name,
     end_date_column_name,
     partial_target_column_name,
-    partial_target_legend_label
+    partial_target_legend_label,
 ):
     if partial_target_column_name and partial_target_column_name in data.columns:
         data_subset = data.loc[(data[chunk_type_column_name] == chunk_types[1])]
@@ -389,17 +386,13 @@ def _plot_metric_partial_target(
                 mode='lines',
                 x=data_subset[start_date_column_name],
                 y=data_subset[metric_column_name],
-                line=dict(
-                    shape='hv',
-                    color=colors[1],
-                    width=2,
-                    dash='dot'
-                ),
+                line=dict(shape='hv', color=colors[1], width=2, dash='dot'),
                 hoverinfo='skip',
-                legendgroup=1
+                legendgroup=1,
             )
         )
-        
+
+
 def _plot_non_drifted_markers(
     fig,
     data,
@@ -419,7 +412,7 @@ def _plot_non_drifted_markers(
             data_subset = data.loc[(data[chunk_type_column_name] == chunk_type) & ~data[drift_column_name]]
         else:
             data_subset = data.loc[(data[chunk_type_column_name] == chunk_type)]
-        
+
         fig.add_trace(
             go.Scatter(
                 name=hover_marker_labels[i],
@@ -432,6 +425,7 @@ def _plot_non_drifted_markers(
                 showlegend=False,
             )
         )
+
 
 def _plot_drifted_markers_and_areas(
     fig,
@@ -448,7 +442,7 @@ def _plot_drifted_markers_and_areas(
     end_date_column_name,
 ):
     if drift_column_name and drift_column_name in data.columns:
-        for i, row in data.loc[data[drift_column_name],:].iterrows():
+        for i, row in data.loc[data[drift_column_name], :].iterrows():
             fig.add_vrect(
                 x0=row[start_date_column_name],
                 x1=row[end_date_column_name],
@@ -474,11 +468,7 @@ def _plot_drifted_markers_and_areas(
 
 
 def _plot_thresholds(
-    fig: go.Figure,
-    data: pd.DataFrame,
-    threshold_column_name: str,
-    threshold_value_format: str,
-    colors: List[str]
+    fig: go.Figure, data: pd.DataFrame, threshold_column_name: str, threshold_value_format: str, colors: List[str]
 ):
     if threshold_column_name and threshold_column_name in data.columns:
         threshold_values = data[threshold_column_name].values[0]
@@ -504,7 +494,9 @@ def _plot_reference_analysis_separator(
     chunk_types: List[str],
 ):
     if v_line_separating_analysis_period:
-        data_subset = data.loc[data[chunk_type_column_name] == chunk_types[1],].head(1)
+        data_subset = data.loc[
+            data[chunk_type_column_name] == chunk_types[1],
+        ].head(1)
         fig.add_vline(
             x=pd.to_datetime(data_subset['start_date'].values[0]),
             line=dict(color=colors[1], width=1, dash='dash'),
@@ -525,8 +517,9 @@ def _plot_confidence_band(
     metric_column_name: str,
 ):
     if (
-        confidence_column_name and estimated_column_name and 
-        {confidence_column_name,estimated_column_name}.issubset(data.columns)
+        confidence_column_name
+        and estimated_column_name
+        and {confidence_column_name, estimated_column_name}.issubset(data.columns)
     ):
         data_subset = data.loc[data[chunk_type_column_name] == chunk_types[1]]
         data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
@@ -544,7 +537,7 @@ def _plot_confidence_band(
                     mode='lines',
                     x=data_subset[start_date_column_name],
                     y=data_subset[metric_column_name] - data_subset[confidence_column_name],
-                    line=dict(shape='hv',color='rgba(0,0,0,0)'),
+                    line=dict(shape='hv', color='rgba(0,0,0,0)'),
                     fill='tonexty',
                     fillcolor=colors_transparent[1],
                     hoverinfo='skip',

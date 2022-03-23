@@ -15,8 +15,8 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import Feature, FeatureType, ModelMetadata
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._joy_plot import _joy_plot
-from nannyml.plots._line_plot import _line_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
+from nannyml.plots._step_plot import _step_plot
 
 
 class UnivariateDriftResult(DriftResult):
@@ -153,7 +153,7 @@ def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'sta
 
     plot_partition_separator = len(data.value_counts()) > 1
 
-    fig = _line_plot(
+    fig = _step_plot(
         table=data,
         metric_column_name=metric_column_name,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
@@ -183,7 +183,7 @@ def _plot_prediction_drift(
 
     plot_partition_separator = len(data.value_counts()) > 1
 
-    fig = _line_plot(
+    fig = _step_plot(
         table=data,
         metric_column_name=metric_column_name,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
