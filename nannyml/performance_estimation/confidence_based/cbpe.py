@@ -17,7 +17,6 @@ from nannyml.metadata import (
     NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
 )
@@ -124,9 +123,9 @@ class CBPE(BasePerformanceEstimator):
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
                     'realized_roc_auc': _calculate_realized_performance(chunk),
                     'estimated_roc_auc': _calculate_cbpe(
-                        self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME])
+                        self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME])
                         if self.needs_calibration
-                        else chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
+                        else chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
                     ),
                 }
                 for chunk in chunks
@@ -157,7 +156,7 @@ def _calculate_alert_thresholds(
 
 def _calculate_confidence_deviation(reference_chunks: List[Chunk]):
     estimated_reference_performance_chunks = [
-        _calculate_cbpe(chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]) for chunk in reference_chunks
+        _calculate_cbpe(chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]) for chunk in reference_chunks
     ]
     deviation = np.std(estimated_reference_performance_chunks)
     return deviation

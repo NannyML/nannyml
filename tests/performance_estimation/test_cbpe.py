@@ -44,3 +44,13 @@ def test_estimator_will_not_calibrate_scores_when_not_needed(metadata, data):  #
     sut.fit(ref_df)
 
     assert sut.needs_calibration is False
+
+
+def test_estimator_will_not_fail_on_work_from_home_sample(metadata, data):  # noqa: D103
+    reference, analysis = data
+    try:
+        estimator = CBPE(model_metadata=metadata)
+        estimator.fit(reference)
+        _ = estimator.estimate(analysis)
+    except Exception as exc:
+        pytest.fail(f'unexpected exception was raised: {exc}')
