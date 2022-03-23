@@ -94,7 +94,8 @@ class AlertCountRanking(Ranking):
         alert_column_names = [
             column_name
             for column_name in drift_calculation_result.data.columns
-            if (self.ALERT_COLUMN_SUFFIX in column_name) and (model_metadata.prediction_column_name not in column_name)
+            if (self.ALERT_COLUMN_SUFFIX in column_name)
+            and (model_metadata.predicted_probability_column_name not in column_name)
         ]
 
         if len(alert_column_names) == 0:

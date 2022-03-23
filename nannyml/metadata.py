@@ -592,6 +592,7 @@ def _guess_features(data: pd.DataFrame) -> List[str]:
             not in _guess_identifiers(data)
             + _guess_partitions(data)
             + _guess_predictions(data)
+            + _guess_predicted_probabilities(data)
             + _guess_timestamps(data)
             + _guess_targets(data)
         ) and (col.name not in NML_METADATA_COLUMNS)

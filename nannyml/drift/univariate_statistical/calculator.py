@@ -55,7 +55,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
             model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
         )
 
-        self.selected_features = self.selected_features + [self.model_metadata.prediction_column_name]
+        self.selected_features = self.selected_features + [self.model_metadata.predicted_probability_column_name]
 
         self._reference_data = None
 
@@ -69,7 +69,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
         # Get lists of categorical <-> categorical features
         categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
         continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features] + [
-            self.model_metadata.prediction_column_name
+            self.model_metadata.predicted_probability_column_name
         ]
 
         features_and_metadata = NML_METADATA_COLUMNS + self.selected_features

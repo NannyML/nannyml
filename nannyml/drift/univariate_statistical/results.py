@@ -82,7 +82,7 @@ class UnivariateDriftResult(DriftResult):
             feature = _get_feature(self.metadata, feature_label, feature_column_name)
             return _plot_feature_drift(self.data, feature, metric, args, kwargs)
         elif kind == 'prediction_drift':
-            return _plot_prediction_drift(self.data, self.metadata.prediction_column_name, metric)
+            return _plot_prediction_drift(self.data, self.metadata.predicted_probability_column_name, metric)
         elif kind == 'feature_distribution':
             feature = _get_feature(self.metadata, feature_label, feature_column_name)
             return _plot_feature_distribution(
