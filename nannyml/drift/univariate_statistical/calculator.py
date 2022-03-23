@@ -12,7 +12,7 @@ from scipy.stats import chi2_contingency, ks_2samp
 from nannyml.chunk import Chunker
 from nannyml.drift.base import BaseDriftCalculator
 from nannyml.drift.univariate_statistical.results import UnivariateDriftResult
-from nannyml.exceptions import CalculatorNotFittedException
+from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 
 ALERT_THRESHOLD_P_VALUE = 0.05
@@ -54,6 +54,12 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
         super(UnivariateStatisticalDriftCalculator, self).__init__(
             model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
         )
+
+        if model_metadata.predicted_probability_column_name is None:
+            raise MissingMetadataException(
+                "missing value for 'predicted_probability_column_name'. "
+                "Please update your model metadata accordingly."
+            )
 
         self.selected_features = self.selected_features + [self.model_metadata.predicted_probability_column_name]
 

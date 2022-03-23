@@ -15,7 +15,7 @@ from nannyml.drift import BaseDriftCalculator
 from nannyml.drift.base import DriftResult
 from nannyml.drift.data_reconstruction.calculator import DataReconstructionDriftCalculator, _minimum_chunk_size
 from nannyml.drift.univariate_statistical.calculator import UnivariateStatisticalDriftCalculator
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
 
 
@@ -31,6 +31,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data['f2'] = np.random.rand(data.shape[0])
     data['f3'] = np.random.randint(4, size=data.shape[0])
     data['f4'] = np.random.randint(20, size=data.shape[0])
+    data['y_pred_proba'] = np.random.rand(data.shape[0])
     data['output'] = np.random.randint(2, size=data.shape[0])
     data['actual'] = np.random.randint(2, size=data.shape[0])
 
@@ -189,42 +190,6 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     assert 'f3' in sut.data.columns
 
 
-def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_object_raises_typeerror(  # noqa: D103
-    sample_drift_data_with_nans, sample_drift_metadata
-):
-    with pytest.raises(TypeError):
-        DataReconstructionDriftCalculator(
-            model_metadata=sample_drift_metadata,
-            chunk_period='W',
-            imputer_categorical=5,
-            imputer_continuous=SimpleImputer(missing_values=np.nan, strategy='mean'),
-        )
-
-
-def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_strategy_raises_valueerror(  # noqa: D103
-    sample_drift_data_with_nans, sample_drift_metadata
-):
-    with pytest.raises(ValueError):
-        DataReconstructionDriftCalculator(
-            model_metadata=sample_drift_metadata,
-            chunk_period='W',
-            imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='median'),
-            imputer_continuous=SimpleImputer(missing_values=np.nan, strategy='mean'),
-        )
-
-
-def test_data_reconstruction_drift_calculator_given_wrong_cont_imputer_object_raises_typeerror(  # noqa: D103
-    sample_drift_data_with_nans, sample_drift_metadata
-):
-    with pytest.raises(TypeError):
-        DataReconstructionDriftCalculator(
-            model_metadata=sample_drift_metadata,
-            chunk_period='W',
-            imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='most_frequent'),
-            imputer_continuous=5,
-        )
-
-
 def test_base_drift_calculator_uses_size_based_chunker_when_given_chunk_size(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
@@ -319,6 +284,14 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  
     assert sorted(expected) == sorted(sut)
 
 
+def test_univariate_statistical_drift_calc_raises_missing_metadata_exception_when_predicted_proba_not_set(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    sample_drift_metadata.predicted_probability_column_name = None
+    with pytest.raises(MissingMetadataException, match="missing value for 'predicted_probability_column_name'"):
+        _ = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=5000)
+
+
 @pytest.mark.parametrize(
     'chunker',
     [
@@ -376,7 +349,7 @@ def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value
         else:
             assert f'{f.column_name}_chi2' in sut
         assert f'{f.column_name}_p_value' in sut
-    assert f'{sample_drift_metadata.prediction_column_name}_dstat' in sut
+    assert f'{sample_drift_metadata.predicted_probability_column_name}_dstat' in sut
 
 
 def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
@@ -582,3 +555,39 @@ def test_data_reconstruction_drift_calculator_minimum_chunk_size_yields_correct_
     ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
     calc.fit(ref_data)
     assert _minimum_chunk_size(features) == 63
+
+
+def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_object_raises_typeerror(  # noqa: D103
+    sample_drift_data_with_nans, sample_drift_metadata
+):
+    with pytest.raises(TypeError):
+        DataReconstructionDriftCalculator(
+            model_metadata=sample_drift_metadata,
+            chunk_period='W',
+            imputer_categorical=5,
+            imputer_continuous=SimpleImputer(missing_values=np.nan, strategy='mean'),
+        )
+
+
+def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_strategy_raises_valueerror(  # noqa: D103
+    sample_drift_data_with_nans, sample_drift_metadata
+):
+    with pytest.raises(ValueError):
+        DataReconstructionDriftCalculator(
+            model_metadata=sample_drift_metadata,
+            chunk_period='W',
+            imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='median'),
+            imputer_continuous=SimpleImputer(missing_values=np.nan, strategy='mean'),
+        )
+
+
+def test_data_reconstruction_drift_calculator_given_wrong_cont_imputer_object_raises_typeerror(  # noqa: D103
+    sample_drift_data_with_nans, sample_drift_metadata
+):
+    with pytest.raises(TypeError):
+        DataReconstructionDriftCalculator(
+            model_metadata=sample_drift_metadata,
+            chunk_period='W',
+            imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='most_frequent'),
+            imputer_continuous=5,
+        )

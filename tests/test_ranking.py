@@ -34,7 +34,7 @@ def sample_drift_result() -> UnivariateDriftResult:  # noqa: D103
 @pytest.fixture
 def sample_metadata(sample_drift_result):  # noqa: D103
     md = extract_metadata(sample_drift_result.data)
-    md.prediction_column_name = 'prediction'
+    md.predicted_probability_column_name = 'y_pred_proba'
     return md
 
 
