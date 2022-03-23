@@ -121,59 +121,59 @@ class Metric(abc.ABC):
         )
 
 
-def _minimum_roc_auc_based_chunk_size(
+def _minimum_chunk_size_roc_auc(
     data: pd.DataFrame,
     partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
     predicted_probability_column_name: str = NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+    required_std: float = 0.02,
     lower_threshold: int = 300,
 ) -> int:
-    def get_prediction(X):
-        # model data
-        h_coefs = [
-            0.00000000e00,
-            -3.46098897e04,
-            2.65871679e04,
-            3.46098897e04,
-            2.29602791e04,
-            -4.96886646e04,
-            -1.12777343e-10,
-            -2.29602791e04,
-            3.13775672e-10,
-            2.48718826e04,
+        """
+        Estimation of minimum sample size to get required standard deviation of AUROC. Calculation is based on
+        Variance Sum Law and expressing AUROC as Mann-Whitney U statistic.
+        """
+        y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+        y_pred_proba = data.loc[
+            data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, predicted_probability_column_name
         ]
-        h_intercept = 1421.9522967076875
-        transformation = PolynomialFeatures(3)
-        #
 
-        inputs = np.asarray(X)
-        transformed_inputs = transformation.fit_transform(inputs)
-        prediction = np.dot(transformed_inputs, h_coefs)[0] + h_intercept
+        y_true, y_pred_proba = np.asarray(y_true), np.asarray(y_pred_proba)
+        if np.mean(y_true) > 0.5:
+            y_true = abs(np.asarray(y_true) - 1)
+            y_pred_proba = 1 - y_pred_proba
 
-        return prediction
+        sorted_idx = np.argsort(y_pred_proba)
+        y_pred_proba = y_pred_proba[sorted_idx]
+        y_true = y_true[sorted_idx]
+        rank_order = np.asarray(range(len(y_pred_proba)))
+        positive_ranks = (y_true * rank_order)
+        indexes = np.unique(positive_ranks)[1:]
+        ser = []
 
-    class_balance = np.mean(data[target_column_name])
+        for i, index in enumerate(indexes):
+            ser.append(index - i)
 
-    # Clean up NaN values
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred_proba = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, predicted_probability_column_name
-    ]
+        n_pos = np.sum(y_true)
+        n_neg = len(y_true) - n_pos
+        ser_divided = ser/(n_pos * n_neg)
+        ser_multi = ser_divided * n_pos
 
-    y_true = y_true[~y_pred_proba.isna()]
-    y_pred_proba.dropna(inplace=True)
+        pos_targets = y_true
+        neg_targets = abs(y_true - 1)
 
-    y_pred_proba = y_pred_proba[~y_true.isna()]
-    y_true.dropna(inplace=True)
+        n_pos_targets = np.sum(pos_targets)
+        n_neg_targets = np.sum(neg_targets)
 
-    auc = roc_auc_score(y_true=y_true, y_score=y_pred_proba)
+        fraction = n_pos_targets / len(y_true)
+        sample_size = (np.std(ser_multi)) ** 2 / ((required_std ** 2) * fraction)
+        sample_size = np.round(sample_size, -2)
 
-    chunk_size = get_prediction([[class_balance, auc]])
-    chunk_size = np.maximum(lower_threshold, chunk_size)
-    chunk_size = np.round(chunk_size, -2)
-    minimum_chunk_size = int(chunk_size)
+        result = int(np.maximum(lower_threshold, sample_size))
 
-    return minimum_chunk_size
+        return result
+
+
 
 
 class AUROC(Metric):
@@ -188,7 +188,7 @@ class AUROC(Metric):
         return self._min_chunk_size
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._min_chunk_size = _minimum_roc_auc_based_chunk_size(reference_data)
+        self._min_chunk_size = _minimum_chunk_size_roc_auc(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
