@@ -14,9 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Plotting will default to using step plots.
 - Restructured the ``nannyml.drift`` package and subpackages. *Breaking changes*!
+- Metadata completeness check will now fail when there are features of ``FeatureType.UNKNOWN``.
 
 ### Fixed
 - Restrict version of the ``scipy`` dependency to be ``>=1.7.3, <1.8.0``. Planned to be relaxed ASAP.
+- Deal with missing values in chunks causing ``NaN`` values when concatenating.
 
 ## [0.2.1] - 2022-03-22
 ### Fixed
