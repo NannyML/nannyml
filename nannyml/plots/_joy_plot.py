@@ -176,10 +176,7 @@ def _create_joy_plot(
     colors_transparent = [
         'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha)) for color in colors
     ]
-    hover_template = (
-        chunk_hover_label
-        + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}, %{customdata[3]}'
-    )
+    hover_template = chunk_hover_label + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}, %{customdata[3]}'
 
     layout = go.Layout(
         title=title,
@@ -204,10 +201,7 @@ def _create_joy_plot(
         y_date_position = row[start_date_column_name]
         y_date_height_scaler = row[start_date_column_name] - row[end_date_column_name]
         kde_support = row['kde_support']
-        # kde_density = row['kde_density']
-        kde_support_len = row['kde_support_len']
         kde_density_scaled = row['kde_density_scaled'] * joy_overlap
-        kde_cdf = row['kde_cdf']
         kde_quartiles = [(q[0], q[1] * joy_overlap) for q in row['kde_quartiles_scaled']]
         color = colors[int(row[chunk_type_column_name] == chunk_types[1])]
         color_drift = colors[row['hue']]
@@ -216,7 +210,6 @@ def _create_joy_plot(
 
         start_date_label_hover = row[start_date_column_name].strftime(date_label_hover_format)
         end_date_label_hover = row[end_date_column_name].strftime(date_label_hover_format)
-
 
         # ____Plot elements___#
         fig.add_trace(
@@ -251,7 +244,7 @@ def _create_joy_plot(
                     row[chunk_column_name],
                     start_date_label_hover,
                     end_date_label_hover,
-                    np.round(kde_quartile[0], 3)
+                    np.round(kde_quartile[0], 3),
                 )
 
                 hover_data = np.asarray([hover_content, hover_content])
