@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Unreleased
+### Added
+- Added support for both predicted labels and predicted probabilities in ``ModelMetadata``.
+- Support for monitoring model performance metrics using the ``PerformanceCalculator``.
+- Support for monitoring target distribution using the ``TargetDistributionCalculator``
+
+### Changed
+- Plotting will default to using step plots.
+- Restructured the ``nannyml.drift`` package and subpackages. *Breaking changes*!
+
+### Fixed
+- Restrict version of the ``scipy`` dependency to be ``>=1.7.3, <1.8.0``. Planned to be relaxed ASAP.
+
 ## [0.2.1] - 2022-03-22
 ### Fixed
 - Data reconstruction drift calculation failing when there are no categorical or continuous features
