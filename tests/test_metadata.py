@@ -560,7 +560,7 @@ def test_complete_returns_incomplete_and_both_prediction_props_when_none_of_both
     assert 'predicted_probability_column_name' in sut[1]
 
 
-def test_complete_returns_false_when_features_of_unknown_feature_type_exist(sample_data):
+def test_complete_returns_false_when_features_of_unknown_feature_type_exist(sample_data):  # noqa: D103
     md = extract_metadata(sample_data)
 
     # Rig the data
