@@ -42,23 +42,36 @@ class TargetDistributionResult:
             using ``fig.show()``.
         """
         if kind == 'distribution':
-            return _plot_distribution(self.data, distribution, args, kwargs)
+            return self._plot_distribution(distribution)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['distribution'].")
 
+    def _plot_distribution(self, distribution: str) -> go.Figure:
+        plot_partition_separator = len(self.data.value_counts()) > 1
 
-def _plot_distribution(data: pd.DataFrame, distribution: str, *args, **kwargs) -> go.Figure:
-    plot_partition_separator = len(data.value_counts()) > 1
-    fig = _step_plot(
-        table=data,
-        metric_column_name='metric_target_drift' if distribution == 'metric' else 'p_value',
-        chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-        threshold_column_name='thresholds',
-        drift_column_name='alert',
-        title=f'Target distribution ({distribution})',
-        y_axis_title=f'Target distribution ({distribution})',
-        v_line_separating_analysis_period=plot_partition_separator,
-        partial_target_column_name='targets_missing_rate',
-    )
-
-    return fig
+        if distribution == 'metric':
+            fig = _step_plot(
+                table=self.data,
+                metric_column_name='metric_target_drift',
+                chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+                drift_column_name='alert',
+                title=f'{self.metadata.target_column_name} rate over time',
+                y_axis_title=f'{self.metadata.target_column_name} rate',
+                v_line_separating_analysis_period=plot_partition_separator,
+                partial_target_column_name='targets_missing_rate',
+                statistically_significant_column_name='significant',
+            )
+            return fig
+        elif distribution == 'statistical':
+            fig = _step_plot(
+                table=self.data,
+                metric_column_name='statistical_target_drift',
+                chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+                drift_column_name='alert',
+                title=f'{self.metadata.target_column_name} rate over time',
+                y_axis_title=f'{self.metadata.target_column_name} chi2 statistic',
+                v_line_separating_analysis_period=plot_partition_separator,
+                partial_target_column_name='targets_missing_rate',
+                statistically_significant_column_name='significant',
+            )
+            return fig

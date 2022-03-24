@@ -131,7 +131,7 @@ class TargetDistributionCalculator:
 
 
 def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:
-    d_stat, p_value, _, _ = chi2_contingency(
+    statistic, p_value, _, _ = chi2_contingency(
         pd.concat([reference_targets.value_counts(), targets.value_counts()], axis=1)
     )
 
@@ -139,8 +139,9 @@ def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.
 
     return {
         'metric_target_drift': targets.mean(),
-        'statistical_target_drift': d_stat,
+        'statistical_target_drift': statistic,
         'p_value': p_value,
         'thresholds': _ALERT_THRESHOLD_P_VALUE,
         'alert': p_value < _ALERT_THRESHOLD_P_VALUE,
+        'significant': p_value < _ALERT_THRESHOLD_P_VALUE,
     }
