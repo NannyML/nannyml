@@ -51,13 +51,14 @@ def _plot_distribution(data: pd.DataFrame, distribution: str, *args, **kwargs) -
     plot_partition_separator = len(data.value_counts()) > 1
     fig = _step_plot(
         table=data,
-        metric_column_name='metric_target_drift' if distribution == 'metric' else 'statistical_target_drift',
+        metric_column_name='metric_target_drift' if distribution == 'metric' else 'p_value',
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-        # threshold_column_name='thresholds',
+        threshold_column_name='thresholds',
         drift_column_name='alert',
         title=f'Target distribution ({distribution})',
         y_axis_title=f'Target distribution ({distribution})',
         v_line_separating_analysis_period=plot_partition_separator,
+        partial_target_column_name='targets_missing_rate',
     )
 
     return fig
