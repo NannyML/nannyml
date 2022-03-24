@@ -468,6 +468,11 @@ class ModelMetadata:
             missing.append('predicted_probability_column_name')
             missing.append('prediction_column_name')
 
+        features_with_unknown_type = list(filter(lambda f: f.feature_type == FeatureType.UNKNOWN, self.features))
+        if len(features_with_unknown_type) > 0:
+            complete = False
+            missing += [f.column_name for f in features_with_unknown_type]
+
         return complete, missing
 
     def __remove_from_features(self, column_name: str):

@@ -560,6 +560,19 @@ def test_complete_returns_incomplete_and_both_prediction_props_when_none_of_both
     assert 'predicted_probability_column_name' in sut[1]
 
 
+def test_complete_returns_false_when_features_of_unknown_feature_type_exist(sample_data):
+    md = extract_metadata(sample_data)
+
+    # Rig the data
+    md.features[0].feature_type = FeatureType.UNKNOWN
+    md.features[1].feature_type = FeatureType.UNKNOWN
+
+    is_complete, missing = md.is_complete()
+    assert not is_complete
+    assert md.features[0].label in missing
+    assert md.features[1].label in missing
+
+
 def test_categorical_features_returns_only_nominal_features(sample_model_metadata):  # noqa: D103
     sample_model_metadata.features = [
         Feature(label='f1', column_name='f1', feature_type=FeatureType.CATEGORICAL),
