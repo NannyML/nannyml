@@ -103,7 +103,7 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
                             chunk.data[column].value_counts(),
                         ],
                         axis=1,
-                    )
+                    ).fillna(0)
                 )
                 chunk_drift[f'{column}_chi2'] = statistic
                 chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
