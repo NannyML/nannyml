@@ -25,14 +25,14 @@ def _get_kde(array, cut=3, clip=(-np.inf, np.inf)):
 
 def _get_kde_support(kde):
     if kde is not None:  # pragma: no cover
-        return kde.support
+        return kde.support[::5]
     else:
         return np.array([])
 
 
 def _get_kde_density(kde):
     if kde is not None:  # pragma: no cover
-        return kde.density
+        return kde.density[::5]
     else:
         return np.array([])
 
@@ -178,7 +178,7 @@ def _create_joy_plot(
     ]
     hover_template = (
         chunk_hover_label
-        + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}; (%{customdata[3]}, %{customdata[4]})'
+        + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}, %{customdata[3]}'
     )
 
     layout = go.Layout(
@@ -216,15 +216,7 @@ def _create_joy_plot(
 
         start_date_label_hover = row[start_date_column_name].strftime(date_label_hover_format)
         end_date_label_hover = row[end_date_column_name].strftime(date_label_hover_format)
-        hover_data = np.array(
-            [
-                [row[chunk_column_name]] * kde_support_len,
-                [start_date_label_hover] * kde_support_len,
-                [end_date_label_hover] * kde_support_len,
-                [joy_hover_format.format(i) for i in kde_support],
-                [joy_hover_format.format(i) for i in kde_cdf],
-            ]
-        ).transpose()
+
 
         # ____Plot elements___#
         fig.add_trace(
@@ -234,8 +226,7 @@ def _create_joy_plot(
                 y=y_date_position + kde_density_scaled * y_date_height_scaler,
                 mode='lines',
                 line=dict(color=color, width=1),
-                hovertemplate=hover_template,
-                customdata=hover_data,
+                hoverinfo='skip',
                 showlegend=False,
                 hoverlabel=dict(bgcolor=color_drift, font=dict(color='white')),
             )
@@ -255,13 +246,25 @@ def _create_joy_plot(
 
         if quartiles_legend_label:
             for kde_quartile in kde_quartiles:
+
+                hover_content = (
+                    row[chunk_column_name],
+                    start_date_label_hover,
+                    end_date_label_hover,
+                    np.round(kde_quartile[0], 3)
+                )
+
+                hover_data = np.asarray([hover_content, hover_content])
+
                 fig.add_trace(
                     go.Scatter(
+                        name=trace_name,
                         x=[kde_quartile[0], kde_quartile[0]],
                         y=[y_date_position, y_date_position + kde_quartile[1] * y_date_height_scaler],
                         mode='lines',
                         line=dict(color=color_drift, width=1, dash='dot'),
-                        hoverinfo='skip',
+                        hovertemplate=hover_template,
+                        customdata=hover_data,
                         showlegend=False,
                     )
                 )
