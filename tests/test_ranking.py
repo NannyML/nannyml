@@ -79,7 +79,7 @@ def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_opt
 def test_alert_count_ranking_should_raise_invalid_arguments_exception_when_given_wrong_drift_results(  # noqa: D103
     sample_metadata,
 ):
-    with pytest.raises(InvalidArgumentsException, match="drift results are not univariate_statistical drift results."):
+    with pytest.raises(InvalidArgumentsException, match="drift results are not statistical drift results."):
         _ = AlertCountRanking().rank(
             UnivariateDriftResult(
                 analysis_data=[],

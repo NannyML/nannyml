@@ -13,8 +13,11 @@ from sklearn.impute import SimpleImputer
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift.base import DriftResult
-from nannyml.drift.data_reconstruction.calculator import DataReconstructionDriftCalculator, _minimum_chunk_size
-from nannyml.drift.univariate_statistical.calculator import UnivariateStatisticalDriftCalculator
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import (
+    DataReconstructionDriftCalculator,
+    _minimum_chunk_size,
+)
+from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
 

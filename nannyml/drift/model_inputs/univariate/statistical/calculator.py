@@ -11,7 +11,7 @@ from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.chunk import Chunker
 from nannyml.drift.base import BaseDriftCalculator
-from nannyml.drift.univariate_statistical.results import UnivariateDriftResult
+from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
 
