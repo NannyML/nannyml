@@ -1,6 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""The classes representing the results of a target distribution calculation."""
+
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -11,7 +14,10 @@ from nannyml.plots._step_plot import _step_plot
 
 
 class TargetDistributionResult:
+    """Contains target distribution data and utilities to plot it."""
+
     def __init__(self, target_distribution: pd.DataFrame, model_metadata: ModelMetadata):
+        """Creates a new instance of the TargetDistributionResults."""
         self.data = target_distribution
         self.metadata = model_metadata
 
@@ -47,6 +53,8 @@ def _plot_distribution(data: pd.DataFrame, distribution: str, *args, **kwargs) -
         table=data,
         metric_column_name='metric_target_drift' if distribution == 'metric' else 'statistical_target_drift',
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+        # threshold_column_name='thresholds',
+        drift_column_name='alert',
         title=f'Target distribution ({distribution})',
         y_axis_title=f'Target distribution ({distribution})',
         v_line_separating_analysis_period=plot_partition_separator,

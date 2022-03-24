@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Module for target distribution monitoring."""
+from typing import Dict
 
 import pandas as pd
 from scipy.stats import chi2_contingency
@@ -58,12 +59,16 @@ class TargetDistributionCalculator:
         else:
             self.chunker = chunker  # type: ignore
 
-        self._reference_data: pd.DataFrame = None  # type: ignore
+        self._reference_targets: pd.Series = None  # type: ignore
 
         # TODO: determine better min_chunk_size for target distribution
         self._minimum_chunk_size = 300
 
     def fit(self, reference_data: pd.DataFrame):
+        """Fits the calculator to reference data.
+
+        During fitting the reference target data is validated and stored for later use.
+        """
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -72,8 +77,9 @@ class TargetDistributionCalculator:
                 f"data does not contain target data column '{self.metadata.target_column_name}'."
             )
 
-        # Preprocess data
-        self._reference_data = preprocess(data=reference_data, model_metadata=self.metadata)
+        self._reference_targets = preprocess(data=reference_data, model_metadata=self.metadata)[
+            NML_METADATA_TARGET_COLUMN_NAME
+        ]
 
     def calculate(self, data: pd.DataFrame):
         """Calculates the target distribution of a binary classifier.
@@ -108,10 +114,8 @@ class TargetDistributionCalculator:
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
-                    'metric_target_drift': _calculate_metric_target_drift(chunk.data[NML_METADATA_TARGET_COLUMN_NAME]),
-                    'statistical_target_drift': _calculate_statistical_target_drift(
-                        self._reference_data[NML_METADATA_TARGET_COLUMN_NAME],
-                        chunk.data[NML_METADATA_TARGET_COLUMN_NAME],
+                    **_calculate_target_drift_for_chunk(
+                        self._reference_targets, chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
                     ),
                 }
                 for chunk in chunks
@@ -121,9 +125,17 @@ class TargetDistributionCalculator:
         return TargetDistributionResult(target_distribution=res, model_metadata=self.metadata)
 
 
-def _calculate_metric_target_drift(target: pd.Series) -> float:
-    return target.mean()
+def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:
+    d_stat, p_value, _, _ = chi2_contingency(
+        pd.concat([reference_targets.value_counts(), targets.value_counts()], axis=1)
+    )
 
+    _ALERT_THRESHOLD_P_VALUE = 0.05
 
-def _calculate_statistical_target_drift(reference_target: pd.Series, target: pd.Series) -> float:
-    return chi2_contingency(pd.concat([reference_target.value_counts(), target.value_counts()], axis=1))[0]
+    return {
+        'metric_target_drift': targets.mean(),
+        'statistical_target_drift': d_stat,
+        'p_value': p_value,
+        'thresholds': _ALERT_THRESHOLD_P_VALUE,
+        'alert': p_value < _ALERT_THRESHOLD_P_VALUE,
+    }
