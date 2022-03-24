@@ -117,8 +117,9 @@ class TargetDistributionCalculator:
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
-                    'targets_missing_rate': 1
-                    - (chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()),
+                    'targets_missing_rate': (
+                        chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()
+                    ),
                     **_calculate_target_drift_for_chunk(
                         self._reference_targets, chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
                     ),

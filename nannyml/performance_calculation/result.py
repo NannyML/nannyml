@@ -106,6 +106,7 @@ def _plot_performance_metric(performance_calculation_results: pd.DataFrame, metr
         drift_legend_label='Degraded performance',
         threshold_column_name=f'{metric}_thresholds',
         threshold_legend_label='Performance threshold',
+        partial_target_column_name='targets_missing_rate',
         title=f'Realized performance: {metric}',
         y_axis_title='Realized performance',
         v_line_separating_analysis_period=plot_partition_separator,
