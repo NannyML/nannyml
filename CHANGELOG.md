@@ -14,7 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Plotting will default to using step plots.
 - Restructured the ``nannyml.drift`` package and subpackages. *Breaking changes*!
-- Metadata completeness check will now fail when there are features of ``FeatureType.UNKNOWN``.
+- Metadata completeness check will now fail when there are features of ``FeatureType.UNKNOWN``.\
+- Chunk date boundaries are now calculated differently for a ``PeriodBasedChunker``, using the
+  theoretical period for boundaries as opposed to the observed boundaries within the chunk observations.
 
 ### Fixed
 - Restrict version of the ``scipy`` dependency to be ``>=1.7.3, <1.8.0``. Planned to be relaxed ASAP.

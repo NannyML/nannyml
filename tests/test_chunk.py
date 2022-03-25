@@ -10,6 +10,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
+from pandas import Timestamp
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
@@ -205,25 +206,6 @@ def test_chunker_should_set_index_boundaries(sample_chunk_data):  # noqa: D103
     assert sut[2].end_index == 20159
 
 
-def test_chunker_should_set_index_date_times(sample_chunk_data):  # noqa: D103
-    class SimpleChunker(Chunker):
-        def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
-            return [
-                Chunk(key='[0:6665]', data=data.iloc[0:6666, :]),
-                Chunk(key='[6666:13331]', data=data.iloc[6666:13332, :]),
-                Chunk(key='[13332:20160]', data=data.iloc[13332:, :]),
-            ]
-
-    chunker = SimpleChunker()
-    sut = chunker.split(data=sample_chunk_data)
-    assert sut[0].start_datetime == sample_chunk_data.iloc[0]['ordered_at'].replace(hour=0, minute=0, second=0)
-    assert sut[0].end_datetime == sample_chunk_data.iloc[6665]['ordered_at'].replace(hour=23, minute=59, second=59)
-    assert sut[1].start_datetime == sample_chunk_data.iloc[6666]['ordered_at'].replace(hour=0, minute=0, second=0)
-    assert sut[1].end_datetime == sample_chunk_data.iloc[13331]['ordered_at'].replace(hour=23, minute=59, second=59)
-    assert sut[2].start_datetime == sample_chunk_data.iloc[13332]['ordered_at'].replace(hour=0, minute=0, second=0)
-    assert sut[2].end_datetime == sample_chunk_data.iloc[20159]['ordered_at'].replace(hour=23, minute=59, second=59)
-
-
 def test_chunker_should_include_all_data_columns_by_default(sample_chunk_data):  # noqa: D103
     class SimpleChunker(Chunker):
         def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
@@ -268,7 +250,7 @@ def test_chunker_get_partition_should_raise_missing_metadata_exception_when_part
     with pytest.raises(
         MissingMetadataException, match=f"missing partition column '{NML_METADATA_PARTITION_COLUMN_NAME}'"
     ):
-        _ = c.split(pd.DataFrame(columns=['a', 'b', 'c']))
+        _ = c.split(pd.DataFrame(columns=['a', 'b', 'c', 'nml_meta_timestamp']))
 
 
 def test_chunker_get_boundary_timestamps_should_raise_missing_metadata_exception_when_column_not_present(  # noqa: D103
@@ -308,7 +290,7 @@ def test_period_based_chunker_works_with_non_default_offset(sample_chunk_data): 
 
 def test_period_based_chunker_works_with_empty_dataset():  # noqa: D103
     chunker = PeriodBasedChunker(date_column_name='date')
-    sut = chunker.split(pd.DataFrame(columns=['date', 'f1', 'f2', 'f3', 'f4']))
+    sut = chunker.split(pd.DataFrame(columns=['date', 'nml_meta_timestamp', 'f1', 'f2', 'f3', 'f4']))
     assert len(sut) == 0
 
 
@@ -332,6 +314,15 @@ def test_period_based_chunker_assigns_periods_to_chunk_keys(sample_chunk_data): 
     assert sut[-1].key == '2020-05'
 
 
+def test_period_based_chunker_uses_periods_to_set_chunk_date_boundaries(sample_chunk_data):  # noqa: D103
+    chunker = PeriodBasedChunker(date_column_name='ordered_at', offset='M')
+    sut = chunker.split(sample_chunk_data)
+    assert sut[0].start_datetime == Timestamp(year=2020, month=1, day=1, hour=0, minute=0, second=0)
+    assert sut[-1].end_datetime == Timestamp(
+        year=2020, month=5, day=31, hour=23, minute=59, second=59, microsecond=999999, nanosecond=999
+    )
+
+
 def test_size_based_chunker_raises_exception_when_passed_nan_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = SizeBasedChunker(chunk_size='size?')
@@ -349,7 +340,7 @@ def test_size_based_chunker_raises_exception_when_passed_zero_size(sample_chunk_
 
 def test_size_based_chunker_works_with_empty_dataset():  # noqa: D103
     chunker = SizeBasedChunker(chunk_size=100)
-    sut = chunker.split(pd.DataFrame(columns=['date', 'f1', 'f2', 'f3', 'f4']))
+    sut = chunker.split(pd.DataFrame(columns=['date', 'nml_meta_timestamp', 'f1', 'f2', 'f3', 'f4']))
     assert len(sut) == 0
 
 
@@ -359,6 +350,13 @@ def test_size_based_chunker_returns_chunks_of_required_size(sample_chunk_data): 
     sut = chunker.split(sample_chunk_data)
     assert len(sut[0]) == chunk_size
     assert len(sut) == sample_chunk_data.shape[0] // chunk_size
+
+
+def test_size_based_chunker_uses_observations_to_set_chunk_date_boundaries(sample_chunk_data):  # noqa: D103
+    chunker = SizeBasedChunker(chunk_size=5000)
+    sut = chunker.split(sample_chunk_data)
+    assert sut[0].start_datetime == Timestamp(year=2020, month=1, day=6, hour=0, minute=0, second=0)
+    assert sut[-1].end_datetime == Timestamp(year=2020, month=5, day=23, hour=21, minute=10, second=0)
 
 
 def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
@@ -390,7 +388,7 @@ def test_count_based_chunker_raises_exception_when_passed_zero_size(sample_chunk
 
 def test_count_based_chunker_works_with_empty_dataset():  # noqa: D103
     chunker = CountBasedChunker(chunk_count=5)
-    sut = chunker.split(pd.DataFrame(columns=['date', 'f1', 'f2', 'f3', 'f4']))
+    sut = chunker.split(pd.DataFrame(columns=['date', 'nml_meta_timestamp', 'f1', 'f2', 'f3', 'f4']))
     assert len(sut) == 0
 
 
@@ -400,6 +398,13 @@ def test_count_based_chunker_returns_chunks_of_required_size(sample_chunk_data):
     sut = chunker.split(sample_chunk_data)
     assert len(sut[0]) == sample_chunk_data.shape[0] // chunk_count
     assert len(sut) == chunk_count
+
+
+def test_count_based_chunker_uses_observations_to_set_chunk_date_boundaries(sample_chunk_data):  # noqa: D103
+    chunker = CountBasedChunker(chunk_count=20)
+    sut = chunker.split(sample_chunk_data)
+    assert sut[0].start_datetime == Timestamp(year=2020, month=1, day=6, hour=0, minute=0, second=0)
+    assert sut[-1].end_datetime == Timestamp(year=2020, month=5, day=24, hour=23, minute=50, second=0)
 
 
 def test_count_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
