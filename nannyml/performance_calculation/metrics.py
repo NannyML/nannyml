@@ -120,6 +120,11 @@ class Metric(abc.ABC):
             and self.lower_threshold == other.lower_threshold
         )
 
+def _floor_chunk_size(
+    calculated_min_chunk_size: float,
+    lower_limit_on_chunk_size: int = 0
+) -> int:
+    return int(np.maximum(calculated_min_chunk_size, lower_limit_on_chunk_size))
 
 def _minimum_chunk_size_roc_auc(
     data: pd.DataFrame,
@@ -127,7 +132,6 @@ def _minimum_chunk_size_roc_auc(
     predicted_probability_column_name: str = NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
-    lower_threshold: int = 300,
 ) -> int:
         """
         Estimation of minimum sample size to get required standard deviation of AUROC. Calculation is based on
@@ -169,9 +173,7 @@ def _minimum_chunk_size_roc_auc(
         sample_size = (np.std(ser_multi)) ** 2 / ((required_std ** 2) * fraction)
         sample_size = np.round(sample_size, -2)
 
-        result = int(np.maximum(lower_threshold, sample_size))
-
-        return result
+        return _floor_chunk_size(sample_size)
 
 
 def _minimum_chunk_size_f1(
@@ -180,7 +182,6 @@ def _minimum_chunk_size_f1(
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
-    lower_threshold: int = 300,
 ):
 
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
@@ -206,10 +207,38 @@ def _minimum_chunk_size_f1(
     obs_level_f1 = tp_fp_fn * correcting_factor
     fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
     sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
+    sample_size = np.round(sample_size, -2)
 
-    result = int(np.maximum(lower_threshold, sample_size))
+    return _floor_chunk_size(sample_size)
 
-    return result
+def _minimum_chunk_size_precision(
+    data: pd.DataFrame,
+    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+    required_std: float = 0.02,
+):
+    y_true = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
+    ]
+    y_pred = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
+    ]
+
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+
+    TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
+    FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
+
+    TP = TP[~np.isnan(TP)]
+    FP = FP[~np.isnan(FP)]
+    obs_level_precision = np.concatenate([TP, FP])
+    amount_positive_pred = np.sum(y_pred)
+    fraction_of_pos_pred = amount_positive_pred / len(y_pred)
+    sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std ** 2) * fraction_of_pos_pred)
+    sample_size = np.round(sample_size, -2)
+
+    return _floor_chunk_size(sample_size)
 
 
 class AUROC(Metric):
@@ -245,9 +274,10 @@ class F1(Metric):
     def __init__(self):
         """Creates a new F1 instance."""
         super().__init__(display_name='F1')
+        self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
-        return 300
+        return self._min_chunk_size
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_f1(reference_data)
@@ -271,12 +301,13 @@ class Precision(Metric):
     def __init__(self):
         """Creates a new Precision instance."""
         super().__init__(display_name='precision')
+        self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
-        return 300
+        return self._min_chunk_size
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        self._min_chunk_size = _minimum_chunk_size_precision(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
