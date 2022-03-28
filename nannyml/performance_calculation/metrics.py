@@ -489,7 +489,6 @@ class MetricFactory:
         'f1': F1(),
         'precision': Precision(),
         'recall': Recall(),
-        'sensitivity': Sensitivity(),
         'specificity': Specificity(),
         'accuracy': Accuracy(),
     }
