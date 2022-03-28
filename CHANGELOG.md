@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restrict version of the ``scipy`` dependency to be ``>=1.7.3, <1.8.0``. Planned to be relaxed ASAP.
 - Deal with missing values in chunks causing ``NaN`` values when concatenating.
 - Crash when estimating CBPE without a target column present
+- Incorrect label in ``ModelMetadata`` printout
 
 ## [0.2.1] - 2022-03-22
 ### Fixed
