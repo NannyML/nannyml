@@ -330,7 +330,7 @@ class ModelMetadata:
             f"{'Partition column':35} {self.partition_column_name or UNKNOWN:35}",
             f"{'Prediction column':35} {self.prediction_column_name or UNKNOWN:35}",
             f"{'Predicted probability column':35} {self.predicted_probability_column_name or UNKNOWN:35}",
-            f"{'Ground truth column':35} {self.target_column_name or UNKNOWN:35}",
+            f"{'Target column':35} {self.target_column_name or UNKNOWN:35}",
             '',
             'Features',
             '',
