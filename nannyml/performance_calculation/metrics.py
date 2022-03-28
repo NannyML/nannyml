@@ -351,7 +351,7 @@ class Precision(Metric):
 
 
 class Recall(Metric):
-    """Recall metric."""
+    """Recall metric, also known as 'sensitivity'."""
 
     def __init__(self):
         """Creates a new Recall instance."""
@@ -405,37 +405,6 @@ class Specificity(Metric):
         else:
             tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
             return tn / (tn + fp)
-
-
-class Sensitivity(Metric):
-    """Sensitivity metric."""
-
-    def __init__(self):
-        """Creates a new Sensitivity instance."""
-        super().__init__(display_name='sensitivity')
-
-    def _minimum_chunk_size(self) -> int:
-        return 300
-
-    def _fit(self, reference_data: pd.DataFrame):
-        pass
-
-    def _calculate(self, data: pd.DataFrame):
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
-
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
-            )
-
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
-
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            return np.nan
-        else:
-            tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-            return tp / (tp + fn)
 
 
 class Accuracy(Metric):
