@@ -298,6 +298,32 @@ def _minimum_chunk_size_specificity(
 
     return _floor_chunk_size(sample_size)
 
+
+
+def _minimum_chunk_size_accuracy(
+    data: pd.DataFrame,
+    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+    required_std: float = 0.02,
+):
+    y_true = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
+    ]
+    y_pred = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
+    ]
+
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    y_true = np.asarray(y_true).astype(int)
+
+    y_pred = np.asarray(y_pred).astype(int)
+    correct_table = (y_true == y_pred).astype(int)
+    sample_size = (np.std(correct_table)**2)/(required_std**2)
+    sample_size = np.round(sample_size, -2)
+
+    return _floor_chunk_size(sample_size)
+
 class AUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
@@ -442,12 +468,13 @@ class Accuracy(Metric):
     def __init__(self):
         """Creates a new Accuracy instance."""
         super().__init__(display_name='accuracy')
+        self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
-        return 300
+        return self._min_chunk_size
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        self._min_chunk_size = _minimum_chunk_size_accuracy(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
