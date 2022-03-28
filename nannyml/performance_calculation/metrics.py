@@ -270,6 +270,34 @@ def _minimum_chunk_size_recall(
 
     return _floor_chunk_size(sample_size)
 
+
+def _minimum_chunk_size_specificity(
+    data: pd.DataFrame,
+    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+    required_std: float = 0.02,
+):
+    y_true = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
+    ]
+    y_pred = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
+    ]
+
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    TN = np.where((y_true == y_pred) & (y_pred == 0), 1, np.nan)
+    FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
+    TN = TN[~np.isnan(TN)]
+    FP = FP[~np.isnan(FP)]
+
+    obs_level_specificity = np.concatenate([TN, FP])
+    fraction_of_relevant = len(obs_level_specificity)/len(y_pred)
+    sample_size = ((np.std(obs_level_specificity))**2)/((required_std**2)*fraction_of_relevant)
+    sample_size = np.round(sample_size, -2)
+
+    return _floor_chunk_size(sample_size)
+
 class AUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
@@ -382,12 +410,13 @@ class Specificity(Metric):
     def __init__(self):
         """Creates a new F1 instance."""
         super().__init__(display_name='specificity')
+        self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
-        return 300
+        return self._min_chunk_size
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        self._min_chunk_size = _minimum_chunk_size_specificity(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
