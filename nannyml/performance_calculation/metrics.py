@@ -174,6 +174,42 @@ def _minimum_chunk_size_roc_auc(
         return result
 
 
+def _minimum_chunk_size_f1(
+    data: pd.DataFrame,
+    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+    required_std: float = 0.02,
+    lower_threshold: int = 300,
+):
+
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
+    ]
+
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+
+    TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
+
+    FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
+    FN = np.where((y_true != y_pred) & (y_pred == 0), 0, np.nan)
+
+    TP = TP[~np.isnan(TP)]
+
+    FN = FN[~np.isnan(FN)]
+    FP = FP[~np.isnan(FP)]
+
+    tp_fp_fn = np.concatenate([TP, FN, FP])
+
+    correcting_factor = len(tp_fp_fn) / ((len(FN) + len(FP)) * .5 + len(TP))
+    obs_level_f1 = tp_fp_fn * correcting_factor
+    fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
+    sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
+
+    result = int(np.maximum(lower_threshold, sample_size))
+
+    return result
 
 
 class AUROC(Metric):
@@ -214,7 +250,7 @@ class F1(Metric):
         return 300
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        self._min_chunk_size = _minimum_chunk_size_f1(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
