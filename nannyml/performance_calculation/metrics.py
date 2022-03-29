@@ -134,8 +134,8 @@ def _minimum_chunk_size_roc_auc(
     required_std: float = 0.02,
 ) -> int:
         """
-        Estimation of minimum sample size to get required standard deviation of AUROC. Calculation is based on
-        Variance Sum Law and expressing AUROC as Mann-Whitney U statistic.
+        Estimation of minimum sample size to get required standard deviation of AUROC. Estimation takes advantage of
+        Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
         """
         y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
         y_pred_proba = data.loc[
@@ -167,7 +167,6 @@ def _minimum_chunk_size_roc_auc(
         neg_targets = abs(y_true - 1)
 
         n_pos_targets = np.sum(pos_targets)
-        n_neg_targets = np.sum(neg_targets)
 
         fraction = n_pos_targets / len(y_true)
         sample_size = (np.std(ser_multi)) ** 2 / ((required_std ** 2) * fraction)
@@ -185,6 +184,10 @@ def _minimum_chunk_size_f1(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
+    """
+    Estimation of minimum sample size to get required standard deviation of F1. Estimation takes advantage of
+    Standard Error of the Mean formula.
+    """
 
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
     y_pred = data.loc[
@@ -194,12 +197,10 @@ def _minimum_chunk_size_f1(
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
 
     TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
-
     FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
     FN = np.where((y_true != y_pred) & (y_pred == 0), 0, np.nan)
 
     TP = TP[~np.isnan(TP)]
-
     FN = FN[~np.isnan(FN)]
     FP = FP[~np.isnan(FP)]
 
@@ -207,7 +208,7 @@ def _minimum_chunk_size_f1(
 
     correcting_factor = len(tp_fp_fn) / ((len(FN) + len(FP)) * .5 + len(TP))
     obs_level_f1 = tp_fp_fn * correcting_factor
-    fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
+    fraction_of_relevant = len(tp_fp_fn)/len(y_pred)
     sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
@@ -221,6 +222,10 @@ def _minimum_chunk_size_precision(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
+    """
+    Estimation of minimum sample size to get required standard deviation of Precision. Estimation takes advantage of
+    Standard Error of the Mean formula.
+    """
     y_true = data.loc[
         data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
     ]
@@ -252,6 +257,10 @@ def _minimum_chunk_size_recall(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
+    """
+    Estimation of minimum sample size to get required standard deviation of Recall. Estimation takes advantage of
+    Standard Error of the Mean formula.
+    """
     y_true = data.loc[
         data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
     ]
@@ -283,6 +292,10 @@ def _minimum_chunk_size_specificity(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
+    """
+    Estimation of minimum sample size to get required standard deviation of Specificity. Estimation takes advantage of
+    Standard Error of the Mean formula.
+    """
     y_true = data.loc[
         data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
     ]
@@ -313,6 +326,11 @@ def _minimum_chunk_size_accuracy(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
+    """
+    Estimation of minimum sample size to get required standard deviation of Accuracy. Estimation takes advantage of
+    Standard Error of the Mean formula.
+    """
+
     y_true = data.loc[
         data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
     ]
