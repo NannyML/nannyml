@@ -462,12 +462,6 @@ def test_feature_type_detection_sets_between_low_and_mid_cardinality_threshold_t
     assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CATEGORICAL
 
 
-def test_feature_type_detection_sets_string_values_to_categorical():  # noqa: D103
-    data = pd.DataFrame({'A': [str(c) for c in range(50)]}, dtype=pd.StringDtype())
-    sut = _predict_feature_types(data)
-    assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CATEGORICAL
-
-
 def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
     data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
     md = extract_metadata(data, model_name='model')
