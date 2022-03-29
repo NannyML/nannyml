@@ -9,7 +9,6 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
-from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -97,7 +96,11 @@ class Metric(abc.ABC):
 
     def minimum_chunk_size(self) -> int:
         """Determines the minimum number of observations a chunk should ideally for this metric to be trustworthy."""
-        return self._minimum_chunk_size()
+        try:
+            return self._minimum_chunk_size()
+        except Exception:
+            # TODO: log failure
+            return 300
 
     def _minimum_chunk_size(self):
         raise NotImplementedError
@@ -120,11 +123,10 @@ class Metric(abc.ABC):
             and self.lower_threshold == other.lower_threshold
         )
 
-def _floor_chunk_size(
-    calculated_min_chunk_size: float,
-    lower_limit_on_chunk_size: int = 300
-) -> int:
+
+def _floor_chunk_size(calculated_min_chunk_size: float, lower_limit_on_chunk_size: int = 300) -> int:
     return int(np.maximum(calculated_min_chunk_size, lower_limit_on_chunk_size))
+
 
 def _minimum_chunk_size_roc_auc(
     data: pd.DataFrame,
@@ -133,48 +135,48 @@ def _minimum_chunk_size_roc_auc(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ) -> int:
-        """
-        Estimation of minimum sample size to get required standard deviation of AUROC. Estimation takes advantage of
-        Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
-        """
-        y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-        y_pred_proba = data.loc[
-            data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, predicted_probability_column_name
-        ]
+    """
+    Estimation of minimum sample size to get required standard deviation of AUROC. Estimation takes advantage of
+    Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
+    """
 
-        y_true, y_pred_proba = np.asarray(y_true), np.asarray(y_pred_proba)
-        if np.mean(y_true) > 0.5:
-            y_true = abs(np.asarray(y_true) - 1)
-            y_pred_proba = 1 - y_pred_proba
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred_proba = data.loc[
+        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, predicted_probability_column_name
+    ]
 
-        sorted_idx = np.argsort(y_pred_proba)
-        y_pred_proba = y_pred_proba[sorted_idx]
-        y_true = y_true[sorted_idx]
-        rank_order = np.asarray(range(len(y_pred_proba)))
-        positive_ranks = (y_true * rank_order)
-        indexes = np.unique(positive_ranks)[1:]
-        ser = []
+    y_true, y_pred_proba = np.asarray(y_true), np.asarray(y_pred_proba)
+    if np.mean(y_true) > 0.5:
+        y_true = abs(np.asarray(y_true) - 1)
+        y_pred_proba = 1 - y_pred_proba
 
-        for i, index in enumerate(indexes):
-            ser.append(index - i)
+    sorted_idx = np.argsort(y_pred_proba)
+    y_pred_proba = y_pred_proba[sorted_idx]
+    y_true = y_true[sorted_idx]
+    rank_order = np.asarray(range(len(y_pred_proba)))
+    positive_ranks = y_true * rank_order
+    indexes = np.unique(positive_ranks)[1:]
+    ser = []
 
-        n_pos = np.sum(y_true)
-        n_neg = len(y_true) - n_pos
-        ser_divided = ser/(n_pos * n_neg)
-        ser_multi = ser_divided * n_pos
+    for i, index in enumerate(indexes):
+        ser.append(index - i)
 
-        pos_targets = y_true
-        neg_targets = abs(y_true - 1)
+    n_pos = np.sum(y_true)
+    n_neg = len(y_true) - n_pos
+    ser_divided = ser / (n_pos * n_neg)
+    ser_multi = ser_divided * n_pos
 
-        n_pos_targets = np.sum(pos_targets)
+    pos_targets = y_true
+    # neg_targets = abs(y_true - 1)
 
-        fraction = n_pos_targets / len(y_true)
-        sample_size = (np.std(ser_multi)) ** 2 / ((required_std ** 2) * fraction)
-        sample_size = np.minimum(sample_size, len(y_true))
-        sample_size = np.round(sample_size, -2)
+    n_pos_targets = np.sum(pos_targets)
 
+    fraction = n_pos_targets / len(y_true)
+    sample_size = (np.std(ser_multi)) ** 2 / ((required_std**2) * fraction)
+    sample_size = np.minimum(sample_size, len(y_true))
+    sample_size = np.round(sample_size, -2)
 
-        return _floor_chunk_size(sample_size)
+    return _floor_chunk_size(sample_size)
 
 
 def _minimum_chunk_size_f1(
@@ -190,9 +192,7 @@ def _minimum_chunk_size_f1(
     """
 
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
-    ]
+    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
 
@@ -206,14 +206,15 @@ def _minimum_chunk_size_f1(
 
     tp_fp_fn = np.concatenate([TP, FN, FP])
 
-    correcting_factor = len(tp_fp_fn) / ((len(FN) + len(FP)) * .5 + len(TP))
+    correcting_factor = len(tp_fp_fn) / ((len(FN) + len(FP)) * 0.5 + len(TP))
     obs_level_f1 = tp_fp_fn * correcting_factor
-    fraction_of_relevant = len(tp_fp_fn)/len(y_pred)
-    sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
+    fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
+    sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std**2) * fraction_of_relevant)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
+
 
 def _minimum_chunk_size_precision(
     data: pd.DataFrame,
@@ -226,12 +227,8 @@ def _minimum_chunk_size_precision(
     Estimation of minimum sample size to get required standard deviation of Precision. Estimation takes advantage of
     Standard Error of the Mean formula.
     """
-    y_true = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
-    ]
-    y_pred = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
-    ]
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
 
@@ -243,7 +240,7 @@ def _minimum_chunk_size_precision(
     obs_level_precision = np.concatenate([TP, FP])
     amount_positive_pred = np.sum(y_pred)
     fraction_of_pos_pred = amount_positive_pred / len(y_pred)
-    sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std ** 2) * fraction_of_pos_pred)
+    sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std**2) * fraction_of_pos_pred)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -261,12 +258,8 @@ def _minimum_chunk_size_recall(
     Estimation of minimum sample size to get required standard deviation of Recall. Estimation takes advantage of
     Standard Error of the Mean formula.
     """
-    y_true = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
-    ]
-    y_pred = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
-    ]
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
 
@@ -276,9 +269,9 @@ def _minimum_chunk_size_recall(
     FN = FN[~np.isnan(FN)]
 
     obs_level_recall = np.concatenate([TP, FN])
-    fraction_of_relevant = sum(obs_level_recall)/len(y_pred)
+    fraction_of_relevant = sum(obs_level_recall) / len(y_pred)
 
-    sample_size = ((np.std(obs_level_recall))**2)/((required_std**2)*fraction_of_relevant)
+    sample_size = ((np.std(obs_level_recall)) ** 2) / ((required_std**2) * fraction_of_relevant)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -296,12 +289,8 @@ def _minimum_chunk_size_specificity(
     Estimation of minimum sample size to get required standard deviation of Specificity. Estimation takes advantage of
     Standard Error of the Mean formula.
     """
-    y_true = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
-    ]
-    y_pred = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
-    ]
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     TN = np.where((y_true == y_pred) & (y_pred == 0), 1, np.nan)
@@ -310,13 +299,12 @@ def _minimum_chunk_size_specificity(
     FP = FP[~np.isnan(FP)]
 
     obs_level_specificity = np.concatenate([TN, FP])
-    fraction_of_relevant = len(obs_level_specificity)/len(y_pred)
-    sample_size = ((np.std(obs_level_specificity))**2)/((required_std**2)*fraction_of_relevant)
+    fraction_of_relevant = len(obs_level_specificity) / len(y_pred)
+    sample_size = ((np.std(obs_level_specificity)) ** 2) / ((required_std**2) * fraction_of_relevant)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
-
 
 
 def _minimum_chunk_size_accuracy(
@@ -331,23 +319,20 @@ def _minimum_chunk_size_accuracy(
     Standard Error of the Mean formula.
     """
 
-    y_true = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name
-    ]
-    y_pred = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name
-    ]
+    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     y_true = np.asarray(y_true).astype(int)
 
     y_pred = np.asarray(y_pred).astype(int)
     correct_table = (y_true == y_pred).astype(int)
-    sample_size = (np.std(correct_table)**2)/(required_std**2)
+    sample_size = (np.std(correct_table) ** 2) / (required_std**2)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
+
 
 class AUROC(Metric):
     """Area under Receiver Operating Curve metric."""
