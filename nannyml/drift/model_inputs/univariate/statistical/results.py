@@ -264,17 +264,17 @@ def _plot_prediction_distribution(
     fig: plotly.graph_objects.Figure
         A visualization of the data distribution and drift using joy-plots.
     """
-    prediction_column_name = metadata.prediction_column_name
-    x_axis_title = f'{prediction_column_name}'
-    drift_column_name = f'{prediction_column_name}_alert'
-    title = f'{prediction_column_name}: distribution over time'
+    predicted_probability_column_name = metadata.predicted_probability_column_name
+    x_axis_title = f'{predicted_probability_column_name}'
+    drift_column_name = f'{predicted_probability_column_name}_alert'
+    title = f'{predicted_probability_column_name}: distribution over time'
 
     fig = _joy_plot(
         feature_table=_create_feature_table(data=data),
         drift_table=drift_data,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
-        feature_column_name=prediction_column_name,
+        feature_column_name=predicted_probability_column_name,
         x_axis_title=x_axis_title,
         post_kde_clip=(0, 1),
         title=title,
