@@ -122,7 +122,7 @@ class Metric(abc.ABC):
 
 def _floor_chunk_size(
     calculated_min_chunk_size: float,
-    lower_limit_on_chunk_size: int = 0
+    lower_limit_on_chunk_size: int = 300
 ) -> int:
     return int(np.maximum(calculated_min_chunk_size, lower_limit_on_chunk_size))
 
@@ -171,7 +171,9 @@ def _minimum_chunk_size_roc_auc(
 
         fraction = n_pos_targets / len(y_true)
         sample_size = (np.std(ser_multi)) ** 2 / ((required_std ** 2) * fraction)
+        sample_size = np.minimum(sample_size, len(y_true))
         sample_size = np.round(sample_size, -2)
+
 
         return _floor_chunk_size(sample_size)
 
@@ -207,6 +209,7 @@ def _minimum_chunk_size_f1(
     obs_level_f1 = tp_fp_fn * correcting_factor
     fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
     sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
+    sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
@@ -236,6 +239,7 @@ def _minimum_chunk_size_precision(
     amount_positive_pred = np.sum(y_pred)
     fraction_of_pos_pred = amount_positive_pred / len(y_pred)
     sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std ** 2) * fraction_of_pos_pred)
+    sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
@@ -266,6 +270,7 @@ def _minimum_chunk_size_recall(
     fraction_of_relevant = sum(obs_level_recall)/len(y_pred)
 
     sample_size = ((np.std(obs_level_recall))**2)/((required_std**2)*fraction_of_relevant)
+    sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
@@ -294,6 +299,7 @@ def _minimum_chunk_size_specificity(
     obs_level_specificity = np.concatenate([TN, FP])
     fraction_of_relevant = len(obs_level_specificity)/len(y_pred)
     sample_size = ((np.std(obs_level_specificity))**2)/((required_std**2)*fraction_of_relevant)
+    sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
@@ -320,6 +326,7 @@ def _minimum_chunk_size_accuracy(
     y_pred = np.asarray(y_pred).astype(int)
     correct_table = (y_true == y_pred).astype(int)
     sample_size = (np.std(correct_table)**2)/(required_std**2)
+    sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
     return _floor_chunk_size(sample_size)
