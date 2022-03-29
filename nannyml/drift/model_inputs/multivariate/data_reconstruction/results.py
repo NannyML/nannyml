@@ -26,9 +26,6 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
         The different plot kinds that are available:
 
         - ``drift``: plots drift per :class:`~nannyml.chunk.Chunk` for a chunked data set.
-        - ``prediction_distribution``: plots the prediction distribution per :class:`~nannyml.chunk.Chunk` of a chunked
-          data set as a joyplot.
-
 
         Returns
         -------
