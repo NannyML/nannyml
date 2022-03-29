@@ -20,6 +20,9 @@ from nannyml.performance_calculation.metrics import AUROC, F1, Metric
 @pytest.fixture
 def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
     ref_df, ana_df, tgt_df = load_synthetic_sample()
+    ref_df['y_pred'] = ref_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
+    ana_df['y_pred'] = ana_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
+
     return ref_df, ana_df, tgt_df
 
 
@@ -112,3 +115,14 @@ def test_calculator_calculate_should_include_target_completeness_rate(data, meta
     assert 'targets_missing_rate' in sut.data.columns
     assert sut.data.loc[0, 'targets_missing_rate'] == 0.1
     assert sut.data.loc[1, 'targets_missing_rate'] == 0.9
+
+
+def test_calculator_calculates_minimum_chunk_size_for_each_metric(  # noqa: D103
+    data, metadata
+):
+    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy' ]
+    for metric in metrics:
+        calc = PerformanceCalculator(model_metadata=metadata, metrics=[metric])
+        calc.fit(reference_data=data[0])
+        assert calc._minimum_chunk_size > 0
+        assert calc._minimum_chunk_size <= len(data[0])
