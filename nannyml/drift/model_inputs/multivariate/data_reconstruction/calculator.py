@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 
 from nannyml.chunk import Chunker
 from nannyml.drift import BaseDriftCalculator
-from nannyml.drift.data_reconstruction.results import DataReconstructionDriftCalculatorResult
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
 from nannyml.metadata import NML_METADATA_COLUMNS, Feature
 
 

@@ -99,7 +99,7 @@ class AlertCountRanking(Ranking):
         ]
 
         if len(alert_column_names) == 0:
-            raise InvalidArgumentsException('drift results are not univariate_statistical drift results.')
+            raise InvalidArgumentsException('drift results are not statistical drift results.')
 
         ranking = pd.DataFrame(drift_calculation_result.data[alert_column_names].sum()).reset_index()
         ranking.columns = ['feature', 'number_of_alerts']

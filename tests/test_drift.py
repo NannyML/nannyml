@@ -13,8 +13,11 @@ from sklearn.impute import SimpleImputer
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift import BaseDriftCalculator
 from nannyml.drift.base import DriftResult
-from nannyml.drift.data_reconstruction.calculator import DataReconstructionDriftCalculator, _minimum_chunk_size
-from nannyml.drift.univariate_statistical.calculator import UnivariateStatisticalDriftCalculator
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import (
+    DataReconstructionDriftCalculator,
+    _minimum_chunk_size,
+)
+from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
 
@@ -361,6 +364,21 @@ def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift
         _ = calc.calculate(data=analysis_data)
     except Exception:
         pytest.fail()
+
+
+def test_statistical_drift_calculator_deals_with_missing_class_labels(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    # rig the data by setting all f3-values in first analysis chunk to 0
+    sample_drift_data.loc[10080:16000, 'f3'] = 0
+
+    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=5000)
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    calc.fit(ref_data)
+    results = calc.calculate(data=analysis_data)
+    assert not np.isnan(results.data.loc[0, 'f3_chi2'])
+    assert not np.isnan(results.data.loc[0, 'f3_p_value'])
 
 
 def test_data_reconstruction_drift_calculator_with_params_should_not_fail(  # noqa: D103

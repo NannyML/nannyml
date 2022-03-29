@@ -36,7 +36,7 @@ class UnivariateDriftResult(DriftResult):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """Renders a line plot for a chosen metric of univariate_statistical statistical drift calculation results.
+        """Renders a line plot for a chosen metric of statistical statistical drift calculation results.
 
         Given either a feature label (check ``model_metadata.features``) or the actual feature column name
         and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
@@ -142,7 +142,7 @@ def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: 
 
 
 def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'statistic', *args, **kwargs) -> go.Figure:
-    """Renders a line plot for a chosen metric of univariate_statistical statistical drift calculation results."""
+    """Renders a line plot for a chosen metric of statistical statistical drift calculation results."""
     (
         metric_column_name,
         metric_label,
