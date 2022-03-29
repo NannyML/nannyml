@@ -14,9 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Plotting will default to using step plots.
 - Restructured the ``nannyml.drift`` package and subpackages. *Breaking changes*!
-- Metadata completeness check will now fail when there are features of ``FeatureType.UNKNOWN``.\
+- Metadata completeness check will now fail when there are features of ``FeatureType.UNKNOWN``.
 - Chunk date boundaries are now calculated differently for a ``PeriodBasedChunker``, using the
   theoretical period for boundaries as opposed to the observed boundaries within the chunk observations.
+- Updated version of the ``black`` pre-commit hook due to breaking changes in its ``click`` dependency.
+- The *minimum chunk size* will now be provided by each individual ``calculator`` / ``estimator`` / ``metric``,
+  allowing for each of them to warn the end user when chunk sizes are suboptimal.
 
 ### Fixed
 - Restrict version of the ``scipy`` dependency to be ``>=1.7.3, <1.8.0``. Planned to be relaxed ASAP.
@@ -25,16 +28,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Incorrect label in ``ModelMetadata`` printout
 
 ## [0.2.1] - 2022-03-22
+### Changed
+- Allow calculators/estimators to provide appropriate ``min_chunk_size`` upon splitting into ``chunks``.
+
 ### Fixed
 - Data reconstruction drift calculation failing when there are no categorical or continuous features
   [(#36)](https://github.com/NannyML/nannyml/issues/36)
 - Incorrect scaling on continuous feature distribution plot [(#39)](https://github.com/NannyML/nannyml/issues/39)
 - Missing ``needs_calibration`` checks before performing score calibration in CBPE
 - Fix crash on chunking when missing target values in reference data
-
-### Changed
-- Allow calculators/estimators to provide appropriate ``min_chunk_size`` upon splitting into ``chunks``.
-
 
 ## [0.2.0] - 2022-03-03
 ### Added
