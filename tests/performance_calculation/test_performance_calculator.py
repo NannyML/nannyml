@@ -117,10 +117,8 @@ def test_calculator_calculate_should_include_target_completeness_rate(data, meta
     assert sut.data.loc[1, 'targets_missing_rate'] == 0.9
 
 
-def test_calculator_calculates_minimum_chunk_size_for_each_metric(  # noqa: D103
-    data, metadata
-):
-    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy' ]
+def test_calculator_calculates_minimum_chunk_size_for_each_metric(data, metadata):  # noqa: D103
+    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
     for metric in metrics:
         calc = PerformanceCalculator(model_metadata=metadata, metrics=[metric])
         calc.fit(reference_data=data[0])

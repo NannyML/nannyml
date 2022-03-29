@@ -135,11 +135,10 @@ def _minimum_chunk_size_roc_auc(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ) -> int:
-    """
-    Estimation of minimum sample size to get required standard deviation of AUROC. Estimation takes advantage of
-    Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
-    """
+    """Estimation of minimum sample size to get required standard deviation of AUROC.
 
+    Estimation takes advantage of Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
+    """
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
     y_pred_proba = data.loc[
         data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, predicted_probability_column_name
@@ -186,11 +185,10 @@ def _minimum_chunk_size_f1(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
-    """
-    Estimation of minimum sample size to get required standard deviation of F1. Estimation takes advantage of
-    Standard Error of the Mean formula.
-    """
+    """Estimation of minimum sample size to get required standard deviation of F1.
 
+    Estimation takes advantage of Standard Error of the Mean formula.
+    """
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
     y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
 
@@ -223,9 +221,9 @@ def _minimum_chunk_size_precision(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
-    """
-    Estimation of minimum sample size to get required standard deviation of Precision. Estimation takes advantage of
-    Standard Error of the Mean formula.
+    """Estimation of minimum sample size to get required standard deviation of Precision.
+
+    Estimation takes advantage of Standard Error of the Mean formula.
     """
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
     y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
@@ -254,9 +252,9 @@ def _minimum_chunk_size_recall(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
-    """
-    Estimation of minimum sample size to get required standard deviation of Recall. Estimation takes advantage of
-    Standard Error of the Mean formula.
+    """Estimation of minimum sample size to get required standard deviation of Recall.
+
+    Estimation takes advantage of Standard Error of the Mean formula.
     """
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
     y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
@@ -285,9 +283,9 @@ def _minimum_chunk_size_specificity(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
-    """
-    Estimation of minimum sample size to get required standard deviation of Specificity. Estimation takes advantage of
-    Standard Error of the Mean formula.
+    """Estimation of minimum sample size to get required standard deviation of Specificity.
+
+    Estimation takes advantage of Standard Error of the Mean formula.
     """
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
     y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
@@ -314,11 +312,10 @@ def _minimum_chunk_size_accuracy(
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
 ):
-    """
-    Estimation of minimum sample size to get required standard deviation of Accuracy. Estimation takes advantage of
-    Standard Error of the Mean formula.
-    """
+    """Estimation of minimum sample size to get required standard deviation of Accuracy.
 
+    Estimation takes advantage of Standard Error of the Mean formula.
+    """
     y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
     y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
 
