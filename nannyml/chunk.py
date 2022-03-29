@@ -40,7 +40,11 @@ class Chunk:
         key : str, required.
             A value describing what data is wrapped in this chunk.
         data : DataFrame, required
-            The data to be contained within the chunk
+            The data to be contained within the chunk.
+        start_datetime: datetime
+            The starting point in time for this chunk.
+        end_datetime: datetime
+            The end point in time for this chunk.
         partition : string, optional
             The 'partition' this chunk belongs to, for example 'reference' or 'analysis'.
         """
