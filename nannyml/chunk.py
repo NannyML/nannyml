@@ -14,6 +14,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 from dateutil.parser import ParserError  # type: ignore
+from pandas import Period
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TIMESTAMP_COLUMN_NAME
@@ -24,7 +25,14 @@ logger = logging.getLogger(__name__)
 class Chunk:
     """A subset of data that acts as a logical unit during calculations."""
 
-    def __init__(self, key: str, data: pd.DataFrame, partition: str = None):
+    def __init__(
+        self,
+        key: str,
+        data: pd.DataFrame,
+        start_datetime: datetime = datetime.max,
+        end_datetime: datetime = datetime.max,
+        partition: str = None,
+    ):
         """Creates a new chunk.
 
         Parameters
@@ -32,7 +40,11 @@ class Chunk:
         key : str, required.
             A value describing what data is wrapped in this chunk.
         data : DataFrame, required
-            The data to be contained within the chunk
+            The data to be contained within the chunk.
+        start_datetime: datetime
+            The starting point in time for this chunk.
+        end_datetime: datetime
+            The end point in time for this chunk.
         partition : string, optional
             The 'partition' this chunk belongs to, for example 'reference' or 'analysis'.
         """
@@ -42,8 +54,8 @@ class Chunk:
 
         self.is_transition: bool = False
 
-        self.start_datetime: datetime = datetime.max
-        self.end_datetime: datetime = datetime.max
+        self.start_datetime = start_datetime
+        self.end_datetime = end_datetime
         self.start_index: int = 0
         self.end_index: int = 0
 
@@ -93,18 +105,6 @@ def _is_transition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION
         return False
 
 
-def _get_boundary_timestamps(c: Chunk, timestamp_column_name: str = NML_METADATA_TIMESTAMP_COLUMN_NAME):
-    if timestamp_column_name not in c.data.columns:
-        raise MissingMetadataException(
-            f"missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
-        )
-
-    min_date = pd.to_datetime(c.data[timestamp_column_name].min()).replace(hour=0, minute=0, second=0)
-    max_date = pd.to_datetime(c.data[timestamp_column_name].max()).replace(hour=23, minute=59, second=59)
-
-    return min_date, max_date
-
-
 def _get_boundary_indices(c: Chunk):
     return c.data.index.min(), c.data.index.max()
 
@@ -151,6 +151,11 @@ class Chunker(abc.ABC):
             The list of chunks
 
         """
+        if NML_METADATA_TIMESTAMP_COLUMN_NAME not in data.columns:
+            raise MissingMetadataException(
+                f"missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
+            )
+
         try:
             chunks = self._split(data, minimum_chunk_size)
         except Exception as exc:
@@ -162,7 +167,6 @@ class Chunker(abc.ABC):
 
             c.partition = _get_partition(c)
 
-            c.start_datetime, c.end_datetime = _get_boundary_timestamps(c)
             c.start_index, c.end_index = _get_boundary_indices(c)
 
             if columns is not None:
@@ -277,8 +281,13 @@ class PeriodBasedChunker(Chunker):
         date_column_name = self.date_column_name or self.date_column.name  # type: ignore
         try:
             grouped_data = data.groupby(pd.to_datetime(data[date_column_name]).dt.to_period(self.offset))
+
+            k: Period
             for k in grouped_data.groups.keys():
-                chunks.append(Chunk(key=str(k), data=grouped_data.get_group(k)))
+                chunk = Chunk(
+                    key=str(k), data=grouped_data.get_group(k), start_datetime=k.start_time, end_datetime=k.end_time
+                )
+                chunks.append(chunk)
         except KeyError:
             raise ChunkerException(f"could not find date_column '{date_column_name}' in given data")
 
@@ -343,9 +352,20 @@ class SizeBasedChunker(Chunker):
         self.chunk_size = chunk_size
 
     def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
+        def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
+            chunk_data = data.loc[index : index + chunk_size - 1, :]
+            min_date = pd.to_datetime(chunk_data[NML_METADATA_TIMESTAMP_COLUMN_NAME].min())
+            max_date = pd.to_datetime(chunk_data[NML_METADATA_TIMESTAMP_COLUMN_NAME].max())
+            return Chunk(
+                key=f'[{index}:{index + self.chunk_size - 1}]',
+                data=chunk_data,
+                start_datetime=min_date,
+                end_datetime=max_date,
+            )
+
         data = data.copy().reset_index()
         chunks = [
-            Chunk(key=f'[{i}:{i + self.chunk_size - 1}]', data=data.loc[i : i + self.chunk_size - 1, :])
+            _create_chunk(index=i, data=data, chunk_size=self.chunk_size)
             for i in range(0, len(data), self.chunk_size)
             if i + self.chunk_size - 1 < len(data)
         ]
@@ -406,11 +426,7 @@ class CountBasedChunker(Chunker):
         data = data.copy().reset_index()
 
         chunk_size = data.shape[0] // self.chunk_count
-        chunks = [
-            Chunk(key=f'[{i}:{i + chunk_size - 1}]', data=data.loc[i : i + chunk_size - 1, :])
-            for i in range(0, len(data), chunk_size)
-            if i + chunk_size - 1 < len(data)
-        ]
+        chunks = SizeBasedChunker(chunk_size=chunk_size).split(data=data, minimum_chunk_size=minimum_chunk_size)
         return chunks
 
 

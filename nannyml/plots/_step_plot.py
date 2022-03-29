@@ -122,7 +122,7 @@ def _step_plot(
     custom_data_columns = [chunk_column_name, 'start_date_label', 'end_date_label', 'metric_label']
 
     if partial_target_column_name and partial_target_column_name in data:
-        hover_template += '&nbsp;&nbsp;&nbsp;&nbsp;' + hover_labels[2] + ': <b>%{customdata[4]}% complete</b>'
+        hover_template += '&nbsp;&nbsp;&nbsp;&nbsp;' + hover_labels[2] + ': <b>%{customdata[4]}% incomplete</b>'
         custom_data_columns += ['incomplete_target_percentage']
 
     layout = go.Layout(
@@ -341,7 +341,7 @@ def _plot_metric(
     partial_target_column_name,
 ):
     if partial_target_column_name and partial_target_column_name in data.columns:
-        subset = data.loc[data[partial_target_column_name] == 1]
+        subset = data.loc[data[partial_target_column_name] == 0]
     else:
         subset = data.copy()
 

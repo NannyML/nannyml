@@ -163,7 +163,10 @@ def _calculate_confidence_deviation(reference_chunks: List[Chunk]):
 
 
 def _calculate_realized_performance(chunk: Chunk):
-    if chunk.data[NML_METADATA_TARGET_COLUMN_NAME].isna().all():
+    if (
+        NML_METADATA_TARGET_COLUMN_NAME not in chunk.data.columns
+        or chunk.data[NML_METADATA_TARGET_COLUMN_NAME].isna().all()
+    ):
         return np.NaN
 
     y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
