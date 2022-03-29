@@ -98,6 +98,10 @@ The predicted label, retrieved by interpreting (thresholding) the prediction sco
 .. warning::
     Either this property or the *predicted_probability* should be set for the metadata to be complete.
 
+.. warning::
+    In case of binary prediction the *prediction values* should be either ``0`` or ``1`` for all functionality to work
+    as intended. NannyML will interpret ``1`` as the *positive label*.
+
 Target
 ------
 
@@ -138,7 +142,7 @@ This means that for the example **work_from_home** case:
        ``transport_mode``
 
        ``industry``
-   * - Prediction probability
+   * - Predicted probability
      - ``y_pred_proba``
    * - Prediction
      - ``np.NaN``
@@ -186,7 +190,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     Partition column          partition
     Prediction column         y_pred_proba
     Prediction column         ~ UNKNOWN ~
-    Ground truth column       ~ UNKNOWN ~
+    Target column             ~ UNKNOWN ~
 
     Features
 
@@ -194,7 +198,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     distance_from_office        distance_from_office        continuous      extracted feature: distance_from_office
     salary_range                salary_range                categorical     extracted feature: salary_range
     gas_price_per_litre         gas_price_per_litre         continuous      extracted feature: gas_price_per_litre
-    public_transportation_cost public_transportation_cost   continuous      extracted feature: public_transportation_cost
+    public_transportation_cost  public_transportation_cost  continuous      extracted feature: public_transportation_cost
     wfh_prev_workday            wfh_prev_workday            categorical     extracted feature: wfh_prev_workday
     workday                     workday                     categorical     extracted feature: workday
     tenure                      tenure                      continuous      extracted feature: tenure
