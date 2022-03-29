@@ -641,9 +641,6 @@ def _predict_feature_types(df: pd.DataFrame):
         elif data_type == 'int64' and unique_count >= INFERENCE_INT_NUNIQUE_THRESHOLD:
             return FeatureType.CONTINUOUS
 
-        elif data_type == 'string':
-            return FeatureType.CATEGORICAL
-
         elif data_type == 'object':
             return FeatureType.CATEGORICAL
 
