@@ -54,7 +54,6 @@ class PerformanceCalculatorResult:
             - 'f1'
             - 'precision'
             - 'recall'
-            - 'sensitivity'
             - 'specificity'
             - 'accuracy'
 

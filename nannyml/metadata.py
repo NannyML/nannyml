@@ -627,6 +627,7 @@ INFERENCE_NUM_ROWS_THRESHOLD = 5
 INFERENCE_HIGH_CARDINALITY_THRESHOLD = 0.1
 INFERENCE_MEDIUM_CARDINALITY_THRESHOLD = 0.01
 INFERENCE_LOW_CARDINALITY_THRESHOLD = 0.0
+INFERENCE_INT_NUNIQUE_THRESHOLD = 40
 
 
 def _predict_feature_types(df: pd.DataFrame):
@@ -634,10 +635,16 @@ def _predict_feature_types(df: pd.DataFrame):
         if row_count < INFERENCE_NUM_ROWS_THRESHOLD:
             return FeatureType.UNKNOWN
 
-        if data_type == 'float64':
+        elif data_type == 'float64':
             return FeatureType.CONTINUOUS
 
-        if unique_fraction >= INFERENCE_HIGH_CARDINALITY_THRESHOLD:
+        elif data_type == 'int64' and unique_count >= INFERENCE_INT_NUNIQUE_THRESHOLD:
+            return FeatureType.CONTINUOUS
+
+        elif data_type == 'object':
+            return FeatureType.CATEGORICAL
+
+        elif unique_fraction >= INFERENCE_HIGH_CARDINALITY_THRESHOLD:
             return FeatureType.CONTINUOUS
 
         elif INFERENCE_LOW_CARDINALITY_THRESHOLD <= unique_fraction <= INFERENCE_MEDIUM_CARDINALITY_THRESHOLD:

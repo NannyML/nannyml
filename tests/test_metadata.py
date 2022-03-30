@@ -438,6 +438,12 @@ def test_feature_type_detection_sets_float_cols_to_continuous():  # noqa: D103
     assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CONTINUOUS
 
 
+def test_feature_type_detection_sets_int_cols_with_high_unique_value_count_to_continuous():  # noqa: D103
+    data = pd.DataFrame({'A': np.random.randint(75, size=10000)})
+    sut = _predict_feature_types(data)
+    assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CONTINUOUS
+
+
 def test_feature_type_detection_sets_above_high_cardinality_threshold_to_nominal():  # noqa: D103
     data = pd.DataFrame({'A': np.random.randint(75, size=100)})
     sut = _predict_feature_types(data)
@@ -445,7 +451,7 @@ def test_feature_type_detection_sets_above_high_cardinality_threshold_to_nominal
 
 
 def test_feature_type_detection_sets_between_mid_and_high_cardinality_threshold_to_none():  # noqa: D103
-    data = pd.DataFrame({'A': np.random.randint(50, size=1000)})
+    data = pd.DataFrame({'A': np.random.randint(39, size=1000)})
     sut = _predict_feature_types(data)
     assert sut.loc['A', 'predicted_feature_type'] == FeatureType.UNKNOWN
 

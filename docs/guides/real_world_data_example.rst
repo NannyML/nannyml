@@ -74,7 +74,7 @@ Indeed, the last one is smaller than the others due to the selected chunking met
 
 .. code:: python
 
-    >>> est_perf.data = est_perf[:-1].copy()
+    >>> est_perf.data = est_perf.data[:-1].copy()
     >>> est_perf.data.tail(2)
 
 +----+---------+---------------+-------------+---------------------+---------------------+-------------+---------------------+--------------+-------------------+-------------------+---------+---------------------------+-------------+------------------+
