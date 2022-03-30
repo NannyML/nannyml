@@ -542,5 +542,9 @@ class MetricFactory:
     @classmethod
     def _create_from_str(cls, key: str) -> Metric:
         if key not in cls._str_to_metric:
-            raise InvalidArgumentsException(f"unknown metric key '{key}' given. " "Should be one of ['roc_auc'].")
+            raise InvalidArgumentsException(
+                f"unknown metric key '{key}' given. "
+                "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
+                "'accuracy']."
+            )
         return cls._str_to_metric[key]
