@@ -50,12 +50,12 @@ def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFram
     prepped_data = model_metadata.enrich(data)
 
     # Check if predicted probability values don't contain (binary) prediction values instead
-    check_predicted_probabilities_are_probabilities(model_metadata, data)
+    _check_predicted_probabilities_are_probabilities(model_metadata, data)
 
     return prepped_data
 
 
-def check_predicted_probabilities_are_probabilities(model_metadata: ModelMetadata, data: pd.DataFrame):
+def _check_predicted_probabilities_are_probabilities(model_metadata: ModelMetadata, data: pd.DataFrame):
     if model_metadata.predicted_probability_column_name is None:
         return
 
