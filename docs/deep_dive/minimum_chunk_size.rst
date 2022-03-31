@@ -15,55 +15,104 @@ are meaningful for them. However, when the chunks are too small, statistical res
 In this case NannyML will issue a warning. The user can then chose to ignore it and continue or use a chunking
 method that will result in bigger chunks.
 
-Minimum Chunk for Performance Estimation
-========================================
+Minimum Chunk for Performance Estimation and Performance Calculation
+====================================================================
 
 When the chunk size is small
 **what looks like a significant drop in performance of the monitored model may be only a sampling effect**.
 To better understand that, have a look at the histogram below.
-It shows dispersion of ROC AUC for a random model predicting a random binary target (which by definition should be 0.5) for
-a sample of 100 observations. It is not uncommon to get ROC AUC of 0.65 for some samples.
+It shows dispersion of accuracy for a random model predicting a random binary target (which by definition should be 0.5)
+for a sample of 100 observations. It is not uncommon to get accuracy of 0.6 for some samples. The effect is even
+stronger for more complex metrics like AUROC.
 
 .. code-block:: python
 
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> from sklearn.metrics import roc_auc_score
+    >>> from sklearn.metrics import accuracy_score
     >>>
     >>> sample_size = 100
-    >>> roc_aucs = []
+    >>> dataset_size = 10_000
+    >>> # random model
+    >>> y_true = np.random.binomial(1, 0.5, dataset_size)
+    >>> y_pred = np.random.binomial(1, 0.5, dataset_size)
+    >>> accuracy_scores = []
     >>>
     >>> for experiment in range(10_000):
-    >>>     y_trues = np.random.binomial(1, 0.5, sample_size) # balanced dataset
-    >>>     y_pred_probas = np.random.beta(0.5,0.5, sample_size) # beta distribution of y_pred_proba
-    >>>     roc_aucs.append(roc_auc_score(y_trues, y_pred_probas))
+    >>>     subset_indexes = np.random.choice(dataset_size, sample_size, replace=False) # get random indexes
+    >>>     y_true_subset = y_true[subset_indexes]
+    >>>     y_pred_subset = y_pred[subset_indexes]
+    >>>     accuracy_scores.append(accuracy_score(y_true_subset, y_pred_subset))
     >>>
-    >>> plt.hist(roc_aucs, bins=50, density=True)
-    >>> plt.title("ROC AUC of random classifier\n for randomly selected samples of 100 observations.");
+    >>> plt.hist(accuracy_scores, bins=20, density=True)
+    >>> plt.title("Accuracy of random classifier\n for randomly selected samples of 100 observations.");
 
-.. image:: ../_static/deep_dive_data_chunks_stability_of_ROC_AUC.svg
+.. image:: ../_static/deep_dive_data_chunks_stability_of_accuracy.svg
     :width: 400pt
 
 When there are many chunks, it is easy to spot the noisy nature of fluctuations. However, with only a few chunks, it
-is difficult to tell whether the observed changes are meaningful and significant. To minimize this risk, NannyML
+is difficult to tell whether the observed changes are significant. To minimize this risk, NannyML
 estimates a minimum chunk size for the monitored data and raises a warning if the selected chunking method results in
-chunks that are smaller. Since NannyML is model-performance-oriented, the minimum chunk size is estimated in order to keep variation of performance of your model *low*. Low is defined as:
+chunks that are smaller. The minimum chunk size is estimated in order to
+keep variation of performance of the monitored model low. The variation is expressed in terms of standard deviation and
+it is considered *low* when it is below 0.02. In other words, for the selected evaluation metric, NannyML
+estimates chunk size for which standard deviation of performance on chunks resulting purely from sampling is lower
+than 0.02.
 
-- For models with ROC AUC below 0.9 on the reference period, standard deviation of ROC AUC on chunks should be lower than 0.01.
-- For Models with ROC AUC above 0.9 on the reference period, standard deviation of ROC AUC on chunks should be below 0.02.
+Let's go through the estimation process for accuracy score from the example above. Selecting chunk in the data and
+calculating performance for it is similar to sampling a set from a population and calculating a statistic. When
+the statistic is a mean, Standard Error (SE) formula [1]_ can be used to estimate the standard deviation of sampled
+means:
 
-Experiments have shown that variability of ROC AUC with respect to sample size is mostly affected by the quality of
-the monitored model (i.e. its performance) and the target distribution (class balance). In order to quantify the
-impact, numerous synthetic data sets were created with different target distributions and models of different quality
-. For each artificially created vector of targets and predicted probabilities, a sample of constant size was drawn
-many times and the standard deviation was calculated. Then, the experiments that met the requirements on standard deviation value were chosen and a model was fitted (see experiment results and fitted surface on the plot below). As a result, a function of two arguments - ROC AUC score and target distribution - was obtained. NannyML uses this function to calculate minimum chunk size based on the characteristics of the monitored data. If any of the created chunks is smaller than the minimum estimated, a warning is raised.
+    .. math::
+        {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
 
-.. image:: ../_static/deep_dive_data_chunks_minimum_chunk_size.svg
-    :width: 800pt
+To directly use it for computation of standard deviation of accuracy, the metric needs to be expressed for each
+observation in the way that mean of observation-level accuracies gives the whole sample accuracy. Observation-level
+accuracy is simply equal to 1 when the prediction is correct and 0 when it is not. Therefore:
 
-This solution has a few shortcomings. It is easy to imagine two different datasets and models with ROC AUC scores and
-class balances that are the same, but dispersions of ROC AUC on samples of the same size that are different. Moreover, the arbitrary limits on standard deviation may not fit all cases. After all, there are situations where the performance actually fluctuates on reference data (due to e.g. seasonality). Finally, there are cases where only one chunk size is justified from business perspective (e.g. quarterly split). For these reasons, minimum chunk size should not be treated as recommended chunk size nor as a hard limit. It is just a chunk size, below which performance - actual or estimated - most likely will be governed by sampling effects rather than actual changes. Finally, be aware that sample size also affects calculations related to data drift.
+.. code-block:: python
 
+    >>> obs_level_accuracy = y_true == y_pred
+    >>> np.mean(obs_level_accuracy), accuracy_score(y_true, y_pred)
+    (0.4988, 0.4988)
+
+Now SE formula can be used to estimate standard deviation and compare it with standard deviation from sampling
+experiments
+above:
+
+.. code-block:: python
+
+    >>> SE_std = np.std(obs_level_accuracy)/np.sqrt(sample_size)
+    >>> SE_std, np.std(accuracy_scores)
+    (0.04999932399543018, 0.04946720594494903)
+
+The same formula can be used to estimate sample size for required standard deviation:
+
+.. code-block:: python
+
+    >>> required_std = 0.02
+    >>> sample_size = (np.std(correct_predictions)**2)/required_std**2
+    >>> sample_size
+    624.99
+
+So for the analyzed case chunk should contain at least 625 observations to keep dispersion of
+accuracy on chunks coming from random effect of sampling below 0.02 SD. In the actual implementation the final value
+is rounded to full hundredths and limited from the bottom to 300.
+
+Generally SE formula gives the exact value when:
+
+    * standard deviation of the population is known,
+    * samples are statistically independent.
+
+Both of these requirements are in fact violated. When data is split into chunks it is not sampled from population -
+it comes from a finite set. Therefore standard deviation of **population** is unknown. Moreover, chunks are not
+independent - observations in chunks are selected chronologically, not randomly. They are drawn *without replacement* (the same observation
+cannot be selected twice). Nevertheless, this approach provides estimation with good enough precision for our use
+case while keeping the computation time very low.
+
+Estimation of minimum chunk size for other metrics, such as AUROC, precision, recall etc. is performed in similar
+manner.
 
 Minimum Chunk for Data Reconstruction
 =====================================
@@ -86,3 +135,8 @@ To ensure that there is no significant noise present in :ref:`Univariate Drift D
 the recommended minimum chunk size is 500. It is a rule of thumb
 choice that should cover most common cases. A better suggestion could be derived by inspecting the data used
 for Univariate Drift detection but at the cost of increased computation time.
+
+
+**References**
+
+.. [1] https://en.wikipedia.org/wiki/Standard_error
