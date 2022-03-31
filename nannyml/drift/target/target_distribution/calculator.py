@@ -12,7 +12,12 @@ from scipy.stats import chi2_contingency
 from nannyml.chunk import Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.target.target_distribution.result import TargetDistributionResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_TARGET_COLUMN_NAME, ModelMetadata
+from nannyml.metadata import (
+    NML_METADATA_COLUMNS,
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
+    ModelMetadata,
+)
 from nannyml.preprocessing import preprocess
 
 
@@ -120,9 +125,7 @@ class TargetDistributionCalculator:
                     'targets_missing_rate': (
                         chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()
                     ),
-                    **_calculate_target_drift_for_chunk(
-                        self._reference_targets, chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
-                    ),
+                    **_calculate_target_drift_for_chunk(self._reference_targets, chunk.data),
                 }
                 for chunk in chunks
             ]
@@ -131,18 +134,21 @@ class TargetDistributionCalculator:
         return TargetDistributionResult(target_distribution=res, model_metadata=self.metadata)
 
 
-def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:
+def _calculate_target_drift_for_chunk(reference_targets: pd.Series, data: pd.DataFrame) -> Dict:
+    targets = data[NML_METADATA_TARGET_COLUMN_NAME]
     statistic, p_value, _, _ = chi2_contingency(
         pd.concat([reference_targets.value_counts(), targets.value_counts()], axis=1).fillna(0)
     )
 
     _ALERT_THRESHOLD_P_VALUE = 0.05
 
+    is_analysis = 'analysis' in set(data[NML_METADATA_PARTITION_COLUMN_NAME].unique())
+
     return {
         'metric_target_drift': targets.mean(),
         'statistical_target_drift': statistic,
         'p_value': p_value,
         'thresholds': _ALERT_THRESHOLD_P_VALUE,
-        'alert': p_value < _ALERT_THRESHOLD_P_VALUE,
+        'alert': (p_value < _ALERT_THRESHOLD_P_VALUE) and is_analysis,
         'significant': p_value < _ALERT_THRESHOLD_P_VALUE,
     }

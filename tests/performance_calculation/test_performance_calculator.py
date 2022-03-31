@@ -43,7 +43,7 @@ class DummyMetric(Metric):
         return 100
 
     def __init__(self):  # noqa: D107
-        super().__init__(display_name='dummy_metric')
+        super().__init__(display_name='dummy_metric', column_name='dummy_metric')
 
     def _calculate(self, data: pd.DataFrame):
         return 0.5

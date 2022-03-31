@@ -125,18 +125,18 @@ def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: 
     if metric == 'statistic':
         if feature_type == FeatureType.CATEGORICAL:
             metric_column_name = f'{feature_column_name}_chi2'
-            metric_label = 'Chi2'
+            metric_label = 'Chi-square statistic'
         elif feature_type == FeatureType.CONTINUOUS:
             metric_column_name = f'{feature_column_name}_dstat'
-            metric_label = 'd-stat'
+            metric_label = 'KS statistic'
         threshold_column_name = None
     elif metric == 'p_value':
         metric_column_name = f'{feature_column_name}_p_value'
-        metric_label = 'p-value'
+        metric_label = 'P-value'
         threshold_column_name = f'{feature_column_name}_threshold'
 
     drift_column_name = f'{feature_column_name}_alert'
-    title = f'{metric_label} evolution for {feature_column_name}'
+    title = f'{metric_label} for {feature_column_name}'
 
     return metric_column_name, metric_label, threshold_column_name, drift_column_name, title
 
@@ -159,6 +159,7 @@ def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'sta
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
         threshold_column_name=threshold_column_name,
+        hover_labels=['Chunk', metric_label, 'Target data'],
         title=title,
         y_axis_title=metric_label,
         v_line_separating_analysis_period=plot_partition_separator,
@@ -189,6 +190,7 @@ def _plot_prediction_drift(
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
         threshold_column_name=threshold_column_name,
+        hover_labels=['Chunk', metric_label, 'Target data'],
         title=title,
         y_axis_title=metric_label,
         v_line_separating_analysis_period=plot_partition_separator,
@@ -210,7 +212,7 @@ def _plot_continuous_feature_distribution(data: List[Chunk], drift_data: pd.Data
     feature_column_name = feature.column_name
     x_axis_title = f'{feature_column_name}'
     drift_column_name = f'{feature_column_name}_alert'
-    title = f'{feature.label}: distribution over time'
+    title = f'Distribution over time for {feature.label}'
 
     fig = _joy_plot(
         feature_table=_create_feature_table(data=data),
@@ -229,7 +231,7 @@ def _plot_categorical_feature_distribution(data: List[Chunk], drift_data: pd.Dat
     feature_column_name = feature.column_name
     x_axis_title = f'{feature_column_name}'
     drift_column_name = f'{feature_column_name}_alert'
-    title = f'{feature.label}: distribution over time'
+    title = f'Distribution over time for {feature.label}'
 
     fig = _stacked_bar_plot(
         feature_table=_create_feature_table(data=data),
@@ -267,7 +269,7 @@ def _plot_prediction_distribution(
     predicted_probability_column_name = metadata.predicted_probability_column_name
     x_axis_title = f'{predicted_probability_column_name}'
     drift_column_name = f'{predicted_probability_column_name}_alert'
-    title = f'{predicted_probability_column_name}: distribution over time'
+    title = f'Distribution over time for {metadata.predicted_probability_column_name}'
 
     fig = _joy_plot(
         feature_table=_create_feature_table(data=data),

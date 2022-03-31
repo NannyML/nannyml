@@ -283,7 +283,7 @@ def _stacked_bar_plot(
         chunk_type_labels = ['Reference', 'Analysis']
 
     if hue_legend_labels is None:
-        hue_legend_labels = ['Reference period', 'Analysis period', 'Period with probable data drift']
+        hue_legend_labels = ['Reference period', 'Analysis period', 'Period with data drift']
 
     if colors is None:
         colors = [Colors.BLUE_SKY_CRAYOLA, Colors.INDIGO_PERSIAN, Colors.GRAY_DARK, Colors.RED_IMPERIAL]

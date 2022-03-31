@@ -308,7 +308,8 @@ def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], feat
 def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_threshold: float) -> pd.Series:
     alert = drift_result.apply(
         lambda row: True
-        if row['reconstruction_error'] > upper_threshold or row['reconstruction_error'] < lower_threshold
+        if (row['reconstruction_error'] > upper_threshold or row['reconstruction_error'] < lower_threshold)
+        and row['partition'] == 'analysis'
         else False,
         axis=1,
     )

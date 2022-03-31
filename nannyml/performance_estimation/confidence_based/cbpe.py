@@ -209,7 +209,8 @@ def _calculate_cbpe(data: pd.Series) -> float:
 def _add_alert_flag(estimated_performance: pd.DataFrame, upper_threshold: float, lower_threshold: float) -> pd.Series:
     alert = estimated_performance.apply(
         lambda row: True
-        if row['estimated_roc_auc'] > upper_threshold or row['estimated_roc_auc'] < lower_threshold
+        if (row['estimated_roc_auc'] > upper_threshold or row['estimated_roc_auc'] < lower_threshold)
+        and row['partition'] == 'analysis'
         else False,
         axis=1,
     )

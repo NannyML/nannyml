@@ -13,7 +13,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.base import BaseDriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
-from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata
+from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, ModelMetadata
 
 ALERT_THRESHOLD_P_VALUE = 0.05
 
@@ -107,7 +107,9 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
                 )
                 chunk_drift[f'{column}_chi2'] = statistic
                 chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
-                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
+                chunk_drift[f'{column}_alert'] = (p_value < ALERT_THRESHOLD_P_VALUE) and (
+                    chunk.data[NML_METADATA_PARTITION_COLUMN_NAME] == 'analysis'
+                ).all()
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
@@ -115,7 +117,9 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
                 statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])  # type: ignore
                 chunk_drift[f'{column}_dstat'] = statistic
                 chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
-                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
+                chunk_drift[f'{column}_alert'] = (p_value < ALERT_THRESHOLD_P_VALUE) and (
+                    chunk.data[NML_METADATA_PARTITION_COLUMN_NAME] == 'analysis'
+                ).all()
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             chunk_drifts.append(chunk_drift)

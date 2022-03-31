@@ -65,7 +65,7 @@ def _step_plot(
     confidence_legend_label='Confidence band',
     threshold_legend_label='Data drift threshold',
     statistically_significant_legend_label='P-value is signficant',
-    drift_legend_label='Probable data drift',
+    drift_legend_label='Data drift',
     chunk_legend_labels=None,
     partial_target_legend_label='Incomplete target data',
     hover_marker_labels=None,

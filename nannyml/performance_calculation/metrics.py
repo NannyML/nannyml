@@ -27,6 +27,7 @@ class Metric(abc.ABC):
     def __init__(
         self,
         display_name: str,
+        column_name: str,
         upper_threshold: float = None,
         lower_threshold: float = None,
     ):
@@ -37,12 +38,15 @@ class Metric(abc.ABC):
         display_name : str
             The name of the metric. Used to display in plots. If not given this name will be derived from the
             ``calculation_function``.
+        column_name: str
+            The name used to indicate the metric in columns of a DataFrame.
         upper_threshold : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold : float, default=None
             An optional lower threshold for the performance metric.
         """
         self.display_name = display_name
+        self.column_name = column_name
         self.lower_threshold = lower_threshold
         self.upper_threshold = upper_threshold
 
@@ -119,6 +123,7 @@ class Metric(abc.ABC):
         """Establishes equality by comparing all properties."""
         return (
             self.display_name == other.display_name
+            and self.column_name == other.column_name
             and self.upper_threshold == other.upper_threshold
             and self.lower_threshold == other.lower_threshold
         )
@@ -336,7 +341,7 @@ class AUROC(Metric):
 
     def __init__(self):
         """Creates a new AUROC instance."""
-        super().__init__(display_name='roc_auc')
+        super().__init__(display_name='ROC AUC', column_name='roc_auc')
         self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
@@ -363,7 +368,7 @@ class F1(Metric):
 
     def __init__(self):
         """Creates a new F1 instance."""
-        super().__init__(display_name='F1')
+        super().__init__(display_name='F1', column_name='f1')
         self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
@@ -390,7 +395,7 @@ class Precision(Metric):
 
     def __init__(self):
         """Creates a new Precision instance."""
-        super().__init__(display_name='precision')
+        super().__init__(display_name='Precision', column_name='precision')
         self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
@@ -416,7 +421,7 @@ class Recall(Metric):
 
     def __init__(self):
         """Creates a new Recall instance."""
-        super().__init__(display_name='recall')
+        super().__init__(display_name='Recall', column_name='recall')
         self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
@@ -442,7 +447,7 @@ class Specificity(Metric):
 
     def __init__(self):
         """Creates a new F1 instance."""
-        super().__init__(display_name='specificity')
+        super().__init__(display_name='Specificity', column_name='specificity')
         self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
@@ -474,7 +479,7 @@ class Accuracy(Metric):
 
     def __init__(self):
         """Creates a new Accuracy instance."""
-        super().__init__(display_name='accuracy')
+        super().__init__(display_name='Accuracy', column_name='accuracy')
         self._min_chunk_size = None
 
     def _minimum_chunk_size(self) -> int:
@@ -533,6 +538,8 @@ class MetricFactory:
         if isinstance(key, str):
             return cls._create_from_str(key)
         elif isinstance(key, Metric):
+            if key.column_name not in cls._str_to_metric:
+                cls._str_to_metric[key.column_name] = key
             return key
         else:
             raise InvalidArgumentsException(

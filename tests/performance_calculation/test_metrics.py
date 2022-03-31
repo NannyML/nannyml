@@ -21,7 +21,9 @@ def test_metric_factory_raises_invalid_args_exception_when_str_key_unknown():  #
 
 
 def test_metric_factory_returns_metric_when_provided_metric_key():  # noqa: D103
-    custom_metric = Metric(display_name='custom_metric', lower_threshold=0.5, upper_threshold=0.9)
+    custom_metric = Metric(
+        display_name='custom_metric', column_name='custom_metric', lower_threshold=0.5, upper_threshold=0.9
+    )
     sut = MetricFactory.create(custom_metric)
     assert sut.display_name == 'custom_metric'
     assert sut.lower_threshold == 0.5

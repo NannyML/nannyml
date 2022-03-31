@@ -339,10 +339,10 @@ def _joy_plot(
         chunk_types = ['reference', 'analysis']
 
     if hue_legend_labels is None:
-        hue_legend_labels = ['Reference period', 'Analysis period', 'Period with probable data drift']
+        hue_legend_labels = ['Reference period', 'Analysis period', 'Period with data drift']
 
     if hue_joy_hover_labels is None:
-        hue_joy_hover_labels = ['Reference', 'No drift', 'Probable drift']
+        hue_joy_hover_labels = ['Reference', 'No data drift', 'Data drift']
 
     if colors is None:
         colors = [Colors.BLUE_SKY_CRAYOLA, Colors.INDIGO_PERSIAN, Colors.GRAY_DARK, Colors.RED_IMPERIAL]
