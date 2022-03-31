@@ -47,6 +47,7 @@ from .drift import (
     DriftCalculator,
     Ranker,
     Ranking,
+    TargetDistributionCalculator,
     UnivariateStatisticalDriftCalculator,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
