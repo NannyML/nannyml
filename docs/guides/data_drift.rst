@@ -77,22 +77,16 @@ they can be easily spotted and discarded. An example of that will be presented l
 
 .. _data-drift-practice:
 
-Data Drift in practice
-======================
+Detecting drift in model inputs
+===============================
 
-NannyML uses two approaches to detect and investigate data drift. A Univariate approach and a
-Multivariate approach.
-
-Data Preparation
-----------------
-
-Let’s start with loading some synthetic data provided by the NannyML package.
+Let’s start by loading some synthetic data provided by the NannyML package.
 
 .. code-block:: python
 
     >>> import nannyml as nml
     >>> import pandas as pd
-    >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
+    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> reference.head()
@@ -115,7 +109,7 @@ Let’s start with loading some synthetic data provided by the NannyML package.
 
 .. _data-drift-univariate:
 
-Univariate Drift Detection
+Univariate drift detection
 --------------------------
 
 NannyML's Univariate approach for data drift looks at each variable individually and conducts
@@ -279,37 +273,9 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 |  6 | gas_price_per_litre        |                  0 |      7 |
 +----+----------------------------+--------------------+--------+
 
-Drift Detection for Model Outputs
----------------------------------
-
-NannyML also detects data drift in the :term:`Model Outputs`. It uses the same methodology as for a continuous feature.
-The results are in our ``univariate_results`` object. We can visualize them with:
-
-.. code-block:: python
-
-    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
-    >>> figure.show()
-
-.. image:: ../_static/drift-guide-predictions.svg
-
-NannyML can also show how the distributions of the model predictions evolved over time:
-
-.. code-block:: python
-
-    >>> figure = univariate_results.plot(kind='prediction_distribution', metric='statistic')
-    >>> figure.show()
-
-.. image:: ../_static/drift-guide-predictions-joyplot.svg
-
-
-Looking at the results we see that we have a false alert on the first chunk of the analysis data. Similar
-to the ``tenure`` variable this is a false alert because the drift measured by the KS d-statistic is very low. This
-can happen when the statistical tests consider significant a small change in the distribtion of a variable
-in the chunks.
-
 .. _data-drift-multivariate:
 
-Multivariate Drift Detection
+Multivariate drift detection
 ----------------------------
 
 The univariate approach to data drift detection is simple and interpretable but has a few significant downsides.
@@ -425,7 +391,116 @@ NannyML can also visualize multivariate drift results with the following code:
 
 .. image:: ../_static/drift-guide-multivariate.svg
 
-The mutlrivariate drift results provide a consice summary of where data drift
+The multivariate drift results provide a consice summary of where data drift
 is happening in our input data.
 
 .. _SimpleImputer: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
+
+
+Drift detection for model outputs
+=================================
+
+NannyML also detects data drift in the :term:`Model Outputs`. It uses the same univariate methodology as for a
+continuous feature. The results are in our previously created ``univariate_results`` object. We can visualize them with:
+
+.. code-block:: python
+
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> univariate_calculator.fit(reference_data=reference)
+    >>> data = pd.concat([reference, analysis], ignore_index=True)
+    >>> univariate_results = univariate_calculator.calculate(data=data)
+    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
+    >>> figure.show()
+
+.. image:: ../_static/drift-guide-predictions.svg
+
+NannyML can also show how the distributions of the model predictions evolved over time:
+
+.. code-block:: python
+
+    >>> figure = univariate_results.plot(kind='prediction_distribution', metric='statistic')
+    >>> figure.show()
+
+.. image:: ../_static/drift-guide-predictions-joyplot.svg
+
+
+Looking at the results we see that we have a false alert on the first chunk of the analysis data. Similar
+to the ``tenure`` variable this is a false alert because the drift measured by the KS d-statistic is very low. This
+can happen when the statistical tests consider significant a small change in the distribtion of a variable
+in the chunks.
+
+
+Drift detection for model targets
+=================================
+
+NannyML provides tools to calculate drift in the distribution of target values.
+The :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator` will calculate both
+the *mean** and the *2 sample Chi squared test* of the target values for each chunk.
+
+In order to calculate target drift, the target values must be available. Let's manually join them with the analysis
+data first.
+
+.. code-block:: python
+
+    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
+    >>> data.loc[data['partition'] == 'analysis'].head(3)
+
+
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+|       |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
++=======+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
+| 50000 |               0.527691 | 0 - 20K €      |               1.8     |                      8.96072 | False              | Tuesday   |  4.22463 |          nan |                  1 | 2017-08-31 04:20:00 |           0.99 | analysis    |        1 |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+| 50001 |               8.48513  | 20K - 20K €    |               2.22207 |                      8.76879 | False              | Friday    |  4.9631  |          nan |                  1 | 2017-08-31 05:16:16 |           0.98 | analysis    |        1 |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+| 50002 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    |  4.58895 |          nan |                  1 | 2017-08-31 05:56:44 |           0.98 | analysis    |        1 |
++-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+
+Now that the data is in place we'll create a new
+:class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator` and *fit* it to the
+reference data using the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
+method.
+
+.. code-block:: python
+
+    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> target_distribution_calculator.fit(reference_data=reference)
+
+After fitting the :class:`calculator<nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator>`
+is ready to use. We calculate the target distribution by calling the
+:meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.calculate`
+method, providing our previously assembled dat as an argument.
+
+.. code-block:: python
+
+    >>> target_distribution = target_distribution_calculator.calculate(data)
+    >>> target_distribution.data.head(3)
+
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   targets_missing_rate |   metric_target_drift |   statistical_target_drift |   p_value |   thresholds | alert   | significant   |
++====+===============+===============+=============+=====================+=====================+=============+========================+=======================+============================+===========+==============+=========+===============+
+|  0 | [0:4999]      |             0 |        4999 | 2014-05-09 22:27:20 | 2014-09-09 08:18:27 | reference   |                      0 |                0.4944 |                   0.467363 |  0.494203 |         0.05 | False   | False         |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
+|  1 | [5000:9999]   |          5000 |        9999 | 2014-09-09 09:13:35 | 2015-01-09 00:02:51 | reference   |                      0 |                0.493  |                   0.76111  |  0.382981 |         0.05 | False   | False         |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
+|  2 | [10000:14999] |         10000 |       14999 | 2015-01-09 00:04:43 | 2015-05-09 15:54:26 | reference   |                      0 |                0.505  |                   0.512656 |  0.473991 |         0.05 | False   | False         |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
+
+The results can be easily plotted by using the
+:meth:`~nannyml.drift.target.target_distribution.result.TargetDistributionResult.plot` method.
+
+
+.. code-block:: python
+
+    >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
+    >>> fig.show()
+
+.. image:: ../_static/target_distribution_metric.svg
+
+
+.. code-block:: python
+
+    >>> fig = target_distribution.plot(kind='distribution', distribution='statistical')
+    >>> fig.show()
+
+.. image:: ../_static/target_distribution_statistical.svg
