@@ -4,5 +4,5 @@
 
 """Module containing the performance calculation implementation."""
 
+from .metrics import AUROC, Metric, MetricFactory  # isort: skip
 from .calculator import PerformanceCalculator, PerformanceCalculatorResult
-from .metrics import AUROC, Metric, MetricFactory

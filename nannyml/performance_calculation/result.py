@@ -3,12 +3,14 @@
 #  License: Apache Software License 2.0
 
 """Module containing the results of performance calculations and associated plots."""
+from typing import Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml import InvalidArgumentsException
 from nannyml.metadata import ModelMetadata
+from nannyml.performance_calculation import Metric
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
@@ -33,7 +35,7 @@ class PerformanceCalculatorResult:
         self.data = performance_data
         self.metadata = model_metadata
 
-    def plot(self, kind: str = 'performance', metric: str = None, *args, **kwargs) -> go.Figure:
+    def plot(self, kind: str = 'performance', metric: Union[str, Metric] = None, *args, **kwargs) -> go.Figure:
         """Render plots based on CBPE estimation results.
 
         This function will return a :class:`plotly.graph_objects.Figure` object.
@@ -64,7 +66,9 @@ class PerformanceCalculatorResult:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
 
-def _plot_performance_metric(performance_calculation_results: pd.DataFrame, metric: str = None) -> go.Figure:
+def _plot_performance_metric(
+    performance_calculation_results: pd.DataFrame, metric: Union[str, Metric] = None
+) -> go.Figure:
     """Renders a line plot of a selected metric of the performance calculation results.
 
     Chunks are set on a time-based X-axis by using the period containing their observations.
@@ -95,6 +99,9 @@ def _plot_performance_metric(performance_calculation_results: pd.DataFrame, metr
     performance_calculation_results = performance_calculation_results.copy(deep=True)
 
     plot_partition_separator = len(performance_calculation_results['partition'].value_counts()) > 1
+
+    if isinstance(metric, Metric):
+        metric = metric.display_name
 
     # Plot metric performance
     fig = _step_plot(
