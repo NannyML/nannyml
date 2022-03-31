@@ -4,6 +4,7 @@
 
 """Preprocessing pipeline for incoming data."""
 import logging
+import warnings
 
 import pandas as pd
 
@@ -11,6 +12,8 @@ from nannyml.exceptions import MissingMetadataException
 from nannyml.metadata import ModelMetadata
 
 logger = logging.getLogger(__name__)
+
+PREDICTED_PROBABILITIES_UNIQUE_VALUES_THRESHOLD = 2
 
 
 def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFrame:
@@ -46,4 +49,30 @@ def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFram
     # If complete then add copies of metadata columns
     prepped_data = model_metadata.enrich(data)
 
+    # Check if predicted probability values don't contain (binary) prediction values instead
+    check_predicted_probabilities_are_probabilities(model_metadata, data)
+
     return prepped_data
+
+
+def check_predicted_probabilities_are_probabilities(model_metadata: ModelMetadata, data: pd.DataFrame):
+    if model_metadata.predicted_probability_column_name is None:
+        return
+
+    predicted_probabilities = data[model_metadata.predicted_probability_column_name]
+
+    values_within_bounds = predicted_probabilities.between(0, 1).all()
+    if not values_within_bounds:
+        warnings.warn(
+            message=f"the predicted probabilities column '{model_metadata.predicted_probability_column_name}'"
+            f" contains values outside of the accepted [0, 1] interval. "
+            f"Please ensure you are not providing predictions instead."
+        )
+
+    enough_unique_values = predicted_probabilities.nunique() > PREDICTED_PROBABILITIES_UNIQUE_VALUES_THRESHOLD
+    if not enough_unique_values:
+        warnings.warn(
+            message=f"the predicted probabilities column '{model_metadata.predicted_probability_column_name}'"
+            f" contains fewer than {PREDICTED_PROBABILITIES_UNIQUE_VALUES_THRESHOLD} unique values. "
+            f"Please ensure you are not providing predictions instead."
+        )

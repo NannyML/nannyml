@@ -116,3 +116,28 @@ def test_preprocess_adds_metadata_columns_to_result(sample_data, sample_metadata
     sut = preprocess(sample_data, sample_metadata)
     for col in NML_METADATA_COLUMNS:
         assert col in sut.columns
+
+
+def test_preprocess_should_raise_warning_when_predicted_probabilities_outside_of_bounds(  # noqa: D103
+    sample_data, sample_metadata
+):
+    sample_data.loc[10, 'output'] = 5
+    sample_metadata.predicted_probability_column_name = 'output'
+
+    with pytest.warns(
+        UserWarning,
+        match="the predicted probabilities column 'output' contains "
+        "values outside of the accepted \\[0, 1\\] interval",
+    ):
+        _ = preprocess(sample_data, sample_metadata)
+
+
+def test_preprocess_should_raise_warning_when_predicted_probabilities_have_too_few_unique_values(  # noqa: D103
+    sample_data, sample_metadata
+):
+    sample_metadata.predicted_probability_column_name = 'output'
+
+    with pytest.warns(
+        UserWarning, match="the predicted probabilities column 'output' contains fewer than 2 " "unique values."
+    ):
+        _ = preprocess(sample_data, sample_metadata)
