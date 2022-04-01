@@ -441,7 +441,7 @@ In order to calculate target drift, the target values must be available. Let's m
 data first.
 
 .. note::
-    The Target Drift detection process requires can handle missing values across all partitions.
+    The Target Drift detection process can handle missing values across all partitions.
 
 .. code-block:: python
 
