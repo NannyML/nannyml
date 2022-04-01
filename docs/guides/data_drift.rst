@@ -441,11 +441,7 @@ In order to calculate target drift, the target values must be available. Let's m
 data first.
 
 .. note::
-    The Target Drift detection process requires no missing values in the target data on the reference dataset. However
-    the analysis data can contain missing values. In this case the entries with missing values will be ignored when
-    calculating the performance results. If there are so many missing values that the available data are below the
-    :ref:`minimum-chunk-size` then the performance results are ommited from the resulting visualizations because they are
-    too noisy, due to low sample size, to be reliable.
+    The Target Drift detection process requires canb handle missing values across all partitions.
 
 .. code-block:: python
 
