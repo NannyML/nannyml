@@ -26,7 +26,7 @@ def _create_value_counts_table(
         top_categories = (
             value_counts_table[feature_column_name].value_counts().index.tolist()[:max_number_of_categories]
         )
-        if len(top_categories) > max_number_of_categories + 1:
+        if value_counts_table[feature_column_name].nunique() > max_number_of_categories + 1:
             value_counts_table.loc[
                 ~value_counts_table[feature_column_name].isin(top_categories), feature_column_name
             ] = 'Other'
