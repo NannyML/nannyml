@@ -222,6 +222,7 @@ def _plot_continuous_feature_distribution(data: List[Chunk], drift_data: pd.Data
         feature_column_name=feature_column_name,
         x_axis_title=x_axis_title,
         title=title,
+        style='vertical',
     )
     return fig
 
@@ -280,6 +281,7 @@ def _plot_prediction_distribution(
         x_axis_title=x_axis_title,
         post_kde_clip=(0, 1),
         title=title,
+        style='vertical',
     )
     return fig
 

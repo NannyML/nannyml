@@ -160,6 +160,7 @@ def _create_joy_plot(
     y_axis_title,
     alpha,
     colors,
+    style,
 ):
     if chunk_types is None:
         chunk_types = ['reference', 'analysis']
@@ -181,10 +182,21 @@ def _create_joy_plot(
     layout = go.Layout(
         title=title,
         xaxis=dict(
-            title=x_axis_title, linecolor=colors[2], range=post_kde_clip, showgrid=False, mirror=True, zeroline=False
+            title=x_axis_title,
+            linecolor=colors[2],
+            range=post_kde_clip if style == 'horizontal' else None,
+            showgrid=False,
+            mirror=True,
+            zeroline=False,
         ),
         yaxis=dict(
-            title=y_axis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False
+            title=y_axis_title,
+            linecolor=colors[2],
+            range=None if style == 'horizontal' else post_kde_clip,
+            showgrid=False,
+            mirror=True,
+            autorange="reversed",
+            zeroline=False,
         ),
         paper_bgcolor='rgba(255,255,255,1)',
         plot_bgcolor='rgba(255,255,255,1)',
@@ -215,8 +227,8 @@ def _create_joy_plot(
         fig.add_trace(
             go.Scatter(
                 name=trace_name,
-                x=kde_support,
-                y=y_date_position + kde_density_scaled * y_date_height_scaler,
+                x=kde_support if style == 'horizontal' else y_date_position + kde_density_scaled * y_date_height_scaler,
+                y=y_date_position + kde_density_scaled * y_date_height_scaler if style == 'horizontal' else kde_support,
                 mode='lines',
                 line=dict(color=color, width=1),
                 hoverinfo='skip',
@@ -227,8 +239,8 @@ def _create_joy_plot(
 
         fig.add_trace(
             go.Scatter(
-                x=kde_support,
-                y=[y_date_position] * len(kde_density_scaled),
+                x=kde_support if style == 'horizontal' else [y_date_position] * len(kde_density_scaled),
+                y=[y_date_position] * len(kde_density_scaled) if style == 'horizontal' else kde_support,
                 line=dict(color='rgba(0,0,0,0)', width=1),
                 fill='tonexty',
                 fillcolor=color_fill,
@@ -252,8 +264,12 @@ def _create_joy_plot(
                 fig.add_trace(
                     go.Scatter(
                         name=trace_name,
-                        x=[kde_quartile[0], kde_quartile[0]],
-                        y=[y_date_position, y_date_position + kde_quartile[1] * y_date_height_scaler],
+                        x=[kde_quartile[0], kde_quartile[0]]
+                        if style == 'horizontal'
+                        else [y_date_position, y_date_position + kde_quartile[1] * y_date_height_scaler],
+                        y=[y_date_position, y_date_position + kde_quartile[1] * y_date_height_scaler]
+                        if style == 'horizontal'
+                        else [kde_quartile[0], kde_quartile[0]],
                         mode='lines',
                         line=dict(color=color_drift, width=1, dash='dot'),
                         hovertemplate=hover_template,
@@ -263,8 +279,8 @@ def _create_joy_plot(
                 )
 
     # ____Add elements to legend___#
-    x = [np.nan] * len(joy_table)
-    y = joy_table[end_date_column_name]
+    x = [np.nan] * len(joy_table) if style == 'horizontal' else joy_table[end_date_column_name]
+    y = joy_table[end_date_column_name] if style == 'horizontal' else [np.nan] * len(joy_table)
 
     # Add joy coloring
     for i, hue_label in enumerate(hue_legend_labels):
@@ -330,6 +346,7 @@ def _joy_plot(
     kde_cut=3,
     kde_clip=(-np.inf, np.inf),
     post_kde_clip=None,
+    style='horizontal',
 ):
     """Renders a joy plot showing the evolution of feature distribution over time.
 
@@ -385,6 +402,7 @@ def _joy_plot(
         y_axis_title,
         alpha,
         colors,
+        style,
     )
 
     return fig
