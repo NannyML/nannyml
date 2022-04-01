@@ -5,7 +5,7 @@ Minimum chunk size
 ==================
 
 .. note::
-    Not sure what data chunk is in the first place? Read about :term:`Data Chunk` for a short explanation or go through
+    Not sure what data chunk is in the first place? Read about :term:`Data Chunk` for a short introduction or go through
     the :ref:`guide<chunk-data>` for practical implementations.
 
 
@@ -15,8 +15,8 @@ are meaningful for them. However, when the chunks are too small, statistical res
 In this case NannyML will issue a warning. The user can then chose to ignore it and continue or use a chunking
 method that will result in bigger chunks.
 
-Minimum Chunk for Performance Estimation and Performance Calculation
-====================================================================
+Minimum Chunk for Performance Estimation and Performance Monitoring
+===================================================================
 
 When the chunk size is small
 **what looks like a significant drop in performance of the monitored model may be only a sampling effect**.

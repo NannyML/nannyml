@@ -433,12 +433,19 @@ in the chunks.
 Drift detection for model targets
 =================================
 
-NannyML provides tools to calculate drift in the distribution of target values.
+NannyML provides tools to calculate drift in the distribution of :term:`Target` values.
 The :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator` will calculate both
 the *mean** and the *2 sample Chi squared test* of the target values for each chunk.
 
 In order to calculate target drift, the target values must be available. Let's manually join them with the analysis
 data first.
+
+.. note::
+    The Target Drift detection process requires no missing values in the target data on the reference dataset. However
+    the analysis data can contain missing values. In this case the entries with missing values will be ignored when
+    calculating the performance results. If there are so many missing values that the available data are below the
+    :ref:`minimum-chunk-size` then the performance results are ommited from the resulting visualizations because they are
+    too noisy, due to low sample size, to be reliable.
 
 .. code-block:: python
 
@@ -494,6 +501,8 @@ The results can be easily plotted by using the
 
     >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
     >>> fig.show()
+
+Note that a dashed line, instead of a solid line, will be used for chunks that have missing target values.
 
 .. image:: ../_static/target_distribution_metric.svg
 

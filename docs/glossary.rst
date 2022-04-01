@@ -34,6 +34,10 @@ Glossary
         number-based so the whole data is splt into *k* chunks. In each case chronology of data between chunks is
         maintained.
 
+    Estimated Performance
+        The performance the monitored model is expected to have as a result of the :term:`Performance Estimation` process.
+        Estimated performance can be available immediately after predictions are made.
+
     Feature
         A variable used by our machine learning model. The model inputs consist of features.
 
@@ -91,13 +95,13 @@ Glossary
         create appropriate drift measures.
 
     Partition
-        A column that tells us what partition the data is in. We will expect data be in one of two partitions.
+        A partition is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two partitions.
 
         The first one is called the ``reference`` partition. It contains all the observations for a period with an *accepted*
         level of performance. It most likely also includes ``target`` data.
 
         The second partition is the ``analysis`` partition. It contains the observations you want NannyML to analyse.
-        It is likely that performance here will be (partially) estimated.
+        In the absence of targets performance in the analysis partition can be estimated.
 
         NannyML needs the partition information to understand which data it can use as a reference to compare other periods by.
 
@@ -105,6 +109,11 @@ Glossary
             We currently only support the following partition values: ``reference`` and ``analysis``.
 
             Please map your own values to them accordingly.
+
+
+    Partition Column
+        A column that tells us what :term:`Partition` the data is in. A partition column is necessary for NannyML
+        in order to produce model monitoring results.
 
     PCA
         Principal Component Analysis. A method used for dimensionality reduction.
@@ -114,6 +123,25 @@ Glossary
 
     Predictions
         A synonym for :term:`Model outputs`.
+
+    Predicted labels
+        The outome a machine learning model predicts for the event it was called to predict.
+        Predicted labels are a two value categorical variable. They can be represented by integers, usually
+        0 and 1, booleans, meaning True or False, or strings. For NannyML, in a binary classification problem,
+        it is ideal if predicted labels are presented as integers with 1 representing the positive outcome.
+
+    Predicted probabilities
+        The probabilities assigned by a machine learning model regarding the chance that a positive event materializes
+        for the binary outome it was called to predict.
+
+    Predicted scores
+        Sometimes the prediction of a machine learning model is transformed into a continuous range of real numbers.
+        Those scores take calues outside the `[0,1]` range that is allowed for probabilities. The higher the score
+        the more likely the positive outcome should be.
+
+    Realized Performance
+        The actual performance of the monitored model once :term:`Targets<Target>` become available.
+        The term is used to differentiate between :term:`Estimated Performance` and actual results.
 
     Reconstruction Error
         The average euclidean distance between the original and the reconstructed data points in a dataset.

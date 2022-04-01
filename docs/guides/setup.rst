@@ -84,7 +84,7 @@ using the given inputs and yielding the resulting prediction. See :term:`Timesta
 Predicted probability
 ---------------------
 
-The score or probability that is emitted by the model, most likely a float.
+The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` that is emitted by the model, most likely a float.
 
 .. warning::
     Either this or the *prediction* should be set for the metadata to be complete.
@@ -93,7 +93,7 @@ The score or probability that is emitted by the model, most likely a float.
 Prediction
 ----------
 
-The predicted label, retrieved by interpreting (thresholding) the prediction scores or probabilities.
+The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresholding) the prediction scores or probabilities.
 
 .. warning::
     Either this property or the *predicted_probability* should be set for the metadata to be complete.
@@ -108,7 +108,10 @@ Target
 The actual outcome of the event the machine learning model is trying to predict. See :term:`Target`.
 
 .. note::
-    **Target** values are only required in the reference data. Performance will be *calculated* using them.
+    **Target** values are only required in the reference data.
+    :ref:`performance-estimation` will use the targets in reference partition and the :term:`Model Outputs`
+    in the analysis partition to estimate performance in the analysis dataset.
+    Performance in will be *calculated* using them.
     In the *analysis data* where they are not required, performance can be *estimated*.
 
 Partition
