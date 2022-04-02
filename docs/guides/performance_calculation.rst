@@ -4,8 +4,8 @@
 Performance Monitoring
 ======================
 
-This guide shows how to use NannyML to calculate the :term:`Realized Performance` of model in order to monitor it.
-In order to do performance monitoring target values need to be available in both the reference and analysis data.
+This guide shows how to use NannyML to calculate the :term:`Realized Performance` of a model in order to monitor it.
+:term:`Target` values need to be available in both the reference and analysis data.
 The guide is based on a synthetic dataset where the monitored model predicts whether an employee will work from home.
 Let's set things up to calculate the *ROC AUC* and *recall* performance metrics.
 
