@@ -75,11 +75,11 @@ Getting started
 Examples
 ========
 
-* `Performance estimation <link URL>`_
+* `Performance estimation <https://docs.nannyml.com/latest/guides/performance_estimation.html>`_
 * `Realized performance calculation <link URL>`_
-* `Univariate model input drift detection <link URL>`_
-* `Multivariate model input drift detection <link URL>`_
-* `Model output drift detection <link URL>`_
+* `Univariate model input drift detection <https://docs.nannyml.com/latest/guides/data_drift.html#univariate-drift-detection>`_
+* `Multivariate model input drift detection <https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-outputs>`_
+* `Model output drift detection <https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-outputs>`_
 * `Model target distribution <link URL>`_
 
 Development setup
