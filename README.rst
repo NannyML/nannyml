@@ -37,7 +37,7 @@ NannyML helps you monitor your ML models in production by:
 * calculating realized performance metrics
 * detecting data drift on model inputs, model outputs and targets
 
-Installing the last stable release
+Installing the latest stable release
 ==================================
 
 .. code-block:: sh
@@ -45,7 +45,7 @@ Installing the last stable release
     pip install nannyml
 
 
-Installing the last development changes
+Installing the latest development changes
 =======================================
 
 .. code-block:: sh
