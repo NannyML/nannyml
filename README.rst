@@ -1,6 +1,6 @@
 .. raw:: html
 
-    <p align="center"><img width=60% src="https://assets.website-files.com/6099466e98d9381b3f745b9a/60994ab2b5bd890780db9c84_NannyML%20logo%20horizontal%20typfont.png"></p>
+    <p align="center"><img width=40% src="https://assets.website-files.com/6099466e98d9381b3f745b9a/60994ab2b5bd890780db9c84_NannyML%20logo%20horizontal%20typfont.png"></p>
     <p align="center">
         <a href="https://pypi.org/project/nannyml/">
             <img src="https://img.shields.io/pypi/v/nannyml.svg">
@@ -40,14 +40,16 @@ NannyML helps you monitor your ML models in production by:
 Installing the last stable release
 ==================================
 
-.. code-block:: bash
+.. code-block:: sh
+
     pip install nannyml
 
 
 Installing the last development changes
 =======================================
 
-.. code-block:: bash
+.. code-block:: sh
+
     python -m pip install git+https://github.com/NannyML/nannyml
 
 
@@ -55,6 +57,7 @@ Getting started
 ===============
 
 .. code-block:: python
+
     import nannyml as nml
 
     metadata = nml.extract_metadata(reference_data)
