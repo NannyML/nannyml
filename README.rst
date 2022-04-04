@@ -1,22 +1,20 @@
 .. raw:: html
 
     <p align="center"><img width=60% src="https://assets.website-files.com/6099466e98d9381b3f745b9a/60994ab2b5bd890780db9c84_NannyML%20logo%20horizontal%20typfont.png"></p>
-
-.. image:: https://img.shields.io/pypi/v/nannyml.svg
-    :target: https://pypi.org/project/nannyml/
-    :alt: PyPi
-
-.. image:: https://img.shields.io/pypi/pyversions/nannyml.svg
-    :target: https://pypi.org/project/nannyml/
-    :alt: Supported versions
-
-.. image:: https://github.com/NannyML/nannyml/actions/workflows/dev.yml/badge.svg
-    :target: https://github.com/nannyml/nannyml/actions/workflows/dev.yml
-    :alt: Build status
-
-.. image:: https://codecov.io/gh/NannyML/nannyml/branch/main/graph/badge.svg?token=OGpF5gVzfR
-    :target: https://codecov.io/gh/NannyML/nannyml
-    :alt: coverage
+    <p align="center">
+        <a href="https://pypi.org/project/nannyml/">
+            <img src="https://img.shields.io/pypi/v/nannyml.svg">
+        </a>
+        <a href="https://pypi.org/project/nannyml/">
+            <img src="https://img.shields.io/pypi/pyversions/nannyml.svg">
+        </a>
+        <a href="https://github.com/nannyml/nannyml/actions/workflows/dev.yml">
+            <img src="https://github.com/NannyML/nannyml/actions/workflows/dev.yml/badge.svg">
+        </a>
+        <a href="https://codecov.io/gh/NannyML/nannyml">
+            <img src="https://codecov.io/gh/NannyML/nannyml/branch/main/graph/badge.svg?token=OGpF5gVzfR">
+        </a>
+    </p>
 
 .. raw:: html
 
