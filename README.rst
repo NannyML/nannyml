@@ -45,8 +45,8 @@ Installing the latest stable release
     pip install nannyml
 
 
-Installing the latest development changes
-=======================================
+Installing the latest development version
+=========================================
 
 .. code-block:: sh
 
