@@ -120,7 +120,7 @@ observed drift and a p-value that shows how likely we are to get the observed sa
 under the assumption that there was no drift. If the p-value is less than 0.05 NannyML considers
 the result unlikely and issues an alert for the associated chunk and feature.
 
-The :py:class:`nannyml.drift.univariate_statistical_drift_calculator.UnivariateStatisticalDriftCalculator`
+The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection.
 An example using it can be seen below:
 
@@ -291,7 +291,7 @@ reflect a change in the structure of the model inputs. NannyML monitors the
 reconstruction error over time for the monitored model and raises an alert if the
 values get outside the range observed in the reference partition.
 
-The :py:class:`nannyml.drift.data_reconstruction_drift_calcutor.DataReconstructionDriftCalculator`
+The :class:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
 module implements this functionality.
 An example of us using it can be seen below:
 
@@ -405,10 +405,6 @@ continuous feature. The results are in our previously created ``univariate_resul
 
 .. code-block:: python
 
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> univariate_calculator.fit(reference_data=reference)
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
     >>> figure.show()
 
@@ -433,12 +429,15 @@ in the chunks.
 Drift detection for model targets
 =================================
 
-NannyML provides tools to calculate drift in the distribution of target values.
-The :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator` will calculate both
-the *mean** and the *2 sample Chi squared test* of the target values for each chunk.
+NannyML uses :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
+in order to monitor drift in :term:`Target` distribution. It can calculate the mean occurance of positive
+events as well as the chi-squared statistic, from the 2 sample Chi Squared test, of the target values for each chunk.
 
-In order to calculate target drift, the target values must be available. Let's manually join them with the analysis
+In order to calculate target drift, the target values must be available. Let's manually add the target data to the analysis
 data first.
+
+.. note::
+    The Target Drift detection process can handle missing target values across all partitions.
 
 .. code-block:: python
 
@@ -494,6 +493,8 @@ The results can be easily plotted by using the
 
     >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
     >>> fig.show()
+
+Note that a dashed line, instead of a solid line, will be used for chunks that have missing target values.
 
 .. image:: ../_static/target_distribution_metric.svg
 

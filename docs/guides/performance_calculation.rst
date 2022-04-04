@@ -1,13 +1,20 @@
 .. _performance-calculation:
 
-=======================
-Performance Calculation
-=======================
+======================
+Performance Monitoring
+======================
 
-This guide explains how to use NannyML to calculate the **realized performance** of a monitored model.
-Note that this will require target values to be available in both the reference and analysis data.
+This guide shows how to use NannyML to calculate the :term:`Realized Performance` of a model in order to monitor it.
+:term:`Target` values need to be available in both the reference and analysis data.
 The guide is based on a synthetic dataset where the monitored model predicts whether an employee will work from home.
-Let's set things up to calculate the *ROC AUC* and *recall* values.
+Let's set things up to calculate the *ROC AUC* and *recall* performance metrics.
+
+.. note::
+    The performance monitoring process requires no missing values in the target data on the reference dataset. However
+    the analysis data can contain missing values. In this case the entries with missing values will be ignored when
+    calculating the performance results. If there are so many missing values that the available data are below the
+    :ref:`minimum-chunk-size` then the performance results are ommited from the resulting visualizations because they are
+    too noisy, due to low sample size, to be reliable.
 
 Prepare the data
 ================
@@ -146,7 +153,7 @@ calculated metric. When taking ``roc_auc`` as an example:
    upper or lower threshold.
 
 
-The results can be also plotted:
+The results can be plotted for vizual inspection:
 
 .. code-block:: python
 

@@ -352,7 +352,7 @@ def _plot_metric(
         data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
         dash = None
         if estimated_column_name and estimated_column_name in data.columns:
-            if data_subset[estimated_column_name].head(1).values[0]:
+            if not data_subset.empty and data_subset[estimated_column_name].head(1).values[0]:
                 dash = 'dot'
         fig.add_trace(
             go.Scatter(

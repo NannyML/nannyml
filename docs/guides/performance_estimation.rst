@@ -74,7 +74,7 @@ partition). However, it can be also used on combined ``reference`` and ``analysi
 
 .. code-block:: python
 
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
 
 To find out how CBPE estimates performance, read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
 
@@ -121,7 +121,7 @@ The results can be also plotted:
     >>> fig.show()
 
 
-.. image:: ../_static/performance_estimation_guide_synth.svg
+.. image:: ../_static/perf-est-guide-syth-example.svg
 
 
 Compare with the actual performance
