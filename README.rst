@@ -59,8 +59,14 @@ Getting started
 .. code-block:: python
 
     import nannyml as nml
+    import pandas as pd
 
+    # Load some data
+    reference_data, analysis_data, _ = nml.load_synthetic_sample()
+    data = pd.concat([reference_data, analysis_data])
     metadata = nml.extract_metadata(reference_data)
+
+    # Estimate performance
     estimator = nml.CBPE(metadata).fit(reference_data)
     estimates = estimator.estimate(data)
 
@@ -80,5 +86,3 @@ Development setup
 =================
 
 * Read the `contributing docs <CONTRIBUTING.md>`_
-
-
