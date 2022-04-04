@@ -1,6 +1,6 @@
 .. raw:: html
 
-    <p align="center"><img width=40% src="https://assets.website-files.com/6099466e98d9381b3f745b9a/60994ab2b5bd890780db9c84_NannyML%20logo%20horizontal%20typfont.png"></p>
+    <p align="center"><img src="https://assets.website-files.com/6099466e98d9381b3f745b9a/60994ab2b5bd890780db9c84_NannyML%20logo%20horizontal%20typfont.png"></p>
     <p align="center">
         <a href="https://pypi.org/project/nannyml/">
             <img src="https://img.shields.io/pypi/v/nannyml.svg">
