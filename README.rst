@@ -14,7 +14,7 @@
         <a href="https://codecov.io/gh/NannyML/nannyml">
             <img src="https://codecov.io/gh/NannyML/nannyml/branch/main/graph/badge.svg?token=OGpF5gVzfR">
         </a>
-    </p>
+        <img alt="PyPI - License" src="https://img.shields.io/pypi/l/nannyml?color=green">    </p>
 
 .. raw:: html
 
