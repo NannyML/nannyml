@@ -51,17 +51,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
 
-      - name: build documentation
-        run: |
-          poetry install -E doc
-          poetry run sphinx-apidoc -o docs/nannyml nannyml tests
-          poetry run sphinx-build -b html docs/ docs/_build/html
-
-      - name: publish documentation
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+#      - name: build documentation
+#        run: |
+#          poetry install -E doc
+#          poetry run sphinx-apidoc -o docs/nannyml nannyml tests
+#          poetry run sphinx-build -b html docs/ docs/_build/html
+#
+#      - name: publish documentation
+#        uses: peaceiris/actions-gh-pages@v3
+#        with:
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          publish_dir: ./public
 
       - name: Build wheels and source tarball
         run: >-
