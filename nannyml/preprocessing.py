@@ -29,8 +29,6 @@ def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFram
 
     Returns
     -------
-    metadata: ModelMetadata
-        Metadata gathered by automated extraction.
     prepped_data: Optional[DataFrame]
         A copy of the uploaded data with added copies of metadata columns
         Will be ``None`` when the extracted/provided metadata was not complete.
