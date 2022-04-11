@@ -72,7 +72,7 @@ estimates.plot(kind='performance').show()
 * [Performance estimation](<https://docs.nannyml.com/latest/guides/performance_estimation.html>)
 * [Realized performance calculation](https://docs.nannyml.com/latest/guides/performance_calculation.html)
 * [Univariate model input drift detection](https://docs.nannyml.com/latest/guides/data_drift.html#univariate-drift-detection)
-* [Multivariate model input drift detection](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-outputs)
+* [Multivariate model input drift detection](https://docs.nannyml.com/latest/guides/data_drift.html#multivariate-drift-detection)
 * [Model output drift detection](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-outputs)
 * [Model target distribution](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-targets)
 
