@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.3.1] - 2022-04-11
+## Changed
+- Publishing to PyPi did not like raw sections in ReST, replaced by Markdown version.
+
 ## [0.3.0] - 2022-04-08
 ### Added
 - Added support for both predicted labels and predicted probabilities in ``ModelMetadata``.
