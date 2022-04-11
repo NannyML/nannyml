@@ -5,7 +5,7 @@ version = "0.3.0"
 homepage = "https://github.com/nnansters/nannyml"
 description = "The NannyML library, monitoring model performance since 2020."
 authors = ["Niels Nuyttens <niels@nannyml.com>"]
-readme = "README.rst"
+readme = "README.md"
 license =  "Apache-2.0"
 classifiers=[
     'Development Status :: 2 - Pre-Alpha',
