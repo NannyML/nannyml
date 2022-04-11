@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
+### Fixed
+- Updated homepage in project metadata
 
 ## [0.3.1] - 2022-04-11
-## Changed
+### Changed
 - Publishing to PyPi did not like raw sections in ReST, replaced by Markdown version.
 
 ## [0.3.0] - 2022-04-08
