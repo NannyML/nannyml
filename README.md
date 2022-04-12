@@ -62,7 +62,8 @@ metadata = nml.extract_metadata(reference_data)
 metadata.target_column_name = 'work_home_actual'
 
 # Estimate performance
-estimator = nml.CBPE(metadata).fit(reference_data)
+estimator = nml.CBPE(metadata)
+estimator.fit(reference_data)
 estimates = estimator.estimate(data)
 
 estimates.plot(kind='performance').show()
