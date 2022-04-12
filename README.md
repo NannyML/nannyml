@@ -59,6 +59,7 @@ import pandas as pd
 reference_data, analysis_data, _ = nml.load_synthetic_sample()
 data = pd.concat([reference_data, analysis_data])
 metadata = nml.extract_metadata(reference_data)
+metadata.target_column_name = 'work_home_actual'
 
 # Estimate performance
 estimator = nml.CBPE(metadata).fit(reference_data)
