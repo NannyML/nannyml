@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## Unreleased
+
+### Changed
+
+
 ### Fixed
 - Updated homepage in project metadata
+- Added missing metadata modification to the *quickstart*
 
 ## [0.3.1] - 2022-04-11
 ### Changed
