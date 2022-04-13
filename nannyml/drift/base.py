@@ -149,7 +149,7 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         """
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
-        reference_data = preprocess(data=reference_data, model_metadata=self.model_metadata)
+        reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
 
         self._fit(reference_data)
 
@@ -187,7 +187,7 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         # Preprocess data
-        data = preprocess(data=data, model_metadata=self.model_metadata)
+        data = preprocess(data=data, metadata=self.model_metadata)
 
         return self._calculate_drift(data)
 

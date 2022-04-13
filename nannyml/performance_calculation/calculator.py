@@ -78,7 +78,7 @@ class PerformanceCalculator:
         """
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
-        reference_data = preprocess(data=reference_data, model_metadata=self.metadata)
+        reference_data = preprocess(data=reference_data, metadata=self.metadata, reference=True)
 
         for metric in self.metrics:
             metric.fit(reference_data, self.chunker)
@@ -102,7 +102,7 @@ class PerformanceCalculator:
             )
 
         # Preprocess data
-        data: pd.DataFrame = preprocess(data=analysis_data, model_metadata=self.metadata)
+        data: pd.DataFrame = preprocess(data=analysis_data, metadata=self.metadata)
 
         # Setup for target completeness rate
         data['NML_TARGET_INCOMPLETE'] = data[NML_METADATA_TARGET_COLUMN_NAME].isna().astype(np.int16)

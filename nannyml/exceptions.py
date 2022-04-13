@@ -23,6 +23,12 @@ class MissingMetadataException(BaseException):
     pass
 
 
+class InvalidReferenceDataException(BaseException):
+    """An exception indicating the reference data provided are invalid."""
+
+    pass
+
+
 class CalculatorException(BaseException):
     """An exception indicating an error occurred during (drift) calculation."""
 

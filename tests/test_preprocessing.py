@@ -3,141 +3,112 @@
 #  License: Apache Software License 2.0
 
 """Unit tests for the preprocessing module."""
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.exceptions import MissingMetadataException
-from nannyml.metadata import NML_METADATA_COLUMNS, extract_metadata
+from nannyml.datasets import load_synthetic_sample
+from nannyml.exceptions import InvalidReferenceDataException, MissingMetadataException
+from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
 from nannyml.preprocessing import preprocess
 
 
 @pytest.fixture
-def sample_data() -> pd.DataFrame:  # noqa: D103
-    data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
-    data['week'] = data.timestamp.dt.isocalendar().week - 1
-    data['partition'] = 'reference'
-    data.loc[data.week >= 11, ['partition']] = 'analysis'
-    # data[NML_METADATA_PARTITION_COLUMN_NAME] = data['partition']  # simulate preprocessing
-    np.random.seed(167)
-    data['f1'] = np.random.randn(data.shape[0])
-    data['f2'] = np.random.rand(data.shape[0])
-    data['f3'] = np.random.randint(4, size=data.shape[0])
-    data['f4'] = np.random.randint(20, size=data.shape[0])
-    data['output'] = np.random.randint(2, size=data.shape[0])
-    data['actual'] = np.random.randint(2, size=data.shape[0])
+def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
+    ref_df, ana_df, tgt_df = load_synthetic_sample()
+    ref_df['y_pred'] = ref_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
+    ana_df['y_pred'] = ana_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
 
-    # Rule 1b is the shifted feature, 75% 0 instead of 50%
-    rule1a = {2: 0, 3: 1}
-    rule1b = {2: 0, 3: 0}
-    data.loc[data.week < 16, ['f3']] = data.loc[data.week < 16, ['f3']].replace(rule1a)
-    data.loc[data.week >= 16, ['f3']] = data.loc[data.week >= 16, ['f3']].replace(rule1b)
-
-    # Rule 2b is the shifted feature
-    c1 = 'white'
-    c2 = 'red'
-    c3 = 'green'
-    c4 = 'blue'
-
-    rule2a = {
-        0: c1,
-        1: c1,
-        2: c1,
-        3: c1,
-        4: c1,
-        5: c2,
-        6: c2,
-        7: c2,
-        8: c2,
-        9: c2,
-        10: c3,
-        11: c3,
-        12: c3,
-        13: c3,
-        14: c3,
-        15: c4,
-        16: c4,
-        17: c4,
-        18: c4,
-        19: c4,
-    }
-
-    rule2b = {
-        0: c1,
-        1: c1,
-        2: c1,
-        3: c1,
-        4: c1,
-        5: c2,
-        6: c2,
-        7: c2,
-        8: c2,
-        9: c2,
-        10: c3,
-        11: c3,
-        12: c3,
-        13: c1,
-        14: c1,
-        15: c4,
-        16: c4,
-        17: c4,
-        18: c1,
-        19: c2,
-    }
-
-    data.loc[data.week < 16, ['f4']] = data.loc[data.week < 16, ['f4']].replace(rule2a)
-    data.loc[data.week >= 16, ['f4']] = data.loc[data.week >= 16, ['f4']].replace(rule2b)
-
-    data.loc[data.week >= 16, ['f1']] = data.loc[data.week >= 16, ['f1']] + 0.6
-    data.loc[data.week >= 16, ['f2']] = np.sqrt(data.loc[data.week >= 16, ['f2']])
-    data['id'] = data.index
-    data.drop(columns=['week'], inplace=True)
-
-    return data
+    return ref_df, ana_df, tgt_df
 
 
 @pytest.fixture
-def sample_metadata(sample_data):  # noqa: D103
-    return extract_metadata(sample_data, model_name='model')
+def metadata(data) -> ModelMetadata:  # noqa: D103
+    md = extract_metadata(data[0])
+    md.target_column_name = 'work_home_actual'
+    return md
 
 
-def test_preprocess_raises_missing_metadata_exception_when_metadata_is_not_complete(  # noqa: D103
-    sample_data, sample_metadata
-):
-    sample_metadata.partition_column_name = None
-    sample_data.drop(columns=['partition'], inplace=True)
+def test_preprocess_raises_missing_metadata_exception_when_metadata_is_not_complete(data, metadata):  # noqa: D103
+    analysis_data = data[0]
+    metadata.partition_column_name = None
+    analysis_data.drop(columns=['partition'], inplace=True)
 
     with pytest.raises(MissingMetadataException):
-        _ = preprocess(data=sample_data, model_metadata=sample_metadata)
+        _ = preprocess(data=analysis_data, metadata=metadata)
 
 
-def test_preprocess_adds_metadata_columns_to_result(sample_data, sample_metadata):  # noqa: D103
-    sut = preprocess(sample_data, sample_metadata)
+def test_preprocess_adds_metadata_columns_to_result(data, metadata):  # noqa: D103
+    reference_data = data[0]
+    sut = preprocess(reference_data, metadata)
     for col in NML_METADATA_COLUMNS:
         assert col in sut.columns
 
 
-def test_preprocess_should_raise_warning_when_predicted_probabilities_outside_of_bounds(  # noqa: D103
-    sample_data, sample_metadata
-):
-    sample_data.loc[10, 'output'] = 5
-    sample_metadata.predicted_probability_column_name = 'output'
+def test_preprocess_should_raise_warning_when_predicted_probabilities_outside_of_bounds(data, metadata):  # noqa: D103
+    analysis_data = data[0]
+    analysis_data.loc[10, 'output'] = 5
+    metadata.predicted_probability_column_name = 'output'
 
     with pytest.warns(
         UserWarning,
         match="the predicted probabilities column 'output' contains "
         "values outside of the accepted \\[0, 1\\] interval",
     ):
-        _ = preprocess(sample_data, sample_metadata)
+        _ = preprocess(analysis_data, metadata)
 
 
 def test_preprocess_should_raise_warning_when_predicted_probabilities_have_too_few_unique_values(  # noqa: D103
-    sample_data, sample_metadata
+    data, metadata
 ):
-    sample_metadata.predicted_probability_column_name = 'output'
-
+    analysis_data = data[1]
+    analysis_data[metadata.predicted_probability_column_name] = 0.20
     with pytest.warns(
-        UserWarning, match="the predicted probabilities column 'output' contains fewer than 2 " "unique values."
+        UserWarning,
+        match=f"the predicted probabilities column '{metadata.predicted_probability_column_name}' "
+        "contains fewer than 2 "
+        "unique values.",
     ):
-        _ = preprocess(sample_data, sample_metadata)
+        _ = preprocess(analysis_data, metadata)
+
+
+def test_preprocess_should_not_fail_when_no_predicted_probabilities_were_set(data, metadata):  # noqa: D103
+    metadata.predicted_probability_column_name = None
+    try:
+        _ = preprocess(data[0], metadata)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_preprocess_should_raise_invalid_ref_data_exception_when_contains_nan_predictions(data, metadata):  # noqa: D103
+    ref_data = data[0]
+    ref_data.loc[:10, metadata.prediction_column_name] = np.NAN
+
+    with pytest.raises(
+        InvalidReferenceDataException,
+        match=f"prediction column '{metadata.prediction_column_name}' contains NaN values.",
+    ):
+        preprocess(ref_data, metadata, reference=True)
+
+
+def test_preprocess_should_raise_invalid_ref_data_exception_when_contains_nan_pred_proba(data, metadata):  # noqa: D103
+    ref_data = data[0]
+    ref_data.loc[:10, metadata.predicted_probability_column_name] = np.NAN
+
+    with pytest.raises(
+        InvalidReferenceDataException,
+        match=f"predicted probability column '{metadata.predicted_probability_column_name}' " f"contains NaN values.",
+    ):
+        preprocess(ref_data, metadata, reference=True)
+
+
+def test_preprocess_should_raise_invalid_ref_data_exception_when_contains_nan_target(data, metadata):  # noqa: D103
+    ref_data = data[0]
+    ref_data.loc[:10, metadata.target_column_name] = np.NAN
+
+    with pytest.raises(
+        InvalidReferenceDataException, match=f"target column '{metadata.target_column_name}' " f"contains NaN values."
+    ):
+        preprocess(ref_data, metadata, reference=True)

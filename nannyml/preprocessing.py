@@ -8,7 +8,7 @@ import warnings
 
 import pandas as pd
 
-from nannyml.exceptions import MissingMetadataException
+from nannyml.exceptions import InvalidReferenceDataException, MissingMetadataException
 from nannyml.metadata import ModelMetadata
 
 logger = logging.getLogger(__name__)
@@ -16,16 +16,18 @@ logger = logging.getLogger(__name__)
 PREDICTED_PROBABILITIES_UNIQUE_VALUES_THRESHOLD = 2
 
 
-def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFrame:
+def preprocess(data: pd.DataFrame, metadata: ModelMetadata, reference: bool = False) -> pd.DataFrame:
     """Analyse and prepare incoming data for further use downstream.
 
     Parameters
     ----------
     data : pd.DataFrame
         A DataFrame containing model inputs, scores, targets and other metadata.
-    model_metadata: ModelMetadata
+    metadata: ModelMetadata
         Optional ModelMetadata instance that might have been manually constructed
         or contains non-default values
+    reference: bool
+        Boolean indicating whether additional checks for reference data should be executed.
 
     Returns
     -------
@@ -35,7 +37,7 @@ def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFram
 
     """
     # Check metadata for completeness.
-    metadata_complete, missing_properties = model_metadata.is_complete()  # type: ignore
+    metadata_complete, missing_properties = metadata.is_complete()  # type: ignore
     if not metadata_complete:
         raise MissingMetadataException(
             f'metadata is still missing values for {missing_properties}.\n'
@@ -45,12 +47,39 @@ def preprocess(data: pd.DataFrame, model_metadata: ModelMetadata) -> pd.DataFram
         )
 
     # If complete then add copies of metadata columns
-    prepped_data = model_metadata.enrich(data)
+    prepped_data = metadata.enrich(data)
 
     # Check if predicted probability values don't contain (binary) prediction values instead
-    _check_predicted_probabilities_are_probabilities(model_metadata, data)
+    _check_predicted_probabilities_are_probabilities(metadata, data)
+
+    # When dealing with reference data, perform some additional, stricter checks.
+    if reference:
+        _validate_reference_data(data, metadata)
 
     return prepped_data
+
+
+def _validate_reference_data(reference_data: pd.DataFrame, metadata: ModelMetadata):
+    if (
+        metadata.predicted_probability_column_name
+        and reference_data[metadata.predicted_probability_column_name].hasnans
+    ):
+        raise InvalidReferenceDataException(
+            f"predicted probability column '{metadata.predicted_probability_column_name}' contains NaN values."
+            "Please ensure any NaN values are removed or replaced."
+        )
+
+    if metadata.prediction_column_name and reference_data[metadata.prediction_column_name].hasnans:
+        raise InvalidReferenceDataException(
+            f"prediction column '{metadata.prediction_column_name}' contains NaN values."
+            "Please ensure any NaN values are removed or replaced."
+        )
+
+    if metadata.target_column_name and reference_data[metadata.target_column_name].hasnans:
+        raise InvalidReferenceDataException(
+            f"target column '{metadata.target_column_name}' contains NaN values."
+            "Please ensure any NaN values are removed or replaced."
+        )
 
 
 def _check_predicted_probabilities_are_probabilities(model_metadata: ModelMetadata, data: pd.DataFrame):

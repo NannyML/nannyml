@@ -83,7 +83,7 @@ class TargetDistributionCalculator:
                 f"data does not contain target data column '{self.metadata.target_column_name}'."
             )
 
-        self._reference_targets = preprocess(data=reference_data, model_metadata=self.metadata)[
+        self._reference_targets = preprocess(data=reference_data, metadata=self.metadata, reference=True)[
             NML_METADATA_TARGET_COLUMN_NAME
         ]
 
@@ -104,7 +104,7 @@ class TargetDistributionCalculator:
             )
 
         # Preprocess data
-        data = preprocess(data=data, model_metadata=self.metadata)
+        data = preprocess(data=data, metadata=self.metadata)
 
         data['NML_TARGET_INCOMPLETE'] = data[NML_METADATA_TARGET_COLUMN_NAME].isna().astype(np.int16)
 
