@@ -4,7 +4,7 @@
 
 """Module containing base classes for performance calculation."""
 
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from nannyml import Chunker, InvalidArgumentsException, ModelMetadata
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import CalculatorNotFittedException
 from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
-from nannyml.performance_calculation.metrics import Metric, MetricFactory
+from nannyml.performance_calculation.metrics import MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
 from nannyml.preprocessing import preprocess
 
@@ -26,7 +26,7 @@ class PerformanceCalculator:
     def __init__(
         self,
         model_metadata: ModelMetadata,
-        metrics: List[Union[str, Metric]],
+        metrics: List[str],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -38,9 +38,8 @@ class PerformanceCalculator:
         ----------
         model_metadata : ModelMetadata
             The metadata describing the monitored model.
-        metrics: List[Union[str, Callable, Metric]]
-            A list of metrics to calculate. These can be specified as a reference string, a function that performs
-            the metric calculation or a Metric object that allows configuring the display name or thresholds.
+        metrics: List[str]
+            A list of metrics to calculate.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.

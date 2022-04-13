@@ -4,7 +4,7 @@
 
 """Module containing metric utilities and implementations."""
 import abc
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -176,7 +176,7 @@ def _minimum_chunk_size_roc_auc(
     n_pos_targets = np.sum(pos_targets)
 
     fraction = n_pos_targets / len(y_true)
-    sample_size = (np.std(ser_multi)) ** 2 / ((required_std ** 2) * fraction)
+    sample_size = (np.std(ser_multi)) ** 2 / ((required_std**2) * fraction)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -212,7 +212,7 @@ def _minimum_chunk_size_f1(
     correcting_factor = len(tp_fp_fn) / ((len(FN) + len(FP)) * 0.5 + len(TP))
     obs_level_f1 = tp_fp_fn * correcting_factor
     fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
-    sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
+    sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std**2) * fraction_of_relevant)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -243,7 +243,7 @@ def _minimum_chunk_size_precision(
     obs_level_precision = np.concatenate([TP, FP])
     amount_positive_pred = np.sum(y_pred)
     fraction_of_pos_pred = amount_positive_pred / len(y_pred)
-    sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std ** 2) * fraction_of_pos_pred)
+    sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std**2) * fraction_of_pos_pred)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -274,7 +274,7 @@ def _minimum_chunk_size_recall(
     obs_level_recall = np.concatenate([TP, FN])
     fraction_of_relevant = sum(obs_level_recall) / len(y_pred)
 
-    sample_size = ((np.std(obs_level_recall)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
+    sample_size = ((np.std(obs_level_recall)) ** 2) / ((required_std**2) * fraction_of_relevant)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -303,7 +303,7 @@ def _minimum_chunk_size_specificity(
 
     obs_level_specificity = np.concatenate([TN, FP])
     fraction_of_relevant = len(obs_level_specificity) / len(y_pred)
-    sample_size = ((np.std(obs_level_specificity)) ** 2) / ((required_std ** 2) * fraction_of_relevant)
+    sample_size = ((np.std(obs_level_specificity)) ** 2) / ((required_std**2) * fraction_of_relevant)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -329,7 +329,7 @@ def _minimum_chunk_size_accuracy(
 
     y_pred = np.asarray(y_pred).astype(int)
     correct_table = (y_true == y_pred).astype(int)
-    sample_size = (np.std(correct_table) ** 2) / (required_std ** 2)
+    sample_size = (np.std(correct_table) ** 2) / (required_std**2)
     sample_size = np.minimum(sample_size, len(y_true))
     sample_size = np.round(sample_size, -2)
 
@@ -533,14 +533,10 @@ class MetricFactory:
     }
 
     @classmethod
-    def create(cls, key: Union[str, Metric]) -> Metric:
+    def create(cls, key: str) -> Metric:
         """Returns a Metric instance for a given key."""
         if isinstance(key, str):
             return cls._create_from_str(key)
-        elif isinstance(key, Metric):
-            if key.column_name not in cls._str_to_metric:
-                cls._str_to_metric[key.column_name] = key
-            return key
         else:
             raise InvalidArgumentsException(
                 f"cannot create metric given a '{type(key)}'" "Please provide a string, function or Metric"

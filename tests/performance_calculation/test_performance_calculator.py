@@ -8,13 +8,12 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.metrics import f1_score
 
 from nannyml.datasets import load_synthetic_sample
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import ModelMetadata, extract_metadata
 from nannyml.performance_calculation import PerformanceCalculator
-from nannyml.performance_calculation.metrics import AUROC, F1, Metric
+from nannyml.performance_calculation.metrics import AUROC, F1
 
 
 @pytest.fixture
@@ -33,28 +32,7 @@ def metadata(data) -> ModelMetadata:  # noqa: D103
     return md
 
 
-class DummyMetric(Metric):
-    """Dummy metric for testing."""
-
-    def _fit(self, reference_data: pd.DataFrame):
-        pass
-
-    def _minimum_chunk_size(self) -> int:
-        return 100
-
-    def __init__(self):  # noqa: D107
-        super().__init__(display_name='dummy_metric', column_name='dummy_metric')
-
-    def _calculate(self, data: pd.DataFrame):
-        return 0.5
-
-
-@pytest.fixture
-def dummy_metric() -> Metric:  # noqa: D103
-    return DummyMetric()
-
-
-def test_calculator_init_with_empty_metrics_should_not_fail(metadata):  # noqa: D103
+def test_calculator_init_with_empty_metrics_should_not_fail(metadata):  # noqa: D103, F821
     try:
         _ = PerformanceCalculator(model_metadata=metadata, metrics=[])
     except Exception as exc:
@@ -68,14 +46,7 @@ def test_calculator_init_should_set_metrics(metadata):  # noqa: D103
     assert sut[1] == F1()
 
 
-def test_calculator_init_should_deal_with_mixed_metric_keys(metadata):  # noqa: D103
-    sut = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', Metric('custom', f1_score)]).metrics
-    assert len(sut) == 2
-    assert sut[0] == AUROC()
-    assert sut[1] == Metric('custom', f1_score)
-
-
-def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target_data_present(  # noqa: D103
+def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target_data_present(  # noqa: D103, F821
     data, metadata
 ):
     calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', 'f1'])
@@ -84,8 +55,8 @@ def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target
         _ = calc.calculate(analysis_data=data[1])
 
 
-def test_calculator_calculate_should_include_chunk_information_columns(data, metadata, dummy_metric):  # noqa: D103
-    calc = PerformanceCalculator(model_metadata=metadata, metrics=[dummy_metric, 'roc_auc'], chunk_size=5000)
+def test_calculator_calculate_should_include_chunk_information_columns(data, metadata):  # noqa: D103
+    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc'], chunk_size=5000)
     calc.fit(reference_data=data[0])
     ref_with_tgt = data[0].join(data[2], on='identifier', rsuffix='_r')
     sut = calc.calculate(analysis_data=ref_with_tgt)
@@ -98,19 +69,20 @@ def test_calculator_calculate_should_include_chunk_information_columns(data, met
     assert 'partition' in sut.data.columns
 
 
-def test_calculator_calculate_should_include_target_completeness_rate(data, metadata, dummy_metric):  # noqa: D103
+def test_calculator_calculate_should_include_target_completeness_rate(data, metadata):  # noqa: D103
     # Let's artificially modify the target completeness of different chunks.
     ref_data = data[0]
+    data = data[1].merge(data[2], on='identifier')
 
     # Drop 10% of the target values in the first chunk
-    ref_data.loc[0:499, metadata.target_column_name] = np.NAN
+    data.loc[0:499, metadata.target_column_name] = np.NAN
 
     # Drop 90% of the target values in the second chunk
-    ref_data.loc[5000:9499, metadata.target_column_name] = np.NAN
+    data.loc[5000:9499, metadata.target_column_name] = np.NAN
 
-    calc = PerformanceCalculator(model_metadata=metadata, metrics=[dummy_metric], chunk_size=5000)
+    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc'], chunk_size=5000)
     calc.fit(reference_data=ref_data)
-    sut = calc.calculate(analysis_data=ref_data)
+    sut = calc.calculate(analysis_data=data)
 
     assert 'targets_missing_rate' in sut.data.columns
     assert sut.data.loc[0, 'targets_missing_rate'] == 0.1
