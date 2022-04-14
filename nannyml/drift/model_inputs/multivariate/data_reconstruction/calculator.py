@@ -61,6 +61,15 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
             The SimpleImputer used to impute categorical features in the data. Defaults to using most_frequent value.
         imputer_continuous: SimpleImputer
             The SimpleImputer used to impute continuous features in the data. Defaults to using mean value.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # Create a calculator that will chunk by week
+        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W')
         """
         super(DataReconstructionDriftCalculator, self).__init__(
             model_metadata, features, chunk_size, chunk_number, chunk_period, chunker

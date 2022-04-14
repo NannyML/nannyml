@@ -51,6 +51,16 @@ class PerformanceCalculator:
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # create a new calculator, chunking by week
+        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
+
         """
         self.metadata = model_metadata
         self.metrics = [MetricFactory.create(m) for m in metrics]
@@ -75,6 +85,16 @@ class PerformanceCalculator:
         ----------
         reference_data: pd.DataFrame
             Reference data for the model, i.e. model inputs and predictions enriched with target data.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
+        >>> # fit the calculator on reference data
+        >>> calculator.fit(ref_df)
         """
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
@@ -92,6 +112,17 @@ class PerformanceCalculator:
         ----------
         analysis_data: pd.DataFrame
             Analysis data for the model, i.e. model inputs and predictions.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
+        >>> calculator.fit(ref_df)
+        >>> # calculate realized performance on analysis data
+        >>> realized_performance = calculator.calculate(ana_df)
         """
         if analysis_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')

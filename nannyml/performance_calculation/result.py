@@ -59,6 +59,18 @@ class PerformanceCalculatorResult:
             - 'specificity'
             - 'accuracy'
 
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
+        >>> calculator.fit(ref_df)
+        >>> realized_performance = calculator.calculate(ana_df)
+        >>> # plot the calculated performance metrics
+        >>> for m in calculator.metrics:
+        >>>     realized_performance.plot(kind='performance', metric=m).show()
         """
         if kind == 'performance':
             return _plot_performance_metric(self.data, metric)

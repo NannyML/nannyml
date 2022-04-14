@@ -40,6 +40,20 @@ class TargetDistributionResult:
         fig: plotly.graph_objects.Figure
             A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
             using ``fig.show()``.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
+        >>> target_distribution_calc.fit(ref_df)
+        >>> target_distribution = target_distribution_calc.calculate(ana_df)
+        >>> # plot the distribution of the mean
+        >>> target_distribution.plot(kind='metric').show()
+        >>> # plot the Chi square statistic
+        >>> target_distribution.plot(kind='statistical').show()
         """
         if kind == 'distribution':
             return self._plot_distribution(distribution)

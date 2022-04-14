@@ -77,6 +77,21 @@ class UnivariateDriftResult(DriftResult):
             A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
             using ``fig.show()``.
 
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
+        >>> drift_calc.fit(ref_df)
+        >>> drifts = drift_calc.calculate(ana_df)
+        >>> # loop over all features and plot the feature drift and feature distribution for each
+        >>> for f in metadata.features:
+        >>>     drifts.plot(kind='feature_drift', feature_label=f.label).show()
+        >>>     drifts.plot(kind='feature_distribution', feature_label=f.label).show()
+
         """
         if kind == 'feature_drift':
             feature = _get_feature(self.metadata, feature_label, feature_column_name)

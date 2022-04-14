@@ -49,6 +49,15 @@ class TargetDistributionCalculator:
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # Create a calculator that will chunk by week
+        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
         """
         self.metadata = model_metadata
         if chunker is None:
@@ -74,6 +83,16 @@ class TargetDistributionCalculator:
         """Fits the calculator to reference data.
 
         During fitting the reference target data is validated and stored for later use.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
+        >>> # fit the calculator on reference data
+        >>> target_distribution_calc.fit(ref_df)
         """
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -90,10 +109,23 @@ class TargetDistributionCalculator:
     def calculate(self, data: pd.DataFrame):
         """Calculates the target distribution of a binary classifier.
 
+        Requires fitting the calculator on reference data first.
+
         Parameters
         ----------
         data: pd.DataFrame
             Data for the model, i.e. model inputs, predictions and targets.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
+        >>> target_distribution_calc.fit(ref_df)
+        >>> # calculate target distribution
+        >>> target_distribution = target_distribution_calc.calculate(ana_df)
         """
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
