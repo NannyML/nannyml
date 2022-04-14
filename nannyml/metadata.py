@@ -83,6 +83,14 @@ class Feature:
         -------
         feature: Feature
 
+        Examples
+        --------
+        >>> from nannyml.metadata import Feature, FeatureType
+        >>> feature = Feature(column_name='dist_from_office', label='office_distance',
+        description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS)
+        >>> feature
+        Feature({'label': 'office_distance', 'column_name': 'dist_from_office', 'type': 'continuous',
+        'description': 'Distance from home to the office'})
         """
         self.column_name = column_name
         self.label = label
@@ -90,7 +98,20 @@ class Feature:
         self.feature_type = feature_type
 
     def to_dict(self) -> Dict[str, Any]:
-        """Converts the feature into a Dictionary representation."""
+        """Converts the feature into a Dictionary representation.
+
+        Examples
+        --------
+        >>> from nannyml.metadata import Feature, FeatureType
+        >>> feature = Feature(column_name='dist_from_office', label='office_distance',
+        description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS)
+        >>> feature.to_dict()
+        {'label': 'office_distance',
+         'column_name': 'dist_from_office',
+         'type': 'continuous',
+         'description': 'Distance from home to the office'}
+
+        """
         return {
             'label': self.label,
             'column_name': self.column_name,
@@ -188,6 +209,31 @@ class ModelMetadata:
         Returns
         -------
         metadata: ModelMetadata
+
+
+        Examples
+        --------
+        >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
+        >>> metadata = ModelMetadata('work_from_home', target_column_name='work_home_actual')
+        >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
+        description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),
+        >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
+        >>> metadata.to_dict()
+        {'identifier_column_name': 'id',
+         'timestamp_column_name': 'date',
+         'partition_column_name': 'partition',
+         'target_column_name': 'work_home_actual',
+         'prediction_column_name': None,
+         'predicted_probability_column_name': None,
+         'features': [{'label': 'office_distance',
+           'column_name': 'dist_from_office',
+           'type': 'continuous',
+           'description': 'Distance from home to the office'},
+          {'label': 'salary_range',
+           'column_name': 'salary_range',
+           'type': 'categorical',
+           'description': None}]}
+
         """
         self.id: int
 
@@ -266,11 +312,21 @@ class ModelMetadata:
             'target_column_name': self.target_column_name,
             'prediction_column_name': self.prediction_column_name,
             'predicted_probability_column_name': self.predicted_probability_column_name,
-            'features': repr(self.features),
+            'features': [feature.to_dict() for feature in self.features],
         }
 
     def to_df(self) -> pd.DataFrame:
-        """Converts a ModelMetadata instance into a read-only DataFrame."""
+        """Converts a ModelMetadata instance into a read-only DataFrame.
+
+        Examples
+        --------
+        >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
+        >>> metadata = ModelMetadata('work_from_home', target_column_name='work_home_actual')
+        >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
+        description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),
+        >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
+        >>> metadata.to_df()
+        """
         return pd.DataFrame(
             [
                 {
@@ -315,7 +371,35 @@ class ModelMetadata:
         )
 
     def print(self):  # pragma: no cover
-        """Returns a string representation of a ModelMetadata instance."""
+        """Returns a string representation of a ModelMetadata instance.
+
+        Examples
+        --------
+        >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
+        >>> metadata = ModelMetadata('work_from_home', target_column_name='work_home_actual')
+        >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
+        >>> description='Distance to the office', feature_type=FeatureType.CONTINUOUS),
+        >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
+        >>> metadata.print()
+        Metadata for model work_from_home
+        --
+        # Warning - unable to identify all essential data
+        # Please identify column names for all '~ UNKNOWN ~' values
+        --
+        Model problem                       binary_classification
+        Identifier column                   id
+        Timestamp column                    date
+        Partition column                    partition
+        Prediction column                   ~ UNKNOWN ~
+        Predicted probability column        ~ UNKNOWN ~
+        Target column                       work_home_actual
+        --
+        Features
+        --
+        Name                                Column                              Type            Description
+        office_distance                     dist_from_office                    continuous      Distance to the office
+        salary_range                        salary_range                        categorical     None
+        """
         UNKNOWN = "~ UNKNOWN ~"
         strs = [
             f"Metadata for model {self.name or UNKNOWN}",
@@ -368,6 +452,22 @@ class ModelMetadata:
         feature: Feature
             A single Feature matching the search criteria. Returns `None` if none were found matching the criteria
             or no criteria were provided.
+
+        Examples
+        --------
+        >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
+        >>> metadata = ModelMetadata('work_from_home', target_column_name='work_home_actual')
+        >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
+        >>> description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),
+        >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
+        >>> metadata.feature(index=1)
+        Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': None})
+        >>> metadata.feature(feature='office_distance')
+        Feature({'label': 'office_distance', 'column_name': 'dist_from_office', 'type': 'continuous',
+        'description': 'Distance from home to the office'})
+        >>> metadata.feature(column='dist_from_office')
+        Feature({'label': 'office_distance', 'column_name': 'dist_from_office', 'type': 'continuous',
+        'description': 'Distance from home to the office'})
 
         """
         if feature:
@@ -425,6 +525,17 @@ class ModelMetadata:
         -------
         features: List[Feature]
             A list of all categorical features
+
+        Examples
+        --------
+        >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
+        >>> metadata = ModelMetadata('work_from_home', target_column_name='work_home_actual')
+        >>> metadata.features = [
+        >>>     Feature('cat1', 'cat1', FeatureType.CATEGORICAL), Feature('cat2', 'cat2', FeatureType.CATEGORICAL),
+        >>>     Feature('cont1', 'cont1', FeatureType.CONTINUOUS), Feature('cont2', 'cont2', FeatureType.CONTINUOUS)]
+        >>> metadata.categorical_features
+        [Feature({'label': 'cat1', 'column_name': 'cat1', 'type': 'categorical', 'description': None}),
+        Feature({'label': 'cat2', 'column_name': 'cat2', 'type': 'categorical', 'description': None})]
         """
         return [f for f in self.features if f.feature_type == FeatureType.CATEGORICAL]
 
@@ -436,6 +547,17 @@ class ModelMetadata:
         -------
         features: List[Feature]
             A list of all continuous features
+
+        Examples
+        --------
+        >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
+        >>> metadata = ModelMetadata('work_from_home', target_column_name='work_home_actual')
+        >>> metadata.features = [
+        >>>     Feature('cat1', 'cat1', FeatureType.CATEGORICAL), Feature('cat2', 'cat2', FeatureType.CATEGORICAL),
+        >>>     Feature('cont1', 'cont1', FeatureType.CONTINUOUS), Feature('cont2', 'cont2', FeatureType.CONTINUOUS)]
+        >>> metadata.continuous_features
+        [Feature({'label': 'cont1', 'column_name': 'cont1', 'type': 'continuous', 'description': None}),
+        Feature({'label': 'cont2', 'column_name': 'cont2', 'type': 'continuous', 'description': None})]
         """
         return [f for f in self.features if f.feature_type == FeatureType.CONTINUOUS]
 
@@ -448,6 +570,21 @@ class ModelMetadata:
             True when all required fields are present, False otherwise
         missing: List[str]
             A list of all missing properties. Empty when metadata is complete.
+
+        Examples
+        --------
+        >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
+        >>> metadata = ModelMetadata('work_from_home', target_column_name='work_home_actual')
+        >>> metadata.features = [
+        >>>     Feature('cat1', 'cat1', FeatureType.CATEGORICAL), Feature('cat2', 'cat2', FeatureType.CATEGORICAL),
+        >>>     Feature('cont1', 'cont1', FeatureType.CONTINUOUS), Feature('cont2', 'cont2', FeatureType.UNKNOWN)]
+        >>> # missing either predicted labels or predicted probabilities, 'cont2' has an unknown feature type
+        >>> metadata.is_complete()
+        (False, ['predicted_probability_column_name', 'prediction_column_name'])
+        >>> metadata.predicted_probability_column_name = 'y_pred_proba'  # fix the missing value
+        >>> metadata.feature(feature='cont2').feature_type = FeatureType.CONTINUOUS
+        >>> metadata.is_complete()
+        (True, [])
         """
         props_to_check = [
             'timestamp_column_name',
@@ -498,6 +635,56 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
     -------
     metadata: ModelMetadata
         A fully initialized ModelMetadata instance.
+
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_synthetic_sample
+    >>> from nannyml.metadata import extract_metadata
+    >>> ref_df, _, _ = load_synthetic_sample()
+    >>> metadata = extract_metadata(ref_df, model_name='work_from_home')
+    >>> metadata.is_complete()
+    (False, ['target_column_name'])
+    >>> metadata.to_dict()
+    {'identifier_column_name': 'identifier',
+     'timestamp_column_name': 'timestamp',
+     'partition_column_name': 'partition',
+     'target_column_name': None,
+     'prediction_column_name': None,
+     'predicted_probability_column_name': 'y_pred_proba',
+     'features': [{'label': 'distance_from_office',
+       'column_name': 'distance_from_office',
+       'type': 'continuous',
+       'description': 'extracted feature: distance_from_office'},
+      {'label': 'salary_range',
+       'column_name': 'salary_range',
+       'type': 'categorical',
+       'description': 'extracted feature: salary_range'},
+      {'label': 'gas_price_per_litre',
+       'column_name': 'gas_price_per_litre',
+       'type': 'continuous',
+       'description': 'extracted feature: gas_price_per_litre'},
+      {'label': 'public_transportation_cost',
+       'column_name': 'public_transportation_cost',
+       'type': 'continuous',
+       'description': 'extracted feature: public_transportation_cost'},
+      {'label': 'wfh_prev_workday',
+       'column_name': 'wfh_prev_workday',
+       'type': 'categorical',
+       'description': 'extracted feature: wfh_prev_workday'},
+      {'label': 'workday',
+       'column_name': 'workday',
+       'type': 'categorical',
+       'description': 'extracted feature: workday'},
+      {'label': 'tenure',
+       'column_name': 'tenure',
+       'type': 'continuous',
+       'description': 'extracted feature: tenure'},
+      {'label': 'work_home_actual',
+       'column_name': 'work_home_actual',
+       'type': 'categorical',
+       'description': 'extracted feature: work_home_actual'}]}
+
 
     Notes
     -----

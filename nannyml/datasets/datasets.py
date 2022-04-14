@@ -37,8 +37,14 @@ def load_synthetic_sample():
         A DataFrame containing reference partition of synthetic sample dataset
     analysis : pd.DataFrame
         A DataFrame containing analysis partition of synthetic sample dataset
-    analysis_gt : pd.DataFrame
-        A DataFrame containing ground truth results for the analysis partition of synthetic sample dataset
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis partition of synthetic sample dataset
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_synthetic_sample
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_sample()
+
     """
     reference = load_csv_file_to_df('synthetic_sample_reference.csv')
     analysis = load_csv_file_to_df('synthetic_sample_analysis.csv')
@@ -60,8 +66,13 @@ def load_modified_california_housing_dataset():
         A DataFrame containing reference partition of modified california housing dataset
     analysis : pd.DataFrame
         A DataFrame containing analysis partition of modified california housing dataset
-    analysis_gt : pd.DataFrame
-        A DataFrame containing ground truth results for the analysis partition of modified california housing dataset
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis partition of modified california housing dataset
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_modified_california_housing_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_modified_california_housing_dataset()
     """
     reference = load_csv_file_to_df('california_housing_reference.csv')
     analysis = load_csv_file_to_df('california_housing_analysis.csv')

@@ -32,6 +32,18 @@ class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
 
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
+        >>> estimator.fit(ref_df)
+        >>> estimates = estimator.estimate(ana_df)
+        >>> # plot the estimated performance
+        >>> estimates.plot(kind='performance').show()
+
         """
         if kind == 'performance':
             return _plot_cbpe_performance_estimation(self.data)

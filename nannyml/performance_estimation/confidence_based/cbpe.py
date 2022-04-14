@@ -65,6 +65,17 @@ class CBPE(BasePerformanceEstimator):
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
 
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # create a new estimator, chunking by week
+        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
+        >>> estimator.fit(ref_df)
+        >>> estimates = estimator.estimate(ana_df)
+
         """
         super().__init__(model_metadata, features, chunk_size, chunk_number, chunk_period, chunker)
 

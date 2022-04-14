@@ -50,6 +50,15 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # Create a calculator that will chunk by week
+        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
         """
         super(UnivariateStatisticalDriftCalculator, self).__init__(
             model_metadata, features, chunk_size, chunk_number, chunk_period, chunker

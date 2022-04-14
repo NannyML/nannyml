@@ -32,6 +32,18 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
         fig: plotly.graph_objects.Figure
             A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
             using ``fig.show()``.
+
+        Examples
+        --------
+
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W')
+        >>> drift_calc.fit(ref_df)
+        >>> drifts = drift_calc.calculate(ana_df)
+        >>> # create the data reconstruction drift plot and display it
+        >>> drifts.plot(kind='drift').show()
         """
         if kind == 'drift':
             return _plot_drift(self.data, args, kwargs)
