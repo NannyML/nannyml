@@ -13,8 +13,9 @@ from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker  
 from nannyml.datasets import load_synthetic_sample
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
-from nannyml.performance_estimation import BasePerformanceEstimator
+from nannyml.performance_estimation import PerformanceEstimator
 from nannyml.performance_estimation.base import PerformanceEstimatorResult
+from nannyml.preprocessing import preprocess
 
 
 @pytest.fixture
@@ -31,20 +32,17 @@ def sample_metadata(sample_data) -> ModelMetadata:  # noqa: D103
 
 
 @pytest.fixture
-def base_estimator(sample_metadata) -> BasePerformanceEstimator:  # noqa: D103
-    return BasePerformanceEstimator(model_metadata=sample_metadata, chunk_size=5000)
-
-
-@pytest.fixture
-def simple_estimator(sample_metadata) -> BasePerformanceEstimator:  # noqa: D103
+def simple_estimator(sample_metadata) -> PerformanceEstimator:  # noqa: D103
     return SimpleEstimator(model_metadata=sample_metadata, chunk_size=5000)
 
 
-class SimpleEstimator(BasePerformanceEstimator):  # noqa: D101
-    def _fit(self, reference_data: pd.DataFrame):
-        pass
+class SimpleEstimator(PerformanceEstimator):  # noqa: D101
+    def fit(self, reference_data: pd.DataFrame) -> PerformanceEstimator:  # noqa: D102
+        _ = preprocess(reference_data, self.model_metadata, reference=True)
+        return self
 
-    def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
+    def estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:  # noqa: D102
+        data = preprocess(data, self.model_metadata)
         features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
         chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=50)
         return PerformanceEstimatorResult(
@@ -54,18 +52,18 @@ class SimpleEstimator(BasePerformanceEstimator):  # noqa: D101
 
 
 def test_base_estimator_given_empty_reference_data_should_raise_invalid_args_exception(  # noqa: D103
-    base_estimator, sample_data
+    simple_estimator, sample_data
 ):
     empty_ref_data = pd.DataFrame(columns=sample_data[0].columns)
     with pytest.raises(InvalidArgumentsException):
-        base_estimator.fit(empty_ref_data)
+        simple_estimator.fit(empty_ref_data)
 
 
 def test_base_estimator_given_empty_analysis_data_should_raise_invalid_args_exception(  # noqa: D103
-    base_estimator, sample_data
+    simple_estimator, sample_data
 ):
     with pytest.raises(InvalidArgumentsException):
-        base_estimator.estimate(data=pd.DataFrame(columns=sample_data[1].columns))
+        simple_estimator.estimate(data=pd.DataFrame(columns=sample_data[1].columns))
 
 
 def test_base_estimator_given_empty_features_list_should_calculate_for_all_features(  # noqa: D103

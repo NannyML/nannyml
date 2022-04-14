@@ -12,7 +12,7 @@ This module currently contains the following implementations of drift calculatio
   inputs and then applying the inverse transofrmation on the latent (reduced) space.
 
 """
-from .base import BaseDriftCalculator, DriftCalculator
+from .base import DriftCalculator
 from .model_inputs.multivariate.data_reconstruction import (
     DataReconstructionDriftCalculator,
     DataReconstructionDriftCalculatorResult,

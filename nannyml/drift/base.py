@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Module containing base classes for drift calculation."""
+from __future__ import annotations
 
 import abc
 from typing import List
@@ -11,9 +12,7 @@ import pandas as pd
 import plotly.graph_objects
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import ModelMetadata
-from nannyml.preprocessing import preprocess
 
 
 class DriftResult(abc.ABC):
@@ -51,47 +50,6 @@ class DriftResult(abc.ABC):
 class DriftCalculator(abc.ABC):
     """Base class for drift calculation."""
 
-    def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
-        """Creates a new instance of an abstract DriftCalculator.
-
-        Parameters
-        ----------
-        model_metadata: ModelMetadata
-            Metadata telling the DriftCalculator what columns are required for drift calculation.
-        features: List[str]
-            An optional list of feature column names. When set only these columns will be included in the
-            drift calculation. If not set it will default to all feature column names.
-        """
-        self.model_metadata = model_metadata
-        if not features:
-            features = [f.column_name for f in self.model_metadata.features]
-        self.selected_features = features
-
-    def fit(self, reference_data: pd.DataFrame):
-        """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
-        raise NotImplementedError
-
-    def calculate(
-        self,
-        data: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """Executes the drift calculation.
-
-        NannyML will use the model metadata to provide additional information about the features.
-        You can select the features included in the calculation by using the `features` parameter.
-
-        """
-        raise NotImplementedError
-
-
-class BaseDriftCalculator(DriftCalculator, abc.ABC):
-    """Abstract class with a basic implementation of drift calculation.
-
-    This class provides a `calculate` function that will take care of all the data preparations that need to occur
-    before handing off the actual calculation to inheriting classes by overriding the `_calculate_drift` method.
-
-    """
-
     def __init__(
         self,
         model_metadata: ModelMetadata,
@@ -101,7 +59,7 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         chunk_period: str = None,
         chunker: Chunker = None,
     ):
-        """Creates a new DriftCalculator.
+        """Creates a new instance of an abstract DriftCalculator.
 
         Parameters
         ----------
@@ -121,9 +79,11 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-
         """
-        super().__init__(model_metadata, features)
+        self.model_metadata = model_metadata
+        if not features:
+            features = [f.column_name for f in self.model_metadata.features]
+        self.selected_features = features
 
         if chunker is None:
             # Note:
@@ -139,60 +99,18 @@ class BaseDriftCalculator(DriftCalculator, abc.ABC):
         else:
             self.chunker = chunker  # type: ignore
 
-    def fit(self, reference_data: pd.DataFrame):
-        """Calibrates a DriftCalculator using a reference dataset.
-
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            The reference data used to calibrate the DriftCalculator.
-        """
-        if reference_data.empty:
-            raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
-        reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
-
-        self._fit(reference_data)
-
-    def _fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame) -> DriftCalculator:
+        """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
         raise NotImplementedError
 
-    def calculate(self, data: pd.DataFrame) -> DriftResult:
-        """Performs validations and transformations before delegating the calculation to implementing classes.
-
-        Steps taken in this function are:
-
-        - Creating fixed metadata columns in both analysis and reference data sets
-        - Filtering for only features listed in the `features` parameter (if any given)
-        - Basic validations on both data sets
-        - Generating chunks from both sets
-        - Calling the `_calculate_drift` function, providing a list of reference data chunks and a list of analysis
-          data chunks.
-
-        Parameters
-        ----------
-        data : DataFrame
-            The data to be analyzed
-
-        Returns
-        -------
-        data_drifts : DataFrame
-            A DataFrame where a cell contains the drift that occurred for a specific feature (current column)
-            when comparing a Chunk of analysis data (current row) to a corresponding Chunk of reference data.
-
-            The results thus contain a row for each Chunk in the analysis set and a column for each feature identified
-            in the model metadata (or less if filtered using the `features` parameter).
-
-        """
-        if data.empty:
-            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
-
-        # Preprocess data
-        data = preprocess(data=data, metadata=self.model_metadata)
-
-        return self._calculate_drift(data)
-
-    def _calculate_drift(
+    def calculate(
         self,
         data: pd.DataFrame,
-    ) -> DriftResult:
+    ) -> pd.DataFrame:
+        """Executes the drift calculation.
+
+        NannyML will use the model metadata to provide additional information about the features.
+        You can select the features included in the calculation by using the `features` parameter.
+
+        """
         raise NotImplementedError

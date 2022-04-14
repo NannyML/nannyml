@@ -3,6 +3,8 @@
 #  License: Apache Software License 2.0
 
 """Module containing base classes for performance estimation."""
+from __future__ import annotations
+
 import abc
 from typing import List
 
@@ -10,9 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml.chunk import Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import ModelMetadata
-from nannyml.preprocessing import preprocess
 
 
 class PerformanceEstimatorResult(abc.ABC):
@@ -39,28 +39,6 @@ class PerformanceEstimatorResult(abc.ABC):
 class PerformanceEstimator(abc.ABC):
     """Abstract class for performance estimation."""
 
-    def __init__(self, model_metadata: ModelMetadata, features: List[str] = None):
-        """Creates a new instance of a performance estimator."""
-        self.model_metadata = model_metadata
-        if not features:
-            features = [f.column_name for f in self.model_metadata.features]
-        self.selected_features = features
-
-    def fit(self, reference_data: pd.DataFrame):
-        """Fits the data on a reference data set."""
-        raise NotImplementedError
-
-    def estimate(self, data: PerformanceEstimatorResult):
-        """Estimate performance given a data set lacking ground truth."""
-        raise NotImplementedError
-
-
-class BasePerformanceEstimator(PerformanceEstimator):
-    """Base class for performance estimation.
-
-    Provides some boilerplate to deal with chunking and data preprocessing.
-    """
-
     def __init__(
         self,
         model_metadata: ModelMetadata,
@@ -70,7 +48,7 @@ class BasePerformanceEstimator(PerformanceEstimator):
         chunk_period: str = None,
         chunker: Chunker = None,
     ):
-        """Creates a new BasePerformanceEstimator.
+        """Creates a new instance of a performance estimator.
 
         Parameters
         ----------
@@ -90,8 +68,12 @@ class BasePerformanceEstimator(PerformanceEstimator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+
         """
-        super(BasePerformanceEstimator, self).__init__(model_metadata, features)
+        self.model_metadata = model_metadata
+        if not features:
+            features = [f.column_name for f in self.model_metadata.features]
+        self.selected_features = features
 
         if chunker is None:
             if chunk_size:
@@ -105,51 +87,10 @@ class BasePerformanceEstimator(PerformanceEstimator):
         else:
             self.chunker = chunker  # type: ignore
 
-    def fit(self, reference_data: pd.DataFrame):
-        """Fits the estimator on a reference data set.
-
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            A data set for which performance is generally accepted as exemplary.
-        """
-        if reference_data.empty:
-            raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
-        reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
-
-        self._fit(reference_data)
-
-    def _fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame) -> PerformanceEstimator:
+        """Fits the data on a reference data set."""
         raise NotImplementedError
 
     def estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
-        """Performs validations and transformations before delegating the estimation to implementing classes.
-
-        Steps taken in this function are:
-
-        - Creating fixed metadata columns in both analysis and reference data sets
-        - Filtering only selected features
-        - Splitting data into chunks
-        - Calling the `_estimate` function
-
-        Parameters
-        ----------
-        data : DataFrame
-            The data to estimate performance for.
-
-        Returns
-        -------
-        estimated_performance : DataFrame
-            A DataFrame where a cell contains the estimated (overall) performance for each chunk.
-
-        """
-        if data.empty:
-            raise InvalidArgumentsException('data contains no rows. Provide a valid data set.')
-
-        # Preprocess data
-        data = preprocess(data=data, metadata=self.model_metadata)
-
-        return self._estimate(data=data)
-
-    def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
+        """Estimate performance given a data set lacking ground truth."""
         raise NotImplementedError

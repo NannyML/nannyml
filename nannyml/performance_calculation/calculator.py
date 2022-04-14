@@ -4,6 +4,8 @@
 
 """Module containing base classes for performance calculation."""
 
+from __future__ import annotations
+
 from typing import Dict, List
 
 import numpy as np
@@ -77,7 +79,7 @@ class PerformanceCalculator:
         else:
             self.chunker = chunker  # type: ignore
 
-    def fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset.
 
         Parameters
@@ -102,6 +104,8 @@ class PerformanceCalculator:
             metric.fit(reference_data, self.chunker)
 
         self._minimum_chunk_size = np.max([metric.minimum_chunk_size() for metric in self.metrics])
+
+        return self
 
     def calculate(self, analysis_data: pd.DataFrame) -> PerformanceCalculatorResult:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation.

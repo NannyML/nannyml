@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from nannyml.datasets import load_synthetic_sample
-from nannyml.exceptions import InvalidReferenceDataException, MissingMetadataException
+from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
 from nannyml.preprocessing import preprocess
 
@@ -111,4 +111,11 @@ def test_preprocess_should_raise_invalid_ref_data_exception_when_contains_nan_ta
     with pytest.raises(
         InvalidReferenceDataException, match=f"target column '{metadata.target_column_name}' " f"contains NaN values."
     ):
+        preprocess(ref_data, metadata, reference=True)
+
+
+def test_preprocess_should_raise_invalid_ref_data_exception_when_ref_data_emtpy(data, metadata):  # noqa: D103
+    ref_data = pd.DataFrame(columns=data[0].columns)
+
+    with pytest.raises(InvalidArgumentsException, match="provided data cannot be empty."):
         preprocess(ref_data, metadata, reference=True)

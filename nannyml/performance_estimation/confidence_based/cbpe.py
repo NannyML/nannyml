@@ -20,11 +20,12 @@ from nannyml.metadata import (
     NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
 )
-from nannyml.performance_estimation.base import BasePerformanceEstimator, PerformanceEstimatorResult
+from nannyml.performance_estimation.base import PerformanceEstimator
 from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
+from nannyml.preprocessing import preprocess
 
 
-class CBPE(BasePerformanceEstimator):
+class CBPE(PerformanceEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
 
     def __init__(
@@ -72,8 +73,6 @@ class CBPE(BasePerformanceEstimator):
         >>> metadata = nml.extract_metadata(ref_df)
         >>> # create a new estimator, chunking by week
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
-        >>> estimator.fit(ref_df)
-        >>> estimates = estimator.estimate(ana_df)
 
         """
         super().__init__(model_metadata, features, chunk_size, chunk_number, chunk_period, chunker)
@@ -87,7 +86,30 @@ class CBPE(BasePerformanceEstimator):
 
         self.minimum_chunk_size: int = None  # type: ignore
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame) -> PerformanceEstimator:
+        """Fits the drift calculator using a set of reference data.
+
+        Parameters
+        ----------
+        reference_data : pd.DataFrame
+            A reference data set containing predictions (labels and/or probabilities) and target values.
+
+        Returns
+        -------
+        estimator: PerformanceEstimator
+            The fitted estimator.
+
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # create a new estimator and fit it on reference data
+        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
+
+        """
+        reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
+
         if self.chunker is None:
             raise NotFittedException()
 
@@ -118,7 +140,35 @@ class CBPE(BasePerformanceEstimator):
                 reference_data[NML_METADATA_TARGET_COLUMN_NAME],
             )
 
-    def _estimate(self, data: pd.DataFrame) -> PerformanceEstimatorResult:
+        return self
+
+    def estimate(self, data: pd.DataFrame) -> CBPEPerformanceEstimatorResult:
+        """Calculates the data reconstruction drift for a given data set.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The dataset to calculate the reconstruction drift for.
+
+        Returns
+        -------
+        estimates: PerformanceEstimatorResult
+            A :class:`result<nannyml.performance_estimation.confidence_based.results.CBPEPerformanceEstimatorResult>`
+            object where each row represents a :class:`~nannyml.chunk.Chunk`,
+            containing :class:`~nannyml.chunk.Chunk` properties and the estimated metrics
+            for that :class:`~nannyml.chunk.Chunk`.
+
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # create a new estimator and fit it on reference data
+        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
+        >>> estimates = estimator.estimate(data)
+        """
+        data = preprocess(data=data, metadata=self.model_metadata)
+
         features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
         chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=self.minimum_chunk_size)
 

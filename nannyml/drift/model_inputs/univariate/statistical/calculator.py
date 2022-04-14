@@ -10,15 +10,16 @@ import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.chunk import Chunker
-from nannyml.drift.base import BaseDriftCalculator
+from nannyml.drift.base import DriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
 from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, ModelMetadata
+from nannyml.preprocessing import preprocess
 
 ALERT_THRESHOLD_P_VALUE = 0.05
 
 
-class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
+class UnivariateStatisticalDriftCalculator(DriftCalculator):
     """A drift calculator that relies on statistics to detect drift."""
 
     def __init__(
@@ -73,13 +74,62 @@ class UnivariateStatisticalDriftCalculator(BaseDriftCalculator):
 
         self._reference_data = None
 
-    def _fit(self, reference_data: pd.DataFrame):
-        self._reference_data = reference_data.copy(deep=True)
+    def fit(self, reference_data: pd.DataFrame):
+        """Fits the drift calculator using a set of reference data.
 
-    def _calculate_drift(
+        Parameters
+        ----------
+        reference_data : pd.DataFrame
+            A reference data set containing predictions (labels and/or probabilities) and target values.
+
+        Returns
+        -------
+        calculator: DriftCalculator
+            The fitted calculator.
+
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # Create a calculator and fit it
+        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
+
+        """
+        reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
+        self._reference_data = reference_data.copy(deep=True)
+        return self
+
+    def calculate(
         self,
         data: pd.DataFrame,
     ) -> UnivariateDriftResult:
+        """Calculates the data reconstruction drift for a given data set.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The dataset to calculate the reconstruction drift for.
+
+        Returns
+        -------
+        reconstruction_drift: UnivariateDriftResult
+            A :class:`result<nannyml.drift.model_inputs.univariate.statistical.results.UnivariateDriftResult>`
+            object where each row represents a :class:`~nannyml.chunk.Chunk`,
+            containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
+            for that :class:`~nannyml.chunk.Chunk`.
+
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # Create a calculator and fit it
+        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
+        >>> drift = drift_calc.calculate(data)
+        """
+        data = preprocess(data=data, metadata=self.model_metadata)
+
         # Get lists of categorical <-> categorical features
         categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
         continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features] + [
