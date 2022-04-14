@@ -64,7 +64,6 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
 
         Examples
         --------
-
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
         >>> metadata = nml.extract_metadata(ref_df)
