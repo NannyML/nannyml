@@ -8,7 +8,7 @@ This first paragraph or two should explain what the feature does in very simple 
 .. code-block:: python
 
     All the code that is run in the tutorial should be presented here.
-    If it is too big for a code-block (~50+ lines) then it should be 
+    If it is too big for a code-block (~50+ lines) then it should be
     presented as a link to an example notebook instead.
 
 
@@ -24,7 +24,7 @@ Succinct description of what the code does.
 
 .. code-block:: python
 
-    Code examples should use one of the sample datasets 
+    Code examples should use one of the sample datasets
     we package with the library.
 
 
