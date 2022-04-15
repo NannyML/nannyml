@@ -123,3 +123,5 @@ docs/index.html
 
 # images created from doc notebooks
 docs/examples/*.svg
+
+*.code-workspace
