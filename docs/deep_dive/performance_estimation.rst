@@ -4,20 +4,21 @@
 Confidence-based Performance Estimation
 =======================================
 
-Introduction
-============
+Binary classification
+=====================
 
 A binary classification model typically returns two outputs for each prediction - a class (binary) and a class
-probability predictions (sometimes referred to as score). The score provides information about the confidence of the
+probability prediction (sometimes referred to as score). The score provides information about the confidence of the
 prediction. A rule of thumb is that, the closer a score is to its lower or upper limit (usually 0 and 1), the higher
 the probability that a classifier’s prediction is correct. When this score is an actual probability, it can be
 directly used to calculate the probability of making an error. For instance, imagine a high-performing model which,
 for a large set of observations, returns a prediction of 1 (positive class) with probability of 0.9. It means that
 for approximately 90% of these observations, the model is correct while for the other 10% the model is wrong.
-Assuming properly calibrated probabilities, NannyML reconstructs the whole confusion matrix and calculates ROC AUC
-for a set of :math:`n` predictions according to following algorithm:
+Assuming properly calibrated probabilities, confusion matrix elements can be estimated and then used to calculate any
+performance metric. Algorithms for estimating one of the simplest metrics (accuracy) and of the most complex (AUROC) are
+described below. Common notation used in the sections below is following:
 
-    Let’s denote:
+    :math:`n` - number of analyzed observations/predictions,
 
     :math:`\hat{p} = Pr(y=1)` - monitored model probability estimate,
 
@@ -25,26 +26,77 @@ for a set of :math:`n` predictions according to following algorithm:
 
     :math:`\hat{y}` - predicted label, :math:`\hat{y}\in{\{0,1\}}`.
 
-    To calculate ROC AUC one needs values of confusion matrix elements (True Positives, False Positives, True Negatives, False Negatives)
-    for a set of all thresholds :math:`t`. This set is obtained by selecting subset of :math:`m`
-    unique values from the set of probability predictions
-    :math:`\mathbf{\hat{p}}` and sorting them increasingly.
-    Therefore :math:`\mathbf{t}=\{\hat{p_1}, \hat{p_2}, ..., \hat{p_m}\}` and
-    :math:`\hat{p_1} < \hat{p_2} < ... < \hat{p_m}` (notice that in some cases :math:`m=n`).
+Estimating Accuracy
+-------------------
 
-    The algorithm runs as follows:
+Accuracy is simply the ratio of correct predictions to all predictions.
+It can be expressed as:
+
+.. math::
+    Accuracy = \frac{TP+TN}{TP+FP+TN+FN} = \frac{TP+TN}{n}
+
+Since the number of observations (:math:`n`) is known, the task comes down to estimating True Positives (TP) and
+True Negatives (TN). The algorithm runs as follows:
+
+
+    1. Get :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote :math:`\hat{p}_j`, and predicted label from
+       :math:`\mathbf{\hat{y}}`, denote :math:`\hat{y}_j`.
+
+    2. Calculate the estimated probability that the prediction is false:
+
+    .. math::
+        P(\hat{y} \neq y)_{j} = |\hat{y}_{j} -  \hat{p}_{j}|
+
+    3. Calculate the estimated probability that the prediction is correct:
+
+    .. math::
+        P(\hat{y} = y)_{j}=1-P(\hat{y} \neq y)_{j}
+
+    4. Calculate estimated confusion matrix element required for the metric:
+
+    .. math::
+        TP_{j}=\begin{cases}P(\hat{y} = y)_{j},\qquad  \ \hat{y}_{j}=1  \\  0, \qquad \qquad \qquad
+        \hat{y}_{j}=0 \end{cases}
+
+    .. math::
+        TN_{j}=\begin{cases} 0,\qquad \qquad \qquad \hat{y}_{j}=1 \\ P(\hat{y} = y)_{j},\qquad \
+        \hat{y}_{j}=0\end{cases}
+
+    5. Get estimated confusion matrix elements for the whole set of predictions, e.g. for True Positives:
+
+    .. math::
+        {TP} = \sum_{j}^{n} {TP}_{j}
+
+    6. Estimate accuracy:
+
+    .. math::
+        Accuracy = \frac{TP+TN}{n}
+
+
+Estimating ROC AUC
+------------------
+
+ROC AUC is much more complex than accuracy. To calculate it one needs values of confusion matrix elements (True
+Positives, False Positives, True Negatives, False Negatives)
+for a set of all thresholds :math:`t`. This set is obtained by selecting subset of :math:`m`
+unique values from the set of probability predictions
+:math:`\mathbf{\hat{p}}` and sorting them increasingly.
+Therefore :math:`\mathbf{t}=\{\hat{p_1}, \hat{p_2}, ..., \hat{p_m}\}` and
+:math:`\hat{p_1} < \hat{p_2} < ... < \hat{p_m}` (notice that in some cases :math:`m=n`).
+
+The algorithm runs as follows:
 
     1. Get :math:`i`-*th* threshold from :math:`\mathbf{t}`,  denote :math:`t_i`.
-    2. Get :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote :math:`p_j`.
+    2. Get :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote :math:`\hat{p}_j`.
     3. Get binary prediction by thresholding probability estimate:
 
     .. math::
-        \hat{p}_{i,j}=\begin{cases}1,\qquad  \hat{p}_j \geq t_i \\ 0,\qquad  \hat{p}_j < t_i \end{cases}
+        \hat{y}_{i,j}=\begin{cases}1,\qquad  \hat{p}_j \geq t_i \\ 0,\qquad  \hat{p}_j < t_i \end{cases}
 
     4. Calculate the estimated probability that the prediction is false:
 
     .. math::
-        P(\hat{y} \neq y)_{i,j} = |\hat{y}_{i,j} -  \hat{p}_{i,j}|
+        P(\hat{y} \neq y)_{i,j} = |\hat{y}_{i,j} -  \hat{p}_{j}|
 
     5. Calculate the estimated probability that the prediction is correct:
 
@@ -54,17 +106,17 @@ for a set of :math:`n` predictions according to following algorithm:
     6. Calculate the confusion matrix elements probability:
 
     .. math::
-        TP_{i,j}=\begin{cases}P(\hat{y} = y)_{i,j},\qquad  y_{i,j}=1  \\  0,\qquad \qquad \qquad \thinspace  y_{i,j}=0 \end{cases}
+        TP_{i,j}=\begin{cases}P(\hat{y} = y)_{i,j},\qquad  \hat{y}_{i,j}=1  \\  0,\qquad \qquad \qquad \thinspace  \hat{y}_{i,j}=0 \end{cases}
 
     .. math::
-        FP_{i,j}=\begin{cases}P(\hat{y} \neq y)_{i,j},\qquad  y_{i,j}=1  \\  0,\qquad \qquad \qquad \thinspace  y_{i,j}=0
+        FP_{i,j}=\begin{cases}P(\hat{y} \neq y)_{i,j},\qquad  \hat{y}_{i,j}=1  \\  0,\qquad \qquad \qquad \thinspace  \hat{y}_{i,j}=0
         \end{cases}
 
     .. math::
-        TN_{i,j}=\begin{cases} 0,\qquad \qquad \qquad \thinspace  y_{i,j}=1 \\ P(\hat{y} = y)_{i,j},\qquad y_{i,j}=0\end{cases}
+        TN_{i,j}=\begin{cases} 0,\qquad \qquad \qquad \thinspace  \hat{y}_{i,j}=1 \\ P(\hat{y} = y)_{i,j},\qquad \hat{y}_{i,j}=0\end{cases}
 
     .. math::
-        FN_{i,j}=\begin{cases} 0,\qquad \qquad \qquad \thinspace  y_{i,j}=1 \\ P(\hat{y} \neq y)_{i,j},\qquad y_{i,j}=0\end{cases}
+        FN_{i,j}=\begin{cases} 0,\qquad \qquad \qquad \thinspace  \hat{y}_{i,j}=1 \\ P(\hat{y} \neq y)_{i,j},\qquad \hat{y}_{i,j}=0\end{cases}
 
     7. Calculate steps 2-6 for all predictions in :math:`\hat{\mathbf{p}}`
        (i.e. for all :math:`j` from 1 to :math:`n`) so
@@ -93,7 +145,8 @@ for a set of :math:`n` predictions according to following algorithm:
 
 
 Probability calibration
-=======================
+-----------------------
+
 In order to accurately estimate the performance from the model scores, they need to be well calibrated. If a classifier assigns a probability of 0.9 for a set of observations and 90% of these observations belong to the positive class, we consider that classifier to be well calibrated with respect to that subset. Most predictive models focus on performance rather than on probability estimation, therefore their scores are rarely calibrated.
 Examples of different models and their calibration curves are shown below [1]_:
 
