@@ -45,8 +45,7 @@ Let's estimate performance for reference and analysis partitions:
 .. code:: python
 
     >>> # fit performance estimator and estimate for combined reference and analysis
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period='M')
-    >>> cbpe.fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period='M').fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
 
 .. parsed-literal::
@@ -145,8 +144,7 @@ univariate drift detection.
 
 .. code:: python
 
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='M')
-    >>> univariate_calculator.fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='M').fit(reference_data=reference)
     >>> univariate_results = univariate_calculator.calculate(data=pd.concat([analysis]))
     >>> nml.Ranker.by('alert_count').rank(univariate_results, metadata)
 

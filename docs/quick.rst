@@ -84,8 +84,7 @@ without access to it's :term:`Target`. To find out how, see :ref:`performance-es
 .. code-block:: python
 
     >>> # fit estimator and estimate
-    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size)
-    >>> estimator.fit(reference)
+    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size).fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
     >>> # show results
     >>> figure = estimated_performance.plot(kind='performance')
@@ -108,8 +107,7 @@ An example of using NannyML to compute and visualize data drift for the model in
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-    >>> univariate_calculator.fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size).fit(reference_data=reference)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's plot drift results for all model inputs
     >>> for feature in metadata.features:
@@ -172,9 +170,7 @@ see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-    >>> # NannyML compares drift versus the full reference dataset.
-    >>> rcerror_calculator.fit(reference_data=reference)
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size).fit(reference_data=reference)
     >>> # let's see Reconstruction error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
     >>> figure = rcerror_results.plot(kind='drift')

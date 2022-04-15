@@ -128,9 +128,7 @@ An example using it can be seen below:
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> # NannyML compares drift versus the full reference dataset.
-    >>> univariate_calculator.fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
     >>> # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
@@ -300,9 +298,7 @@ An example of us using it can be seen below:
 
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> # NannyML compares drift versus the full reference dataset.
-    >>> rcerror_calculator.fit(reference_data=reference)
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
     >>> # let's see RC error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
 
@@ -462,8 +458,7 @@ method.
 
 .. code-block:: python
 
-    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> target_distribution_calculator.fit(reference_data=reference)
+    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
 
 After fitting the :class:`calculator<nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator>`
 is ready to use. We calculate the target distribution by calling the

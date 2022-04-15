@@ -65,8 +65,7 @@ method needs to be specified now. Read more about chunking in relevant :ref:`gui
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5000)
-    >>> cbpe.fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where ground truth is missing (i.e. the ``analysis``

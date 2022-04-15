@@ -123,8 +123,7 @@ drift statistics produces the following results:
     >>> metadata.target_column_name = 'y_true'
 
     >>> # Let's compute univariate drift
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=DPP)
-    >>> univariate_calculator.fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=DPP).fit(reference_data=reference)
     >>> # let's compute (and visualize) results across all the dataset.
     >>> univariate_results = univariate_calculator.calculate(data=data)
 
@@ -223,8 +222,7 @@ what it does on the butterfly dataset.
 .. code-block:: python
 
     # Let's compute univariate drift
-    rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=DPP)
-    rcerror_calculator.fit(reference_data=reference)
+    rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=DPP).fit(reference_data=reference)
     # let's compute (and visualize) results across all the dataset.
     rcerror_results = rcerror_calculator.calculate(data=data)
 

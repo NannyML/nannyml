@@ -50,7 +50,7 @@ values are joined on the analysis frame by the ``identifier`` column.
 
 .. code-block:: python
 
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
+    >>> data = pd.concat([reference, analysis.merge(analysis_target, on='identifier').reset_index(drop=True)
     >>> data.loc[data['partition'] == 'analysis'].head(3)
 
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -106,8 +106,7 @@ The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculato
 
 .. code-block:: python
 
-    >>> performance_calculator = nml.PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', 'recall'], chunk_size=5000)
-    >>> performance_calculator.fit(reference_data=reference)
+    >>> performance_calculator = nml.PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', 'recall'], chunk_size=5000).fit(reference_data=reference)
 
 The fitted :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` can be used to calculate
 realized performance metrics on data for which target values are available.
