@@ -49,15 +49,15 @@ def test_calculator_init_should_set_metrics(metadata):  # noqa: D103
 def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target_data_present(  # noqa: D103, F821
     data, metadata
 ):
-    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', 'f1'])
-    calc.fit(reference_data=data[0])
+    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', 'f1']).fit(reference_data=data[0])
     with pytest.raises(InvalidArgumentsException):
         _ = calc.calculate(analysis_data=data[1])
 
 
 def test_calculator_calculate_should_include_chunk_information_columns(data, metadata):  # noqa: D103
-    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc'], chunk_size=5000)
-    calc.fit(reference_data=data[0])
+    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc'], chunk_size=5000).fit(
+        reference_data=data[0]
+    )
     ref_with_tgt = data[0].join(data[2], on='identifier', rsuffix='_r')
     sut = calc.calculate(analysis_data=ref_with_tgt)
 
@@ -80,8 +80,9 @@ def test_calculator_calculate_should_include_target_completeness_rate(data, meta
     # Drop 90% of the target values in the second chunk
     data.loc[5000:9499, metadata.target_column_name] = np.NAN
 
-    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc'], chunk_size=5000)
-    calc.fit(reference_data=ref_data)
+    calc = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc'], chunk_size=5000).fit(
+        reference_data=ref_data
+    )
     sut = calc.calculate(analysis_data=data)
 
     assert 'targets_missing_rate' in sut.data.columns
@@ -92,7 +93,6 @@ def test_calculator_calculate_should_include_target_completeness_rate(data, meta
 def test_calculator_calculates_minimum_chunk_size_for_each_metric(data, metadata):  # noqa: D103
     metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
     for metric in metrics:
-        calc = PerformanceCalculator(model_metadata=metadata, metrics=[metric])
-        calc.fit(reference_data=data[0])
+        calc = PerformanceCalculator(model_metadata=metadata, metrics=[metric]).fit(reference_data=data[0])
         assert calc._minimum_chunk_size > 0
         assert calc._minimum_chunk_size <= len(data[0])

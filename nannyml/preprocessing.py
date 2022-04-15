@@ -8,7 +8,7 @@ import warnings
 
 import pandas as pd
 
-from nannyml.exceptions import InvalidReferenceDataException, MissingMetadataException
+from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException, MissingMetadataException
 from nannyml.metadata import ModelMetadata
 
 logger = logging.getLogger(__name__)
@@ -45,6 +45,9 @@ def preprocess(data: pd.DataFrame, metadata: ModelMetadata, reference: bool = Fa
             'and re-running preprocessing or set metadata properties manually.\n'
             'See https://docs.nannyml.com/metadata-extraction for more information\n'
         )
+
+    if data.empty:
+        raise InvalidArgumentsException("provided data cannot be empty.")
 
     # If complete then add copies of metadata columns
     prepped_data = metadata.enrich(data)

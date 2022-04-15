@@ -14,12 +14,13 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
 from nannyml.chunk import Chunker
-from nannyml.drift import BaseDriftCalculator
+from nannyml.drift import DriftCalculator
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
 from nannyml.metadata import NML_METADATA_COLUMNS, Feature
+from nannyml.preprocessing import preprocess
 
 
-class DataReconstructionDriftCalculator(BaseDriftCalculator):
+class DataReconstructionDriftCalculator(DriftCalculator):
     """BaseDriftCalculator implementation using Reconstruction Error as a measure of drift."""
 
     def __init__(
@@ -64,7 +65,6 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
 
         Examples
         --------
-
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
         >>> metadata = nml.extract_metadata(ref_df)
@@ -99,7 +99,30 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
             imputer_continuous = SimpleImputer(missing_values=np.nan, strategy='mean')
         self._imputer_continuous = imputer_continuous
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame):
+        """Fits the drift calculator using a set of reference data.
+
+        Parameters
+        ----------
+        reference_data : pd.DataFrame
+            A reference data set containing predictions (labels and/or probabilities) and target values.
+
+        Returns
+        -------
+        calculator: DriftCalculator
+            The fitted calculator.
+
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # Create a calculator and fit it
+        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
+
+        """
+        reference_data = preprocess(reference_data, self.model_metadata, reference=True)
+
         selected_categorical_column_names = _get_selected_feature_names(
             self.selected_features, self.model_metadata.categorical_features
         )
@@ -139,10 +162,38 @@ class DataReconstructionDriftCalculator(BaseDriftCalculator):
         # Calculate thresholds
         self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
 
-    def _calculate_drift(
+        return self
+
+    def calculate(
         self,
         data: pd.DataFrame,
     ) -> DataReconstructionDriftCalculatorResult:
+        """Calculates the data reconstruction drift for a given data set.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The dataset to calculate the reconstruction drift for.
+
+        Returns
+        -------
+        reconstruction_drift: DataReconstructionDriftCalculatorResult
+            A
+            :class:`result<nannyml.drift.model_inputs.multivariate.data_reconstruction.results.DataReconstructionDriftCalculatorResult>`
+            object where each row represents a :class:`~nannyml.chunk.Chunk`,
+            containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
+            for that :class:`~nannyml.chunk.Chunk`.
+
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(ref_df)
+        >>> # Create a calculator and fit it
+        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
+        >>> drift = drift_calc.calculate(data)
+        """
+        data = preprocess(data, self.model_metadata)
 
         selected_categorical_column_names = _get_selected_feature_names(
             self.selected_features, self.model_metadata.categorical_features

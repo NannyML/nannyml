@@ -3,6 +3,8 @@
 #  License: Apache Software License 2.0
 
 """Module for target distribution monitoring."""
+from __future__ import annotations
+
 from typing import Dict
 
 import numpy as np
@@ -52,7 +54,6 @@ class TargetDistributionCalculator:
 
         Examples
         --------
-
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
         >>> metadata = nml.extract_metadata(ref_df)
@@ -79,14 +80,13 @@ class TargetDistributionCalculator:
         # TODO: determine better min_chunk_size for target distribution
         self._minimum_chunk_size = 300
 
-    def fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame) -> TargetDistributionCalculator:
         """Fits the calculator to reference data.
 
         During fitting the reference target data is validated and stored for later use.
 
         Examples
         --------
-
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
         >>> metadata = nml.extract_metadata(ref_df)
@@ -106,6 +106,8 @@ class TargetDistributionCalculator:
             NML_METADATA_TARGET_COLUMN_NAME
         ]
 
+        return self
+
     def calculate(self, data: pd.DataFrame):
         """Calculates the target distribution of a binary classifier.
 
@@ -118,7 +120,6 @@ class TargetDistributionCalculator:
 
         Examples
         --------
-
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
         >>> metadata = nml.extract_metadata(ref_df)

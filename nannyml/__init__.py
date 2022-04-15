@@ -41,7 +41,6 @@ from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBase
 from .datasets import load_modified_california_housing_dataset, load_synthetic_sample
 from .drift import (
     AlertCountRanking,
-    BaseDriftCalculator,
     DataReconstructionDriftCalculator,
     DataReconstructionDriftCalculatorResult,
     DriftCalculator,
@@ -53,6 +52,6 @@ from .drift import (
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
 from .performance_calculation import PerformanceCalculator
-from .performance_estimation import CBPE, BasePerformanceEstimator
+from .performance_estimation import CBPE, PerformanceEstimator
 
 logger = logging.getLogger(__name__)
