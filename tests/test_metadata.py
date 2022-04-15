@@ -12,7 +12,6 @@ import pytest
 
 from nannyml.exceptions import MissingMetadataException
 from nannyml.metadata import (
-    NML_METADATA_IDENTIFIER_COLUMN_NAME,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
@@ -22,7 +21,6 @@ from nannyml.metadata import (
     FeatureType,
     ModelMetadata,
     _guess_features,
-    _guess_identifiers,
     _guess_partitions,
     _guess_predicted_probabilities,
     _guess_predictions,
@@ -150,7 +148,6 @@ def test_model_metadata_creation_with_defaults_has_correct_properties():  # noqa
     assert sut.model_problem == 'binary_classification'
     assert sut.features is not None
     assert len(sut.features) == 0
-    assert sut.identifier_column_name == 'id'
     assert sut.prediction_column_name is None
     assert sut.predicted_probability_column_name is None
     assert sut.target_column_name == 'target'
@@ -163,7 +160,6 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
         model_name='model',
         model_problem='classification',
         features=[sample_feature],
-        identifier_column_name='ident',
         prediction_column_name='pred',
         predicted_probability_column_name='pred_proba',
         target_column_name='gt',
@@ -177,7 +173,6 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
     assert sut.features[0].column_name == 'col'
     assert sut.features[0].description == 'desc'
     assert sut.features[0].feature_type == FeatureType.CATEGORICAL
-    assert sut.identifier_column_name == 'ident'
     assert sut.prediction_column_name == 'pred'
     assert sut.predicted_probability_column_name == 'pred_proba'
     assert sut.target_column_name == 'gt'
@@ -187,7 +182,6 @@ def test_model_metadata_creation_with_custom_values_has_correct_properties(sampl
 
 def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_dict()
-    assert sut['identifier_column_name'] == 'id'
     assert sut['prediction_column_name'] is None
     assert sut['predicted_probability_column_name'] is None
     assert sut['partition_column_name'] == 'partition'
@@ -197,7 +191,6 @@ def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
 
 def test_to_pd_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_df()
-    assert sut.loc[sut['label'] == 'identifier_column_name', 'column_name'].iloc[0] == 'id'
     assert sut.loc[sut['label'] == 'prediction_column_name', 'column_name'].iloc[0] is None
     assert sut.loc[sut['label'] == 'predicted_probability_column_name', 'column_name'].iloc[0] is None
     assert sut.loc[sut['label'] == 'partition_column_name', 'column_name'].iloc[0] == 'partition'
@@ -278,16 +271,15 @@ def test_extract_metadata_for_no_cols_dataframe_should_return_none():  # noqa: D
 
 
 def test_extract_metadata_without_any_feature_columns_should_return_metadata_without_features():  # noqa: D103
-    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts'])
+    data = pd.DataFrame(columns=['prediction', 'actual', 'partition', 'ts'])
     sut = extract_metadata(data)
     assert len(sut.features) == 0
 
 
 def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names(sample_model_metadata):  # noqa: D103
-    data = pd.DataFrame(columns=['identity', 'y_pred', 'y_pred_proba', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    data = pd.DataFrame(columns=['y_pred', 'y_pred_proba', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
     sut = extract_metadata(data)
     assert sut is not None
-    assert sut.identifier_column_name == 'identity'
     assert sut.prediction_column_name == 'y_pred'
     assert sut.predicted_probability_column_name == 'y_pred_proba'
     assert sut.target_column_name == 'actual'
@@ -297,7 +289,7 @@ def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names
 
 # TODO verify behaviour
 def test_extract_metadata_for_empty_dataframe_should_return_features_with_feature_type_unknown():  # noqa: D103
-    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    data = pd.DataFrame(columns=['prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
     sut = extract_metadata(data)
     assert len(sut.features) == 2
     assert sut.features[0].feature_type is FeatureType.UNKNOWN
@@ -307,7 +299,6 @@ def test_extract_metadata_for_empty_dataframe_should_return_features_with_featur
 def test_extract_metadata_without_matching_columns_should_set_them_to_none():  # noqa: D103
     data = pd.DataFrame(columns=['a', 'b', 'c'])
     sut = extract_metadata(data)
-    assert sut.identifier_column_name is None
     assert sut.prediction_column_name is None
     assert sut.target_column_name is None
     assert sut.partition_column_name is None
@@ -324,13 +315,13 @@ def test_extract_metadata_without_matching_columns_should_set_features():  # noq
 
 
 def test_extract_metadata_with_multiple_matching_columns_should_return_first_matching_column():  # noqa: D103
-    data = pd.DataFrame(columns=['ident', 'id', 'uid'])
+    data = pd.DataFrame(columns=['target', 'ground_truth', 'actual'])
     sut = extract_metadata(data)
-    assert sut.identifier_column_name == 'ident'
+    assert sut.target_column_name == 'target'
 
 
 def test_extract_metadata_does_not_fail_when_adding_metadata_parameter_fails():  # noqa: D103
-    cols = ['identity', 'prediction', 'actual', 'partition', 'timestamp_non_standard', 'feat1', 'feat2']
+    cols = ['prediction', 'actual', 'partition', 'timestamp_non_standard', 'feat1', 'feat2']
     df = pd.DataFrame(columns=cols)
     try:
         _ = extract_metadata(df)
@@ -338,7 +329,7 @@ def test_extract_metadata_does_not_fail_when_adding_metadata_parameter_fails(): 
         pytest.fail("should not have failed because of inner exception")
 
 
-@pytest.mark.parametrize('metadata_column', ['identity', 'prediction', 'actual', 'partition'])
+@pytest.mark.parametrize('metadata_column', ['prediction', 'actual', 'partition'])
 def test_extract_metadata_raises_missing_metadata_exception_when_missing_metadata_values(metadata_column):  # noqa: D103
     df = pd.DataFrame({metadata_column: [np.NaN]})
     with pytest.raises(MissingMetadataException):
@@ -349,23 +340,6 @@ def test_extract_metadata_raises_missing_metadata_exception_when_missing_timesta
     df = pd.DataFrame({'timestamp': [datetime.datetime.now(), np.NaN]})
     with pytest.raises(MissingMetadataException):
         _ = extract_metadata(df)
-
-
-@pytest.mark.parametrize(
-    'col,expected',
-    [
-        ('id', True),
-        ('ident', True),
-        ('identity', True),
-        ('identifier', True),
-        ('uid', True),
-        ('uuid', True),
-        ('nope', False),
-    ],
-)
-def test_guess_identifiers_yields_correct_results(col, expected):  # noqa: D103
-    sut = _guess_identifiers(data=pd.DataFrame(columns=[col]))
-    assert col == sut[0] if expected else len(sut) == 0
 
 
 @pytest.mark.parametrize(
@@ -419,7 +393,7 @@ def test_guess_partitions_yields_correct_results(col, expected):  # noqa: D103
 
 
 @pytest.mark.parametrize(
-    'col,expected', [('part', True), ('A', True), ('partition', False), ('id', False), ('nope', True)]
+    'col,expected', [('part', True), ('A', True), ('partition', False), ('id', True), ('nope', True)]
 )
 def test_guess_features_yields_correct_results(col, expected):  # noqa: D103
     sut = _guess_features(data=pd.DataFrame(columns=[col]))
@@ -467,7 +441,6 @@ def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
     md = extract_metadata(data, model_name='model')
     sut = md.enrich(data).columns
 
-    assert NML_METADATA_IDENTIFIER_COLUMN_NAME in sut
     assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME in sut
@@ -481,16 +454,14 @@ def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
     md = extract_metadata(data, model_name='model')
     sut = md.enrich(data).columns
 
-    assert len(sut) == len(data.columns) + 6
+    assert len(sut) == len(data.columns) + 5
     assert len(data.columns) == old_column_count
 
-    assert NML_METADATA_IDENTIFIER_COLUMN_NAME in sut
     assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME in sut
     assert NML_METADATA_TARGET_COLUMN_NAME in sut
     assert NML_METADATA_PARTITION_COLUMN_NAME in sut
-    assert 'identity' in sut
     assert 'prediction' in sut
     assert 'actual' in sut
     assert 'partition' in sut
