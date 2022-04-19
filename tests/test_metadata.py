@@ -276,6 +276,11 @@ def test_extract_metadata_without_any_feature_columns_should_return_metadata_wit
     assert len(sut.features) == 0
 
 
+def test_extract_metadata_should_not_consider_excluded_columns(sample_model_metadata, sample_data):  # noqa: D103
+    metadata = extract_metadata(sample_data, exclude_columns=['id'])
+    assert metadata.feature(feature='id') is None
+
+
 def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names(sample_model_metadata):  # noqa: D103
     data = pd.DataFrame(columns=['y_pred', 'y_pred_proba', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
     sut = extract_metadata(data)

@@ -118,7 +118,6 @@ drift statistics produces the following results:
 
     >>> # Let's create the model metadata object
     >>> metadata = nml.extract_metadata(data = reference, model_name='3d_rotation')
-    >>> metadata.identifier_column_name = 'ordered'
     >>> metadata.timestamp_column_name = 'ordered'
     >>> metadata.target_column_name = 'y_true'
 

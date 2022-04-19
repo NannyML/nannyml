@@ -591,18 +591,24 @@ class ModelMetadata:
             self.features.remove(current_feature)
 
 
-def extract_metadata(data: pd.DataFrame, model_name: str = None):
+def extract_metadata(data: pd.DataFrame, model_name: str = None, exclude_columns: List[str] = None):
     """Tries to extract model metadata from a given data set.
 
     Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
     NannyML includes this helper function that tries to do the boring stuff for you using some simple rules.
 
+    By default, all columns in the given dataset are considered to be either model features or metadata. Use the
+    ``exclude_columns`` parameter to prevent columns from being interpreted as metadata or features.
+
     Parameters
     ----------
     data : DataFrame
         The dataset containing model inputs and outputs, enriched with the required metadata.
-    model_name : string
-            A human-readable name for the model.
+    model_name : str
+        A human-readable name for the model.
+    exclude_columns: List[str], default=None
+        A list of column names that are to be skipped during metadata extraction, preventing them from being interpreted
+        as either model metadata or model features.
 
     Returns
     -------
@@ -674,6 +680,9 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
 
     if len(data.columns) == 0:
         return None
+
+    if exclude_columns is not None and len(exclude_columns) != 0:
+        data = data.drop(columns=exclude_columns)
 
     metadata = ModelMetadata(model_name=model_name)
 

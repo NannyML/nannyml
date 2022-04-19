@@ -87,7 +87,7 @@ Let’s start by loading some synthetic data provided by the NannyML package.
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> reference.head()
 

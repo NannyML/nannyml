@@ -51,7 +51,7 @@ Let's extract the metadata and complete the missing information:
 .. code-block:: python
 
     >>> analysis.head(3)
-    >>> metadata = nml.extract_metadata(reference)
+    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
 
 
