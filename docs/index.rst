@@ -1,3 +1,4 @@
+======================================
 Welcome to NannyML's documentation!
 ======================================
 
@@ -23,8 +24,10 @@ Welcome to NannyML's documentation!
    :caption: Contents:
 
    quick
-   guides
-   deep_dive
+   tutorials
+   examples
+   troubleshooting
+   how_it_works
    glossary
    Technical reference <nannyml/modules>
 

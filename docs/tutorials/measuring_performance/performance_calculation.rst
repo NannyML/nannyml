@@ -1,7 +1,7 @@
 .. _performance-calculation:
 
 ======================
-Performance Monitoring
+Monitoring performance
 ======================
 
 This guide shows how to use NannyML to calculate the :term:`Realized Performance` of a model in order to monitor it.
@@ -97,7 +97,7 @@ Fit calculator and calculate
 ============================
 
 In the next step a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using the previously
-extracted :class:`~nannyml.metadata.ModelMetadata`, a list of metrics and an optional :ref:`chunking<chunk-data>` specification.
+extracted :class:`~nannyml.metadata.ModelMetadata`, a list of metrics and an optional :ref:`chunking<chunking>` specification.
 The list of metrics specifies which metrics should be calculated. For an overview of all metrics,
 check the :mod:`~nannyml.performance_calculation.metrics` module.
 
@@ -159,11 +159,11 @@ The results can be plotted for vizual inspection:
     >>> fig = realized_performance.plot(kind='performance', metric='roc_auc')
     >>> fig.show()
 
-.. image:: ../_static/performance_calculation_roc_auc.svg
+.. image:: /_static/performance_calculation_roc_auc.svg
 
 .. code-block:: python
 
     >>> fig = realized_performance.plot(kind='performance', metric='recall')
     >>> fig.show()
 
-.. image:: ../_static/performance_calculation_recall.svg
+.. image:: /_static/performance_calculation_recall.svg

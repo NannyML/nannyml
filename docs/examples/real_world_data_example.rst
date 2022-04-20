@@ -1,3 +1,5 @@
+.. _real_world_data_example:
+
 =============================
 Example on real world dataset
 =============================

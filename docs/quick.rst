@@ -99,7 +99,16 @@ Detecting Data Drift
 ====================
 
 NannyML allows for further investigation into potential peformance issues with it's data drift detection
-functionality. See :ref:`data-drift-practice` for more details.
+functionality. See :ref:`data-drift` for more details.
+
+Drift alerts
+-------------
+
+NannyML uses statistics to issue an :term:`Alert`. It establishes an expected baseline from
+the reference data and when the drift results for a chunk are unlikely, given the expectations
+from the baseline, then it issues a drift alert. Given this statistical approach, there can be
+cases where the alert is a false positive. However when reviewing the data drift visualizations
+they can be easily spotted and discarded.
 
 An example of using NannyML to compute and visualize data drift for the model inputs can be seen below:
 
@@ -164,7 +173,7 @@ NannyML can also look for drift in the model outputs:
 .. image:: ./_static/drift-guide-predictions.svg
 
 More complex data drift cases can get detected by Data Reconstruction with PCA. For more information
-see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 
 
 .. code-block:: python

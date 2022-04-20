@@ -1,13 +1,105 @@
+.. _chunking-data:
+
+=============
+Chunking data
+=============
+
+.. note::
+    Not sure what data chunk is in the first place? Read about :term:`Data Chunk`.
+
+Why do we need chunks?
+======================
+
+
+NannyML monitors ML models in production by doing data drift detection and performance estimation or monitoring.
+This functionality relies on aggregate metrics that are evaluated on samples of production data.
+These samples are called chunks. All the results generated are
+calculated and presented per chunk i.e. a chunk is a single data point on the monitoring results. You
+can refer to :ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance-estimation>`
+to review example results.
+
+
+Additional considerations
+=========================
+
+Different partitions within one chunk
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to get performance estimation or data drift results for a dataset that contains two
+partitions - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
+them. Such a chunk will be considered as an ``analysis`` chunk, even if only one observation belongs to ``analysis``
+observations. In the example below, chunk which contains observations from 44444 to 55554 is considered an analysis
+chunk but indices from 44444 to 49999 point to reference observations:
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9).fit(reference_data=reference)
+    >>> # Estimate on concatenated reference and analysis
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
+    >>> est_perf.data.iloc[3:5,:7]
+
+
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   estimated_roc_auc |
++====+===============+===============+=============+=====================+=====================+=============+=====================+
+|  3 | [33333:44443] |         33333 |       44443 | 2016-07-25 00:00:00 | 2017-04-19 23:59:59 | reference   |            0.968876 |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
+|  4 | [44444:55554] |         44444 |       55554 | 2017-04-19 00:00:00 | 2018-01-15 23:59:59 | analysis    |            0.968921 |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
+
+.. code-block:: python
+
+    >>> reference.index.max()
+    49999
+
+.. note::
+    This is especially important for Performance Estimation. Since the Performance Estimation algorithm is calibrated
+    on the ``reference`` dataset (see :ref:`PE deep dive <performance-estimation-deep-dive>`), it will perform better on
+    it. If the first ``analysis`` chunk contains ``reference`` data, the performance estimation may perform better on this
+    chunk as well. Keep this in mind when interpreting the results.
+
+
+Underpopulated chunks
+~~~~~~~~~~~~~~~~~~~~~
+
+Depending on the selected chunking method and the provided datasets, some chunks may be tiny. In fact, they
+might be so small that results obtained are governed by noise rather than actual signal. NannyML estimates minimum chunk
+size for the monitored data and model provided (see how in :ref:`minimum chunk size <minimum-chunk-size>`). If some of the chunks
+created are smaller than the minimum chunk size, a warning will be raised. For example:
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q").fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
+    UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be
+    statistically relevant and might negatively influence the quality of calculations. Please consider splitting
+    your data in a different way or continue at your own risk.
+
+When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in above
+sections. When there are more chunks mentioned - the selected splitting method is most likely not suitable.
+Look at :ref:`minimum chunk size <minimum-chunk-size>` to get more information about the effect of
+small chunks. Beware of the trade-offs involved, when selecting the chunking method.
+
+
+Not enough chunks
+~~~~~~~~~~~~~~~~~
+Sometimes the selected chunking method may result in not enough chunks being generated in the ``reference``
+period. NannyML calculates thresholds based on variability of metrics on the ``reference`` chunks (see how thresholds
+are calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
+far from optimal but a reasonable minimum. If there are less than 6 chunks, a warning will be raised:
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=5).fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
+    UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
+    continue at your own risk.
+
 .. _minimum-chunk-size:
 
 ==================
 Minimum chunk size
 ==================
-
-.. note::
-    Not sure what data chunk is in the first place? Read about :term:`Data Chunk` for a short introduction or go through
-    the :ref:`guide<chunk-data>` for practical implementations.
-
 
 Small sample size strongly affects the reliability of any ML or statistical analysis, including data drift detection
 and performance estimation. NannyML allows splitting data in chunks in different ways to let users choose chunks that
@@ -126,12 +218,12 @@ based on the number of features user to perform data reconstruction according to
 
 The result based on internal testing. It is merely a suggestion because multidimensional data can have difficult to foresee
 instabilities. A better suggestion could be derived by inspecting the data used to look for
-:ref:`multivariate drift<data-drift-multivariate>` but at the cost of increased computation time.
+:ref:`multivariate drift<multivariate_feature_drift_detection>` but at the cost of increased computation time.
 
 Minimum Chunk for Univariate Drift
 ==================================
 
-To ensure that there is no significant noise present in :ref:`Univariate Drift Detection<data-drift-univariate>`
+To ensure that there is no significant noise present in :ref:`Univariate Drift Detection<univariate_feature_drift_detection>`
 the recommended minimum chunk size is 500. It is a rule of thumb
 choice that should cover most common cases. A better suggestion could be derived by inspecting the data used
 for Univariate Drift detection but at the cost of increased computation time.

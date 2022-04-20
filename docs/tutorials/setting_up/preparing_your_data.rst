@@ -1,8 +1,8 @@
 .. _import-data:
 
-==========
-Setting up
-==========
+===================
+Preparing Your Data
+===================
 
 .. note::
     A lot of new terminology will be introduced here. A full terminology overview is available in our
@@ -30,7 +30,7 @@ a given day or not. You can see below how to import it and explore it.
     49998             10.336794    0 - 20K €             1.516446                    8.733694  ...                 0  2017-08-31 03:10:27          0.00  reference
     49999              2.815616  20K - 20K €             2.244124                    7.473265  ...                 1  2017-08-31 03:10:29          1.00  reference
 
-On data, metadata and observations
+What it's for
 ==================================
 
 NannyML offers tools to help monitor **models** in production.
@@ -54,14 +54,51 @@ feature inputs, the model output and target.
 ..
     TODO: insert illustration that shows all data in tabular form with annotations
 
+Walkthrough
+===========
 
-Data requirements
-=================
+.. _data-drift-partitions:
+
+Data Periods
+---------------
+
+In order to detect data drift NannyML needs two datasets. The reference partition and the
+analysis partition.
+
+Reference Period
+^^^^^^^^^^^^^^^^^^^
+
+The reference partition's purpose is to establish a baseline of expectations for the machine
+learning model being monitored. The model inputs, model outputs and
+the performance results of the monitored model are needed in the reference partition and are assumed
+to be stable and acceptable.
+
+The reference dataset can be a reference (or benchmark) period when the
+monitored model has been in production and its performance results were satisfactory.
+Alternatively, it can be the test set used when evaluating the monitored model before
+deploying it to production. The reference dataset **cannot** be the training set used to fit the model.
+
+Analysis Period
+^^^^^^^^^^^^^^^^^^^
+
+The analysis partition is where NannyML analyzes the data drift and performance characteristics of the monitored
+model and compares them to the reference partition.
+The analysis partition will usually consist of the latest production data up to a desired point in
+the past, which needs to be after the point where the reference partition ends.
+The analysis partition is not required to have ground truth and associated performance results
+available.
+
+NannyML when performing drift analysis compares each :term:`Data Chunk` of the analysis partition
+with the reference data. NannyML will flag any meaningful changes data distributions as data drift.
+
+
+Meeting data requirements
+-------------------------
 
 The data provided to NannyML should contain the following columns:
 
 Identifier
-----------
+^^^^^^^^^^^^^^^^^^^
 
 A unique, identifying value for each observation. See :term:`Identifier`.
 
@@ -69,7 +106,7 @@ If the data does not contain any real identifier column an artificial one can al
 timestamps are good candidates.
 
 Timestamp
----------
+^^^^^^^^^^^^^^^^^^^
 
 Name of the column containing the timestamp at which the observation occurred, i.e. when the model was invoked
 using the given inputs and yielding the resulting prediction. See :term:`Timestamp`.
@@ -82,7 +119,7 @@ using the given inputs and yielding the resulting prediction. See :term:`Timesta
                 - *Unix-epoch* in units of seconds, e.g. ``1513393355``
 
 Predicted probability
----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` that is emitted by the model, most likely a float.
 
@@ -91,7 +128,7 @@ The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilitie
 
 
 Prediction
-----------
+^^^^^^^^^^^^^^^^^^^
 
 The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresholding) the prediction scores or probabilities.
 
@@ -103,7 +140,7 @@ The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresh
     as intended. NannyML will interpret ``1`` as the *positive label*.
 
 Target
-------
+^^^^^^^^^^^^^^^^^^^
 
 The actual outcome of the event the machine learning model is trying to predict. See :term:`Target`.
 
@@ -114,10 +151,10 @@ The actual outcome of the event the machine learning model is trying to predict.
     Performance in will be *calculated* using them.
     In the *analysis data* where they are not required, performance can be *estimated*.
 
-Partition
----------
+Period
+^^^^^^^^^^^^^^^^^^^
 
-The partition each observation belongs to, an indicator for NannyML on whether to use this observation as
+The period each observation belongs to, an indicator for NannyML on whether to use this observation as
 *reference* data or *analysis* data. The *reference* data contains observations for which target values
 are available, hence the model performance can be *calculated* for this set.
 The occurrence of drift - or the lack hereof - is known and validated.
@@ -155,18 +192,18 @@ This means that for the example **work_from_home** case:
      - ``identifier``
    * - Timestamp
      - ``timestamp``
-   * - Partition
-     - ``partition``
+   * - Period
+     - ``period``
 
 Providing metadata
-===================
+--------------------
 
 NannyML uses the :class:`nannyml.metadata.ModelMetadata` and :class:`nannyml.metadata.Feature` classes
 to deal with metadata. Whilst it is possible to construct the model metadata fully manual using these classes,
 this approach does not scale well for more complex models with many features.
 
 Extracting metadata
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 NannyML provides the :func:`nannyml.metadata.extract_metadata` function to automatically extract the required metadata
 from a given ``DataFrame``. It does so by following some simple naming conventions and heuristics to column names
@@ -237,7 +274,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     and update the values where needed.
 
 Heuristics
-----------
+^^^^^^^^^^^^^^^^^^^
 
 NannyML uses some simple heuristics to detect metadata, often by naming convention. By using the right column names,
 NannyML can extract all required metadata automatically.
@@ -304,7 +341,7 @@ We can see in our example that we are currently missing the ``target_column_name
     (False, ['target_column_name'])
 
 Updating metadata
------------------
+^^^^^^^^^^^^^^^^^^^
 
 The metadata can be completed by providing the missing value.
 

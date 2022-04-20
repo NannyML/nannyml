@@ -192,7 +192,7 @@ Understanding Reconstruction Error with PCA
 
 As PCA learns the internal structure of the data, a significant change in the reconstruction error means
 that the learned structure no longer accurately approximates the current data structure. This indicates data drift.
-:ref:`Multivariate Drift Detection<data-drift-multivariate>` shows how one can compute
+:ref:`Multivariate Drift Detection<multivariate_feature_drift_detection>` shows how one can compute
 Reconstruction Error with PCA.
 
 Applying PCA as part of the Data Reconstruction with PCA means that we lose some information about our dataset.
