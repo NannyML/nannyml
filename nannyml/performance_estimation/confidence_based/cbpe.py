@@ -3,20 +3,29 @@
 #  License: Apache Software License 2.0
 
 """Implementation of the CBPE estimator."""
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import auc, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory, needs_calibration
-from nannyml.exceptions import NotFittedException
+from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.metadata import (
     NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
 )
@@ -31,6 +40,7 @@ class CBPE(PerformanceEstimator):
     def __init__(
         self,
         model_metadata: ModelMetadata,
+        metrics: List[str],
         features: List[str] = None,
         chunk_size: int = None,
         chunk_number: int = None,
@@ -45,6 +55,8 @@ class CBPE(PerformanceEstimator):
         ----------
         model_metadata: ModelMetadata
             Metadata telling the DriftCalculator what columns are required for drift calculation.
+        metrics: List[str]
+            A list of metrics to calculate.
         features: List[str], default=None
             An optional list of feature column names. When set only these columns will be included in the
             drift calculation. If not set all feature columns will be used.
@@ -77,8 +89,11 @@ class CBPE(PerformanceEstimator):
         """
         super().__init__(model_metadata, features, chunk_size, chunk_number, chunk_period, chunker)
 
-        self._upper_alert_threshold: float
-        self._lower_alert_threshold: float
+        self.metrics = metrics
+
+        self._confidence_deviations: Dict[str, float] = {}
+        self._alert_thresholds: Dict[str, Tuple[float, float]] = {}
+        self.needs_calibration: bool = False
 
         if calibrator is None:
             calibrator = CalibratorFactory.create(calibration)
@@ -113,17 +128,11 @@ class CBPE(PerformanceEstimator):
         if self.chunker is None:
             raise NotFittedException()
 
-        # y_true = y_true[~y_pred_proba.isna()]
-        # y_pred_proba.dropna(inplace=True)
-        #
-        # y_pred_proba = y_pred_proba[~y_true.isna()]
-        # y_true.dropna(inplace=True)
-
         reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=300)
 
-        self._lower_alert_threshold, self._upper_alert_threshold = _calculate_alert_thresholds(reference_chunks)
+        self._alert_thresholds = _calculate_alert_thresholds(reference_chunks, metrics=self.metrics)
 
-        self._confidence_deviation = _calculate_confidence_deviation(reference_chunks)
+        self._confidence_deviations = _calculate_confidence_deviations(reference_chunks, metrics=self.metrics)
 
         self.minimum_chunk_size = _minimum_chunk_size(reference_data)
 
@@ -169,8 +178,13 @@ class CBPE(PerformanceEstimator):
         """
         data = preprocess(data=data, metadata=self.model_metadata)
 
+        if self.needs_calibration:
+            data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME] = self.calibrator.calibrate(
+                data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
+            )
+
         features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=self.minimum_chunk_size)
+        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=300)
 
         res = pd.DataFrame.from_records(
             [
@@ -181,68 +195,74 @@ class CBPE(PerformanceEstimator):
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'partition': 'analysis' if chunk.is_transition else chunk.partition,
-                    'realized_roc_auc': _calculate_realized_performance(chunk),
-                    'estimated_roc_auc': _calculate_cbpe(
-                        self.calibrator.calibrate(chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME])
-                        if self.needs_calibration
-                        else chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
-                    ),
+                    **self._estimate(chunk),
                 }
                 for chunk in chunks
             ]
         )
 
-        res['confidence'] = self._confidence_deviation
-        res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
-        res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
-        res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)
         res = res.reset_index(drop=True)
         return CBPEPerformanceEstimatorResult(estimated_data=res, model_metadata=self.model_metadata)
 
-
-def _calculate_alert_thresholds(
-    reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
-) -> Tuple[float, float]:
-
-    realised_performance_chunks = [_calculate_realized_performance(chunk) for chunk in reference_chunks]
-
-    deviation = np.std(realised_performance_chunks) * std_num
-    mean_realised_performance = np.mean(realised_performance_chunks)
-    lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
-    upper_threshold = np.minimum(mean_realised_performance + deviation, upper_limit)
-
-    return lower_threshold, upper_threshold
-
-
-def _calculate_confidence_deviation(reference_chunks: List[Chunk]):
-    estimated_reference_performance_chunks = [
-        _calculate_cbpe(chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]) for chunk in reference_chunks
-    ]
-    deviation = np.std(estimated_reference_performance_chunks)
-    return deviation
+    def _estimate(self, chunk: Chunk) -> Dict:
+        estimates: Dict[str, Any] = {}
+        for metric in self.metrics:
+            estimated_metric = _estimate_metric(data=chunk.data, metric=metric)
+            estimates[f'confidence_{metric}'] = self._confidence_deviations[metric]
+            estimates[f'realized_{metric}'] = _calculate_realized_performance(chunk, metric)
+            estimates[f'estimated_{metric}'] = estimated_metric
+            estimates[f'upper_threshold_{metric}'] = self._alert_thresholds[metric][0]
+            estimates[f'lower_threshold_{metric}'] = self._alert_thresholds[metric][1]
+            estimates[f'alert_{metric}'] = (
+                estimated_metric > self._alert_thresholds[metric][1]
+                or estimated_metric < self._alert_thresholds[metric][0]
+            ) and chunk.partition == 'analysis'
+        return estimates
 
 
-def _calculate_realized_performance(chunk: Chunk):
-    if (
-        NML_METADATA_TARGET_COLUMN_NAME not in chunk.data.columns
-        or chunk.data[NML_METADATA_TARGET_COLUMN_NAME].isna().all()
-    ):
-        return np.NaN
+def _estimate_metric(data: pd.DataFrame, metric: str) -> float:
+    # if metric != 'roc_auc':
+    #     if metadata.prediction_column_name is None:
+    #         raise MissingMetadataException("missing value for 'prediction_column_name'. Please ensure predicted "
+    #                                        "label values are specified and present in the sample.")
 
-    y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
-    y_pred_proba = chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
+    if metric == 'roc_auc':
+        return _estimate_roc_auc(data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME])
+    elif metric == 'f1':
+        return _estimate_f1(
+            y_pred=data[NML_METADATA_PREDICTION_COLUMN_NAME],
+            y_pred_proba=data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+        )
+    elif metric == 'precision':
+        return _estimate_precision(
+            y_pred=data[NML_METADATA_PREDICTION_COLUMN_NAME],
+            y_pred_proba=data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+        )
+    elif metric == 'recall':
+        return _estimate_recall(
+            y_pred=data[NML_METADATA_PREDICTION_COLUMN_NAME],
+            y_pred_proba=data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+        )
+    elif metric == 'specificity':
+        return _estimate_specificity(
+            y_pred=data[NML_METADATA_PREDICTION_COLUMN_NAME],
+            y_pred_proba=data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+        )
+    elif metric == 'accuracy':
+        return _estimate_accuracy(
+            y_pred=data[NML_METADATA_PREDICTION_COLUMN_NAME],
+            y_pred_proba=data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+        )
+    else:
+        raise InvalidArgumentsException(
+            f"unknown value for 'metric': '{metric}'. "
+            "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
+            "'specificity','accuracy']."
+        )
 
-    y_true = y_true[~y_pred_proba.isna()]
-    y_pred_proba.dropna(inplace=True)
 
-    y_pred_proba = y_pred_proba[~y_true.isna()]
-    y_true.dropna(inplace=True)
-
-    return roc_auc_score(y_true, y_pred_proba)
-
-
-def _calculate_cbpe(data: pd.Series) -> float:
-    thresholds = np.sort(data)
+def _estimate_roc_auc(y_pred_proba: pd.Series) -> float:
+    thresholds = np.sort(y_pred_proba)
     one_min_thresholds = 1 - thresholds
 
     TP = np.cumsum(thresholds[::-1])[::-1]
@@ -264,6 +284,104 @@ def _calculate_cbpe(data: pd.Series) -> float:
     fpr = FP / (FP + TN)
     metric = auc(fpr, tpr)
     return metric
+
+
+def _estimate_f1(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
+    fn = np.where(y_pred == 0, y_pred_proba, 0)
+    TP, FP, FN = np.sum(tp), np.sum(fp), np.sum(fn)
+    metric = TP / (TP + 0.5 * (FP + FN))
+    return metric
+
+
+def _estimate_precision(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
+    TP, FP = np.sum(tp), np.sum(fp)
+    metric = TP / (TP + FP)
+    return metric
+
+
+def _estimate_recall(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    fn = np.where(y_pred == 0, y_pred_proba, 0)
+    TP, FN = np.sum(tp), np.sum(fn)
+    metric = TP / (TP + FN)
+    return metric
+
+
+def _estimate_specificity(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
+    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
+    TN, FP = np.sum(tn), np.sum(fp)
+    metric = TN / (TN + FP)
+    return metric
+
+
+def _estimate_accuracy(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
+    TP, TN = np.sum(tp), np.sum(tn)
+    metric = (TP + TN) / len(y_pred)
+    return metric
+
+
+def _calculate_confidence_deviations(reference_chunks: List[Chunk], metrics: List[str]):
+    return {metric: np.std([_estimate_metric(chunk.data, metric) for chunk in reference_chunks]) for metric in metrics}
+
+
+def _calculate_realized_performance(chunk: Chunk, metric: str):
+    if (
+        NML_METADATA_TARGET_COLUMN_NAME not in chunk.data.columns
+        or chunk.data[NML_METADATA_TARGET_COLUMN_NAME].isna().all()
+    ):
+        return np.NaN
+
+    y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
+    y_pred_proba = chunk.data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
+    y_pred = chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
+
+    y_true = y_true[~y_pred_proba.isna()]
+    y_pred_proba.dropna(inplace=True)
+
+    y_pred_proba = y_pred_proba[~y_true.isna()]
+    y_true.dropna(inplace=True)
+
+    if metric == 'roc_auc':
+        return roc_auc_score(y_true, y_pred_proba)
+    elif metric == 'f1':
+        return f1_score(y_true=y_true, y_pred=y_pred)
+    elif metric == 'precision':
+        return precision_score(y_true=y_true, y_pred=y_pred)
+    elif metric == 'recall':
+        return recall_score(y_true=y_true, y_pred=y_pred)
+    elif metric == 'specificity':
+        conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
+        return conf_matrix[1, 1] / (conf_matrix[1, 0] + conf_matrix[1, 1])
+    elif metric == 'accuracy':
+        return accuracy_score(y_true=y_true, y_pred=y_pred)
+    else:
+        raise InvalidArgumentsException(
+            f"unknown value for 'metric': '{metric}'. "
+            "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
+            "'specificity','accuracy']."
+        )
+
+
+def _calculate_alert_thresholds(
+    reference_chunks: List[Chunk], metrics: List[str], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+) -> Dict[str, Tuple[float, float]]:
+    alert_thresholds = {}
+    for metric in metrics:
+        realised_performance_chunks = [_calculate_realized_performance(chunk, metric) for chunk in reference_chunks]
+        deviation = np.std(realised_performance_chunks) * std_num
+        mean_realised_performance = np.mean(realised_performance_chunks)
+        lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
+        upper_threshold = np.minimum(mean_realised_performance + deviation, upper_limit)
+
+        alert_thresholds[metric] = (lower_threshold, upper_threshold)
+    return alert_thresholds
 
 
 def _add_alert_flag(estimated_performance: pd.DataFrame, upper_threshold: float, lower_threshold: float) -> pd.Series:

@@ -16,7 +16,7 @@ from nannyml.plots._step_plot import _step_plot
 class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
-    def plot(self, kind: str = 'performance', *args, **kwargs) -> go.Figure:
+    def plot(self, kind: str = 'performance', metric: str = None, *args, **kwargs) -> go.Figure:
         """Render plots based on CBPE estimation results.
 
         This function will return a :class:`plotly.graph_objects.Figure` object.
@@ -31,6 +31,8 @@ class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
         ----------
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
+        metric: str, default=None
+            The metric to plot when rendering a plot of kind 'performance'.
 
         Examples
         --------
@@ -45,12 +47,16 @@ class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
 
         """
         if kind == 'performance':
-            return _plot_cbpe_performance_estimation(self.data)
+            if metric is None:
+                raise InvalidArgumentsException(
+                    "no value for 'metric' given. Please provide the name of a metric to display."
+                )
+            return _plot_cbpe_performance_estimation(self.data, metric)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
 
-def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Figure:
+def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: str) -> go.Figure:
     """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
     Chunks are set on a time-based X-axis by using the period containing their observations.
@@ -64,6 +70,8 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Fi
     ----------
     estimation_results : pd.DataFrame
         Results of the data CBPE performance estimation
+    metric: str, default=None
+            The metric to plot when rendering a plot of kind 'performance'.
 
     Returns
     -------
@@ -73,7 +81,9 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Fi
     """
     estimation_results = estimation_results.copy(deep=True)
 
-    estimation_results['thresholds'] = list(zip(estimation_results.lower_threshold, estimation_results.upper_threshold))
+    estimation_results['thresholds'] = list(
+        zip(estimation_results[f'lower_threshold_{metric}'], estimation_results[f'upper_threshold_{metric}'])
+    )
 
     estimation_results['estimated'] = estimation_results['partition'].apply(lambda r: r == 'analysis')
 
@@ -81,10 +91,10 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Fi
 
     # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
     estimation_results['plottable'] = estimation_results.apply(
-        lambda r: r['estimated_roc_auc'] if r['partition'] == 'analysis' else r['realized_roc_auc'], axis=1
+        lambda r: r[f'estimated_{metric}'] if r['partition'] == 'analysis' else r[f'realized_{metric}'], axis=1
     )
     estimation_results['alert'] = estimation_results.apply(
-        lambda r: r['alert'] if r['partition'] == 'analysis' else False, axis=1
+        lambda r: r[f'alert_{metric}'] if r['partition'] == 'analysis' else False, axis=1
     )
 
     # Plot estimated performance
@@ -98,11 +108,11 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame) -> go.Fi
         hover_marker_labels=['Reference', 'No change', 'Change'],
         threshold_column_name='thresholds',
         threshold_legend_label='Performance threshold',
-        title='CBPE - Estimated ROC AUC',
-        y_axis_title='Estimated ROC AUC',
+        title=f'CBPE - Estimated {metric}',
+        y_axis_title=f'Estimated {metric}',
         v_line_separating_analysis_period=plot_partition_separator,
         estimated_column_name='estimated',
-        confidence_column_name='confidence',
+        confidence_column_name=f'confidence_{metric}',
     )
 
     return fig
