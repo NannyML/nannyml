@@ -7,12 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Changed
+### Added
+- Added support for new metrics in the Confidence Based Performance Estimator (CBPE). It now estimates ``roc_auc``,
+  ``f1``, ``precision``, ``recall`` and ``accuracy``.
 
+### Changed
+- Removed the ``identifier`` property from the ``ModelMetadata`` class. Joining ``analysis`` data and
+  ``analysis target`` values should be done upfront or index-based.
+- Added an ``exclude_columns`` parameter to the ``extract_metadata`` function. Use it to specify the columns that should
+  not be considered as model metadata or features.
+- All ``fit`` methods now return the fitted object. This allows chaining ``Calculator``/``Estimator`` instantiation
+  and fitting into a single line.
+- Custom metrics are no longer supported in the ``PerformanceCalculator``. Only the predefined metrics remain supported.
 
 ### Fixed
 - Updated homepage in project metadata
 - Added missing metadata modification to the *quickstart*
+- Perform some additional check on reference data during preprocessing
 
 ## [0.3.1] - 2022-04-11
 ### Changed
