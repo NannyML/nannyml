@@ -12,6 +12,8 @@ from nannyml.performance_estimation.base import PerformanceEstimatorResult
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
+SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+
 
 class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
     """Contains results for CBPE estimation and adds plotting functionality."""
@@ -50,6 +52,10 @@ class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
             if metric is None:
                 raise InvalidArgumentsException(
                     "no value for 'metric' given. Please provide the name of a metric to display."
+                )
+            if metric not in SUPPORTED_METRIC_VALUES:
+                raise InvalidArgumentsException(
+                    f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
                 )
             return _plot_cbpe_performance_estimation(self.data, metric)
         else:

@@ -20,7 +20,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory, needs_calibration
-from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException, NotFittedException
+from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import (
     NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -30,7 +30,10 @@ from nannyml.metadata import (
     NML_METADATA_TARGET_COLUMN_NAME,
 )
 from nannyml.performance_estimation.base import PerformanceEstimator
-from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
+from nannyml.performance_estimation.confidence_based.results import (
+    SUPPORTED_METRIC_VALUES,
+    CBPEPerformanceEstimatorResult,
+)
 from nannyml.preprocessing import preprocess
 
 
@@ -92,16 +95,13 @@ class CBPE(PerformanceEstimator):
         if metrics is None or len(metrics) == 0:
             raise InvalidArgumentsException(
                 "no metrics provided. Please provide a non-empty list of metrics."
-                "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
-                "'specificity', 'accuracy']."
+                f"Supported values are {SUPPORTED_METRIC_VALUES}."
             )
 
         for metric in metrics:
-            if metric not in ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']:
+            if metric not in SUPPORTED_METRIC_VALUES:
                 raise InvalidArgumentsException(
-                    f"unknown 'metric' value: '{metric}'. "
-                    "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
-                    "'specificity', 'accuracy']."
+                    f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
                 )
         self.metrics = metrics
 
@@ -140,9 +140,6 @@ class CBPE(PerformanceEstimator):
         reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
 
         _validate_data_requirements_for_metrics(reference_data, self.model_metadata, self.metrics)
-
-        if self.chunker is None:
-            raise NotFittedException()
 
         reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=300)
 
@@ -283,9 +280,7 @@ def _estimate_metric(data: pd.DataFrame, metric: str) -> float:
         )
     else:
         raise InvalidArgumentsException(
-            f"unknown 'metric' value: '{metric}'. "
-            "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
-            "'specificity','accuracy']."
+            f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
         )
 
 
@@ -391,9 +386,7 @@ def _calculate_realized_performance(chunk: Chunk, metric: str):
         return accuracy_score(y_true=y_true, y_pred=y_pred)
     else:
         raise InvalidArgumentsException(
-            f"unknown 'metric' value: '{metric}'. "
-            "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
-            "'specificity', 'accuracy']."
+            f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
         )
 
 
@@ -410,18 +403,6 @@ def _calculate_alert_thresholds(
 
         alert_thresholds[metric] = (lower_threshold, upper_threshold)
     return alert_thresholds
-
-
-def _add_alert_flag(estimated_performance: pd.DataFrame, upper_threshold: float, lower_threshold: float) -> pd.Series:
-    alert = estimated_performance.apply(
-        lambda row: True
-        if (row['estimated_roc_auc'] > upper_threshold or row['estimated_roc_auc'] < lower_threshold)
-        and row['partition'] == 'analysis'
-        else False,
-        axis=1,
-    )
-
-    return alert
 
 
 def _minimum_chunk_size(
