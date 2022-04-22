@@ -34,7 +34,7 @@ Let's load the dataset from NannyML datasets:
 .. code:: python
 
     >>> # extract metadata, add gt column name
-    >>> metadata = nml.extract_metadata(reference)
+    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'clf_target'
     >>> metadata.timestamp_column_name = 'timestamp'
 
