@@ -20,7 +20,7 @@ from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory, needs_calibration
-from nannyml.exceptions import InvalidArgumentsException, NotFittedException
+from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException, NotFittedException
 from nannyml.metadata import (
     NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -89,6 +89,20 @@ class CBPE(PerformanceEstimator):
         """
         super().__init__(model_metadata, features, chunk_size, chunk_number, chunk_period, chunker)
 
+        if metrics is None or len(metrics) == 0:
+            raise InvalidArgumentsException(
+                "no metrics provided. Please provide a non-empty list of metrics."
+                "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
+                "'specificity', 'accuracy']."
+            )
+
+        for metric in metrics:
+            if metric not in ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']:
+                raise InvalidArgumentsException(
+                    f"unknown 'metric' value: '{metric}'. "
+                    "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
+                    "'specificity', 'accuracy']."
+                )
         self.metrics = metrics
 
         self._confidence_deviations: Dict[str, float] = {}
@@ -124,6 +138,8 @@ class CBPE(PerformanceEstimator):
 
         """
         reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
+
+        _validate_data_requirements_for_metrics(reference_data, self.model_metadata, self.metrics)
 
         if self.chunker is None:
             raise NotFittedException()
@@ -178,6 +194,8 @@ class CBPE(PerformanceEstimator):
         """
         data = preprocess(data=data, metadata=self.model_metadata)
 
+        _validate_data_requirements_for_metrics(data, self.model_metadata, self.metrics)
+
         if self.needs_calibration:
             data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME] = self.calibrator.calibrate(
                 data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
@@ -220,12 +238,22 @@ class CBPE(PerformanceEstimator):
         return estimates
 
 
-def _estimate_metric(data: pd.DataFrame, metric: str) -> float:
-    # if metric != 'roc_auc':
-    #     if metadata.prediction_column_name is None:
-    #         raise MissingMetadataException("missing value for 'prediction_column_name'. Please ensure predicted "
-    #                                        "label values are specified and present in the sample.")
+def _validate_data_requirements_for_metrics(data: pd.DataFrame, metadata: ModelMetadata, metrics: List[str]):
+    if 'roc_auc' in metrics:
+        if metadata.predicted_probability_column_name is None:
+            raise MissingMetadataException(
+                "missing value for 'predicted_probability_column_name'. Please ensure predicted "
+                "label values are specified and present in the sample."
+            )
 
+    if metadata.prediction_column_name is None:
+        raise MissingMetadataException(
+            "missing value for 'prediction_column_name'. Please ensure predicted "
+            "label values are specified and present in the sample."
+        )
+
+
+def _estimate_metric(data: pd.DataFrame, metric: str) -> float:
     if metric == 'roc_auc':
         return _estimate_roc_auc(data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME])
     elif metric == 'f1':
@@ -255,7 +283,7 @@ def _estimate_metric(data: pd.DataFrame, metric: str) -> float:
         )
     else:
         raise InvalidArgumentsException(
-            f"unknown value for 'metric': '{metric}'. "
+            f"unknown 'metric' value: '{metric}'. "
             "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
             "'specificity','accuracy']."
         )
@@ -363,9 +391,9 @@ def _calculate_realized_performance(chunk: Chunk, metric: str):
         return accuracy_score(y_true=y_true, y_pred=y_pred)
     else:
         raise InvalidArgumentsException(
-            f"unknown value for 'metric': '{metric}'. "
+            f"unknown 'metric' value: '{metric}'. "
             "Supported values are ['roc_auc', 'f1', 'precision', 'recall', "
-            "'specificity','accuracy']."
+            "'specificity', 'accuracy']."
         )
 
 
