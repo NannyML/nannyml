@@ -50,7 +50,7 @@ By using NannyML, you get the following benefits:
 
 * **Automatic** detection of silent model failure
 * Discovering the **root cause** to why your model performance has changes
-* **No alert fatigue.** React only when necessary model performance is impacted
+* **No alert fatigue.** React only when necessary if model performance is impacted
 * **Painless** setup in any environment
 * An end to sleepless nights caused by not knowing your model performance 😴
 
@@ -61,7 +61,6 @@ By using NannyML, you get the following benefits:
 | **[Key Concepts]** | Glossary of key concepts we use. |
 | **[Technical Reference]** | Monitor the performance of your ML models. |
 | **[New in v0.3.1]** | New features, bug fixes. |
-| **[Docs]** | Full documentation for using NannyML. |
 | **[Real World Example]** |  Take a look at a real-world example of NannyML. |
 | **[Blog]** | Thoughts on post-deployment data science from the NannyML team. |
 | **[Newsletter]** | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
@@ -72,7 +71,6 @@ By using NannyML, you get the following benefits:
 [Key Concepts]: https://docs.nannyml.com/latest/glossary.html
 [Technical Reference]:https://docs.nannyml.com/latest/nannyml/nannyml.html
 [New in v0.3.1]: https://nannyml.substack.com/p/nannyml-031-release-soft-launch?s=w
-[Docs]: https://docs.nannyml.com/
 [Real World Example]: https://docs.nannyml.com/v0.3.1/guides/real_world_data_example.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
