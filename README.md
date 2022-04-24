@@ -35,9 +35,9 @@ NannyML is an open-source python library that allows you to estimate real-world 
 detect multivariate data drift, and link data drift to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, beautiful and interactive visualizations, and currently
 works on all binary classification models with tabular data.
 
-NannyMLs performance estimation algorithm, confidence-based performance estimation (CBPE), was researched
-and developed by NannyML core contributors. NannyML has also developed its own multivariate
-drift detection based on PCA reconstruction error.
+NannyMLs performance estimation algorithm, [confidence-based performance estimation (CBPE)](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html), was researched
+and developed by NannyML core contributors. NannyML has also developed its own [multivariate
+drift detection](https://docs.nannyml.com/latest/deep_dive/data_reconstruction.html#id1) based on PCA reconstruction error.
 
 If you like NannyML, feel free to give us a star and join the [slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ)!
 
@@ -58,6 +58,7 @@ By using NannyML, you get the following benefits:
 | NannyML Resources | Description |
 | ------------- | ------------- |
 | **[NannyML 101]** | New to NannyML? Start here! |
+| **[Performance Estimation]** | How the magic works. |
 | **[Key Concepts]** | Glossary of key concepts we use. |
 | **[Technical Reference]** | Monitor the performance of your ML models. |
 | **[New in v0.3.1]** | New features, bug fixes. |
@@ -68,6 +69,7 @@ By using NannyML, you get the following benefits:
 | **[Contribute]** | How to contribute to the NannyML project and codebase. |
 
 [NannyML 101]: https://docs.nannyml.com/
+[Performance Estimation]:https://docs.nannyml.com/latest/deep_dive/performance_estimation.html
 [Key Concepts]: https://docs.nannyml.com/latest/glossary.html
 [Technical Reference]:https://docs.nannyml.com/latest/nannyml/nannyml.html
 [New in v0.3.1]: https://nannyml.substack.com/p/nannyml-031-release-soft-launch?s=w
@@ -80,7 +82,8 @@ By using NannyML, you get the following benefits:
 # Features
 
 ### 1. Estimating real-world model performance in the absence of ground truth
-Using an algorithm researched by NannyML contributors, called **Confidence-Based Performance Estimation**, NannyML is
+Using an algorithm researched by NannyML contributors, called [**Confidence-Based Performance Estimation**\
+](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html) , NannyML is
 able to estimate model performance. NannyML reconstructs the expected confusion matrix and then calculates the expected ROC AUC.
 
 ### 2. Multivariate data drift detection
