@@ -9,7 +9,7 @@ import warnings
 import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException, MissingMetadataException
-from nannyml.metadata import ModelMetadata
+from nannyml.metadata.base import ModelMetadata
 
 logger = logging.getLogger(__name__)
 

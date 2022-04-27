@@ -27,7 +27,7 @@
     </strong>
 </p>
 
-![Performance estimatition graph](https://raw.githubusercontent.com/hakimelakhrass/nannyml/main/docs/_static/perf-est-guide-syth-example.svg)
+![Performance estimation graph](https://raw.githubusercontent.com/hakimelakhrass/nannyml/main/docs/_static/perf-est-guide-syth-example.svg)
 
 
 # What is NannyML?
@@ -55,18 +55,18 @@ By using NannyML, you get the following benefits:
 * An end to sleepless nights caused by not knowing your model performance 😴
 
 # GO DEEP
-| NannyML Resources | Description |
-| ------------- | ------------- |
-| **[NannyML 101]** | New to NannyML? Start here! |
-| **[Performance Estimation]** | How the magic works. |
-| **[Key Concepts]** | Glossary of key concepts we use. |
-| **[Technical Reference]** | Monitor the performance of your ML models. |
-| **[New in v0.3.1]** | New features, bug fixes. |
-| **[Real World Example]** |  Take a look at a real-world example of NannyML. |
-| **[Blog]** | Thoughts on post-deployment data science from the NannyML team. |
-| **[Newsletter]** | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| **[Join slack]** | Need help with your specific use case? Say hi on slack! |
-| **[Contribute]** | How to contribute to the NannyML project and codebase. |
+| NannyML Resources            | Description                                                                            |
+|------------------------------|----------------------------------------------------------------------------------------|
+| **[NannyML 101]**            | New to NannyML? Start here!                                                            |
+| **[Performance Estimation]** | How the magic works.                                                                   |
+| **[Key Concepts]**           | Glossary of key concepts we use.                                                       |
+| **[Technical Reference]**    | Monitor the performance of your ML models.                                             |
+| **[New in v0.3.1]**          | New features, bug fixes.                                                               |
+| **[Real World Example]**     | Take a look at a real-world example of NannyML.                                        |
+| **[Blog]**                   | Thoughts on post-deployment data science from the NannyML team.                        |
+| **[Newsletter]**             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
+| **[Join slack]**             | Need help with your specific use case? Say hi on slack!                                |
+| **[Contribute]**             | How to contribute to the NannyML project and codebase.                                 |
 
 [NannyML 101]: https://docs.nannyml.com/
 [Performance Estimation]:https://docs.nannyml.com/latest/deep_dive/performance_estimation.html
@@ -154,7 +154,7 @@ import pandas as pd
 
 reference_data, analysis_data, _ = nml.load_synthetic_sample()
 data = pd.concat([reference_data, analysis_data])
-metadata = nml.extract_metadata(reference_data)
+metadata = nml.extract_metadata(reference_data, model_type=nml.ModelType.CLASSIFICATION_BINARY)
 metadata.target_column_name = 'work_home_actual'
 
 # Estimate performance
@@ -165,7 +165,7 @@ estimates = estimator.estimate(data)
 estimates.plot(kind='performance').show()
 
 univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-univariate_calculator.fit(reference_data=reference)
+univariate_calculator.fit(reference_data=reference_data)
 univariate_results = univariate_calculator.calculate(data=data)
 
 # let's plot drift results for all model inputs
@@ -176,7 +176,7 @@ for feature in metadata.features:
 # Let's initialize the object that will perform Data Reconstruction with PCA
 rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
 # NannyML compares drift versus the full reference dataset.
-rcerror_calculator.fit(reference_data=reference)
+rcerror_calculator.fit(reference_data=reference_data)
 # Let's see Reconstruction error statistics for all available data
 rcerror_results = rcerror_calculator.calculate(data=data)
 figure = rcerror_results.plot(kind='drift')
@@ -221,6 +221,3 @@ Feel free to join and ask questions or raise issues. Someone will definitely res
 
 NannyML is distributed under an Apache License Version 2.0. A complete version is found [here](LICENSE.MD). All contributions
 will be distributed under this license.
-
-
-

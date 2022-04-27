@@ -19,7 +19,8 @@ from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator impo
 )
 from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata import NML_METADATA_COLUMNS, FeatureType, extract_metadata
+from nannyml.metadata import extract_metadata
+from nannyml.metadata.base import NML_METADATA_COLUMNS, FeatureType, ModelType
 from nannyml.preprocessing import preprocess
 
 
@@ -121,7 +122,7 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 
 @pytest.fixture
 def sample_drift_metadata(sample_drift_data):  # noqa: D103
-    return extract_metadata(sample_drift_data, model_name='model')
+    return extract_metadata(sample_drift_data, model_name='model', model_type=ModelType.CLASSIFICATION_BINARY)
 
 
 class SimpleDriftResult(DriftResult):
@@ -176,7 +177,7 @@ def test_base_drift_calculator_given_empty_features_list_should_calculate_for_al
     calc = SimpleDriftCalculator(sample_drift_metadata, chunk_size=1000).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data)
 
-    md = extract_metadata(sample_drift_data, model_name='model')
+    md = extract_metadata(sample_drift_data, model_name='model', model_type=ModelType.CLASSIFICATION_BINARY)
     assert len(sut.data.columns) == len(md.features)
     for f in md.features:
         assert f.column_name in sut.data.columns

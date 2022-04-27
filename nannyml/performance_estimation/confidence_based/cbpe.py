@@ -21,7 +21,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory, needs_calibration
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata import (
+from nannyml.metadata.base import (
     NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
@@ -83,9 +83,10 @@ class CBPE(PerformanceEstimator):
 
         Examples
         --------
+        >>> import nannyml.metadata.extraction
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nannyml.metadata.extraction.extract_metadata(ref_df)
         >>> # create a new estimator, chunking by week
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
 
@@ -132,7 +133,7 @@ class CBPE(PerformanceEstimator):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # create a new estimator and fit it on reference data
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
@@ -184,7 +185,7 @@ class CBPE(PerformanceEstimator):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # create a new estimator and fit it on reference data
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> estimates = estimator.estimate(data)

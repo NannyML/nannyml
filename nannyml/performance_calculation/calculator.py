@@ -14,7 +14,11 @@ import pandas as pd
 from nannyml import Chunker, InvalidArgumentsException, ModelMetadata
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import CalculatorNotFittedException
-from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
+from nannyml.metadata.base import (
+    NML_METADATA_COLUMNS,
+    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_TARGET_COLUMN_NAME,
+)
 from nannyml.performance_calculation.metrics import MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
 from nannyml.preprocessing import preprocess
@@ -36,31 +40,31 @@ class PerformanceCalculator:
     ):
         """Creates a new performance calculator.
 
-        Parameters
-        ----------
-        model_metadata : ModelMetadata
-            The metadata describing the monitored model.
-        metrics: List[str]
-            A list of metrics to calculate.
-        chunk_size: int
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
-            The `Chunker` used to split the data sets into a lists of chunks.
+                Parameters
+                ----------
+                model_metadata : ModelMetadata
+                    The metadata describing the monitored model.
+                metrics: List[str]
+                    A list of metrics to calculate.
+                chunk_size: int
+                    Splits the data into chunks containing `chunks_size` observations.
+                    Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+                chunk_number: int
+                    Splits the data into `chunk_number` pieces.
+                    Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+                chunk_period: str
+                    Splits the data according to the given period.
+                    Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+                chunker : Chunker
+                    The `Chunker` used to split the data sets into a lists of chunks.
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # create a new calculator, chunking by week
-        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
+                Examples
+                --------
+        import nannyml.metadata.extraction        >>> import nannyml as nml
+                >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+                >>> metadata = nannyml.metadata.extraction.extract_metadata(ref_df)
+                >>> # create a new calculator, chunking by week
+                >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
 
         """
         self.metadata = model_metadata
@@ -82,19 +86,19 @@ class PerformanceCalculator:
     def fit(self, reference_data: pd.DataFrame) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset.
 
-        Parameters
-        ----------
-        reference_data: pd.DataFrame
-            Reference data for the model, i.e. model inputs and predictions enriched with target data.
+                Parameters
+                ----------
+                reference_data: pd.DataFrame
+                    Reference data for the model, i.e. model inputs and predictions enriched with target data.
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
-        >>> # fit the calculator on reference data
-        >>> calculator.fit(ref_df)
+                Examples
+                --------
+        import nannyml.metadata.extraction        >>> import nannyml as nml
+                >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+                >>> metadata = nannyml.metadata.extraction.extract_metadata(ref_df)
+                >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
+                >>> # fit the calculator on reference data
+                >>> calculator.fit(ref_df)
         """
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
@@ -110,20 +114,20 @@ class PerformanceCalculator:
     def calculate(self, analysis_data: pd.DataFrame) -> PerformanceCalculatorResult:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation.
 
-        Parameters
-        ----------
-        analysis_data: pd.DataFrame
-            Analysis data for the model, i.e. model inputs and predictions.
+                Parameters
+                ----------
+                analysis_data: pd.DataFrame
+                    Analysis data for the model, i.e. model inputs and predictions.
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
-        >>> calculator.fit(ref_df)
-        >>> # calculate realized performance on analysis data
-        >>> realized_performance = calculator.calculate(ana_df)
+                Examples
+                --------
+        import nannyml.metadata.extraction        >>> import nannyml as nml
+                >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+                >>> metadata = nannyml.metadata.extraction.extract_metadata(ref_df)
+                >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
+                >>> calculator.fit(ref_df)
+                >>> # calculate realized performance on analysis data
+                >>> realized_performance = calculator.calculate(ana_df)
         """
         if analysis_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')

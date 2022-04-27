@@ -12,7 +12,7 @@ import pandas as pd
 import plotly.graph_objects
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.metadata import ModelMetadata
+from nannyml.metadata.base import ModelMetadata
 
 
 class DriftResult(abc.ABC):

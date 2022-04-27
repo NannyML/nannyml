@@ -13,7 +13,7 @@ from pytest_mock import MockerFixture
 
 from nannyml import Calibrator, InvalidArgumentsException, IsotonicCalibrator, MissingMetadataException
 from nannyml.datasets import load_synthetic_sample
-from nannyml.metadata import ModelMetadata, extract_metadata
+from nannyml.metadata import ModelMetadata, ModelType, extract_metadata
 from nannyml.performance_estimation import CBPE
 from nannyml.performance_estimation.base import PerformanceEstimatorResult
 
@@ -27,7 +27,7 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 @pytest.fixture
 def metadata(data) -> ModelMetadata:  # noqa: D103
-    md = extract_metadata(data[0], exclude_columns=['identifier'])
+    md = extract_metadata(data[0], exclude_columns=['identifier'], model_type=ModelType.CLASSIFICATION_BINARY)
     md.target_column_name = 'work_home_actual'
     return md
 

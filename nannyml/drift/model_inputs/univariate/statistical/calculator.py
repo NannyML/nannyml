@@ -13,7 +13,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.base import DriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
-from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, ModelMetadata
+from nannyml.metadata.base import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, ModelMetadata
 from nannyml.preprocessing import preprocess
 
 ALERT_THRESHOLD_P_VALUE = 0.05
@@ -33,32 +33,32 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
     ):
         """Constructs a new UnivariateStatisticalDriftCalculator.
 
-        Parameters
-        ----------
-        model_metadata: ModelMetadata
-            Metadata for the model whose data is to be processed.
-        features: List[str], default=None
-            An optional list of feature names to use during drift calculation. None by default, in this case
-            all features are used during calculation.
-        chunk_size: int
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
-            The `Chunker` used to split the data sets into a lists of chunks.
+                Parameters
+                ----------
+                model_metadata: ModelMetadata
+                    Metadata for the model whose data is to be processed.
+                features: List[str], default=None
+                    An optional list of feature names to use during drift calculation. None by default, in this case
+                    all features are used during calculation.
+                chunk_size: int
+                    Splits the data into chunks containing `chunks_size` observations.
+                    Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+                chunk_number: int
+                    Splits the data into `chunk_number` pieces.
+                    Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+                chunk_period: str
+                    Splits the data according to the given period.
+                    Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+                chunker : Chunker
+                    The `Chunker` used to split the data sets into a lists of chunks.
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # Create a calculator that will chunk by week
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
+                Examples
+                --------
+        import nannyml.metadata.extraction        >>> import nannyml as nml
+                >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+                >>> metadata = nannyml.metadata.extraction.extract_metadata(ref_df)
+                >>> # Create a calculator that will chunk by week
+                >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
         """
         super(UnivariateStatisticalDriftCalculator, self).__init__(
             model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
@@ -91,7 +91,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator and fit it
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
@@ -123,7 +123,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator and fit it
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> drift = drift_calc.calculate(data)

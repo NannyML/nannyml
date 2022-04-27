@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 from nannyml.chunk import Chunk
 from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import Feature, FeatureType, ModelMetadata
+from nannyml.metadata.base import Feature, FeatureType, ModelMetadata
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
@@ -82,7 +82,7 @@ class UnivariateDriftResult(DriftResult):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
         >>> drift_calc.fit(ref_df)
         >>> drifts = drift_calc.calculate(ana_df)

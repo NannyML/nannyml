@@ -50,7 +50,15 @@ from .drift import (
     UnivariateStatisticalDriftCalculator,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from .metadata import Feature, FeatureType, ModelMetadata, extract_metadata
+from .metadata import (
+    BinaryClassificationMetadata,
+    Feature,
+    FeatureType,
+    ModelMetadata,
+    ModelType,
+    MultiClassClassificationMetadata,
+    extract_metadata,
+)
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, PerformanceEstimator
 

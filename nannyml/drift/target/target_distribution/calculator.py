@@ -14,7 +14,7 @@ from scipy.stats import chi2_contingency
 from nannyml.chunk import Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.target.target_distribution.result import TargetDistributionResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import (
+from nannyml.metadata.base import (
     NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
@@ -56,7 +56,7 @@ class TargetDistributionCalculator:
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator that will chunk by week
         >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
         """
@@ -89,7 +89,7 @@ class TargetDistributionCalculator:
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
         >>> # fit the calculator on reference data
         >>> target_distribution_calc.fit(ref_df)
@@ -122,7 +122,7 @@ class TargetDistributionCalculator:
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
         >>> target_distribution_calc.fit(ref_df)
         >>> # calculate target distribution

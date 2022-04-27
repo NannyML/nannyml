@@ -12,7 +12,8 @@ import pytest
 from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker  # , _minimum_chunk_size
 from nannyml.datasets import load_synthetic_sample
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import NML_METADATA_COLUMNS, ModelMetadata, extract_metadata
+from nannyml.metadata import extract_metadata
+from nannyml.metadata.base import NML_METADATA_COLUMNS, ModelMetadata, ModelType
 from nannyml.performance_estimation import PerformanceEstimator
 from nannyml.performance_estimation.base import PerformanceEstimatorResult
 from nannyml.preprocessing import preprocess
@@ -26,7 +27,7 @@ def sample_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 @pytest.fixture
 def sample_metadata(sample_data) -> ModelMetadata:  # noqa: D103
-    md = extract_metadata(sample_data[0])
+    md = extract_metadata(sample_data[0], model_type=ModelType.CLASSIFICATION_BINARY)
     md.target_column_name = 'work_home_actual'
     return md
 

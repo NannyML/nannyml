@@ -12,7 +12,7 @@ from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_
 
 from nannyml import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import (
+from nannyml.metadata.base import (
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
