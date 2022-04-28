@@ -26,11 +26,10 @@ from nannyml.metadata.base import (
     _guess_partitions,
     _guess_predicted_probabilities,
     _guess_predictions,
-    _guess_targets,
     _guess_timestamps,
     _predict_feature_types,
 )
-from nannyml.metadata.binary_classification import BinaryClassificationMetadata
+from nannyml.metadata.binary_classification import BinaryClassificationMetadata, _guess_targets
 from nannyml.metadata.multiclass_classification import MultiClassClassificationMetadata
 
 

@@ -495,13 +495,6 @@ class ModelMetadata(abc.ABC):
 
     @abc.abstractmethod
     def extract(self, data: pd.DataFrame, model_name: str = None, exclude_columns: List[str] = None):
-        def check_for_nan(column_names):
-            number_of_nan = data[column_names].isnull().sum().sum()
-            if number_of_nan > 0:
-                raise MissingMetadataException(
-                    f'found {number_of_nan} NaN values in one of these columns: {column_names}'
-                )
-
         if len(data.columns) == 0:
             return None
 
@@ -509,28 +502,28 @@ class ModelMetadata(abc.ABC):
             data = data.drop(columns=exclude_columns)
 
         predictions = _guess_predictions(data)
-        check_for_nan(predictions)
+        _check_for_nan(data, predictions)
         self.prediction_column_name = None if len(predictions) == 0 else predictions[0]  # type: ignore
 
         predicted_probabilities = _guess_predicted_probabilities(data)
-        check_for_nan(predicted_probabilities)
+        _check_for_nan(data, predicted_probabilities)
         self.predicted_probability_column_name = (
             None if len(predicted_probabilities) == 0 else predicted_probabilities[0]
         )
 
-        targets = _guess_targets(data)
-        check_for_nan(targets)
-        self.target_column_name = None if len(targets) == 0 else targets[0]  # type: ignore
+        # targets = _guess_targets(data)
+        # check_for_nan(targets)
+        # self.target_column_name = None if len(targets) == 0 else targets[0]  # type: ignore
 
         partitions = _guess_partitions(data)
-        check_for_nan(partitions)
+        _check_for_nan(data, partitions)
         self.partition_column_name = None if len(partitions) == 0 else partitions[0]  # type: ignore
 
         timestamps = _guess_timestamps(data)
-        check_for_nan(timestamps)
+        _check_for_nan(data, timestamps)
         self.timestamp_column_name = None if len(timestamps) == 0 else timestamps[0]  # type: ignore
 
-        self.features = _extract_features(data)
+        # self.features = extract_features(data)
 
         return self
 
@@ -561,11 +554,11 @@ def _guess_predicted_probabilities(data: pd.DataFrame) -> List[str]:
     return [col for col in data.columns if _guess_if_prediction(data[col])]
 
 
-def _guess_targets(data: pd.DataFrame) -> List[str]:
-    def _guess_if_ground_truth(col: pd.Series) -> bool:
-        return col.name in ['target', 'ground_truth', 'actual', 'actuals']
-
-    return [col for col in data.columns if _guess_if_ground_truth(data[col])]
+# def _guess_targets(data: pd.DataFrame) -> List[str]:
+#     def _guess_if_ground_truth(col: pd.Series) -> bool:
+#         return col.name in ['target', 'ground_truth', 'actual', 'actuals']
+#
+#     return [col for col in data.columns if _guess_if_ground_truth(data[col])]
 
 
 def _guess_partitions(data: pd.DataFrame) -> List[str]:
@@ -583,14 +576,17 @@ def _guess_features(data: pd.DataFrame) -> List[str]:
             + _guess_predictions(data)
             + _guess_predicted_probabilities(data)
             + _guess_timestamps(data)
-            + _guess_targets(data)
+            # + _guess_targets(data)
         ) and (col.name not in NML_METADATA_COLUMNS)
 
     return [col for col in data.columns if _guess_if_feature(data[col])]
 
 
-def _extract_features(data: pd.DataFrame) -> List[Feature]:
-    feature_columns = _guess_features(data)
+def _extract_features(data: pd.DataFrame, exclude_columns: List[str] = None) -> List[Feature]:
+    if not exclude_columns:
+        exclude_columns = []
+
+    feature_columns = [col for col in _guess_features(data) if col not in exclude_columns]
     if len(feature_columns) == 0:
         return []
 
@@ -658,3 +654,9 @@ def _predict_feature_types(df: pd.DataFrame):
     stats['column_data_type'] = str(stats['column_data_type'])
 
     return stats
+
+
+def _check_for_nan(data: pd.DataFrame, column_names: List[str]):
+    number_of_nan = data[column_names].isnull().sum().sum()
+    if number_of_nan > 0:
+        raise MissingMetadataException(f'found {number_of_nan} NaN values in one of these columns: {column_names}')
