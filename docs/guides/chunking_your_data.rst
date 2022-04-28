@@ -30,6 +30,8 @@ synthetic dataset provided by NannyML. Set up first with:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> reference, analysis, _ = nml.datasets.load_synthetic_sample()
+    >>> reference['y_pred'] = reference['y_pred_proba'].map(lambda p: int(p >= 0.8))
+    >>> analysis['y_pred'] = analysis['y_pred_proba'].map(lambda p: int(p >= 0.8))
     >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
 
@@ -43,7 +45,7 @@ argument to get appropriate split. See the example below that chunks data quarte
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q").fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q", metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> est_perf.data.iloc[:3,:5]
 
@@ -94,7 +96,7 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3500).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3500, metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> est_perf.data.iloc[:3,:5]
 
@@ -140,7 +142,7 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9, metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> len(est_perf.data)
     9
@@ -182,7 +184,7 @@ dive<minimum-chunk-size>`):
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
     >>> est_perf.data.iloc[:3,:5]
 
@@ -203,7 +205,7 @@ Finally, once the chunking method is selected, the full performance estimation c
 
     .. code-block:: python
 
-        >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5_000).fit(reference_data=reference)
+        >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5_000, metrics=['roc_auc']).fit(reference_data=reference)
         >>> est_perf = cbpe.estimate(analysis)
         >>> est_perf.plot(kind='performance').show()
 
@@ -225,7 +227,7 @@ chunk but indices from 44444 to 49999 point to reference observations:
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9, metrics=['roc_auc']).fit(reference_data=reference)
     >>> # Estimate on concatenated reference and analysis
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
     >>> est_perf.data.iloc[3:5,:7]
@@ -261,7 +263,7 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q").fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q", metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
@@ -282,7 +284,7 @@ far from optimal but a reasonable minimum. If there are less than 6 chunks, a wa
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=5).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=5, metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
     continue at your own risk.

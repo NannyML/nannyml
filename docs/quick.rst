@@ -16,6 +16,8 @@ NannyML provides a sample synthetic dataset that can be used for testing purpose
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> reference['y_pred'] = reference['y_pred_proba'].map(lambda p: int(p >= 0.8))
+    >>> analysis['y_pred'] = analysis['y_pred_proba'].map(lambda p: int(p >= 0.8))
     >>> reference.head()
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
@@ -42,7 +44,7 @@ The next step is to have NannyML deduce some information about the model from th
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
@@ -84,10 +86,10 @@ without access to it's :term:`Target`. To find out how, see :ref:`performance-es
 .. code-block:: python
 
     >>> # fit estimator and estimate
-    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size).fit(reference)
+    >>> estimator = estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc', 'f1']).fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
     >>> # show results
-    >>> figure = estimated_performance.plot(kind='performance')
+    >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
     >>> figure.show()
 
 .. image:: ./_static/perf-est-guide-syth-example.svg
@@ -98,7 +100,7 @@ of 2019.
 Detecting Data Drift
 ====================
 
-NannyML allows for further investigation into potential peformance issues with it's data drift detection
+NannyML allows for further investigation into potential performance issues with it's data drift detection
 functionality. See :ref:`data-drift-practice` for more details.
 
 An example of using NannyML to compute and visualize data drift for the model inputs can be seen below:
