@@ -1,4 +1,4 @@
-.. _chunking-data:
+.. _chunk-data:
 
 =============
 Chunking data
@@ -19,6 +19,200 @@ can refer to :ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation
 to review example results.
 
 
+Creating chunks
+===============
+To allow for flexibility there are many ways to create chunks. The examples provided will explain how chunks are
+created depending on the instructions provided. The examples will be run based on the performance estimation flow on
+synthetic dataset provided by NannyML. Set up first with:
+
+.. code-block:: python
+
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> reference, analysis, _ = nml.datasets.load_synthetic_sample()
+    >>> reference['y_pred'] = reference['y_pred_proba'].map(lambda p: int(p >= 0.8))
+    >>> analysis['y_pred'] = analysis['y_pred_proba'].map(lambda p: int(p >= 0.8))
+    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
+    >>> metadata.target_column_name = 'work_home_actual'
+
+
+Time-based chunking
+~~~~~~~~~~~~~~~~~~~
+
+Time-based chunking creates chunks based on time intervals. One chunk can contain all the observations
+from a single hour, day, week, month etc. In most cases, such chunks will vary in length. Specify ``chunk_period``
+argument to get appropriate split. See the example below that chunks data quarterly:
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q", metrics=['roc_auc']).fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
+    >>> est_perf.data.iloc[:3,:5]
+
++----+--------+---------------+-------------+---------------------+---------------------+
+|    | key    |   start_index |   end_index | start_date          | end_date            |
++====+========+===============+=============+=====================+=====================+
+|  0 | 2017Q3 |             0 |        1261 | 2017-08-31 00:00:00 | 2017-09-30 23:59:59 |
++----+--------+---------------+-------------+---------------------+---------------------+
+|  1 | 2017Q4 |          1262 |        4951 | 2017-10-01 00:00:00 | 2017-12-31 23:59:59 |
++----+--------+---------------+-------------+---------------------+---------------------+
+|  2 | 2018Q1 |          4952 |        8702 | 2018-01-01 00:00:00 | 2018-03-31 23:59:59 |
++----+--------+---------------+-------------+---------------------+---------------------+
+
+.. note::
+    Notice that each calendar quarter was taken into account, even if it was not fully covered with records.
+    This makes some chunks smaller (usually the last and the first). See the first row above - Q3 is July-September,
+    but the first record in the data is from the last day of August. First chunk has ~1.2k of observations while the 2nd
+    and 3rd above 3k.
+
+Possible time offsets are listed in the table below:
+
++------------+------------+
+| Alias      | Description|
++============+============+
+| S          | second     |
++------------+------------+
+| T, min     | minute     |
++------------+------------+
+| H          | hour       |
++------------+------------+
+| D          | day        |
++------------+------------+
+| W          | week       |
++------------+------------+
+| M          | month      |
++------------+------------+
+| Q          | quarter    |
++------------+------------+
+| A, y       | year       |
++------------+------------+
+
+
+Size-based chunking
+~~~~~~~~~~~~~~~~~~~
+
+Chunks can be of fixed size, i.e. each chunk contains the same number of observations. Set this up by specifying
+``chunk_size`` parameter:
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3500, metrics=['roc_auc']).fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
+    >>> est_perf.data.iloc[:3,:5]
+
++----+--------------+---------------+-------------+---------------------+---------------------+
+|    | key          |   start_index |   end_index | start_date          | end_date            |
++====+==============+===============+=============+=====================+=====================+
+|  0 | [0:3499]     |             0 |        3499 | 2017-08-31 00:00:00 | 2017-11-26 23:59:59 |
++----+--------------+---------------+-------------+---------------------+---------------------+
+|  1 | [3500:6999]  |          3500 |        6999 | 2017-11-26 00:00:00 | 2018-02-18 23:59:59 |
++----+--------------+---------------+-------------+---------------------+---------------------+
+|  2 | [7000:10499] |          7000 |       10499 | 2018-02-18 00:00:00 | 2018-05-14 23:59:59 |
++----+--------------+---------------+-------------+---------------------+---------------------+
+
+
+.. note::
+    If the number of observations is not divisible by the chunk size required, the number of rows equal to the
+    remainder of a division will be dropped. This ensures that each chunk has the same size, but in worst case
+    scenario it results in dropping ``chunk_size-1`` rows. Notice that the last index in last chunk is 48999 while
+    the last index in raw data is 49999:
+
+    .. code-block:: python
+
+        >>> est_perf.data.iloc[-2:,:5]
+
+    +----+---------------+---------------+-------------+---------------------+---------------------+
+    |    | key           |   start_index |   end_index | start_date          | end_date            |
+    +====+===============+===============+=============+=====================+=====================+
+    | 12 | [42000:45499] |         42000 |       45499 | 2020-06-18 00:00:00 | 2020-09-13 23:59:59 |
+    +----+---------------+---------------+-------------+---------------------+---------------------+
+    | 13 | [45500:48999] |         45500 |       48999 | 2020-09-13 00:00:00 | 2020-12-08 23:59:59 |
+    +----+---------------+---------------+-------------+---------------------+---------------------+
+
+    .. code-block:: python
+
+        >>> analysis.index.max()
+        49999
+
+
+Number-based chunking
+~~~~~~~~~~~~~~~~~~~~~
+
+The total number of chunks can be fixed by ``chunk_number`` parameter:
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9, metrics=['roc_auc']).fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(analysis)
+    >>> len(est_perf.data)
+    9
+
+.. note::
+    Created chunks will be equal in size. If the number of observations is not divisible by the ``chunk_number`` then
+    the number of observations equal to the residual of the division will be dropped. See:
+
+    .. code-block:: python
+
+        >>> est_perf.data.iloc[-2:,:5]
+
+    +----+---------------+---------------+-------------+---------------------+---------------------+
+    |    | key           |   start_index |   end_index | start_date          | end_date            |
+    +====+===============+===============+=============+=====================+=====================+
+    |  7 | [38885:44439] |         38885 |       44439 | 2020-04-03 00:00:00 | 2020-08-18 23:59:59 |
+    +----+---------------+---------------+-------------+---------------------+---------------------+
+    |  8 | [44440:49994] |         44440 |       49994 | 2020-08-18 00:00:00 | 2021-01-01 23:59:59 |
+    +----+---------------+---------------+-------------+---------------------+---------------------+
+
+    .. code-block:: python
+
+        >>> analysis.index.max()
+        49999
+
+.. note::
+    The same splitting rule is always applied to the dataset used for fitting (``reference``) and the dataset of
+    interest (in the presented case - ``analysis``). Unless these two datasets are of the same size, the chunk sizes
+    can be considerably different. Additionally, if the data drift or performance estimation is calculated on
+    combined ``reference`` and ``analysis`` the results presented for ``reference`` will be calculated on different
+    chunks than they were fitted.
+
+Automatic chunking
+~~~~~~~~~~~~~~~~~~
+
+The default chunking method is size-based, with the size being three times the
+estimated minimum size for the monitored data and model (see how NannyML estimates minimum chunk size in :ref:`deep
+dive<minimum-chunk-size>`):
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, metrics=['roc_auc']).fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
+    >>> est_perf.data.iloc[:3,:5]
+
++----+-------------+---------------+-------------+---------------------+---------------------+
+|    | key         |   start_index |   end_index | start_date          | end_date            |
++====+=============+===============+=============+=====================+=====================+
+|  0 | [0:899]     |             0 |         899 | 2014-05-09 00:00:00 | 2014-06-01 23:59:59 |
++----+-------------+---------------+-------------+---------------------+---------------------+
+|  1 | [900:1799]  |           900 |        1799 | 2014-06-01 00:00:00 | 2014-06-23 23:59:59 |
++----+-------------+---------------+-------------+---------------------+---------------------+
+|  2 | [1800:2699] |          1800 |        2699 | 2014-06-23 00:00:00 | 2014-07-15 23:59:59 |
++----+-------------+---------------+-------------+---------------------+---------------------+
+
+Chunks on plots with results
+============================
+
+Finally, once the chunking method is selected, the full performance estimation can be run:
+
+    .. code-block:: python
+
+        >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5_000, metrics=['roc_auc']).fit(reference_data=reference)
+        >>> est_perf = cbpe.estimate(analysis)
+        >>> est_perf.plot(kind='performance').show()
+
+.. image:: ../_static/guide-chunking_your_data-pe_plot.svg
+
+Each marker on the plot represents estimated performance for a single chunk (y axis). Markers are placed at the end of the period covered by the chunk i.e. they indicate the last timestamp in the chunk (x axis). Plots are interactive - hovering over the marker will display the information about the period.
+
 Additional considerations
 =========================
 
@@ -33,7 +227,7 @@ chunk but indices from 44444 to 49999 point to reference observations:
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9, metrics=['roc_auc']).fit(reference_data=reference)
     >>> # Estimate on concatenated reference and analysis
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
     >>> est_perf.data.iloc[3:5,:7]
@@ -64,12 +258,12 @@ Underpopulated chunks
 
 Depending on the selected chunking method and the provided datasets, some chunks may be tiny. In fact, they
 might be so small that results obtained are governed by noise rather than actual signal. NannyML estimates minimum chunk
-size for the monitored data and model provided (see how in :ref:`minimum chunk size <minimum-chunk-size>`). If some of the chunks
+size for the monitored data and model provided (see how in :ref:`deep dive<minimum-chunk-size>`). If some of the chunks
 created are smaller than the minimum chunk size, a warning will be raised. For example:
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q").fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q", metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
@@ -77,7 +271,7 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
 
 When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in above
 sections. When there are more chunks mentioned - the selected splitting method is most likely not suitable.
-Look at :ref:`minimum chunk size <minimum-chunk-size>` to get more information about the effect of
+Look at the :ref:`deep dive on minimum chunk size <minimum-chunk-size>` to get more information about the effect of
 small chunks. Beware of the trade-offs involved, when selecting the chunking method.
 
 
@@ -90,145 +284,7 @@ far from optimal but a reasonable minimum. If there are less than 6 chunks, a wa
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=5).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=5, metrics=['roc_auc']).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
     continue at your own risk.
-
-.. _minimum-chunk-size:
-
-==================
-Minimum chunk size
-==================
-
-Small sample size strongly affects the reliability of any ML or statistical analysis, including data drift detection
-and performance estimation. NannyML allows splitting data in chunks in different ways to let users choose chunks that
-are meaningful for them. However, when the chunks are too small, statistical results may become unreliable.
-In this case NannyML will issue a warning. The user can then chose to ignore it and continue or use a chunking
-method that will result in bigger chunks.
-
-Minimum Chunk for Performance Estimation and Performance Monitoring
-===================================================================
-
-When the chunk size is small
-**what looks like a significant drop in performance of the monitored model may be only a sampling effect**.
-To better understand that, have a look at the histogram below.
-It shows dispersion of accuracy for a random model predicting a random binary target (which by definition should be 0.5)
-for a sample of 100 observations. It is not uncommon to get accuracy of 0.6 for some samples. The effect is even
-stronger for more complex metrics like AUROC.
-
-.. code-block:: python
-
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
-    >>> from sklearn.metrics import accuracy_score
-    >>>
-    >>> sample_size = 100
-    >>> dataset_size = 10_000
-    >>> # random model
-    >>> y_true = np.random.binomial(1, 0.5, dataset_size)
-    >>> y_pred = np.random.binomial(1, 0.5, dataset_size)
-    >>> accuracy_scores = []
-    >>>
-    >>> for experiment in range(10_000):
-    >>>     subset_indexes = np.random.choice(dataset_size, sample_size, replace=False) # get random indexes
-    >>>     y_true_subset = y_true[subset_indexes]
-    >>>     y_pred_subset = y_pred[subset_indexes]
-    >>>     accuracy_scores.append(accuracy_score(y_true_subset, y_pred_subset))
-    >>>
-    >>> plt.hist(accuracy_scores, bins=20, density=True)
-    >>> plt.title("Accuracy of random classifier\n for randomly selected samples of 100 observations.");
-
-.. image:: ../_static/deep_dive_data_chunks_stability_of_accuracy.svg
-    :width: 400pt
-
-When there are many chunks, it is easy to spot the noisy nature of fluctuations. However, with only a few chunks, it
-is difficult to tell whether the observed changes are significant. To minimize this risk, NannyML
-estimates a minimum chunk size for the monitored data and raises a warning if the selected chunking method results in
-chunks that are smaller. The minimum chunk size is estimated in order to
-keep variation of performance of the monitored model low. The variation is expressed in terms of standard deviation and
-it is considered *low* when it is below 0.02. In other words, for the selected evaluation metric, NannyML
-estimates chunk size for which standard deviation of performance on chunks resulting purely from sampling is lower
-than 0.02.
-
-Let's go through the estimation process for accuracy score from the example above. Selecting chunk in the data and
-calculating performance for it is similar to sampling a set from a population and calculating a statistic. When
-the statistic is a mean, Standard Error (SE) formula [1]_ can be used to estimate the standard deviation of sampled
-means:
-
-    .. math::
-        {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
-
-To directly use it for computation of standard deviation of accuracy, the metric needs to be expressed for each
-observation in the way that mean of observation-level accuracies gives the whole sample accuracy. Observation-level
-accuracy is simply equal to 1 when the prediction is correct and 0 when it is not. Therefore:
-
-.. code-block:: python
-
-    >>> obs_level_accuracy = y_true == y_pred
-    >>> np.mean(obs_level_accuracy), accuracy_score(y_true, y_pred)
-    (0.4988, 0.4988)
-
-Now SE formula can be used to estimate standard deviation and compare it with standard deviation from sampling
-experiments
-above:
-
-.. code-block:: python
-
-    >>> SE_std = np.std(obs_level_accuracy)/np.sqrt(sample_size)
-    >>> SE_std, np.std(accuracy_scores)
-    (0.04999932399543018, 0.04946720594494903)
-
-The same formula can be used to estimate sample size for required standard deviation:
-
-.. code-block:: python
-
-    >>> required_std = 0.02
-    >>> sample_size = (np.std(correct_predictions)**2)/required_std**2
-    >>> sample_size
-    624.99
-
-So for the analyzed case chunk should contain at least 625 observations to keep dispersion of
-accuracy on chunks coming from random effect of sampling below 0.02 SD. In the actual implementation the final value
-is rounded to full hundredths and limited from the bottom to 300.
-
-Generally SE formula gives the exact value when:
-
-    * standard deviation of the population is known,
-    * samples are statistically independent.
-
-Both of these requirements are in fact violated. When data is split into chunks it is not sampled from population -
-it comes from a finite set. Therefore standard deviation of **population** is unknown. Moreover, chunks are not
-independent - observations in chunks are selected chronologically, not randomly. They are drawn *without replacement* (the same observation
-cannot be selected twice). Nevertheless, this approach provides estimation with good enough precision for our use
-case while keeping the computation time very low.
-
-Estimation of minimum chunk size for other metrics, such as AUROC, precision, recall etc. is performed in similar
-manner.
-
-Minimum Chunk for Data Reconstruction
-=====================================
-
-To ensure that there is no significant noise present in data recontruction results NannyML suggests a minimum chunk size
-based on the number of features user to perform data reconstruction according to this function:
-
-.. math::
-
-    f(x) = \textrm{Int}( 20 * x ^ {\frac{5}{6}})
-
-The result based on internal testing. It is merely a suggestion because multidimensional data can have difficult to foresee
-instabilities. A better suggestion could be derived by inspecting the data used to look for
-:ref:`multivariate drift<multivariate_feature_drift_detection>` but at the cost of increased computation time.
-
-Minimum Chunk for Univariate Drift
-==================================
-
-To ensure that there is no significant noise present in :ref:`Univariate Drift Detection<univariate_feature_drift_detection>`
-the recommended minimum chunk size is 500. It is a rule of thumb
-choice that should cover most common cases. A better suggestion could be derived by inspecting the data used
-for Univariate Drift detection but at the cost of increased computation time.
-
-
-**References**
-
-.. [1] https://en.wikipedia.org/wiki/Standard_error
