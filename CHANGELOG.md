@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated homepage in project metadata
 - Added missing metadata modification to the *quickstart*
 - Perform some additional check on reference data during preprocessing
+- Deal with out-of-time-order data when chunking
 
 ## [0.3.1] - 2022-04-11
 ### Changed
