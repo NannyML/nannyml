@@ -28,10 +28,12 @@ between the model inputs and the target changes. In this case we have: :math:`P(
 In production it can happen that a model experiences data drift and concept drift simultaneously.
 
 
+Below we see the various ways in which NannyML detects data drift.
+
 .. toctree::
    :maxdepth: 2
 
-   detecting_data_drift/univariate_feature_drift_detection
-   detecting_data_drift/multivariate_feature_drift_detection
+   detecting_data_drift/univariate_drift_detection
+   detecting_data_drift/multivariate_drift_detection
    detecting_data_drift/drift_detection_for_model_outputs
    detecting_data_drift/drift_detection_for_model_targets

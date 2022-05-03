@@ -1,13 +1,79 @@
-.. _univariate_feature_drift_detection:
+.. _univariate_drift_detection:
+.. _data-drift-univariate
 
-======================================
-Univariate Feature Drift Detection
-======================================
+==========================
+Univariate Drift Detection
+==========================
 
-Needs content
+Why Perform Univariate Drift Detection
+--------------------------------------
 
-Walkthrough
-------------
+Univariate Drift Detection looks at each feature individually and checks whether it's
+distribution has changed. This is the simpler form of data drift detection and has the benefit of
+being the most straightforward to understand and communicate.
+
+Just The Code
+-------------
+
+If you just want the code to experiment yourself, here you go:
+
+.. code-block:: python
+
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata.target_column_name = 'work_home_actual'
+    >>> reference.head()
+    >>>
+    >>> # Let's initialize the object that will perform the Univariate Drift calculations
+    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> # let's see drift statistics for all available data
+    >>> data = pd.concat([reference, analysis], ignore_index=True)
+    >>> univariate_results = univariate_calculator.calculate(data=data)
+    >>> # let's view a small subset of our results:
+    >>> # We use the data property of the results class to view the relevant data.
+    >>> univariate_results.data.iloc[:5, :9]
+    >>>
+    >>> univariate_results.data.iloc[-5:, :9]
+    >>>
+    >>> # let's plot drift results for all model inputs
+    >>> for feature in metadata.features:
+    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
+    ...     figure.show()
+    >>>
+    >>> # let's plot distribution drift results for continuous model inputs
+    >>> for feature in metadata.continuous_features:
+    ...     figure = univariate_results.plot(
+    ...         kind='feature_distribution',
+    ...         feature_label=feature.label
+    ...     )
+    ...     figure.show()
+    >>>
+    >>> # let's plot distribution drift results for categorical model inputs
+    >>> for feature in metadata.categorical_features:
+    ...     figure = univariate_results.plot(
+    ...         kind='feature_distribution',
+    ...         feature_label=feature.label
+    ...     )
+    ...     figure.show()
+    >>>
+    >>> ranker = nml.Ranker.by('alert_count')
+    >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
+    >>> ranked_features
+
+
+Walkthrough on univariate drift detection
+-----------------------------------------
+
+NannyML's Univariate approach for data drift looks at each variable individually and conducts
+statistical tests comparing the chunks created from the data provided with the reference dataset.
+NannyML uses the KS Test for continuous features and the 2 sample
+Chi squared test for categorical features. Both tests provide a statistic where they measure the
+observed drift and a p-value that shows how likely we are to get the observed sample
+under the assumption that there was no drift. If the p-value is less than 0.05 NannyML considers
+the result unlikely and issues an alert for the associated chunk and feature.
 
 Let’s start by loading some synthetic data provided by the NannyML package.
 
@@ -34,20 +100,6 @@ Let’s start by loading some synthetic data provided by the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-
-
-.. _data-drift-univariate:
-
-Univariate drift detection
---------------------------
-
-NannyML's Univariate approach for data drift looks at each variable individually and conducts
-statistical tests comparing the chunks created from the data provided with the reference dataset.
-NannyML uses the KS Test for continuous features and the 2 sample
-Chi squared test for categorical features. Both tests provide a statistic where they measure the
-observed drift and a p-value that shows how likely we are to get the observed sample
-under the assumption that there was no drift. If the p-value is less than 0.05 NannyML considers
-the result unlikely and issues an alert for the associated chunk and feature.
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection.
@@ -199,3 +251,15 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 +----+----------------------------+--------------------+--------+
 |  6 | gas_price_per_litre        |                  0 |      7 |
 +----+----------------------------+--------------------+--------+
+
+Insights and Follow Ups
+-----------------------
+
+After reviewing the above results we have a good understanding of what has changed in our
+model's population.
+
+If needed further investigation can be performed as to why our population characteristics have
+changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.
+
+The `Performance Estimation`_ functionality of NannyML can help provide estimates of the impact of the
+observed changes to Model Performance.

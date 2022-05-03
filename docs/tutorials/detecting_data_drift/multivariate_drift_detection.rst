@@ -1,4 +1,4 @@
-.. _multivariate_feature_drift_detection:
+.. _multivariate_drift_detection:
 
 ======================================
 Multivariate Feature Drift Detection
