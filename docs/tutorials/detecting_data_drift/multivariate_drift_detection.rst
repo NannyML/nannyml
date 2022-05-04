@@ -4,13 +4,68 @@
 Multivariate Feature Drift Detection
 ======================================
 
-Needs content
+Why Perform Multivariate Drift Detection
+----------------------------------------
 
+The univariate approach to data drift detection is simple and interpretable but
+is not sensitive to all changes that can happen in a dataset. Multivariate drift detection
+focuses on the structure of our data within the data input space and
+detects changes in that structure. This allows capturing changes in our data that may not be
+visible from the univariate drift detection methods.
 
-Walkthrough
-------------
+Just The Code
+-------------
 
-Let’s start by loading some synthetic data provided by the NannyML package.
+If you just want the code to experiment yourself withinb a Jupyter Notebook, here you go:
+
+.. code-block:: python
+
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata.target_column_name = 'work_home_actual'
+    >>> display(reference.head())
+    >>>
+    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
+    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> # let's see RC error statistics for all available data
+    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    >>>
+    >>> from sklearn.impute import SimpleImputer
+    >>>
+    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(
+    >>>     model_metadata=metadata,
+    >>>     chunk_size=5000,
+    >>>     imputer_categorical=SimpleImputer(strategy='constant', fill_value='missing'),
+    >>>     imputer_continuous=SimpleImputer(strategy='median')
+    >>> )
+    >>> # NannyML compares drift versus the full reference dataset.
+    >>> rcerror_calculator.fit(reference_data=reference)
+    >>> # let's see RC error statistics for all available data
+    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    >>>
+    >>> # We use the data property of the results class to view the relevant data.
+    >>> display(rcerror_results.data)
+    >>>
+    >>> figure = rcerror_results.plot(kind='drift')
+    >>> figure.show()
+
+Walkthrough on multivariate drift detection
+-------------------------------------------
+
+NannyML uses Data Reconstruction with PCA to detect such changes. For a detailed explanation of
+the method see
+:ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+The method returns a single number, :term:`Reconstruction Error`. The changes in this value
+reflect a change in the structure of the model inputs. NannyML monitors the
+reconstruction error over time for the monitored model and raises an alert if the
+values get outside of a range defined by the variance in the reference partition.
+
+Let's start by loading some synthetic data provided by the NannyML package.
 
 .. code-block:: python
 
@@ -36,25 +91,9 @@ Let’s start by loading some synthetic data provided by the NannyML package.
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 
-Multivariate drift detection
-----------------------------
-
-The univariate approach to data drift detection is simple and interpretable but has a few significant downsides.
-Multidimensional data can have complex structures
-whose change may not be visible by just viewing the distributions of each feature.
-
-
-NannyML uses Data Reconstruction with PCA to detect such changes. For a detailed explanation of
-the method see
-:ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
-The method returns a single number, :term:`Reconstruction Error`. The changes in this value
-reflect a change in the structure of the model inputs. NannyML monitors the
-reconstruction error over time for the monitored model and raises an alert if the
-values get outside the range observed in the reference partition.
 
 The :class:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
-module implements this functionality.
-An example of us using it can be seen below:
+module implements this functionality. One way to use it can be seen below:
 
 
 .. code-block:: python
@@ -66,8 +105,7 @@ An example of us using it can be seen below:
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
 
 
-An important detail is that :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>` cannot process missing values,
-therefore they need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
+An important detail is that missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
 the most frequent value for categorical features and the mean for continuous features. It takes place if the relevant optional
 arguments are not specified. If needed they can be specified with an instannce of `SimpleImputer`_ class
 in which cases NannyML will perform the imputation as instructed. An example where custom imputation strategies are used can be seen below:
@@ -155,3 +193,16 @@ is happening in our input data.
 
 .. _SimpleImputer: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
 
+
+Insights and Follow Ups
+-----------------------
+
+After reviewing the results we may want to look at the
+:ref:`drift results of individual features<univariate_drift_detection>`
+to see what changed in the model's feature's individually.
+Moreover the :ref:`Performance Estimation<performance-estimation>` functionality can be used to
+estimate the impact of the observed changes.
+
+
+For more information on how multivariate drift works the
+:ref:`Data Reconstruction with PCA<data-reconstruction-pca>` explanation page gives more details.

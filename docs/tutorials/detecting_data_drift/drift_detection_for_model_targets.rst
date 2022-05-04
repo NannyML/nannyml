@@ -1,16 +1,54 @@
 .. _drift_detection_for_model_targets:
 
-======================================
+=================================
 Drift Detection for Model Targets
-======================================
+=================================
 
-Needs content
+Why Perform Drift Detection for Model Targets
+---------------------------------------------
+
+The performance of a machine learning model can be affected if the distribution of targets changes.
+The target distribution can change both becuase of data drift but also because of label shift.
+
+Moreover a change in the target distribution may mean that business assumptions on which the model is
+used may need to be revisited.
+
+Just The Code
+-------------
+
+If you just want the code to experiment yourself withinb a Jupyter Notebook, here you go:
+
+.. code-block:: python
+
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata.target_column_name = 'work_home_actual'
+    >>> display(reference.head())
+    >>>
+    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
+    >>> data.loc[data['partition'] == 'analysis'].head(3)
+    >>>
+    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>>
+    >>> target_distribution = target_distribution_calculator.calculate(data)
+    >>> target_distribution.data.head(3)
+    >>>
+    >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
+    >>> fig.show()
+    >>>
+    >>> fig = target_distribution.plot(kind='distribution', distribution='statistical')
+    >>> fig.show()
 
 
-Walkthrough
-----------------
 
-Let’s start by loading some synthetic data provided by the NannyML package.
+
+Walkthrough on Drift Detection for Model Targets
+------------------------------------------------
+
+Let's start by loading some synthetic data provided by the NannyML package.
 
 .. code-block:: python
 
@@ -36,11 +74,6 @@ Let’s start by loading some synthetic data provided by the NannyML package.
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
 
-
-
-
-Drift detection for model targets
-=================================
 
 NannyML uses :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
 in order to monitor drift in :term:`Target` distribution. It can calculate the mean occurance of positive
@@ -69,9 +102,11 @@ data first.
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 Now that the data is in place we'll create a new
-:class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator` and *fit* it to the
+:class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator` and
+*fit* it to the
 reference data using the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
-method.
+method. The data in the reference partition represent an accepted target distribution
+against which we will compare subsequent data.
 
 .. code-block:: python
 
@@ -80,7 +115,7 @@ method.
 After fitting the :class:`calculator<nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator>`
 is ready to use. We calculate the target distribution by calling the
 :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.calculate`
-method, providing our previously assembled dat as an argument.
+method, providing our previously assembled data as an argument.
 
 .. code-block:: python
 
@@ -117,3 +152,13 @@ Note that a dashed line, instead of a solid line, will be used for chunks that h
     >>> fig.show()
 
 .. image:: /_static/target_distribution_statistical.svg
+
+Insights and Follow Ups
+-----------------------
+
+Looking at the results we see that we have a false alert on the first chunk of the analysis data. This
+can happen when the statistical tests consider significant a small change in the distribtion of a variable
+in the chunks. But becuase the change is small it is usually not significant from a model monitoring perspective.
+
+The :ref:`performance-calculation` functionality of NannyML can can add context to the target drift results
+showing whether there are associated performance changes.

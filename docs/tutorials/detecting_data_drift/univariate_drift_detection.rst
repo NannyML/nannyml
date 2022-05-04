@@ -20,10 +20,11 @@ If you just want the code to experiment yourself, here you go:
 
     >>> import nannyml as nml
     >>> import pandas as pd
+    >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
     >>> metadata.target_column_name = 'work_home_actual'
-    >>> reference.head()
+    >>> display(reference.head())
     >>>
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
@@ -33,9 +34,9 @@ If you just want the code to experiment yourself, here you go:
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's view a small subset of our results:
     >>> # We use the data property of the results class to view the relevant data.
-    >>> univariate_results.data.iloc[:5, :9]
+    >>> display(univariate_results.data.iloc[:5, :9])
     >>>
-    >>> univariate_results.data.iloc[-5:, :9]
+    >>> display(univariate_results.data.iloc[-5:, :9])
     >>>
     >>> # let's plot drift results for all model inputs
     >>> for feature in metadata.features:
@@ -60,7 +61,7 @@ If you just want the code to experiment yourself, here you go:
     >>>
     >>> ranker = nml.Ranker.by('alert_count')
     >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
-    >>> ranked_features
+    >>> display(ranked_features)
 
 
 Walkthrough on univariate drift detection
@@ -166,6 +167,7 @@ NannyML can also visualize those results with the following code:
 
 .. image:: /_static/drift-guide-gas_price_per_litre.svg
 
+.. _univariate_drift_detection_tenure:
 .. image:: /_static/drift-guide-tenure.svg
 
 .. image:: /_static/drift-guide-wfh_prev_workday.svg
