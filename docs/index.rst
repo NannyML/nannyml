@@ -25,9 +25,9 @@ Welcome to NannyML's documentation!
 
    quick
    tutorials
+   how_it_works
    examples
    troubleshooting
-   how_it_works
    glossary
    Technical reference <nannyml/modules>
 

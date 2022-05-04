@@ -1,5 +1,4 @@
 .. _univariate_drift_detection:
-.. _data-drift-univariate
 
 ==========================
 Univariate Drift Detection
@@ -261,5 +260,5 @@ model's population.
 If needed further investigation can be performed as to why our population characteristics have
 changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.
 
-The `Performance Estimation`_ functionality of NannyML can help provide estimates of the impact of the
+The :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
 observed changes to Model Performance.

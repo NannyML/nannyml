@@ -13,7 +13,7 @@ boundary. This boundary depends on the structure of the data within the model in
 space. However the world is not static, and the structure of a model's input data can
 change. This change can then cause our existing decision boundary to be suboptimal.
 
-:ref:`Univariate Drift Detection<data-drift-univariate>` describes how NannyML analyzes
+:ref:`Univariate Drift Detection<univariate_drift_detection>` describes how NannyML analyzes
 each feature individually and
 observes whether there are changes in the resulting feature distributions over time. However,
 this is not enough to capture all the changes that may affect a machine learning model.
@@ -192,7 +192,7 @@ Understanding Reconstruction Error with PCA
 
 As PCA learns the internal structure of the data, a significant change in the reconstruction error means
 that the learned structure no longer accurately approximates the current data structure. This indicates data drift.
-:ref:`Multivariate Drift Detection<multivariate_feature_drift_detection>` shows how one can compute
+:ref:`Multivariate Drift Detection<multivariate_drift_detection>` shows how one can compute
 Reconstruction Error with PCA.
 
 Applying PCA as part of the Data Reconstruction with PCA means that we lose some information about our dataset.
