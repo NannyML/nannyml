@@ -1,8 +1,8 @@
-.. _compare_estimated_and_real_performance:
+.. _compare_estimated_and_realized_performance:
 
-======================================
-Compare Estimated and Real Performance
-======================================
+==========================================
+Compare Estimated and Realized Performance
+==========================================
 
 
 When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the

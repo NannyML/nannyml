@@ -8,7 +8,7 @@ Tutorials
     :maxdepth: 2
 
     tutorials/setting_up
-    tutorials/measuring_performance
+    tutorials/monitoring_performance
     tutorials/detecting_data_drift
     tutorials/adjusting_plots
     tutorials/contributing
