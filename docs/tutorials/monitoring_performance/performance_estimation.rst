@@ -4,7 +4,50 @@
 Performance Estimation
 ======================
 
-This guide explains how to use NannyML to estimate the performance of a monitored model (in absence of ground truth). The guide is based on a synthetic dataset where the monitored model predicts whether an employee will work from home.
+Why Perform Performance Estimation
+----------------------------------
+
+NammyML allows for estimating the performance of a classification model before ground truth
+becomes available. This can be very helpful in situations where there is a significant delay
+in when ground truth becomes available but any changes in the model's performance would have
+a significant impact on business results.
+
+Just The Code
+-------------
+
+If you just want the code to experiment yourself, here you go:
+
+.. code-block:: python
+
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_sample()
+    >>> reference.head(3)
+
+    >>> reference['y_pred'] = reference['y_pred_proba'].map(lambda p: int(p >= 0.8))
+    >>> analysis['y_pred'] = analysis['y_pred_proba'].map(lambda p: int(p >= 0.8))
+    >>> reference.head(3)
+
+    >>> analysis.head(3)
+
+    >>> analysis.head(3)
+    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
+    >>> metadata.target_column_name = 'work_home_actual'
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc', 'f1', 'precision', 'recall']).fit(reference_data=reference)
+
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
+
+    >>> est_perf.data.head(3)
+
+    >>> for metric in cbpe.metrics:
+            est_perf.plot(kind='performance', metric=metric).show()
+
+
+
+
+This guide explains how to use NannyML to estimate the performance of a monitored model (in absence of ground truth).
+The guide is based on a synthetic dataset where the monitored model predicts whether an employee will work from home.
 
 Prepare the data
 ================
