@@ -51,7 +51,7 @@ Walkthrough on Drift Detection for Model Outputs
 ------------------------------------------------
 
 NannyML detects data drift for :term:`Model Outputs` in the same univariate drift methodology as
-for a continuous feature. 
+for a continuous feature.
 
 Let's start by loading some synthetic data provided by the NannyML package.
 

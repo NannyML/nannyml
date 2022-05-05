@@ -197,4 +197,6 @@ Finally, once the chunking method is selected, the full performance estimation c
 
 .. image:: /_static/guide-chunking_your_data-pe_plot.svg
 
-Each marker on the plot represents estimated performance for a single chunk (y axis). Markers are placed at the end of the period covered by the chunk i.e. they indicate the last timestamp in the chunk (x axis). Plots are interactive - hovering over the marker will display the information about the period.
+Each marker on the plot represents estimated performance for a single chunk (y axis).
+Markers are placed at the end of the period covered by the chunk i.e. they indicate the last timestamp in the
+chunk (x axis). Plots are interactive - hovering over the marker will display the information about the period.

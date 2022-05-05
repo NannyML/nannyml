@@ -97,17 +97,6 @@ Meeting data requirements
 
 The data provided to NannyML should contain the following columns:
 
-<<<<<<< HEAD:docs/tutorials/setting_up/preparing_your_data.rst
-Identifier
-^^^^^^^^^^^^^^^^^^^
-
-A unique, identifying value for each observation. See :term:`Identifier`.
-
-If the data does not contain any real identifier column an artificial one can always be created. Row numbers or
-timestamps are good candidates.
-
-=======
->>>>>>> @{-1}:docs/guides/setup.rst
 Timestamp
 ^^^^^^^^^^^^^^^^^^^
 
