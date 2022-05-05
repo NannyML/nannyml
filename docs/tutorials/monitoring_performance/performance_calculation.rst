@@ -67,28 +67,26 @@ Let's extract the metadata and complete any missing information:
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(reference)
+    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> metadata.to_df()
 
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
 |    | label                             | column_name                | type        | description                                   |
 +====+===================================+============================+=============+===============================================+
-|  0 | identifier_column_name            | identifier                 | continuous  | identifier                                    |
+|  0 | timestamp_column_name             | timestamp                  | continuous  | timestamp                                     |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  1 | timestamp_column_name             | timestamp                  | continuous  | timestamp                                     |
+|  1 | partition_column_name             | partition                  | categorical | partition                                     |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  2 | partition_column_name             | partition                  | categorical | partition                                     |
+|  2 | target_column_name                | work_home_actual           | categorical | target                                        |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  3 | target_column_name                | work_home_actual           | categorical | target                                        |
+|  3 | prediction_column_name            | y_pred                     | continuous  | predicted label                               |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  4 | prediction_column_name            | y_pred                     | continuous  | predicted label                               |
+|  4 | predicted_probability_column_name | y_pred_proba               | continuous  | predicted score/probability                   |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  5 | predicted_probability_column_name | y_pred_proba               | continuous  | predicted score/probability                   |
+|  5 | distance_from_office              | distance_from_office       | continuous  | extracted feature: distance_from_office       |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  6 | distance_from_office              | distance_from_office       | continuous  | extracted feature: distance_from_office       |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  7 | salary_range                      | salary_range               | categorical | extracted feature: salary_range               |
+|  6 | salary_range                      | salary_range               | categorical | extracted feature: salary_range               |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
 
 Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.

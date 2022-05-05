@@ -182,7 +182,7 @@ def _create_joy_plot(
     layout = go.Layout(
         title=title,
         xaxis=dict(
-            title=x_axis_title,
+            title=x_axis_title if style == 'horizontal' else y_axis_title,
             linecolor=colors[2],
             range=post_kde_clip if style == 'horizontal' else None,
             showgrid=False,
@@ -190,12 +190,12 @@ def _create_joy_plot(
             zeroline=False,
         ),
         yaxis=dict(
-            title=y_axis_title,
+            title=y_axis_title if style == 'horizontal' else x_axis_title,
             linecolor=colors[2],
             range=None if style == 'horizontal' else post_kde_clip,
             showgrid=False,
             mirror=True,
-            autorange="reversed",
+            autorange="reversed" if style == 'horizontal' else None,
             zeroline=False,
         ),
         paper_bgcolor='rgba(255,255,255,1)',

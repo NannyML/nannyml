@@ -101,7 +101,7 @@ Detecting Data Drift
 ====================
 
 NannyML allows for further investigation into potential performance issues with it's data drift detection
-functionality. See :ref:`data-drift` for more details.
+functionality. See :ref:`data-drift-practice` for more details.
 
 An example of using NannyML to compute and visualize data drift for the model inputs can be seen below:
 

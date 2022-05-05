@@ -16,7 +16,6 @@ NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
 NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
 NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME = 'nml_meta_predicted_proba'
 NML_METADATA_TARGET_COLUMN_NAME = 'nml_meta_target'
-NML_METADATA_IDENTIFIER_COLUMN_NAME = 'nml_meta_identifier'
 NML_METADATA_TIMESTAMP_COLUMN_NAME = 'nml_meta_timestamp'
 
 NML_METADATA_REFERENCE_PARTITION_NAME = 'reference'
@@ -27,7 +26,6 @@ NML_METADATA_COLUMNS = [
     NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
-    NML_METADATA_IDENTIFIER_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 ]
 
@@ -172,7 +170,6 @@ class ModelMetadata:
         model_name: str = None,
         model_problem: str = 'binary_classification',
         features: List[Feature] = None,
-        identifier_column_name: str = 'id',
         prediction_column_name: str = None,
         predicted_probability_column_name: str = None,
         target_column_name: str = 'target',
@@ -189,9 +186,6 @@ class ModelMetadata:
             The kind of problem your model is trying to solve. Optional, defaults to `binary_classification`.
         features : List[Feature]
             The list of Features for the model. Optional, defaults to `None`.
-        identifier_column_name : string
-            The name of the column that contains a value that acts as an identifier for the
-            observation, i.e. it is unique over all observations. Optional, defaults to `id`
         prediction_column_name : string
             The name of the column that contains the models' predictions. Optional, defaults to ``None``.
         predicted_probability_column_name: string
@@ -219,8 +213,7 @@ class ModelMetadata:
         description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),
         >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
         >>> metadata.to_dict()
-        {'identifier_column_name': 'id',
-         'timestamp_column_name': 'date',
+        {'timestamp_column_name': 'date',
          'partition_column_name': 'partition',
          'target_column_name': 'work_home_actual',
          'prediction_column_name': None,
@@ -240,7 +233,6 @@ class ModelMetadata:
         self.name = model_name
         self.model_problem = model_problem
 
-        self._identifier_column_name = identifier_column_name
         self._prediction_column_name = prediction_column_name
         self._predicted_probability_column_name = predicted_probability_column_name
         self._target_column_name = target_column_name
@@ -248,15 +240,6 @@ class ModelMetadata:
         self._timestamp_column_name = timestamp_column_name
 
         self.features = [] if features is None else features
-
-    @property
-    def identifier_column_name(self):  # noqa: D102
-        return self._identifier_column_name
-
-    @identifier_column_name.setter
-    def identifier_column_name(self, column_name: str):  # noqa: D102
-        self._identifier_column_name = column_name
-        self.__remove_from_features(column_name)
 
     @property
     def prediction_column_name(self):  # noqa: D102
@@ -306,7 +289,6 @@ class ModelMetadata:
     def to_dict(self) -> Dict[str, Any]:  # pragma: no cover
         """Converts a ModelMetadata instance into a Dictionary."""
         return {
-            'identifier_column_name': self.identifier_column_name,
             'timestamp_column_name': self.timestamp_column_name,
             'partition_column_name': self.partition_column_name,
             'target_column_name': self.target_column_name,
@@ -329,12 +311,6 @@ class ModelMetadata:
         """
         return pd.DataFrame(
             [
-                {
-                    'label': 'identifier_column_name',
-                    'column_name': self.identifier_column_name,
-                    'type': FeatureType.CONTINUOUS.value,
-                    'description': 'identifier',
-                },
                 {
                     'label': 'timestamp_column_name',
                     'column_name': self.timestamp_column_name,
@@ -387,7 +363,6 @@ class ModelMetadata:
         # Please identify column names for all '~ UNKNOWN ~' values
         --
         Model problem                       binary_classification
-        Identifier column                   id
         Timestamp column                    date
         Partition column                    partition
         Prediction column                   ~ UNKNOWN ~
@@ -409,7 +384,6 @@ class ModelMetadata:
             '',
             f"{'Model problem':35} {self.model_problem or UNKNOWN:35}",
             '',
-            f"{'Identifier column':35} {self.identifier_column_name or UNKNOWN:35}",
             f"{'Timestamp column':35} {self.timestamp_column_name or UNKNOWN:35}",
             f"{'Partition column':35} {self.partition_column_name or UNKNOWN:35}",
             f"{'Prediction column':35} {self.prediction_column_name or UNKNOWN:35}",
@@ -499,7 +473,6 @@ class ModelMetadata:
         """
         data = data.copy()
 
-        data[NML_METADATA_IDENTIFIER_COLUMN_NAME] = data[self.identifier_column_name]
         data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
         if self.prediction_column_name in data.columns:
             data[NML_METADATA_PREDICTION_COLUMN_NAME] = data[self.prediction_column_name]
@@ -618,18 +591,24 @@ class ModelMetadata:
             self.features.remove(current_feature)
 
 
-def extract_metadata(data: pd.DataFrame, model_name: str = None):
+def extract_metadata(data: pd.DataFrame, model_name: str = None, exclude_columns: List[str] = None):
     """Tries to extract model metadata from a given data set.
 
     Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
     NannyML includes this helper function that tries to do the boring stuff for you using some simple rules.
 
+    By default, all columns in the given dataset are considered to be either model features or metadata. Use the
+    ``exclude_columns`` parameter to prevent columns from being interpreted as metadata or features.
+
     Parameters
     ----------
     data : DataFrame
         The dataset containing model inputs and outputs, enriched with the required metadata.
-    model_name : string
-            A human-readable name for the model.
+    model_name : str
+        A human-readable name for the model.
+    exclude_columns: List[str], default=None
+        A list of column names that are to be skipped during metadata extraction, preventing them from being interpreted
+        as either model metadata or model features.
 
     Returns
     -------
@@ -702,11 +681,10 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
     if len(data.columns) == 0:
         return None
 
-    metadata = ModelMetadata(model_name=model_name)
+    if exclude_columns is not None and len(exclude_columns) != 0:
+        data = data.drop(columns=exclude_columns)
 
-    identifiers = _guess_identifiers(data)
-    check_for_nan(identifiers)
-    metadata.identifier_column_name = None if len(identifiers) == 0 else identifiers[0]  # type: ignore
+    metadata = ModelMetadata(model_name=model_name)
 
     predictions = _guess_predictions(data)
     check_for_nan(predictions)
@@ -733,13 +711,6 @@ def extract_metadata(data: pd.DataFrame, model_name: str = None):
     metadata.features = _extract_features(data)
 
     return metadata
-
-
-def _guess_identifiers(data: pd.DataFrame) -> List[str]:
-    def _guess_if_identifier(col: pd.Series) -> bool:
-        return col.name in ['id', 'ident', 'identity', 'identifier', 'uid', 'uuid']
-
-    return [col for col in data.columns if _guess_if_identifier(data[col])]
 
 
 def _guess_timestamps(data: pd.DataFrame) -> List[str]:
@@ -781,8 +752,7 @@ def _guess_features(data: pd.DataFrame) -> List[str]:
     def _guess_if_feature(col: pd.Series) -> bool:
         return (
             col.name
-            not in _guess_identifiers(data)
-            + _guess_partitions(data)
+            not in _guess_partitions(data)
             + _guess_predictions(data)
             + _guess_predicted_probabilities(data)
             + _guess_timestamps(data)

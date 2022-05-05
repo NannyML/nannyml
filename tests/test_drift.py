@@ -102,7 +102,6 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
 
     data.loc[data.week >= 16, ['f1']] = data.loc[data.week >= 16, ['f1']] + 0.6
     data.loc[data.week >= 16, ['f2']] = np.sqrt(data.loc[data.week >= 16, ['f2']])
-    data['id'] = data.index
     data.drop(columns=['week'], inplace=True)
 
     return data
@@ -111,10 +110,12 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
 @pytest.fixture
 def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D103
     data = sample_drift_data.copy(deep=True)
-    nan_pick1 = set(sample_drift_data.id.sample(frac=0.11, random_state=13))
-    nan_pick2 = set(sample_drift_data.id.sample(frac=0.11, random_state=14))
+    data['id'] = data.index
+    nan_pick1 = set(data.id.sample(frac=0.11, random_state=13))
+    nan_pick2 = set(data.id.sample(frac=0.11, random_state=14))
     data.loc[data.id.isin(nan_pick1), 'f1'] = np.NaN
     data.loc[data.id.isin(nan_pick2), 'f4'] = np.NaN
+    data.drop(columns=['id'], inplace=True)
     return data
 
 

@@ -97,6 +97,7 @@ Meeting data requirements
 
 The data provided to NannyML should contain the following columns:
 
+<<<<<<< HEAD:docs/tutorials/setting_up/preparing_your_data.rst
 Identifier
 ^^^^^^^^^^^^^^^^^^^
 
@@ -105,6 +106,8 @@ A unique, identifying value for each observation. See :term:`Identifier`.
 If the data does not contain any real identifier column an artificial one can always be created. Row numbers or
 timestamps are good candidates.
 
+=======
+>>>>>>> @{-1}:docs/guides/setup.rst
 Timestamp
 ^^^^^^^^^^^^^^^^^^^
 
@@ -188,8 +191,6 @@ This means that for the example **work_from_home** case:
      - ``np.NaN``
    * - Ground truth.
      - ``work_home_actual``
-   * - Identifier
-     - ``identifier``
    * - Timestamp
      - ``timestamp``
    * - Period
@@ -209,9 +210,16 @@ NannyML provides the :func:`nannyml.metadata.extract_metadata` function to autom
 from a given ``DataFrame``. It does so by following some simple naming conventions and heuristics to column names
 and data. It returns a prepopulated instance of the :class:`ModelMetadata<nannyml.metadata.ModelMetadata>` class.
 
+To prevent NannyML from interpreting some columns as either metadata or model features it provides
+the optional ``extract_metadata`` parameter. It takes a list of column names that will not be included in the
+:class:`ModelMetadata<nannyml.metadata.ModelMetadata>`.
+
+An example of this is the ``identifier`` column in the included sample dataset. It is required to join the analysis data
+with its target values, but that is the only purpose it serves. So that it doesn't
+
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(data=reference)
+    >>> metadata = nml.extract_metadata(data=reference, exclude_columns=['identifier'])
     >>> metadata
     Metadata({'identifier_column_name': 'identifier', 'timestamp_column_name': 'timestamp', 'partition_column_name': 'partition', 'target_column_name': None, 'prediction_column_name': 'y_pred_proba', 'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"})
 
@@ -225,7 +233,6 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     # Warning - unable to identify all essential data
     # Please identify column names for all '~ UNKNOWN ~' values
     Model problem             binary_classification
-    Identifier column         identifier
     Timestamp column          timestamp
     Partition column          partition
     Prediction column         y_pred_proba
@@ -254,19 +261,18 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
 
     >>> metadata.to_df()
                                  label  ...                                    description
-    0       identifier_column_name  ...                                     identifier
-    1        timestamp_column_name  ...                                      timestamp
-    2        partition_column_name  ...                                      partition
-    3           target_column_name  ...                                         target
-    4       prediction_column_name  ...                   prediction score/probability
-    5         distance_from_office  ...        extracted feature: distance_from_office
-    6                 salary_range  ...                extracted feature: salary_range
-    7          gas_price_per_litre  ...         extracted feature: gas_price_per_litre
-    8   public_transportation_cost  ...  extracted feature: public_transportation_cost
-    9             wfh_prev_workday  ...            extracted feature: wfh_prev_workday
-    10                     workday  ...                     extracted feature: workday
-    11                      tenure  ...                      extracted feature: tenure
-    12            work_home_actual  ...            extracted feature: work_home_actual
+    0        timestamp_column_name  ...                                      timestamp
+    1        partition_column_name  ...                                      partition
+    2           target_column_name  ...                                         target
+    3       prediction_column_name  ...                   prediction score/probability
+    4         distance_from_office  ...        extracted feature: distance_from_office
+    5                 salary_range  ...                extracted feature: salary_range
+    6          gas_price_per_litre  ...         extracted feature: gas_price_per_litre
+    7   public_transportation_cost  ...  extracted feature: public_transportation_cost
+    8             wfh_prev_workday  ...            extracted feature: wfh_prev_workday
+    9                     workday  ...                     extracted feature: workday
+    10                      tenure  ...                      extracted feature: tenure
+    11            work_home_actual  ...            extracted feature: work_home_actual
 
 .. warning::
     Because the extraction is based on simple rules the results are never guaranteed to be completely correct.
@@ -287,8 +293,6 @@ These metadata properties follow simple naming conventions for discovery:
 
    * - Metadata property
      - Naming convention
-   * - ``identifier_column_name``
-     - ``column_name in ['id', 'ident', 'identity', 'identifier', 'uid', 'uuid']``
    * - ``timestamp_column_name``
      - ``column_name in ['date', 'timestamp', 'ts', 'date', 'time']``
    * - ``predicted_probability_column_name``
