@@ -224,3 +224,4 @@ will be distributed under this license.
 
 
 
+* Read the docs on [how to contribute](CONTRIBUTING.rst)

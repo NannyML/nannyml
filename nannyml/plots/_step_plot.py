@@ -113,12 +113,18 @@ def _step_plot(
         'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha)) for color in colors
     ]
 
+    # This has been updated to show the general shape, but the period label and other details are hard-coded.
+    # I think this needs to be put together more conditionally when building each figure, but I couldn't figure out how
+    # The border can also be changed, but I think that also means this needs restructuring?
+    # https://plotly.com/python/hover-text-and-formatting/#customizing-hover-label-appearance
     hover_template = (
-        hover_labels[0]
-        + ': <b>%{customdata[0]}</b>&nbsp;&nbsp;&nbsp;&nbsp;'
-        + 'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b>&nbsp;&nbsp;&nbsp;&nbsp;'
+        '<b style="color:#3B0280;line-height:60px">Analysis</b> &nbsp; &nbsp; <span style="color:#AD0000">⚠ <b>Drift detected</b></span><br>'  # noqa: E501
+        + hover_labels[0]
+        + ': <b>%{customdata[0]}</b> &nbsp; &nbsp; '
+        + 'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b> &nbsp; &nbsp; <br>'
         + hover_labels[1]
-        + ': <b>%{customdata[3]}</b>'
+        + ': <b>%{customdata[3]}</b>  &nbsp; &nbsp; '
+        + 'Data: <span style="color:#AD0000">⚠ <b>97% missing</b></span>  &nbsp; &nbsp; Stability: <b>0.6</b> &nbsp; &nbsp; <extra></extra>'  # noqa: E501
     )
 
     custom_data_columns = [chunk_column_name, 'start_date_label', 'end_date_label', 'metric_label']
@@ -136,6 +142,7 @@ def _step_plot(
         paper_bgcolor='rgba(255,255,255,1)',
         plot_bgcolor='rgba(255,255,255,1)',
         legend=dict(itemclick=False, itemdoubleclick=False),
+        hoverlabel=dict(bgcolor="white", font_size=14),
     )
 
     if figure:
