@@ -192,6 +192,8 @@ def _plot_prediction_drift(
     if isinstance(metadata, BinaryClassificationMetadata):
         prediction_column_name = metadata.prediction_column_name
     elif isinstance(metadata, MulticlassClassificationMetadata):
+        if not class_label or class_label == "":
+            raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
         prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
     else:
         raise NotImplementedError
@@ -292,7 +294,7 @@ def _plot_prediction_distribution(
     if isinstance(metadata, BinaryClassificationMetadata):
         predicted_probability_column_name = metadata.predicted_probability_column_name
     elif isinstance(metadata, MulticlassClassificationMetadata):
-        if class_label is None:
+        if not class_label or class_label == "":
             raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
         predicted_probability_column_name = metadata.predicted_probabilities_column_names[class_label]
     else:

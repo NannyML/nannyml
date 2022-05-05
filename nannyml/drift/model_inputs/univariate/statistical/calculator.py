@@ -82,9 +82,8 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
                     "missing value for 'predicted_probability_column_name'. "
                     "Please update your model metadata accordingly."
                 )
-            self.__predicted_probabilities_column_names = cast(
-                MulticlassClassificationMetadata, self.model_metadata
-            ).predicted_probabilities_column_names
+            md = cast(MulticlassClassificationMetadata, self.model_metadata)
+            self.__predicted_probabilities_column_names = list(md.predicted_probabilities_column_names.values())
 
         self.selected_features += self.__predicted_probabilities_column_names
         self._reference_data = None
