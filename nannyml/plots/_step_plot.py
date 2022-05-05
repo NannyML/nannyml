@@ -41,7 +41,7 @@ def _data_prep_step_plot(
     if partial_target_column_name and partial_target_column_name in data:
         missing_data_style = 'style="color:#AD0000"'
         data['incomplete_target_percentage'] = (data[partial_target_column_name] * 100).apply(
-            lambda p: f'Data: <span {missing_data_style if p >= 0.0 else ""}>{"⚠ " if p >= 0.0 else "" }'
+            lambda p: f'Data: <span {missing_data_style if p >= 0.5 else ""}>{"⚠ " if p >= 0.5 else "" }'
             f'<b>{p:.2f}% missing</b></span>  &nbsp; &nbsp;'
         )
     else:
