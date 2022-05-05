@@ -21,23 +21,17 @@ If you just want the code to experiment yourself, here you go:
 
     >>> import pandas as pd
     >>> import nannyml as nml
+    >>> from IPython.display import display
     >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_sample()
-    >>> reference.head(3)
+    >>> display(reference.head(3))
 
-    >>> reference['y_pred'] = reference['y_pred_proba'].map(lambda p: int(p >= 0.8))
-    >>> analysis['y_pred'] = analysis['y_pred_proba'].map(lambda p: int(p >= 0.8))
-    >>> reference.head(3)
+    >>> display(analysis.head(3))
 
-    >>> analysis.head(3)
-
-    >>> analysis.head(3)
     >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
 
     >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc', 'f1', 'precision', 'recall']).fit(reference_data=reference)
-
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-
     >>> est_perf.data.head(3)
 
     >>> for metric in cbpe.metrics:
@@ -45,41 +39,25 @@ If you just want the code to experiment yourself, here you go:
 
 
 
+Walkthrough on Performance Estimation
+-------------------------------------
 
-This guide explains how to use NannyML to estimate the performance of a monitored model (in absence of ground truth).
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` class
+implements the performance estimation functionality for binary classification models. For more
+information on how the algorithm works read the
+:ref:`Confidence Based Performance Estimation<performance-estimation-deep-dive>` page.
+
+
 The guide is based on a synthetic dataset where the monitored model predicts whether an employee will work from home.
-
-Prepare the data
-================
-
 Let's first load the data and have a quick look:
 
 .. code-block:: python
 
     >>> import pandas as pd
     >>> import nannyml as nml
+    >>> from IPython.display import display
     >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_sample()
-    >>> reference.head(3)
-
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |
-+====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+
-|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-
-The data only contains the predicted probabilities in the ``y_pred_proba`` column right now. To address the full range
-of metrics the CBPE supports it will need to access the predicted labels as well.
-In the case of a binary classifier it is easy to add these to the dataset by thresholding.
-
-.. code-block:: python
-
-    >>> reference['y_pred'] = reference['y_pred_proba'].map(lambda p: int(p >= 0.8))
-    >>> analysis['y_pred'] = analysis['y_pred_proba'].map(lambda p: int(p >= 0.8))
-    >>> reference.head(3)
+    >>> display(reference.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -94,7 +72,7 @@ In the case of a binary classifier it is easy to add these to the dataset by thr
 
 .. code-block:: python
 
-    >>> analysis.head(3)
+    >>> display(analysis.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -107,23 +85,25 @@ In the case of a binary classifier it is easy to add these to the dataset by thr
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
 
 
-``reference`` and ``analysis`` correspond to ``reference`` and ``analysis`` partitions of the monitored data. To
-understand what they are read :ref:`data partitions<data-drift-partitions>`. Let's leave
-``analysis_gt`` for now, it will be described and used later.
+The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` partitions of
+the monitored data. To understand what they are read :ref:`data partitions<data-drift-partitions>`. The
+``analysis_gt`` dataframe contains the ground truth results of the analysis period and we will not be using
+it during Performance Estimation.
 
-Let's extract the metadata and complete the missing information:
+One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
+Some information is infered automatically and we provide the rest.
 
 .. code-block:: python
 
-    >>> analysis.head(3)
-    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(reference, model_name='wfh_predictor', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
 
 
-Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
+Full information on how the model's data should be prepared can be found in the guide on
+:ref:`importing data<import-data>`.
 
 Creating and using the estimator
-================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the next step Confidence-based Performance Estimation (CBPE) estimator is created and fitted on ``reference`` data.
 Both the chunking method and the metrics to estimate need to be specified now.
@@ -131,11 +111,15 @@ Read more about chunking in relevant :ref:`guide<chunk-data>`.
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc', 'f1', 'precision', 'recall']).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    ...     model_metadata=metadata,
+    ...     chunk_size=5000,
+    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+    ... ).fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
-Typically, this would be used on the latest production data where ground truth is missing (i.e. the ``analysis``
-partition).
+Typically, this would be used on the latest production data where ground truth is missing, which usually is
+the ``analysis`` partition.
 
 However, it can be also used on combined ``reference`` and ``analysis`` data, e.g. when comparing
 estimations of ``reference`` and ``analysis`` data or comparing the estimated performance versus the realized
@@ -148,7 +132,7 @@ performance on ``reference`` data.
 To find out how CBPE estimates performance, read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
 
 View the results
-================
+~~~~~~~~~~~~~~~~
 
 To get the data frame with results:
 
@@ -201,49 +185,21 @@ The results can be also plotted:
 
 .. image:: ../../_static/perf-est-guide-recall.svg
 
+.. image:: ../../_static/perf-est-guide-specificity.svg
 
-Compare with the actual performance
-===================================
-
-When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
-ground truth is given in ``analysis_gt`` variable. It consists of ``identifier`` that allows to match it with
-``analysis`` data and the target for monitored model - ``work_home_actual``:
-
-.. code-block:: python
-
-    >>> analysis_gt.head(3)
+.. image:: ../../_static/perf-est-guide-accuracy.svg
 
 
-+----+--------------+--------------------+
-|    |   identifier |   work_home_actual |
-+====+==============+====================+
-|  0 |        50000 |                  1 |
-+----+--------------+--------------------+
-|  1 |        50001 |                  1 |
-+----+--------------+--------------------+
-|  2 |        50002 |                  1 |
-+----+--------------+--------------------+
+Insights and Follow Ups
+-----------------------
 
-.. code-block:: python
+After reviewing the performance estimation results we have to decide if further investigation is needed.
+The :ref:`Data Drift<data-drift>` functionality can help here.
 
-    >>> from sklearn.metrics import roc_auc_score
-    >>> import matplotlib.pyplot as plt
-    >>> # merge gt to analysis
-    >>> analysis_full = pd.merge(analysis, analysis_gt, on = 'identifier')
-    >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
-    >>> target_col = 'work_home_actual'
-    >>> pred_score_col = 'y_pred_proba'
-    >>> actual_performance = []
-    >>> for idx in est_perf.data.index:
-    >>>     start_index, end_index = est_perf.data.loc[idx, 'start_index'], est_perf.data.loc[idx, 'end_index']
-    >>>     sub = df_all.loc[start_index:end_index]
-    >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    >>>     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
-    >>> # plot
-    >>> est_perf.data[['estimated_roc_auc', 'actual_roc_auc']].plot()
-    >>> plt.xlabel('chunk')
-    >>> plt.ylabel('ROC AUC')
-    >>> plt.show()
+If needed further investigation can be performed as to why our population characteristics have
+changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.
 
-
-.. image:: ../../_static/guide-performance_estimation_tmp.svg
+When the ground truth results become available they can be compared with the estimated results as
+demonstrated :ref:`here<compare_estimated_and_realized_performance>`. You can learn more
+about the Confidence Based Performance Estimation and it's limitation in the
+:ref:`How it Works page<performance-estimation-deep-dive>`
