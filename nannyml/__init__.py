@@ -56,7 +56,7 @@ from .metadata import (
     FeatureType,
     ModelMetadata,
     ModelType,
-    MultiClassClassificationMetadata,
+    MulticlassClassificationMetadata,
     extract_metadata,
 )
 from .performance_calculation import PerformanceCalculator

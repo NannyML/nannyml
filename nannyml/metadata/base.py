@@ -15,8 +15,6 @@ from nannyml.exceptions import MissingMetadataException
 from nannyml.metadata.feature import Feature, FeatureType
 
 NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
-NML_METADATA_PREDICTION_COLUMN_NAME = 'nml_meta_prediction'
-NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME = 'nml_meta_predicted_proba'
 NML_METADATA_TARGET_COLUMN_NAME = 'nml_meta_target'
 NML_METADATA_TIMESTAMP_COLUMN_NAME = 'nml_meta_timestamp'
 
@@ -25,8 +23,6 @@ NML_METADATA_ANALYSIS_PARTITION_NAME = 'analysis'
 
 NML_METADATA_COLUMNS = [
     NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
-    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 ]
@@ -78,8 +74,6 @@ class ModelMetadata(abc.ABC):
         model_type: ModelType,
         model_name: str = None,
         features: List[Feature] = None,
-        prediction_column_name: str = None,
-        predicted_probability_column_name: str = None,
         target_column_name: str = 'target',
         partition_column_name: str = 'partition',
         timestamp_column_name: str = 'date',
@@ -95,11 +89,6 @@ class ModelMetadata(abc.ABC):
             A human-readable name for the model.
         features : List[Feature]
             The list of Features for the model. Optional, defaults to `None`.
-        prediction_column_name : string
-            The name of the column that contains the models' predictions. Optional, defaults to ``None``.
-        predicted_probability_column_name: string
-            The name of the column that contains the models' predicted probabilities.
-            Optional, defaults to ``None``.
         target_column_name : string
             The name of the column that contains the ground truth / target / actual. Optional, defaults to `target`
         partition_column_name : string
@@ -140,31 +129,11 @@ class ModelMetadata(abc.ABC):
         self.model_type = model_type
         self.name = model_name
 
-        self._prediction_column_name = prediction_column_name
-        self._predicted_probability_column_name = predicted_probability_column_name
         self._target_column_name = target_column_name
         self._partition_column_name = partition_column_name
         self._timestamp_column_name = timestamp_column_name
 
         self.features = [] if features is None else features
-
-    @property
-    def prediction_column_name(self):  # noqa: D102
-        return self._prediction_column_name
-
-    @prediction_column_name.setter
-    def prediction_column_name(self, column_name: str):  # noqa: D102
-        self._prediction_column_name = column_name
-        self.__remove_from_features(column_name)
-
-    @property
-    def predicted_probability_column_name(self):  # noqa: D102
-        return self._predicted_probability_column_name
-
-    @predicted_probability_column_name.setter
-    def predicted_probability_column_name(self, column_name: str):  # noqa: D102
-        self._predicted_probability_column_name = column_name
-        self.__remove_from_features(column_name)
 
     @property
     def target_column_name(self):  # noqa: D102
@@ -173,7 +142,7 @@ class ModelMetadata(abc.ABC):
     @target_column_name.setter
     def target_column_name(self, column_name: str):  # noqa: D102
         self._target_column_name = column_name
-        self.__remove_from_features(column_name)
+        self._remove_from_features(column_name)
 
     @property
     def partition_column_name(self):  # noqa: D102
@@ -182,7 +151,7 @@ class ModelMetadata(abc.ABC):
     @partition_column_name.setter
     def partition_column_name(self, column_name: str):  # noqa: D102
         self._partition_column_name = column_name
-        self.__remove_from_features(column_name)
+        self._remove_from_features(column_name)
 
     @property
     def timestamp_column_name(self):  # noqa: D102
@@ -191,19 +160,25 @@ class ModelMetadata(abc.ABC):
     @timestamp_column_name.setter
     def timestamp_column_name(self, column_name: str):  # noqa: D102
         self._timestamp_column_name = column_name
-        self.__remove_from_features(column_name)
+        self._remove_from_features(column_name)
 
+    @property
+    @abc.abstractmethod
+    def metadata_columns(self):
+        """Returns all metadata columns that are added to the data by the ``enrich`` method."""
+        return NML_METADATA_COLUMNS
+
+    @abc.abstractmethod
     def to_dict(self) -> Dict[str, Any]:  # pragma: no cover
         """Converts a ModelMetadata instance into a Dictionary."""
         return {
             'timestamp_column_name': self.timestamp_column_name,
             'partition_column_name': self.partition_column_name,
             'target_column_name': self.target_column_name,
-            'prediction_column_name': self.prediction_column_name,
-            'predicted_probability_column_name': self.predicted_probability_column_name,
             'features': [feature.to_dict() for feature in self.features],
         }
 
+    @abc.abstractmethod
     def to_df(self) -> pd.DataFrame:
         """Converts a ModelMetadata instance into a read-only DataFrame.
 
@@ -235,18 +210,6 @@ class ModelMetadata(abc.ABC):
                     'column_name': self.target_column_name,
                     'type': FeatureType.CATEGORICAL.value,
                     'description': 'target',
-                },
-                {
-                    'label': 'prediction_column_name',
-                    'column_name': self.prediction_column_name,
-                    'type': FeatureType.CONTINUOUS.value,
-                    'description': 'predicted label',
-                },
-                {
-                    'label': 'predicted_probability_column_name',
-                    'column_name': self.predicted_probability_column_name,
-                    'type': FeatureType.CONTINUOUS.value,
-                    'description': 'predicted score/probability',
                 },
             ]
             + [feature.to_dict() for feature in self.features],
@@ -289,12 +252,12 @@ class ModelMetadata(abc.ABC):
             '# Warning - unable to identify all essential data',
             f'# Please identify column names for all \'{UNKNOWN}\' values',  # TODO: add link to relevant docs
             '',
-            f"{'Model problem':35} {self.model_problem or UNKNOWN:35}",
+            f"{'Model type':35} {self.model_type or UNKNOWN:35}",
             '',
             f"{'Timestamp column':35} {self.timestamp_column_name or UNKNOWN:35}",
             f"{'Partition column':35} {self.partition_column_name or UNKNOWN:35}",
-            f"{'Prediction column':35} {self.prediction_column_name or UNKNOWN:35}",
-            f"{'Predicted probability column':35} {self.predicted_probability_column_name or UNKNOWN:35}",
+            # f"{'Prediction column':35} {self.prediction_column_name or UNKNOWN:35}",
+            # f"{'Predicted probability column':35} {self.predicted_probability_column_name or UNKNOWN:35}",
             f"{'Target column':35} {self.target_column_name or UNKNOWN:35}",
             '',
             'Features',
@@ -365,6 +328,7 @@ class ModelMetadata(abc.ABC):
         else:
             return None
 
+    @abc.abstractmethod
     def enrich(self, data: pd.DataFrame) -> pd.DataFrame:
         """Creates copies of all metadata columns with fixed names.
 
@@ -381,14 +345,6 @@ class ModelMetadata(abc.ABC):
         data = data.copy()
 
         data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
-        if self.prediction_column_name in data.columns:
-            data[NML_METADATA_PREDICTION_COLUMN_NAME] = data[self.prediction_column_name]
-        else:
-            data[NML_METADATA_PREDICTION_COLUMN_NAME] = np.NaN
-        if self.predicted_probability_column_name in data.columns:
-            data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME] = data[self.predicted_probability_column_name]
-        else:
-            data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME] = np.NaN
         data[NML_METADATA_PARTITION_COLUMN_NAME] = data[self.partition_column_name]
         if self.target_column_name in data.columns:
             data[NML_METADATA_TARGET_COLUMN_NAME] = data[self.target_column_name]
@@ -481,11 +437,6 @@ class ModelMetadata(abc.ABC):
                 missing.append(attr)
                 complete = False
 
-        if self.prediction_column_name is None and self.predicted_probability_column_name is None:
-            complete = False
-            missing.append('predicted_probability_column_name')
-            missing.append('prediction_column_name')
-
         features_with_unknown_type = list(filter(lambda f: f.feature_type == FeatureType.UNKNOWN, self.features))
         if len(features_with_unknown_type) > 0:
             complete = False
@@ -495,25 +446,46 @@ class ModelMetadata(abc.ABC):
 
     @abc.abstractmethod
     def extract(self, data: pd.DataFrame, model_name: str = None, exclude_columns: List[str] = None):
+        """Tries to extract model metadata from a given data set.
+
+        Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
+        NannyML includes this helper function that tries to do the boring stuff for you using some simple rules.
+
+        By default, all columns in the given dataset are considered to be either model features or metadata. Use the
+        ``exclude_columns`` parameter to prevent columns from being interpreted as metadata or features.
+
+        Parameters
+        ----------
+        data : DataFrame
+            The dataset containing model inputs and outputs, enriched with the required metadata.
+        model_name : str
+            A human-readable name for the model.
+        exclude_columns: List[str], default=None
+            A list of column names that are to be skipped during metadata extraction,
+            preventing them from being interpreted as either model metadata or model features.
+
+        Returns
+        -------
+        metadata: ModelMetadata
+            A fully initialized ModelMetadata subclass instance.
+
+        Notes
+        -----
+        This method is most often not used directly, but by calling the
+        :func:`nannyml.metadata.extraction.extract_metadata` function that will delegate to this method.
+
+        This particular abstract method provides common functionality for its subclasses and is always called there
+        using a ``super().extract() call.
+        """
         if len(data.columns) == 0:
             return None
 
         if exclude_columns is not None and len(exclude_columns) != 0:
             data = data.drop(columns=exclude_columns)
 
-        predictions = _guess_predictions(data)
-        _check_for_nan(data, predictions)
-        self.prediction_column_name = None if len(predictions) == 0 else predictions[0]  # type: ignore
-
-        predicted_probabilities = _guess_predicted_probabilities(data)
-        _check_for_nan(data, predicted_probabilities)
-        self.predicted_probability_column_name = (
-            None if len(predicted_probabilities) == 0 else predicted_probabilities[0]
-        )
-
-        # targets = _guess_targets(data)
-        # check_for_nan(targets)
-        # self.target_column_name = None if len(targets) == 0 else targets[0]  # type: ignore
+        targets = _guess_targets(data)
+        _check_for_nan(data, targets)
+        self.target_column_name = None if len(targets) == 0 else targets[0]  # type: ignore
 
         partitions = _guess_partitions(data)
         _check_for_nan(data, partitions)
@@ -527,7 +499,7 @@ class ModelMetadata(abc.ABC):
 
         return self
 
-    def __remove_from_features(self, column_name: str):
+    def _remove_from_features(self, column_name: str):
         current_feature = self.feature(column=column_name)
         if current_feature:
             self.features.remove(current_feature)
@@ -540,25 +512,11 @@ def _guess_timestamps(data: pd.DataFrame) -> List[str]:
     return [col for col in data.columns if _guess_if_timestamp(data[col])]
 
 
-def _guess_predictions(data: pd.DataFrame) -> List[str]:
-    def _guess_if_prediction(col: pd.Series) -> bool:
-        return col.name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred']
+def _guess_targets(data: pd.DataFrame) -> List[str]:
+    def _guess_if_ground_truth(col: pd.Series) -> bool:
+        return col.name in ['target', 'ground_truth', 'actual', 'actuals']
 
-    return [col for col in data.columns if _guess_if_prediction(data[col])]
-
-
-def _guess_predicted_probabilities(data: pd.DataFrame) -> List[str]:
-    def _guess_if_prediction(col: pd.Series) -> bool:
-        return col.name in ['y_pred_proba']
-
-    return [col for col in data.columns if _guess_if_prediction(data[col])]
-
-
-# def _guess_targets(data: pd.DataFrame) -> List[str]:
-#     def _guess_if_ground_truth(col: pd.Series) -> bool:
-#         return col.name in ['target', 'ground_truth', 'actual', 'actuals']
-#
-#     return [col for col in data.columns if _guess_if_ground_truth(data[col])]
+    return [col for col in data.columns if _guess_if_ground_truth(data[col])]
 
 
 def _guess_partitions(data: pd.DataFrame) -> List[str]:
@@ -570,14 +528,9 @@ def _guess_partitions(data: pd.DataFrame) -> List[str]:
 
 def _guess_features(data: pd.DataFrame) -> List[str]:
     def _guess_if_feature(col: pd.Series) -> bool:
-        return (
-            col.name
-            not in _guess_partitions(data)
-            + _guess_predictions(data)
-            + _guess_predicted_probabilities(data)
-            + _guess_timestamps(data)
-            # + _guess_targets(data)
-        ) and (col.name not in NML_METADATA_COLUMNS)
+        return (col.name not in _guess_partitions(data) + _guess_timestamps(data) + _guess_targets(data)) and (
+            col.name not in NML_METADATA_COLUMNS
+        )
 
     return [col for col in data.columns if _guess_if_feature(data[col])]
 

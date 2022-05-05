@@ -22,12 +22,14 @@ from nannyml import Calibrator, Chunk, Chunker, ModelMetadata
 from nannyml.calibration import CalibratorFactory, needs_calibration
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata.base import (
-    NML_METADATA_COLUMNS,
     NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
+)
+from nannyml.metadata.binary_classification import (
+    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
+    BinaryClassificationMetadata,
 )
 from nannyml.performance_estimation.base import PerformanceEstimator
 from nannyml.performance_estimation.confidence_based.results import (
@@ -199,7 +201,7 @@ class CBPE(PerformanceEstimator):
                 data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
             )
 
-        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        features_and_metadata = self.model_metadata.metadata_columns + self.selected_features
         chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=300)
 
         res = pd.DataFrame.from_records(
@@ -237,18 +239,19 @@ class CBPE(PerformanceEstimator):
 
 
 def _validate_data_requirements_for_metrics(data: pd.DataFrame, metadata: ModelMetadata, metrics: List[str]):
-    if 'roc_auc' in metrics:
-        if metadata.predicted_probability_column_name is None:
+    if isinstance(metadata, BinaryClassificationMetadata):
+        if 'roc_auc' in metrics:
+            if metadata.predicted_probability_column_name is None:
+                raise MissingMetadataException(
+                    "missing value for 'predicted_probability_column_name'. Please ensure predicted "
+                    "label values are specified and present in the sample."
+                )
+
+        if metadata.prediction_column_name is None:
             raise MissingMetadataException(
-                "missing value for 'predicted_probability_column_name'. Please ensure predicted "
+                "missing value for 'prediction_column_name'. Please ensure predicted "
                 "label values are specified and present in the sample."
             )
-
-    if metadata.prediction_column_name is None:
-        raise MissingMetadataException(
-            "missing value for 'prediction_column_name'. Please ensure predicted "
-            "label values are specified and present in the sample."
-        )
 
 
 def _estimate_metric(data: pd.DataFrame, metric: str) -> float:

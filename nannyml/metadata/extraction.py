@@ -2,6 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
+"""Module containing functionality to extract metadata for a given model type from a data sample."""
+
 from typing import List
 
 import pandas as pd
@@ -9,7 +11,7 @@ import pandas as pd
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata.base import ModelType
 from nannyml.metadata.binary_classification import BinaryClassificationMetadata
-from nannyml.metadata.multiclass_classification import MultiClassClassificationMetadata
+from nannyml.metadata.multiclass_classification import MulticlassClassificationMetadata
 
 
 def extract_metadata(
@@ -22,8 +24,6 @@ def extract_metadata(
 
     By default, all columns in the given dataset are considered to be either model features or metadata. Use the
     ``exclude_columns`` parameter to prevent columns from being interpreted as metadata or features.
-
-    By specifying
 
     Parameters
     ----------
@@ -99,7 +99,6 @@ def extract_metadata(
     Be sure to always review the results of this method for their correctness and completeness.
     Adjust and complete as you see fit.
     """
-
     metadata = ModelMetadataFactory.create(model_type=model_type, model_name=model_name).extract(
         data, exclude_columns=exclude_columns
     )
@@ -108,13 +107,32 @@ def extract_metadata(
 
 
 class ModelMetadataFactory:
+    """A factory class that aids in the construction of :class:`~nannyml.metadata.base.ModelMetadata` subclasses."""
+
     mapping = {
         ModelType.CLASSIFICATION_BINARY: BinaryClassificationMetadata,
-        ModelType.CLASSIFICATION_MULTICLASS: MultiClassClassificationMetadata,
+        ModelType.CLASSIFICATION_MULTICLASS: MulticlassClassificationMetadata,
     }
 
     @classmethod
     def create(cls, model_type: ModelType, **kwargs):
+        """Creates a new :class:`~nannyml.metadata.base.ModelMetadata` subclass instance for a given model type.
+
+        Parameters
+        ----------
+        model_type : ModelType
+            The type of model NannyML should try to extract metadata for. This type will determine the properties
+            NannyML will look for in the data sample.
+        kwargs :
+            Any optional keyword arguments to be passed along to the :class:`~nannyml.metadata.base.ModelMetadata`
+            constructor.
+
+        Returns
+        -------
+        metadata: ModelMetadata
+            A new :class:`~nannyml.metadata.base.ModelMetadata` subclass instance.
+
+        """
         if model_type not in cls.mapping:
             raise InvalidArgumentsException(f"could not create metadata for model type '{model_type}'")
 

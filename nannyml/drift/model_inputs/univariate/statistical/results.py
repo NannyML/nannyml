@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 from nannyml.chunk import Chunk
 from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata
 from nannyml.metadata.base import Feature, FeatureType, ModelMetadata
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._joy_plot import _joy_plot
@@ -33,6 +34,7 @@ class UnivariateDriftResult(DriftResult):
         metric: str = 'statistic',
         feature_label: str = None,
         feature_column_name: str = None,
+        class_label: str = None,
         *args,
         **kwargs,
     ) -> go.Figure:
@@ -70,6 +72,9 @@ class UnivariateDriftResult(DriftResult):
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
+        class_label: str, default=None
+            The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
+
 
         Returns
         -------
@@ -96,7 +101,7 @@ class UnivariateDriftResult(DriftResult):
             feature = _get_feature(self.metadata, feature_label, feature_column_name)
             return _plot_feature_drift(self.data, feature, metric, args, kwargs)
         elif kind == 'prediction_drift':
-            return _plot_prediction_drift(self.data, self.metadata.predicted_probability_column_name, metric)
+            return _plot_prediction_drift(self.data, self.metadata, metric, class_label)
         elif kind == 'feature_distribution':
             feature = _get_feature(self.metadata, feature_label, feature_column_name)
             return _plot_feature_distribution(
@@ -106,9 +111,7 @@ class UnivariateDriftResult(DriftResult):
             )
         elif kind == 'prediction_distribution':
             return _plot_prediction_distribution(
-                data=self._analysis_data,
-                drift_data=self.data,
-                metadata=self.metadata,
+                data=self._analysis_data, drift_data=self.data, metadata=self.metadata, class_label=class_label
             )
         else:
             raise InvalidArgumentsException(
@@ -183,11 +186,16 @@ def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'sta
 
 
 def _plot_prediction_drift(
-    data: pd.DataFrame,
-    prediction_column_name: str,
-    metric: str = 'statistic',
+    data: pd.DataFrame, metadata: ModelMetadata, metric: str = 'statistic', class_label: str = None
 ) -> go.Figure:
     """Renders a line plot of the drift metric for a given feature."""
+    if isinstance(metadata, BinaryClassificationMetadata):
+        prediction_column_name = metadata.prediction_column_name
+    elif isinstance(metadata, MulticlassClassificationMetadata):
+        prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
+    else:
+        raise NotImplementedError
+
     (
         metric_column_name,
         metric_label,
@@ -261,9 +269,7 @@ def _plot_categorical_feature_distribution(data: List[Chunk], drift_data: pd.Dat
 
 
 def _plot_prediction_distribution(
-    data: List[Chunk],
-    drift_data: pd.DataFrame,
-    metadata: ModelMetadata,
+    data: List[Chunk], drift_data: pd.DataFrame, metadata: ModelMetadata, class_label: str = None
 ) -> go.Figure:
     """Plots the data distribution and associated drift for each chunk of the model predictions.
 
@@ -275,16 +281,26 @@ def _plot_prediction_distribution(
         The results of the drift calculation
     metadata: ModelMetadata
         The metadata for the monitored model
+    class_label: str, default=None
+        The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
     Returns
     -------
     fig: plotly.graph_objects.Figure
         A visualization of the data distribution and drift using joy-plots.
     """
-    predicted_probability_column_name = metadata.predicted_probability_column_name
+    if isinstance(metadata, BinaryClassificationMetadata):
+        predicted_probability_column_name = metadata.predicted_probability_column_name
+    elif isinstance(metadata, MulticlassClassificationMetadata):
+        if class_label is None:
+            raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
+        predicted_probability_column_name = metadata.predicted_probabilities_column_names[class_label]
+    else:
+        raise NotImplementedError
+
     x_axis_title = f'{predicted_probability_column_name}'
     drift_column_name = f'{predicted_probability_column_name}_alert'
-    title = f'Distribution over time for {metadata.predicted_probability_column_name}'
+    title = f'Distribution over time for {predicted_probability_column_name}'
 
     fig = _joy_plot(
         feature_table=_create_feature_table(data=data),

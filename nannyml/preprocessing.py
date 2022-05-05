@@ -5,10 +5,12 @@
 """Preprocessing pipeline for incoming data."""
 import logging
 import warnings
+from typing import Union
 
 import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException, MissingMetadataException
+from nannyml.metadata import BinaryClassificationMetadata
 from nannyml.metadata.base import ModelMetadata
 
 logger = logging.getLogger(__name__)
@@ -62,7 +64,12 @@ def preprocess(data: pd.DataFrame, metadata: ModelMetadata, reference: bool = Fa
     return prepped_data
 
 
-def _validate_reference_data(reference_data: pd.DataFrame, metadata: ModelMetadata):
+# TODO: move this to calculators or metadata subclasses?
+def _validate_reference_data(reference_data: pd.DataFrame, metadata: Union[ModelMetadata]):
+
+    if not isinstance(metadata, BinaryClassificationMetadata):
+        return
+
     if (
         metadata.predicted_probability_column_name
         and reference_data[metadata.predicted_probability_column_name].hasnans
@@ -85,16 +92,20 @@ def _validate_reference_data(reference_data: pd.DataFrame, metadata: ModelMetada
         )
 
 
-def _check_predicted_probabilities_are_probabilities(model_metadata: ModelMetadata, data: pd.DataFrame):
-    if model_metadata.predicted_probability_column_name is None:
+# TODO: move this to calculators or metadata subclasses?
+def _check_predicted_probabilities_are_probabilities(metadata: ModelMetadata, data: pd.DataFrame):
+    if not isinstance(metadata, BinaryClassificationMetadata):
         return
 
-    predicted_probabilities = data[model_metadata.predicted_probability_column_name]
+    if metadata.predicted_probability_column_name is None:
+        return
+
+    predicted_probabilities = data[metadata.predicted_probability_column_name]
 
     values_within_bounds = predicted_probabilities.between(0, 1).all()
     if not values_within_bounds:
         warnings.warn(
-            message=f"the predicted probabilities column '{model_metadata.predicted_probability_column_name}'"
+            message=f"the predicted probabilities column '{metadata.predicted_probability_column_name}'"
             f" contains values outside of the accepted [0, 1] interval. "
             f"Please ensure you are not providing predictions instead."
         )
@@ -102,7 +113,7 @@ def _check_predicted_probabilities_are_probabilities(model_metadata: ModelMetada
     enough_unique_values = predicted_probabilities.nunique() > PREDICTED_PROBABILITIES_UNIQUE_VALUES_THRESHOLD
     if not enough_unique_values:
         warnings.warn(
-            message=f"the predicted probabilities column '{model_metadata.predicted_probability_column_name}'"
+            message=f"the predicted probabilities column '{metadata.predicted_probability_column_name}'"
             f" contains fewer than {PREDICTED_PROBABILITIES_UNIQUE_VALUES_THRESHOLD} unique values. "
             f"Please ensure you are not providing predictions instead."
         )

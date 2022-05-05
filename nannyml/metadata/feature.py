@@ -2,6 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
+"""A module containing definitions and functionality concerning model features."""
+
 # TODO wording
 from enum import Enum
 from typing import Any, Dict

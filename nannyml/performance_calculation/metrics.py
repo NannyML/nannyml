@@ -14,10 +14,12 @@ from nannyml import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata.base import (
     NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
+)
+from nannyml.metadata.binary_classification import (
+    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
+    NML_METADATA_PREDICTION_COLUMN_NAME,
 )
 
 

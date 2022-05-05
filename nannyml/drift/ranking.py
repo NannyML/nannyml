@@ -56,37 +56,35 @@ class AlertCountRanking(Ranking):
     ) -> pd.DataFrame:
         """Compares the number of alerts for each feature and uses that for ranking.
 
-                Parameters
-                ----------
-                drift_calculation_result : pd.DataFrame
-                    The drift calculation results. Requires alert columns to be present. These are recognized and parsed
-                    using the ALERT_COLUMN_SUFFIX pattern, currently equal to ``'_alert'``.
-                model_metadata: ModelMetadata
-                    Metadata describing the monitored model, used to check what the features are and exclude predictions
-                    from ranking results.
-                only_drifting : bool
-                    Omits features without alerts from the ranking results.
+        Parameters
+        ----------
+        drift_calculation_result : pd.DataFrame
+            The drift calculation results. Requires alert columns to be present. These are recognized and parsed
+            using the ALERT_COLUMN_SUFFIX pattern, currently equal to ``'_alert'``.
+        model_metadata: ModelMetadata
+            Metadata describing the monitored model, used to check what the features are and exclude predictions
+            from ranking results.
+        only_drifting : bool
+            Omits features without alerts from the ranking results.
 
-                Returns
-                -------
-                feature_ranking: pd.DataFrame
-                    A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
-                    second-highest rank is 2, etc.)
+        Returns
+        -------
+        feature_ranking: pd.DataFrame
+            A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
+            second-highest rank is 2, etc.)
 
-                Examples
-                --------
-        import nannyml.metadata.extraction        >>> import nannyml as nml
-                >>> reference_df, analysis_df, target_df = nml.load_synthetic_sample()
-                >>> metadata = nannyml.metadata.extraction.extract_metadata(reference_df)
-                >>> metadata.target_column_name = 'work_home_actual'
-                >>> calc = nml.UnivariateStatisticalDriftCalculator(metadata, chunk_size=5000)
-                >>> calc.fit(reference_df)
-                >>> drift = calc.calculate(analysis_df)
-                >>>
-                >>> ranked = Ranker.by('alert_count').rank(drift, metadata)
-                >>> ranked
-
-
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_sample()
+        >>> metadata = nml.extract_metadata(reference_df)
+        >>> metadata.target_column_name = 'work_home_actual'
+        >>> calc = nml.UnivariateStatisticalDriftCalculator(metadata, chunk_size=5000)
+        >>> calc.fit(reference_df)
+        >>> drift = calc.calculate(analysis_df)
+        >>>
+        >>> ranked = Ranker.by('alert_count').rank(drift, metadata)
+        >>> ranked
         """
         if drift_calculation_result.data.empty:
             raise InvalidArgumentsException('drift results contain no data to use for ranking')
@@ -95,7 +93,7 @@ class AlertCountRanking(Ranking):
             column_name
             for column_name in drift_calculation_result.data.columns
             if (self.ALERT_COLUMN_SUFFIX in column_name)
-            and (model_metadata.predicted_probability_column_name not in column_name)
+            and (column_name in [feature.column_name for feature in model_metadata.features])
         ]
 
         if len(alert_column_names) == 0:
