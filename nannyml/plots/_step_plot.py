@@ -23,6 +23,7 @@ def _data_prep_step_plot(
     start_date_column_name: str,
     end_date_column_name: str,
     partial_target_column_name: str,
+    drift_column_name: str,
     hover_metric_format='{0:.4f}',
     hover_date_label_format='%b-%d-%Y',
 ):
@@ -34,10 +35,17 @@ def _data_prep_step_plot(
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
 
+    data['hover_partition'] = data['partition'].str.capitalize()
+    data['hover_alert'] = data[drift_column_name].apply(lambda x: "⚠ <b>Drift detected</b>" if x else "")
+
     if partial_target_column_name and partial_target_column_name in data:
+        missing_data_style = 'style="color:#AD0000"'
         data['incomplete_target_percentage'] = (data[partial_target_column_name] * 100).apply(
-            lambda p: format(p, '.2f')
+            lambda p: f'Data: <span {missing_data_style if p >= 0.0 else ""}>{"⚠ " if p >= 0.0 else "" }'
+            f'<b>{p:.2f}% missing</b></span>  &nbsp; &nbsp;'
         )
+    else:
+        data['incomplete_target_percentage'] = ''
     return data
 
 
@@ -105,6 +113,7 @@ def _step_plot(
         start_date_column_name,
         end_date_column_name,
         partial_target_column_name,
+        drift_column_name,
         hover_metric_format,
         hover_date_label_format,
     )
@@ -118,20 +127,25 @@ def _step_plot(
     # The border can also be changed, but I think that also means this needs restructuring?
     # https://plotly.com/python/hover-text-and-formatting/#customizing-hover-label-appearance
     hover_template = (
-        '<b style="color:#3B0280;line-height:60px">Analysis</b> &nbsp; &nbsp; <span style="color:#AD0000">⚠ <b>Drift detected</b></span><br>'  # noqa: E501
+        '<b style="color:#3B0280;line-height:60px">%{customdata[4]}</b> &nbsp; &nbsp; <span style="color:#AD0000">%{customdata[5]}</span><br>'  # noqa: E501
         + hover_labels[0]
         + ': <b>%{customdata[0]}</b> &nbsp; &nbsp; '
         + 'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b> &nbsp; &nbsp; <br>'
         + hover_labels[1]
         + ': <b>%{customdata[3]}</b>  &nbsp; &nbsp; '
-        + 'Data: <span style="color:#AD0000">⚠ <b>97% missing</b></span>  &nbsp; &nbsp; Stability: <b>0.6</b> &nbsp; &nbsp; <extra></extra>'  # noqa: E501
+        # + 'Data: <span style="color:#AD0000">⚠ <b>97% missing</b></span>  &nbsp; &nbsp; Stability: <b>0.6</b> &nbsp; &nbsp; <extra></extra>'  # noqa: E501
+        + '%{customdata[6]} <extra></extra>'  # noqa: E501
     )
 
-    custom_data_columns = [chunk_column_name, 'start_date_label', 'end_date_label', 'metric_label']
-
-    if partial_target_column_name and partial_target_column_name in data:
-        hover_template += '&nbsp;&nbsp;&nbsp;&nbsp;' + hover_labels[2] + ': <b>%{customdata[4]}% incomplete</b>'
-        custom_data_columns += ['incomplete_target_percentage']
+    custom_data_columns = [
+        chunk_column_name,
+        'start_date_label',
+        'end_date_label',
+        'metric_label',
+        'hover_partition',
+        'hover_alert',
+        'incomplete_target_percentage',
+    ]
 
     layout = go.Layout(
         title=title,
