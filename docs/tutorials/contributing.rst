@@ -1,7 +1,3 @@
 .. _contributing:
 
-======================================
-Contributing
-======================================
-
-Needs new content
+.. include:: ../../CONTRIBUTING.rst

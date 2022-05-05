@@ -80,4 +80,4 @@ estimates.plot(kind='performance').show()
 
 # Development setup
 
-* Read the docs on [how to contribute](CONTRIBUTING.md)
+* Read the docs on [how to contribute](CONTRIBUTING.rst)
