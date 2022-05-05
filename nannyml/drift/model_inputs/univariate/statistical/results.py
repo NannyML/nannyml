@@ -244,7 +244,7 @@ def _plot_continuous_feature_distribution(data: List[Chunk], drift_data: pd.Data
 def _plot_categorical_feature_distribution(data: List[Chunk], drift_data: pd.DataFrame, feature: Feature) -> go.Figure:
     """Plots the data distribution and associated drift for each chunk of a given categorical feature."""
     feature_column_name = feature.column_name
-    x_axis_title = f'{feature_column_name}'
+    yaxis_title = f'{feature_column_name}'
     drift_column_name = f'{feature_column_name}_alert'
     title = f'Distribution over time for {feature.label}'
 
@@ -254,7 +254,7 @@ def _plot_categorical_feature_distribution(data: List[Chunk], drift_data: pd.Dat
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
         feature_column_name=feature_column_name,
-        x_axis_title=x_axis_title,
+        yaxis_title=yaxis_title,
         title=title,
     )
     return fig
