@@ -26,15 +26,15 @@ If you just want the code to experiment yourself withinb a Jupyter Notebook, her
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
     >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head())
+    >>> display(reference.head(3))
     >>>
     >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
-    >>> data.loc[data['partition'] == 'analysis'].head(3)
+    >>> display(data.loc[data['partition'] == 'analysis'].head(3))
     >>>
     >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
     >>>
     >>> target_distribution = target_distribution_calculator.calculate(data)
-    >>> target_distribution.data.head(3)
+    >>> display(target_distribution.data.head(3))
     >>>
     >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
     >>> fig.show()
@@ -54,25 +54,22 @@ Let's start by loading some synthetic data provided by the NannyML package.
 
     >>> import nannyml as nml
     >>> import pandas as pd
+    >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
     >>> metadata.target_column_name = 'work_home_actual'
-    >>> reference.head()
+    >>> display(reference.head(3))
 
 
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |
-+====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+
-|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|  3 |               2.53041  | 20K - 20K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
-|  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
++====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
+|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |        1 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |        0 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 
 NannyML uses :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
@@ -88,7 +85,7 @@ data first.
 .. code-block:: python
 
     >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
-    >>> data.loc[data['partition'] == 'analysis'].head(3)
+    >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
 
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -120,7 +117,7 @@ method, providing our previously assembled data as an argument.
 .. code-block:: python
 
     >>> target_distribution = target_distribution_calculator.calculate(data)
-    >>> target_distribution.data.head(3)
+    >>> display(target_distribution.data.head(3))
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   targets_missing_rate |   metric_target_drift |   statistical_target_drift |   p_value |   thresholds | alert   | significant   |
