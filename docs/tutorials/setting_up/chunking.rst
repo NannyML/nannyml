@@ -4,10 +4,20 @@
 Chunking
 ======================================
 
-Needs formatting as per tutorial template
+Why do we need chunks?
+----------------------
 
-Walkthrough
-===========
+NannyML monitors ML models in production by doing data drift detection and performance estimation or monitoring.
+This functionality relies on aggregate metrics that are evaluated on samples of production data.
+These samples are called :term:`chunks<Data Chunk>`. All the results generated are
+calculated and presented per chunk i.e. a chunk is a single data point on the monitoring results. You
+can refer to :ref:`Data Drift guide<data-drift>` or :ref:`Performance Estimation guide<performance-estimation>`
+to review example results.
+
+
+
+Walkthrough on creating chunks
+------------------------------
 
 To allow for flexibility there are many ways to create chunks. The examples provided will explain how chunks are
 created depending on the instructions provided. The examples will be run based on the performance estimation flow on
@@ -185,7 +195,7 @@ dive<minimum-chunk-size>`):
 +----+-------------+---------------+-------------+---------------------+---------------------+
 
 Chunks on plots with results
-============================
+----------------------------
 
 Finally, once the chunking method is selected, the full performance estimation can be run:
 
