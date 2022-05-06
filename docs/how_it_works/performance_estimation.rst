@@ -5,7 +5,7 @@ Confidence-based Performance Estimation
 =======================================
 
 Binary classification
-=====================
+---------------------
 
 A binary classification model typically returns two outputs for each prediction - a class (binary) and a class
 probability prediction (sometimes referred to as score). The score provides information about the confidence of the
@@ -147,7 +147,8 @@ The algorithm for estimating ROC AUC runs as follows:
 
 
 Multiclass Classification
-=========================
+-------------------------
+
 Multiclass classification model outputs prediction (predicted class) and
 probability for each possible class. It means that if there are three classes, for example A, B and C, model output
 should contain four pieces of information - predicted class (e.g. A) and three probabilities or scores, one for each class.
@@ -181,7 +182,7 @@ It is just estimated as the mean of predicted probabilities corresponding to the
 .. _performance-estimation-deep-dive-limitations:
 
 Limitations
-===========
+-----------
 
 CBPE estimates performance perfectly well under following conditions:
 
@@ -221,7 +222,7 @@ Read more about it :ref:`here<chunk-data-minimum-chunk>`.
 
 
 Probability calibration
-=======================
+-----------------------
 
 In order to accurately estimate the performance from the model scores, they need to be well calibrated. If a classifier assigns a probability of 0.9 for a set of observations and 90% of these observations belong to the positive class, we consider that classifier to be well calibrated with respect to that subset. Most predictive models focus on performance rather than on probability estimation, therefore their scores are rarely calibrated.
 Examples of different models and their calibration curves are shown below [1]_:
