@@ -194,6 +194,8 @@ def _plot_prediction_drift(
     elif isinstance(metadata, MulticlassClassificationMetadata):
         if not class_label or class_label == "":
             raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
+        if class_label not in metadata.predicted_probabilities_column_names:
+            raise InvalidArgumentsException(f"no classes found named '{class_label}'. Please review the given value.")
         prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
     else:
         raise NotImplementedError

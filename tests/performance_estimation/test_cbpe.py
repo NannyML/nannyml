@@ -35,17 +35,17 @@ def metadata(data) -> ModelMetadata:  # noqa: D103
 @pytest.fixture
 def estimates(metadata, data) -> PerformanceEstimatorResult:  # noqa: D103
     reference, analysis = data
-    estimator = CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc']).fit(reference)
+    estimator = CBPE.create(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc']).fit(reference)
     return estimator.estimate(pd.concat([reference, analysis]))
 
 
 def test_cbpe_will_calibrate_scores_when_needed(metadata, data):  # noqa: D103
     ref_df = data[0]
 
-    sut = CBPE(model_metadata=metadata, metrics=['roc_auc'])
+    sut = CBPE.create(model_metadata=metadata, metrics=['roc_auc'])
     sut.fit(ref_df)
 
-    assert sut.needs_calibration is True
+    assert sut.needs_calibration
 
 
 def test_cbpe_will_not_calibrate_scores_when_not_needed(metadata, data):  # noqa: D103
@@ -53,7 +53,7 @@ def test_cbpe_will_not_calibrate_scores_when_not_needed(metadata, data):  # noqa
     # If predictions equal targets no calibration will be required
     ref_df[metadata.predicted_probability_column_name] = ref_df[metadata.target_column_name]
 
-    sut = CBPE(model_metadata=metadata, metrics=['roc_auc'])
+    sut = CBPE.create(model_metadata=metadata, metrics=['roc_auc'])
     sut.fit(ref_df)
 
     assert sut.needs_calibration is False
@@ -62,7 +62,7 @@ def test_cbpe_will_not_calibrate_scores_when_not_needed(metadata, data):  # noqa
 def test_cbpe_will_not_fail_on_work_from_home_sample(metadata, data):  # noqa: D103
     reference, analysis = data
     try:
-        estimator = CBPE(model_metadata=metadata, metrics=['roc_auc'])
+        estimator = CBPE.create(model_metadata=metadata, metrics=['roc_auc'])
         estimator.fit(reference)
         _ = estimator.estimate(analysis)
     except Exception as exc:
@@ -71,12 +71,12 @@ def test_cbpe_will_not_fail_on_work_from_home_sample(metadata, data):  # noqa: D
 
 def test_cbpe_raises_invalid_arguments_exception_when_giving_invalid_metric_value(metadata):  # noqa: D103
     with pytest.raises(InvalidArgumentsException, match="unknown 'metric' value: 'foo'."):
-        _ = CBPE(model_metadata=metadata, metrics=['f1', 'foo'])
+        _ = CBPE.create(model_metadata=metadata, metrics=['f1', 'foo'])
 
 
 def test_cbpe_fitting_raises_invalid_arguments_exception_when_giving_invalid_metric_value(metadata, data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException, match="unknown 'metric' value: 'foo'."):
-        estimator = CBPE(model_metadata=metadata, metrics=['f1'])
+        estimator = CBPE.create(model_metadata=metadata, metrics=['f1'])
         estimator.metrics = ['foo']
         estimator.fit(data[0])
 
@@ -85,7 +85,7 @@ def test_cbpe_estimating_raises_invalid_arguments_exception_when_giving_invalid_
     metadata, data
 ):
     with pytest.raises(InvalidArgumentsException, match="unknown 'metric' value: 'foo'."):
-        estimator = CBPE(model_metadata=metadata, metrics=['f1'])
+        estimator = CBPE.create(model_metadata=metadata, metrics=['f1'])
         estimator.fit(data[0])
         estimator.metrics = ['foo']
         estimator.estimate(data[1])
@@ -95,14 +95,14 @@ def test_cbpe_raises_invalid_arguments_exception_when_given_empty_metrics_list(m
     with pytest.raises(
         InvalidArgumentsException, match="no metrics provided. Please provide a non-empty list of metrics."
     ):
-        _ = CBPE(model_metadata=metadata, metrics=[])
+        _ = CBPE.create(model_metadata=metadata, metrics=[])
 
 
 def test_cbpe_raises_invalid_arguments_exception_when_given_none_metrics_list(metadata):  # noqa: D103
     with pytest.raises(
         InvalidArgumentsException, match="no metrics provided. Please provide a non-empty list of metrics."
     ):
-        _ = CBPE(model_metadata=metadata, metrics=None)
+        _ = CBPE.create(model_metadata=metadata, metrics=None)
 
 
 def test_cbpe_raises_missing_metadata_exception_when_predictions_are_required_but_not_given(  # noqa: D103
@@ -111,7 +111,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predictions_are_required_bu
     metadata.prediction_column_name = None
 
     reference, _ = data
-    estimator = CBPE(model_metadata=metadata, metrics=['f1'])  # requires predictions!
+    estimator = CBPE.create(model_metadata=metadata, metrics=['f1'])  # requires predictions!
     with pytest.raises(
         MissingMetadataException,
         match="missing value for 'prediction_column_name'. "
@@ -122,7 +122,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predictions_are_required_bu
 
 
 def test_cbpe_defaults_to_isotonic_calibrator_when_none_given(metadata):  # noqa: D103
-    estimator = CBPE(model_metadata=metadata, metrics=['roc_auc'])
+    estimator = CBPE.create(model_metadata=metadata, metrics=['roc_auc'])
     assert isinstance(estimator.calibrator, IsotonicCalibrator)
 
 
@@ -134,7 +134,7 @@ def test_cbpe_uses_custom_calibrator_when_provided(metadata):  # noqa: D103
         def calibrate(self, y_pred_proba: np.ndarray):
             pass
 
-    estimator = CBPE(model_metadata=metadata, metrics=['roc_auc'], calibrator=TestCalibrator())
+    estimator = CBPE.create(model_metadata=metadata, metrics=['roc_auc'], calibrator=TestCalibrator())
     assert isinstance(estimator.calibrator, TestCalibrator)
 
 
@@ -144,7 +144,7 @@ def test_cbpe_uses_calibrator_to_calibrate_predicted_probabilities_when_needed( 
     reference, analysis = data
 
     calibrator = IsotonicCalibrator()
-    estimator = CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator).fit(
+    estimator = CBPE.create(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator).fit(
         reference
     )
     assert typing.cast(CBPE, estimator).needs_calibration
@@ -161,7 +161,7 @@ def test_cbpe_doesnt_use_calibrator_to_calibrate_predicted_probabilities_when_no
     reference, analysis = data
 
     calibrator = IsotonicCalibrator()
-    estimator = CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator).fit(
+    estimator = CBPE.create(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator).fit(
         reference
     )
 
@@ -179,7 +179,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predicted_probabilities_are
 
     metadata.predicted_probability_column_name = None
 
-    estimator = CBPE(model_metadata=metadata, metrics=['roc_auc'])
+    estimator = CBPE.create(model_metadata=metadata, metrics=['roc_auc'])
     with pytest.raises(
         MissingMetadataException,
         match="missing value for 'predicted_probability_column_name'. "
@@ -193,7 +193,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predicted_probabilities_are
 def test_cbpe_runs_for_all_metrics(metadata, data, metric):  # noqa: D103
     reference, analysis = data
     try:
-        estimator = CBPE(model_metadata=metadata, chunk_size=5000, metrics=[metric]).fit(reference)
+        estimator = CBPE.create(model_metadata=metadata, chunk_size=5000, metrics=[metric]).fit(reference)
         _ = estimator.estimate(pd.concat([reference, analysis]))
     except Exception as e:
         pytest.fail(f'an unexpected exception occurred: {e}')

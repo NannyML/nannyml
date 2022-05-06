@@ -137,6 +137,16 @@ class IsotonicCalibrator(Calibrator):
         return self._regressor.predict(y_pred_proba)
 
 
+class NoopCalibrator(Calibrator):
+    """A Calibrator subclass that simply returns the inputs unaltered."""
+
+    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+        return self
+
+    def calibrate(self, y_pred_proba: np.ndarray):
+        return np.asarray(y_pred_proba)
+
+
 def _get_bin_index_edges(vector_length: int, bin_count: int) -> List[Tuple[int, int]]:
     """Generates edges of bins for specified vector length and number of bins required.
 
@@ -200,7 +210,7 @@ def _calculate_expected_calibration_error(
 
 
 def needs_calibration(
-    y_true: pd.Series, y_pred_proba: pd.Series, calibrator: Calibrator, bin_count: int = 2, split_count: int = 3
+    y_true: pd.Series, y_pred_proba: pd.Series, calibrator: Calibrator, bin_count: int = 10, split_count: int = 10
 ) -> bool:
     """Returns whether a series of prediction scores benefits from additional calibration or not.
 
@@ -239,12 +249,18 @@ def needs_calibration(
     >>> needs_calibration(y_true, y_pred_proba, calibrator, bin_count=2, split_count=3)
     True
     """
-    if np.isnan(y_true).any():
-        raise InvalidArgumentsException(
-            'target values contain NaN. ' 'Please ensure reference targets do not contain NaN values.'
-        )
+    if y_true.dtype == 'object':
+        if pd.isnull(y_true).any():
+            raise InvalidArgumentsException(
+                'target values contain NaN. ' 'Please ensure reference targets do not contain NaN values.'
+            )
+    else:
+        if np.isnan(y_true).any():
+            raise InvalidArgumentsException(
+                'target values contain NaN. ' 'Please ensure reference targets do not contain NaN values.'
+            )
 
-    if np.isnan(y_pred_proba).any():
+    if y_pred_proba.isnull().values.any():
         raise InvalidArgumentsException(
             'predicted probabilities contain NaN. '
             'Please ensure reference predicted probabilities do not contain NaN values.'
@@ -254,11 +270,14 @@ def needs_calibration(
     y_pred_proba = y_pred_proba.reset_index(drop=True)
     y_true = y_true.reset_index(drop=True)
 
-    if roc_auc_score(y_true, y_pred_proba) > 0.999:
+    if roc_auc_score(y_true, y_pred_proba, multi_class='ovr') > 0.999:
         return False
 
-    sss = StratifiedShuffleSplit(n_splits=split_count, test_size=0.4, random_state=42)
-    ece_diffs = []
+    sss = StratifiedShuffleSplit(n_splits=split_count, test_size=0.1, random_state=42)
+
+    list_y_true_test = []
+    list_y_pred_proba_test = []
+    list_calibrated_y_pred_proba_test = []
 
     for train, test in sss.split(y_pred_proba, y_true):
         y_pred_proba_train, y_true_train = y_pred_proba[train], y_true[train]
@@ -266,14 +285,20 @@ def needs_calibration(
         calibrator.fit(y_pred_proba_train, y_true_train)
         calibrated_y_pred_proba_test = calibrator.calibrate(y_pred_proba_test)
 
-        bin_index_edges = _get_bin_index_edges(len(y_pred_proba_test), bin_count)
-        ece_before_calibration = _calculate_expected_calibration_error(y_true_test, y_pred_proba_test, bin_index_edges)
-        ece_after_calibration = _calculate_expected_calibration_error(
-            y_true_test, calibrated_y_pred_proba_test, bin_index_edges
-        )
-        ece_diffs.append(ece_before_calibration - ece_after_calibration)
+        list_y_true_test.append(y_true_test)
+        list_y_pred_proba_test.append(y_pred_proba_test)
+        list_calibrated_y_pred_proba_test.append(calibrated_y_pred_proba_test)
 
-    if any(np.asarray(ece_diffs) <= 0):
-        return False
-    else:
-        return True
+    vec_y_true_test = np.concatenate(list_y_true_test)
+    vec_y_pred_proba_test = np.concatenate(list_y_pred_proba_test)
+    vec_calibrated_y_pred_proba_test = np.concatenate(list_calibrated_y_pred_proba_test)
+
+    bin_index_edges = _get_bin_index_edges(len(vec_y_pred_proba_test), bin_count)
+    ece_before_calibration = _calculate_expected_calibration_error(
+        vec_y_true_test, vec_y_pred_proba_test, bin_index_edges
+    )
+    ece_after_calibration = _calculate_expected_calibration_error(
+        vec_y_true_test, vec_calibrated_y_pred_proba_test, bin_index_edges
+    )
+
+    return ece_before_calibration > ece_after_calibration

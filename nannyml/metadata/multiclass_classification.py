@@ -88,7 +88,10 @@ class MulticlassClassificationMetadata(ModelMetadata):
             NML_METADATA_PREDICTION_COLUMN_NAME,
             NML_METADATA_TARGET_COLUMN_NAME,
             NML_METADATA_TIMESTAMP_COLUMN_NAME,
-        ] + [
+        ] + self.predicted_class_probability_metadata_columns()
+
+    def predicted_class_probability_metadata_columns(self) -> List[str]:
+        return [
             f'{NML_METADATA_PREDICTED_CLASS_PROBABILITY_COLUMN_NAME}_{clazz}'
             for clazz in self.predicted_probabilities_column_names.keys()
         ]
