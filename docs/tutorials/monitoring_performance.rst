@@ -4,6 +4,11 @@
 Monitoring Performance
 ======================
 
+The Performance monitoring functionality of NannyML consists of two main things.
+Estimating Performance of a machine learning model in the absence of ground truth
+and monitoring realized performance after ground truth becomes available.
+More details can be seen below.
+
 .. toctree::
    :maxdepth: 2
 

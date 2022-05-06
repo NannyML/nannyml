@@ -25,31 +25,33 @@ If you just want the code to experiment yourself, here you go:
     >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_sample()
     >>> display(reference.head(3))
 
-    >>> display(analysis.head(3))
-
     >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
+    >>> display(metadata.is_complete())
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc', 'f1', 'precision', 'recall']).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    ...     model_metadata=metadata,
+    ...     chunk_size=5000,
+    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+    ... ).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-    >>> est_perf.data.head(3)
+    >>> display(est_perf.data.head(3))
 
     >>> for metric in cbpe.metrics:
-            est_perf.plot(kind='performance', metric=metric).show()
+    ...     figure = est_perf.plot(kind='performance', metric=metric)
+    ...     figure.show()
 
 
 
 Walkthrough on Performance Estimation
 -------------------------------------
 
-The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` class
-implements the performance estimation functionality for binary classification models. For more
-information on how the algorithm works read the
-:ref:`Confidence Based Performance Estimation<performance-estimation-deep-dive>` page.
+Prepare the data
+~~~~~~~~~~~~~~~~
 
+For simplicity the guide is based on a synthetic dataset where the monitored model predicts
+whether an employee will work from home.
 
-The guide is based on a synthetic dataset where the monitored model predicts whether an employee will work from home.
-Let's first load the data and have a quick look:
 
 .. code-block:: python
 
@@ -70,21 +72,6 @@ Let's first load the data and have a quick look:
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 
-.. code-block:: python
-
-    >>> display(analysis.head(3))
-
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier | timestamp           |   y_pred_proba | partition   |   y_pred |
-+====+========================+================+=======================+==============================+====================+===========+==========+==============+=====================+================+=============+==========+
-|  0 |               0.527691 | 0 - 20K €      |               1.8     |                      8.96072 | False              | Tuesday   |  4.22463 |        50000 | 2017-08-31 04:20:00 |           0.99 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|  1 |               8.48513  | 20K - 20K €    |               2.22207 |                      8.76879 | False              | Friday    |  4.9631  |        50001 | 2017-08-31 05:16:16 |           0.98 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|  2 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    |  4.58895 |        50002 | 2017-08-31 05:56:44 |           0.98 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-
-
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` partitions of
 the monitored data. To understand what they are read :ref:`data partitions<data-drift-partitions>`. The
 ``analysis_gt`` dataframe contains the ground truth results of the analysis period and we will not be using
@@ -97,17 +84,35 @@ Some information is infered automatically and we provide the rest.
 
     >>> metadata = nml.extract_metadata(reference, model_name='wfh_predictor', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
+    >>> display(metadata.is_complete())
+    (True, [])
 
 
-Full information on how the model's data should be prepared can be found in the guide on
-:ref:`importing data<import-data>`.
+We see that the metadata are complete. Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
 
 Creating and using the estimator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the next step Confidence-based Performance Estimation (CBPE) estimator is created and fitted on ``reference`` data.
-Both the chunking method and the metrics to estimate need to be specified now.
-Read more about chunking in relevant :ref:`guide<chunk-data>`.
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` class
+implements the performance estimation functionality for binary classification models.
+
+In the next step Confidence-based Performance Estimation
+(:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
+estimator is created using the previously
+extracted :class:`~nannyml.metadata.ModelMetadata`, a list of metrics and an optional
+:ref:`chunking<chunking>` specification. The list of metrics specifies the metrics
+that will be used to estimate the performance of the model being monitored.
+For an overview of all metrics,
+check the :mod:`~nannyml.performance_calculation.metrics` module.
+Read more about chunking in relevant :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`
+if needed.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+estimator is then fitted using the
+:meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` method on the ``reference`` data.
+
+
+
 
 .. code-block:: python
 
@@ -118,8 +123,8 @@ Read more about chunking in relevant :ref:`guide<chunk-data>`.
     ... ).fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
-Typically, this would be used on the latest production data where ground truth is missing, which usually is
-the ``analysis`` partition.
+Typically, this would be used on the latest production data where ground truth is missing. In our example this is
+the ``analysis`` data.
 
 However, it can be also used on combined ``reference`` and ``analysis`` data, e.g. when comparing
 estimations of ``reference`` and ``analysis`` data or comparing the estimated performance versus the realized
@@ -129,16 +134,16 @@ performance on ``reference`` data.
 
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
 
-To find out how CBPE estimates performance, read the relevant :ref:`deep dive<performance-estimation-deep-dive>`.
+To find out how CBPE estimates performance, read the :ref:`Performance Estimation deep dive<performance-estimation-deep-dive>`.
 
 View the results
 ~~~~~~~~~~~~~~~~
 
-To get the data frame with results:
+NannyML can output a dataframe that contains all the results:
 
 .. code-block:: python
 
-    >>> est_perf.data.head(3)
+    >>> display(est_perf.data.head(3))
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+------------------------+----------------------+-----------------------+-----------------------------+-----------------------------+-------------------+---------------------+-------------------+--------------------+--------------------------+--------------------------+----------------+------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |   confidence_precision |   realized_precision |   estimated_precision |   upper_threshold_precision |   lower_threshold_precision | alert_precision   |   confidence_recall |   realized_recall |   estimated_recall |   upper_threshold_recall |   lower_threshold_recall | alert_recall   |   actual_roc_auc |
@@ -174,20 +179,21 @@ The results can be also plotted:
 .. code-block:: python
 
     >>> for metric in cbpe.metrics:
-            est_perf.plot(kind='performance', metric=metric).show()
+    ...     figure = est_perf.plot(kind='performance', metric=metric)
+    ...     figure.show()
 
 
-.. image:: ../../_static/perf-est-guide-roc_auc.svg
+.. image:: ../../_static/tutorial-perf-est-roc_auc.svg
 
-.. image:: ../../_static/perf-est-guide-f1.svg
+.. image:: ../../_static/tutorial-perf-est-f1.svg
 
-.. image:: ../../_static/perf-est-guide-precision.svg
+.. image:: ../../_static/tutorial-perf-est-precision.svg
 
-.. image:: ../../_static/perf-est-guide-recall.svg
+.. image:: ../../_static/tutorial-perf-est-recall.svg
 
-.. image:: ../../_static/perf-est-guide-specificity.svg
+.. image:: ../../_static/tutorial-perf-est-specificity.svg
 
-.. image:: ../../_static/perf-est-guide-accuracy.svg
+.. image:: ../../_static/tutorial-perf-est-accuracy.svg
 
 
 Insights and Follow Ups
@@ -197,9 +203,9 @@ After reviewing the performance estimation results we have to decide if further 
 The :ref:`Data Drift<data-drift>` functionality can help here.
 
 If needed further investigation can be performed as to why our population characteristics have
-changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.
+changed the way they did. This is an ad-hoc investigation that is not covered by NannyML.
 
 When the ground truth results become available they can be compared with the estimated results as
 demonstrated :ref:`here<compare_estimated_and_realized_performance>`. You can learn more
-about the Confidence Based Performance Estimation and it's limitation in the
+about the Confidence Based Performance Estimation and its limitation in the
 :ref:`How it Works page<performance-estimation-deep-dive>`
