@@ -254,4 +254,4 @@ Fitting a calibrator on model training data would introduce bias [1]_.
 .. [2] https://scikit-learn.org/stable/modules/generated/sklearn.isotonic.IsotonicRegression.html
 .. [3] https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedShuffleSplit.html
 .. [4] Naeini, Mahdi Pakdaman, Gregory Cooper, and Milos Hauskrecht: "Obtaining well calibrated probabilities using bayesian binning." Twenty-Ninth AAAI Conference on Artificial Intelligence, 2015.
-.. [5] https://scikit-learn.org/stable/modules/model_evaluation.html
+
