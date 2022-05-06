@@ -302,6 +302,8 @@ are meaningful for them. However, when the chunks are too small, statistical res
 In this case NannyML will issue a warning. The user can then chose to ignore it and continue or use a chunking
 method that will result in bigger chunks.
 
+.. _chunk-data-minimum-chunk:
+
 Minimum Chunk for Performance Estimation and Performance Monitoring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
