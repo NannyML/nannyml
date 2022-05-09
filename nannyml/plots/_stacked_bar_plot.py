@@ -127,9 +127,7 @@ def _create_stacked_bar_plot(
     layout = go.Layout(
         title=title,
         xaxis=dict(title=xaxis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
-        yaxis=dict(
-            title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, autorange="reversed", zeroline=False
-        ),
+        yaxis=dict(title=yaxis_title, linecolor=colors[2], showgrid=False, mirror=True, zeroline=False),
         paper_bgcolor='rgba(255,255,255,1)',
         plot_bgcolor='rgba(255,255,255,1)',
         legend=dict(itemclick=False, itemdoubleclick=False),
@@ -161,9 +159,9 @@ def _create_stacked_bar_plot(
         fig.add_trace(
             go.Bar(
                 name=category,
-                x=data['value_counts_normalised'],
-                y=data[start_date_column_name],
-                orientation='h',
+                x=data[start_date_column_name],
+                y=data['value_counts_normalised'],
+                orientation='v',
                 marker_line_color=data['hue'].apply(lambda hue: colors[hue] if hue == -1 else 'rgba(255,255,255,1)'),
                 marker_color=category_colors_transparant[i],
                 marker_line_width=data['hue'].apply(lambda hue: 2 if hue == -1 else 1),
@@ -179,22 +177,22 @@ def _create_stacked_bar_plot(
     for i, chunk_type in enumerate(chunk_types):
         subset = stacked_bar_table.loc[stacked_bar_table[chunk_type_column_name] == chunk_type]
         fig.add_shape(
-            y0=subset[start_date_column_name].min(),
-            y1=subset[end_date_column_name].max(),
-            x0=0,
-            x1=1.05,
+            y0=0,
+            y1=1.05,
+            x0=subset[start_date_column_name].min(),
+            x1=subset[end_date_column_name].max(),
             line_color=colors_transparant[i],
             layer='above',
             line_width=2,
             line=dict(dash='dash'),
         ),
         fig.add_annotation(
-            x=1.025,
-            y=subset[start_date_column_name].mean(),
+            x=subset[start_date_column_name].mean(),
+            y=1.025,
             text=chunk_type_labels[i],
             font=dict(color=colors[i]),
             align="center",
-            textangle=90,
+            textangle=0,
             showarrow=False,
         )
 
@@ -267,8 +265,8 @@ def _stacked_bar_plot(
     date_label_hover_format='%d/%b/%y',
     figure=None,
     title='Feature: distribution over time',
-    x_axis_title='Relative frequency',
-    yaxis_title='Time',
+    x_axis_title='Time',
+    yaxis_title='Relative frequency',
     alpha=1,
     alpha_chunk_type=0.5,
     colors=None,

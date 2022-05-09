@@ -156,6 +156,8 @@ class Chunker(abc.ABC):
                 f"missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
             )
 
+        data = data.sort_values(by=[NML_METADATA_TIMESTAMP_COLUMN_NAME]).reset_index(drop=True)
+
         try:
             chunks = self._split(data, minimum_chunk_size)
         except Exception as exc:

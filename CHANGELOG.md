@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added missing metadata modification to the *quickstart*
 - Perform some additional check on reference data during preprocessing
 
+## [0.3.2] - 2022-05-03
+
+### Fixed
+- Deal with out-of-time-order data when chunking
+- Fix reversed Y-axis and plot labels in continuous distribution plots
+
 ## [0.3.1] - 2022-04-11
 ### Changed
 - Publishing to PyPi did not like raw sections in ReST, replaced by Markdown version.
