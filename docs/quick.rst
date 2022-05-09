@@ -122,7 +122,7 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
 The data are already split into a reference and an analysis periods. NannyML uses the reference period to
 establish a baseline for expected model performance. The analysis period is the one that is subject to actual
 monitoring.
-For more information about periods check :ref:`data-drift-partitions`. The key thing to note is that we don't expect
+For more information about periods check :ref:`data-drift-periods`. The key thing to note is that we don't expect
 the analysis period to contain information about the :term:`Target`. This is why on the synthetic dataset it is provided in a separate object.
 
 .. code-block:: python

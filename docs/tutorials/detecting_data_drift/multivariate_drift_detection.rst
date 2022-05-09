@@ -65,7 +65,7 @@ the method see
 The method returns a single number, :term:`Reconstruction Error`. The changes in this value
 reflect a change in the structure of the model inputs. NannyML monitors the
 reconstruction error over time for the monitored model and raises an alert if the
-values get outside of a range defined by the variance in the reference partition.
+values get outside of a range defined by the variance in the reference period.
 
 Let's start by loading some synthetic data provided by the NannyML package.
 

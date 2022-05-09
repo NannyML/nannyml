@@ -7,9 +7,9 @@ Performance Estimation
 Why Perform Performance Estimation
 ----------------------------------
 
-NammyML allows for estimating the performance of a classification model before ground truth
+NammyML allows for estimating the performance of a classification model before :term:`targets<Target`
 becomes available. This can be very helpful in situations where there is a significant delay
-in when ground truth becomes available but any changes in the model's performance would have
+in when targets becomes available but any changes in the model's performance would have
 a significant impact on business results.
 
 Just The Code
@@ -72,9 +72,9 @@ whether an employee will work from home.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 
-The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` partitions of
-the monitored data. To understand what they are read :ref:`data partitions<data-drift-partitions>`. The
-``analysis_gt`` dataframe contains the ground truth results of the analysis period and we will not be using
+The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
+the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
+``analysis_gt`` dataframe contains the target results of the analysis period and we will not be using
 it during Performance Estimation.
 
 One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
@@ -123,7 +123,7 @@ estimator is then fitted using the
     ... ).fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
-Typically, this would be used on the latest production data where ground truth is missing. In our example this is
+Typically, this would be used on the latest production data where target is missing. In our example this is
 the ``analysis`` data.
 
 However, it can be also used on combined ``reference`` and ``analysis`` data, e.g. when comparing
@@ -205,7 +205,7 @@ The :ref:`Data Drift<data-drift>` functionality can help here.
 If needed further investigation can be performed as to why our population characteristics have
 changed the way they did. This is an ad-hoc investigation that is not covered by NannyML.
 
-When the ground truth results become available they can be compared with the estimated results as
+When the target results become available they can be compared with the estimated results as
 demonstrated :ref:`here<compare_estimated_and_realized_performance>`. You can learn more
 about the Confidence Based Performance Estimation and its limitation in the
 :ref:`How it Works page<performance-estimation-deep-dive>`

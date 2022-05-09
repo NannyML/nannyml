@@ -9,9 +9,9 @@ See what modifications were made to the data to make it suitable for the
 use case :ref:`here<california-housing-appendix>`.
 
 
----------------------
+---------------------------------------
 Monitoring workflow with NannyML
----------------------
+---------------------------------------
 
 
 Load and prepare data

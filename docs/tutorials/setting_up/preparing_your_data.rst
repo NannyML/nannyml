@@ -57,7 +57,7 @@ feature inputs, the model output and target.
 Walkthrough
 ===========
 
-.. _data-drift-partitions:
+.. _data-drift-periods:
 
 Data Periods
 ---------------
