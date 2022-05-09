@@ -27,46 +27,40 @@
     </strong>
 </p>
 
-![Performance estimatition graph](https://raw.githubusercontent.com/hakimelakhrass/nannyml/main/docs/_static/perf-est-guide-syth-example.svg)
+<p align="center">
+  <img src="media/estimate-post-deployment-model-performance.gif" alt="animated">
+</p>
 
+# 💡 What is NannyML?
+NannyML is an open-source python library that allows you to **estimate post-deployment model performance** (without access to targets), detect data drift, and intelligently link data drift alerts back to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, interactive visualizations, is completely model-agnostic and currently supports all tabular binary classification use cases.
 
-# What is NannyML?
-NannyML is an open-source python library that allows you to estimate real-world model performance (without access to targets),
-detect multivariate data drift, and link data drift to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, beautiful and interactive visualizations, and currently
-works on all binary classification models with tabular data.
+The core contributors of NannyML have researched and developed a novel algorithm for estimating model performance: [confidence-based performance estimation (CBPE)](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html). The nansters also invented a new approach to detect [multivariate data drift](https://docs.nannyml.com/latest/deep_dive/data_reconstruction.html#id1) using PCA-based data reconstruction.
 
-NannyMLs performance estimation algorithm, [confidence-based performance estimation (CBPE)](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html), was researched
-and developed by NannyML core contributors. NannyML has also developed its own [multivariate
-drift detection](https://docs.nannyml.com/latest/deep_dive/data_reconstruction.html#id1) based on PCA reconstruction error.
+If you like what we are working on, be sure to become an Nanster yourself, join our [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ) <img src="media/slack.png" width='25'> and champion us with a GitHub <img src="media/github.png" width='25'> star ⭐.
 
-If you like NannyML, feel free to give us a star and join the [slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ)!
+# ☔ Why use NannyML?
+NannyML closes the loop with performance monitoring and post deployment data science, empowering data scientist to quickly understand and **automatically detect silent model failure**. By using NannyML, data scientists can finally maintain complete visibility and trust in their deployed machine learning models.
+Allowing you to have the following benefits:
 
-# Why use NannyML?
-NannyML is built to allow data scientists to quickly and automatically detect silent model failure. Data scientists can
-then explore the root cause of the changes in model performance. NannyML also outputs alerts when performance has changed
-and for data drift that is correlated with the performance change.
-
-By using NannyML, you get the following benefits:
-
-* **Automatic** detection of silent model failure
-* Discovering the **root cause** to why your model performance has changes
-* **No alert fatigue.** React only when necessary if model performance is impacted
+* End sleepless nights caused by not knowing your model performance 😴
+* Analyse data drift and model performance **over time**
+* Discover the **root cause** to why your models are not performing as expected
+* **No alert fatigue!** React only when necessary if model performance is impacted
 * **Painless** setup in any environment
-* An end to sleepless nights caused by not knowing your model performance 😴
 
-# GO DEEP
+# 🧠 GO DEEP
 | NannyML Resources | Description |
 | ------------- | ------------- |
-| **[NannyML 101]** | New to NannyML? Start here! |
-| **[Performance Estimation]** | How the magic works. |
-| **[Key Concepts]** | Glossary of key concepts we use. |
-| **[Technical Reference]** | Monitor the performance of your ML models. |
-| **[New in v0.3.1]** | New features, bug fixes. |
-| **[Real World Example]** |  Take a look at a real-world example of NannyML. |
-| **[Blog]** | Thoughts on post-deployment data science from the NannyML team. |
-| **[Newsletter]** | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| **[Join slack]** | Need help with your specific use case? Say hi on slack! |
-| **[Contribute]** | How to contribute to the NannyML project and codebase. |
+| ☎️ **[NannyML 101]** | New to NannyML? Start here! |
+| 🔮 **[Performance estimation]** | How the magic works. |
+| 🌍 **[Real world example]** |  Take a look at a real-world example of NannyML. |
+| 🔑 **[Key concepts]** | Glossary of key concepts we use. |
+| 🔬 **[Technical reference]** | Monitor the performance of your ML models. |
+| 🔎 **[Blog]** | Thoughts on post-deployment data science from the NannyML team. |
+| 📬 **[Newsletter]** | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
+| 💎	**[New in v0.3.1]** | New features, bug fixes. |
+| 🧑‍💻 **[Contribute]** | How to contribute to the NannyML project and codebase. |
+| <img src="media/slack.png" width='25'> **[Join slack]** | Need help with your specific use case? Say hi on slack! |
 
 [NannyML 101]: https://docs.nannyml.com/
 [Performance Estimation]:https://docs.nannyml.com/latest/deep_dive/performance_estimation.html
@@ -79,149 +73,126 @@ By using NannyML, you get the following benefits:
 [Join Slack]: https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ
 [Contribute]: https://github.com/NannyML/nannyml/blob/main/CONTRIBUTING.md
 
-# Features
+# 🔱 Features
 
-### 1. Estimating real-world model performance in the absence of ground truth
-Using an algorithm researched by NannyML contributors, called [**Confidence-Based Performance Estimation**\
-](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html) , NannyML is
-able to estimate model performance. NannyML reconstructs the expected confusion matrix and then calculates the expected ROC AUC.
+### 1. Performance estimation and monitoring
 
-### 2. Multivariate data drift detection
-NannyML uses Data Reconstruction with PCA to detect multivariate changes. NannyML monitors the reconstruction error over time for the monitored model and raises an alert if the values get
-outside the range observed in the reference partition.
+When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html) to **estimate model performance**. This algorithm requires the predicted probabilities of your machine learning model and leverages probability calibration to estimate any traditional binary classification metric (ROC_AUC, Precision, Recall, F1, etc.). Rather than estimating the performance of future model predictions, CBPE estimates the expected model performance of the predictions made at inference time.
 
-![Multivariate Data Drift graph](https://raw.githubusercontent.com/hakimelakhrass/nannyml/main/docs/_static/drift-guide-multivariate.svg)
+<p><img src="media/estimated performance.svg"></p>
 
-### 3. Univariate data drift detection
-NannyML uses the KS Test for continuous features and the 2-sample Chi-squared test for categorical features. Both tests
-provide a statistic where they measure the observed drift and a p-value that shows how likely we are to get the observed sample under the assumption that there was no drift.
+NannyML can also **track the realised performance** of your machine learning model once targets are available.
 
-![Univariate Data Drift graph](https://raw.githubusercontent.com/hakimelakhrass/nannyml/main/docs/_static/drift-guide-joyplot-distance_from_office.svg)
+### 2. Data drift detection
 
-### 4. Target shift detection
-Monitor target shift by calculating the mean occurrence of positive events as well as the chi-squared statistic from the 2-sample Chi-Squared test of the target values for each chunk.
+To detect **multivariate feature drift** NannyML uses [PCA-based data reconstruction](https://docs.nannyml.com/latest/deep_dive/data_reconstruction.html#id1). Changes in the resulting reconstruction error are monitored over time and data drift alerts are logged when the reconstruction error in a certain period exceeds a threshold. This threshold is calculated based on the reconstruction error observed in the reference period.
 
-### 5. Model output drift detection
-Know when your model outputs are changing. It uses the same univariate methodology as for a continuous feature.
+<p><img src="media/multivariate feature drift.svg"></p>
 
-### 6. Calculating realized performance metrics
-Find out how your model is performing after ground truth has come in.
+NannyML utilises statistical tests to detect **univariate feature drift**. The Kolmogorov–Smirnov test is used for continuous features and the 2-sample chi-squared test for categorical features. The results of these tests are tracked over time, properly corrected to counteract multiplicity and overlayed on the temporal feature distributions. (It is also possible to visualise the test-statistics over time, to get a notion of the drift magnitude.)
 
-### 7. Interactive visualization
-A whole suite of beautiful visualizations. They are designed
-to help you explore your model performance and data.
+<p><img src="media/univaritate continuous feature distribution drift.svg"><img src="media/univaritate categoric feature distribution drift.svg"></p>
 
-![Stacked barchart example](https://raw.githubusercontent.com/hakimelakhrass/nannyml/main/docs/_static/drift-guide-stacked-workday.svg)
-### 8. Get alerts on what matters most
-Because NannyML can estimate performance, it allows you to get alerts on changes
-that matter.
+NannyML uses the same statistical tests to detected **model output drift**.
 
-# Getting started
+<p><img src="media/model output drift.svg"></p>
 
-## Install NannyML
+**Target distribution drift** is monitored by calculating the mean occurrence of positive events in combination with the 2-sample chi-squared test. Bear in mind that this operation requires the presence of actuals.
 
- *Requirments*: requires Python >=3.7.1, <3.11
+<p><img src="media/target distribution drift.svg"></p>
 
- Easily install via PyPI:
+### 3. Intelligent alerting
+
+Because NannyML can estimate performance, it is possible to weed out data drift alerts that do not impact expected performance, combatting alert fatigue. Besides linking data drift issues to drops in performance it is also possible to prioritise alerts according to other criteria using NannyML’s Ranker.
+
+
+# 🚀 Getting started
+
+### Install NannyML
+
+From PyPI:
 
 ```bash
 pip install nannyml
 ```
 
-
-*HERE BE DRAGONS* **USE AT YOUR OWN RISK**:
-
-You can install the latest development version of NannyML here.
-
+**Here be dragons!** Use at your own risk. The latest development version of NannyML:
 
 ```bash
 python -m pip install git+https://github.com/NannyML/nannyml
 ```
 
-## Quick Start
+### Quick Start
 
-#### Step 1: Import data, estimate performance, and detect drift
-
-**Reference refers to the period you want to compare your production data to**
-
-**Analysis is your production data**
-
-NannyML provides synthetic data for you to play around with =).
 
 ```python
-import nannyml as nml
 import pandas as pd
+import nannyml as nml
 
-reference_data, analysis_data, _ = nml.load_synthetic_sample()
-data = pd.concat([reference_data, analysis_data])
-metadata = nml.extract_metadata(reference_data)
+# Load dummy data
+reference, analysis, analysis_target = nml.load_synthetic_sample()
+data = pd.concat([reference, analysis], ignore_index=True)
+
+# Extract meta data
+metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
 metadata.target_column_name = 'work_home_actual'
 
-# Estimate performance
-estimator = nml.CBPE(metadata)
-estimator.fit(reference_data)
-estimates = estimator.estimate(data)
+# Choose a chunker or set a chunk size
+chunk_size = 5000
 
-estimates.plot(kind='performance').show()
+# Estimate model performance
+estimator = nml.CBPE(model_metadata=metadata, metrics=['roc_auc'], chunk_size=chunk_size)
+estimator.fit(reference)
+estimated_performance = estimator.estimate(data=data)
 
+figure = estimated_performance.plot(metric='roc_auc', kind='performance')
+figure.show()
+
+# Detect multivariate feature drift
+multivariate_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
+multivariate_calculator.fit(reference_data=reference)
+multivariate_results = multivariate_calculator.calculate(data=data)
+
+figure = multivariate_results.plot(kind='drift')
+figure.show()
+
+# Detect univariate feature drift
 univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
 univariate_calculator.fit(reference_data=reference)
 univariate_results = univariate_calculator.calculate(data=data)
 
-# let's plot drift results for all model inputs
-for feature in metadata.features:
-    figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
-    figure.show()
-
-# Let's initialize the object that will perform Data Reconstruction with PCA
-rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-# NannyML compares drift versus the full reference dataset.
-rcerror_calculator.fit(reference_data=reference)
-# Let's see Reconstruction error statistics for all available data
-rcerror_results = rcerror_calculator.calculate(data=data)
-figure = rcerror_results.plot(kind='drift')
-figure.show()
-
-figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
-figure.show()
-```
-
-#### Step 2: Rank Alerts
-
-```python
+# Rank features based on number of alerts
 ranker = nml.Ranker.by('alert_count')
 ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
-ranked_features
+
+for feature in ranked_features.feature:
+    figure = univariate_results.plot(kind='feature_distribution', feature_label=feature)
+    figure.show()
 ```
 
+# 📖 Documentation
 
-# Detailed documentation and guides
+* Performance monitoring
+  - [Estimated performance](<https://docs.nannyml.com/latest/guides/performance_estimation.html>)
+  - [Realized performance](https://docs.nannyml.com/latest/guides/performance_calculation.html)
+* Drift detection
+  * [Multivariate feature drift](https://docs.nannyml.com/latest/guides/data_drift.html#multivariate-drift-detection)
+  - [Univariate feature drift](https://docs.nannyml.com/latest/guides/data_drift.html#univariate-drift-detection)
+  - [Model output drift](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-outputs)
+  - [Target distribution drift](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-targets)
 
-* [Performance estimation](<https://docs.nannyml.com/latest/guides/performance_estimation.html>)
-* [Realized performance calculation](https://docs.nannyml.com/latest/guides/performance_calculation.html)
-* [Univariate model input drift detection](https://docs.nannyml.com/latest/guides/data_drift.html#univariate-drift-detection)
-* [Multivariate model input drift detection](https://docs.nannyml.com/latest/guides/data_drift.html#multivariate-drift-detection)
-* [Model output drift detection](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-outputs)
-* [Model target distribution](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-targets)
+# 🦸 Contributing and Community
 
-# Contributing and Community
+We want to build NannyML together with the community! The easiest to contribute at the moment is to propose new features or log bugs under [issues](https://github.com/NannyML/nannyml/issues). For more information, have a look at [how to contribute](CONTRIBUTING.rst).
 
-We want to build NannyML together with the community! The best way to contribute at the moment is to
-propose new features or log bugs under [issues](https://github.com/NannyML/nannyml/issues).
+# 🙋 Get help
 
-Also, we would love it if you joined some discussions in the community [slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ)
-Read the docs on [how to contribute](CONTRIBUTING.md).
+The best place to ask for help is in the [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ). Feel free to join and ask questions or raise issues. Someone will definitely respond to you.
 
-# Asking for help
+# 🥷 Stay updated
 
-The best place to ask for help is on [slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ).
-Feel free to join and ask questions or raise issues. Someone will definitely respond to you.
+If you want to stay up to date with recent changes to the NannyML library, you can subscribe to our [release notes](https://nannyml.substack.com). For thoughts on post-deployment data science from the NannyML team, feel free to visit our [blog](https://www.nannyml.com/blog). You can also sing up for our [newsletter](https://mailchi.mp/022c62281d13/postdeploymentnewsletter), which brings together the best papers, articles, news, and open-source libraries highlighting the ML challenges after deployment.
 
-# License
+# 📄 License
 
-NannyML is distributed under an Apache License Version 2.0. A complete version is found [here](LICENSE.MD). All contributions
-will be distributed under this license.
-
-
-
-* Read the docs on [how to contribute](CONTRIBUTING.rst)
+NannyML is distributed under an Apache License Version 2.0. A complete version can be found [here](LICENSE.MD). All contributions will be distributed under this license.
