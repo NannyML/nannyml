@@ -23,15 +23,14 @@ from nannyml.performance_estimation.confidence_based.results import (
 class CBPE(PerformanceEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
 
-    @staticmethod
-    def create(model_metadata: ModelMetadata, *args, **kwargs):
+    def __new__(cls, model_metadata: ModelMetadata, *args, **kwargs):
         from ._cbpe_binary_classification import _BinaryClassificationCBPE
         from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
 
         if isinstance(model_metadata, BinaryClassificationMetadata):
-            return _BinaryClassificationCBPE(model_metadata, *args, **kwargs)
+            return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
         elif isinstance(model_metadata, MulticlassClassificationMetadata):
-            return _MulticlassClassificationCBPE(model_metadata, *args, **kwargs)
+            return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
 
     def __init__(
         self,
