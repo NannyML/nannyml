@@ -3,14 +3,13 @@
 #  License: Apache Software License 2.0
 
 """Module containing the results of performance calculations and associated plots."""
-from typing import Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml import InvalidArgumentsException
 from nannyml.metadata import ModelMetadata
-from nannyml.performance_calculation import Metric, MetricFactory
+from nannyml.performance_calculation import MetricFactory
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
@@ -35,7 +34,7 @@ class PerformanceCalculatorResult:
         self.data = performance_data
         self.metadata = model_metadata
 
-    def plot(self, kind: str = 'performance', metric: Union[str, Metric] = None, *args, **kwargs) -> go.Figure:
+    def plot(self, kind: str = 'performance', metric: str = None, *args, **kwargs) -> go.Figure:
         """Render plots based on CBPE estimation results.
 
         This function will return a :class:`plotly.graph_objects.Figure` object.
@@ -73,13 +72,13 @@ class PerformanceCalculatorResult:
         >>>     realized_performance.plot(kind='performance', metric=m).show()
         """
         if kind == 'performance':
-            return _plot_performance_metric(self.data, metric)
+            return _plot_performance_metric(self.data, self.metadata, metric)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
 
 def _plot_performance_metric(
-    performance_calculation_results: pd.DataFrame, metric: Union[str, Metric] = None
+    performance_calculation_results: pd.DataFrame, metadata: ModelMetadata, metric: str = None
 ) -> go.Figure:
     """Renders a line plot of a selected metric of the performance calculation results.
 
@@ -112,13 +111,9 @@ def _plot_performance_metric(
 
     plot_partition_separator = len(performance_calculation_results['partition'].value_counts()) > 1
 
-    if isinstance(metric, Metric):
-        metric_column_name = metric.column_name
-        metric_display_name = metric.display_name
-    else:
-        _metric = MetricFactory.create(metric)  # type: ignore
-        metric_column_name = _metric.column_name
-        metric_display_name = _metric.display_name
+    _metric = MetricFactory.create(metric, metadata)  # type: ignore
+    metric_column_name = _metric.column_name
+    metric_display_name = _metric.display_name
 
     # Plot metric performance
     fig = _step_plot(

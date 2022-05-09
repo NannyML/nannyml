@@ -41,7 +41,7 @@ class MulticlassClassificationMetadata(ModelMetadata):
     def __init__(
         self,
         prediction_column_name: str = None,
-        predicted_probabilities_column_names: Dict[str, str] = None,
+        predicted_probabilities_column_names: Dict[Any, str] = None,
         *args,
         **kwargs,
     ):
@@ -73,7 +73,7 @@ class MulticlassClassificationMetadata(ModelMetadata):
         return self._predicted_probabilities_column_names
 
     @predicted_probabilities_column_names.setter
-    def predicted_probabilities_column_names(self, class_to_column_mapping: Dict[str, str]):  # noqa: D102
+    def predicted_probabilities_column_names(self, class_to_column_mapping: Dict[Any, str]):  # noqa: D102
         self._predicted_probabilities_column_names = class_to_column_mapping
         if class_to_column_mapping is None or len(class_to_column_mapping) == 0:
             return
@@ -262,14 +262,19 @@ class MulticlassClassificationMetadata(ModelMetadata):
         return md
 
 
-def _extract_class_to_column_mapping(column_names: List[str]) -> Dict[str, str]:
+def _extract_class_to_column_mapping(column_names: List[str]) -> Dict[Any, str]:
     import re
 
     mapping = {}
     for column_name in column_names:
         match = re.search(f'(?<={PREDICTED_PROBABILITIES_PATTERN})\\w+', column_name)
         if match:
-            mapping[match.group(0)] = column_name
+            class_name: Any
+            try:
+                class_name = int(match.group(0))
+            except ValueError:
+                class_name = match.group(0)
+            mapping[class_name] = column_name
 
     return mapping
 

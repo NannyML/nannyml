@@ -4,11 +4,20 @@
 
 """Module containing metric utilities and implementations."""
 import abc
+from typing import Type  # noqa: TYP001
 from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    multilabel_confusion_matrix,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
 from nannyml import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -16,11 +25,14 @@ from nannyml.metadata.base import (
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_REFERENCE_PARTITION_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
+    ModelMetadata,
 )
 from nannyml.metadata.binary_classification import (
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     NML_METADATA_PREDICTION_COLUMN_NAME,
+    BinaryClassificationMetadata,
 )
+from nannyml.metadata.multiclass_classification import MulticlassClassificationMetadata
 
 
 class Metric(abc.ABC):
@@ -30,6 +42,7 @@ class Metric(abc.ABC):
         self,
         display_name: str,
         column_name: str,
+        metadata: ModelMetadata,
         upper_threshold: float = None,
         lower_threshold: float = None,
     ):
@@ -49,8 +62,11 @@ class Metric(abc.ABC):
         """
         self.display_name = display_name
         self.column_name = column_name
+        self.metadata = metadata
         self.lower_threshold = lower_threshold
         self.upper_threshold = upper_threshold
+
+        self._minimum_chunk_size: int = 300
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
         """Fits a Metric on reference data.
@@ -103,13 +119,10 @@ class Metric(abc.ABC):
     def minimum_chunk_size(self) -> int:
         """Determines the minimum number of observations a chunk should ideally for this metric to be trustworthy."""
         try:
-            return self._minimum_chunk_size()
+            return self._minimum_chunk_size
         except Exception:
             # TODO: log failure
             return 300
-
-    def _minimum_chunk_size(self):
-        raise NotImplementedError
 
     def _calculate_alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
@@ -338,16 +351,12 @@ def _minimum_chunk_size_accuracy(
     return _floor_chunk_size(sample_size)
 
 
-class AUROC(Metric):
+class BinaryClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
-    def __init__(self):
+    def __init__(self, metadata: ModelMetadata):
         """Creates a new AUROC instance."""
-        super().__init__(display_name='ROC AUC', column_name='roc_auc')
-        self._min_chunk_size = None
-
-    def _minimum_chunk_size(self) -> int:
-        return self._min_chunk_size
+        super().__init__(display_name='ROC AUC', column_name='roc_auc', metadata=metadata)
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_roc_auc(reference_data)
@@ -365,16 +374,12 @@ class AUROC(Metric):
             return roc_auc_score(y_true, y_pred)
 
 
-class F1(Metric):
+class BinaryClassificationF1(Metric):
     """F1 score metric."""
 
-    def __init__(self):
+    def __init__(self, metadata: ModelMetadata):
         """Creates a new F1 instance."""
-        super().__init__(display_name='F1', column_name='f1')
-        self._min_chunk_size = None
-
-    def _minimum_chunk_size(self) -> int:
-        return self._min_chunk_size
+        super().__init__(display_name='F1', column_name='f1', metadata=metadata)
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_f1(reference_data)
@@ -392,16 +397,12 @@ class F1(Metric):
             return f1_score(y_true, y_pred)
 
 
-class Precision(Metric):
+class BinaryClassificationPrecision(Metric):
     """Precision metric."""
 
-    def __init__(self):
+    def __init__(self, metadata: ModelMetadata):
         """Creates a new Precision instance."""
-        super().__init__(display_name='Precision', column_name='precision')
-        self._min_chunk_size = None
-
-    def _minimum_chunk_size(self) -> int:
-        return self._min_chunk_size
+        super().__init__(display_name='Precision', column_name='precision', metadata=metadata)
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_precision(reference_data)
@@ -418,16 +419,12 @@ class Precision(Metric):
             return precision_score(y_true, y_pred)
 
 
-class Recall(Metric):
+class BinaryClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
-    def __init__(self):
+    def __init__(self, metadata: ModelMetadata):
         """Creates a new Recall instance."""
-        super().__init__(display_name='Recall', column_name='recall')
-        self._min_chunk_size = None
-
-    def _minimum_chunk_size(self) -> int:
-        return self._min_chunk_size
+        super().__init__(display_name='Recall', column_name='recall', metadata=metadata)
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_recall(reference_data)
@@ -444,16 +441,12 @@ class Recall(Metric):
             return recall_score(y_true, y_pred)
 
 
-class Specificity(Metric):
+class BinaryClassificationSpecificity(Metric):
     """Specificity metric."""
 
-    def __init__(self):
+    def __init__(self, metadata: ModelMetadata):
         """Creates a new F1 instance."""
-        super().__init__(display_name='Specificity', column_name='specificity')
-        self._min_chunk_size = None
-
-    def _minimum_chunk_size(self) -> int:
-        return self._min_chunk_size
+        super().__init__(display_name='Specificity', column_name='specificity', metadata=metadata)
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_specificity(reference_data)
@@ -476,16 +469,12 @@ class Specificity(Metric):
             return tn / (tn + fp)
 
 
-class Accuracy(Metric):
+class BinaryClassificationAccuracy(Metric):
     """Accuracy metric."""
 
-    def __init__(self):
+    def __init__(self, metadata: ModelMetadata):
         """Creates a new Accuracy instance."""
-        super().__init__(display_name='Accuracy', column_name='accuracy')
-        self._min_chunk_size = None
-
-    def _minimum_chunk_size(self) -> int:
-        return self._min_chunk_size
+        super().__init__(display_name='Accuracy', column_name='accuracy', metadata=metadata)
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_accuracy(reference_data)
@@ -508,6 +497,200 @@ class Accuracy(Metric):
             return (tp + tn) / (tp + tn + fp + fn)
 
 
+class MulticlassClassificationAUROC(Metric):
+    """Area under Receiver Operating Curve metric."""
+
+    def __init__(self, metadata: ModelMetadata):
+        """Creates a new AUROC instance."""
+        super().__init__(display_name='ROC AUC', column_name='roc_auc', metadata=metadata)
+        self._min_chunk_size = 300
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _calculate(self, data: pd.DataFrame):
+        """Redefine to handle NaNs and edge cases."""
+        if not isinstance(self.metadata, MulticlassClassificationMetadata):
+            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
+        y_pred = data[self.metadata.predicted_class_probability_metadata_columns()]
+
+        if y_pred.isna().all().any():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+            )
+
+        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        if y_true.nunique() <= 1:
+            return np.nan
+        else:
+            return roc_auc_score(y_true, y_pred, multi_class='ovr', average='macro')
+
+
+class MulticlassClassificationF1(Metric):
+    """F1 score metric."""
+
+    def __init__(self, metadata: ModelMetadata):
+        """Creates a new F1 instance."""
+        super().__init__(display_name='F1', column_name='f1', metadata=metadata)
+        self._min_chunk_size = 300
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _calculate(self, data: pd.DataFrame):
+        if not isinstance(self.metadata, MulticlassClassificationMetadata):
+            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
+        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+
+        if y_pred.isna().all().any():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+            )
+
+        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
+        else:
+            return f1_score(y_true, y_pred, average='macro')
+
+
+class MulticlassClassificationPrecision(Metric):
+    """Precision metric."""
+
+    def __init__(self, metadata: ModelMetadata):
+        """Creates a new Precision instance."""
+        super().__init__(display_name='Precision', column_name='precision', metadata=metadata)
+        self._min_chunk_size = 300
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _calculate(self, data: pd.DataFrame):
+        if not isinstance(self.metadata, MulticlassClassificationMetadata):
+            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
+        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+
+        if y_pred.isna().all().any():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+            )
+
+        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
+        else:
+            return precision_score(y_true, y_pred, average='macro')
+
+
+class MulticlassClassificationRecall(Metric):
+    """Recall metric, also known as 'sensitivity'."""
+
+    def __init__(self, metadata: ModelMetadata):
+        """Creates a new Recall instance."""
+        super().__init__(display_name='Recall', column_name='recall', metadata=metadata)
+        self._min_chunk_size = 300
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _calculate(self, data: pd.DataFrame):
+        if not isinstance(self.metadata, MulticlassClassificationMetadata):
+            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
+        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+
+        if y_pred.isna().all().any():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+            )
+
+        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
+        else:
+            return recall_score(y_true, y_pred, average='macro')
+
+
+class MulticlassClassificationSpecificity(Metric):
+    """Specificity metric."""
+
+    def __init__(self, metadata: ModelMetadata):
+        """Creates a new F1 instance."""
+        super().__init__(display_name='Specificity', column_name='specificity', metadata=metadata)
+        self._min_chunk_size = 300
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _calculate(self, data: pd.DataFrame):
+        if not isinstance(self.metadata, MulticlassClassificationMetadata):
+            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
+        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+
+        if y_pred.isna().all().any():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+            )
+
+        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
+        else:
+            MCM = multilabel_confusion_matrix(
+                y_true,
+                y_pred,
+            )
+            tn_sum = MCM[:, 0, 0]
+            fp_sum = MCM[:, 0, 1]
+            class_wise_specificity = tn_sum / (tn_sum + fp_sum)
+            return np.mean(class_wise_specificity)
+
+
+class MulticlassClassificationAccuracy(Metric):
+    """Accuracy metric."""
+
+    def __init__(self, metadata: ModelMetadata):
+        """Creates a new Accuracy instance."""
+        super().__init__(display_name='Accuracy', column_name='accuracy', metadata=metadata)
+        self._min_chunk_size = 300
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _calculate(self, data: pd.DataFrame):
+        if not isinstance(self.metadata, MulticlassClassificationMetadata):
+            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
+        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+
+        if y_pred.isna().all().any():
+            raise InvalidArgumentsException(
+                f"could not calculate metric '{self.display_name}': " "prediction column contains no data"
+            )
+
+        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
+        else:
+            return accuracy_score(y_true, y_pred)
+
+
 def _common_data_cleaning(y_true, y_pred):
     y_true, y_pred = (
         pd.Series(y_true).reset_index(drop=True),
@@ -525,31 +708,54 @@ def _common_data_cleaning(y_true, y_pred):
 class MetricFactory:
     """A factory class that produces Metric instances based on a given magic string or a metric specification."""
 
-    _str_to_metric: Dict[str, Metric] = {
-        'roc_auc': AUROC(),
-        'f1': F1(),
-        'precision': Precision(),
-        'recall': Recall(),
-        'specificity': Specificity(),
-        'accuracy': Accuracy(),
+    _metrics: Dict[str, Dict[str, Type[Metric]]] = {
+        'roc_auc': {
+            BinaryClassificationMetadata.__name__: BinaryClassificationAUROC,
+            MulticlassClassificationMetadata.__name__: MulticlassClassificationAUROC,
+        },
+        'f1': {
+            BinaryClassificationMetadata.__name__: BinaryClassificationF1,
+            MulticlassClassificationMetadata.__name__: MulticlassClassificationF1,
+        },
+        'precision': {
+            BinaryClassificationMetadata.__name__: BinaryClassificationPrecision,
+            MulticlassClassificationMetadata.__name__: MulticlassClassificationPrecision,
+        },
+        'recall': {
+            BinaryClassificationMetadata.__name__: BinaryClassificationRecall,
+            MulticlassClassificationMetadata.__name__: MulticlassClassificationRecall,
+        },
+        'specificity': {
+            BinaryClassificationMetadata.__name__: BinaryClassificationSpecificity,
+            MulticlassClassificationMetadata.__name__: MulticlassClassificationSpecificity,
+        },
+        'accuracy': {
+            BinaryClassificationMetadata.__name__: BinaryClassificationAccuracy,
+            MulticlassClassificationMetadata.__name__: MulticlassClassificationAccuracy,
+        },
     }
 
     @classmethod
-    def create(cls, key: str) -> Metric:
+    def create(cls, key: str, metadata: ModelMetadata) -> Metric:
         """Returns a Metric instance for a given key."""
-        if isinstance(key, str):
-            return cls._create_from_str(key)
-        else:
+        if not isinstance(key, str):
             raise InvalidArgumentsException(
                 f"cannot create metric given a '{type(key)}'" "Please provide a string, function or Metric"
             )
 
-    @classmethod
-    def _create_from_str(cls, key: str) -> Metric:
-        if key not in cls._str_to_metric:
+        if key not in cls._metrics:
             raise InvalidArgumentsException(
                 f"unknown metric key '{key}' given. "
                 "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
                 "'accuracy']."
             )
-        return cls._str_to_metric[key]
+
+        metadata_class_name = type(metadata).__name__
+        if metadata_class_name not in cls._metrics[key]:
+            raise RuntimeError(
+                f"metric '{key}' is currently not supported for model type {metadata_class_name}. "
+                "Please specify another metric or use one of these supported model types for this metric: "
+                f"{[metadata_class_name for md in cls._metrics[key]]}"
+            )
+        metric_class = cls._metrics[key][metadata_class_name]
+        return metric_class(metadata=metadata)  # type: ignore

@@ -64,7 +64,7 @@ class PerformanceCalculator:
 
         """
         self.metadata = model_metadata
-        self.metrics = [MetricFactory.create(m) for m in metrics]
+        self.metrics = [MetricFactory.create(m, self.metadata) for m in metrics]
         self._minimum_chunk_size = None
 
         if chunker is None:
