@@ -31,7 +31,8 @@ If you just want the code to experiment yourself withinb a Jupyter Notebook, her
     >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
     >>>
-    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> target_distribution_calculator = target_distribution_calculator.fit(reference_data=reference)
     >>>
     >>> target_distribution = target_distribution_calculator.calculate(data)
     >>> display(target_distribution.data.head(3))
@@ -87,35 +88,31 @@ data first.
     >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
-
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |       |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
 +=======+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
 | 50000 |               0.527691 | 0 - 20K €      |               1.8     |                      8.96072 | False              | Tuesday   |  4.22463 |          nan |                  1 | 2017-08-31 04:20:00 |           0.99 | analysis    |        1 |
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-| 50001 |               8.48513  | 20K - 20K €    |               2.22207 |                      8.76879 | False              | Friday    |  4.9631  |          nan |                  1 | 2017-08-31 05:16:16 |           0.98 | analysis    |        1 |
+| 50001 |               8.48513  | 20K - 40K €    |               2.22207 |                      8.76879 | False              | Friday    |  4.9631  |          nan |                  1 | 2017-08-31 05:16:16 |           0.98 | analysis    |        1 |
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 | 50002 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    |  4.58895 |          nan |                  1 | 2017-08-31 05:56:44 |           0.98 | analysis    |        1 |
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 Now that the data is in place we'll create a new
-:class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator` and
-*fit* it to the
-reference data using the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
-method. The data in the reference partition represent an accepted target distribution
+:class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
+instantiating it with appropriate parameters.
+Subsequently the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
+method gets called on the reference data which represent an accepted target distribution
 against which we will compare subsequent data.
+Then the
+:meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.calculate` method gets
+called to calculate the target drift results on the data provided to it. We use the previously
+assembled data as an argument.
 
 .. code-block:: python
 
-    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
-
-After fitting the :class:`calculator<nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator>`
-is ready to use. We calculate the target distribution by calling the
-:meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.calculate`
-method, providing our previously assembled data as an argument.
-
-.. code-block:: python
-
+    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> target_distribution_calculator = target_distribution_calculator.fit(reference_data=reference)
     >>> target_distribution = target_distribution_calculator.calculate(data)
     >>> display(target_distribution.data.head(3))
 

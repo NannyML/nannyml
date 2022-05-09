@@ -26,19 +26,21 @@ If you just want the code to experiment yourself withinb a Jupyter Notebook, her
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
     >>> # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's view a small subset of our results:
     >>> # We use the data property of the results class to view the relevant data.
-    >>> display(univariate_results.data.iloc[[-7, -6, -5, -4], [0,1,2,3,4,22,23]])
+    >>> y_pred_proba_result_columns = list(univariate_results.data.columns)[:5] + [s for s in list(univariate_results.data.columns) if "y_pred_proba" in s]
+    >>> display(univariate_results.data[y_pred_proba_result_columns][-7:-3])
 
     >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
     >>> figure.show()
@@ -61,7 +63,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
@@ -81,31 +83,40 @@ Let's start by loading some synthetic data provided by the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
-class implements the functionality needed for Univariate Drift Detection that we need for drift detection in model outputs as well.
+class implements the functionality needed for drift detection in model outputs as well.
+Following the process shown at :ref:`univariate_drift_detection`
+:class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
+is instantiated with appropriate parameters and the
+:meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method
+is called on the reference data where results will be based off. Then the
+:meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method
+calculates the drift results on the data provided to it. An example using it can be seen below:
 
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
     >>> # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's view a small subset of our results:
     >>> # We use the data property of the results class to view the relevant data.
-    >>> display(univariate_results.data.iloc[[-7, -6, -5, -4], [0,1,2,3,4,22,23]])
+    >>> y_pred_proba_result_columns = list(univariate_results.data.columns)[:5] + [s for s in list(univariate_results.data.columns) if "y_pred_proba" in s]
+    >>> display(univariate_results.data[y_pred_proba_result_columns][-7:-3])
 
-+----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+
-|    | key           |   start_index |   end_index | start_date          | end_date            |   y_pred_proba_dstat |   y_pred_proba_p_value |
-+====+===============+===============+=============+=====================+=====================+======================+========================+
-| 13 | [65000:69999] |         65000 |       69999 | 2018-09-01 16:19:07 | 2018-12-31 10:11:21 |              0.01058 |                  0.685 |
-+----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+
-| 14 | [70000:74999] |         70000 |       74999 | 2018-12-31 10:38:45 | 2019-04-30 11:01:30 |              0.01408 |                  0.325 |
-+----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+
-| 15 | [75000:79999] |         75000 |       79999 | 2019-04-30 11:02:00 | 2019-09-01 00:24:27 |              0.1307  |                  0     |
-+----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+
-| 16 | [80000:84999] |         80000 |       84999 | 2019-09-01 00:28:54 | 2019-12-31 09:09:12 |              0.1273  |                  0     |
-+----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+
++----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            |   y_pred_proba_dstat |   y_pred_proba_p_value | y_pred_proba_alert   |   y_pred_proba_threshold |
++====+===============+===============+=============+=====================+=====================+======================+========================+======================+==========================+
+| 13 | [65000:69999] |         65000 |       69999 | 2018-09-01 16:19:07 | 2018-12-31 10:11:21 |              0.01058 |                  0.685 | False                |                     0.05 |
++----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
+| 14 | [70000:74999] |         70000 |       74999 | 2018-12-31 10:38:45 | 2019-04-30 11:01:30 |              0.01408 |                  0.325 | False                |                     0.05 |
++----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
+| 15 | [75000:79999] |         75000 |       79999 | 2019-04-30 11:02:00 | 2019-09-01 00:24:27 |              0.1307  |                  0     | True                 |                     0.05 |
++----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
+| 16 | [80000:84999] |         80000 |       84999 | 2019-09-01 00:28:54 | 2019-12-31 09:09:12 |              0.1273  |                  0     | True                 |                     0.05 |
++----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
 
 
 NannyML can visualize the statistical properties of the drift in model outputs with:

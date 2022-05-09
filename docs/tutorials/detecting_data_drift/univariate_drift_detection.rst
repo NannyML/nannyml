@@ -22,13 +22,14 @@ If you just want the code to experiment yourself, here you go:
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
     >>> # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
@@ -83,7 +84,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
@@ -97,20 +98,25 @@ Let's start by loading some synthetic data provided by the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  3 |               2.53041  | 20K - 20K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
+|  3 |               2.53041  | 20K - 40K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
-class implements the functionality needed for Univariate Drift Detection.
+class implements the functionality needed for Univariate Drift Detection. Upon instantiating it with appropriate parameters
+the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method needs
+to be called on the reference data where results will be based off. Then the
+:meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method will
+calculate the drift results on the data provided to it.
 An example using it can be seen below:
 
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
     >>> # let's see drift statistics for all available data
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> univariate_results = univariate_calculator.calculate(data=data)
@@ -243,9 +249,9 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 +----+----------------------------+--------------------+--------+
 |  1 | wfh_prev_workday           |                  5 |      2 |
 +----+----------------------------+--------------------+--------+
-|  2 | public_transportation_cost |                  5 |      3 |
+|  2 | distance_from_office       |                  5 |      3 |
 +----+----------------------------+--------------------+--------+
-|  3 | distance_from_office       |                  5 |      4 |
+|  3 | public_transportation_cost |                  5 |      4 |
 +----+----------------------------+--------------------+--------+
 |  4 | tenure                     |                  2 |      5 |
 +----+----------------------------+--------------------+--------+

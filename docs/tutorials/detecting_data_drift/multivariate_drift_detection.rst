@@ -24,19 +24,20 @@ If you just want the code to experiment yourself withinb a Jupyter Notebook, her
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
-    >>>
+
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> rcerror_calculator = rcerror_calculator.fit(reference_data=reference)
     >>> # let's see RC error statistics for all available data
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
-    >>>
+
     >>> from sklearn.impute import SimpleImputer
-    >>>
+
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
     >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(
     >>>     model_metadata=metadata,
@@ -48,10 +49,10 @@ If you just want the code to experiment yourself withinb a Jupyter Notebook, her
     >>> rcerror_calculator.fit(reference_data=reference)
     >>> # let's see RC error statistics for all available data
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
-    >>>
+
     >>> # We use the data property of the results class to view the relevant data.
     >>> display(rcerror_results.data)
-    >>>
+
     >>> figure = rcerror_results.plot(kind='drift')
     >>> figure.show()
 
@@ -74,7 +75,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
@@ -88,21 +89,27 @@ Let's start by loading some synthetic data provided by the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  3 |               2.53041  | 20K - 20K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
+|  3 |               2.53041  | 20K - 40K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
-
 The :class:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
-module implements this functionality. One way to use it can be seen below:
+module implements this functionality.
+Upon instantiating it with appropriate parameters
+the :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.fit` method needs
+to be called on the reference data where results will be based off. Then the
+:meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.calculate` method will
+calculate the multivariate drift results on the data provided to it.
+One way to use it can be seen below:
 
 
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000).fit(reference_data=reference)
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000)
+    >>> rcerror_calculator = rcerror_calculator.fit(reference_data=reference)
     >>> # let's see RC error statistics for all available data
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
