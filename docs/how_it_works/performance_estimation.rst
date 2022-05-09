@@ -16,7 +16,7 @@ for a large set of observations, returns a prediction of 1 (positive class) with
 for approximately 90% of these observations, the model is correct while for the other 10% the model is wrong.
 Assuming properly calibrated probabilities, confusion matrix elements can be estimated and then used to calculate any
 performance metric. Algorithms for estimating one of the simplest metrics (accuracy) and of the most complex (AUROC) are
-described below. Common notation used in the sections below is following:
+described below. Common notation used in the sections below is the following:
 
     :math:`n` - number of analyzed observations/predictions,
 
@@ -62,12 +62,12 @@ True Negatives (TN). The algorithm runs as follows:
     5. Get estimated confusion matrix elements for the whole set of predictions, e.g. for True Positives:
 
     .. math::
-        {TP} = \sum_{j}^{n} {TP}_{j}
+        {TP} = \sum_{j=1}^{n} {TP}_{j}
 
     6. Estimate accuracy:
 
     .. math::
-        Accuracy = \frac{TP+TN}{n}
+        accuracy = \frac{TP+TN}{n}
 
 Actually, first three steps are enough to estimate expected accuracy - once probabilities that the predictions are
 correct are known, all that needs to be done is calculation of mean of these probabilities. The explanation above
@@ -80,17 +80,17 @@ more in :ref:`Limitations <performance-estimation-deep-dive-limitations>`.
 A different type of metric is ROC AUC.
 To estimate it one needs values of confusion matrix elements (True
 Positives, False Positives, True Negatives, False Negatives)
-for a set of all thresholds :math:`t`. This set is obtained by selecting subset of :math:`m`
+for a set of all thresholds :math:`t`. This set is obtained by selecting a subset of :math:`m`
 unique values from the set of probability predictions
 :math:`\mathbf{\hat{p}}` and sorting them increasingly.
 Therefore :math:`\mathbf{t}=\{\hat{p_1}, \hat{p_2}, ..., \hat{p_m}\}` and
-:math:`\hat{p_1} < \hat{p_2} < ... < \hat{p_m}` (notice that in some cases :math:`m=n`).
+:math:`\hat{p_1} < \hat{p_2} < ... < \hat{p_m}` (:math:`1 < m \leq n`).
 
 The algorithm for estimating ROC AUC runs as follows:
 
-    1. Get :math:`i`-*th* threshold from :math:`\mathbf{t}`,  denote :math:`t_i`.
-    2. Get :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote :math:`\hat{p}_j`.
-    3. Get binary prediction by thresholding probability estimate:
+    1. Get :math:`i`-*th* threshold from :math:`\mathbf{t}` (:math:`i` ranges from 1 to :math:`m`),  denote :math:`t_i`, .
+    2. Get :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}` (:math:`j` ranges from 1 to :math:`n`), denote :math:`\hat{p}_j`.
+    3. Get the predicted label by thresholding the probability estimate:
 
     .. math::
         \hat{y}_{i,j}=\begin{cases}1,\qquad  \hat{p}_j \geq t_i \\ 0,\qquad  \hat{p}_j < t_i \end{cases}
@@ -127,7 +127,7 @@ The algorithm for estimating ROC AUC runs as follows:
     8. Get estimated confusion matrix elements for the whole set of predictions, e.g. for True Positives:
 
     .. math::
-        {TP}_i = \sum_{j}^{n} {TP}_{i,j}
+        {TP}_i = \sum_{j=1}^{n} {TP}_{i,j}
 
     9. Calculate estimated true positive rate and false positive rate:
 
@@ -149,15 +149,19 @@ The algorithm for estimating ROC AUC runs as follows:
 Multiclass Classification
 -------------------------
 
-Multiclass classification model outputs prediction (predicted class) and
+Multiclass classification model outputs prediction label (predicted class) and
 probability for each possible class. It means that if there are three classes, for example A, B and C, model output
-should contain four pieces of information - predicted class (e.g. A) and three probabilities or scores, one for each class.
+should contain four pieces of information - predicted class (e.g. A) and three probabilities, one for each class.
 Assuming these probabilities are well calibrated, they can be used to estimate performance metrics. As an example,
-let's describe the process for macro-averaged precision. Let's stick to the notation already introduced and add
-:math:`k` to denote class. Simple algorithm runs as follows:
+let's describe the process for macro-averaged precision. Let's use :math:`c` to denote total number of classes and
+:math:`k` to indicate a particular class. We can stick to previously introduced notation keeping in mind that
+:math:`y` and :math:`\hat{y}`
+are not binary anymore and take one of :math:`c` values.
+
+    The algorithm runs as follows:
 
     1. Estimate precision for each class separately, just like in binary classification. Transform vector of
-       multiclass predictions :math:`\mathbf{\hat{y}}` to binary vector relevant for class :math:`k` i.e.
+       multiclass predictions :math:`\mathbf{\hat{y}}` to binary vector relevant for the class :math:`k` i.e.
        :math:`\mathbf{\hat{y}_k}` and take corresponding predicted probabilities :math:`\mathbf{\hat{p}_k}`:
 
         .. math::
@@ -172,7 +176,7 @@ let's describe the process for macro-averaged precision. Let's stick to the nota
     2. Calculate macro-averaged precision:
 
         .. math::
-            {precision} = \frac{1}{k} \sum_{}^{k} {precision}_{k}
+            {precision} = \frac{1}{c} \sum_{k=1}^{c} {precision}_{k}
 
 Recall, f1, specificity and *one-vs-rest* ROC AUC are estimated in the exact same way. Multiclass accuracy is a bit
 different as it is not estimated class-wise and averaged because this is not the way the metric itself is calculated.
