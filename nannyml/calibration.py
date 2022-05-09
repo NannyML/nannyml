@@ -210,7 +210,7 @@ def _calculate_expected_calibration_error(
 
 
 def needs_calibration(
-    y_true: pd.Series, y_pred_proba: pd.Series, calibrator: Calibrator, bin_count: int = 10, split_count: int = 10
+    y_true: np.array, y_pred_proba: np.array, calibrator: Calibrator, bin_count: int = 10, split_count: int = 10
 ) -> bool:
     """Returns whether a series of prediction scores benefits from additional calibration or not.
 
@@ -224,10 +224,10 @@ def needs_calibration(
     ----------
     calibrator : Calibrator
         The Calibrator to use during testing.
-    y_true : pd.Series
-        Vector with reference binary targets - ``0`` or ``1``. Shape ``(n,)``.
-    y_pred_proba : pd.Series
-        Vector of continuous reference scores/probabilities. Has to be the same shape as ``y_true``.
+    y_true : np.array
+        Series with reference binary targets - ``0`` or ``1``. Shape ``(n,)``.
+    y_pred_proba : np.array
+        Series or DataFrame of continuous reference scores/probabilities. Has to be the same shape as ``y_true``.
     bin_count : int
         Desired amount of bins to calculate ECE on.
     split_count : int
@@ -260,15 +260,15 @@ def needs_calibration(
                 'target values contain NaN. ' 'Please ensure reference targets do not contain NaN values.'
             )
 
-    if y_pred_proba.isnull().values.any():
+    if np.isnan(y_pred_proba).any():
         raise InvalidArgumentsException(
             'predicted probabilities contain NaN. '
             'Please ensure reference predicted probabilities do not contain NaN values.'
         )
 
     # Reset indices to deal with subsetting vs. index results from stratified shuffle split
-    y_pred_proba = y_pred_proba.reset_index(drop=True)
-    y_true = y_true.reset_index(drop=True)
+    # y_pred_proba = y_pred_proba.reset_index(drop=True)
+    # y_true = y_true.reset_index(drop=True)
 
     if roc_auc_score(y_true, y_pred_proba, multi_class='ovr') > 0.999:
         return False
@@ -280,8 +280,13 @@ def needs_calibration(
     list_calibrated_y_pred_proba_test = []
 
     for train, test in sss.split(y_pred_proba, y_true):
-        y_pred_proba_train, y_true_train = y_pred_proba[train], y_true[train]
-        y_pred_proba_test, y_true_test = y_pred_proba[test], y_true[test]
+        if isinstance(y_pred_proba, pd.DataFrame):
+            y_pred_proba_train, y_true_train = y_pred_proba.iloc[train, :], y_true[train]
+            y_pred_proba_test, y_true_test = y_pred_proba.iloc[test, :], y_true[test]
+        else:
+            y_pred_proba_train, y_true_train = y_pred_proba[train], y_true[train]
+            y_pred_proba_test, y_true_test = y_pred_proba[test], y_true[test]
+
         calibrator.fit(y_pred_proba_train, y_true_train)
         calibrated_y_pred_proba_test = calibrator.calibrate(y_pred_proba_test)
 

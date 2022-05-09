@@ -137,11 +137,11 @@ class _MulticlassClassificationCBPE(CBPE):
 
         # Fit calibrator if calibration is needed
         # This is just a flag, might just want to skip this
-        self.needs_calibration = needs_calibration(
-            y_true=reference_data[NML_METADATA_TARGET_COLUMN_NAME],
-            y_pred_proba=reference_data[self.model_metadata.predicted_class_probability_metadata_columns()],
-            calibrator=self.calibrator,
-        )
+        # self.needs_calibration = needs_calibration(
+        #     y_true=reference_data[NML_METADATA_TARGET_COLUMN_NAME],
+        #     y_pred_proba=reference_data[self.model_metadata.predicted_class_probability_metadata_columns()],
+        #     calibrator=self.calibrator,
+        # )
 
         self._calibrators = _fit_calibrators(reference_data, self.model_metadata, self.calibrator)
 
@@ -399,7 +399,7 @@ def _fit_calibrators(reference_data: pd.DataFrame, metadata: ModelMetadata, cali
     noop_calibrator = NoopCalibrator()
 
     for y_true, y_pred_proba in zip(y_trues, y_pred_probas):
-        if not needs_calibration(y_true, y_pred_proba, calibrator):
+        if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
             calibrator = noop_calibrator
 
         calibrator.fit(y_pred_proba, y_true)
