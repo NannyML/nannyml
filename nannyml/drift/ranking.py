@@ -94,6 +94,12 @@ class AlertCountRanking(Ranking):
         if len(alert_column_names) == 0:
             raise InvalidArgumentsException('drift results are not statistical drift results.')
 
+        if (
+            len(list(filter(lambda col: col.endswith(self.ALERT_COLUMN_SUFFIX), drift_calculation_result.data.columns)))
+            == 0
+        ):
+            raise InvalidArgumentsException('drift results are not statistical drift results.')
+
         ranking = pd.DataFrame(drift_calculation_result.data[alert_column_names].sum()).reset_index()
         ranking.columns = ['feature', 'number_of_alerts']
         ranking['feature'] = ranking['feature'].str.replace(self.ALERT_COLUMN_SUFFIX, '')
