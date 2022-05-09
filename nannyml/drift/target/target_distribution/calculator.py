@@ -5,6 +5,7 @@
 """Module for target distribution monitoring."""
 from __future__ import annotations
 
+import warnings
 from typing import Dict
 
 import numpy as np
@@ -177,8 +178,28 @@ def _calculate_target_drift_for_chunk(reference_targets: pd.Series, data: pd.Dat
 
     is_analysis = 'analysis' in set(data[NML_METADATA_PARTITION_COLUMN_NAME].unique())
 
+    is_binary_targets = data[NML_METADATA_TARGET_COLUMN_NAME].nunique() <= 2
+    if is_binary_targets:
+        warnings.warn(
+            f"the target column contains {data[NML_METADATA_TARGET_COLUMN_NAME].nunique()} unique values. "
+            "NannyML cannot provide a value for 'metric_target_drift' "
+            "when there are more than 2 unique values. "
+            "All 'metric_target_drift' values will be set to np.NAN"
+        )
+
+    is_string_targets = (
+        data[NML_METADATA_TARGET_COLUMN_NAME].dtype == 'object'
+        or data[NML_METADATA_TARGET_COLUMN_NAME].dtype == 'string'
+    )
+    if is_string_targets:
+        warnings.warn(
+            "the target column contains non-numerical values. NannyML cannot provide a value for "
+            "'metric_target_drift'."
+            "All 'metric_target_drift' values will be set to np.NAN"
+        )
+
     return {
-        'metric_target_drift': targets.mean(),
+        'metric_target_drift': targets.mean() if not (is_binary_targets or is_string_targets) else np.NAN,
         'statistical_target_drift': statistic,
         'p_value': p_value,
         'thresholds': _ALERT_THRESHOLD_P_VALUE,
