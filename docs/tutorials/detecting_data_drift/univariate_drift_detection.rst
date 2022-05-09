@@ -22,7 +22,7 @@ If you just want the code to experiment yourself, here you go:
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
@@ -84,7 +84,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns='identifier')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns='identifier')
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
