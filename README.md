@@ -79,7 +79,7 @@ Allowing you to have the following benefits:
 
 When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html) to **estimate model performance**. This algorithm requires the predicted probabilities of your machine learning model and leverages probability calibration to estimate any traditional binary classification metric (ROC_AUC, Precision, Recall, F1, etc.). Rather than estimating the performance of future model predictions, CBPE estimates the expected model performance of the predictions made at inference time.
 
-<p><img src="media/estimated performance.svg"></p>
+<p><img src="docs/_static/tutorial-perf-est-roc_auc.svg"></p>
 
 NannyML can also **track the realised performance** of your machine learning model once targets are available.
 
@@ -87,19 +87,19 @@ NannyML can also **track the realised performance** of your machine learning mod
 
 To detect **multivariate feature drift** NannyML uses [PCA-based data reconstruction](https://docs.nannyml.com/latest/deep_dive/data_reconstruction.html#id1). Changes in the resulting reconstruction error are monitored over time and data drift alerts are logged when the reconstruction error in a certain period exceeds a threshold. This threshold is calculated based on the reconstruction error observed in the reference period.
 
-<p><img src="media/multivariate feature drift.svg"></p>
+<p><img src="docs/_static/drift-guide-multivariate.svg"></p>
 
 NannyML utilises statistical tests to detect **univariate feature drift**. The Kolmogorov–Smirnov test is used for continuous features and the 2-sample chi-squared test for categorical features. The results of these tests are tracked over time, properly corrected to counteract multiplicity and overlayed on the temporal feature distributions. (It is also possible to visualise the test-statistics over time, to get a notion of the drift magnitude.)
 
-<p><img src="media/univaritate continuous feature distribution drift.svg"><img src="media/univaritate categoric feature distribution drift.svg"></p>
+<p><img src="docs/_static/drift-guide-joyplot-distance_from_office.svg"><img src="docs/_static/drift-guide-stacked-salary_range.svg"></p>
 
 NannyML uses the same statistical tests to detected **model output drift**.
 
-<p><img src="media/model output drift.svg"></p>
+<p><img src="docs/_static/drift-guide-predictions-joyplot.svg"></p>
 
 **Target distribution drift** is monitored by calculating the mean occurrence of positive events in combination with the 2-sample chi-squared test. Bear in mind that this operation requires the presence of actuals.
 
-<p><img src="media/target distribution drift.svg"></p>
+<p><img src="docs/_static/target_distribution_metric.svg"></p>
 
 ### 3. Intelligent alerting
 
@@ -116,7 +116,7 @@ From PyPI:
 pip install nannyml
 ```
 
-**Here be dragons!** Use at your own risk. The latest development version of NannyML:
+**Here be dragons!** Use the latest development version of NannyML at your own risk:
 
 ```bash
 python -m pip install git+https://github.com/NannyML/nannyml
@@ -134,7 +134,7 @@ reference, analysis, analysis_target = nml.load_synthetic_sample()
 data = pd.concat([reference, analysis], ignore_index=True)
 
 # Extract meta data
-metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor')
+metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', exclude_columns=['identifier'])
 metadata.target_column_name = 'work_home_actual'
 
 # Choose a chunker or set a chunk size
