@@ -107,9 +107,9 @@ values are joined on the analysis frame by the ``identifier`` column.
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 
-The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` partitions of
-the monitored data. To understand what they are read :ref:`data partitions<data-drift-partitions>`. The
-``analysis_gt`` dataframe contains the ground truth results of the analysis period and we will not be using
+The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
+the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
+``analysis_gt`` dataframe contains the target results of the analysis period and we will not be using
 it during Performance Estimation.
 
 One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
@@ -181,7 +181,7 @@ calculated metric. When taking ``roc_auc`` as an example:
  - ``roc_auc`` - The value of the metric for a specific chunk.
  - ``roc_auc_thresholds`` - A tuple containing the lower and upper thresholds. Crossing them will raise an alert on significant
    metric change. The thresholds are calculated based on the realized performance metric of the monitored model on chunks in
-   the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   the ``reference`` period. The thresholds are 3 standard deviations away from the mean performance calculated on
    ``reference`` chunks.
  - ``roc_auc_alert`` - Flag indicating potentially significant performance change. ``True`` if realized performance crosses
    upper or lower threshold.

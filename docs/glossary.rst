@@ -94,25 +94,26 @@ Glossary
         Drift Detection steps that involve all the features of our model in order to
         create appropriate drift measures.
 
-    Partition
-        A partition is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two partitions.
+    Data Period
+        A data period is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two data periods.
 
-        The first one is called the ``reference`` partition. It contains all the observations for a period with an *accepted*
+        The first data period is called the ``reference`` period. It contains all the observations for a period with an *accepted*
         level of performance. It most likely also includes ``target`` data.
 
-        The second partition is the ``analysis`` partition. It contains the observations you want NannyML to analyse.
-        In the absence of targets performance in the analysis partition can be estimated.
+        The second subset of the data is the ``analysis`` period. It contains the observations you want NannyML to analyse.
+        In the absence of targets performance in the analysis period can be estimated.
 
-        NannyML needs the partition information to understand which data it can use as a reference to compare other periods by.
+        NannyML needs the period information to understand which data it can use as a reference to compare other periods by.
+        This is contained in the :tarm:`Partition Column`.
 
         .. warning::
-            We currently only support the following partition values: ``reference`` and ``analysis``.
+            We currently only support the following partition column values: ``reference`` and ``analysis``.
 
             Please map your own values to them accordingly.
 
 
     Partition Column
-        A column that tells us what :term:`Partition` the data is in. A partition column is necessary for NannyML
+        A column that tells us what :term:`Data Period` the data is in. A partition column is necessary for NannyML
         in order to produce model monitoring results.
 
     PCA
