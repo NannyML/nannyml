@@ -7,5 +7,4 @@ Examples
 .. toctree::
    :maxdepth: 2
 
-   examples/california
-   examples/real_world_data_example
+   examples/california_housing
