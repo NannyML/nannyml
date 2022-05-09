@@ -62,8 +62,8 @@ Walkthrough
 Data Periods
 ---------------
 
-In order to detect data drift NannyML needs two datasets. The reference partition and the
-analysis partition.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset (*reference period*). Then it can
+monitor the data that is subject to actual analysis (*analysis period*).
 
 Reference Period
 ^^^^^^^^^^^^^^^^^^^
@@ -84,7 +84,7 @@ Analysis Period
 The analysis partition is where NannyML analyzes the data drift and performance characteristics of the monitored
 model and compares them to the reference partition.
 The analysis partition will usually consist of the latest production data up to a desired point in
-the past, which needs to be after the point where the reference partition ends.
+the past, which should be after the point where the reference partition ends.
 The analysis partition is not required to have ground truth and associated performance results
 available.
 
