@@ -24,6 +24,7 @@ class CBPE(PerformanceEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
 
     def __new__(cls, model_metadata: ModelMetadata, *args, **kwargs):
+        """Creates a new CBPE subclass instance based on the type of the provided ``model_metadata``."""
         from ._cbpe_binary_classification import _BinaryClassificationCBPE
         from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
 
@@ -44,7 +45,7 @@ class CBPE(PerformanceEstimator):
         calibration: str = None,
         calibrator: Calibrator = None,
     ):
-        """Creates a new CBPE performance estimator.
+        """Initializes a new CBPE performance estimator.
 
         Parameters
         ----------

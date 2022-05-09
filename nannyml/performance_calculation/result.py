@@ -91,6 +91,8 @@ def _plot_performance_metric(
     ----------
     performance_calculation_results : pd.DataFrame
         Results of the data CBPE performance estimation
+    metadata: ModelMetadata
+        The metadata describing the model being monitored
     metric: str, default=None
             The name of the metric to plot. Value should be one of:
             - 'roc_auc'

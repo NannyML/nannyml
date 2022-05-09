@@ -256,7 +256,7 @@ def _estimate_roc_auc(y_pred_probas: pd.DataFrame) -> float:
     return multiclass_roc_auc
 
 
-def _estimate_f1(y_preds: List[np.array], y_pred_probas: List[np.array]) -> float:
+def _estimate_f1(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
     ovr_f1_estimates = []
     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
         ovr_f1_estimates.append(estimate_binary_f1(y_pred, y_pred_proba))
@@ -265,7 +265,7 @@ def _estimate_f1(y_preds: List[np.array], y_pred_probas: List[np.array]) -> floa
     return multiclass_metric
 
 
-def _estimate_precision(y_preds: List[np.array], y_pred_probas: List[np.array]) -> float:
+def _estimate_precision(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
     ovr_precision_estimates = []
     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
         ovr_precision_estimates.append(estimate_binary_precision(y_pred, y_pred_proba))
@@ -274,7 +274,7 @@ def _estimate_precision(y_preds: List[np.array], y_pred_probas: List[np.array]) 
     return multiclass_metric
 
 
-def _estimate_recall(y_preds: List[np.array], y_pred_probas: List[np.array]) -> float:
+def _estimate_recall(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
     ovr_recall_estimates = []
     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
         ovr_recall_estimates.append(estimate_binary_recall(y_pred, y_pred_proba))
@@ -284,7 +284,7 @@ def _estimate_recall(y_preds: List[np.array], y_pred_probas: List[np.array]) -> 
     return multiclass_metric
 
 
-def _estimate_specificity(y_preds: List[np.array], y_pred_probas: List[np.array]) -> float:
+def _estimate_specificity(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
     ovr_specificity_estimates = []
     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
         ovr_specificity_estimates.append(estimate_binary_specificity(y_pred, y_pred_proba))
@@ -294,7 +294,7 @@ def _estimate_specificity(y_preds: List[np.array], y_pred_probas: List[np.array]
     return multiclass_metric
 
 
-def _estimate_accuracy(y_preds: List[np.array], y_pred_probas: List[np.array]) -> float:
+def _estimate_accuracy(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
     y_preds_array = np.asarray(y_preds).T
     y_pred_probas_array = np.asarray(y_pred_probas).T
     probability_of_predicted = np.max(y_preds_array * y_pred_probas_array, axis=1)
@@ -379,14 +379,12 @@ def _calculate_confidence_deviations(reference_chunks: List[Chunk], metadata: Mo
     }
 
 
-def _get_class_splits(
-    data: pd.DataFrame, metadata: ModelMetadata, include_targets: bool = True
-) -> List[Tuple[str, np.array, np.array]]:
+def _get_class_splits(data: pd.DataFrame, metadata: ModelMetadata, include_targets: bool = True) -> List[Tuple]:
     if not isinstance(metadata, MulticlassClassificationMetadata):
         raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
     classes = sorted(list(metadata.predicted_probabilities_column_names.keys()))
-    y_trues: List[np.array] = []
+    y_trues: List[np.ndarray] = []
 
     if include_targets:
         y_trues = list(label_binarize(data[NML_METADATA_TARGET_COLUMN_NAME], classes=classes).T)

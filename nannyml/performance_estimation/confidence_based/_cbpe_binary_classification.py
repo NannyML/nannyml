@@ -304,7 +304,7 @@ def _estimate_roc_auc(y_pred_proba: pd.Series) -> float:
     return metric
 
 
-def _estimate_f1(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+def _estimate_f1(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
@@ -313,7 +313,7 @@ def _estimate_f1(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
     return metric
 
 
-def _estimate_precision(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+def _estimate_precision(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TP, FP = np.sum(tp), np.sum(fp)
@@ -321,7 +321,7 @@ def _estimate_precision(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
     return metric
 
 
-def _estimate_recall(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+def _estimate_recall(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
     TP, FN = np.sum(tp), np.sum(fn)
@@ -329,7 +329,7 @@ def _estimate_recall(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
     return metric
 
 
-def _estimate_specificity(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+def _estimate_specificity(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
     tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TN, FP = np.sum(tn), np.sum(fp)
@@ -337,7 +337,7 @@ def _estimate_specificity(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
     return metric
 
 
-def _estimate_accuracy(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+def _estimate_accuracy(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
     TP, TN = np.sum(tp), np.sum(tn)

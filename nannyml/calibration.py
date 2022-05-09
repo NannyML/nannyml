@@ -141,9 +141,11 @@ class NoopCalibrator(Calibrator):
     """A Calibrator subclass that simply returns the inputs unaltered."""
 
     def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+        """Fit nothing and just return the calibrator."""
         return self
 
     def calibrate(self, y_pred_proba: np.ndarray):
+        """Calibrate nothing and just return the original ``y_pred_proba`` inputs."""
         return np.asarray(y_pred_proba)
 
 
@@ -210,7 +212,7 @@ def _calculate_expected_calibration_error(
 
 
 def needs_calibration(
-    y_true: np.array, y_pred_proba: np.array, calibrator: Calibrator, bin_count: int = 10, split_count: int = 10
+    y_true: np.ndarray, y_pred_proba: np.ndarray, calibrator: Calibrator, bin_count: int = 10, split_count: int = 10
 ) -> bool:
     """Returns whether a series of prediction scores benefits from additional calibration or not.
 

@@ -91,6 +91,7 @@ class MulticlassClassificationMetadata(ModelMetadata):
         ] + self.predicted_class_probability_metadata_columns()
 
     def predicted_class_probability_metadata_columns(self) -> List[str]:
+        """Returns the names of the class probability columns added to the data by the ``enrich`` method."""
         return [
             f'{NML_METADATA_PREDICTED_CLASS_PROBABILITY_COLUMN_NAME}_{clazz}'
             for clazz in self.predicted_probabilities_column_names.keys()
