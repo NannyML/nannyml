@@ -475,7 +475,7 @@ class ModelMetadata(abc.ABC):
         :func:`nannyml.metadata.extraction.extract_metadata` function that will delegate to this method.
 
         This particular abstract method provides common functionality for its subclasses and is always called there
-        using a ``super().extract() call.
+        using a ``super().extract()`` call.
         """
         if len(data.columns) == 0:
             return None
