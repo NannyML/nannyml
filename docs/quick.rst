@@ -4,8 +4,9 @@
 Quickstart
 =================
 
+----------------
 Why use NannyML?
-=================
+----------------
 
 NannyML is a library that makes Model Monitoring more productive.
 It estimates the performance of the monitored models in absence of the target, detects data drift
@@ -15,14 +16,15 @@ the next day or not. The synthetic dataset used is already preprocessed - it is 
 ready to be directly used by NannyML. In order to find out how to prepare your dataset check
 :ref:`tutorials<tutorials>`.
 This is also a good place to go to get detailed guides on core concepts and functionalities. If you want to know
-what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for other for examples
+what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
 on other datasets or ML problems look at :ref:`examples<examples>`.
 
+-------------
 Just the code
-=================
+-------------
 
-Feel free to copy-paste the code below and experiment with the results yourself. If you want us to walk you through
-this - go below.
+Feel free to copy-paste the code below and experiment with the results yourself. If you want us to guide you go to
+the :ref:`Walkthrough<walktghrough_the_quickstart>`.
 
 .. code-block:: python
 
@@ -69,8 +71,11 @@ this - go below.
     >>> figure.show()
 
 
+.. _walktghrough_the_quickstart:
+
+--------------------------
 Walkthrough the quickstart
-==========================
+--------------------------
 
 Let's start with loading synthetic dataset included in the library:
 
@@ -96,8 +101,8 @@ Let's start with loading synthetic dataset included in the library:
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
-The synthetic dataset provided contains a binary classification model that predicts whether
-and employee will work from home the next workday or not. The probability of the employee
+The synthetic dataset provided contains inputs and predictions of a binary classification model that predicts whether
+an employee will work from home the next workday or not. The probability of the employee
 working from home is included in the ``y_pred_proba`` column, while the prediction is in ``y_pred`` column. The model
 inputs are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``,
 ``wfh_prev_workday``, ``workday`` and ``tenure``. ``identifier`` is the :term:`Identifier` column
@@ -114,11 +119,11 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> chunk_size = 5000
 
-The data are already split into a reference and an analysis partition. NannyML uses the reference partition to
-establish a baseline for expected model performance and the analysis partition to check whether
-the monitored model keeps performing as expected.
-For more information about partitions look :ref:`data-drift-partitions`. The key thing to note is that we don't expect the analysis partition to contain
-information about the :term:`Target`. This is why on the synthetic dataset it is provided in a separate object.
+The data are already split into a reference and an analysis periods. NannyML uses the reference period to
+establish a baseline for expected model performance. The analysis period is the one that is subject to actual
+monitoring.
+For more information about periods check :ref:`data-drift-partitions`. The key thing to note is that we don't expect
+the analysis period to contain information about the :term:`Target`. This is why on the synthetic dataset it is provided in a separate object.
 
 .. code-block:: python
 
@@ -140,7 +145,7 @@ information about the :term:`Target`. This is why on the synthetic dataset it is
 
 
 Estimating Performance without Targets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+======================================
 
 NannyML can estimate the performance on a Machine Learning model in production
 without access to its :term:`Target`. For more details, see :ref:`performance-estimation`.
@@ -161,7 +166,7 @@ The results indicate that the model’s performance is likely to be negatively i
 onwards.
 
 Detecting Data Drift
-~~~~~~~~~~~~~~~~~~~~
+====================
 
 NannyML allows for further investigation into potential performance issues with its data drift detection
 functionality. See :ref:`data-drift` for more details.
@@ -216,7 +221,7 @@ When there are a lot of drifted features, NannyML can also rank them by the numb
 |  6 | gas_price_per_litre        |                  0 |      7 |
 +----+----------------------------+--------------------+--------+
 
-NannyML can also look for drift in the model outputs:
+Drift in the model outputs can be also visualized:
 
 .. code-block:: python
 
@@ -244,8 +249,9 @@ Putting everything together, we see that 4 features exhibit data drift from late
 ``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
 This drift is responsible for the potential negative impact in performance that we observed.
 
+-----------------------
 Insights and Follow Ups
-=======================
+-----------------------
 
 With NannyML we were able to estimate performance in the absence of ground truth. The estimation has shown
 potential drop in ROC AUC in the second half of the analysis period. Univariate and multivariate
