@@ -112,7 +112,7 @@ class _MulticlassClassificationCBPE(CBPE):
         )
 
         self.model_metadata = model_metadata  # seems to be required for typing to kick in
-        self._calibrators: List[Calibrator] = []
+        self._calibrators: Dict[str, Calibrator] = {}
 
     def fit(self, reference_data: pd.DataFrame) -> PerformanceEstimator:
         if not isinstance(self.model_metadata, MulticlassClassificationMetadata):
@@ -152,10 +152,7 @@ class _MulticlassClassificationCBPE(CBPE):
 
         _validate_data_requirements_for_metrics(data, self.model_metadata, self.metrics)
 
-        # if self.needs_calibration:
-        #     data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME] = self.calibrator.calibrate(
-        #         data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]
-        #     )
+        data = _calibrate_predicted_probabilities(data, self.model_metadata, self._calibrators)
 
         features_and_metadata = self.model_metadata.metadata_columns + self.selected_features
         chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=300)
@@ -382,27 +379,67 @@ def _calculate_confidence_deviations(reference_chunks: List[Chunk], metadata: Mo
     }
 
 
-def _fit_calibrators(reference_data: pd.DataFrame, metadata: ModelMetadata, calibrator: Calibrator) -> List[Calibrator]:
+def _get_class_splits(
+    data: pd.DataFrame, metadata: ModelMetadata, include_targets: bool = True
+) -> List[Tuple[str, np.array, np.array]]:
     if not isinstance(metadata, MulticlassClassificationMetadata):
         raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
     classes = sorted(list(metadata.predicted_probabilities_column_names.keys()))
-    y_trues = label_binarize(reference_data[NML_METADATA_TARGET_COLUMN_NAME], classes=classes)
-    y_trues = list(y_trues.T)
+    y_trues: List[np.array] = []
+
+    if include_targets:
+        y_trues = list(label_binarize(data[NML_METADATA_TARGET_COLUMN_NAME], classes=classes).T)
 
     y_pred_probas = [
-        reference_data[class_proba_col]
-        for class_proba_col in sorted(metadata.predicted_class_probability_metadata_columns())
+        data[class_proba_col] for class_proba_col in sorted(metadata.predicted_class_probability_metadata_columns())
     ]
 
-    fitted_calibrators = []
+    return [
+        (classes[idx], y_trues[idx] if include_targets else None, y_pred_probas[idx]) for idx in range(len(classes))
+    ]
+
+
+def _fit_calibrators(
+    reference_data: pd.DataFrame, metadata: ModelMetadata, calibrator: Calibrator
+) -> Dict[str, Calibrator]:
+    fitted_calibrators = {}
     noop_calibrator = NoopCalibrator()
 
-    for y_true, y_pred_proba in zip(y_trues, y_pred_probas):
+    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, metadata):
         if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
             calibrator = noop_calibrator
 
         calibrator.fit(y_pred_proba, y_true)
-        fitted_calibrators.append(deepcopy(calibrator))
+        fitted_calibrators[clazz] = deepcopy(calibrator)
 
     return fitted_calibrators
+
+
+def _calibrate_predicted_probabilities(
+    data: pd.DataFrame, metadata: ModelMetadata, calibrators: Dict[str, Calibrator]
+) -> pd.DataFrame:
+    if not isinstance(metadata, MulticlassClassificationMetadata):
+        raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+    class_splits = _get_class_splits(data, metadata, include_targets=False)
+    number_of_observations = len(data)
+    number_of_classes = len(class_splits)
+
+    calibrated_probas = np.zeros((number_of_observations, number_of_classes))
+
+    for idx, split in enumerate(class_splits):
+        clazz, _, y_pred_proba = split
+        calibrated_probas[:, idx] = calibrators[clazz].calibrate(y_pred_proba)
+
+    denominator = np.sum(calibrated_probas, axis=1)[:, np.newaxis]
+    uniform_proba = np.full_like(calibrated_probas, 1 / number_of_classes)
+
+    calibrated_probas = np.divide(calibrated_probas, denominator, out=uniform_proba, where=denominator != 0)
+
+    calibrated_data = data.copy(deep=True)
+    predicted_class_proba_column_names = sorted(metadata.predicted_class_probability_metadata_columns())
+    for idx in range(number_of_classes):
+        calibrated_data[predicted_class_proba_column_names[idx]] = calibrated_probas[:, idx]
+
+    return calibrated_data
