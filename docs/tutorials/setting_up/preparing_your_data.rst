@@ -208,9 +208,9 @@ with its target values, but that is the only purpose it serves. So that it doesn
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(data=reference, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(data=reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
     >>> metadata
-    Metadata({'identifier_column_name': 'identifier', 'timestamp_column_name': 'timestamp', 'partition_column_name': 'partition', 'target_column_name': None, 'prediction_column_name': 'y_pred_proba', 'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"})
+    Metadata({'model_type': 'classification_binary', 'timestamp_column_name': 'timestamp', 'partition_column_name': 'partition', 'target_column_name': None, 'prediction_column_name': 'y_pred_proba', 'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"})
 
 The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata.print` method or returned as a
 ``dictionary`` or a ``DataFrame``.
@@ -269,7 +269,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     and update the values where needed.
 
 Heuristics
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^
 
 NannyML uses some simple heuristics to detect metadata, often by naming convention. By using the right column names,
 NannyML can extract all required metadata automatically.
