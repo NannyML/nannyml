@@ -4,7 +4,7 @@
 Chunking data
 =============
 
-Additional chunking considerations
+Chunking considerations
 ----------------------------------
 
 :term:`Chunks<Data Chunk>` were introduced in detail :ref:`Setting Up: Chunking<chunking>`.
