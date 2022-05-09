@@ -14,7 +14,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import extract_metadata
 from nannyml.metadata.base import ModelMetadata, ModelType
 from nannyml.performance_calculation import PerformanceCalculator
-from nannyml.performance_calculation.metrics import F1, BinaryClassificationAUROC
+from nannyml.performance_calculation.metrics import BinaryClassificationAUROC, BinaryClassificationF1
 
 
 @pytest.fixture
@@ -43,8 +43,8 @@ def test_calculator_init_with_empty_metrics_should_not_fail(metadata):  # noqa: 
 def test_calculator_init_should_set_metrics(metadata):  # noqa: D103
     sut = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', 'f1']).metrics
     assert len(sut) == 2
-    assert sut[0] == BinaryClassificationAUROC()
-    assert sut[1] == F1()
+    assert sut[0] == BinaryClassificationAUROC(metadata)
+    assert sut[1] == BinaryClassificationF1(metadata)
 
 
 def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target_data_present(  # noqa: D103, F821

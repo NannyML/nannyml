@@ -127,14 +127,14 @@ def test_guess_predicted_probabilities_yields_correct_results(col, expected):  #
 )
 def test_extract_class_to_column_mapping_finds_present_class_names(clazz, column_name):  # noqa: D103
     sut = _extract_class_to_column_mapping([column_name])
-    assert str(clazz) in sut
-    assert sut[str(clazz)] == column_name
+    assert clazz in sut
+    assert sut[clazz] == column_name
 
 
 @pytest.mark.parametrize('clazz,column_name', [(0, 'y_pred_proba'), ('A', 'y_pred_probability_A')])
 def test_extract_class_to_column_mapping_skips_non_present_class_names(clazz, column_name):  # noqa: D103
     sut = _extract_class_to_column_mapping([column_name])
-    assert str(clazz) not in sut
+    assert clazz not in sut
 
 
 def test_extract_metadata_should_set_multiclass_classification_properties(data):  # noqa: D103
