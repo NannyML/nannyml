@@ -89,12 +89,7 @@ class AlertCountRanking(Ranking):
         if drift_calculation_result.data.empty:
             raise InvalidArgumentsException('drift results contain no data to use for ranking')
 
-        alert_column_names = [
-            column_name
-            for column_name in drift_calculation_result.data.columns
-            if (self.ALERT_COLUMN_SUFFIX in column_name)
-            and (column_name in [feature.column_name for feature in model_metadata.features])
-        ]
+        alert_column_names = [f'{feature.column_name}{self.ALERT_COLUMN_SUFFIX}' for feature in model_metadata.features]
 
         if len(alert_column_names) == 0:
             raise InvalidArgumentsException('drift results are not statistical drift results.')

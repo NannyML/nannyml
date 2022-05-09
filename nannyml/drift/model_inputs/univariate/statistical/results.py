@@ -190,7 +190,7 @@ def _plot_prediction_drift(
 ) -> go.Figure:
     """Renders a line plot of the drift metric for a given feature."""
     if isinstance(metadata, BinaryClassificationMetadata):
-        prediction_column_name = metadata.prediction_column_name
+        prediction_column_name = metadata.predicted_probability_column_name
     elif isinstance(metadata, MulticlassClassificationMetadata):
         if not class_label or class_label == "":
             raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
