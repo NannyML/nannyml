@@ -61,7 +61,7 @@ to the dataset by thresholding.
 .. code:: python
 
     >>> # extract metadata, add gt column name
-    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'], model_type=nml.ModelType.CLASSIFICATION_BINARY)
     >>> metadata.target_column_name = 'clf_target'
     >>> metadata.timestamp_column_name = 'timestamp'
 

@@ -11,9 +11,10 @@ import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
 
-from nannyml import Calibrator, InvalidArgumentsException, IsotonicCalibrator, MissingMetadataException
+from nannyml.calibration import Calibrator, IsotonicCalibrator
 from nannyml.datasets import load_synthetic_sample
-from nannyml.metadata import ModelMetadata, extract_metadata
+from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
+from nannyml.metadata import BinaryClassificationMetadata, ModelType, extract_metadata
 from nannyml.performance_estimation import CBPE
 from nannyml.performance_estimation.base import PerformanceEstimatorResult
 
@@ -26,8 +27,8 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 
 @pytest.fixture
-def metadata(data) -> ModelMetadata:  # noqa: D103
-    md = extract_metadata(data[0], exclude_columns=['identifier'])
+def metadata(data) -> BinaryClassificationMetadata:  # noqa: D103
+    md = extract_metadata(data[0], exclude_columns=['identifier'], model_type=ModelType.CLASSIFICATION_BINARY)
     md.target_column_name = 'work_home_actual'
     return md
 
@@ -35,7 +36,8 @@ def metadata(data) -> ModelMetadata:  # noqa: D103
 @pytest.fixture
 def estimates(metadata, data) -> PerformanceEstimatorResult:  # noqa: D103
     reference, analysis = data
-    estimator = CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc']).fit(reference)
+    estimator = CBPE(model_metadata=metadata, metrics=['roc_auc'])  # type: ignore
+    estimator.fit(reference)
     return estimator.estimate(pd.concat([reference, analysis]))
 
 
@@ -45,7 +47,7 @@ def test_cbpe_will_calibrate_scores_when_needed(metadata, data):  # noqa: D103
     sut = CBPE(model_metadata=metadata, metrics=['roc_auc'])
     sut.fit(ref_df)
 
-    assert sut.needs_calibration is True
+    assert sut.needs_calibration
 
 
 def test_cbpe_will_not_calibrate_scores_when_not_needed(metadata, data):  # noqa: D103
@@ -144,9 +146,9 @@ def test_cbpe_uses_calibrator_to_calibrate_predicted_probabilities_when_needed( 
     reference, analysis = data
 
     calibrator = IsotonicCalibrator()
-    estimator = CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator).fit(
-        reference
-    )
+    estimator = CBPE(
+        model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator  # type: ignore
+    ).fit(reference)
     assert typing.cast(CBPE, estimator).needs_calibration
 
     spy = mocker.spy(calibrator, 'calibrate')
@@ -161,9 +163,9 @@ def test_cbpe_doesnt_use_calibrator_to_calibrate_predicted_probabilities_when_no
     reference, analysis = data
 
     calibrator = IsotonicCalibrator()
-    estimator = CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator).fit(
-        reference
-    )
+    estimator = CBPE(
+        model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator  # type: ignore
+    ).fit(reference)
 
     typing.cast(CBPE, estimator).needs_calibration = False  # Override this to disable calibration
 

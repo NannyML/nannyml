@@ -14,12 +14,12 @@ from pandas import Timestamp
 
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata import (
+from nannyml.metadata.base import (
     NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
+from nannyml.metadata.binary_classification import NML_METADATA_PREDICTION_COLUMN_NAME
 
 rng = np.random.default_rng()
 

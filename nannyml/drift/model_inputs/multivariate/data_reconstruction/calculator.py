@@ -16,7 +16,7 @@ from sklearn.preprocessing import StandardScaler
 from nannyml.chunk import Chunker
 from nannyml.drift import DriftCalculator
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
-from nannyml.metadata import NML_METADATA_COLUMNS, Feature
+from nannyml.metadata.base import NML_METADATA_COLUMNS, Feature
 from nannyml.preprocessing import preprocess
 
 
@@ -67,7 +67,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator that will chunk by week
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W')
         """
@@ -116,7 +116,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator and fit it
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
@@ -188,7 +188,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator and fit it
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> drift = drift_calc.calculate(data)

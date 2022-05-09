@@ -17,7 +17,7 @@ from dateutil.parser import ParserError  # type: ignore
 from pandas import Period
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata import NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TIMESTAMP_COLUMN_NAME
+from nannyml.metadata.base import NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TIMESTAMP_COLUMN_NAME
 
 logger = logging.getLogger(__name__)
 

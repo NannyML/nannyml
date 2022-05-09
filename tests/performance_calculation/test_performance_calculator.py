@@ -11,9 +11,10 @@ import pytest
 
 from nannyml.datasets import load_synthetic_sample
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import ModelMetadata, extract_metadata
+from nannyml.metadata import extract_metadata
+from nannyml.metadata.base import ModelMetadata, ModelType
 from nannyml.performance_calculation import PerformanceCalculator
-from nannyml.performance_calculation.metrics import AUROC, F1
+from nannyml.performance_calculation.metrics import BinaryClassificationAUROC, BinaryClassificationF1
 
 
 @pytest.fixture
@@ -27,7 +28,7 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 @pytest.fixture
 def metadata(data) -> ModelMetadata:  # noqa: D103
-    md = extract_metadata(data[0])
+    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
     md.target_column_name = 'work_home_actual'
     return md
 
@@ -42,8 +43,8 @@ def test_calculator_init_with_empty_metrics_should_not_fail(metadata):  # noqa: 
 def test_calculator_init_should_set_metrics(metadata):  # noqa: D103
     sut = PerformanceCalculator(model_metadata=metadata, metrics=['roc_auc', 'f1']).metrics
     assert len(sut) == 2
-    assert sut[0] == AUROC()
-    assert sut[1] == F1()
+    assert sut[0] == BinaryClassificationAUROC(metadata)
+    assert sut[1] == BinaryClassificationF1(metadata)
 
 
 def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target_data_present(  # noqa: D103, F821

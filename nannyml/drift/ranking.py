@@ -11,7 +11,7 @@ import pandas as pd
 
 from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import ModelMetadata
+from nannyml.metadata.base import ModelMetadata
 
 
 class Ranking(abc.ABC):
@@ -85,8 +85,6 @@ class AlertCountRanking(Ranking):
         >>>
         >>> ranked = Ranker.by('alert_count').rank(drift, metadata)
         >>> ranked
-
-
         """
         if drift_calculation_result.data.empty:
             raise InvalidArgumentsException('drift results contain no data to use for ranking')
@@ -95,7 +93,7 @@ class AlertCountRanking(Ranking):
             column_name
             for column_name in drift_calculation_result.data.columns
             if (self.ALERT_COLUMN_SUFFIX in column_name)
-            and (model_metadata.predicted_probability_column_name not in column_name)
+            and (column_name in [feature.column_name for feature in model_metadata.features])
         ]
 
         if len(alert_column_names) == 0:

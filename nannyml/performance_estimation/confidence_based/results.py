@@ -40,7 +40,7 @@ class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
         >>> estimator.fit(ref_df)
         >>> estimates = estimator.estimate(ana_df)

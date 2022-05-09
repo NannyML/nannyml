@@ -7,17 +7,18 @@
 import pandas as pd
 import pytest
 
+from nannyml import BinaryClassificationMetadata, ModelType
 from nannyml.drift import UnivariateDriftResult
 from nannyml.drift.ranking import AlertCountRanking
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import ModelMetadata, extract_metadata
+from nannyml.metadata import extract_metadata
 
 
 @pytest.fixture
 def sample_drift_result() -> UnivariateDriftResult:  # noqa: D103
     return UnivariateDriftResult(
         analysis_data=[],
-        model_metadata=ModelMetadata(),
+        model_metadata=BinaryClassificationMetadata(),
         drift_data=pd.DataFrame(
             {
                 'f1_alert': [0, 0, 0, 0, 1, 1],
@@ -33,7 +34,7 @@ def sample_drift_result() -> UnivariateDriftResult:  # noqa: D103
 
 @pytest.fixture
 def sample_metadata(sample_drift_result):  # noqa: D103
-    md = extract_metadata(sample_drift_result.data)
+    md = extract_metadata(sample_drift_result.data, model_type=ModelType.CLASSIFICATION_BINARY)
     md.predicted_probability_column_name = 'y_pred_proba'
     return md
 

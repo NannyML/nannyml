@@ -14,7 +14,7 @@ import pandas as pd
 from nannyml import Chunker, InvalidArgumentsException, ModelMetadata
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import CalculatorNotFittedException
-from nannyml.metadata import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
+from nannyml.metadata.base import NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
 from nannyml.performance_calculation.metrics import MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
 from nannyml.preprocessing import preprocess
@@ -64,7 +64,7 @@ class PerformanceCalculator:
 
         """
         self.metadata = model_metadata
-        self.metrics = [MetricFactory.create(m) for m in metrics]
+        self.metrics = [MetricFactory.create(m, self.metadata) for m in metrics]
         self._minimum_chunk_size = None
 
         if chunker is None:
@@ -140,7 +140,7 @@ class PerformanceCalculator:
         data['NML_TARGET_INCOMPLETE'] = data[NML_METADATA_TARGET_COLUMN_NAME].isna().astype(np.int16)
 
         # Generate chunks
-        features_and_metadata = NML_METADATA_COLUMNS + [TARGET_COMPLETENESS_RATE_COLUMN_NAME]
+        features_and_metadata = self.metadata.metadata_columns + [TARGET_COMPLETENESS_RATE_COLUMN_NAME]
         if self.chunker is None:
             raise CalculatorNotFittedException(
                 'chunker has not been set. '

@@ -37,7 +37,7 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
         --------
         >>> import nannyml as nml
         >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
-        >>> metadata = nml.extract_metadata(ref_df)
+        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W')
         >>> drift_calc.fit(ref_df)
         >>> drifts = drift_calc.calculate(ana_df)
