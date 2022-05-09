@@ -4,8 +4,14 @@
 Confidence-based Performance Estimation
 =======================================
 
+This page describes the algorithm that NannyML uses to estimate monitored model performance.
+
+--------------
+CBPE algorithm
+--------------
+
 Binary classification
----------------------
+=====================
 
 A binary classification model typically returns two outputs for each prediction - a class (binary) and a class
 probability prediction (sometimes referred to as score). The score provides information about the confidence of the
@@ -147,7 +153,7 @@ The algorithm for estimating ROC AUC runs as follows:
 
 
 Multiclass Classification
--------------------------
+=========================
 
 Multiclass classification model outputs prediction label (predicted class) and
 probability for each possible class. It means that if there are three classes, for example A, B and C, model output
@@ -185,6 +191,7 @@ It is just estimated as the mean of predicted probabilities corresponding to the
 
 .. _performance-estimation-deep-dive-limitations:
 
+-----------
 Limitations
 -----------
 
@@ -224,7 +231,7 @@ evaluated on sample of 5 observations only. For each observation model returns a
 It still may happen that they all turn out being negative and accuracy of your model on such sample is equal to 0!
 Read more about it :ref:`here<chunk-data-minimum-chunk>`.
 
-
+-----------------------
 Probability calibration
 -----------------------
 
