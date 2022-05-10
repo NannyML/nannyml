@@ -13,8 +13,8 @@ in when targets becomes available but any changes in the model's performance wou
 a significant impact on business results.
 
 
-Binary classification
-============================================
+Binary Classification
+=====================
 
 Just The Code
 ----------------
@@ -100,7 +100,7 @@ Creating and using the estimator
 In the next step Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
 estimator is created using the previously
-extracted :class:`~nannyml.metadata.ModelMetadata`, a list of metrics and an optional
+extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional
 :ref:`chunking<chunking>` specification. The list of metrics specifies the metrics
 for which the performance of the monitored model will be estimated.
 For an overview of all metrics,
@@ -200,7 +200,7 @@ The results can be also plotted:
 
 
 
-Multiclass classification
+Multiclass Classification
 =========================
 
 Just The Code
@@ -214,23 +214,29 @@ If you just want the code to experiment yourself, here you go:
     >>> import nannyml as nml
     >>> from IPython.display import display
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_multiclass_classification_dataset()
+    >>> display(reference.head(3))
+
+    >>> metadata = nml.extract_metadata(
+    ...     reference,
+    ...     model_name='credit_card_segment',
+    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     exclude_columns=['identifier']
+    >>> )
     >>> metadata.target_column_name = 'y_true'
-    >>> metadata.predicted_probabilities_column_names = {
-    ...    0: 'y_pred_proba_0',
-    ...     1: 'y_pred_proba_1',
-    ...     2: 'y_pred_proba_2',
-    ...     3: 'y_pred_proba_3',
-    ...     4: 'y_pred_proba_4',
-    ... }
     >>> display(metadata.is_complete())
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3000, metrics=['roc_auc', 'f1'])
-    >>> cbpe.fit(reference)
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
+    >>> cbpe = nml.CBPE(
+    ...     model_metadata=metadata,
+    ...     chunk_size=6000,
+    ...     metrics=['roc_auc', 'f1']
+    >>> )
+    >>> cbpe = cbpe.fit(reference_data=reference)
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
+    >>> display(est_perf.data.head(3))
 
-    >>> for metric in metrics:
-    ...     figure = estimates.plot(kind="performance", metric=metric)
+    >>> for metric in cbpe.metrics:
+    ...     figure = est_perf.plot(kind='performance', metric=metric)
     ...     figure.show()
 
 
@@ -240,15 +246,29 @@ Walkthrough on Performance Estimation for Multiclass classification
 Prepare the data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For simplicity the guide is based on a synthetic dataset where the monitored model predicts whether #TODO
+For simplicity the guide is based on a synthetic dataset where the monitored model predicts
+which type of credit card product new customers should be assigned to.
 
 .. code-block:: python
 
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = #TODO
+
+    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_multiclass_classification_dataset()
     >>> display(reference.head(3))
+
+
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
+|    | acq_channel   |   app_behavioral_score |   requested_credit_limit | app_channel   |   credit_bureau_score |   stated_income | is_customer   | partition   |   identifier | timestamp           |   y_pred_proba_prepaid_card |   y_pred_proba_highstreet_card |   y_pred_proba_upmarket_card | y_pred       | y_true        |
++====+===============+========================+==========================+===============+=======================+=================+===============+=============+==============+=====================+=============================+================================+==============================+==============+===============+
+|  0 | Partner3      |               1.80823  |                      350 | web           |                   309 |           15000 | True          | reference   |        60000 | 2020-05-02 02:01:30 |                        0.97 |                           0.03 |                         0    | prepaid_card | prepaid_card  |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
+|  1 | Partner2      |               4.38257  |                      500 | mobile        |                   418 |           23000 | True          | reference   |        60001 | 2020-05-02 02:03:33 |                        0.87 |                           0.13 |                         0    | prepaid_card | prepaid_card  |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
+|  2 | Partner2      |              -0.787575 |                      400 | web           |                   507 |           24000 | False         | reference   |        60002 | 2020-05-02 02:04:49 |                        0.47 |                           0.35 |                         0.18 | prepaid_card | upmarket_card |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
+
 
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
 the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
@@ -260,22 +280,21 @@ Some information is infered automatically and we provide the rest.
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(
+    ...     reference,
+    ...     model_name='credit_card_segment',
+    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     exclude_columns=['identifier']
+    >>> )
     >>> metadata.target_column_name = 'y_true'
-    >>> metadata.predicted_probabilities_column_names = {
-    ...     0: 'y_pred_proba_0',
-    ...     1: 'y_pred_proba_1',
-    ...     2: 'y_pred_proba_2',
-    ...     3: 'y_pred_proba_3',
-    ...     4: 'y_pred_proba_4',
-    ... }
     >>> display(metadata.is_complete())
+    (True, [])
 
 The difference between binary and multiclass classification is that metadata for multiclass classification should
 contain mapping between classes (i.e. values that are in target and prediction columns) to column names with predicted
 probabilities that correspond to these classes. This mapping can be specified by providing dictionary to
 ``predicted_probabilities_column_names`` or it can be automatically extracted if predicted probability column names
-meet some requirements. Read more in #TODO link to setting up.
+meet some requirements. Read more in the :term:`Setting Up, Providing Metadata<providing_metadata>` section.
 
 Creating and using the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -283,7 +302,7 @@ Creating and using the estimator
 In the next step Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
 estimator is created using the previously
-extracted :class:`~nannyml.metadata.ModelMetadata`, a list of metrics and an optional
+extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional
 :ref:`chunking<chunking>` specification. The list of metrics specifies the metrics
 for which the performance of the monitored model will be estimated.
 For an overview of all metrics,
@@ -297,8 +316,12 @@ estimator is then fitted using the
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3000, metrics=['roc_auc', 'f1'])
-    >>> cbpe.fit(reference)
+    >>> cbpe = nml.CBPE(
+    ...     model_metadata=metadata,
+    ...     chunk_size=6000,
+    ...     metrics=['roc_auc', 'f1']
+    >>> )
+    >>> cbpe = cbpe.fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where target is missing. In our example this is
@@ -324,16 +347,17 @@ NannyML can output a dataframe that contains all the results:
 
     >>> display(est_perf.data.head(3))
 
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
++====+===============+===============+=============+=====================+=====================+=============+======================+====================+=====================+===========================+===========================+=================+=================+===============+================+======================+======================+============+
+|  0 | [0:5999]      |             0 |        5999 | 2020-05-02 02:01:30 | 2020-05-14 12:25:35 | reference   |          0.000827459 |           0.90476  |            0.908026 |                  0.900902 |                  0.913516 | False           |      0.00175158 |      0.750532 |       0.752619 |             0.741254 |             0.764944 | False      |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|  1 | [6000:11999]  |          6000 |       11999 | 2020-05-14 12:29:25 | 2020-05-26 18:27:42 | reference   |          0.000827459 |           0.905917 |            0.910047 |                  0.900902 |                  0.913516 | False           |      0.00175158 |      0.751148 |       0.756168 |             0.741254 |             0.764944 | False      |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|  2 | [12000:17999] |         12000 |       17999 | 2020-05-26 18:31:06 | 2020-06-07 19:55:45 | reference   |          0.000827459 |           0.909329 |            0.910029 |                  0.900902 |                  0.913516 | False           |      0.00175158 |      0.75714  |       0.756323 |             0.741254 |             0.764944 | False      |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
 
-+----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
-|    | key         |   start_index |   end_index | start_date          | end_date                   | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
-+====+=============+===============+=============+=====================+============================+=============+======================+====================+=====================+===========================+===========================+=================+=================+===============+================+======================+======================+============+
-|  0 | [0:2999]    |             0 |        2999 | 2020-03-25 00:00:00 | 2020-03-29 04:45:59.040000 | reference   |           0.00115409 |           0.902728 |            0.90361  |                   0.89656 |                  0.914466 | False           |      0.00246067 |      0.651833 |       0.665298 |             0.641054 |             0.694064 | False      |
-+----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
-|  1 | [3000:5999] |          3000 |        5999 | 2020-03-29 04:48:00 | 2020-04-02 09:33:59.040000 | reference   |           0.00115409 |           0.903694 |            0.904372 |                   0.89656 |                  0.914466 | False           |      0.00246067 |      0.651666 |       0.664147 |             0.641054 |             0.694064 | False      |
-+----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
-|  2 | [6000:8999] |          6000 |        8999 | 2020-04-02 09:36:00 | 2020-04-06 14:21:59.040000 | reference   |           0.00115409 |           0.908264 |            0.904698 |                   0.89656 |                  0.914466 | False           |      0.00246067 |      0.679368 |       0.667693 |             0.641054 |             0.694064 | False      |
-+----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+
 
 
 Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
@@ -357,9 +381,14 @@ The results can be also plotted:
 
 .. code-block:: python
 
-    >>> for metric in cbpe.metrics:
+        >>> for metric in cbpe.metrics:
     ...     figure = est_perf.plot(kind='performance', metric=metric)
     ...     figure.show()
+
+
+.. image:: /_static/tutorial-perf-est-mc-f1.svg
+
+.. image:: /_static/tutorial-perf-est-mc-roc_auc.svg
 
 
 Insights and Follow Ups

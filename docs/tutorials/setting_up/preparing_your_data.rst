@@ -185,6 +185,8 @@ This means that for the example **work_from_home** case:
    * - Period
      - ``period``
 
+.. _providing_metadata:
+
 Providing metadata
 --------------------
 
