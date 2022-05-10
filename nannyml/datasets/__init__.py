@@ -4,4 +4,8 @@
 
 """NannyML Dataset module."""
 
-from .datasets import load_modified_california_housing_dataset, load_synthetic_binary_classification_dataset
+from .datasets import (
+    load_modified_california_housing_dataset,
+    load_synthetic_binary_classification_dataset,
+    load_synthetic_multiclass_classification_dataset,
+)
