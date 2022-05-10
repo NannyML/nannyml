@@ -88,14 +88,14 @@ class MulticlassClassificationMetadata(ModelMetadata):
             NML_METADATA_PREDICTION_COLUMN_NAME,
             NML_METADATA_TARGET_COLUMN_NAME,
             NML_METADATA_TIMESTAMP_COLUMN_NAME,
-        ] + self.predicted_class_probability_metadata_columns()
+        ] + list(self.predicted_class_probability_metadata_columns().values())
 
-    def predicted_class_probability_metadata_columns(self) -> List[str]:
+    def predicted_class_probability_metadata_columns(self) -> Dict[Any, str]:
         """Returns the names of the class probability columns added to the data by the ``enrich`` method."""
-        return [
-            f'{NML_METADATA_PREDICTED_CLASS_PROBABILITY_COLUMN_NAME}_{clazz}'
+        return {
+            clazz: f'{NML_METADATA_PREDICTED_CLASS_PROBABILITY_COLUMN_NAME}_{clazz}'
             for clazz in self.predicted_probabilities_column_names.keys()
-        ]
+        }
 
     def to_dict(self) -> Dict[str, Any]:
         """Represents a MulticlassClassificationMetadata instance as a dictionary."""

@@ -214,18 +214,16 @@ def _validate_data_requirements_for_metrics(data: pd.DataFrame, metadata: ModelM
 
 def _get_predictions(data: pd.DataFrame, metadata: MulticlassClassificationMetadata):
     classes = sorted(list(metadata.predicted_probabilities_column_names.keys()))
-    y_preds = label_binarize(data[NML_METADATA_PREDICTION_COLUMN_NAME], classes=classes)
-    y_preds_list = list(y_preds.T)
+    y_preds = list(label_binarize(data[NML_METADATA_PREDICTION_COLUMN_NAME], classes=classes).T)
 
-    y_pred_probas = [
-        data[class_proba_col] for class_proba_col in sorted(metadata.predicted_class_probability_metadata_columns())
-    ]
-    return y_preds_list, y_pred_probas
+    class_probability_column_names = metadata.predicted_class_probability_metadata_columns()
+    y_pred_probas = [data[class_probability_column_names[clazz]] for clazz in classes]
+    return y_preds, y_pred_probas
 
 
 def _estimate_metric(data: pd.DataFrame, metadata: MulticlassClassificationMetadata, metric: str) -> float:
     if metric == 'roc_auc':
-        return _estimate_roc_auc(data[metadata.predicted_class_probability_metadata_columns()])
+        return _estimate_roc_auc(data[list(metadata.predicted_class_probability_metadata_columns().values())])
     elif metric == 'f1':
         y_preds, y_pred_probas = _get_predictions(data, metadata)
         return _estimate_f1(y_preds, y_pred_probas)
@@ -337,8 +335,14 @@ def _calculate_realized_performance(chunk: Chunk, metadata: ModelMetadata, metri
     ):
         return np.NaN
 
+    # Make sure labels and class_probability_columns have the same ordering
+    labels, class_probability_columns = [], []
+    for label, class_probability_column in metadata.predicted_class_probability_metadata_columns().items():
+        labels.append(label)
+        class_probability_columns.append(class_probability_column)
+
     y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
-    y_pred_probas = chunk.data[metadata.predicted_class_probability_metadata_columns()]
+    y_pred_probas = chunk.data[class_probability_columns]
     y_pred = chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
     # y_true = y_true[~y_pred_proba.isna()]
@@ -348,15 +352,15 @@ def _calculate_realized_performance(chunk: Chunk, metadata: ModelMetadata, metri
     # y_true.dropna(inplace=True)
 
     if metric == 'roc_auc':
-        return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro')
+        return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
     elif metric == 'f1':
-        return f1_score(y_true=y_true, y_pred=y_pred, average='macro')
+        return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
     elif metric == 'precision':
-        return precision_score(y_true=y_true, y_pred=y_pred, average='macro')
+        return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
     elif metric == 'recall':
-        return recall_score(y_true=y_true, y_pred=y_pred, average='macro')
+        return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
     elif metric == 'specificity':
-        mcm = multilabel_confusion_matrix(y_true, y_pred)
+        mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
         tn_sum = mcm[:, 0, 0]
         fp_sum = mcm[:, 0, 1]
         class_wise_specificity = tn_sum / (tn_sum + fp_sum)
@@ -389,9 +393,8 @@ def _get_class_splits(data: pd.DataFrame, metadata: ModelMetadata, include_targe
     if include_targets:
         y_trues = list(label_binarize(data[NML_METADATA_TARGET_COLUMN_NAME], classes=classes).T)
 
-    y_pred_probas = [
-        data[class_proba_col] for class_proba_col in sorted(metadata.predicted_class_probability_metadata_columns())
-    ]
+    class_probability_column_names = metadata.predicted_class_probability_metadata_columns()
+    y_pred_probas = [data[class_probability_column_names[clazz]] for clazz in classes]
 
     return [
         (classes[idx], y_trues[idx] if include_targets else None, y_pred_probas[idx]) for idx in range(len(classes))

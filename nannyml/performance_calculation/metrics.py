@@ -515,8 +515,13 @@ class MulticlassClassificationAUROC(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
+        labels, class_probability_columns = [], []
+        for label, class_probability_column in self.metadata.predicted_class_probability_metadata_columns().items():
+            labels.append(label)
+            class_probability_columns.append(class_probability_column)
+
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[self.metadata.predicted_class_probability_metadata_columns()]
+        y_pred = data[class_probability_columns]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
@@ -528,7 +533,7 @@ class MulticlassClassificationAUROC(Metric):
         if y_true.nunique() <= 1:
             return np.nan
         else:
-            return roc_auc_score(y_true, y_pred, multi_class='ovr', average='macro')
+            return roc_auc_score(y_true, y_pred, multi_class='ovr', average='macro', labels=labels)
 
 
 class MulticlassClassificationF1(Metric):
@@ -546,6 +551,7 @@ class MulticlassClassificationF1(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
+        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -559,7 +565,7 @@ class MulticlassClassificationF1(Metric):
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
-            return f1_score(y_true, y_pred, average='macro')
+            return f1_score(y_true, y_pred, average='macro', labels=labels)
 
 
 class MulticlassClassificationPrecision(Metric):
@@ -577,6 +583,7 @@ class MulticlassClassificationPrecision(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
+        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -590,7 +597,7 @@ class MulticlassClassificationPrecision(Metric):
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
-            return precision_score(y_true, y_pred, average='macro')
+            return precision_score(y_true, y_pred, average='macro', labels=labels)
 
 
 class MulticlassClassificationRecall(Metric):
@@ -608,6 +615,7 @@ class MulticlassClassificationRecall(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
+        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -621,14 +629,14 @@ class MulticlassClassificationRecall(Metric):
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
-            return recall_score(y_true, y_pred, average='macro')
+            return recall_score(y_true, y_pred, average='macro', labels=labels)
 
 
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
 
     def __init__(self, metadata: ModelMetadata):
-        """Creates a new F1 instance."""
+        """Creates a new Specificity instance."""
         super().__init__(display_name='Specificity', column_name='specificity', metadata=metadata)
         self._min_chunk_size = 300
 
@@ -639,6 +647,7 @@ class MulticlassClassificationSpecificity(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
+        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -652,10 +661,7 @@ class MulticlassClassificationSpecificity(Metric):
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
-            MCM = multilabel_confusion_matrix(
-                y_true,
-                y_pred,
-            )
+            MCM = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
             tn_sum = MCM[:, 0, 0]
             fp_sum = MCM[:, 0, 1]
             class_wise_specificity = tn_sum / (tn_sum + fp_sum)
