@@ -178,8 +178,7 @@ Automatic chunking
 ~~~~~~~~~~~~~~~~~~
 
 The default chunking method is size-based, with the size being three times the
-estimated minimum size for the monitored data and model (see how NannyML estimates minimum chunk size in :ref:`deep
-dive<minimum-chunk-size>`):
+estimated minimum size for the monitored data and model (see how NannyML estimates minimum chunk size in :ref:`minimum chunk size<minimum-chunk-size>`):
 
 .. code-block:: python
 
