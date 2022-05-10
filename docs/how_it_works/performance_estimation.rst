@@ -196,9 +196,9 @@ It is just estimated as the mean of predicted probabilities corresponding to the
 
 .. _performance-estimation-deep-dive-limitations:
 
------------
-Limitations
------------
+-------------
+When it works
+-------------
 
 CBPE estimates performance perfectly well under following conditions:
 
