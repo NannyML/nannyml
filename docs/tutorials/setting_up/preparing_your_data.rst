@@ -8,8 +8,8 @@ Preparing Your Data
     A lot of new terminology will be introduced here. A full terminology overview is available in our
     :ref:`glossary<glossary>`.
 
-This guide illustrates how to set up NannyML for use on a given model. Some data for a fictional model is available.
-The **work_from_home** model is a binary classifier trying to predict whether someone will be working from home on
+This guide illustrates how to set up NannyML for use on a given model. We are using data from a fictional model for our example.
+This fictional **work_from_home** model is a binary classifier trying to predict whether someone will be working from home on
 a given day or not. You can see below how to import it and explore it.
 
 .. code-block:: python
@@ -17,7 +17,7 @@ a given day or not. You can see below how to import it and explore it.
     >>> import nannyml as nml
     >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
     >>> reference
-           distance_from_office salary_range  gas_price_per_litre  public_transportation_cost  ...  work_home_actual            timestamp  y_pred_proba  partition
+           distance_from_office salary_range  gas_price_per_litre  public_transportation_cost  ...  work_home_actual            timestamp  y_pred_proba  period
     0                  5.962247  40K - 60K €             2.119485                    8.568058  ...                 1  2014-05-09 22:27:20          0.99  reference
     1                  0.535872  40K - 60K €             2.357199                    5.425382  ...                 0  2014-05-09 22:59:32          0.07  reference
     2                  1.969519  40K - 60K €             2.366849                    8.247158  ...                 1  2014-05-09 23:48:25          1.00  reference
@@ -39,11 +39,11 @@ To do so it needs the understand what the :term:`Model inputs`,
 NannyML will leverage this information to know which columns to use and how to interpret the data in them for
 drift calculation and performance estimation.
 
-For this purpose NannyML also requires some additional data, columns that are not features of the monitored model,
-such as a timestamp or partition data.
+For this purpose NannyML also requires some additional data; columns that are not features of the monitored model,
+such as a timestamp or period data.
 
-The information describing the features, prediction, target and the columns
-where to find required data is called :term:`Model Metadata`.
+The information describing the features, prediction, target, and the columns
+where required data are found, is called :term:`Model Metadata`.
 
 ..
     TODO: insert illustration showing model invocation and assigning names to everything
@@ -68,9 +68,9 @@ monitor the data that is subject to actual analysis (*analysis period*).
 Reference Period
 ^^^^^^^^^^^^^^^^^^^
 
-The reference partition's purpose is to establish a baseline of expectations for the machine
-learning model being monitored. The model inputs, model outputs and
-the performance results of the monitored model are needed in the reference partition and are assumed
+The reference period's purpose is to establish a baseline of expectations for the machine
+learning model being monitored. It needs to include the model inputs, model outputs and
+the performance results of the monitored model. The performance of the model for this period is assumed
 to be stable and acceptable.
 
 The reference dataset can be a reference (or benchmark) period when the
@@ -78,18 +78,27 @@ monitored model has been in production and its performance results were satisfac
 Alternatively, it can be the test set used when evaluating the monitored model before
 deploying it to production. The reference dataset **cannot** be the training set used to fit the model.
 
+The *reference* dataset contains observations for which target values
+are available, hence the model performance can be *calculated* for this set.
+The occurrence of drift - or the lack hereof - is known and validated.
+
+..
+    TODO: a -brief- explanation of why the ref dataset can't be the training set
+
 Analysis Period
 ^^^^^^^^^^^^^^^^^^^
 
-The analysis partition is where NannyML analyzes the data drift and performance characteristics of the monitored
-model and compares them to the reference partition.
-The analysis partition will usually consist of the latest production data up to a desired point in
-the past, which should be after the point where the reference partition ends.
-The analysis partition is not required to have ground truth and associated performance results
+The analysis period is where NannyML analyzes the data drift and performance characteristics of the monitored
+model and compares them to the reference period.
+The analysis period will usually consist of the latest production data up to a desired point in
+the past, which should be after the point where the reference period ends.
+The analysis period is not required to have targets and associated performance results
 available.
 
-NannyML when performing drift analysis compares each :term:`Data Chunk` of the analysis partition
-with the reference data. NannyML will flag any meaningful changes data distributions as data drift.
+When performing drift analysis NannyML compares each :term:`Data Chunk` of the analysis period
+with the reference data. NannyML will flag any meaningful changes to data distributions as data drift.
+
+The *analysis* data does not contain any target values, so performance can only be *estimated* for it.
 
 
 Meeting data requirements
@@ -100,7 +109,7 @@ The data provided to NannyML should contain the following columns:
 Timestamp
 ^^^^^^^^^^^^^^^^^^^
 
-Name of the column containing the timestamp at which the observation occurred, i.e. when the model was invoked
+The column containing the timestamp at which the observation occurred, i.e. when the model was invoked
 using the given inputs and yielding the resulting prediction. See :term:`Timestamp`.
 
 .. note::
@@ -134,23 +143,20 @@ The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresh
 Target
 ^^^^^^^^^^^^^^^^^^^
 
-The actual outcome of the event the machine learning model is trying to predict. See :term:`Target`.
+The actual outcome of the event the machine learning model is trying to predict.
 
 .. note::
     **Target** values are only required in the reference data.
-    :ref:`performance-estimation` will use the targets in reference partition and the :term:`Model Outputs`
-    in the analysis partition to estimate performance in the analysis dataset.
     Performance in will be *calculated* using them.
-    In the *analysis data* where they are not required, performance can be *estimated*.
+    In the *analysis data* where they are not required, performance can be *estimated*. This :ref:`performance-estimation` 
+    will use the targets in reference period and the :term:`Model Outputs`
+    in the analysis period to estimate performance in the analysis dataset.
 
 Period
 ^^^^^^^^^^^^^^^^^^^
 
-The period each observation belongs to, an indicator for NannyML on whether to use this observation as
-*reference* data or *analysis* data. The *reference* data contains observations for which target values
-are available, hence the model performance can be *calculated* for this set.
-The occurrence of drift - or the lack hereof - is known and validated.
-The *analysis* data does not contain any target values, hence performance can only be *estimated*.
+The period each observation belongs to. An indicator for NannyML on whether to use this observation as
+*reference* data or *analysis* data.
 
 ----
 
@@ -178,7 +184,7 @@ This means that for the example **work_from_home** case:
      - ``y_pred_proba``
    * - Prediction
      - ``np.NaN``
-   * - Ground truth.
+   * - Ground truth
      - ``work_home_actual``
    * - Timestamp
      - ``timestamp``
@@ -199,8 +205,8 @@ NannyML provides the :func:`nannyml.metadata.extract_metadata` function to autom
 from a given ``DataFrame``. It does so by following some simple naming conventions and heuristics to column names
 and data. It returns a prepopulated instance of the :class:`ModelMetadata<nannyml.metadata.ModelMetadata>` class.
 
-To prevent NannyML from interpreting some columns as either metadata or model features it provides
-the optional ``extract_metadata`` parameter. It takes a list of column names that will not be included in the
+To prevent NannyML from interpreting some columns as either metadata or model features, it provides
+the optional ``exclude_columns`` parameter. It takes a list of column names that will not be included in the
 :class:`ModelMetadata<nannyml.metadata.ModelMetadata>`.
 
 An example of this is the ``identifier`` column in the included sample dataset. It is required to join the analysis data
@@ -210,7 +216,7 @@ with its target values, but that is the only purpose it serves. So that it doesn
 
     >>> metadata = nml.extract_metadata(data=reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
     >>> metadata
-    Metadata({'model_type': 'classification_binary', 'timestamp_column_name': 'timestamp', 'partition_column_name': 'partition', 'target_column_name': None, 'prediction_column_name': 'y_pred_proba', 'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"})
+    Metadata({'model_type': 'classification_binary', 'timestamp_column_name': 'timestamp', 'period_column_name': 'period', 'target_column_name': None, 'prediction_column_name': 'y_pred_proba', 'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"})
 
 The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata.print` method or returned as a
 ``dictionary`` or a ``DataFrame``.
@@ -223,7 +229,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     # Please identify column names for all '~ UNKNOWN ~' values
     Model problem             binary_classification
     Timestamp column          timestamp
-    Partition column          partition
+    period column          period
     Prediction column         y_pred_proba
     Prediction column         ~ UNKNOWN ~
     Target column             ~ UNKNOWN ~
@@ -243,7 +249,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     >>> metadata.to_dict()
     {'identifier_column_name': 'identifier',
      'timestamp_column_name': 'timestamp',
-     'partition_column_name': 'partition',
+     'period_column_name': 'period',
      'target_column_name': None,
      'prediction_column_name': 'y_pred_proba',
      'features': "[Feature({'label': 'distance_from_office', 'column_name': 'distance_from_office', 'type': 'continuous', 'description': 'extracted feature: distance_from_office'}), Feature({'label': 'salary_range', 'column_name': 'salary_range', 'type': 'categorical', 'description': 'extracted feature: salary_range'}), Feature({'label': 'gas_price_per_litre', 'column_name': 'gas_price_per_litre', 'type': 'continuous', 'description': 'extracted feature: gas_price_per_litre'}), Feature({'label': 'public_transportation_cost', 'column_name': 'public_transportation_cost', 'type': 'continuous', 'description': 'extracted feature: public_transportation_cost'}), Feature({'label': 'wfh_prev_workday', 'column_name': 'wfh_prev_workday', 'type': 'categorical', 'description': 'extracted feature: wfh_prev_workday'}), Feature({'label': 'workday', 'column_name': 'workday', 'type': 'categorical', 'description': 'extracted feature: workday'}), Feature({'label': 'tenure', 'column_name': 'tenure', 'type': 'continuous', 'description': 'extracted feature: tenure'}), Feature({'label': 'work_home_actual', 'column_name': 'work_home_actual', 'type': 'categorical', 'description': 'extracted feature: work_home_actual'})]"}
@@ -251,7 +257,7 @@ The metadata can then be printed using the :meth:`nannyml.metadata.ModelMetadata
     >>> metadata.to_df()
                                  label  ...                                    description
     0        timestamp_column_name  ...                                      timestamp
-    1        partition_column_name  ...                                      partition
+    1        period_column_name  ...                                      period
     2           target_column_name  ...                                         target
     3       prediction_column_name  ...                   prediction score/probability
     4         distance_from_office  ...        extracted feature: distance_from_office
@@ -290,8 +296,8 @@ These metadata properties follow simple naming conventions for discovery:
      - ``column_name in ['p', 'pred', 'prediction', 'out', 'output', 'y_pred']``
    * - ``target_column_name``
      - ``column_name in ['target', 'ground_truth', 'actual', 'actuals']``
-   * - ``partition_column_name``
-     - ``column_name in ['partition']``
+   * - ``period_column_name``
+     - ``column_name in ['period']``
 
 Any column not flagged as one of the above is considered to be a feature. To assign the appropriate
 :class:`feature type<nannyml.metadata.FeatureType>` NannyML will evaluate the feature values and apply
