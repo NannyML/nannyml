@@ -45,9 +45,9 @@ def extract_metadata(
 
     Examples
     --------
-    >>> from nannyml.datasets import load_synthetic_sample
+    >>> from nannyml.datasets import load_synthetic_binary_classification_dataset
     >>> from nannyml.metadata import extract_metadata
-    >>> ref_df, _, _ = load_synthetic_sample()
+    >>> ref_df, _, _ = load_synthetic_binary_classification_dataset()
     >>> metadata = extract_metadata(ref_df, model_name='work_from_home')
     >>> metadata.is_complete()
     (False, ['target_column_name'])

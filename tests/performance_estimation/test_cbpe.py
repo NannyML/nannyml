@@ -12,7 +12,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from nannyml.calibration import Calibrator, IsotonicCalibrator
-from nannyml.datasets import load_synthetic_sample
+from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import BinaryClassificationMetadata, ModelType, extract_metadata
 from nannyml.performance_estimation import CBPE
@@ -21,7 +21,7 @@ from nannyml.performance_estimation.base import PerformanceEstimatorResult
 
 @pytest.fixture
 def data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, _ = load_synthetic_sample()
+    ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
     ref_df['y_pred'] = ref_df['y_pred_proba'].apply(lambda p: int(p >= 0.8))
     return ref_df, ana_df
 

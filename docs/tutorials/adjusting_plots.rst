@@ -12,7 +12,7 @@ updating the plot. See example below:
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY,
     >>>                                 exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'

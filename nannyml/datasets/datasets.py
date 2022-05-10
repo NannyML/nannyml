@@ -28,7 +28,7 @@ def load_csv_file_to_df(local_file: str) -> DataFrame:
         return read_csv(data)
 
 
-def load_synthetic_sample():
+def load_synthetic_binary_classification_dataset():
     """Loads the synthetic sample provided for testing the NannyML package.
 
     Returns
@@ -42,8 +42,8 @@ def load_synthetic_sample():
 
     Examples
     --------
-    >>> from nannyml.datasets import load_synthetic_sample
-    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_sample()
+    >>> from nannyml.datasets import load_synthetic_binary_classification_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
 
     """
     reference = load_csv_file_to_df('synthetic_sample_reference.csv')

@@ -57,7 +57,7 @@ class PerformanceCalculator:
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df)
         >>> # create a new calculator, chunking by week
         >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
@@ -90,7 +90,7 @@ class PerformanceCalculator:
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df)
         >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
         >>> # fit the calculator on reference data
@@ -118,7 +118,7 @@ class PerformanceCalculator:
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df)
         >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
         >>> calculator.fit(ref_df)

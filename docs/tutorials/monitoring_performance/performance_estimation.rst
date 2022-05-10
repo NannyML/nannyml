@@ -26,7 +26,7 @@ If you just want the code to experiment yourself, here you go:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_sample()
+    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
     >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
@@ -62,7 +62,7 @@ whether an employee will work from home.
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_sample()
+    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+

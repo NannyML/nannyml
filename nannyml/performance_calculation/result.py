@@ -63,7 +63,7 @@ class PerformanceCalculatorResult:
         --------
         >>> import nannyml.metadata.extraction
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nannyml.metadata.extraction.extract_metadata(ref_df)
         >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
         >>> calculator.fit(ref_df)

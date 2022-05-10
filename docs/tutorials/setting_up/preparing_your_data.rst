@@ -15,7 +15,7 @@ a given day or not. You can see below how to import it and explore it.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_gt = nml.load_synthetic_sample()
+    >>> reference, analysis, analysis_gt = nml.load_synthetic_binary_classification_dataset()
     >>> reference
            distance_from_office salary_range  gas_price_per_litre  public_transportation_cost  ...  work_home_actual            timestamp  y_pred_proba  partition
     0                  5.962247  40K - 60K €             2.119485                    8.568058  ...                 1  2014-05-09 22:27:20          0.99  reference

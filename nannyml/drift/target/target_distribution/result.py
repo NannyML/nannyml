@@ -44,7 +44,7 @@ class TargetDistributionResult:
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
         >>> target_distribution_calc.fit(ref_df)

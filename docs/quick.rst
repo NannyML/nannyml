@@ -31,7 +31,7 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> display(analysis.head())
     >>> display(reference.head())
 
@@ -83,7 +83,7 @@ Let's start with loading synthetic dataset included in the library:
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> reference.head()
 
 

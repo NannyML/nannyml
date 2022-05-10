@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.datasets import load_synthetic_sample
+from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.metadata import ModelType, MulticlassClassificationMetadata, extract_metadata
 from nannyml.metadata.base import (
     NML_METADATA_PARTITION_COLUMN_NAME,
@@ -27,7 +27,7 @@ from nannyml.metadata.multiclass_classification import (
 
 @pytest.fixture
 def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, tgt_df = load_synthetic_sample()
+    ref_df, ana_df, tgt_df = load_synthetic_binary_classification_dataset()
     ref_df.drop(columns=['y_pred_proba'], inplace=True)
     ana_df.drop(columns=['y_pred_proba'], inplace=True)
 

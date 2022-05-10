@@ -93,7 +93,7 @@ class _MulticlassClassificationCBPE(CBPE):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df)
         >>> # create a new estimator, chunking by week
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
