@@ -4,7 +4,12 @@
 Confidence-based Performance Estimation
 =======================================
 
-This page describes the algorithm that NannyML uses to estimate monitored model performance.
+This page describes the algorithms that NannyML uses to estimate monitored model performance. A high-level summary is
+that NannyML takes advantage of the confidence accompanying the prediction. For
+classifiers, this confidence is expressed by the probability that an observation belongs to a class.
+These probabilities are then used to estimate a value of selected performance evaluation metric for a set of
+observations. Given well-calibrated probabilities and large enough set of observations,
+CBPE returns accurate estimation of performance metric value.
 
 --------------
 CBPE algorithm
