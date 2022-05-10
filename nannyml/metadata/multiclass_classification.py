@@ -197,7 +197,9 @@ class MulticlassClassificationMetadata(ModelMetadata):
         ok, missing = super().is_complete()
 
         # Either predicted probabilities or predicted labels should be specified
-        if self.prediction_column_name is None and self.predicted_probabilities_column_names is None:
+        if self.prediction_column_name is None and (
+            self.predicted_probabilities_column_names is None or len(self.predicted_probabilities_column_names) == 0
+        ):
             ok = False
             missing.append('predicted_probabilities_column_names')
             missing.append('prediction_column_name')
