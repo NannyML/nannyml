@@ -8,15 +8,12 @@ Quickstart
 Why use NannyML?
 ----------------
 
-NannyML is a library that makes Model Monitoring more productive.
-It estimates the performance of the monitored models in absence of the target, detects data drift
-and finds the data drift that is responsible for changes in performance. This quickstart presents these core
-functionalities on an example of binary classification model that predicts whether an employee will work from home
-the next day or not. The synthetic dataset used is already preprocessed - it is merged with model predictions and
-ready to be directly used by NannyML. In order to find out how to prepare your dataset check
+NannyML is a library that makes Model Monitoring more productive. It estimates the performance of the monitored models in the absence of targets, detects data drift, and finds the data drift that is responsible for changes in performance. 
+
+This quickstart presents these core functionalities on an example of binary classification model that predicts whether an employee will work from home the next day or not. The synthetic dataset used is already preprocessed - it is merged with model predictions and ready to be directly used by NannyML. In order to find out how to prepare your dataset check
 :ref:`tutorials<tutorials>`.
 This is also a good place to go to get detailed guides on core concepts and functionalities. If you want to know
-what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
+what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you are just looking for examples
 on other datasets or ML problems look at :ref:`examples<examples>`.
 
 -------------
@@ -77,7 +74,7 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
 Walkthrough the quickstart
 --------------------------
 
-Let's start with loading synthetic dataset included in the library:
+Let's start with loading the synthetic dataset included in the library:
 
 .. code-block:: python
 
@@ -119,7 +116,7 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> chunk_size = 5000
 
-The data are already split into a reference and an analysis periods. NannyML uses the reference period to
+The data are already split into reference and analysis periods. NannyML uses the reference period to
 establish a baseline for expected model performance. The analysis period is the one that is subject to actual
 monitoring.
 For more information about periods check :ref:`data-drift-periods`. The key thing to note is that we don't expect
