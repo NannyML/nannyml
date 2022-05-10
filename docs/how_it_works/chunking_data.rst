@@ -7,14 +7,14 @@ Chunking data
 Chunking considerations
 ----------------------------------
 
-:term:`Chunks<Data Chunk>` were introduced in detail :ref:`Setting Up: Chunking<chunking>`.
-However some times special issues may arise when using chunks. They are described below.
+:term:`Chunks<Data Chunk>` were introduced in :ref:`Setting Up: Chunking<chunking>`.
+However sometimes special issues may arise when using chunks. They are described below.
 
-Different partitions within one chunk
+Different periods within one chunk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to get performance estimation or data drift results for a dataset that contains two
-partitions - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
+:ref:`periods<data-drift-periods>` - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
 them. Such a chunk will be considered as an ``analysis`` chunk, even if only one observation belongs to ``analysis``
 observations. In the example below, chunk which contains observations from 44444 to 55554 is considered an analysis
 chunk but indices from 44444 to 49999 point to reference observations:
@@ -63,9 +63,9 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
     your data in a different way or continue at your own risk.
 
-When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in above
-sections. When there are more chunks mentioned - the selected splitting method is most likely not suitable.
-Look at the :ref:`deep dive on minimum chunk size <minimum-chunk-size>` to get more information about the effect of
+When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in :ref:`Setting Up: Chunking<chunking>`. 
+When there are more chunks mentioned - the selected splitting method is most likely not suitable.
+Read :ref:` minimum chunk size <minimum-chunk-size>` to get more information about the effect of
 small chunks. Beware of the trade-offs involved, when selecting the chunking method.
 
 
@@ -141,7 +141,7 @@ it is considered *low* when it is below 0.02. In other words, for the selected e
 estimates chunk size for which standard deviation of performance on chunks resulting purely from sampling is lower
 than 0.02.
 
-Let's go through the estimation process for accuracy score from the example above. Selecting chunk in the data and
+Let's go through the estimation process for accuracy score from the example above. Selecting a chunk in the data and
 calculating performance for it is similar to sampling a set from a population and calculating a statistic. When
 the statistic is a mean, Standard Error (SE) formula [1]_ can be used to estimate the standard deviation of sampled
 means:
@@ -150,7 +150,7 @@ means:
         {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
 
 To directly use it for computation of standard deviation of accuracy, the metric needs to be expressed for each
-observation in the way that mean of observation-level accuracies gives the whole sample accuracy. Observation-level
+observation in the way that the mean of observation-level accuracies gives the whole sample accuracy. Observation-level
 accuracy is simply equal to 1 when the prediction is correct and 0 when it is not. Therefore:
 
 .. code-block:: python
@@ -178,7 +178,7 @@ The same formula can be used to estimate sample size for required standard devia
     >>> sample_size
     624.99
 
-So for the analyzed case chunk should contain at least 625 observations to keep dispersion of
+So for the analyzed case the chunk should contain at least 625 observations to keep dispersion of
 accuracy on chunks coming from random effect of sampling below 0.02 SD. In the actual implementation the final value
 is rounded to full hundredths and limited from the bottom to 300.
 
@@ -200,13 +200,13 @@ Minimum Chunk for Data Reconstruction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To ensure that there is no significant noise present in data recontruction results NannyML suggests a minimum chunk size
-based on the number of features user to perform data reconstruction according to this function:
+based on the number of features used to perform data reconstruction according to this function:
 
 .. math::
 
     f(x) = \textrm{Int}( 20 * x ^ {\frac{5}{6}})
 
-The result based on internal testing. It is merely a suggestion because multidimensional data can have difficult to foresee
+The results are based on internal testing. It is merely a suggestion because multidimensional data can have difficult to foresee
 instabilities. A better suggestion could be derived by inspecting the data used to look for
 :ref:`multivariate drift<multivariate_drift_detection>` but at the cost of increased computation time.
 
