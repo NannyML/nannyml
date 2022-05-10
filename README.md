@@ -71,7 +71,7 @@ Allowing you to have the following benefits:
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
 [Join Slack]: https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ
-[Contribute]: https://github.com/NannyML/nannyml/blob/main/CONTRIBUTING.md
+[Contribute]: https://github.com/NannyML/nannyml/blob/main/CONTRIBUTING.rst
 
 # 🔱 Features
 

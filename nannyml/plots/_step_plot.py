@@ -35,7 +35,12 @@ def _data_prep_step_plot(
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
 
-    data['hover_partition'] = data['partition'].str.capitalize()
+    data['hover_partition'] = data['partition'].apply(
+        lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
+        if x == 'reference'
+        else f'<b style="color:{Colors.INDIGO_PERSIAN};line-height:60px">Analysis</b>'
+    )
+    # data['hover_partition'] = data['partition'].str.capitalize()
     data['hover_alert'] = data[drift_column_name].apply(lambda x: "⚠ <b>Drift detected</b>" if x else "")
 
     if partial_target_column_name and partial_target_column_name in data:
@@ -127,7 +132,7 @@ def _step_plot(
     # The border can also be changed, but I think that also means this needs restructuring?
     # https://plotly.com/python/hover-text-and-formatting/#customizing-hover-label-appearance
     hover_template = (
-        '<b style="color:#3B0280;line-height:60px">%{customdata[4]}</b> &nbsp; &nbsp; <span style="color:#AD0000">%{customdata[5]}</span><br>'  # noqa: E501
+        '%{customdata[4]} &nbsp; &nbsp; <span style="color:#AD0000">%{customdata[5]}</span><br>'  # noqa: E501
         + hover_labels[0]
         + ': <b>%{customdata[0]}</b> &nbsp; &nbsp; '
         + 'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b> &nbsp; &nbsp; <br>'
