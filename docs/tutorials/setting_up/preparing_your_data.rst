@@ -351,4 +351,4 @@ The metadata can be completed by providing the missing value.
     (True, [])  # yay, our metadata is all good to go!
 
 It looks like the metadata is now complete and ready to use in
-:ref:`drift calculation<data-drift>` or :ref:`performance estimation<performance-estimation>`.
+:ref:`drift calculation<data-drift>`, :ref:`performance calculation<performance_calculation>` or :ref:`performance estimation<performance-estimation>`.
