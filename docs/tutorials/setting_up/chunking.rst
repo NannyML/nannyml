@@ -36,8 +36,9 @@ Time-based chunking
 ~~~~~~~~~~~~~~~~~~~
 
 Time-based chunking creates chunks based on time intervals. One chunk can contain all the observations
-from a single hour, day, week, month etc. In most cases, such chunks will vary in length. Specify ``chunk_period``
-argument to get appropriate split. See the example below that chunks data quarterly:
+from a single hour, day, week, month etc. In most cases, such chunks will vary in the number of 
+observations they contain. Specify the ``chunk_period``
+argument to get an appropriate split. See the example below that chunks data quarterly:
 
 .. code-block:: python
 
@@ -57,9 +58,9 @@ argument to get appropriate split. See the example below that chunks data quarte
 
 .. note::
     Notice that each calendar quarter was taken into account, even if it was not fully covered with records.
-    This makes some chunks smaller (usually the last and the first). See the first row above - Q3 is July-September,
+    This means some chunks contain fewer observations (usually the last and the first). See the first row above - Q3 is July-September,
     but the first record in the data is from the last day of August. First chunk has ~1.2k of observations while the 2nd
-    and 3rd above 3k.
+    and 3rd contain above 3k.
 
 Possible time offsets are listed in the table below:
 
@@ -134,7 +135,7 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 Number-based chunking
 ~~~~~~~~~~~~~~~~~~~~~
 
-The total number of chunks can be fixed by ``chunk_number`` parameter:
+The total number of chunks can be set by the ``chunk_number`` parameter:
 
 .. code-block:: python
 
@@ -144,7 +145,7 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
     9
 
 .. note::
-    Created chunks will be equal in size. If the number of observations is not divisible by the ``chunk_number`` then
+    Chunks created this way will be equal in size. If the number of observations is not divisible by the ``chunk_number`` then
     the number of observations equal to the residual of the division will be dropped. See:
 
     .. code-block:: python
@@ -167,7 +168,9 @@ The total number of chunks can be fixed by ``chunk_number`` parameter:
 .. note::
     The same splitting rule is always applied to the dataset used for fitting (``reference``) and the dataset of
     interest (in the presented case - ``analysis``). Unless these two datasets are of the same size, the chunk sizes
-    can be considerably different. Additionally, if the data drift or performance estimation is calculated on
+    can be considerably different. E.g. if the ``reference`` dataset has 10,000 observations and the ``analysis`` dataset has
+    80,000, and chunking is number-based, chunks in ``reference`` will be much small than in ``analysis``.
+    Additionally, if the data drift or performance estimation is calculated on
     combined ``reference`` and ``analysis`` the results presented for ``reference`` will be calculated on different
     chunks than they were fitted.
 
@@ -207,6 +210,6 @@ Finally, once the chunking method is selected, the full performance estimation c
 
 .. image:: /_static/guide-chunking_your_data-pe_plot.svg
 
-Each marker on the plot represents estimated performance for a single chunk (y axis).
+Each marker on the plot represents estimated performance (y axis) for a single chunk.
 Markers are placed at the end of the period covered by the chunk i.e. they indicate the last timestamp in the
 chunk (x axis). Plots are interactive - hovering over the marker will display the information about the period.
