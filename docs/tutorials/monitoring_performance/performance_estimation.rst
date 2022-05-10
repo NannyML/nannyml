@@ -97,15 +97,12 @@ We see that the metadata are complete. Full information on how the data should b
 Creating and using the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` class
-implements the performance estimation functionality for binary classification models.
-
 In the next step Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
 estimator is created using the previously
 extracted :class:`~nannyml.metadata.ModelMetadata`, a list of metrics and an optional
 :ref:`chunking<chunking>` specification. The list of metrics specifies the metrics
-that will be used to estimate the performance of the model being monitored.
+for which the performance of the monitored model will be estimated.
 For an overview of all metrics,
 check the :mod:`~nannyml.performance_calculation.metrics` module.
 Read more about chunking in relevant :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`
@@ -213,37 +210,156 @@ If you just want the code to experiment yourself, here you go:
 
 .. code-block:: python
 
-    >>> lorem
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> from IPython.display import display
 
+    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    >>> metadata.target_column_name = 'y_true'
+    >>> metadata.predicted_probabilities_column_names = {
+    ...    0: 'y_pred_proba_0',
+    ...     1: 'y_pred_proba_1',
+    ...     2: 'y_pred_proba_2',
+    ...     3: 'y_pred_proba_3',
+    ...     4: 'y_pred_proba_4',
+    ... }
+    >>> display(metadata.is_complete())
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3000, metrics=['roc_auc', 'f1'])
+    >>> cbpe.fit(reference)
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
+
+    >>> for metric in metrics:
+    ...     figure = estimates.plot(kind="performance", metric=metric)
+    ...     figure.show()
 
 
 Walkthrough on Performance Estimation for Multiclass classification
 -------------------------------------------------------------------
 
-lorem ipsum
-
 Prepare the data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-lorem ipsum
+For simplicity the guide is based on a synthetic dataset where the monitored model predicts whether #TODO
 
+.. code-block:: python
+
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> from IPython.display import display
+    >>> reference, analysis, analysis_gt = #TODO
+    >>> display(reference.head(3))
+
+The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
+the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
+``analysis_gt`` dataframe contains the target results of the analysis period and we will not be using
+it during Performance Estimation.
+
+One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
+Some information is infered automatically and we provide the rest.
+
+.. code-block:: python
+
+    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    >>> metadata.target_column_name = 'y_true'
+    >>> metadata.predicted_probabilities_column_names = {
+    ...     0: 'y_pred_proba_0',
+    ...     1: 'y_pred_proba_1',
+    ...     2: 'y_pred_proba_2',
+    ...     3: 'y_pred_proba_3',
+    ...     4: 'y_pred_proba_4',
+    ... }
+    >>> display(metadata.is_complete())
+
+The difference between binary and multiclass classification is that metadata for multiclass classification should
+contain mapping between classes (i.e. values that are in target and prediction columns) to column names with predicted
+probabilities that correspond to these classes. This mapping can be specified by providing dictionary to
+``predicted_probabilities_column_names`` or it can be automatically extracted if predicted probability column names
+meet some requirements. Read more in #TODO link to setting up.
 
 Creating and using the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-lorem ipsum
+In the next step Confidence-based Performance Estimation
+(:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
+estimator is created using the previously
+extracted :class:`~nannyml.metadata.ModelMetadata`, a list of metrics and an optional
+:ref:`chunking<chunking>` specification. The list of metrics specifies the metrics
+for which the performance of the monitored model will be estimated.
+For an overview of all metrics,
+check the :mod:`~nannyml.performance_calculation.metrics` module.
+Read more about chunking in relevant :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`
+if needed.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+estimator is then fitted using the
+:meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` method on the ``reference`` data.
+
+.. code-block:: python
+
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3000, metrics=['roc_auc', 'f1'])
+    >>> cbpe.fit(reference)
+
+The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
+Typically, this would be used on the latest production data where target is missing. In our example this is
+the ``analysis`` data.
+
+However, it can be also used on combined ``reference`` and ``analysis`` data, e.g. when comparing
+estimations of ``reference`` and ``analysis`` data or comparing the estimated performance versus the realized
+performance on ``reference`` data.
+
+.. code-block:: python
+
+    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
+
+To find out how CBPE estimates performance, read the :ref:`Performance Estimation deep dive<performance-estimation-deep-dive>`.
 
 
 View the results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-lorem ipsum
+NannyML can output a dataframe that contains all the results:
+
+.. code-block:: python
+
+    >>> display(est_perf.data.head(3))
 
 
-Insights and Follow Ups
------------------------
++----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|    | key         |   start_index |   end_index | start_date          | end_date                   | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
++====+=============+===============+=============+=====================+============================+=============+======================+====================+=====================+===========================+===========================+=================+=================+===============+================+======================+======================+============+
+|  0 | [0:2999]    |             0 |        2999 | 2020-03-25 00:00:00 | 2020-03-29 04:45:59.040000 | reference   |           0.00115409 |           0.902728 |            0.90361  |                   0.89656 |                  0.914466 | False           |      0.00246067 |      0.651833 |       0.665298 |             0.641054 |             0.694064 | False      |
++----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|  1 | [3000:5999] |          3000 |        5999 | 2020-03-29 04:48:00 | 2020-04-02 09:33:59.040000 | reference   |           0.00115409 |           0.903694 |            0.904372 |                   0.89656 |                  0.914466 | False           |      0.00246067 |      0.651666 |       0.664147 |             0.641054 |             0.694064 | False      |
++----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|  2 | [6000:8999] |          6000 |        8999 | 2020-04-02 09:36:00 | 2020-04-06 14:21:59.040000 | reference   |           0.00115409 |           0.908264 |            0.904698 |                   0.89656 |                  0.914466 | False           |      0.00246067 |      0.679368 |       0.667693 |             0.641054 |             0.694064 | False      |
++----+-------------+---------------+-------------+---------------------+----------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
 
-After reviewing
+
+Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
+that was estimated:
+
+ - ``estimated_<metric>`` - the estimate of ROC AUC for a specific chunk,
+ - ``confidence_<metric>`` - the width of the confidence band. It is equal to 1 standard deviation of performance estimates on
+   `reference` data (hence calculated during ``fit`` phase).
+ - ``upper_threshold_<metric>`` and ``lower_threshold_<metric>`` - crossing these thresholds will raise an alert on significant
+   performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
+   the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   chunks.
+   They are calculated during ``fit`` phase.
+ - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also
+   be calculated and included within the results.
+ - ``alert_<metric>`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
+   upper or lower threshold.
+
+
+The results can be also plotted:
+
+.. code-block:: python
+
+    >>> for metric in cbpe.metrics:
+    ...     figure = est_perf.plot(kind='performance', metric=metric)
+    ...     figure.show()
 
 
 Insights and Follow Ups
