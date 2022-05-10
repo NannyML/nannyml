@@ -3,7 +3,7 @@
 name = "nannyml"
 version = "0.3.1"
 homepage = "https://github.com/nannyml/nannyml"
-description = "The NannyML library, monitoring model performance since 2020."
+description = "NannyML, Your library for monitoring model performance."
 authors = ["Niels Nuyttens <niels@nannyml.com>"]
 readme = "README.md"
 license =  "Apache-2.0"
