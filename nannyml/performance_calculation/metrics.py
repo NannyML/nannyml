@@ -516,9 +516,9 @@ class MulticlassClassificationAUROC(Metric):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
         labels, class_probability_columns = [], []
-        for label, class_probability_column in self.metadata.predicted_class_probability_metadata_columns().items():
+        for label in sorted(list(self.metadata.predicted_class_probability_metadata_columns())):
             labels.append(label)
-            class_probability_columns.append(class_probability_column)
+            class_probability_columns.append(self.metadata.predicted_class_probability_metadata_columns()[label])
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[class_probability_columns]
@@ -551,7 +551,7 @@ class MulticlassClassificationF1(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
-        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
+        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -583,7 +583,7 @@ class MulticlassClassificationPrecision(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
-        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
+        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -615,7 +615,7 @@ class MulticlassClassificationRecall(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
-        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
+        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -647,7 +647,7 @@ class MulticlassClassificationSpecificity(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
-        labels = list(self.metadata.predicted_class_probability_metadata_columns().keys())
+        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
