@@ -19,6 +19,17 @@ This is also a good place to go to get detailed guides on core concepts and func
 what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
 on other datasets or ML problems look at :ref:`examples<examples>`.
 
+------------------
+Installing NannyML
+------------------
+
+From the shell of your python environment type:
+
+.. code-block:: bash
+
+    $ pip install nannyml
+
+
 -------------
 Just the code
 -------------
@@ -74,7 +85,7 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
 .. _walktghrough_the_quickstart:
 
 --------------------------
-Walkthrough the quickstart
+Walkthrough the Quickstart
 --------------------------
 
 Let's start with loading synthetic dataset included in the library:
