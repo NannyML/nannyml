@@ -1,8 +1,8 @@
 .. _glossary:
 
-========
+########
 Glossary
-========
+########
 
 .. glossary::
 
@@ -104,7 +104,7 @@ Glossary
         In the absence of targets performance in the analysis period can be estimated.
 
         NannyML needs the period information to understand which data it can use as a reference to compare other periods by.
-        This is contained in the :tarm:`Partition Column`.
+        This is contained in the :term:`Partition Column`.
 
         .. warning::
             We currently only support the following partition column values: ``reference`` and ``analysis``.

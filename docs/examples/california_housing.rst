@@ -128,7 +128,7 @@ to the month of September.
 Comparison with the actual performance
 ======================================
 
-Let’s use the ground truth that we have to
+Let's use the ground truth that we have to
 calculate ROC AUC on relevant chunks and compare:
 
 .. code:: python
@@ -374,7 +374,7 @@ The data are now being splitted so they can be in a form required by NannyML.
     >>> analysis_target = analysis[['identifier', 'clf_target']].copy()
     >>> analysis = analysis.drop('clf_target', axis=1)
 
-The ``reference`` dataframe represents the reference :term:`Partition` and the ``analysis``
+The ``reference`` dataframe represents the reference :term:`Data Period` and the ``analysis``
 dataframe represents the analysis partition. The ``analysis_target`` dataframe contains the targets
 for the analysis partition that is provided separately.
 

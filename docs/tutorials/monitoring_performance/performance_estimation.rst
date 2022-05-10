@@ -1,19 +1,23 @@
 .. _performance-estimation:
 
-======================
+============================================
 Performance Estimation
-======================
+============================================
 
 Why Perform Performance Estimation
-----------------------------------
+============================================
 
-NammyML allows for estimating the performance of a classification model before :term:`targets<Target`
+NammyML allows for estimating the performance of a classification model before :term:`targets<Target>`
 becomes available. This can be very helpful in situations where there is a significant delay
 in when targets becomes available but any changes in the model's performance would have
 a significant impact on business results.
 
+
+Binary classification
+============================================
+
 Just The Code
--------------
+----------------
 
 If you just want the code to experiment yourself, here you go:
 
@@ -43,11 +47,11 @@ If you just want the code to experiment yourself, here you go:
 
 
 
-Walkthrough on Performance Estimation
--------------------------------------
+Walkthrough on Performance Estimation for Binary classification
+----------------------------------------------------------------
 
 Prepare the data
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts
 whether an employee will work from home.
@@ -91,7 +95,7 @@ Some information is infered automatically and we provide the rest.
 We see that the metadata are complete. Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
 
 Creating and using the estimator
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` class
 implements the performance estimation functionality for binary classification models.
@@ -137,7 +141,7 @@ performance on ``reference`` data.
 To find out how CBPE estimates performance, read the :ref:`Performance Estimation deep dive<performance-estimation-deep-dive>`.
 
 View the results
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 NannyML can output a dataframe that contains all the results:
 
@@ -196,8 +200,54 @@ The results can be also plotted:
 .. image:: ../../_static/tutorial-perf-est-accuracy.svg
 
 
+
+
+
+Multiclass classification
+=========================
+
+Just The Code
+-------------
+
+If you just want the code to experiment yourself, here you go:
+
+.. code-block:: python
+
+    >>> lorem
+
+
+
+Walkthrough on Performance Estimation for Multiclass classification
+-------------------------------------------------------------------
+
+lorem ipsum
+
+Prepare the data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+lorem ipsum
+
+
+Creating and using the estimator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+lorem ipsum
+
+
+View the results
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+lorem ipsum
+
+
 Insights and Follow Ups
 -----------------------
+
+After reviewing
+
+
+Insights and Follow Ups
+==========================
 
 After reviewing the performance estimation results we have to decide if further investigation is needed.
 The :ref:`Data Drift<data-drift>` functionality can help here.

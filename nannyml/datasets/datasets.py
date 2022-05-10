@@ -58,7 +58,7 @@ def load_modified_california_housing_dataset():
 
     This dataset has been altered to represent a binary classification problem over time.
     More information about the dataset can be found at:
-    :ref:`california-housing`
+    :ref:`california-housing-appendix`
 
     Returns
     -------

@@ -1,6 +1,6 @@
-======================================
+###################################
 Welcome to NannyML's documentation!
-======================================
+###################################
 
 .. image:: https://img.shields.io/pypi/v/nannyml.svg
     :target: https://pypi.org/project/nannyml/
@@ -32,7 +32,7 @@ Welcome to NannyML's documentation!
    Technical reference <nannyml/modules>
 
 Indices and tables
-==================
+##################
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`

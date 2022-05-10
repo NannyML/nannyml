@@ -21,7 +21,7 @@ Binary classification
 A binary classification model typically returns two outputs for each prediction - a class (binary) and a class
 probability prediction (sometimes referred to as score). The score provides information about the confidence of the
 prediction. A rule of thumb is that, the closer the score is to its lower or upper limit (usually 0 and 1), the higher
-the probability that the classifier’s prediction is correct. When this score is an actual probability, it can be
+the probability that the classifier's prediction is correct. When this score is an actual probability, it can be
 directly used to estimate the probability of making an error. For instance, imagine a high-performing model which,
 for a large set of observations, returns a prediction of 1 (positive class) with probability of 0.9. It means that
 for approximately 90% of these observations, the model is correct while for the other 10% the model is wrong.
