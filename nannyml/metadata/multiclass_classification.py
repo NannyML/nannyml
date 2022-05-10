@@ -139,7 +139,7 @@ class MulticlassClassificationMetadata(ModelMetadata):
             ]
 
         df_multiclass = pd.DataFrame(multiclass_entries)
-        return df_base.append(df_multiclass)
+        return df_base.append(df_multiclass, ignore_index=True).reset_index(drop=True)
 
     def enrich(self, data: pd.DataFrame) -> pd.DataFrame:
         """Creates copies of all metadata columns with fixed names.
