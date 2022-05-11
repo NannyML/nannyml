@@ -20,7 +20,8 @@ import os
 import sys
 
 # sys.path.insert(0, os.path.abspath('../nannyml'))
-sys.path.append(os.path.join(os.path.dirname(__name__), '..'))
+# sys.path.append(os.path.join(os.path.dirname(__name__), '..'))
+sys.path.insert(0, os.path.abspath('..'))
 
 import nannyml  # noqa: E402
 
@@ -169,3 +170,20 @@ napoleon_attr_annotations = True
 # -- Also document __init__ methods
 
 autoclass_content = 'both'
+
+
+def run_apidoc(_):
+    import os
+    import sys
+
+    from sphinx.ext.apidoc import main
+
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    cur_dir = os.path.abspath(os.path.dirname(__file__))
+    module = os.path.join(cur_dir, "..", "nannyml")
+    out_dir = os.path.join(cur_dir, "nannyml")
+    main(['-e', '-o', out_dir, module, '--force'])
+
+
+def setup(app):
+    app.connect('builder-inited', run_apidoc)
