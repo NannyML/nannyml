@@ -48,7 +48,7 @@ Glossary
         are also close together in the latent space.
 
     Ground truth
-        A synonym for :term:`Target`
+        A synonym for :term:`Target`.
 
     Identifier
         Usually a single column, but can be multiple columns where necessary. It is used uniquely identify an observation.
@@ -148,7 +148,8 @@ Glossary
         The average euclidean distance between the original and the reconstructed data points in a dataset.
 
     Target
-        The actual outcome of the event the machine learning model is trying to predict.
+        The actual outcome of the event the machine learning model is trying to predict. Also referred to as
+        :term:`Ground truth`.
 
     Timestamp
         Usually a single column, but can be multiple columns where necessary.
