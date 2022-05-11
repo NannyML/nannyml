@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker  # , _minimum_chunk_size
-from nannyml.datasets import load_synthetic_sample
+from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import extract_metadata
 from nannyml.metadata.base import NML_METADATA_COLUMNS, ModelMetadata, ModelType
@@ -21,7 +21,7 @@ from nannyml.preprocessing import preprocess
 
 @pytest.fixture
 def sample_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, _ = load_synthetic_sample()
+    ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
     return ref_df, ana_df
 
 

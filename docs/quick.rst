@@ -8,16 +8,27 @@ Quickstart
 Why use NannyML?
 ----------------
 
-NannyML is a library that makes Model Monitoring more productive.
-It estimates the performance of the monitored models in absence of the target, detects data drift
-and finds the data drift that is responsible for changes in performance. This quickstart presents these core
+NannyML detects silent model failure, estimates performance of ML models after deployment
+before target data become available and robustly detects data drift potentially responsible for the failure.
+This quickstart presents these core
 functionalities on an example of binary classification model that predicts whether an employee will work from home
-the next day or not. The synthetic dataset used is already preprocessed - it is merged with model predictions and
-ready to be directly used by NannyML. In order to find out how to prepare your dataset check
+the next day or not. This synthetic dataset used is already preprocessed - it is merged with model predictions and
+ready to be directly used by NannyML. In order to find out how to prepare your own dataset check these
 :ref:`tutorials<tutorials>`.
 This is also a good place to go to get detailed guides on core concepts and functionalities. If you want to know
 what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
 on other datasets or ML problems look at :ref:`examples<examples>`.
+
+------------------
+Installing NannyML
+------------------
+
+From the shell of your python environment type:
+
+.. code-block:: bash
+
+    $ pip install nannyml
+
 
 -------------
 Just the code
@@ -31,7 +42,7 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> display(analysis.head())
     >>> display(reference.head())
 
@@ -42,7 +53,7 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
     >>> chunk_size = 5000
 
     >>> # fit estimator and estimate
-    >>> estimator = estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit(reference)
+    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
     >>> # show results
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
@@ -74,7 +85,7 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
 .. _walktghrough_the_quickstart:
 
 --------------------------
-Walkthrough the quickstart
+Walkthrough the Quickstart
 --------------------------
 
 Let's start with loading synthetic dataset included in the library:
@@ -83,7 +94,7 @@ Let's start with loading synthetic dataset included in the library:
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> reference.head()
 
 
@@ -108,7 +119,7 @@ inputs are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, 
 ``wfh_prev_workday``, ``workday`` and ``tenure``. ``identifier`` is the :term:`Identifier` column
 and ``timestamp`` is the :term:`Timestamp` column.
 
-The next step is to have NannyML deduce some information about the model from the dataset and make a choice about the
+The next step is to have NannyML deduce :term:`model metadata<Model Metadata>` from the dataset and make a choice about the
 way we will split our data into :term:`Data Chunks<Data Chunk>`.
 
 .. code-block:: python
@@ -119,11 +130,12 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> chunk_size = 5000
 
-The data are already split into a reference and an analysis periods. NannyML uses the reference period to
-establish a baseline for expected model performance. The analysis period is the one that is subject to actual
-monitoring.
+The data are already split into a reference and an analysis periods. NannyML uses the **reference period** to
+establish a baseline for expected model performance. The **analysis period** is where we can estimate or
+monitor performance, as well as detect data drift.
 For more information about periods check :ref:`data-drift-periods`. The key thing to note is that we don't expect
-the analysis period to contain information about the :term:`Target`. This is why on the synthetic dataset it is provided in a separate object.
+the analysis period to contain information about the :term:`Target` when we estimate performance.
+Therefore in our synthetic dataset it is provided in a separate object.
 
 .. code-block:: python
 
@@ -153,8 +165,7 @@ without access to its :term:`Target`. For more details, see :ref:`performance-es
 .. code-block:: python
 
     >>> # fit estimator and estimate
-    >>> estimator = estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit
-    (reference)
+    >>> estimator = estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
     >>> # show results
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')

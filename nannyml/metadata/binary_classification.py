@@ -201,7 +201,7 @@ class BinaryClassificationMetadata(ModelMetadata):
                 },
             ]
         )
-        return df_base.append(df_binary)
+        return df_base.append(df_binary, ignore_index=True).reset_index(drop=True)
 
     def enrich(self, data: pd.DataFrame) -> pd.DataFrame:
         """Creates copies of all metadata columns with fixed names.

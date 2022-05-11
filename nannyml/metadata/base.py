@@ -514,7 +514,7 @@ def _guess_timestamps(data: pd.DataFrame) -> List[str]:
 
 def _guess_targets(data: pd.DataFrame) -> List[str]:
     def _guess_if_ground_truth(col: pd.Series) -> bool:
-        return col.name in ['target', 'ground_truth', 'actual', 'actuals']
+        return col.name in ['target', 'ground_truth', 'actual', 'actuals', 'y_true']
 
     return [col for col in data.columns if _guess_if_ground_truth(data[col])]
 

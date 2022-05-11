@@ -93,7 +93,7 @@ class _MulticlassClassificationCBPE(CBPE):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df)
         >>> # create a new estimator, chunking by week
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
@@ -337,9 +337,9 @@ def _calculate_realized_performance(chunk: Chunk, metadata: ModelMetadata, metri
 
     # Make sure labels and class_probability_columns have the same ordering
     labels, class_probability_columns = [], []
-    for label, class_probability_column in metadata.predicted_class_probability_metadata_columns().items():
+    for label in sorted(list(metadata.predicted_class_probability_metadata_columns())):
         labels.append(label)
-        class_probability_columns.append(class_probability_column)
+        class_probability_columns.append(metadata.predicted_class_probability_metadata_columns()[label])
 
     y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
     y_pred_probas = chunk.data[class_probability_columns]

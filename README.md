@@ -130,7 +130,7 @@ import pandas as pd
 import nannyml as nml
 
 # Load dummy data
-reference, analysis, analysis_target = nml.load_synthetic_sample()
+reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
 data = pd.concat([reference, analysis], ignore_index=True)
 
 # Extract meta data

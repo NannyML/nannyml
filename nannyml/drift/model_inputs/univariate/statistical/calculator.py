@@ -56,7 +56,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df)
         >>> # Create a calculator that will chunk by week
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
@@ -104,7 +104,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator and fit it
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
@@ -136,7 +136,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_sample()
+        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
         >>> # Create a calculator and fit it
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)

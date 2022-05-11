@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.datasets import load_synthetic_sample
+from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata import extract_metadata
 from nannyml.metadata.base import ModelMetadata, ModelType
@@ -19,7 +19,7 @@ from nannyml.performance_calculation.metrics import BinaryClassificationAUROC, B
 
 @pytest.fixture
 def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, tgt_df = load_synthetic_sample()
+    ref_df, ana_df, tgt_df = load_synthetic_binary_classification_dataset()
     ref_df['y_pred'] = ref_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
     ana_df['y_pred'] = ana_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
 

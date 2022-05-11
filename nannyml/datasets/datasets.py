@@ -28,27 +28,54 @@ def load_csv_file_to_df(local_file: str) -> DataFrame:
         return read_csv(data)
 
 
-def load_synthetic_sample():
-    """Loads the synthetic sample provided for testing the NannyML package.
+def load_synthetic_binary_classification_dataset():
+    """Loads the synthetic binary classification dataset provided for testing the NannyML package.
 
     Returns
     -------
     reference : pd.DataFrame
-        A DataFrame containing reference partition of synthetic sample dataset
+        A DataFrame containing reference partition of synthetic binary classification dataset
     analysis : pd.DataFrame
-        A DataFrame containing analysis partition of synthetic sample dataset
+        A DataFrame containing analysis partition of synthetic binary classification dataset
     analysis_tgt : pd.DataFrame
-        A DataFrame containing target values for the analysis partition of synthetic sample dataset
+        A DataFrame containing target values for the analysis partition of synthetic binary
+        classification dataset
 
     Examples
     --------
-    >>> from nannyml.datasets import load_synthetic_sample
-    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_sample()
+    >>> from nannyml.datasets import load_synthetic_binary_classification_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
 
     """
     reference = load_csv_file_to_df('synthetic_sample_reference.csv')
     analysis = load_csv_file_to_df('synthetic_sample_analysis.csv')
     analysis_gt = load_csv_file_to_df('synthetic_sample_analysis_gt.csv')
+
+    return reference, analysis, analysis_gt
+
+
+def load_synthetic_multiclass_classification_dataset():
+    """Loads the synthetic multiclass classification dataset provided for testing the NannyML package.
+
+    Returns
+    -------
+    reference : pd.DataFrame
+        A DataFrame containing reference partition of synthetic multiclass classification dataset
+    analysis : pd.DataFrame
+        A DataFrame containing analysis partition of synthetic multiclass classification dataset
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis partition of synthetic
+        multiclass classification dataset
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_synthetic_multiclass_classification_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
+
+    """
+    reference = load_csv_file_to_df('mc_reference.csv')
+    analysis = load_csv_file_to_df('mc_analysis.csv')
+    analysis_gt = load_csv_file_to_df('mc_analysis_gt.csv')
 
     return reference, analysis, analysis_gt
 

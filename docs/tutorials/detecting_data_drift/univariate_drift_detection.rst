@@ -7,9 +7,9 @@ Univariate Drift Detection
 Why Perform Univariate Drift Detection
 --------------------------------------
 
-Univariate Drift Detection looks at each feature individually and checks whether it's
-distribution has changed. This is the simpler form of data drift detection and has the benefit of
-being the most straightforward to understand and communicate.
+Univariate Drift Detection looks at each feature individually and checks whether its
+distribution has changed. It's a simple, fully explainable form of data drift detection
+and is the most straightforward to understand and communicate.
 
 Just The Code
 -------------
@@ -21,8 +21,8 @@ If you just want the code to experiment yourself, here you go:
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns='identifier')
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
@@ -74,7 +74,7 @@ NannyML uses the KS Test for continuous features and the 2 sample
 Chi squared test for categorical features. Both tests provide a statistic where they measure the
 observed drift and a p-value that shows how likely we are to get the observed sample
 under the assumption that there was no drift. If the p-value is less than 0.05 NannyML considers
-the result unlikely and issues an alert for the associated chunk and feature.
+the result unlikely to be due to chance and issues an alert for the associated chunk and feature.
 
 Let's start by loading some synthetic data provided by the NannyML package.
 
@@ -83,8 +83,8 @@ Let's start by loading some synthetic data provided by the NannyML package.
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_sample()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns='identifier')
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head())
 
@@ -159,7 +159,7 @@ An example using it can be seen below:
 
 NannyML returns a dataframe with 3 columns for each feature. The first column contains the corresponding test
 statistic. The second column contains the corresponding p-value and the third column says whether there
-is a drift alert for that feature and the relevant chunk.
+is a drift alert for that feature and chunk.
 
 NannyML can also visualize those results with the following code:
 
@@ -230,10 +230,10 @@ point of view. That is so because the measure of the drift, as shown by the KS d
 in conrast to the alerts for the ``public_transportation_cost`` for example, where
 the KS d-statistc grows significantly.
 The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
-``wfh_prev_workday`` have been rightly identified as exhibiting drift.
+``wfh_prev_workday`` have been correctly identified as drifted.
 
 NannyML can rank features according to how many alerts they have had within the data analyzed
-for data drift. NannyML allows for the option to view the ranking of all the model inputs or just the ones that have drifted.
+for data drift. NannyML allows viewing the ranking of all the model inputs or just the ones that have drifted.
 NannyML provides a dataframe with the resulting ranking of features using the code below:
 
 .. code-block:: python
@@ -266,7 +266,7 @@ Insights and Follow Ups
 After reviewing the above results we have a good understanding of what has changed in our
 model's population.
 
-If needed further investigation can be performed as to why our population characteristics have
+If needed, we can investigate further as to why our population characteristics have
 changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.
 
 The :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the

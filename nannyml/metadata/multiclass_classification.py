@@ -139,7 +139,7 @@ class MulticlassClassificationMetadata(ModelMetadata):
             ]
 
         df_multiclass = pd.DataFrame(multiclass_entries)
-        return df_base.append(df_multiclass)
+        return df_base.append(df_multiclass, ignore_index=True).reset_index(drop=True)
 
     def enrich(self, data: pd.DataFrame) -> pd.DataFrame:
         """Creates copies of all metadata columns with fixed names.
@@ -197,7 +197,9 @@ class MulticlassClassificationMetadata(ModelMetadata):
         ok, missing = super().is_complete()
 
         # Either predicted probabilities or predicted labels should be specified
-        if self.prediction_column_name is None and self.predicted_probabilities_column_names is None:
+        if self.prediction_column_name is None and (
+            self.predicted_probabilities_column_names is None or len(self.predicted_probabilities_column_names) == 0
+        ):
             ok = False
             missing.append('predicted_probabilities_column_names')
             missing.append('prediction_column_name')

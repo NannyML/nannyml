@@ -76,7 +76,7 @@ class AlertCountRanking(Ranking):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_sample()
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
         >>> metadata = nml.extract_metadata(reference_df)
         >>> metadata.target_column_name = 'work_home_actual'
         >>> calc = nml.UnivariateStatisticalDriftCalculator(metadata, chunk_size=5000)
