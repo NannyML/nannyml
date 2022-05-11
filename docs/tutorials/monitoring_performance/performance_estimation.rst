@@ -7,11 +7,12 @@ Performance Estimation
 Why Perform Performance Estimation
 ============================================
 
-NammyML allows for estimating the performance of a classification model before :term:`targets<Target>`
-becomes available. This can be very helpful in situations where there is a significant delay
-in when targets becomes available but any changes in the model's performance would have
-a significant impact on business results.
-
+NannyML allows to estimate the performance of a classification model when :term:`targets<Target>` are absent.
+This can be very helpful in situations where there is a significant delay
+in when targets become available but any changes in the model's performance would have
+a significant impact on business results. This tutorial explains how to use NannyML to estimate performance of binary
+and multiclass classification models in the absence of ground truth. To find out how it works check
+:ref:`the explanation of CBPE<performance-estimation-deep-dive>`.
 
 Binary Classification
 =====================
@@ -29,25 +30,35 @@ If you just want the code to experiment yourself, here you go:
     >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(
+    ...     reference,
+    ...     model_type=nml.ModelType.CLASSIFICATION_BINARY,
+    ...     exclude_columns=['identifier']
+    ... )
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(metadata.is_complete())
 
     >>> cbpe = nml.CBPE(
     ...     model_metadata=metadata,
     ...     chunk_size=5000,
-    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
-    ... ).fit(reference_data=reference)
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-    >>> display(est_perf.data.head(3))
+    ...     metrics=['roc_auc', 'f1']
+    ... )
+    >>> cbpe.fit(reference_data=reference)
 
+    >>> est_perf_analysis = cbpe.estimate(analysis)
+    >>> display(est_perf_analysis.data.head(3))
     >>> for metric in cbpe.metrics:
-    ...     figure = est_perf.plot(kind='performance', metric=metric)
+    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
+    ...     figure.show()
+
+    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
+    >>> for metric in cbpe.metrics:
+    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
     ...     figure.show()
 
 
 
-Walkthrough on Performance Estimation for Binary classification
+Walkthrough on Performance Estimation for Binary Classification
 ----------------------------------------------------------------
 
 Prepare the data
@@ -78,15 +89,19 @@ whether an employee will work from home.
 
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
 the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
-``analysis_gt`` dataframe contains the target results of the analysis period and we will not be using
-it during Performance Estimation.
+``analysis_gt`` dataframe contains the target (ground truth) results of the analysis period and will not be used
+during Performance Estimation.
 
-One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
-Some information is infered automatically and we provide the rest.
+One of the first steps in using NannyML is providing metadata information about the model that is monitored.
+Some information is inferred automatically and the rest should be provided.
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, model_name='wfh_predictor', exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(
+    ...     reference,
+    ...     model_type=nml.ModelType.CLASSIFICATION_BINARY,
+    ...     exclude_columns=['identifier']
+    ... )
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(metadata.is_complete())
     (True, [])
@@ -94,7 +109,7 @@ Some information is infered automatically and we provide the rest.
 
 We see that the metadata are complete. Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
 
-Creating and using the estimator
+Create and fit the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the next step Confidence-based Performance Estimation
@@ -120,48 +135,56 @@ estimator is then fitted using the
     >>> cbpe = nml.CBPE(
     ...     model_metadata=metadata,
     ...     chunk_size=5000,
-    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
-    ... ).fit(reference_data=reference)
+    ...     metrics=['roc_auc', 'f1']
+    ... )
+    >>> cbpe.fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where target is missing. In our example this is
 the ``analysis`` data.
 
-However, it can be also used on combined ``reference`` and ``analysis`` data, e.g. when comparing
-estimations of ``reference`` and ``analysis`` data or comparing the estimated performance versus the realized
-performance on ``reference`` data.
+.. code-block:: python
+
+    >>> est_perf_analysis = cbpe.estimate(analysis)
+
+However, it can be also used on combined ``reference`` and ``analysis`` data. This might help to build better
+understanding of the monitored model performance changes on analysis data as it can be then shown in the context of
+changes of calculated performance on the reference period.
 
 .. code-block:: python
 
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
+    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
 
-To find out how CBPE estimates performance, read the :ref:`Performance Estimation deep dive<performance-estimation-deep-dive>`.
+To find out how CBPE estimates performance, read about :ref:`Confidence-based
+Performance Estimation<performance-estimation-deep-dive>`.
 
 View the results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-NannyML can output a dataframe that contains all the results:
+NannyML can output a dataframe that contains all the results. Let's have a look at the results for analysis period
+only:
 
 .. code-block:: python
 
-    >>> display(est_perf.data.head(3))
+    >>> display(est_perf_analysis.data.head(3))
 
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+------------------------+----------------------+-----------------------+-----------------------------+-----------------------------+-------------------+---------------------+-------------------+--------------------+--------------------------+--------------------------+----------------+------------------+
-|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |   confidence_precision |   realized_precision |   estimated_precision |   upper_threshold_precision |   lower_threshold_precision | alert_precision   |   confidence_recall |   realized_recall |   estimated_recall |   upper_threshold_recall |   lower_threshold_recall | alert_recall   |   actual_roc_auc |
-+====+===============+===============+=============+=====================+=====================+=============+======================+====================+=====================+===========================+===========================+=================+=================+===============+================+======================+======================+============+========================+======================+=======================+=============================+=============================+===================+=====================+===================+====================+==========================+==========================+================+==================+
-|  0 | [0:4999]      |             0 |        4999 | 2014-05-09 22:27:20 | 2014-09-09 08:18:27 | reference   |           0.00035752 |           0.976477 |            0.969051 |                  0.963317 |                   0.97866 | False           |      0.00145944 |      0.926044 |       0.921705 |             0.911932 |             0.928751 | False      |            0.000579414 |             0.972408 |              0.966623 |                    0.955649 |                    0.978068 | False             |          0.00270608 |          0.8839   |           0.880777 |                  0.86706 |                 0.889152 | False          |         0.976253 |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+------------------------+----------------------+-----------------------+-----------------------------+-----------------------------+-------------------+---------------------+-------------------+--------------------+--------------------------+--------------------------+----------------+------------------+
-|  1 | [5000:9999]   |          5000 |        9999 | 2014-09-09 09:13:35 | 2015-01-09 00:02:51 | reference   |           0.00035752 |           0.968899 |            0.968909 |                  0.963317 |                   0.97866 | False           |      0.00145944 |      0.917111 |       0.917418 |             0.911932 |             0.928751 | False      |            0.000579414 |             0.965889 |              0.966807 |                    0.955649 |                    0.978068 | False             |          0.00270608 |          0.873022 |           0.87283  |                  0.86706 |                 0.889152 | False          |         0.969045 |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+------------------------+----------------------+-----------------------+-----------------------------+-----------------------------+-------------------+---------------------+-------------------+--------------------+--------------------------+--------------------------+----------------+------------------+
-|  2 | [10000:14999] |         10000 |       14999 | 2015-01-09 00:04:43 | 2015-05-09 15:54:26 | reference   |           0.00035752 |           0.972    |            0.968657 |                  0.963317 |                   0.97866 | False           |      0.00145944 |      0.917965 |       0.919083 |             0.911932 |             0.928751 | False      |            0.000579414 |             0.965066 |              0.96696  |                    0.955649 |                    0.978068 | False             |          0.00270608 |          0.875248 |           0.875723 |                  0.86706 |                 0.889152 | False          |         0.971742 |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+------------------------+----------------------+-----------------------+-----------------------------+-----------------------------+-------------------+---------------------+-------------------+--------------------+--------------------------+--------------------------+----------------+------------------+
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
++====+===============+===============+=============+=====================+=====================+=============+======================+====================+=====================+===========================+===========================+=================+=================+===============+================+======================+======================+============+
+|  0 | [0:4999]      |             0 |        4999 | 2017-08-31 04:20:00 | 2018-01-02 00:45:44 | analysis    |           0.00035752 |                nan |            0.968631 |                  0.963317 |                   0.97866 | False           |     0.000951002 |           nan |       0.948555 |             0.935047 |             0.961094 | False      |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|  1 | [5000:9999]   |          5000 |        9999 | 2018-01-02 01:13:11 | 2018-05-01 13:10:10 | analysis    |           0.00035752 |                nan |            0.969044 |                  0.963317 |                   0.97866 | False           |     0.000951002 |           nan |       0.946578 |             0.935047 |             0.961094 | False      |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+|  2 | [10000:14999] |         10000 |       14999 | 2018-05-01 14:25:25 | 2018-09-01 15:40:40 | analysis    |           0.00035752 |                nan |            0.969444 |                  0.963317 |                   0.97866 | False           |     0.000951002 |           nan |       0.948807 |             0.935047 |             0.961094 | False      |
++----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
+
 
 .. _performance-estimation-thresholds:
 
-Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
+Apart from chunk and partition-related data, the results data have the following columns for each metric
 that was estimated:
 
- - ``estimated_<metric>`` - the estimate of ROC AUC for a specific chunk,
+ - ``estimated_<metric>`` - the estimate of selected ``metric`` for a specific chunk,
  - ``confidence_<metric>`` - the width of the confidence band. It is equal to 1 standard deviation of performance estimates on
    `reference` data (hence calculated during ``fit`` phase).
  - ``upper_threshold_<metric>`` and ``lower_threshold_<metric>`` - crossing these thresholds will raise an alert on significant
@@ -175,29 +198,48 @@ that was estimated:
    upper or lower threshold.
 
 
-The results can be also plotted:
+These results can be also plotted:
 
 .. code-block:: python
 
     >>> for metric in cbpe.metrics:
-    ...     figure = est_perf.plot(kind='performance', metric=metric)
+    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
     ...     figure.show()
 
 
-.. image:: ../../_static/tutorial-perf-est-roc_auc.svg
+.. image:: ../../_static/tutorial-perf-est-guide-analysis-roc_auc.svg
 
-.. image:: ../../_static/tutorial-perf-est-f1.svg
+.. image:: ../../_static/tutorial-perf-est-guide-analysis-f1.svg
 
-.. image:: ../../_static/tutorial-perf-est-precision.svg
+The purple dashed step plot shows the estimated performance in each chunk of analysis period. Thick squared point
+marker indicates the middle of this period. Solid, low-saturated purple line *behind* indicates the confidence band.
+Red horizontal
+dashed lines show upper and lower thresholds. If the estimated performance crosses upper or lower threshold and alert
+is raised
+which is indicated with red, low-saturated background in the whole width of the relevant chunk. This is additionally
+indicated by red point marker in the middle of the chunk. Description of tabular results above explains how the
+confidence bands and thresholds are calculated. Additional information is shown in the hover (these are
+interactive plots).
 
-.. image:: ../../_static/tutorial-perf-est-recall.svg
+To get a better context let's additionally plot estimation of performance on *analysis* data together with calculated
+performance on reference period (where the target was available).
 
-.. image:: ../../_static/tutorial-perf-est-specificity.svg
+.. code-block:: python
 
-.. image:: ../../_static/tutorial-perf-est-accuracy.svg
+    >>> for metric in cbpe.metrics:
+    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
+    ...     figure.show()
 
 
+.. image:: ../../_static/tutorial-perf-est-guide-with-ref-roc_auc.svg
 
+.. image:: ../../_static/tutorial-perf-est-guide-with-ref-f1.svg
+
+The right hand side of the plot is exactly the same as previously as it shows the estimated performance for the
+analysis period. The purple dashed vertical line splits the reference and analysis periods. On the left hand side of
+the line, the actual model performance (not estimation!) is plotted with solid light blue line. This facilitates
+interpretation of the estimation on reference period as it helps to build expectations on variability of the
+performance.
 
 
 Multiclass Classification
@@ -232,15 +274,20 @@ If you just want the code to experiment yourself, here you go:
     ...     metrics=['roc_auc', 'f1']
     >>> )
     >>> cbpe = cbpe.fit(reference_data=reference)
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-    >>> display(est_perf.data.head(3))
 
+    >>> est_perf_analysis = cbpe.estimate(analysis)
+    >>> display(est_perf_analysis.data.head(3))
     >>> for metric in cbpe.metrics:
-    ...     figure = est_perf.plot(kind='performance', metric=metric)
+    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
+    ...     figure.show()
+
+    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
+    >>> for metric in cbpe.metrics:
+    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
     ...     figure.show()
 
 
-Walkthrough on Performance Estimation for Multiclass classification
+Walkthrough on Performance Estimation for Multiclass Classification
 -------------------------------------------------------------------
 
 Prepare the data
@@ -272,11 +319,11 @@ which type of credit card product new customers should be assigned to.
 
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
 the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
-``analysis_gt`` dataframe contains the target results of the analysis period and we will not be using
-it during Performance Estimation.
+``analysis_gt`` dataframe contains the target results of the analysis period and will not be used
+during Performance Estimation.
 
 One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
-Some information is infered automatically and we provide the rest.
+Some information is inferred automatically and we provide the rest.
 
 .. code-block:: python
 
@@ -292,9 +339,10 @@ Some information is infered automatically and we provide the rest.
 
 The difference between binary and multiclass classification is that metadata for multiclass classification should
 contain mapping between classes (i.e. values that are in target and prediction columns) to column names with predicted
-probabilities that correspond to these classes. This mapping can be specified by providing dictionary to
-``predicted_probabilities_column_names`` or it can be automatically extracted if predicted probability column names
-meet some requirements. Read more in the :term:`Setting Up, Providing Metadata<providing_metadata>` section.
+probabilities that correspond to these classes. This mapping can be specified or it can be automatically extracted
+if predicted probability column names meet specific requirements as in the example presented. Read more in the
+:ref:`Setting Up, Providing
+Metadata<import-data>` section.
 
 Creating and using the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -327,43 +375,48 @@ The fitted ``cbpe`` can be used to estimate performance on other data, for which
 Typically, this would be used on the latest production data where target is missing. In our example this is
 the ``analysis`` data.
 
-However, it can be also used on combined ``reference`` and ``analysis`` data, e.g. when comparing
-estimations of ``reference`` and ``analysis`` data or comparing the estimated performance versus the realized
-performance on ``reference`` data.
+.. code-block:: python
+
+    >>> est_perf_analysis = cbpe.estimate(analysis)
+
+However, it can be also used on combined ``reference`` and ``analysis`` data. This might help to build better
+understanding of the monitored model performance changes on analysis data as it can be then shown in the context of
+changes of calculated performance on the reference period.
 
 .. code-block:: python
 
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
+    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
 
-To find out how CBPE estimates performance, read the :ref:`Performance Estimation deep dive<performance-estimation-deep-dive>`.
-
+To find out how CBPE estimates performance, read about :ref:`Confidence-based
+Performance Estimation<performance-estimation-deep-dive>`.
 
 View the results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-NannyML can output a dataframe that contains all the results:
+NannyML can output a dataframe that contains all the results. Let's have a look at the results for analysis period
+only:
 
 .. code-block:: python
 
-    >>> display(est_perf.data.head(3))
+    >>> display(est_perf_analysis.data.head(3))
+
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
 +====+===============+===============+=============+=====================+=====================+=============+======================+====================+=====================+===========================+===========================+=================+=================+===============+================+======================+======================+============+
-|  0 | [0:5999]      |             0 |        5999 | 2020-05-02 02:01:30 | 2020-05-14 12:25:35 | reference   |          0.000827459 |           0.90476  |            0.908026 |                  0.900902 |                  0.913516 | False           |      0.00175158 |      0.750532 |       0.752619 |             0.741254 |             0.764944 | False      |
+|  0 | [0:4999]      |             0 |        4999 | 2017-08-31 04:20:00 | 2018-01-02 00:45:44 | analysis    |           0.00035752 |                nan |            0.968631 |                  0.963317 |                   0.97866 | False           |     0.000951002 |           nan |       0.948555 |             0.935047 |             0.961094 | False      |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
-|  1 | [6000:11999]  |          6000 |       11999 | 2020-05-14 12:29:25 | 2020-05-26 18:27:42 | reference   |          0.000827459 |           0.905917 |            0.910047 |                  0.900902 |                  0.913516 | False           |      0.00175158 |      0.751148 |       0.756168 |             0.741254 |             0.764944 | False      |
+|  1 | [5000:9999]   |          5000 |        9999 | 2018-01-02 01:13:11 | 2018-05-01 13:10:10 | analysis    |           0.00035752 |                nan |            0.969044 |                  0.963317 |                   0.97866 | False           |     0.000951002 |           nan |       0.946578 |             0.935047 |             0.961094 | False      |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
-|  2 | [12000:17999] |         12000 |       17999 | 2020-05-26 18:31:06 | 2020-06-07 19:55:45 | reference   |          0.000827459 |           0.909329 |            0.910029 |                  0.900902 |                  0.913516 | False           |      0.00175158 |      0.75714  |       0.756323 |             0.741254 |             0.764944 | False      |
+|  2 | [10000:14999] |         10000 |       14999 | 2018-05-01 14:25:25 | 2018-09-01 15:40:40 | analysis    |           0.00035752 |                nan |            0.969444 |                  0.963317 |                   0.97866 | False           |     0.000951002 |           nan |       0.948807 |             0.935047 |             0.961094 | False      |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
-
 
 
 
 Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
 that was estimated:
 
- - ``estimated_<metric>`` - the estimate of ROC AUC for a specific chunk,
+ - ``estimated_<metric>`` - the estimate of a metric for a specific chunk,
  - ``confidence_<metric>`` - the width of the confidence band. It is equal to 1 standard deviation of performance estimates on
    `reference` data (hence calculated during ``fit`` phase).
  - ``upper_threshold_<metric>`` and ``lower_threshold_<metric>`` - crossing these thresholds will raise an alert on significant
@@ -377,18 +430,48 @@ that was estimated:
    upper or lower threshold.
 
 
-The results can be also plotted:
+These results can be also plotted:
 
 .. code-block:: python
 
-        >>> for metric in cbpe.metrics:
-    ...     figure = est_perf.plot(kind='performance', metric=metric)
+    >>> for metric in cbpe.metrics:
+    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
     ...     figure.show()
 
 
-.. image:: /_static/tutorial-perf-est-mc-f1.svg
+.. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-roc_auc.svg
 
-.. image:: /_static/tutorial-perf-est-mc-roc_auc.svg
+.. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-f1.svg
+
+The purple dashed step plot shows the estimated performance in each chunk of analysis period. Thick squared point
+marker indicates the middle of this period. Solid, low-saturated purple line *behind* indicates the confidence band.
+Red horizontal
+dashed lines show upper and lower thresholds. If the estimated performance crosses upper or lower threshold and alert
+is raised
+which is indicated with red, low-saturated background in the whole width of the relevant chunk. This is additionally
+indicated by red point marker in the middle of the chunk. Description of tabular results above explains how the
+confidence bands and thresholds were calculated. Additional information is shown in the hover (these are
+interactive plots).
+
+To get a better context let's additionally plot estimation of performance on *analysis* data together with calculated
+performance on reference period (where the target was available).
+
+.. code-block:: python
+
+    >>> for metric in cbpe.metrics:
+    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
+    ...     figure.show()
+
+
+.. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-roc_auc.svg
+
+.. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-f1.svg
+
+The right hand side of the plot is exactly the same as previously as it shows the estimated performance for the
+analysis period. The purple dashed vertical line splits the reference and analysis periods. On the left hand side of
+the line, the actual model performance (not estimation!) is plotted with solid light blue line. This facilitates
+interpretation of the estimation on reference period as it helps to build expectations on variability of the
+performance.
 
 
 Insights and Follow Ups
@@ -397,10 +480,10 @@ Insights and Follow Ups
 After reviewing the performance estimation results we have to decide if further investigation is needed.
 The :ref:`Data Drift<data-drift>` functionality can help here.
 
-If needed further investigation can be performed as to why our population characteristics have
-changed the way they did. This is an ad-hoc investigation that is not covered by NannyML.
+This may help to indicate which of our population characteristics have
+changed and how. This will naturally lead to investigating *why* they changed which is not covered by NannyML.
 
 When the target results become available they can be compared with the estimated results as
 demonstrated :ref:`here<compare_estimated_and_realized_performance>`. You can learn more
-about the Confidence Based Performance Estimation and its limitation in the
+about the Confidence Based Performance Estimation and its limitations in the
 :ref:`How it Works page<performance-estimation-deep-dive>`

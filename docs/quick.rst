@@ -171,7 +171,7 @@ without access to its :term:`Target`. For more details, see :ref:`performance-es
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
     >>> figure.show()
 
-.. image:: ./_static/perf-est-guide-syth-example.svg
+.. image:: ./_static/quick_start_perf_est.svg
 
 The results indicate that the model’s performance is likely to be negatively impacted from the second half of 2019
 onwards.
