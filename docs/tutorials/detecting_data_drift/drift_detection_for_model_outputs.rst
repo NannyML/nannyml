@@ -7,11 +7,10 @@ Drift Detection for Model Outputs
 Why Perform Drift Detection for Model Outputs
 ---------------------------------------------
 
-The distribution of model outputs gives us a summary of the population's
-propensity with regards to the question the model is answering. If the model's
-population changes, then the propensity of the population will change and vice versa.
-
-Changes to a model's population are very important to know as soon as possible because
+The distribution of model outputs tells us how likely our population
+will do what the model predicts. If the model's
+population changes, then our populations' actions will be different.
+The difference in actions is very important to know as soon as possible because
 they directly affect the business results from operating a machine learning model.
 
 
@@ -52,8 +51,8 @@ If you just want the code to experiment yourself withinb a Jupyter Notebook, her
 Walkthrough on Drift Detection for Model Outputs
 ------------------------------------------------
 
-NannyML detects data drift for :term:`Model Outputs` in the same univariate drift methodology as
-for a continuous feature.
+NannyML detects data drift for :term:`Model Outputs` using the
+:ref:`Univariate Drift Detection methodology<univariate_drift_detection>`.
 
 Let's start by loading some synthetic data provided by the NannyML package.
 

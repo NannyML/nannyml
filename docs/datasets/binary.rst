@@ -66,7 +66,7 @@ Metadata Extraction
 ===================
 
 The dataset's columns are name such that the heuristics NannyML uses to extract metadata can
-identify them. We can see below how to extract metadata 
+identify them. We can see below how to extract metadata
 
 
 .. code-block:: python

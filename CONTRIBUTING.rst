@@ -21,7 +21,7 @@ When reporting a bug, please include:
 * Any details about your local setup that might be helpful in troubleshooting.
 * Detailed steps to reproduce the bug.
 
-.. _issues page: https://github.com/nnansters/nannyml/issues
+.. _issues page: https://github.com/NannyML/nannyml/issues
 
 Fix Bugs
 ~~~~~~~~

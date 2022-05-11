@@ -104,7 +104,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
-class implements the functionality needed for Univariate Drift Detection. Upon instantiating it with appropriate parameters
+class implements the functionality needed for Univariate Drift Detection. After instantiating it with appropriate parameters
 the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method needs
 to be called on the reference data where results will be based off. Then the
 :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method will

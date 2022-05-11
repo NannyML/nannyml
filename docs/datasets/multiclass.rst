@@ -47,7 +47,7 @@ The model uses 7 features:
   new customer fileld and submitted their application.
 - `requested_credit_limit`: A numerical feature. The credit limit the customer selected as appropriate for their
   needs.
-- `app_channel`: A categorical feature with 3 categories describing how the application was submitted. It can 
+- `app_channel`: A categorical feature with 3 categories describing how the application was submitted. It can
   be in-store, from the website or from a mobile device.
 - `credit_bureau_score`: A numerical feature. The credit score provided by the credit bureau that assesses the credit
   worthiness of the new customer. The higher the score the more creidt worthy the customer.
@@ -73,7 +73,7 @@ Metadata Extraction
 ===================
 
 The dataset's columns are name such that the heuristics NannyML uses to extract metadata can
-identify them. We can see below how to extract metadata 
+identify them. We can see below how to extract metadata:
 
 
 .. code-block:: python
