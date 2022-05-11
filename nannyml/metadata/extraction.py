@@ -98,7 +98,6 @@ def extract_metadata(data: pd.DataFrame, model_type: str, model_name: str = None
     Be sure to always review the results of this method for their correctness and completeness.
     Adjust and complete as you see fit.
     """
-
     metadata = ModelMetadataFactory.create(model_type=ModelType.parse(model_type), model_name=model_name).extract(
         data, exclude_columns=exclude_columns
     )

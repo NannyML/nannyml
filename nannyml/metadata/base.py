@@ -43,6 +43,7 @@ class ModelType(str, Enum):
 
     @staticmethod
     def parse(model_type_str: str):
+        """Returns a ModelType instance from a string representation."""
         if model_type_str == 'classification_binary':
             return ModelType.CLASSIFICATION_BINARY
         elif model_type_str == 'classification_multiclass':

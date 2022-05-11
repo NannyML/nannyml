@@ -146,8 +146,8 @@ def test_cbpe_uses_calibrator_to_calibrate_predicted_probabilities_when_needed( 
     reference, analysis = data
 
     calibrator = IsotonicCalibrator()
-    estimator = CBPE(
-        model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator  # type: ignore
+    estimator = CBPE(  # type: ignore
+        model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator
     ).fit(reference)
     assert typing.cast(CBPE, estimator).needs_calibration
 
@@ -163,8 +163,8 @@ def test_cbpe_doesnt_use_calibrator_to_calibrate_predicted_probabilities_when_no
     reference, analysis = data
 
     calibrator = IsotonicCalibrator()
-    estimator = CBPE(
-        model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator  # type: ignore
+    estimator = CBPE(  # type: ignore
+        model_metadata=metadata, chunk_size=5000, metrics=['roc_auc'], calibrator=calibrator
     ).fit(reference)
 
     typing.cast(CBPE, estimator).needs_calibration = False  # Override this to disable calibration
