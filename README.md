@@ -24,7 +24,7 @@
     <strong>
         <a href="https://nannyml.com/">Website</a>
         •
-        <a href="https://docs.nannyml.com">Docs</a>
+        <a href="https://nannyml.readthedocs.io">Docs</a>
         •
         <a href="https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ">Community Slack</a>
     </strong>
