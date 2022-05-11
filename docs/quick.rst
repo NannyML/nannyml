@@ -46,7 +46,7 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
     >>> display(analysis.head())
     >>> display(reference.head())
 
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
@@ -124,7 +124,7 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics

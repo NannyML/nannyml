@@ -29,7 +29,7 @@ If you just want the code to experiment yourself, here you go:
     >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(metadata.is_complete())
 
@@ -86,7 +86,7 @@ Some information is infered automatically and we provide the rest.
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, model_name='wfh_predictor', exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', model_name='wfh_predictor', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(metadata.is_complete())
     (True, [])
@@ -220,7 +220,7 @@ If you just want the code to experiment yourself, here you go:
     >>> metadata = nml.extract_metadata(
     ...     reference,
     ...     model_name='credit_card_segment',
-    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     model_type='classification_multiclass',
     ...     exclude_columns=['identifier']
     >>> )
     >>> metadata.target_column_name = 'y_true'
@@ -283,7 +283,7 @@ Some information is infered automatically and we provide the rest.
     >>> metadata = nml.extract_metadata(
     ...     reference,
     ...     model_name='credit_card_segment',
-    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     model_type='classification_multiclass',
     ...     exclude_columns=['identifier']
     >>> )
     >>> metadata.target_column_name = 'y_true'

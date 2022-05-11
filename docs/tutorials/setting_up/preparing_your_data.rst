@@ -54,7 +54,7 @@ Just the code
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(data=reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.is_complete()
     (False, ['target_column_name'])
     >>> metadata.target_column_name = 'work_home_actual'
@@ -139,7 +139,7 @@ We can now leverage the :func:`nannyml.metadata.extraction.extract_metadata` fun
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(data=reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_binary', exclude_columns=['identifier'])
 
 The ``data`` argument is used to pass the data sample for the extraction.
 
