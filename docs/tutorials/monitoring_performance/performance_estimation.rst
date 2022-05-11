@@ -65,7 +65,7 @@ Prepare the data
 ^^^^^^^^^^^^^^^^^^
 
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts
-whether an employee will work from home.
+whether an employee will work from home. Read more :ref:`here<dataset-synthetic-binary>`.
 
 
 .. code-block:: python
@@ -294,7 +294,7 @@ Prepare the data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts
-which type of credit card product new customers should be assigned to.
+which type of credit card product new customers should be assigned to. Read more :ref:`here<dataset-synthetic-multiclass>`.
 
 .. code-block:: python
 
