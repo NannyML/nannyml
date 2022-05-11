@@ -29,7 +29,7 @@ Welcome to NannyML's documentation!
    examples
    troubleshooting
    glossary
-   Technical reference <nannyml/modules>
+   API reference <nannyml/modules>
 
 Indices and tables
 ##################
