@@ -14,9 +14,7 @@ from nannyml.metadata.binary_classification import BinaryClassificationMetadata
 from nannyml.metadata.multiclass_classification import MulticlassClassificationMetadata
 
 
-def extract_metadata(
-    data: pd.DataFrame, model_type: ModelType, model_name: str = None, exclude_columns: List[str] = None
-):
+def extract_metadata(data: pd.DataFrame, model_type: str, model_name: str = None, exclude_columns: List[str] = None):
     """Tries to extract model metadata from a given data set.
 
     Manually constructing model metadata can be cumbersome, especially if you have hundreds of features.
@@ -29,8 +27,9 @@ def extract_metadata(
     ----------
     data : DataFrame
         The dataset containing model inputs and outputs, enriched with the required metadata.
-    model_type: ModelType
-        The kind of model to extract metadata for. Required.
+    model_type: str
+        The kind of model to extract metadata for.
+        Should be one of "classification_binary" or "classification_multiclass".
     model_name : str
         A human-readable name for the model.
     exclude_columns: List[str], default=None
@@ -99,7 +98,8 @@ def extract_metadata(
     Be sure to always review the results of this method for their correctness and completeness.
     Adjust and complete as you see fit.
     """
-    metadata = ModelMetadataFactory.create(model_type=model_type, model_name=model_name).extract(
+
+    metadata = ModelMetadataFactory.create(model_type=ModelType.parse(model_type), model_name=model_name).extract(
         data, exclude_columns=exclude_columns
     )
 

@@ -45,7 +45,7 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 @pytest.fixture
 def metadata(data) -> MulticlassClassificationMetadata:  # noqa: D103
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    md = extract_metadata(data[0], model_type='classification_multiclass', exclude_columns=['identifier'])
     md.target_column_name = 'work_home_actual'
     return md
 
@@ -138,7 +138,7 @@ def test_extract_class_to_column_mapping_skips_non_present_class_names(clazz, co
 
 
 def test_extract_metadata_should_set_multiclass_classification_properties(data):  # noqa: D103
-    sut = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_MULTICLASS)
+    sut = extract_metadata(data[0], model_type='classification_multiclass')
     assert sut is not None
 
     # check binary classification properties
@@ -186,7 +186,7 @@ def test_setting_prediction_column_name_after_extracting_metadata_updates_the_fe
     data: pd.DataFrame,
 ):
     data[0].rename(columns={'y_pred': 'foo'}, inplace=True)
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    md = extract_metadata(data[0], model_type='classification_multiclass', exclude_columns=['identifier'])
     md.prediction_column_name = 'foo'
     assert md.prediction_column_name == 'foo'
     assert md.feature(column='foo') is None
@@ -203,7 +203,7 @@ def test_setting_predicted_probabilities_column_names_after_extracting_metadata_
         },
         inplace=True,
     )
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    md = extract_metadata(data[0], model_type='classification_multiclass', exclude_columns=['identifier'])
     md.predicted_probabilities_column_names = {
         'remote': 'score_remote',
         'onsite': 'score_onsite',
@@ -218,7 +218,7 @@ def test_setting_predicted_probabilities_column_names_after_extracting_metadata_
 
 
 def test_enrich_copies_each_metadata_column_to_new_fixed_column(data, metadata):  # noqa: D103
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_MULTICLASS, exclude_columns=['identifier'])
+    md = extract_metadata(data[0], model_type='classification_multiclass', exclude_columns=['identifier'])
     sut = md.enrich(data[0]).columns
 
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut

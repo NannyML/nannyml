@@ -35,7 +35,7 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 @pytest.fixture
 def metadata(data) -> ModelMetadata:  # noqa: D103
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data[0], model_type='classification_binary')
     md.target_column_name = 'work_home_actual'
     return md
 
@@ -102,7 +102,7 @@ def test_setting_prediction_column_name_after_extracting_metadata_updates_the_fe
     data: pd.DataFrame,
 ):
     data[0].rename(columns={'y_pred': 'foo'}, inplace=True)
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data[0], model_type='classification_binary')
     md.prediction_column_name = 'foo'
     assert md.prediction_column_name == 'foo'
     assert md.feature(column='foo') is None
@@ -112,7 +112,7 @@ def test_setting_predicted_probability_column_name_after_extracting_metadata_upd
     data: pd.DataFrame,
 ):
     data[0].rename(columns={'y_pred_proba': 'score'}, inplace=True)
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data[0], model_type='classification_binary')
     md.prediction_column_name = 'score'
     assert md.prediction_column_name == 'score'
     assert md.feature(column='score') is None
@@ -120,7 +120,7 @@ def test_setting_predicted_probability_column_name_after_extracting_metadata_upd
 
 def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
     data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
-    md = extract_metadata(data, model_name='model', model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data, model_name='model', model_type='classification_binary')
     sut = md.enrich(data).columns
 
     assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
@@ -133,7 +133,7 @@ def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
 def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
     data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
     old_column_count = len(data.columns)
-    md = extract_metadata(data, model_name='model', model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data, model_name='model', model_type='classification_binary')
     sut = md.enrich(data).columns
 
     assert len(sut) == len(data.columns) + 5
@@ -152,7 +152,7 @@ def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
 
 
 def test_enrich_adds_nan_prediction_column_if_no_prediction_column_in_original_data(data):  # noqa: D103
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data[0], model_type='classification_binary')
     analysis_data = data[1].drop(columns=[md.prediction_column_name])
     sut = md.enrich(analysis_data)
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut.columns
@@ -162,7 +162,7 @@ def test_enrich_adds_nan_prediction_column_if_no_prediction_column_in_original_d
 def test_enrich_adds_nan_predicted_probability_column_if_no_predicted_probability_in_original_data(  # noqa: D103
     data,
 ):
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data[0], model_type='classification_binary')
     analysis_data = data[1].drop(columns=[md.prediction_column_name])
     sut = md.enrich(analysis_data)
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut.columns
@@ -227,7 +227,7 @@ def test_complete_returns_false_when_features_of_unknown_feature_type_exist(data
 
 
 def test_extract_metadata_should_set_binary_classification_properties(data):  # noqa: D103
-    sut = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data[0], model_type='classification_binary')
     assert sut is not None
 
     # check binary classification properties

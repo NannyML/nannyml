@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from nannyml.exceptions import MissingMetadataException
+from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata.feature import Feature, FeatureType
 
 NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
@@ -40,6 +40,15 @@ class ModelType(str, Enum):
 
     CLASSIFICATION_BINARY = 'classification_binary'
     CLASSIFICATION_MULTICLASS = 'classification_multiclass'
+
+    @staticmethod
+    def parse(model_type_str: str):
+        if model_type_str == 'classification_binary':
+            return ModelType.CLASSIFICATION_BINARY
+        elif model_type_str == 'classification_multiclass':
+            return ModelType.CLASSIFICATION_MULTICLASS
+        else:
+            raise InvalidArgumentsException(f"unknown model type '{model_type_str}'")
 
 
 # TODO wording
@@ -106,7 +115,7 @@ class ModelMetadata(abc.ABC):
         Examples
         --------
         >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
-        >>> metadata = ModelMetadata(model_type=ModelType.CLASSIFICATION_BINARY, target_column_name='work_home_actual')
+        >>> metadata = ModelMetadata(model_type='classification_binary', target_column_name='work_home_actual')
         >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
         description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),
         >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
@@ -185,7 +194,7 @@ class ModelMetadata(abc.ABC):
         Examples
         --------
         >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
-        >>> metadata = ModelMetadata(model_type=ModelType.CLASSIFICATION_BINARY, target_column_name='work_home_actual')
+        >>> metadata = ModelMetadata(model_type='classification_binary', target_column_name='work_home_actual')
         >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
         description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),
         >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
@@ -222,7 +231,7 @@ class ModelMetadata(abc.ABC):
         Examples
         --------
         >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
-        >>> metadata = ModelMetadata(model_type=ModelType.CLASSIFICATION_BINARY, target_column_name='work_home_actual')
+        >>> metadata = ModelMetadata(model_type='classification_binary', target_column_name='work_home_actual')
         >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
         >>> description='Distance to the office', feature_type=FeatureType.CONTINUOUS),
         >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
@@ -300,7 +309,7 @@ class ModelMetadata(abc.ABC):
         Examples
         --------
         >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
-        >>> metadata = ModelMetadata(model_type=ModelType.CLASSIFICATION_BINARY, target_column_name='work_home_actual')
+        >>> metadata = ModelMetadata(model_type='classification_binary', target_column_name='work_home_actual')
         >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
         >>> description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),
         >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
@@ -365,7 +374,7 @@ class ModelMetadata(abc.ABC):
         Examples
         --------
         >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
-        >>> metadata = ModelMetadata(model_type=ModelType.CLASSIFICATION_BINARY, target_column_name='work_home_actual')
+        >>> metadata = ModelMetadata(model_type='classification_binary', target_column_name='work_home_actual')
         >>> metadata.features = [
         >>>     Feature('cat1', 'cat1', FeatureType.CATEGORICAL), Feature('cat2', 'cat2', FeatureType.CATEGORICAL),
         >>>     Feature('cont1', 'cont1', FeatureType.CONTINUOUS), Feature('cont2', 'cont2', FeatureType.CONTINUOUS)]

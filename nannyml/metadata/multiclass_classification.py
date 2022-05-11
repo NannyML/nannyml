@@ -110,7 +110,7 @@ class MulticlassClassificationMetadata(ModelMetadata):
         Examples
         --------
         >>> from nannyml.metadata import ModelMetadata, Feature, FeatureType
-        >>> metadata = ModelMetadata(model_type=ModelType.CLASSIFICATION_MULTICLASS,
+        >>> metadata = ModelMetadata(model_type='classification_multiclass',
         target_column_name='work_home_actual')
         >>> metadata.features = [Feature(column_name='dist_from_office', label='office_distance',
         description='Distance from home to the office', feature_type=FeatureType.CONTINUOUS),

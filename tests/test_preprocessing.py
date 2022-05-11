@@ -12,7 +12,7 @@ import pytest
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException, MissingMetadataException
 from nannyml.metadata import extract_metadata
-from nannyml.metadata.base import NML_METADATA_COLUMNS, ModelMetadata, ModelType
+from nannyml.metadata.base import NML_METADATA_COLUMNS, ModelMetadata
 from nannyml.preprocessing import preprocess
 
 
@@ -27,7 +27,7 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 @pytest.fixture
 def metadata(data) -> ModelMetadata:  # noqa: D103
-    md = extract_metadata(data[0], model_type=ModelType.CLASSIFICATION_BINARY)
+    md = extract_metadata(data[0], model_type='classification_binary')
     md.target_column_name = 'work_home_actual'
     return md
 
