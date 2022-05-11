@@ -294,7 +294,7 @@ The difference between binary and multiclass classification is that metadata for
 contain mapping between classes (i.e. values that are in target and prediction columns) to column names with predicted
 probabilities that correspond to these classes. This mapping can be specified by providing dictionary to
 ``predicted_probabilities_column_names`` or it can be automatically extracted if predicted probability column names
-meet some requirements. Read more in the :term:`Setting Up, Providing Metadata<providing_metadata>` section.
+meet some requirements. Read more in the :ref:`providing metadata<import-data>` section.
 
 Creating and using the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

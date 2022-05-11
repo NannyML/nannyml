@@ -126,7 +126,7 @@ Some information is infered automatically and we provide the rest.
     (True, [])
 
 
-We see that the metadata are complete. Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
+We see that the metadata are complete. Full information on how to extract metadata can be found in the :ref:`providing metadata guide<import-data>`.
 
 Fit calculator and calculate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -331,7 +331,7 @@ Some information is infered automatically and we provide the rest.
     (True, [])
 
 
-We see that the metadata are complete. Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
+We see that the metadata are complete. Full information on how to extract metadata can be found in the :ref:`providing metadata guide<import-data>`.
 
 Fit calculator and calculate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

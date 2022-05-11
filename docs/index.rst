@@ -30,6 +30,7 @@ Welcome to NannyML's documentation!
    troubleshooting
    glossary
    API reference <nannyml/modules>
+   contributing
 
 Indices and tables
 ##################

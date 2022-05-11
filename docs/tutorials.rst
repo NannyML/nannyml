@@ -11,4 +11,3 @@ Tutorials
     tutorials/monitoring_performance
     tutorials/detecting_data_drift
     tutorials/adjusting_plots
-    tutorials/contributing
