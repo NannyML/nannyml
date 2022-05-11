@@ -249,24 +249,24 @@ def test_feature_filtering_without_criteria_returns_none(sample_model_metadata):
 
 
 def test_extract_metadata_for_no_cols_dataframe_should_return_none():  # noqa: D103
-    sut = extract_metadata(data=pd.DataFrame(), model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data=pd.DataFrame(), model_type='classification_binary')
     assert sut is None
 
 
 def test_extract_metadata_without_any_feature_columns_should_return_metadata_without_features():  # noqa: D103
     data = pd.DataFrame(columns=['actual', 'partition', 'ts'])
-    sut = extract_metadata(data, model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data, model_type='classification_binary')
     assert len(sut.features) == 0
 
 
 def test_extract_metadata_should_not_consider_excluded_columns(sample_model_metadata, sample_data):  # noqa: D103
-    metadata = extract_metadata(sample_data, exclude_columns=['id'], model_type=ModelType.CLASSIFICATION_BINARY)
+    metadata = extract_metadata(sample_data, exclude_columns=['id'], model_type='classification_binary')
     assert metadata.feature(feature='id') is None
 
 
 def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names(sample_model_metadata):  # noqa: D103
     data = pd.DataFrame(columns=['y_pred', 'y_pred_proba', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
-    sut = extract_metadata(data, model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data, model_type='classification_binary')
     assert sut is not None
     assert sut.target_column_name == 'actual'
     assert sut.partition_column_name == 'partition'
@@ -276,7 +276,7 @@ def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names
 # TODO verify behaviour
 def test_extract_metadata_for_empty_dataframe_should_return_features_with_feature_type_unknown():  # noqa: D103
     data = pd.DataFrame(columns=['actual', 'partition', 'ts', 'feat1', 'feat2'])
-    sut = extract_metadata(data, model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data, model_type='classification_binary')
     assert len(sut.features) == 2
     assert sut.features[0].feature_type is FeatureType.UNKNOWN
     assert sut.features[1].feature_type is FeatureType.UNKNOWN
@@ -284,7 +284,7 @@ def test_extract_metadata_for_empty_dataframe_should_return_features_with_featur
 
 def test_extract_metadata_without_matching_columns_should_set_them_to_none():  # noqa: D103
     data = pd.DataFrame(columns=['a', 'b', 'c'])
-    sut = extract_metadata(data, model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data, model_type='classification_binary')
     assert sut.prediction_column_name is None
     assert sut.target_column_name is None
     assert sut.partition_column_name is None
@@ -293,7 +293,7 @@ def test_extract_metadata_without_matching_columns_should_set_them_to_none():  #
 
 def test_extract_metadata_without_matching_columns_should_set_features():  # noqa: D103
     data = pd.DataFrame(columns=['a', 'b', 'c'])
-    sut = extract_metadata(data, model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data, model_type='classification_binary')
     assert len(sut.features) == 3
     assert sut.feature(column='a')
     assert sut.feature(column='b')
@@ -302,7 +302,7 @@ def test_extract_metadata_without_matching_columns_should_set_features():  # noq
 
 def test_extract_metadata_with_multiple_matching_columns_should_return_first_matching_column():  # noqa: D103
     data = pd.DataFrame(columns=['target', 'ground_truth', 'actual'])
-    sut = extract_metadata(data, model_type=ModelType.CLASSIFICATION_BINARY)
+    sut = extract_metadata(data, model_type='classification_binary')
     assert sut.target_column_name == 'target'
 
 
@@ -310,7 +310,7 @@ def test_extract_metadata_does_not_fail_when_adding_metadata_parameter_fails(): 
     cols = ['actual', 'partition', 'timestamp_non_standard', 'feat1', 'feat2']
     df = pd.DataFrame(columns=cols)
     try:
-        _ = extract_metadata(df, model_type=ModelType.CLASSIFICATION_BINARY)
+        _ = extract_metadata(df, model_type='classification_binary')
     except Exception:
         pytest.fail("should not have failed because of inner exception")
 
@@ -319,7 +319,7 @@ def test_extract_metadata_does_not_fail_when_adding_metadata_parameter_fails(): 
 def test_extract_metadata_raises_missing_metadata_exception_when_missing_metadata_values(metadata_column):  # noqa: D103
     df = pd.DataFrame({metadata_column: [np.NaN]})
     with pytest.raises(MissingMetadataException):
-        _ = extract_metadata(df, model_type=ModelType.CLASSIFICATION_BINARY)
+        _ = extract_metadata(df, model_type='classification_binary')
 
 
 @pytest.mark.parametrize(

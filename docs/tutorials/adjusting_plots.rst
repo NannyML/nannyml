@@ -13,7 +13,7 @@ updating the plot. See example below:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type=nml.ModelType.CLASSIFICATION_BINARY,
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary',
     >>>                                 exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=5000, metrics=['roc_auc']).fit(reference)

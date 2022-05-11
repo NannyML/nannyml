@@ -41,7 +41,7 @@ If you just want the code to experiment yourself, here you go:
     >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(metadata.is_complete())
 
@@ -120,13 +120,13 @@ Some information is infered automatically and we provide the rest.
 
 .. code-block:: python
 
-    >>> metadata = nml.extract_metadata(reference, model_type=nml.ModelType.CLASSIFICATION_BINARY, exclude_columns=['identifier'])
+    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(metadata.is_complete())
     (True, [])
 
 
-We see that the metadata are complete. Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
+We see that the metadata are complete. Full information on how to extract metadata can be found in the :ref:`providing metadata guide<import-data>`.
 
 Fit calculator and calculate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -237,7 +237,7 @@ If you just want the code to experiment yourself, here you go:
     >>> metadata = nml.extract_metadata(
     reference,
     ...     model_name='credit_card_segment',
-    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     model_type='classification_multiclass',
     ...     exclude_columns=['identifier']
     >>> )
     >>> metadata.target_column_name = 'y_true'
@@ -323,7 +323,7 @@ Some information is infered automatically and we provide the rest.
     >>> metadata = nml.extract_metadata(
     reference,
     ...     model_name='credit_card_segment',
-    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     model_type='classification_multiclass',
     ...     exclude_columns=['identifier']
     >>> )
     >>> metadata.target_column_name = 'y_true'
@@ -331,7 +331,7 @@ Some information is infered automatically and we provide the rest.
     (True, [])
 
 
-We see that the metadata are complete. Full information on how the data should be prepared can be found in the guide on :ref:`importing data<import-data>`.
+We see that the metadata are complete. Full information on how to extract metadata can be found in the :ref:`providing metadata guide<import-data>`.
 
 Fit calculator and calculate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

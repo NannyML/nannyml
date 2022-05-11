@@ -28,8 +28,10 @@ Welcome to NannyML's documentation!
    how_it_works
    examples
    troubleshooting
+   datasets
    glossary
    API reference <nannyml/modules>
+   contributing
 
 Indices and tables
 ##################

@@ -117,7 +117,7 @@ drift statistics produces the following results:
     >>> data = pd.concat([reference, analysis], ignore_index=True)
 
     >>> # Let's create the model metadata object
-    >>> metadata = nml.extract_metadata(data = reference, model_name='3d_rotation', model_type=nml.ModelType.CLASSIFICATION_BINARY)
+    >>> metadata = nml.extract_metadata(data = reference, model_name='3d_rotation', model_type='classification_binary')
     >>> metadata.timestamp_column_name = 'ordered'
     >>> metadata.target_column_name = 'y_true'
 
