@@ -46,7 +46,6 @@ If you just want the code to experiment yourself, here you go:
     ...     figure.show()
 
 
-
 Walkthrough on Performance Estimation for Binary classification
 ----------------------------------------------------------------
 
