@@ -87,6 +87,7 @@ Training a Machine Learning Model
     >>> clf = RandomForestClassifier(random_state=42)
     >>> clf.fit(df_train[features], df_train[target])
     >>> df['y_pred_proba'] = clf.predict_proba(df[features])[:,1]
+    >>> df['y_pred'] = df['y_pred_proba'].map(lambda p: int(p >= 0.8))
 
     >>> # Check roc auc score
     >>> for partition_name, partition_data in df.groupby('partition', sort=False):
