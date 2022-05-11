@@ -481,7 +481,7 @@ After reviewing the performance estimation results we have to decide if further 
 The :ref:`Data Drift<data-drift>` functionality can help here.
 
 This may help to indicate which of our population characteristics have
-changed and how. This will naturally lead to investigating *why* they changed which is not covered by NannyML.
+changed and how. This will sometimes lead to investigating *why* they changed which is not covered by NannyML.
 
 When the target results become available they can be compared with the estimated results as
 demonstrated :ref:`here<compare_estimated_and_realized_performance>`. You can learn more
