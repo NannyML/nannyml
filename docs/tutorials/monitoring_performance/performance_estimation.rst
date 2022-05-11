@@ -7,7 +7,7 @@ Performance Estimation
 Why Perform Performance Estimation
 ============================================
 
-NammyML allows for estimating the performance of a classification model before :term:`targets<Target>`
+NannyML allows for estimating the performance of a classification model before :term:`targets<Target>`
 becomes available. This can be very helpful in situations where there is a significant delay
 in when targets becomes available but any changes in the model's performance would have
 a significant impact on business results.
