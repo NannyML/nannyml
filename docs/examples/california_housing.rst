@@ -1,6 +1,6 @@
-=============================
-California Housing Dataset
-=============================
+=================================================
+Binary Classification: California Housing Dataset
+=================================================
 
 This document outlines a typical workflow for estimating performance of a model without access to ground truth, detecting performance issues and identifying potential root causes for these issues.
 Below, one can find an example use of NannyML on the modified California Housing Prices dataset.
