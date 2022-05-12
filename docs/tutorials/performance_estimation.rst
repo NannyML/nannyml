@@ -9,7 +9,7 @@ Why Perform Performance Estimation
 
 NannyML allows to estimate the performance of a classification model when :term:`targets<Target>` are absent.
 This can be very helpful in situations where there is a significant delay
-in when targets become available but any changes in the model's performance would have
+in when targets become available, but any changes in the model's performance would have
 a significant impact on business results. This tutorial explains how to use NannyML to estimate performance of binary
 and multiclass classification models in the absence of ground truth. To find out how it works check
 :ref:`the explanation of CBPE<performance-estimation-deep-dive>`.
@@ -112,7 +112,7 @@ We see that the metadata are complete. Full information on how the data should b
 Create and fit the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In the next step Confidence-based Performance Estimation
+In the next step the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
 estimator is created using the previously
 extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional
@@ -145,14 +145,14 @@ estimator is then fitted using the
     >>> cbpe.fit(reference_data=reference)
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
-Typically, this would be used on the latest production data where target is missing. In our example this is
-the ``analysis`` data.
+Typically, this would be used on the latest production data where targets are missing. In our example this is
+the *analysis* data.
 
 .. code-block:: python
 
     >>> est_perf_analysis = cbpe.estimate(analysis)
 
-However, it can be also used on combined ``reference`` and ``analysis`` data. This might help to build better
+However, it can be also be used on the combined *reference* and *analysis* data. This might help to build better
 understanding of the monitored model performance changes on analysis data as it can be then shown in the context of
 changes of calculated performance on the reference period.
 
@@ -160,8 +160,8 @@ changes of calculated performance on the reference period.
 
     >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
 
-To find out how CBPE estimates performance, read about :ref:`Confidence-based
-Performance Estimation<performance-estimation-deep-dive>`.
+To find out how CBPE estimates performance, read the :ref:`Confidence-based
+Performance Estimation deep dive<performance-estimation-deep-dive>`.
 
 View the results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

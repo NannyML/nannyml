@@ -24,7 +24,7 @@ From the shell of your python environment type:
 
 
 ---------------------
-Content of Quickstart
+Content of quickstart
 ---------------------
 
 
@@ -33,7 +33,7 @@ that
 predicts whether an employee will work
 from home the next day or not. First, the whole code is shown so experiment-first users can get their hands dirty
 right away.
-This is followed by detailed walkthrough so read-first minds can get familiar with the flow before coding.
+This is followed by detailed walk through so read-first minds can get familiar with the flow before coding.
 :ref:`The synthetic dataset<dataset-synthetic-binary>` used is already preprocessed - it is merged with model
 predictions and ready to be directly used by NannyML.  In order to find out how to prepare your
 own dataset check these :ref:`tutorials<tutorials>`. This is also a good place to go to get detailed guides on main
@@ -47,7 +47,7 @@ Just the code
 -------------
 
 Feel free to copy-paste the code below and experiment with the results yourself. If you want us to guide you go to
-the :ref:`Walkthrough<walktghrough_the_quickstart>`.
+the :ref:`Walkthrough<walk_through_the_quickstart>`.
 
 .. code-block:: python
 
@@ -94,13 +94,13 @@ the :ref:`Walkthrough<walktghrough_the_quickstart>`.
     >>> figure.show()
 
 
-.. _walktghrough_the_quickstart:
+.. _walk_through_the_quickstart:
 
---------------------------
-Walkthrough the Quickstart
---------------------------
+---------------------------
+Walk through the quickstart
+---------------------------
 
-Let's start with loading synthetic dataset included in the library:
+Let's start with loading the synthetic dataset included in the library:
 
 .. code-block:: python
 
@@ -143,8 +143,8 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> chunk_size = 5000
 
-The data are already split into a reference and an analysis periods. NannyML uses **the reference period** to
-establish a baseline for expected model performance. **The analysis period** is where we estimate or
+The data are already split into a reference and an analysis periods. NannyML uses the **reference period** to
+establish a baseline for expected model performance. The ** analysis period** is where we estimate or
 monitor performance, as well as detect data drift.
 For more information about periods check :ref:`data-drift-periods`. The key thing is that
 the analysis period doesn't need to contain the :term:`Target` data.

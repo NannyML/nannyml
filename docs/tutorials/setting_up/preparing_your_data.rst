@@ -488,5 +488,5 @@ To find out more about the columns that should in your dataset, check out the
 You can read the :ref:`how metadata extraction works<deep_dive_metadata_extraction>` to find out more about our
 naming conventions and heuristics.
 
-You can put your shiny new metadata to use in :ref:`drift calculation<data-drift>`
+You can put your shiny new metadata to use in :ref:`drift calculation<data-drift>`, :ref:`performance calculation<performance-calculation>`
 or :ref:`performance estimation<performance-estimation>`.
