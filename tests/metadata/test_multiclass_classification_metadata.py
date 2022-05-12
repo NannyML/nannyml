@@ -260,3 +260,20 @@ def test_metadata_columns_returns_correct_metadata_columns(metadata):  # noqa: D
     assert 'nml_meta_predicted_proba_remote' in sut
     assert 'nml_meta_predicted_proba_onsite' in sut
     assert 'nml_meta_predicted_proba_hybrid' in sut
+
+
+@pytest.mark.parametrize(
+    'mapping,ok,missing',
+    [
+        ({'remote': 'y_pred_proba_remote', 'onsite': 'y_pred_proba_onsite', 'hybrid': 'y_pred_proba_hybrid'}, True, []),
+        ({'remote': 'y_pred_proba_remote', 'onsite': 'y_pred_proba_onsite'}, False, ['hybrid']),
+        ({'onsite': 'y_pred_proba_onsite'}, False, ['remote', 'hybrid']),
+    ],
+)
+def test_validate_predicted_class_labels_in_class_probability_mapping(  # noqa: D103
+    metadata: MulticlassClassificationMetadata, data, mapping, ok, missing
+):
+    metadata.predicted_probabilities_column_names = mapping
+    _ok, _missing = metadata.validate_predicted_class_labels_in_class_probability_mapping(data[0])
+    assert _ok == ok
+    assert _missing == missing
