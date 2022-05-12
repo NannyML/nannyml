@@ -159,8 +159,8 @@ A metric that is able to capture this change is needed.
 Data Reconstruction with PCA
 ----------------------------
 
-The solution to the problem posed with univariate drift statistics and the butterfly dataset
-is to use the Data Reconstruction with PCA. This method is able to capture
+To detect the drift that can't be seen on feature level we use Data Reconstruction with PCA.
+This method is able to capture
 complex changes in our data. The algorithm implementing Data Reconstruction with PCA
 works in three steps described below.
 
@@ -191,19 +191,19 @@ Understanding Reconstruction Error with PCA
 
 As PCA learns the internal structure of the data, a significant change in the reconstruction error means
 that the learned structure no longer accurately approximates the current data structure. This indicates data drift.
-:ref:`Multivariate Drift Detection<multivariate_drift_detection>` shows how one can compute
-Reconstruction Error with PCA.
 
-Applying PCA as part of the Data Reconstruction with PCA means that we lose some information about our dataset.
+
+Applying PCA as part of the Data Reconstruction with PCA means we lose some information about our dataset.
 This means that the reconstructed data will be slightly different compared to the original and reconstruction
-error reflects that. However the change in reconstruction error values over time has valuable insight.
-It tells us whether there is data drift or not. This is because, when there is
-data drift, the principal compoments of the model input data, that the PCA method has learnt,
-are now different. This will result in worse reconstruction of the new data and
-therefore increased reconstruction error.
+error reflects that. However, the change in reconstruction error values over time has valuable insight.
+It tells if there is data drift. This is because, when there is
+data drift, the principal components the PCA method has learnt become suboptimal.
+This will result in worse reconstruction of the new data and
+therefore different reconstruction error.
 
 Because of the noise present in real world datasets, there will always be some
-variability in reconstruction error results. This variability is used to determine
+variability in the reconstruction error results. We use this variablity as an acceptable
+baseline. Any reconstruction error values outside of that baseline represent
 a significant change in reconstruction error. NannyMl computes the mean
 and standard deviation of the reconstruction error with PCA on the reference
 dataset based on the different results for each :term:`Data Chunk`. This establishes
@@ -234,4 +234,7 @@ what it does on the butterfly dataset.
 
 
 The change in the butterfly dataset is now clearly visible through the change in the
-reconstruction error.
+reconstruction error, while our earlier univariate approach detected no change.
+
+For more information on using Reconstruction Error with PCA check
+the :ref:`Multivariate Drift Detection<multivariate_drift_detection>` tutorial.

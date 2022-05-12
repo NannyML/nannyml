@@ -14,6 +14,9 @@
     <a href="https://codecov.io/gh/NannyML/nannyml">
         <img src="https://codecov.io/gh/NannyML/nannyml/branch/main/graph/badge.svg?token=OGpF5gVzfR">
     </a>
+    <a href='https://nannyml.readthedocs.io/en/main/?badge=main'>
+        <img src='https://readthedocs.org/projects/nannyml/badge/?version=main' alt='Documentation Status' />
+    </a>
     <img alt="PyPI - License" src="https://img.shields.io/pypi/l/nannyml?color=green">
 </p>
 
@@ -21,7 +24,7 @@
     <strong>
         <a href="https://nannyml.com/">Website</a>
         •
-        <a href="https://docs.nannyml.com">Docs</a>
+        <a href="https://nannyml.readthedocs.io">Docs</a>
         •
         <a href="https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ">Community Slack</a>
     </strong>

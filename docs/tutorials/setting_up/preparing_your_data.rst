@@ -182,6 +182,17 @@ The following line of code modifies the :class:`~nannyml.metadata.base.ModelMeta
 
     >>> metadata.target_column_name = 'work_home_actual'
 
+.. note:: Updating metadata
+    All :class:`~nannyml.metadata.base.ModelMetadata` properties can be updated.
+
+    This includes:
+    - target_column_name
+    - partition_column_name
+    - timestamp_column_name
+    - prediction_column_name
+    - predicted_probability_column_name (for *binary classification*)
+    - predicted_probabalities_column_names (for *multiclass classification*)
+
 -----
 
 We see the metadata is now considered complete. We can represent the :class:`~nannyml.metadata.base.ModelMetadata`

@@ -1,17 +1,15 @@
 .. _multivariate_drift_detection:
 
-======================================
-Multivariate Feature Drift Detection
-======================================
+=================================
+Multivariate Data Drift Detection
+=================================
 
 Why Perform Multivariate Drift Detection
 ----------------------------------------
 
-The univariate approach to data drift detection is simple and interpretable but
-is not sensitive to all changes that can happen in a dataset. Multivariate drift detection
-focuses on the structure of our data within the data input space and
-detects changes in that structure. This allows capturing changes in our data that may not be
-visible from the univariate drift detection methods.
+Multivariate data drift detection addresses the shortcomings of univariate data detection methods.
+It provides one summary number reducing the risk of false alerts and detects more subtle changes
+in the data structure that cannot be detected with univariate approaches.
 
 Just The Code
 -------------
@@ -63,7 +61,7 @@ NannyML uses Data Reconstruction with PCA to detect such changes. For a detailed
 the method see
 :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 The method returns a single number, :term:`Reconstruction Error`. The changes in this value
-reflect a change in the structure of the model inputs. NannyML monitors the
+reflect a change in the structure of the model inputs. NannyML calculates the
 reconstruction error over time for the monitored model and raises an alert if the
 values get outside of a range defined by the variance in the reference period.
 
@@ -96,7 +94,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
 
 The :class:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
 module implements this functionality.
-Upon instantiating it with appropriate parameters
+After instantiating it with appropriate parameters
 the :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.fit` method needs
 to be called on the reference data where results will be based off. Then the
 :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.calculate` method will
@@ -115,9 +113,9 @@ One way to use it can be seen below:
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
 
 
-An important detail is that missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
-the most frequent value for categorical features and the mean for continuous features. It takes place if the relevant optional
-arguments are not specified. If needed they can be specified with an instannce of `SimpleImputer`_ class
+Missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
+the most frequent value for categorical features and the mean for continuous features. These defaults can be
+overridden with an instannce of `SimpleImputer`_ class
 in which cases NannyML will perform the imputation as instructed. An example where custom imputation strategies are used can be seen below:
 
 
