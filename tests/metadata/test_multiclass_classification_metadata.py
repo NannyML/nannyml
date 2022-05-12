@@ -267,7 +267,7 @@ def test_metadata_columns_returns_correct_metadata_columns(metadata):  # noqa: D
     [
         ({'remote': 'y_pred_proba_remote', 'onsite': 'y_pred_proba_onsite', 'hybrid': 'y_pred_proba_hybrid'}, True, []),
         ({'remote': 'y_pred_proba_remote', 'onsite': 'y_pred_proba_onsite'}, False, ['hybrid']),
-        ({'onsite': 'y_pred_proba_onsite'}, False, ['remote', 'hybrid']),
+        ({'onsite': 'y_pred_proba_onsite'}, False, ['hybrid', 'remote']),
     ],
 )
 def test_validate_predicted_class_labels_in_class_probability_mapping(  # noqa: D103
