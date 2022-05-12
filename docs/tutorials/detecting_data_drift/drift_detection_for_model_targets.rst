@@ -24,22 +24,22 @@ If you just want the code to experiment yourself within a Jupyter Notebook, here
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head(3))
-    >>>
+
     >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
-    >>>
+
     >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
     >>> target_distribution_calculator = target_distribution_calculator.fit(reference_data=reference)
-    >>>
+
     >>> target_distribution = target_distribution_calculator.calculate(data)
     >>> display(target_distribution.data.head(3))
-    >>>
+
     >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
     >>> fig.show()
-    >>>
+
     >>> fig = target_distribution.plot(kind='distribution', distribution='statistical')
     >>> fig.show()
 
@@ -57,7 +57,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
     >>> import pandas as pd
     >>> from IPython.display import display
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary')
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head(3))
 

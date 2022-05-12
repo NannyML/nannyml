@@ -240,7 +240,7 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 
     >>> ranker = nml.Ranker.by('alert_count')
     >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
-    >>> ranked_features
+    >>> display(ranked_features)
 
 +----+----------------------------+--------------------+--------+
 |    | feature                    |   number_of_alerts |   rank |
