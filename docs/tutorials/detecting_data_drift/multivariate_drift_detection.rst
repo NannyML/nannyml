@@ -115,7 +115,7 @@ One way to use it can be seen below:
 
 Missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
 the most frequent value for categorical features and the mean for continuous features. These defaults can be
-overridden with an instannce of `SimpleImputer`_ class
+overridden with an instance of `SimpleImputer`_ class
 in which cases NannyML will perform the imputation as instructed. An example where custom imputation strategies are used can be seen below:
 
 
@@ -195,7 +195,7 @@ NannyML can also visualize multivariate drift results with the following code:
 
 .. image:: /_static/drift-guide-multivariate.svg
 
-The multivariate drift results provide a consice summary of where data drift
+The multivariate drift results provide a concise summary of where data drift
 is happening in our input data.
 
 .. _SimpleImputer: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
