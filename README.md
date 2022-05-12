@@ -176,8 +176,8 @@ for feature in ranked_features.feature:
 # 📖 Documentation
 
 * Performance monitoring
-  - [Estimated performance](https://nannyml.readthedocs.io/en/main/tutorials/monitoring_performance/performance_estimation.html)
-  - [Realized performance](https://nannyml.readthedocs.io/en/main/tutorials/monitoring_performance/performance_calculation.html)
+  - [Estimated performance](https://nannyml.readthedocs.io/en/main/tutorials/performance_estimation.html)
+  - [Realized performance](https://nannyml.readthedocs.io/en/main/tutorials/performance_calculation.html)
 * Drift detection
   * [Multivariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/multivariate_drift_detection.html)
   - [Univariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/univariate_drift_detection.html)

@@ -47,4 +47,3 @@ ground truth is given in ``analysis_gt`` variable. It consists of ``identifier``
 
 
 .. image:: /_static/guide-performance_estimation_tmp.svg
-

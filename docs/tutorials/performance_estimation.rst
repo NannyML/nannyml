@@ -212,9 +212,9 @@ These results can be also plotted:
     ...     figure.show()
 
 
-.. image:: ../../_static/tutorial-perf-est-guide-analysis-roc_auc.svg
+.. image:: ../_static/tutorial-perf-est-guide-analysis-roc_auc.svg
 
-.. image:: ../../_static/tutorial-perf-est-guide-analysis-f1.svg
+.. image:: ../_static/tutorial-perf-est-guide-analysis-f1.svg
 
 The purple dashed step plot shows the estimated performance in each chunk of analysis period. Thick squared point
 marker indicates the middle of this period. Solid, low-saturated purple line *behind* indicates the confidence band.
@@ -236,9 +236,9 @@ performance on reference period (where the target was available).
     ...     figure.show()
 
 
-.. image:: ../../_static/tutorial-perf-est-guide-with-ref-roc_auc.svg
+.. image:: ../_static/tutorial-perf-est-guide-with-ref-roc_auc.svg
 
-.. image:: ../../_static/tutorial-perf-est-guide-with-ref-f1.svg
+.. image:: ../_static/tutorial-perf-est-guide-with-ref-f1.svg
 
 The right hand side of the plot is exactly the same as previously as it shows the estimated performance for the
 analysis period. The purple dashed vertical line splits the reference and analysis periods. On the left hand side of
@@ -449,9 +449,9 @@ These results can be also plotted:
     ...     figure.show()
 
 
-.. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-roc_auc.svg
+.. image:: ../_static/tutorial-perf-est-mc-guide-analysis-roc_auc.svg
 
-.. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-f1.svg
+.. image:: ../_static/tutorial-perf-est-mc-guide-analysis-f1.svg
 
 The purple dashed step plot shows the estimated performance in each chunk of analysis period. Thick squared point
 marker indicates the middle of this period. Solid, low-saturated purple line *behind* indicates the confidence band.
@@ -473,9 +473,9 @@ performance on reference period (where the target was available).
     ...     figure.show()
 
 
-.. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-roc_auc.svg
+.. image:: ../_static/tutorial-perf-est-mc-guide-with-ref-roc_auc.svg
 
-.. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-f1.svg
+.. image:: ../_static/tutorial-perf-est-mc-guide-with-ref-f1.svg
 
 The right hand side of the plot is exactly the same as previously as it shows the estimated performance for the
 analysis period. The purple dashed vertical line splits the reference and analysis periods. On the left hand side of
