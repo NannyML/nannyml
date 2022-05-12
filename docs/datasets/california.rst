@@ -56,7 +56,7 @@ The things that need to be added to the dataset are:
     >>> timestamps = [dt.datetime(2020,1,1) + dt.timedelta(hours=x/2) for x in df.index]
     >>> df['timestamp'] = timestamps
 
-    >>> # add partitions
+    >>> # add periods/partitions
     >>> train_beg = dt.datetime(2020,1,1)
     >>> train_end = dt.datetime(2020,5,1)
     >>> test_beg = dt.datetime(2020,5,1)
@@ -93,13 +93,13 @@ Training a Machine Learning Model
     >>> for partition_name, partition_data in df.groupby('partition', sort=False):
     ...     print(partition_name, roc_auc_score(partition_data[target], partition_data['y_pred_proba']))
     train 1.0
-    test 0.8737681614409617
-    production 0.8224322932364313
+    test 0.9079415179034716
+    production 0.8402458783370228
 
 Meeting NannyML Data Requirements
 =================================
 
-The data are now being splitted so they can be in a form required by NannyML.
+The data are now being split to satisfy NannyML format requirements.
 
 .. code-block:: python
 
@@ -113,8 +113,8 @@ The data are now being splitted so they can be in a form required by NannyML.
     >>> analysis = analysis.drop('clf_target', axis=1)
 
 The ``reference`` dataframe represents the reference :term:`Data Period` and the ``analysis``
-dataframe represents the analysis partition. The ``analysis_target`` dataframe contains the targets
-for the analysis partition that is provided separately.
+dataframe represents the analysis period. The ``analysis_target`` dataframe contains the targets
+for the analysis period that is provided separately.
 
 
 .. _California Housing Dataset: https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_california_housing.html
