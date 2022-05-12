@@ -4,11 +4,11 @@
 Data Reconstruction with PCA
 ============================
 
-Data Drift in Multidimensional data
------------------------------------
+Limitations of Univariate Drift Detection
+-----------------------------------------
 
 Machine Learning models typically have a multidimensional input space. In binary
-classification problems, models are trained to find the optimal classification
+classification problems, models are trained to find the optimal decision
 boundary. This boundary depends on the structure of the data within the model input
 space. However the world is not static, and the structure of a model's input data can
 change. This change can then cause our existing decision boundary to be suboptimal.
@@ -61,7 +61,7 @@ Let's see first how we can construct an instance of the Butterfly dataset:
     >>> )
 
     >>> # convert data to dataframe
-    >>> datadf = pd.DataFrame(dataar, columns=['f1', 'f2', 'f3'])
+    >>> datadf = pd.DataFrame(dataar, columns=['feature1', 'feature2', 'feature3'])
 
     >>> # add "timestamp" column
     >>> datadf = datadf.assign(ordered = pd.date_range(start='1/6/2020', freq='5min', periods=20*DPP))
@@ -73,19 +73,21 @@ Let's see first how we can construct an instance of the Butterfly dataset:
     >>> datadf.loc[datadf.week >= 11, ['partition']] = 'analysis'
 
     >>> # Assign random predictions and targets (we won't be using them but they are needed for NannyML)
-    >>> datadf = datadf.assign(y_pred = np.random.rand(DPP*20))
+    >>> datadf = datadf.assign(y_pred_proba = np.random.rand(DPP*20))
     >>> datadf = datadf.assign(y_true = np.random.randint(2, size=DPP*20))
 
-The key feature of the butterfly dataset is the data drift on its first two features.
-This data drift is introduced by a 90 degree rotation across the z-axis. The following code creates a
-plot that clearly shows the resulting data drift:
+The key property of the butterfly dataset is the data drift on its first two features.
+This data drift is introduced by a 90 degree rotation across the z-axis. The practical effect
+of this rotation is that we started with two features, `feature1` and `feature2` that were positively correlated
+but are now negatively correlated. The following code creates a plot that clearly shows the
+resulting data drift:
 
 .. code-block:: python
 
     >>> # let's construct a dataframe for visuzlization purposes
-    >>> dat1 = datadf.loc[datadf.week == 10, ['f1', 'f2']][:1500]
+    >>> dat1 = datadf.loc[datadf.week == 10, ['feature1', 'feature2']][:1500]
     >>> dat1['week'] = 10
-    >>> dat2 = datadf.loc[datadf.week == 16, ['f1', 'f2']][:1500]
+    >>> dat2 = datadf.loc[datadf.week == 16, ['feature1', 'feature2']][:1500]
     >>> dat2['week'] = 16
     >>> data_sample = pd.concat([dat1, dat2], ignore_index=True)
 
@@ -93,8 +95,8 @@ plot that clearly shows the resulting data drift:
     >>> colors = nml.plots.colors.Colors
     >>> figure = sns.jointplot(
     ...     data=data_sample,
-    ...     x="f1",
-    ...     y="f2",
+    ...     x="feature1",
+    ...     y="feature2",
     ...     hue="week",
     ...     palette=[colors.BLUE_SKY_CRAYOLA.value, colors.RED_IMPERIAL.value]
     >>> )
@@ -103,9 +105,11 @@ plot that clearly shows the resulting data drift:
 .. image:: ../_static/butterfly-scatterplot.svg
 
 
-The plot shows that the univariate distribution of features `f1` and
-`f2` are unchanged. Indeed using NannyML to compute and plot the univariate
-drift statistics produces the following results:
+The plot shows that the univariate distribution of features `feature1` and
+`feature2` are unchanged. With blue color you can see the original distribution
+of the two features and with red color you can see the resulting distribution
+after we have applied our transformation. Using NannyML to compute and plot the univariate
+drift statistics shows that on the individual feature level no changes are visible:
 
 .. code-block:: python
 
@@ -126,19 +130,6 @@ drift statistics produces the following results:
     >>> # let's compute (and visualize) results across all the dataset.
     >>> univariate_results = univariate_calculator.calculate(data=data)
 
-    >>> # let's create plot with results
-    >>> for feature in metadata.features:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
-    ...     figure.show()
-
-.. image:: ../_static/butterfly-univariate-drift-f1.svg
-
-.. image:: ../_static/butterfly-univariate-drift-f2.svg
-
-.. image:: ../_static/butterfly-univariate-drift-f3.svg
-
-.. code-block:: python
-
     >>> for feature in metadata.continuous_features:
     ...     figure = univariate_results.plot(
     ...         kind='feature_distribution',
@@ -146,15 +137,16 @@ drift statistics produces the following results:
     ...     )
     ...     figure.show()
 
-.. image:: ../_static/butterfly-univariate-drift-joyplot-f1.svg
+.. image:: ../_static/butterfly-univariate-drift-joyplot-feature1.svg
 
-.. image:: ../_static/butterfly-univariate-drift-joyplot-f2.svg
+.. image:: ../_static/butterfly-univariate-drift-joyplot-feature2.svg
 
-.. image:: ../_static/butterfly-univariate-drift-joyplot-f3.svg
+.. image:: ../_static/butterfly-univariate-drift-joyplot-feature3.svg
 
 These results make it clear that the univariate distribution results do not detect any drift.
-However there is data drift in the butterfly dataset. It has been explicitly created with it.
-A metric that is able to capture this change is needed.
+However there is data drift in the butterfly dataset. As mentioned, the correlation between features
+`feature1` and `feature2` has changed from positive to negative.
+A methodology that is able to capture this change is needed.
 
 Data Reconstruction with PCA
 ----------------------------
@@ -162,26 +154,27 @@ Data Reconstruction with PCA
 To detect the drift that can't be seen on feature level we use Data Reconstruction with PCA.
 This method is able to capture
 complex changes in our data. The algorithm implementing Data Reconstruction with PCA
-works in three steps described below.
+works in three steps as described below.
 
-The first step is data preparation and includes missing values :term:`Imputation`,
-frequency encoding and scaling the data. Missing values need to be imputed because using PCA requires it.
+The first step is data preparation. This includes missing values :term:`Imputation`,
+frequency encoding and scaling the data. Missing values need to be imputed because it is a PCA requirement.
 Frequency encoding is used to convert all categorical features into numbers. The next thing to do
-is standardize all features to 0 mean and unit variance. This makes sure that all features
+is standardize all features to 0 mean and unit variance, to make sure that all features
 contribute to PCA on equal footing.
 
-The second step is the dimensionality reduction part by using the PCA algorithm.
+The second step is the dimensionality reduction where PCA comes in.
 By default it aims to capture 65% of the dataset's variance but this is a parameter that
 can be changed. The PCA algorithm is fitted on the reference dataset and
-learns a transformation from the pre-processed model input space to a :term:`Latent space`.
-NannyML then applies this transformation to the data
-being analyzed. It is important that the PCA method captures the internal structure of the
+learns a transformation from the pre-processed model input space to a :term:`latent space<Latent space>`.
+NannyML then applies this transformation to compress the data that is
+being analyzed. It is important to note that the PCA method captures the internal structure of the
 model input data and ignores any random noise that is usually present.
 
 
-The third step is to transform the data from the latent space back to the preprocessed
-model input space, using the inverse PCA transformation.
-The euclidean distance between the original data points and their re-cosntructed counterparts
+The third step is decompressing the data we just compressed.
+This is done using the inverse PCA transformation which transforms to take the data from latent space
+back to the prepocessed model input space.
+Then, the euclidean distance between the original data points and their re-cosntructed counterparts
 is computed. The resulting distances are then aggregated to get their average. The resulting
 number is called :term:`Reconstruction Error`.
 
@@ -193,18 +186,22 @@ As PCA learns the internal structure of the data, a significant change in the re
 that the learned structure no longer accurately approximates the current data structure. This indicates data drift.
 
 
-Applying PCA as part of the Data Reconstruction with PCA means we lose some information about our dataset.
-This means that the reconstructed data will be slightly different compared to the original and reconstruction
-error reflects that. However, the change in reconstruction error values over time has valuable insight.
-It tells if there is data drift. This is because, when there is
+When applying PCA we lose some information about our dataset.
+This means that the reconstructed data will always be slightly different compared to the original
+and reconstruction error reflects that.
+Because of this the valuable insight doesn't come from the value of the reconstruction
+error but from the change in reconstruction error values over time.
+The change tells if there is data drift. This is because, when there is
 data drift, the principal components the PCA method has learnt become suboptimal.
 This will result in worse reconstruction of the new data and
 therefore different reconstruction error.
 
 Because of the noise present in real world datasets, there will always be some
-variability in the reconstruction error results. We use this variablity as an acceptable
-baseline. Any reconstruction error values outside of that baseline represent
-a significant change in reconstruction error. NannyMl computes the mean
+variability in the reconstruction error results. Hence not every change in reconstruction
+error values means that we have data drift. The variability of reconstruction error
+values on a known good dataset is used to determine an acceptable
+variance on the reconstruction error values. Any reconstruction error values outside of that
+variance represent a significant change in reconstruction error. NannyMl computes the mean
 and standard deviation of the reconstruction error with PCA on the reference
 dataset based on the different results for each :term:`Data Chunk`. This establishes
 a range of expected values of reconstruction error. A threshold for significant change
@@ -220,7 +217,7 @@ what it does on the butterfly dataset.
 
 .. code-block:: python
 
-    # Let's compute univariate drift
+    # Let's compute multivariate drift
     rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=DPP).fit(reference_data=reference)
     # let's compute (and visualize) results across all the dataset.
     rcerror_results = rcerror_calculator.calculate(data=data)
