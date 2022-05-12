@@ -28,7 +28,7 @@ synthetic dataset provided by NannyML. Set up first with:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> reference, analysis, _ = nml.datasets.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary')
+    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
 
 
