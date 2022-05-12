@@ -7,11 +7,10 @@ Estimating Performance
 Why Perform Performance Estimation
 ============================================
 
-NannyML allows to estimate the performance of a classification model when :term:`targets<Target>` are absent.
-This can be very helpful in situations where there is a significant delay
-in when targets become available, but any changes in the model's performance would have
-a significant impact on business results. This tutorial explains how to use NannyML to estimate performance of binary
-and multiclass classification models in the absence of ground truth. To find out how it works check
+NannyML allows estimating the performance of a classification model when :term:`targets<Target>` are absent.
+This can be very helpful when targets are delayed, only partially available, or not available at all. This tutorial
+explains how to use NannyML to estimate the performance of binary
+and multiclass classification models in the absence of target data. To find out how it works check
 :ref:`the explanation of CBPE<performance-estimation-deep-dive>`.
 
 Binary Classification
@@ -154,7 +153,7 @@ the *analysis* data.
 
 However, it can be also be used on the combined *reference* and *analysis* data. This might help to build better
 understanding of the monitored model performance changes on analysis data as it can be then shown in the context of
-changes of calculated performance on the reference period.
+changes of calculated performance in the reference period.
 
 .. code-block:: python
 
@@ -216,13 +215,20 @@ These results can be also plotted:
 
 .. image:: ../_static/tutorial-perf-est-guide-analysis-f1.svg
 
-The purple dashed step plot shows the estimated performance in each chunk of analysis period. Thick squared point
-marker indicates the middle of this period. Solid, low-saturated purple line *behind* indicates the confidence band.
-Red horizontal
-dashed lines show upper and lower thresholds. If the estimated performance crosses upper or lower threshold and alert
-is raised
-which is indicated with red, low-saturated background in the whole width of the relevant chunk. This is additionally
-indicated by red point marker in the middle of the chunk. Description of tabular results above explains how the
+Let's describe each element of the plot:
+
+* The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
+  marker indicates the middle of this period.
+
+* The solid, low-saturated purple line *behind* indicates the confidence band.
+
+* The red horizontal dashed lines show upper and lower thresholds.
+
+* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red,
+  low-saturated background in the whole width of the relevant chunk. This is additionally
+  indicated by a red point marker in the middle of the chunk.
+
+Description of tabular results above explains how the
 confidence bands and thresholds are calculated. Additional information is shown in the hover (these are
 interactive plots).
 
@@ -240,11 +246,16 @@ performance on reference period (where the target was available).
 
 .. image:: ../_static/tutorial-perf-est-guide-with-ref-f1.svg
 
-The right hand side of the plot is exactly the same as previously as it shows the estimated performance for the
-analysis period. The purple dashed vertical line splits the reference and analysis periods. On the left hand side of
-the line, the actual model performance (not estimation!) is plotted with solid light blue line. This facilitates
-interpretation of the estimation on reference period as it helps to build expectations on variability of the
-performance.
+
+* The right-hand side of the plot shows the estimated performance for the
+  analysis period as before.
+
+* The purple dashed vertical line splits the reference and analysis periods.
+
+* On the left-hand side of the line, the actual model performance (not estimation!) is plotted with a solid light blue
+  line. This facilitates
+  interpretation of the estimation on reference period as it helps to build expectations on the variability of the
+  performance.
 
 
 Multiclass Classification
@@ -391,7 +402,7 @@ the ``analysis`` data.
 
 However, it can be also used on combined ``reference`` and ``analysis`` data. This might help to build better
 understanding of the monitored model performance changes on analysis data as it can be then shown in the context of
-changes of calculated performance on the reference period.
+changes of calculated performance in the reference period.
 
 .. code-block:: python
 
@@ -453,14 +464,21 @@ These results can be also plotted:
 
 .. image:: ../_static/tutorial-perf-est-mc-guide-analysis-f1.svg
 
-The purple dashed step plot shows the estimated performance in each chunk of analysis period. Thick squared point
-marker indicates the middle of this period. Solid, low-saturated purple line *behind* indicates the confidence band.
-Red horizontal
-dashed lines show upper and lower thresholds. If the estimated performance crosses upper or lower threshold and alert
-is raised
-which is indicated with red, low-saturated background in the whole width of the relevant chunk. This is additionally
-indicated by red point marker in the middle of the chunk. Description of tabular results above explains how the
-confidence bands and thresholds were calculated. Additional information is shown in the hover (these are
+Let's describe each element of the plot:
+
+* The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
+  marker indicates the middle of this period.
+
+* The solid, low-saturated purple line *behind* indicates the confidence band.
+
+* The red horizontal dashed lines show upper and lower thresholds.
+
+* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red,
+  low-saturated background in the whole width of the relevant chunk. This is additionally
+  indicated by a red point marker in the middle of the chunk.
+
+Description of tabular results above explains how the
+confidence bands and thresholds are calculated. Additional information is shown in the hover (these are
 interactive plots).
 
 To get a better context let's additionally plot estimation of performance on *analysis* data together with calculated
@@ -477,23 +495,23 @@ performance on reference period (where the target was available).
 
 .. image:: ../_static/tutorial-perf-est-mc-guide-with-ref-f1.svg
 
-The right hand side of the plot is exactly the same as previously as it shows the estimated performance for the
-analysis period. The purple dashed vertical line splits the reference and analysis periods. On the left hand side of
-the line, the actual model performance (not estimation!) is plotted with solid light blue line. This facilitates
-interpretation of the estimation on reference period as it helps to build expectations on variability of the
-performance.
+* The right-hand side of the plot shows the estimated performance for the
+  analysis period as before.
+
+* The purple dashed vertical line splits the reference and analysis periods.
+
+* On the left-hand side of the line, the actual model performance (not estimation!) is plotted with a solid light blue
+  line. This facilitates
+  interpretation of the estimation on reference period as it helps to build expectations on the variability of the
+  performance.
 
 
 Insights and Follow Ups
 ==========================
 
 After reviewing the performance estimation results we have to decide if further investigation is needed.
-The :ref:`Data Drift<data-drift>` functionality can help here.
-
-This may help to indicate which of our population characteristics have
-changed and how. This will sometimes lead to investigating *why* they changed which is not covered by NannyML.
-
-When the target results become available they can be compared with the estimated results as
+The :ref:`Data Drift<data-drift>` functionality can help here. When the target results become available they can be
+compared with the estimated results as
 demonstrated :ref:`here<compare_estimated_and_realized_performance>`. You can learn more
 about the Confidence Based Performance Estimation and its limitations in the
 :ref:`How it Works page<performance-estimation-deep-dive>`
