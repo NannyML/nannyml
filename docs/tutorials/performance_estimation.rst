@@ -1,7 +1,7 @@
 .. _performance-estimation:
 
 ============================================
-Performance Estimation
+Estimating Performance
 ============================================
 
 Why Perform Performance Estimation
