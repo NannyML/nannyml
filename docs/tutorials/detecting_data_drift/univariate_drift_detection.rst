@@ -227,7 +227,7 @@ stacked bar charts for categorical variables. It does so with the following code
 NannyML highlights the areas with possible data drift.
 Here, the ``tenure`` feature has two alerts that are false positives, from a model monitoring
 point of view. That is so because the measure of the drift, as shown by the KS d-statistic is very low. This is
-in conrast to the alerts for the ``public_transportation_cost`` for example, where
+in contrast to the alerts for the ``public_transportation_cost`` for example, where
 the KS d-statistc grows significantly.
 The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
 ``wfh_prev_workday`` have been correctly identified as drifted.
