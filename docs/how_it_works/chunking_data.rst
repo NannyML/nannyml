@@ -12,11 +12,11 @@ For an introduction on :term:`chunks<Data Chunk>` please have a loot at
 This guide focuses on the potential issues that may arise from using chunks.
 They are described below.
 
-Different partitions within one chunk
+Different periods within one chunk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to get performance estimation or data drift results for a dataset that contains two
-partitions - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
+periods - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
 them. Such a chunk will be considered as an ``analysis`` chunk, even if only one observation belongs to ``analysis``.
 In the example below, chunk which contains observations from 44444 to 55554 is considered an analysis
 chunk but indices from 44444 to 49999 point to reference observations:
@@ -71,11 +71,11 @@ are smaller than the minimum chunk size, a warning will be raised. For example:
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
     your data in a different way or continue at your own risk.
 
-When the warning is about a single chunk, it is usually the last chunk.
-As this is the most recent chuck, it might be that not all observations have been generated yet.
+When the warning is about a single chunk, it is usually the last chunk and this is due to the reasons described in
+:ref:`Setting Up: Chunking<chunking>`.
 When there are more than one underpopulated chunks staying with the selected chunking method
 may be suboptimal.
-Look at the :ref:`section on minimum chunk size <minimum-chunk-size>` to get more information about the effect of
+Read :ref:`minimum chunk size <minimum-chunk-size>` to get more information about the effect of
 small chunks. Beware of the trade-offs involved, when selecting the chunking method.
 
 
@@ -162,7 +162,7 @@ the sampled means:
 
 In order to take advantage of the SE formula, accuracy for each observation separately needs to be calculated.
 Accuracy for a single observation is simply equal to 1 when the prediction is correct and equal to 0 otherwise.
-With observation-level accuracies in place, accuracy for the whole sample can be calculated as a mean of them.
+With observation-level accuracies in place, accuracy for the whole sample can be calculated as the mean of them.
 After this transformation the SE formula can be used directly to estimate the standard error of accuracy as a
 function of sample:
 
@@ -190,7 +190,7 @@ The same formula can be used to estimate the sample size for the required standa
     >>> sample_size
     624.99
 
-So for the analyzed case, a chunk with 625 observations will result with standard error of accuracy equal to 0.02.
+So for the analyzed case, the chunk size of 625 observations will result with standard error of accuracy equal to 0.02.
 In other words, if we calculate accuracy of this model on a large number of samples with 625 observations each,
 standard deviation of these accuracies will be about 0.02. This dispersion will be purely the effect of sampling
 because model quality and data distribution remain unchanged. In the current NannyML implementation, the estimated chunk
@@ -216,7 +216,7 @@ Minimum Chunk for Multivariate Drift
 
 To ensure that there is no significant noise present in :ref:`multivariate drift<multivariate_drift_detection>`
 results NannyML suggests a minimum chunk size
-based on the number of features user to perform data reconstruction according to this function:
+based on the number of features used to perform data reconstruction according to this function:
 
 .. math::
 
