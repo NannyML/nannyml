@@ -26,7 +26,7 @@ If you just want the code to experiment yourself, here you go:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
     >>> metadata = nml.extract_metadata(
@@ -72,7 +72,7 @@ whether an employee will work from home. Read more :ref:`here<dataset-synthetic-
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -88,7 +88,7 @@ whether an employee will work from home. Read more :ref:`here<dataset-synthetic-
 
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
 the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
-``analysis_gt`` dataframe contains the target (ground truth) results of the analysis period and will not be used
+``analysis_targets`` dataframe contains the target (ground truth) results of the analysis period and will not be used
 during Performance Estimation.
 
 One of the first steps in using NannyML is providing metadata information about the model that is monitored.
@@ -272,7 +272,7 @@ If you just want the code to experiment yourself, here you go:
     >>> import nannyml as nml
     >>> from IPython.display import display
 
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_multiclass_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_multiclass_classification_dataset()
     >>> display(reference.head(3))
 
     >>> metadata = nml.extract_metadata(
@@ -318,7 +318,7 @@ which type of credit card product new customers should be assigned to. Read more
     >>> import nannyml as nml
     >>> from IPython.display import display
 
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_multiclass_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_multiclass_classification_dataset()
     >>> display(reference.head(3))
 
 
@@ -335,7 +335,7 @@ which type of credit card product new customers should be assigned to. Read more
 
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
 the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
-``analysis_gt`` dataframe contains the target results of the analysis period and will not be used
+``analysis_targets`` dataframe contains the target results of the analysis period and will not be used
 during Performance Estimation.
 
 One of the first steps in using NannyML is providing metadata information about the model we are monitoring.

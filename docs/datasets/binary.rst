@@ -22,7 +22,7 @@ A sample of the dataset can be seen below.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+

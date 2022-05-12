@@ -18,7 +18,7 @@ Let's load the dataset from NannyML datasets:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> # load data
-    >>> reference, analysis, analysis_gt = nml.datasets.load_modified_california_housing_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_modified_california_housing_dataset()
     >>> reference.head(3)
 
 +----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
@@ -124,7 +124,7 @@ calculate ROC AUC on relevant chunks and compare:
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
     >>> # add ground truth to analysis
-    >>> analysis_full = pd.merge(analysis,analysis_gt, on = 'identifier')
+    >>> analysis_full = pd.merge(analysis,analysis_targets, on = 'identifier')
     >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
     >>> df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
     >>> # calculate actual ROC AUC

@@ -6,12 +6,12 @@ Comparing Estimated and Realized Performance
 
 
 When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
-ground truth is given in ``analysis_gt`` variable. It consists of ``identifier`` that allows to match it with
+ground truth is given in ``analysis_targets`` variable. It consists of ``identifier`` that allows to match it with
 ``analysis`` data and the target for monitored model - ``work_home_actual``:
 
 .. code-block:: python
 
-    >>> analysis_gt.head(3)
+    >>> analysis_targets.head(3)
 
 
 +----+--------------+--------------------+
@@ -29,7 +29,7 @@ ground truth is given in ``analysis_gt`` variable. It consists of ``identifier``
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
     >>> # merge gt to analysis
-    >>> analysis_full = pd.merge(analysis, analysis_gt, on = 'identifier')
+    >>> analysis_full = pd.merge(analysis, analysis_targets, on = 'identifier')
     >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
     >>> target_col = 'work_home_actual'
     >>> pred_score_col = 'y_pred_proba'

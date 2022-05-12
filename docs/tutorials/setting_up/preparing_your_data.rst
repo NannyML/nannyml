@@ -32,7 +32,7 @@ Just the code
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_gt = nml.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_binary_classification_dataset()
     >>> reference.columns
     Index(['distance_from_office', 'salary_range', 'gas_price_per_litre',
        'public_transportation_cost', 'wfh_prev_workday', 'workday', 'tenure',
@@ -105,7 +105,7 @@ using the shared ``identifier`` column.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_gt = nml.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_binary_classification_dataset()
 
 -----
 
@@ -250,7 +250,7 @@ Just the code
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_gt = nml.load_synthetic_multiclass_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_multiclass_classification_dataset()
     >>> reference.columns
     Index(['acq_channel', 'app_behavioral_score', 'requested_credit_limit',
        'app_channel', 'credit_bureau_score', 'stated_income', 'is_customer',
@@ -331,7 +331,7 @@ using the shared ``identifier`` column.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_gt = nml.load_synthetic_multiclass_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_multiclass_classification_dataset()
 
 -----
 

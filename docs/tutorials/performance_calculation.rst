@@ -36,7 +36,7 @@ If you just want the code to experiment yourself, here you go:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
     >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
@@ -78,7 +78,7 @@ whether an employee will work from home.
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -113,7 +113,7 @@ values are joined on the analysis frame by the ``identifier`` column.
 
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
 the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
-``analysis_gt`` dataframe contains the target results of the analysis period and we will not be using
+``analysis_targets`` dataframe contains the target results of the analysis period and we will not be using
 it during Performance Estimation.
 
 One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
@@ -234,12 +234,12 @@ If you just want the code to experiment yourself, here you go:
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_multiclass_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_multiclass_classification_dataset()
     >>> display(reference.head(3))
 
     >>> data = pd.concat([
     ...     reference,
-    ...     analysis.set_index('identifier').join(analysis_gt.set_index('identifier'), on='identifier', rsuffix='_r')
+    ...     analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')
     >>> ], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
@@ -283,7 +283,7 @@ which type of credit card product new customers should be assigned to.
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_gt = nml.datasets.load_synthetic_multiclass_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_multiclass_classification_dataset()
     >>> display(reference.head(3))
 
 +----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
@@ -304,7 +304,7 @@ values are joined on the analysis frame by the ``identifier`` column.
 
     >>> data = pd.concat([
     ...     reference,
-    ...     analysis.set_index('identifier').join(analysis_gt.set_index('identifier'), on='identifier', rsuffix='_r')
+    ...     analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')
     >>> ], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
@@ -321,7 +321,7 @@ values are joined on the analysis frame by the ``identifier`` column.
 
 The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
 the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
-``analysis_gt`` dataframe contains the target results of the analysis period and we will not be using
+``analysis_targets`` dataframe contains the target results of the analysis period and we will not be using
 it during Performance Estimation.
 
 One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
