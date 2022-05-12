@@ -5,19 +5,12 @@ Quickstart
 =================
 
 ----------------
-Why use NannyML?
+What is NannyML?
 ----------------
 
 NannyML detects silent model failure, estimates performance of ML models after deployment
 before target data become available and robustly detects data drift potentially responsible for the failure.
-This quickstart presents these core
-functionalities on an example of binary classification model that predicts whether an employee will work from home
-the next day or not. This synthetic dataset used is already preprocessed - it is merged with model predictions and
-ready to be directly used by NannyML. In order to find out how to prepare your own dataset check these
-:ref:`tutorials<tutorials>`.
-This is also a good place to go to get detailed guides on core concepts and functionalities. If you want to know
-what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
-on other datasets or ML problems look at :ref:`examples<examples>`.
+
 
 ------------------
 Installing NannyML
@@ -28,6 +21,25 @@ From the shell of your python environment type:
 .. code-block:: bash
 
     $ pip install nannyml
+
+
+---------------------
+Content of Quickstart
+---------------------
+
+
+This quickstart presents core functionalities of NannyML on an example of binary classification model
+that
+predicts whether an employee will work
+from home the next day or not. First, the whole code is shown so experiment-first users can get their hands dirty
+right away.
+This is followed by detailed walkthrough so read-first minds can get familiar with the flow before coding.
+:ref:`The synthetic dataset<dataset-synthetic-binary>` used is already preprocessed - it is merged with model
+predictions and ready to be directly used by NannyML.  In order to find out how to prepare your
+own dataset check these :ref:`tutorials<tutorials>`. This is also a good place to go to get detailed guides on main
+concepts and functionalities. If you want to know
+what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
+on other datasets or ML problems look at :ref:`examples<examples>`.
 
 
 -------------
@@ -119,7 +131,8 @@ inputs are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, 
 ``wfh_prev_workday``, ``workday`` and ``tenure``. ``identifier`` is the :term:`Identifier` column
 and ``timestamp`` is the :term:`Timestamp` column.
 
-The next step is to have NannyML deduce :term:`model metadata<Model Metadata>` from the dataset and make a choice about the
+The next step is to have NannyML extract  :term:`model metadata<Model Metadata>` from the dataset and make a choice
+about the
 way we will split our data into :term:`Data Chunks<Data Chunk>`.
 
 .. code-block:: python
@@ -130,12 +143,12 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
     >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> chunk_size = 5000
 
-The data are already split into a reference and an analysis periods. NannyML uses the **reference period** to
-establish a baseline for expected model performance. The **analysis period** is where we can estimate or
+The data are already split into a reference and an analysis periods. NannyML uses **the reference period** to
+establish a baseline for expected model performance. **The analysis period** is where we estimate or
 monitor performance, as well as detect data drift.
-For more information about periods check :ref:`data-drift-periods`. The key thing to note is that we don't expect
-the analysis period to contain information about the :term:`Target` when we estimate performance.
-Therefore in our synthetic dataset it is provided in a separate object.
+For more information about periods check :ref:`data-drift-periods`. The key thing is that
+the analysis period doesn't need to contain the :term:`Target` data.
+Therefore in our example it is provided as a separate object.
 
 .. code-block:: python
 
@@ -242,7 +255,7 @@ Drift in the model outputs can be also visualized:
 .. image:: ./_static/drift-guide-predictions.svg
 
 More complex data drift cases can get detected by Data Reconstruction with PCA. For more information
-see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 
 
 .. code-block:: python
