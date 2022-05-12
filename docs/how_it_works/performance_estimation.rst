@@ -8,8 +8,9 @@ This page describes the algorithms that NannyML uses to estimate monitored model
 that NannyML takes advantage of the confidence accompanying the prediction. For
 classifiers, this confidence is expressed by the probability that an observation belongs to a class.
 These probabilities are then used to estimate a value of selected performance evaluation metric for a set of
-observations. Given well-calibrated probabilities and large enough set of observations,
-CBPE returns accurate estimation of performance metric value.
+observations. Provided that the monitored model returns well-calibrated probabilities (or probabilities that can
+:ref:`get well-calibrated in post processing <cbpe_probability_calibration>`) and large enough set of observations,
+:ref:`CBPE returns accurate estimation of performance metric value<performance-estimation-deep-dive-limitations>`.
 
 --------------
 CBPE algorithm
@@ -23,8 +24,8 @@ probability prediction (sometimes referred to as score). The score provides info
 prediction. A rule of thumb is that, the closer the score is to its lower or upper limit (usually 0 and 1), the higher
 the probability that the classifier's prediction is correct. When this score is an actual probability, it can be
 directly used to estimate the probability of making an error. For instance, imagine a high-performing model which,
-for a large set of observations, returns a prediction of 1 (positive class) with probability of 0.9. It means that
-for approximately 90% of these observations, the model is correct while for the other 10% the model is wrong.
+for a large set of observations, returns a prediction of 1 (positive class) with a probability of 0.9. It means that
+for approximately 90% of these observations, the model is correct, while for the other 10% the model is wrong.
 Assuming properly calibrated probabilities, confusion matrix elements can be estimated and then used to calculate any
 performance metric. Algorithms for estimating one of the simplest metrics (accuracy) and of the most complex (AUROC) are
 described below. Common notation used in the sections below is the following:
@@ -161,7 +162,7 @@ Multiclass Classification
 =========================
 
 Multiclass classification model outputs prediction label (predicted class) and
-probability for each possible class. It means that if there are three classes, for example A, B and C, model output
+probability for each class. It means that if there are three classes, for example A, B and C, model output
 should contain four pieces of information - predicted class (e.g. A) and three probabilities, one for each class.
 Assuming these probabilities are well calibrated, they can be used to estimate performance metrics. As an example,
 let's describe the process for macro-averaged precision. Let's use :math:`c` to denote total number of classes and
@@ -189,56 +190,72 @@ are not binary anymore and take one of :math:`c` values.
         .. math::
             {precision} = \frac{1}{c} \sum_{k=1}^{c} {precision}_{k}
 
-Recall, f1, specificity and *one-vs-rest* ROC AUC are estimated in the exact same way. Multiclass accuracy is a bit
-different as it is not estimated class-wise and averaged because this is not the way the metric itself is calculated.
-It is just estimated as the mean of predicted probabilities corresponding to the predicted classes.
+Recall, f1, specificity and *one-vs-rest* ROC AUC are estimated in the exact same way. Multiclass accuracy is
+just estimated as the mean of predicted probabilities corresponding to the predicted classes.
 
 
 .. _performance-estimation-deep-dive-limitations:
 
--------------
-When it works
--------------
+---------------------------
+Assumptions and Limitations
+---------------------------
 
-CBPE estimates performance perfectly well under following conditions:
+CBPE is unbiased estimator of performance assuming:
 
-    1. The monitored model returns well-calibrated probabilities.
+**The monitored model returns well-calibrated probabilities.**
+    Well-calibrated probabilities allow to accurately estimate confusion matrix elements and thus estimate any metric
+    based on them. A model that returns perfectly calibrated probabilities
+    is an ideal probabilistic model (Bayes Classifier). One may ask if there's anything to estimate if the model is perfect?
+    Performance of ideal model is usually far from being equal to the maximum possible value for a given metric - it is
+    lower because of the irreducible error coming from the fact that classes are not perfectly separable with the data available. In
+    reality, many models are very close to Bayes Classifier - close enough for CBPE to work. Usually *good models*
+    (e.g. ROC AUC>0.9) return well-calibrated probabilities, or scores that can be accurately
+    :ref:`calibrated in postprocessing<cbpe_probability_calibration>`. There are also models considered as *poor*
+    (with performance just better than random) that still return well-calibrated probabilities - this happens when
+    most of the error is an irreducible error i.e. when there is not enough signal in the features to predict the target.
+    Performance of all models change in time as a result of changes in distributions of inputs (X).
+    Very often it happens right after switching to production.
+    The good news is that **CBPE will remain accurate under data drift i.e. when distribution of inputs P(X) changes but
+    probability of target given inputs P(Y|X) stays the same** (or in other words - if probabilities remain
+    well-calibrated). An example might be a situation when one segment of population starts to dominate in
+    the data - in medical applications we might have training data which is balanced with respect to patients' age
+    but in production mainly older patients are analyzed. Performance of the monitored model will probably change in such
+    case and this change will be noticed by CBPE.
+
+**There is no data drift to previously unseen regions in the input space.**
+    The algorithm will most likely not work if
+    the drift happens to subregions previously unseen in the input
+    space. In such case the monitored  model was not able to learn P(Y|X). Using
+    the same example, this will happen when the model was trained on youths only but then it is applied to middle-aged people. If true relation
+    between age and the target is nonlinear, most models will not estimate probability correctly on previously unseen data.
+    This also depends on the type of the algorithm trained and its ability to extrapolate estimation of probabilities. For example Random Forest
+    model estimated probability will remain constant and equal to the one in the closest input space region covered by training
+    data - in our case this will be the probability for *the oldest patients of youths*. On the other hand, Logistic
+    Regression will learn a parameter (coefficient) between age and the target and extrapolate linearly. Provided that true
+    underlying relationship is also linear, Logistic Regression model will estimate probability correctly even for unseen
+    *ages*.
 
 
-    2. Sample of data used for estimation is large enough.
+**There is no concept drift**.
+    While dealing well with data drift, CBPE will not work under concept drift i.e. when
+    P(Y|X) changes. Except
+    from very specific cases, there is no way to identify concept drift without any ground truth data.
 
-Let's focus on the first one. A model that returns perfectly calibrated probabilities is an ideal probabilistic model
-(Optimal Bayes Classifier). One may ask if there's anything to estimate if the model is perfect?
-Performance of ideal model is usually far from being equal to the maximum possible value for a given metric - it is
-lower because of the irreducible error coming from the fact that classes are not perfectly separable with the data available. In
-reality, many models are very close to Bayes Classifier - close enough for CBPE to work.
-Moreover, performance of such models does not have to be constant - it depends on the distribution of inputs
-(X) in analyzed sample and this may change with time. Very often it changes right after switching to production.
-The good news is that **CBPE will remain accurate under data drift i.e. when distribution of inputs P(X) changes but
-probability of target given inputs P(Y|X) stays the same**. An example might be a situation when one segment of population starts to dominate in
-the data - in medical applications we might have training data which is balanced with respect to patients' age
-but in production mainly older patients are analyzed. Performance of the monitored model will probably change in such
-case and this change will be noticed by CBPE. The algorithm however will most likely not work if the drift happens to
-subregions previously unseen in the input space. In such case the monitored  model was not able to learn P(Y|X). Using
-the same example, this will happen when the model was trained on youths only but then it is applied to middle-aged people. If true relation
-between age and the target is nonlinear, most models will not estimate probability correctly. This also depends on the
-type of the algorithm trained and its ability to extrapolate estimation of probabilities. For example Random Forest
-model estimated probability will remain constant and equal to the one in the closest input space region covered by training
-data - in our case this will be the probability for *the oldest patients of youths*. On the other hand, Logistic
-Regression will learn a parameter (coefficient) between age and the target and extrapolate linearly. Provided that true
-underlying relationship is also linear, Logistic Regression model will estimate probability correctly even for unseen
-*ages*. While dealing well with data drift, CBPE will not work under concept drift. Except from very specific cases,
-there is no way to identify concept drift without any ground truth data.
+**Sample of data used for estimation is large enough.**
+    CBPE calculates expected values of confusion matrix elements. It means it will get more accurate with increasing
+    sample size. If you toss a coin only a few times, you are likely to get more heads than tails or the other way
+    around, even though the expectation of 50/50 is correct. With small sample not only CBPE won't work well - even
+    if there is an access to the ground truth the calculated metric will not be reliable as well. Let's imagine a very
+    good model that is evaluated on a sample of 5 observations only. For each observation model returns a positive class
+    with 90% probability. It still may happen that they all turn out being negative and accuracy of your model on such sample is equal to 0!
+    Read more about it :ref:`here<chunk-data-minimum-chunk>`.
 
-Second requirement is obvious but worth noting. With small sample not only CBPE won't work well - even if there is
-access to ground truth the calculated metric will not be reliable as well. Let's imagine a very good model that is
-evaluated on sample of 5 observations only. For each observation model returns a positive class with 90% probability.
-It still may happen that they all turn out being negative and accuracy of your model on such sample is equal to 0!
-Read more about it :ref:`here<chunk-data-minimum-chunk>`.
 
------------------------
-Probability calibration
------------------------
+.. _cbpe_probability_calibration:
+
+---------------------------------
+Appendix: Probability calibration
+---------------------------------
 
 In order to accurately estimate the performance from the model scores, they need to be well calibrated. If a classifier assigns a probability of 0.9 for a set of observations and 90% of these observations belong to the positive class, we consider that classifier to be well calibrated with respect to that subset. Most predictive models focus on performance rather than on probability estimation, therefore their scores are rarely calibrated.
 Examples of different models and their calibration curves are shown below [1]_:
