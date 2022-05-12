@@ -52,25 +52,25 @@ Allowing you to have the following benefits:
 * **Painless** setup in any environment
 
 # 🧠 GO DEEP
-| NannyML Resources | Description |
-| ------------- | ------------- |
-| ☎️ **[NannyML 101]** | New to NannyML? Start here! |
-| 🔮 **[Performance estimation]** | How the magic works. |
-| 🌍 **[Real world example]** |  Take a look at a real-world example of NannyML. |
-| 🔑 **[Key concepts]** | Glossary of key concepts we use. |
-| 🔬 **[Technical reference]** | Monitor the performance of your ML models. |
-| 🔎 **[Blog]** | Thoughts on post-deployment data science from the NannyML team. |
-| 📬 **[Newsletter]** | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎	**[New in v0.3.1]** | New features, bug fixes. |
-| 🧑‍💻 **[Contribute]** | How to contribute to the NannyML project and codebase. |
-| <img src="media/slack.png" width='25'> **[Join slack]** | Need help with your specific use case? Say hi on slack! |
+| NannyML Resources                                       | Description                                                                            |
+|---------------------------------------------------------|----------------------------------------------------------------------------------------|
+| ☎️ **[NannyML 101]**                                    | New to NannyML? Start here!                                                            |
+| 🔮 **[Performance estimation]**                         | How the magic works.                                                                   |
+| 🌍 **[Real world example]**                             | Take a look at a real-world example of NannyML.                                        |
+| 🔑 **[Key concepts]**                                   | Glossary of key concepts we use.                                                       |
+| 🔬 **[Technical reference]**                            | Monitor the performance of your ML models.                                             |
+| 🔎 **[Blog]**                                           | Thoughts on post-deployment data science from the NannyML team.                        |
+| 📬 **[Newsletter]**                                     | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
+| 💎	**[New in v0.3.1]**                                  | New features, bug fixes.                                                               |
+| 🧑‍💻 **[Contribute]**                                  | How to contribute to the NannyML project and codebase.                                 |
+| <img src="media/slack.png" width='25'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
-[NannyML 101]: https://docs.nannyml.com/
-[Performance Estimation]:https://docs.nannyml.com/latest/deep_dive/performance_estimation.html
-[Key Concepts]: https://docs.nannyml.com/latest/glossary.html
-[Technical Reference]:https://docs.nannyml.com/latest/nannyml/nannyml.html
+[NannyML 101]: https://nannyml.readthedocs.io/
+[Performance Estimation]:https://nannyml.readthedocs.io/en/main/how_it_works/performance_estimation.html
+[Key Concepts]: https://nannyml.readthedocs.io/en/main/glossary.html
+[Technical Reference]:https://nannyml.readthedocs.io/en/main/nannyml/modules.html
 [New in v0.3.1]: https://nannyml.substack.com/p/nannyml-031-release-soft-launch?s=w
-[Real World Example]: https://docs.nannyml.com/v0.3.1/guides/real_world_data_example.html
+[Real World Example]: https://nannyml.readthedocs.io/en/main/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
 [Join Slack]: https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ
@@ -82,13 +82,13 @@ Allowing you to have the following benefits:
 
 When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html) to **estimate model performance**. This algorithm requires the predicted probabilities of your machine learning model and leverages probability calibration to estimate any traditional binary classification metric (ROC_AUC, Precision, Recall, F1, etc.). Rather than estimating the performance of future model predictions, CBPE estimates the expected model performance of the predictions made at inference time.
 
-<p><img src="docs/_static/tutorial-perf-est-roc_auc.svg"></p>
+<p><img src="docs/_static/tutorial-perf-est-guide-with-ref-roc_auc.svg"></p>
 
 NannyML can also **track the realised performance** of your machine learning model once targets are available.
 
 ### 2. Data drift detection
 
-To detect **multivariate feature drift** NannyML uses [PCA-based data reconstruction](https://docs.nannyml.com/latest/deep_dive/data_reconstruction.html#id1). Changes in the resulting reconstruction error are monitored over time and data drift alerts are logged when the reconstruction error in a certain period exceeds a threshold. This threshold is calculated based on the reconstruction error observed in the reference period.
+To detect **multivariate feature drift** NannyML uses [PCA-based data reconstruction](https://nannyml.readthedocs.io/en/main/how_it_works/data_reconstruction.html). Changes in the resulting reconstruction error are monitored over time and data drift alerts are logged when the reconstruction error in a certain period exceeds a threshold. This threshold is calculated based on the reconstruction error observed in the reference period.
 
 <p><img src="docs/_static/drift-guide-multivariate.svg"></p>
 
@@ -176,13 +176,13 @@ for feature in ranked_features.feature:
 # 📖 Documentation
 
 * Performance monitoring
-  - [Estimated performance](<https://docs.nannyml.com/latest/guides/performance_estimation.html>)
-  - [Realized performance](https://docs.nannyml.com/latest/guides/performance_calculation.html)
+  - [Estimated performance](https://nannyml.readthedocs.io/en/main/tutorials/monitoring_performance/performance_estimation.html)
+  - [Realized performance](https://nannyml.readthedocs.io/en/main/tutorials/monitoring_performance/performance_calculation.html)
 * Drift detection
-  * [Multivariate feature drift](https://docs.nannyml.com/latest/guides/data_drift.html#multivariate-drift-detection)
-  - [Univariate feature drift](https://docs.nannyml.com/latest/guides/data_drift.html#univariate-drift-detection)
-  - [Model output drift](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-outputs)
-  - [Target distribution drift](https://docs.nannyml.com/latest/guides/data_drift.html#drift-detection-for-model-targets)
+  * [Multivariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/multivariate_drift_detection.html)
+  - [Univariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/univariate_drift_detection.html)
+  - [Model output drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/drift_detection_for_model_outputs.html)
+  - [Target distribution drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/drift_detection_for_model_targets.html)
 
 # 🦸 Contributing and Community
 
