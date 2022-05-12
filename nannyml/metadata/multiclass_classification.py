@@ -98,6 +98,7 @@ class MulticlassClassificationMetadata(ModelMetadata):
         }
 
     def class_labels(self) -> List:
+        """Returns a sorted list of class labels based on the class probability mapping."""
         return [class_label for class_label in sorted(list(self.predicted_probabilities_column_names.keys()))]
 
     def to_dict(self) -> Dict[str, Any]:
@@ -268,7 +269,20 @@ class MulticlassClassificationMetadata(ModelMetadata):
         return md
 
     def validate_predicted_class_labels_in_class_probability_mapping(self, data: pd.DataFrame) -> Tuple[bool, List]:
-        """"""
+        """Checks if all predicted class labels have a corresponding predicted class probability column.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            A pd.DataFrame that contains both the prediction column and the predicted class probability columns.
+
+        Returns
+        -------
+        ok: bool
+            Boolean indicating validity. ``True`` when no class probability columns are missing, ``False`` otherwise.
+        missing: List
+            A list of predicted classes for which a corresponding probability column is missing.
+        """
         predicted_class_labels = list(data[self.prediction_column_name].unique())
         missing = [
             predicted_class_label
