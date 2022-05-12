@@ -7,20 +7,27 @@ Chunking data
 Chunking considerations
 ----------------------------------
 
-:term:`Chunks<Data Chunk>` were introduced in detail :ref:`Setting Up: Chunking<chunking>`.
-However some times special issues may arise when using chunks. They are described below.
+For an introduction on :term:`chunks<Data Chunk>` please have a loot at
+:ref:`Setting Up: Chunking<chunking>`.
+This guide focuses on the potential issues that may arise from using chunks.
+They are described below.
 
 Different partitions within one chunk
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to get performance estimation or data drift results for a dataset that contains two
 partitions - ``reference`` and ``analysis``, most likely there will be a chunk that contains  observations from both of
-them. Such a chunk will be considered as an ``analysis`` chunk, even if only one observation belongs to ``analysis``
-observations. In the example below, chunk which contains observations from 44444 to 55554 is considered an analysis
+them. Such a chunk will be considered as an ``analysis`` chunk, even if only one observation belongs to ``analysis``.
+In the example below, chunk which contains observations from 44444 to 55554 is considered an analysis
 chunk but indices from 44444 to 49999 point to reference observations:
 
 .. code-block:: python
 
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> reference, analysis, _ = nml.datasets.load_synthetic_binary_classification_dataset()
+    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
+    >>> metadata.target_column_name = 'work_home_actual'
     >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9, metrics=['roc_auc']).fit(reference_data=reference)
     >>> # Estimate on concatenated reference and analysis
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
@@ -50,10 +57,11 @@ chunk but indices from 44444 to 49999 point to reference observations:
 Underpopulated chunks
 ~~~~~~~~~~~~~~~~~~~~~
 
-Depending on the selected chunking method and the provided datasets, some chunks may be tiny. In fact, they
-might be so small that results obtained are governed by noise rather than actual signal. NannyML estimates minimum chunk
-size for the monitored data and model provided (see how in :ref:`deep dive<minimum-chunk-size>`). If some of the chunks
-created are smaller than the minimum chunk size, a warning will be raised. For example:
+Depending on the selected chunking method and the provided datasets, some chunks may not have a lot of observations
+inside them. In fact, they might be so small that results obtained are governed by noise rather than actual signal.
+NannyML estimates a minimum chunk size based on the reference data
+(see how in the :ref:`section on minimum chunk size<minimum-chunk-size>`). If some of the created chunks
+are smaller than the minimum chunk size, a warning will be raised. For example:
 
 .. code-block:: python
 
@@ -63,16 +71,19 @@ created are smaller than the minimum chunk size, a warning will be raised. For e
     statistically relevant and might negatively influence the quality of calculations. Please consider splitting
     your data in a different way or continue at your own risk.
 
-When the warning is about 1 chunk, it is usually the last chunk and this is due to the reasons described in above
-sections. When there are more chunks mentioned - the selected splitting method is most likely not suitable.
-Look at the :ref:`deep dive on minimum chunk size <minimum-chunk-size>` to get more information about the effect of
+When the warning is about a single chunk, it is usually the last chunk.
+As this is the most recent chuck, it might be that not all observations have been generated yet.
+When there are more than one underpopulated chunks staying with the selected chunking method
+may be suboptimal.
+Look at the :ref:`section on minimum chunk size <minimum-chunk-size>` to get more information about the effect of
 small chunks. Beware of the trade-offs involved, when selecting the chunking method.
 
 
 Not enough chunks
 ~~~~~~~~~~~~~~~~~
-Sometimes the selected chunking method may result in not enough chunks being generated in the ``reference``
-period. NannyML calculates thresholds based on variability of metrics on the ``reference`` chunks (see how thresholds
+
+Sometimes the selected chunking method might not genereate enough chunks in the rerfence period.
+NannyML calculates thresholds based on the variability of metrics measured in the ``reference`` chunks (see how thresholds
 are calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
 far from optimal but a reasonable minimum. If there are less than 6 chunks, a warning will be raised:
 
@@ -101,11 +112,11 @@ Minimum Chunk for Performance Estimation and Performance Monitoring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When the chunk size is small
-**what looks like a significant drop in performance of the monitored model may be only a sampling effect**.
+**what looks like a significant drop in performance of the monitored model may only be a sampling effect**.
 To better understand that, have a look at the histogram below.
 It shows dispersion of accuracy for a random model predicting a random binary target (which by definition should be 0.5)
 for a sample of 100 observations. It is not uncommon to get accuracy of 0.6 for some samples. The effect is even
-stronger for more complex metrics like AUROC.
+stronger for more complex metrics like ROC AUC.
 
 .. code-block:: python
 
@@ -138,20 +149,22 @@ estimates a minimum chunk size for the monitored data and raises a warning if th
 chunks that are smaller. The minimum chunk size is estimated in order to
 keep variation of performance of the monitored model low. The variation is expressed in terms of standard deviation and
 it is considered *low* when it is below 0.02. In other words, for the selected evaluation metric, NannyML
-estimates chunk size for which standard deviation of performance on chunks resulting purely from sampling is lower
+estimates a chunk size for which the standard deviation of performance on chunks resulting purely from sampling is lower
 than 0.02.
 
-Let's go through the estimation process for accuracy score from the example above. Selecting chunk in the data and
+Let's go through the estimation process for accuracy score from the example above. Selecting a chunk in the data and
 calculating performance for it is similar to sampling a set from a population and calculating a statistic. When
-the statistic is a mean, Standard Error (SE) formula [1]_ can be used to estimate the standard deviation of sampled
-means:
+the statistic is a mean, the Standard Error (SE) formula [1]_ can be used to estimate the standard deviation of
+the sampled means:
 
     .. math::
         {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
 
-To directly use it for computation of standard deviation of accuracy, the metric needs to be expressed for each
-observation in the way that mean of observation-level accuracies gives the whole sample accuracy. Observation-level
-accuracy is simply equal to 1 when the prediction is correct and 0 when it is not. Therefore:
+In order to take advantage of the SE formula, accuracy for each observation separately needs to be calculated.
+Accuracy for a single observation is simply equal to 1 when the prediction is correct and equal to 0 otherwise.
+With observation-level accuracies in place, accuracy for the whole sample can be calculated as a mean of them.
+After this transformation the SE formula can be used directly to estimate the standard error of accuracy as a
+function of sample:
 
 .. code-block:: python
 
@@ -159,9 +172,8 @@ accuracy is simply equal to 1 when the prediction is correct and 0 when it is no
     >>> np.mean(obs_level_accuracy), accuracy_score(y_true, y_pred)
     (0.4988, 0.4988)
 
-Now SE formula can be used to estimate standard deviation and compare it with standard deviation from sampling
-experiments
-above:
+Now the SE formula can be used to estimate the standard deviation and compare it with
+the standard deviation from the sampling experiments above:
 
 .. code-block:: python
 
@@ -169,7 +181,7 @@ above:
     >>> SE_std, np.std(accuracy_scores)
     (0.04999932399543018, 0.04946720594494903)
 
-The same formula can be used to estimate sample size for required standard deviation:
+The same formula can be used to estimate the sample size for the required standard deviation:
 
 .. code-block:: python
 
@@ -178,45 +190,47 @@ The same formula can be used to estimate sample size for required standard devia
     >>> sample_size
     624.99
 
-So for the analyzed case chunk should contain at least 625 observations to keep dispersion of
-accuracy on chunks coming from random effect of sampling below 0.02 SD. In the actual implementation the final value
-is rounded to full hundredths and limited from the bottom to 300.
+So for the analyzed case, a chunk with 625 observations will result with standard error of accuracy equal to 0.02.
+In other words, if we calculate accuracy of this model on a large number of samples with 625 observations each,
+standard deviation of these accuracies will be about 0.02. This dispersion will be purely the effect of sampling
+because model quality and data distribution remain unchanged. In the current NannyML implementation, the estimated chunk
+size is rounded to full hundredths, 600 in the example above. Additionally, if the estimation returns a number lower
+than 300, the minimum chunk size suggested is 300.
 
-Generally SE formula gives the exact value when:
+Generally the SE formula gives the exact value when:
 
-    * standard deviation of the population is known,
-    * samples are statistically independent.
+    * The standard deviation of the population is known,
+    * The samples are statistically independent.
 
-Both of these requirements are in fact violated. When data is split into chunks it is not sampled from population -
+Both of these requirements are in fact violated. When the data is split into chunks it is not sampled from population,
 it comes from a finite set. Therefore standard deviation of **population** is unknown. Moreover, chunks are not
-independent - observations in chunks are selected chronologically, not randomly. They are drawn *without replacement* (the same observation
-cannot be selected twice). Nevertheless, this approach provides estimation with good enough precision for our use
-case while keeping the computation time very low.
+independent - observations in chunks are selected chronologically, not randomly. They are also drawn *without replacement*,
+meaning the same observation cannot be selected twice. Nevertheless, this approach provides an estimation with good enough
+precision for our use case while keeping the computation time very low.
 
-Estimation of minimum chunk size for other metrics, such as AUROC, precision, recall etc. is performed in similar
+Estimation of minimum chunk size for other metrics, such as ROC AUC, precision, recall etc. is performed in similar
 manner.
 
-Minimum Chunk for Data Reconstruction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Minimum Chunk for Multivariate Drift
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To ensure that there is no significant noise present in data recontruction results NannyML suggests a minimum chunk size
+To ensure that there is no significant noise present in :ref:`multivariate drift<multivariate_drift_detection>`
+results NannyML suggests a minimum chunk size
 based on the number of features user to perform data reconstruction according to this function:
 
 .. math::
 
     f(x) = \textrm{Int}( 20 * x ^ {\frac{5}{6}})
 
-The result based on internal testing. It is merely a suggestion because multidimensional data can have difficult to foresee
-instabilities. A better suggestion could be derived by inspecting the data used to look for
-:ref:`multivariate drift<multivariate_drift_detection>` but at the cost of increased computation time.
+This result is based on internal testing. It is merely a suggestion because multidimensional data can have difficult to foresee
+instabilities.
 
 Minimum Chunk for Univariate Drift
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To ensure that there is no significant noise present in :ref:`Univariate Drift Detection<univariate_drift_detection>`
 the recommended minimum chunk size is 500. It is a rule of thumb
-choice that should cover most common cases. A better suggestion could be derived by inspecting the data used
-for Univariate Drift detection but at the cost of increased computation time.
+that should cover most common cases.
 
 
 **References**
