@@ -8,15 +8,8 @@ Below, one can find an example use of NannyML on the modified California Housing
 See what modifications were made to the data to make it suitable for the
 use case :ref:`here<dataset-california>`.
 
-
----------------------------------------
-Monitoring workflow with NannyML
----------------------------------------
-
-
 Load and prepare data
 =====================
-
 
 Let's load the dataset from NannyML datasets:
 
@@ -28,39 +21,21 @@ Let's load the dataset from NannyML datasets:
     >>> reference, analysis, analysis_gt = nml.datasets.load_modified_california_housing_dataset()
     >>> reference.head(3)
 
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+
-|    |   MedInc |   HouseAge |   AveRooms |   AveBedrms |   Population |   AveOccup |   Latitude |   Longitude | timestamp           | partition   |   clf_target |   y_pred_proba |   identifier |
-+====+==========+============+============+=============+==============+============+============+=============+=====================+=============+==============+================+==============+
-|  0 |   9.8413 |         32 |    7.17004 |     1.01484 |         4353 |    2.93725 |      34.22 |     -118.19 | 2020-10-01 00:00:00 | reference   |            1 |           0.99 |            0 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+
-|  1 |   8.3695 |         37 |    7.45875 |     1.06271 |          941 |    3.10561 |      34.22 |     -118.21 | 2020-10-01 01:00:00 | reference   |            1 |           1    |            1 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+
-|  2 |   8.72   |         44 |    6.16318 |     1.04603 |          668 |    2.79498 |      34.2  |     -118.18 | 2020-10-01 02:00:00 | reference   |            1 |           1    |            2 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+
++----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
+|    |   MedInc |   HouseAge |   AveRooms |   AveBedrms |   Population |   AveOccup |   Latitude |   Longitude | timestamp           | partition   |   clf_target |   y_pred_proba |   y_pred |   identifier |
++====+==========+============+============+=============+==============+============+============+=============+=====================+=============+==============+================+==========+==============+
+|  0 |   9.8413 |         32 |    7.17004 |     1.01484 |         4353 |    2.93725 |      34.22 |     -118.19 | 2020-10-01 00:00:00 | reference   |            1 |           0.99 |        1 |            0 |
++----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
+|  1 |   8.3695 |         37 |    7.45875 |     1.06271 |          941 |    3.10561 |      34.22 |     -118.21 | 2020-10-01 01:00:00 | reference   |            1 |           1    |        1 |            1 |
++----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
+|  2 |   8.72   |         44 |    6.16318 |     1.04603 |          668 |    2.79498 |      34.2  |     -118.18 | 2020-10-01 02:00:00 | reference   |            1 |           1    |        1 |            2 |
++----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
 
-The data only contains the predicted probabilities in the ``y_pred_proba`` column right now. Performance estimation
-requires access to the predicted labels as well. In the case of a binary classifier it is easy to add these
-to the dataset by thresholding.
-
-.. code-block:: python
-
-    >>> reference['y_pred'] = reference['y_pred_proba'].map(lambda p: int(p >= 0.8))
-    >>> analysis['y_pred'] = analysis['y_pred_proba'].map(lambda p: int(p >= 0.8))
-    >>> reference.head(3)
-
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+----------+
-|    |   MedInc |   HouseAge |   AveRooms |   AveBedrms |   Population |   AveOccup |   Latitude |   Longitude | timestamp           | partition   |   clf_target |   y_pred_proba |   identifier |   y_pred |
-+====+==========+============+============+=============+==============+============+============+=============+=====================+=============+==============+================+==============+==========+
-|  0 |   9.8413 |         32 |    7.17004 |     1.01484 |         4353 |    2.93725 |      34.22 |     -118.19 | 2020-10-01 00:00:00 | reference   |            1 |           0.99 |            0 |        1 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+----------+
-|  1 |   8.3695 |         37 |    7.45875 |     1.06271 |          941 |    3.10561 |      34.22 |     -118.21 | 2020-10-01 01:00:00 | reference   |            1 |           1    |            1 |        1 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+----------+
-|  2 |   8.72   |         44 |    6.16318 |     1.04603 |          668 |    2.79498 |      34.2  |     -118.18 | 2020-10-01 02:00:00 | reference   |            1 |           1    |            2 |        1 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+--------------+----------+
+Let's extract metadata.
 
 .. code:: python
 
-    >>> # extract metadata, add gt column name
+    >>> # extract metadata, add target column name
     >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'], model_type='classification_binary')
     >>> metadata.target_column_name = 'clf_target'
     >>> metadata.timestamp_column_name = 'timestamp'
@@ -68,36 +43,50 @@ to the dataset by thresholding.
 Performance Estimation
 ======================
 
-
 Let's estimate performance for reference and analysis partitions:
 
 .. code:: python
 
     >>> # fit performance estimator and estimate for combined reference and analysis
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period='M', metrics=['roc_auc']).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period='M', metrics=['roc_auc'])
+    >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
 
 .. parsed-literal::
 
     UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be statistically relevant and might negatively influence the quality of calculations.Please consider splitting your data in a different way or continue at your own risk.
 
-Some chunks are too small, most likely the last one, let's see:
+Some chunks are too small, let's  quickly check:
 
 .. code:: python
 
-    >>> est_perf.data.tail(3)
+    >>> est_perf.data['end_index'] - est_perf.data['start_index']
 
-+----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
-|    | key     |   start_index |   end_index | start_date          | end_date                      | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |
-+====+=========+===============+=============+=====================+===============================+=============+======================+====================+=====================+===========================+===========================+=================+
-| 17 | 2022-03 |          6552 |        7295 | 2022-03-01 00:00:00 | 2022-03-31 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.829077 |                  0.708336 |                         1 | False           |
-+----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
-| 18 | 2022-04 |          7296 |        8015 | 2022-04-01 00:00:00 | 2022-04-30 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.910661 |                  0.708336 |                         1 | False           |
-+----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
-| 19 | 2022-05 |          8016 |        8231 | 2022-05-01 00:00:00 | 2022-05-31 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.939883 |                  0.708336 |                         1 | False           |
-+----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
+    0     743
+    1     719
+    2     743
+    3     743
+    4     671
+    5     743
+    6     719
+    7     743
+    8     719
+    9     743
+    10    743
+    11    719
+    12    743
+    13    719
+    14    743
+    15    743
+    16    671
+    17    743
+    18    719
+    19    215
+    dtype: int64
 
-Indeed, the last one is smaller than the others due to the selected chunking method. Let's remove it for clarity of visualizations.
+
+The last one is smaller than the others due to the selected chunking method. Let's remove it for clarity of
+visualizations.
 
 .. code:: python
 
@@ -107,11 +96,10 @@ Indeed, the last one is smaller than the others due to the selected chunking met
 +----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
 |    | key     |   start_index |   end_index | start_date          | end_date                      | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |
 +====+=========+===============+=============+=====================+===============================+=============+======================+====================+=====================+===========================+===========================+=================+
-| 16 | 2022-02 |          5880 |        6551 | 2022-02-01 00:00:00 | 2022-02-28 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.911054 |                  0.708336 |                         1 | False           |
+| 17 | 2022-03 |         12384 |       13127 | 2022-03-01 00:00:00 | 2022-03-31 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.829077 |                  0.708336 |                         1 | False           |
 +----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
-| 17 | 2022-03 |          6552 |        7295 | 2022-03-01 00:00:00 | 2022-03-31 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.829077 |                  0.708336 |                         1 | False           |
+| 18 | 2022-04 |         13128 |       13847 | 2022-04-01 00:00:00 | 2022-04-30 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.910661 |                  0.708336 |                         1 | False           |
 +----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
-
 
 Let's plot the estimated performance:
 
@@ -161,7 +149,7 @@ calculate ROC AUC on relevant chunks and compare:
 .. image:: ../_static/example_california_performance_estimation_tmp.svg
 
 The significant drop at the first few chunks of the analysis period was
-estimated accurately. After that the overall trend seems to be well
+estimated accurately. After that, the overall trend seems to be well
 represented. The estimation of performance has a lower variance than
 actual performance.
 
@@ -174,7 +162,7 @@ univariate drift detection.
 .. code:: python
 
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='M').fit(reference_data=reference)
-    >>> univariate_results = univariate_calculator.calculate(data=pd.concat([analysis]))
+    >>> univariate_results = univariate_calculator.calculate(data=analysis)
     >>> nml.Ranker.by('alert_count').rank(univariate_results, metadata)
 
 
