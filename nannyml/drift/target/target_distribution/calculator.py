@@ -178,7 +178,7 @@ def _calculate_target_drift_for_chunk(reference_targets: pd.Series, data: pd.Dat
 
     is_analysis = 'analysis' in set(data[NML_METADATA_PARTITION_COLUMN_NAME].unique())
 
-    is_binary_targets = data[NML_METADATA_TARGET_COLUMN_NAME].nunique() <= 2
+    is_binary_targets = data[NML_METADATA_TARGET_COLUMN_NAME].nunique() > 2
     if is_binary_targets:
         warnings.warn(
             f"the target column contains {data[NML_METADATA_TARGET_COLUMN_NAME].nunique()} unique values. "

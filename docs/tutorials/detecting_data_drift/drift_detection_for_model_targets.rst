@@ -23,12 +23,12 @@ If you just want the code to experiment yourself within a Jupyter Notebook, here
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_binary_classification_dataset()
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head(3))
 
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
+    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
     >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
@@ -56,7 +56,7 @@ Let's start by loading some synthetic data provided by the NannyML package.
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_binary_classification_dataset()
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> display(reference.head(3))
@@ -87,7 +87,7 @@ data first.
 
 .. code-block:: python
 
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
+    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
