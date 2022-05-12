@@ -5,7 +5,7 @@ Data requirements
 ==================
 
 In this guide we'll present an overview of the data NannyML requires to function.
-It serves as a preamble to the guide on :ref:`providing metadata<import-data>`.
+It serves as a starting point for the guide on :ref:`providing metadata<import-data>`.
 
 .. _data-drift-periods:
 
@@ -25,24 +25,22 @@ to be stable and acceptable.
 
 The *reference* dataset contains observations for which target values
 are available, hence the model performance can be *calculated* for this set.
-The occurrence of drift - or the lack hereof - is known and validated.
+The ranges and distribution of model inputs, outputs and targets is well-known and validated for this set.
 
 .. warning::
-    Since *training* data is often not representative of real world production model inputs it is often not
-    well suited as *reference* data.
+    Don't use *training* data as a *reference* data set to prevent overfitting, e.g during model score calibration.
 
 
 Analysis Period
 ^^^^^^^^^^^^^^^
 
-The analysis period is where NannyML analyzes the data drift and performance characteristics of the monitored
-model and compares them to the reference period.
-The analysis period will usually consist of the latest production data up to a desired point in
+The *analysis* period is where NannyML analyzes the data drift and the performance of the monitored
+model using the knowledge gained from analyzing the *reference* period.
+The *analysis* period will usually consist of the latest production data up to a desired point in
 the past, which should be after the point where the reference period ends.
-The analysis period is not required to have targets and associated performance results
-available.
+The analysis period is not required to have targets available.
 
-When performing drift analysis NannyML compares each :term:`Data Chunk` of the analysis period
+When performing drift analysis, NannyML compares each :term:`Data Chunk` of the analysis period
 with the reference data. NannyML will flag any meaningful changes to data distributions as data drift.
 
 The *analysis* data does not contain any target values, so performance can only be *estimated* for it.

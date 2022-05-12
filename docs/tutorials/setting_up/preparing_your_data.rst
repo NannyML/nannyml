@@ -5,22 +5,25 @@ Providing metadata
 ==================
 
 Why is data preparation required?
----------------------------------
+=================================
 
-NannyML intends to work with any data set it is given. To do so it needs to understand it and
-assign a correct role to each column of the data set.
-
-This can be done using the concept of *model metadata*. As a user you can provide a
+NannyML can process any data used in supported models. It requires *model metadata* to
+assign a correct role to each column of the data set. You can provide a
 :class:`~nannyml.metadata.base.ModelMetadata` object that allows NannyML to make sense of your data.
 It allows you to specify what the :term:`model inputs<Model inputs>`, :term:`model predictions<Model predictions>`
 and :term:`targets <Target>` are for your monitored model.
 
-This guide will illustrate how to use NannyML to help your create this mythical
+This guide will illustrate how to use NannyML to help your create this
 :class:`~nannyml.metadata.base.ModelMetadata` object.
 
+
+Metadata for binary classification
+======================================
+
 We'll use a sample data set for this guide.
-This fictional **work_from_home** model is a binary classifier trying to predict whether someone will be
-working from home on a given day or not.
+The dataset describes a machine learning model that tries to predict whether an employee will work from
+home on the next day.
+You can read more about it on the :ref:`dataset introduction page<dataset-synthetic-binary>`.
 
 
 Just the code
@@ -143,23 +146,23 @@ We can now leverage the :func:`nannyml.metadata.extraction.extract_metadata` fun
 
 The ``data`` argument is used to pass the data sample for the extraction.
 
-The ``model_type`` argument allows us to specify the type of the model that is monitored. This is not about the
-underlying implementation (e.g. logistic regression or an SVM) but about the problem that it tries to solve,
-binary classification in this case. This argument allows the :func:`nannyml.metadata.extraction.extract_metadata`
-function to look for specific patterns in the columns. Think about how the columns containing prediction scores or
-probabilities will be different between binary classification or multiclass classification.
+The ``model_type``The model_type argument allows us to specify the type of the model that is monitored -
+either ``classification_binary`` or ``classification_multiclass``.
+The exact algorithm does not matter, as NannyML doesn’t use the model when analysing data.
+This argument allows the :func:`nannyml.metadata.extraction.extract_metadata`
+function to look for specific patterns in the columns.
 
-The ``exclude_columns`` argument is used to pass along the names of columns that are not relevant to the model at all.
-In this example case the ``identifier`` column is such a column: it is solely used as a helper to perform the join
+The ``exclude_columns`` argument is used to pass along the names of columns that are not relevant to the model.
+In this example case the ``identifier`` column is such a column: it is only used as a helper to perform the join
 between the *analysis* period data and its *target* values. By excluding it we can ensure it is not picked up as a
 model feature by NannyML.
 
 -----
 
-The next line is not really required and used for educational purposes here. The
-:func:`nannyml.metadata.base.is_complete` function checks if all required metadata properties have been provided.
+The :func:`nannyml.metadata.base.is_complete` function checks if all required metadata properties have been provided.
 It is normally used internally to validate user inputs. The function returns a ``bool`` indicating if metadata is
 complete. The second return argument is an array containing the name of any missing properties.
+Running this step is not necessary but can be done to double-check everything is in order in advance.
 
 .. code-block:: python
 
@@ -182,16 +185,16 @@ The following line of code modifies the :class:`~nannyml.metadata.base.ModelMeta
 
     >>> metadata.target_column_name = 'work_home_actual'
 
-.. note:: Updating metadata
-    All :class:`~nannyml.metadata.base.ModelMetadata` properties can be updated.
+.. note::
+    All :class:`~nannyml.metadata.binary_classification.BinaryClassificationMetadata` properties can be updated
+    when they are missing or incorrect.
 
-    This includes:
-    - target_column_name
-    - partition_column_name
-    - timestamp_column_name
-    - prediction_column_name
-    - predicted_probability_column_name (for *binary classification*)
-    - predicted_probabalities_column_names (for *multiclass classification*)
+    These are:
+        - ``target_column_name``
+        - ``partition_column_name``
+        - ``timestamp_column_name``
+        - ``prediction_column_name``
+        - ``predicted_probability_column_name``
 
 -----
 
@@ -232,8 +235,240 @@ object as a ``DataFrame`` for easy inspection.
 | 11 | predicted_probability_column_name | y_pred_proba               | continuous  | predicted score/probability                   |
 +----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
 
+
+Metadata for multiclass classification
+=======================================
+
+We'll use a sample data set for this guide.
+The dataset describes a machine learning model that tries to predict
+the most appropriate product for new customers applying for a credit card.
+You can read more about it on the :ref:`dataset introduction page<dataset-synthetic-multiclass>`.
+
+Just the code
+-------------
+
+.. code-block:: python
+
+    >>> import nannyml as nml
+    >>> reference, analysis, analysis_gt = nml.load_synthetic_multiclass_classification_dataset()
+    >>> reference.columns
+    Index(['acq_channel', 'app_behavioral_score', 'requested_credit_limit',
+       'app_channel', 'credit_bureau_score', 'stated_income', 'is_customer',
+       'partition', 'identifier', 'timestamp', 'y_pred_proba_prepaid_card',
+       'y_pred_proba_highstreet_card', 'y_pred_proba_upmarket_card', 'y_pred',
+       'y_true'],
+      dtype='object')
+    >>> reference.head()
+
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
+|    | acq_channel   |   app_behavioral_score |   requested_credit_limit | app_channel   |   credit_bureau_score |   stated_income | is_customer   | partition   |   identifier | timestamp           |   y_pred_proba_prepaid_card |   y_pred_proba_highstreet_card |   y_pred_proba_upmarket_card | y_pred          | y_true        |
++====+===============+========================+==========================+===============+=======================+=================+===============+=============+==============+=====================+=============================+================================+==============================+=================+===============+
+|  0 | Partner3      |               1.80823  |                      350 | web           |                   309 |           15000 | True          | reference   |        60000 | 2020-05-02 02:01:30 |                        0.97 |                           0.03 |                         0    | prepaid_card    | prepaid_card  |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
+|  1 | Partner2      |               4.38257  |                      500 | mobile        |                   418 |           23000 | True          | reference   |        60001 | 2020-05-02 02:03:33 |                        0.87 |                           0.13 |                         0    | prepaid_card    | prepaid_card  |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
+|  2 | Partner2      |              -0.787575 |                      400 | web           |                   507 |           24000 | False         | reference   |        60002 | 2020-05-02 02:04:49 |                        0.47 |                           0.35 |                         0.18 | prepaid_card    | upmarket_card |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
+|  3 | Partner3      |              -2.13177  |                      300 | mobile        |                   324 |           38000 | False         | reference   |        60003 | 2020-05-02 02:07:59 |                        0.26 |                           0.5  |                         0.24 | highstreet_card | upmarket_card |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
+|  4 | Partner3      |              -1.36294  |                      450 | mobile        |                   736 |           38000 | True          | reference   |        60004 | 2020-05-02 02:20:19 |                        0.03 |                           0.04 |                         0.93 | upmarket_card   | upmarket_card |
++----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
+
+.. code-block:: python
+
+    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_multiclass', exclude_columns=['identifier'])
+    >>> metadata.is_complete()
+    (True, [])
+    >>> metadata.to_df()
+
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|    | label                                             | column_name                  | type        | description                                             |
++====+===================================================+==============================+=============+=========================================================+
+|  0 | timestamp_column_name                             | timestamp                    | continuous  | timestamp                                               |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  1 | partition_column_name                             | partition                    | categorical | partition                                               |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  2 | target_column_name                                | y_true                       | categorical | target                                                  |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  3 | acq_channel                                       | acq_channel                  | categorical | extracted feature: acq_channel                          |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  4 | app_behavioral_score                              | app_behavioral_score         | continuous  | extracted feature: app_behavioral_score                 |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  5 | requested_credit_limit                            | requested_credit_limit       | categorical | extracted feature: requested_credit_limit               |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  6 | app_channel                                       | app_channel                  | categorical | extracted feature: app_channel                          |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  7 | credit_bureau_score                               | credit_bureau_score          | continuous  | extracted feature: credit_bureau_score                  |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  8 | stated_income                                     | stated_income                | categorical | extracted feature: stated_income                        |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  9 | is_customer                                       | is_customer                  | categorical | extracted feature: is_customer                          |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 10 | prediction_column_name                            | y_pred                       | continuous  | predicted label                                         |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 11 | predicted_probability_column_name_prepaid_card    | y_pred_proba_prepaid_card    | continuous  | predicted score/probability for class 'prepaid_card'    |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 12 | predicted_probability_column_name_highstreet_card | y_pred_proba_highstreet_card | continuous  | predicted score/probability for class 'highstreet_card' |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 13 | predicted_probability_column_name_upmarket_card   | y_pred_proba_upmarket_card   | continuous  | predicted score/probability for class 'upmarket_card'   |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+
+.. code-block:: python
+
+    >>> metadata.predicted_probabilities_column_names
+    {'prepaid_card': 'y_pred_proba_prepaid_card',
+     'highstreet_card': 'y_pred_proba_highstreet_card',
+     'upmarket_card': 'y_pred_proba_upmarket_card'}
+
+Walkthrough
+-----------
+
+The first line loads the demo data. Remark that it returns three different ``DataFrames``. The first two correspond to
+the different :term:`data periods<Data Period>`, containing the data of the *reference* and *analysis* periods.
+The third ``DataFrame`` contains the *target* values for the *analysis* period. It can be joined with this period by
+using the shared ``identifier`` column.
+
+.. code-block:: python
+
+    >>> import nannyml as nml
+    >>> reference, analysis, analysis_gt = nml.load_synthetic_multiclass_classification_dataset()
+
+-----
+
+The next lines takes a quick peek at the data inside the *reference* period.
+
+.. code-block:: python
+
+    >>> Index(['acq_channel', 'app_behavioral_score', 'requested_credit_limit',
+       'app_channel', 'credit_bureau_score', 'stated_income', 'is_customer',
+       'partition', 'identifier', 'timestamp', 'y_pred_proba_prepaid_card',
+       'y_pred_proba_highstreet_card', 'y_pred_proba_upmarket_card', 'y_pred',
+       'y_true'],
+      dtype='object')
+
+The ``y_pred`` column contains the labels predicted by the model.
+
+The ``y_pred_proba_prepaid_card``, ``y_pred_proba_highstreet_card`` and ``y_pred_proba_upmarket_card``
+contain the predicted class probabilities for the three classes labeled ``prepaid_card``, ``highstreet_card``
+and ``upmarket_card``.
+
+The ``y_true`` column contains the target values (remember, we're looking at the *reference*
+period here, for which target values are available).
+
+The ``partition`` column contains the name of the :term:`data period<Data Period>` the observation belongs to, in this
+case all of them belong to the *reference* period.
+
+The ``timestamp`` column contains the timestamp at which the model did this particular prediction.
+
+The ``identifier`` column is used to uniquely identify each row. It is not a feature as it does not serve as an input
+for the model.
+
+The rest of the columns are the model inputs containing either continuous or categorical feature values.
+
+-----
+
+We can now leverage the :func:`nannyml.metadata.extraction.extract_metadata` function to create a
+:class:`~nannyml.metadata.base.ModelMetadata` object from the *reference* data.
+
+.. code-block:: python
+
+    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_multiclass', exclude_columns=['identifier'])
+
+The ``data`` argument is used to pass the data sample for the extraction.
+
+The ``model_type``The model_type argument allows us to specify the type of the model that is monitored -
+either ``classification_binary`` or ``classification_multiclass``.
+The exact algorithm does not matter, as NannyML doesn’t use the model when analysing data.
+This argument allows the :func:`nannyml.metadata.extraction.extract_metadata`
+function to look for specific patterns in the columns.
+
+The ``exclude_columns`` argument is used to pass along the names of columns that are not relevant to the model.
+In this example case the ``identifier`` column is such a column: it is only used as a helper to perform the join
+between the *analysis* period data and its *target* values. By excluding it we can ensure it is not picked up as a
+model feature by NannyML.
+
+-----
+
+The :func:`nannyml.metadata.base.is_complete` function checks if all required metadata properties have been provided.
+It is normally used internally to validate user inputs. The function returns a ``bool`` indicating if metadata is
+complete. The second return argument is an array containing the name of any missing properties.
+Running this step is not necessary but can be done to double-check everything is in order in advance.
+
+.. code-block:: python
+
+    >>> metadata.is_complete()
+    (True, [])
+
+We can see that the extraction was able to find all required properties. The metadata is considered to be *complete*.
+
+.. note::
+    All :class:`~nannyml.metadata.multiclass_classification.MulticlassClassificationMetadata` properties can be updated
+    when they are missing or incorrect.
+
+    These are:
+        - ``target_column_name``
+        - ``partition_column_name``
+        - ``timestamp_column_name``
+        - ``prediction_column_name``
+        - ``predicted_probabilities_column_names``
+
+-----
+
+We can represent the :class:`~nannyml.metadata.base.ModelMetadata` object as a ``DataFrame`` for easy inspection.
+
+.. code-block:: python
+
+    >>> metadata.is_complete()
+    (True, [])
+    >>> metadata.to_df()
+
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|    | label                                             | column_name                  | type        | description                                             |
++====+===================================================+==============================+=============+=========================================================+
+|  0 | timestamp_column_name                             | timestamp                    | continuous  | timestamp                                               |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  1 | partition_column_name                             | partition                    | categorical | partition                                               |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  2 | target_column_name                                | y_true                       | categorical | target                                                  |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  3 | acq_channel                                       | acq_channel                  | categorical | extracted feature: acq_channel                          |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  4 | app_behavioral_score                              | app_behavioral_score         | continuous  | extracted feature: app_behavioral_score                 |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  5 | requested_credit_limit                            | requested_credit_limit       | categorical | extracted feature: requested_credit_limit               |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  6 | app_channel                                       | app_channel                  | categorical | extracted feature: app_channel                          |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  7 | credit_bureau_score                               | credit_bureau_score          | continuous  | extracted feature: credit_bureau_score                  |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  8 | stated_income                                     | stated_income                | categorical | extracted feature: stated_income                        |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+|  9 | is_customer                                       | is_customer                  | categorical | extracted feature: is_customer                          |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 10 | prediction_column_name                            | y_pred                       | continuous  | predicted label                                         |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 11 | predicted_probability_column_name_prepaid_card    | y_pred_proba_prepaid_card    | continuous  | predicted score/probability for class 'prepaid_card'    |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 12 | predicted_probability_column_name_highstreet_card | y_pred_proba_highstreet_card | continuous  | predicted score/probability for class 'highstreet_card' |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+| 13 | predicted_probability_column_name_upmarket_card   | y_pred_proba_upmarket_card   | continuous  | predicted score/probability for class 'upmarket_card'   |
++----+---------------------------------------------------+------------------------------+-------------+---------------------------------------------------------+
+
+-----
+
+We can now inspect the :class:`~nannyml.metadata.multiclass_classification.MulticlassClassificationMetadata` object
+and find the mapping of class labels to a predicted probability column for that class, stored as a Python ``dict``.
+
+.. code-block:: python
+
+    >>> metadata.predicted_probabilities_column_names
+    {'prepaid_card': 'y_pred_proba_prepaid_card',
+     'highstreet_card': 'y_pred_proba_highstreet_card',
+     'upmarket_card': 'y_pred_proba_upmarket_card'}
+
+
 Insights and Follow Ups
------------------------
+=======================
 
 .. warning::
     Because the extraction is based on simple rules the results are never guaranteed to be completely correct.
@@ -244,8 +479,8 @@ Insights and Follow Ups
     using incomplete metadata.
 
 .. note::
-    We are aware that this boilerplate setup step creates some friction for the end user. We're actively working
-    on reducing this friction even more.
+    We are aware that this boilerplate setup step creates some friction. We're actively working
+    on reducing it.
 
 To find out more about the columns that should in your dataset, check out the
 :ref:`data requirements<data_requirements>` documentation.

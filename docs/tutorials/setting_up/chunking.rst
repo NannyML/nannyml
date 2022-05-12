@@ -58,8 +58,8 @@ argument to get appropriate split. See the example below that chunks data quarte
 .. note::
     Notice that each calendar quarter was taken into account, even if it was not fully covered with records.
     This makes some chunks smaller (usually the last and the first). See the first row above - Q3 is July-September,
-    but the first record in the data is from the last day of August. First chunk has ~1.2k of observations while the 2nd
-    and 3rd above 3k.
+    but the first record in the data is from the last day of August. The first chunk has ~1200 of observations while the 2nd
+    and 3rd above 3000.
 
 Possible time offsets are listed in the table below:
 
