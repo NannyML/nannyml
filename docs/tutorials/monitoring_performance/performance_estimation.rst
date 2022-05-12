@@ -117,11 +117,16 @@ In the next step Confidence-based Performance Estimation
 estimator is created using the previously
 extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional
 :ref:`chunking<chunking>` specification. The list of metrics specifies the metrics
-for which the performance of the monitored model will be estimated.
-For an overview of all metrics,
-check the :mod:`~nannyml.performance_calculation.metrics` module.
-Read more about chunking in relevant :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`
-if needed.
+for which the performance of the monitored model will be estimated. The following metrics are currently supported:
+
+- ``roc_auc``
+- ``f1``
+- ``precision``
+- ``recall``
+- ``specificity``
+- ``accuracy``
+
+For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
@@ -344,7 +349,7 @@ if predicted probability column names meet specific requirements as in the examp
 :ref:`Setting Up, Providing
 Metadata<import-data>` section.
 
-Creating and using the estimator
+Create and fit the estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the next step Confidence-based Performance Estimation
@@ -352,11 +357,16 @@ In the next step Confidence-based Performance Estimation
 estimator is created using the previously
 extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional
 :ref:`chunking<chunking>` specification. The list of metrics specifies the metrics
-for which the performance of the monitored model will be estimated.
-For an overview of all metrics,
-check the :mod:`~nannyml.performance_calculation.metrics` module.
-Read more about chunking in relevant :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`
-if needed.
+for which the performance of the monitored model will be estimated. The following metrics are currently supported:
+
+- ``roc_auc``
+- ``f1``
+- ``precision``
+- ``recall``
+- ``specificity``
+- ``accuracy``
+
+For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the

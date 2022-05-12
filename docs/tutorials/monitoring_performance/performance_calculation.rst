@@ -133,8 +133,16 @@ Fit calculator and calculate
 
 In the next step a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using the previously
 extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional :ref:`chunking<chunking>` specification.
-The list of metrics specifies which metrics should be calculated. For an overview of all metrics,
-check the :mod:`~nannyml.performance_calculation.metrics` module.
+The list of metrics specifies which metrics should be calculated. The following metrics are currently supported:
+
+- ``roc_auc``
+- ``f1``
+- ``precision``
+- ``recall``
+- ``specificity``
+- ``accuracy``
+
+For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
 The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is then fitted using the
 :meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.fit` method on the ``reference`` data.
@@ -338,8 +346,16 @@ Fit calculator and calculate
 
 In the next step a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using the previously
 extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional :ref:`chunking<chunking>` specification.
-The list of metrics specifies which metrics should be calculated. For an overview of all metrics,
-check the :mod:`~nannyml.performance_calculation.metrics` module.
+The list of metrics specifies which metrics should be calculated. The following metrics are currently supported:
+
+- ``roc_auc``
+- ``f1``
+- ``precision``
+- ``recall``
+- ``specificity``
+- ``accuracy``
+
+For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
 The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is then fitted using the
 :meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.fit` method on the ``reference`` data.
