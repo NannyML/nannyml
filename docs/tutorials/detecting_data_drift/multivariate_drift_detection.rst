@@ -14,7 +14,7 @@ in the data structure that cannot be detected with univariate approaches.
 Just The Code
 -------------
 
-If you just want the code to experiment yourself withinb a Jupyter Notebook, here you go:
+If you just want the code to experiment yourself within a Jupyter Notebook, here you go:
 
 .. code-block:: python
 

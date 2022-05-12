@@ -1,7 +1,7 @@
 .. _metadata_not_found:
 
 ===========================================
-Dealing with a ``MissingMetadataException``
+Dealing with a MissingMetadataException
 ===========================================
 
 The problem

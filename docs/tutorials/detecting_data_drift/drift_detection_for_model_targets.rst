@@ -8,7 +8,7 @@ Why Perform Drift Detection for Model Targets
 ---------------------------------------------
 
 The performance of a machine learning model can be affected if the distribution of targets changes.
-The target distribution can change both becuase of data drift but also because of label shift.
+The target distribution can change both because of data drift but also because of label shift.
 
 Moreover a change in the target distribution may mean that business assumptions on which the model is
 used may need to be revisited.
@@ -16,7 +16,7 @@ used may need to be revisited.
 Just The Code
 -------------
 
-If you just want the code to experiment yourself withinb a Jupyter Notebook, here you go:
+If you just want the code to experiment yourself within a Jupyter Notebook, here you go:
 
 .. code-block:: python
 
@@ -153,8 +153,8 @@ Insights and Follow Ups
 -----------------------
 
 Looking at the results we see that we have a false alert on the first chunk of the analysis data. This
-can happen when the statistical tests consider significant a small change in the distribtion of a variable
-in the chunks. But becuase the change is small it is usually not significant from a model monitoring perspective.
+can happen when the statistical tests consider significant a small change in the distribution of a variable
+in the chunks. But because the change is small it is usually not significant from a model monitoring perspective.
 
 The :ref:`performance-calculation` functionality of NannyML can can add context to the target drift results
 showing whether there are associated performance changes.

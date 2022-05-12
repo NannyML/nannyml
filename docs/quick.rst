@@ -172,7 +172,7 @@ Therefore in our example it is provided as a separate object.
 Estimating Performance without Targets
 ======================================
 
-NannyML can estimate the performance on a Machine Learning model in production
+NannyML can estimate the performance on a machine learning model in production
 without access to its :term:`Target`. For more details, see :ref:`performance-estimation`.
 
 .. code-block:: python

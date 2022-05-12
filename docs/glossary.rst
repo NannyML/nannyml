@@ -16,7 +16,7 @@ Glossary
         drift statistics are insufficient in detecting complex data drifts in multidimensional
         data.
 
-    CBPE (Confidence-Based Perofmance Estimation)
+    CBPE (Confidence-Based Performance Estimation)
         A family of methods to estimate model performance in the absence of ground truth that take advantage of the
         confidence which is expressed in the monitored model output probability/score prediction.
 
@@ -71,9 +71,6 @@ Glossary
     Imputation
         The process of substituting missing values with actual values on a dataset.
 
-    Model
-        Definition of a model.
-
     Model inputs
         Every :term:`Feature` used by the model.
 
@@ -91,7 +88,7 @@ Glossary
 
 
     Multivariate Drift Detection
-        Drift Detection steps that involve all the features of our model in order to
+        Drift Detection steps that involve all model features in order to
         create appropriate drift measures.
 
     Data Period
@@ -126,18 +123,18 @@ Glossary
         A synonym for :term:`Model outputs`.
 
     Predicted labels
-        The outome a machine learning model predicts for the event it was called to predict.
+        The outcome a machine learning model predicts for the event it was called to predict.
         Predicted labels are a two value categorical variable. They can be represented by integers, usually
         0 and 1, booleans, meaning True or False, or strings. For NannyML, in a binary classification problem,
         it is ideal if predicted labels are presented as integers with 1 representing the positive outcome.
 
     Predicted probabilities
         The probabilities assigned by a machine learning model regarding the chance that a positive event materializes
-        for the binary outome it was called to predict.
+        for the binary outcome it was called to predict.
 
     Predicted scores
         Sometimes the prediction of a machine learning model is transformed into a continuous range of real numbers.
-        Those scores take calues outside the `[0,1]` range that is allowed for probabilities. The higher the score
+        Those scores take values outside the `[0,1]` range that is allowed for probabilities. The higher the score
         the more likely the positive outcome should be.
 
     Realized Performance
@@ -166,5 +163,5 @@ Glossary
                 - *Unix-epoch* in units of seconds, e.g. ``1513393355``
 
     Univariate Drift Detection
-        Drift Detection methods that use each feature of our model individually
+        Drift Detection methods that use each model feature individually
         in order to detect change in :term:`Model Inputs`.

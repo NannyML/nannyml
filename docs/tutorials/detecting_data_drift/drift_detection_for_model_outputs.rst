@@ -17,7 +17,7 @@ they directly affect the business results from operating a machine learning mode
 Just The Code
 -------------
 
-If you just want the code to experiment yourself withinb a Jupyter Notebook, here you go:
+If you just want the code to experiment yourself within a Jupyter Notebook, here you go:
 
 .. code-block:: python
 
@@ -143,8 +143,8 @@ Insights and Follow Ups
 Looking at the results we see that we have a false alert on the first chunk of the analysis data. This is similar
 to the ``tenure`` variable in the :ref:`univariate drift results<univariate_drift_detection_tenure>` where there is also
 a false alert because the drift measured by the KS d-statistic is very low. This
-can happen when the statistical tests consider significant a small change in the distribtion of a variable
-in the chunks. But becuase the change is small it is usually not significant from a model monitoring perspective.
+can happen when the statistical tests consider significant a small change in the distribution of a variable
+in the chunks. But because the change is small it is usually not significant from a model monitoring perspective.
 
 If required the :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
 observed changes to Model Outputs.
