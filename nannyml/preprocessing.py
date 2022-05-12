@@ -10,7 +10,7 @@ from typing import Union
 import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException, MissingMetadataException
-from nannyml.metadata import BinaryClassificationMetadata
+from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata
 from nannyml.metadata.base import ModelMetadata
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,18 @@ def preprocess(data: pd.DataFrame, metadata: ModelMetadata, reference: bool = Fa
 
     # If complete then add copies of metadata columns
     prepped_data = metadata.enrich(data)
+
+    # TODO refactor this into a proper pattern
+    if isinstance(metadata, MulticlassClassificationMetadata):
+        ok, missing = metadata.validate_predicted_class_labels_in_class_probability_mapping(data)
+        if not ok:
+            raise InvalidArgumentsException(
+                f"class labels {missing} in the prediction column "
+                f"'{metadata.prediction_column_name}' have no corresponding predicted "
+                f"class probability column. "
+                f"Please review the prediction column values and the metadata "
+                f"'predicted_probabilities_column_names' property."
+            )
 
     # Check if predicted probability values don't contain (binary) prediction values instead
     _check_predicted_probabilities_are_probabilities(metadata, data)

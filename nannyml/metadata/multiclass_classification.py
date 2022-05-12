@@ -97,6 +97,9 @@ class MulticlassClassificationMetadata(ModelMetadata):
             for clazz in self.predicted_probabilities_column_names.keys()
         }
 
+    def class_labels(self) -> List:
+        return [class_label for class_label in sorted(list(self.predicted_probabilities_column_names.keys()))]
+
     def to_dict(self) -> Dict[str, Any]:
         """Represents a MulticlassClassificationMetadata instance as a dictionary."""
         res = super().to_dict()
@@ -263,6 +266,17 @@ class MulticlassClassificationMetadata(ModelMetadata):
         self.features = _extract_features(data, exclude_columns=not_feature_cols)
 
         return md
+
+    def validate_predicted_class_labels_in_class_probability_mapping(self, data: pd.DataFrame) -> Tuple[bool, List]:
+        """"""
+        predicted_class_labels = list(data[self.prediction_column_name].unique())
+        missing = [
+            predicted_class_label
+            for predicted_class_label in predicted_class_labels
+            if predicted_class_label not in self.class_labels()
+        ]
+
+        return len(missing) == 0, missing
 
 
 def _extract_class_to_column_mapping(column_names: List[str]) -> Dict[Any, str]:
