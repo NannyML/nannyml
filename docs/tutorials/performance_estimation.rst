@@ -33,7 +33,7 @@ If you just want the code to experiment yourself, here you go:
 
     >>> metadata = nml.extract_metadata(
     ...     reference,
-    ...     model_type=nml.ModelType.CLASSIFICATION_BINARY,
+    ...     model_type="classification_binary",
     ...     exclude_columns=['identifier']
     ... )
     >>> metadata.target_column_name = 'work_home_actual'
@@ -100,7 +100,7 @@ Some information is inferred automatically and the rest should be provided.
 
     >>> metadata = nml.extract_metadata(
     ...     reference,
-    ...     model_type=nml.ModelType.CLASSIFICATION_BINARY,
+    ...     model_type="classification_binary",
     ...     exclude_columns=['identifier']
     ... )
     >>> metadata.target_column_name = 'work_home_actual'
@@ -280,7 +280,7 @@ If you just want the code to experiment yourself, here you go:
     >>> metadata = nml.extract_metadata(
     ...     reference,
     ...     model_name='credit_card_segment',
-    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     model_type="classification_multiclass",
     ...     exclude_columns=['identifier']
     >>> )
     >>> metadata.target_column_name = 'y_true'
@@ -348,7 +348,7 @@ Some information is inferred automatically and we provide the rest.
     >>> metadata = nml.extract_metadata(
     ...     reference,
     ...     model_name='credit_card_segment',
-    ...     model_type=nml.ModelType.CLASSIFICATION_MULTICLASS,
+    ...     model_type="classification_multiclass",
     ...     exclude_columns=['identifier']
     >>> )
     >>> metadata.target_column_name = 'y_true'
