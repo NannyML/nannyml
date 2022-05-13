@@ -30,7 +30,7 @@ performance estimation with binary classification data<performance-estimation-bi
 
     >>> from sklearn.metrics import roc_auc_score
     >>> import matplotlib.pyplot as plt
-    >>> # merge gt to analysis
+    >>> # merge target data to analysis
     >>> analysis_full = pd.merge(analysis, analysis_targets, on = 'identifier')
     >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
     >>> target_col = 'work_home_actual'

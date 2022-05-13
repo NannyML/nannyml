@@ -93,8 +93,8 @@ Training a Machine Learning Model
     >>> for partition_name, partition_data in df.groupby('partition', sort=False):
     ...     print(partition_name, roc_auc_score(partition_data[target], partition_data['y_pred_proba']))
     train 1.0
-    test 0.9079415179034716
-    production 0.8402458783370228
+    test 0.8737681614409617
+    production 0.8224322932364313
 
 Meeting NannyML Data Requirements
 =================================
