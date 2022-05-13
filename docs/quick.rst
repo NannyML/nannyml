@@ -61,7 +61,6 @@ the :ref:`Walkthrough<walk_through_the_quickstart>`.
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> chunk_size = 5000
 
     >>> # fit estimator and estimate
@@ -140,7 +139,6 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
     >>> chunk_size = 5000
 
 The data are already split into a reference and an analysis periods. NannyML uses the **reference period** to
