@@ -39,7 +39,7 @@ If you just want the code to experiment yourself, here you go:
     >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
     >>> display(reference.head(3))
 
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
+    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
     >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
@@ -55,7 +55,7 @@ If you just want the code to experiment yourself, here you go:
 
     >>> realized_performance = performance_calculator.calculate(data)
 
-    >>> display(ealized_performance.data.head(3))
+    >>> display(realized_performance.data.head(3))
 
     >>> for metric in performance_calculator.metrics:
     ...     figure = realized_performance.plot(kind='performance', metric=metric)
@@ -97,7 +97,7 @@ values are joined on the analysis frame by the ``identifier`` column.
 
 .. code-block:: python
 
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_target.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
+    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
 +-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -244,7 +244,7 @@ If you just want the code to experiment yourself, here you go:
     >>> display(data.loc[data['partition'] == 'analysis'].head(3))
 
     >>> metadata = nml.extract_metadata(
-    reference,
+    ...     reference,
     ...     model_name='credit_card_segment',
     ...     model_type='classification_multiclass',
     ...     exclude_columns=['identifier']
@@ -330,7 +330,7 @@ Some information is infered automatically and we provide the rest.
 .. code-block:: python
 
     >>> metadata = nml.extract_metadata(
-    reference,
+    ...     reference,
     ...     model_name='credit_card_segment',
     ...     model_type='classification_multiclass',
     ...     exclude_columns=['identifier']
