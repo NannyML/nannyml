@@ -16,6 +16,8 @@ and multiclass classification models in the absence of target data. To find out 
 Binary Classification
 =====================
 
+.. _performance-estimation-binary-just-the-code:
+
 Just The Code
 ----------------
 

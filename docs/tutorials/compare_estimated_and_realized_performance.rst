@@ -5,9 +5,11 @@ Comparing Estimated and Realized Performance
 ============================================
 
 
+
 When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
 ground truth is given in ``analysis_targets`` variable. It consists of ``identifier`` that allows to match it with
-``analysis`` data and the target for monitored model - ``work_home_actual``:
+``analysis`` data and the target for monitored model - ``work_home_actual``. Start with the code from :ref:`tutorial on
+performance estimation with binary classification data<performance-estimation-binary-just-the-code>` and continue:
 
 .. code-block:: python
 
@@ -34,13 +36,13 @@ ground truth is given in ``analysis_targets`` variable. It consists of ``identif
     >>> target_col = 'work_home_actual'
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
-    >>> for idx in est_perf.data.index:
-    >>>     start_index, end_index = est_perf.data.loc[idx, 'start_index'], est_perf.data.loc[idx, 'end_index']
+    >>> for idx in est_perf_with_ref.data.index:
+    >>>     start_index, end_index = est_perf_with_ref.data.loc[idx, 'start_index'], est_perf_with_ref.data.loc[idx, 'end_index']
     >>>     sub = df_all.loc[start_index:end_index]
     >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    >>>     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
+    >>>     est_perf_with_ref.data.loc[idx, 'actual_roc_auc'] = actual_perf
     >>> # plot
-    >>> est_perf.data[['estimated_roc_auc', 'actual_roc_auc']].plot()
+    >>> est_perf_with_ref.data[['estimated_roc_auc', 'actual_roc_auc']].plot()
     >>> plt.xlabel('chunk')
     >>> plt.ylabel('ROC AUC')
     >>> plt.show()
