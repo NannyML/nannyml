@@ -24,7 +24,7 @@
     <strong>
         <a href="https://nannyml.com/">Website</a>
         •
-        <a href="https://nannyml.readthedocs.io">Docs</a>
+        <a href="https://nannyml.readthedocs.io/en/stable/">Docs</a>
         •
         <a href="https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ">Community Slack</a>
     </strong>
@@ -37,7 +37,7 @@
 # 💡 What is NannyML?
 NannyML is an open-source python library that allows you to **estimate post-deployment model performance** (without access to targets), detect data drift, and intelligently link data drift alerts back to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, interactive visualizations, is completely model-agnostic and currently supports all tabular binary classification use cases.
 
-The core contributors of NannyML have researched and developed a novel algorithm for estimating model performance: [confidence-based performance estimation (CBPE)](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html). The nansters also invented a new approach to detect [multivariate data drift](https://docs.nannyml.com/latest/deep_dive/data_reconstruction.html#id1) using PCA-based data reconstruction.
+The core contributors of NannyML have researched and developed a novel algorithm for estimating model performance: [confidence-based performance estimation (CBPE)](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html). The nansters also invented a new approach to detect [multivariate data drift](https://nannyml.readthedocs.io/en/stable/how_it_works/data_reconstruction.html) using PCA-based data reconstruction.
 
 If you like what we are working on, be sure to become an Nanster yourself, join our [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ) <img src="media/slack.png" width='25'> and champion us with a GitHub <img src="media/github.png" width='25'> star ⭐.
 
@@ -54,7 +54,7 @@ Allowing you to have the following benefits:
 # 🧠 GO DEEP
 | NannyML Resources                                       | Description                                                                            |
 |---------------------------------------------------------|----------------------------------------------------------------------------------------|
-| ☎️ **[NannyML 101]**                                    | New to NannyML? Start here!                                                            |
+| ☎️ **[NannyML 101]**                                     | New to NannyML? Start here!                                                            |
 | 🔮 **[Performance estimation]**                         | How the magic works.                                                                   |
 | 🌍 **[Real world example]**                             | Take a look at a real-world example of NannyML.                                        |
 | 🔑 **[Key concepts]**                                   | Glossary of key concepts we use.                                                       |
@@ -62,15 +62,15 @@ Allowing you to have the following benefits:
 | 🔎 **[Blog]**                                           | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                     | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
 | 💎 **[New in v0.4.0]**                                  | New features, bug fixes.                                                               |
-| 🧑‍💻 **[Contribute]**                                  | How to contribute to the NannyML project and codebase.                                 |
+| 🧑‍💻 **[Contribute]**                                     | How to contribute to the NannyML project and codebase.                                 |
 | <img src="media/slack.png" width='25'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
-[NannyML 101]: https://nannyml.readthedocs.io/
-[Performance Estimation]:https://nannyml.readthedocs.io/en/main/how_it_works/performance_estimation.html
-[Key Concepts]: https://nannyml.readthedocs.io/en/main/glossary.html
-[Technical Reference]:https://nannyml.readthedocs.io/en/main/nannyml/modules.html
+[NannyML 101]: https://nannyml.readthedocs.io/en/stable/
+[Performance Estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
+[Key Concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
+[Technical Reference]:https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
 [New in v0.4.0]: https://github.com/NannyML/nannyml/releases/latest/
-[Real World Example]: https://nannyml.readthedocs.io/en/main/examples/california_housing.html
+[Real World Example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
 [Join Slack]: https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ
@@ -80,7 +80,7 @@ Allowing you to have the following benefits:
 
 ### 1. Performance estimation and monitoring
 
-When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://docs.nannyml.com/latest/deep_dive/performance_estimation.html) to **estimate model performance**. This algorithm requires the predicted probabilities of your machine learning model and leverages probability calibration to estimate any traditional binary classification metric (ROC_AUC, Precision, Recall, F1, etc.). Rather than estimating the performance of future model predictions, CBPE estimates the expected model performance of the predictions made at inference time.
+When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html) to **estimate model performance**. This algorithm requires the predicted probabilities of your machine learning model and leverages probability calibration to estimate any traditional binary classification metric (ROC_AUC, Precision, Recall, F1, etc.). Rather than estimating the performance of future model predictions, CBPE estimates the expected model performance of the predictions made at inference time.
 
 <p><img src="docs/_static/tutorial-perf-est-guide-with-ref-roc_auc.svg"></p>
 
