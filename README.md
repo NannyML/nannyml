@@ -69,7 +69,7 @@ Allowing you to have the following benefits:
 [Performance Estimation]:https://nannyml.readthedocs.io/en/main/how_it_works/performance_estimation.html
 [Key Concepts]: https://nannyml.readthedocs.io/en/main/glossary.html
 [Technical Reference]:https://nannyml.readthedocs.io/en/main/nannyml/modules.html
-[New in v0.4.0]: https://github.com/NannyML/nannyml/releases/tag/v0.4.0
+[New in v0.4.0]: https://github.com/NannyML/nannyml/releases/latest/
 [Real World Example]: https://nannyml.readthedocs.io/en/main/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
