@@ -63,15 +63,17 @@ the :ref:`Walkthrough<walk_through_the_quickstart>`.
     >>> data = pd.concat([reference, analysis], ignore_index=True)
     >>> chunk_size = 5000
 
-    >>> # fit estimator and estimate
-    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit(reference)
+    >>> # initialize, fit estimator and estimate
+    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc'])
+    >>> estimator = estimator.fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
     >>> # show results
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
     >>> figure.show()
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size).fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
+    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's plot drift results for all model inputs
     >>> for feature in metadata.features:
@@ -171,12 +173,14 @@ Estimating Performance without Targets
 ======================================
 
 NannyML can estimate the performance on a machine learning model in production
-without access to its :term:`Target`. For more details, see :ref:`performance-estimation`.
+without access to its :term:`Target`. For more details on how to use performance estimation see :ref:`here<performance-estimation>`,
+while for more details on how it works see :ref:`here<performance-estimation-deep-dive>`.
 
 .. code-block:: python
 
-    >>> # fit estimator and estimate
-    >>> estimator =  nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit(reference)
+    >>> # initialize, fit estimator and estimate
+    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc'])
+    >>> estimator = estimator.fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
     >>> # show results
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
@@ -184,7 +188,7 @@ without access to its :term:`Target`. For more details, see :ref:`performance-es
 
 .. image:: ./_static/quick_start_perf_est.svg
 
-The results indicate that the model’s performance is likely to be negatively impacted from the second half of 2019
+The results indicate that the model's performance is likely to be negatively impacted from the second half of 2019
 onwards.
 
 Detecting Data Drift
@@ -196,7 +200,8 @@ functionality. See :ref:`data-drift` for more details.
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size).fit(reference_data=reference)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
+    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
     >>> univariate_results = univariate_calculator.calculate(data=data)
     >>> # let's plot drift results for all model inputs
     >>> for feature in metadata.features:

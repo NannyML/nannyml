@@ -59,6 +59,7 @@ a binary classifier trying to predict whether someone will be working from home 
 
 .. code-block:: python
 
+    >>> import nannyml as nml
     >>> reference, _, _ = nml.load_synthetic_binary_classification_dataset()
     >>> reference[['identifier', 'work_home_actual', 'timestamp', 'y_pred_proba',
        'partition', 'y_pred']].head()

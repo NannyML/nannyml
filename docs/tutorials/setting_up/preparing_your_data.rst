@@ -148,7 +148,7 @@ The ``data`` argument is used to pass the data sample for the extraction.
 
 The ``model_type``The model_type argument allows us to specify the type of the model that is monitored -
 either ``classification_binary`` or ``classification_multiclass``.
-The exact algorithm does not matter, as NannyML doesn’t use the model when analysing data.
+The exact algorithm does not matter, as NannyML doesn't use the model when analysing data.
 This argument allows the :func:`nannyml.metadata.extraction.extract_metadata`
 function to look for specific patterns in the columns.
 
@@ -378,7 +378,7 @@ The ``data`` argument is used to pass the data sample for the extraction.
 
 The ``model_type``The model_type argument allows us to specify the type of the model that is monitored -
 either ``classification_binary`` or ``classification_multiclass``.
-The exact algorithm does not matter, as NannyML doesn’t use the model when analysing data.
+The exact algorithm does not matter, as NannyML doesn't use the model when analysing data.
 This argument allows the :func:`nannyml.metadata.extraction.extract_metadata`
 function to look for specific patterns in the columns.
 

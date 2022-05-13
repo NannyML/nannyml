@@ -106,7 +106,7 @@ NannyML uses the same statistical tests to detected **model output drift**.
 
 ### 3. Intelligent alerting
 
-Because NannyML can estimate performance, it is possible to weed out data drift alerts that do not impact expected performance, combatting alert fatigue. Besides linking data drift issues to drops in performance it is also possible to prioritise alerts according to other criteria using NannyML’s Ranker.
+Because NannyML can estimate performance, it is possible to weed out data drift alerts that do not impact expected performance, combatting alert fatigue. Besides linking data drift issues to drops in performance it is also possible to prioritise alerts according to other criteria using NannyML's Ranker.
 
 
 # 🚀 Getting started

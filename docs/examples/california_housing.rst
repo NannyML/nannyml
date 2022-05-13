@@ -156,7 +156,7 @@ actual performance.
 Drift detection
 ===============
 
-The next step is to dig deeper to find out what might be responsible for this drop in ROC AUC. Let’s do it using
+The next step is to dig deeper to find out what might be responsible for this drop in ROC AUC. Let's do it using
 univariate drift detection.
 
 .. code:: python
@@ -187,7 +187,7 @@ univariate drift detection.
 +----+--------------+--------------------+--------+
 
 
-It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period, top 4 features drifted in all analyzed chunks. Let’s look at the magnitude of this drift by looking at the KS distance statistics.
+It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period, top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift by looking at the KS distance statistics.
 
 .. code:: python
 
@@ -213,7 +213,7 @@ It looks like there is a lot of drift in this dataset. Since we have 12 chunks i
 | Population_dstat | 0.0713122 |
 +------------------+-----------+
 
-The mean value of D-statistic for Longitude and Latitude on analysis chunks is the largest. Let’s plot their
+The mean value of D-statistic for Longitude and Latitude on analysis chunks is the largest. Let's plot their
 distributions for the analysis period.
 
 .. code:: python
@@ -231,7 +231,7 @@ distributions for the analysis period.
 
 Indeed, distributions of these variables are completely different in each
 chunk. This was expected, as the original dataset has observations from
-nearby locations next to each other. Let’s see it on a scatter plot:
+nearby locations next to each other. Let's see it on a scatter plot:
 
 .. code:: python
 
