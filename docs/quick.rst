@@ -142,7 +142,7 @@ way we will split our data into :term:`Data Chunks<Data Chunk>`.
     >>> chunk_size = 5000
 
 The data are already split into a reference and an analysis periods. NannyML uses the **reference period** to
-establish a baseline for expected model performance. The ** analysis period** is where we estimate or
+establish a baseline for expected model performance. The **analysis period** is where we estimate or
 monitor performance, as well as detect data drift.
 For more information about periods check :ref:`data-drift-periods`. The key thing is that
 the analysis period doesn't need to contain the :term:`Target` data.
@@ -176,7 +176,7 @@ without access to its :term:`Target`. For more details, see :ref:`performance-es
 .. code-block:: python
 
     >>> # fit estimator and estimate
-    >>> estimator = estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit(reference)
+    >>> estimator =  nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc']).fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
     >>> # show results
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
