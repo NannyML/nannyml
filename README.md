@@ -61,7 +61,7 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                            | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                           | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                     | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎	**[New in v0.3.1]**                                  | New features, bug fixes.                                                               |
+| 💎 **[New in v0.4.0]**                                  | New features, bug fixes.                                                               |
 | 🧑‍💻 **[Contribute]**                                  | How to contribute to the NannyML project and codebase.                                 |
 | <img src="media/slack.png" width='25'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
@@ -69,7 +69,7 @@ Allowing you to have the following benefits:
 [Performance Estimation]:https://nannyml.readthedocs.io/en/main/how_it_works/performance_estimation.html
 [Key Concepts]: https://nannyml.readthedocs.io/en/main/glossary.html
 [Technical Reference]:https://nannyml.readthedocs.io/en/main/nannyml/modules.html
-[New in v0.3.1]: https://nannyml.substack.com/p/nannyml-031-release-soft-launch?s=w
+[New in v0.4.0]: https://github.com/NannyML/nannyml/releases/tag/v0.4.0
 [Real World Example]: https://nannyml.readthedocs.io/en/main/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
