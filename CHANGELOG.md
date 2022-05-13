@@ -7,9 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.0] - 2022-05-13
+
 ### Added
 - Added support for new metrics in the Confidence Based Performance Estimator (CBPE). It now estimates ``roc_auc``,
   ``f1``, ``precision``, ``recall`` and ``accuracy``.
+- Added support for **multiclass classification**. This includes
+  - Specifying ``multiclass classification metadata`` + support in automated metadata extraction (by introducing a
+    ``model_type`` parameter).
+  - Support for all ``CBPE`` metrics.
+  - Support for realized performance calculation using the ``PerformanceCalculator``.
+  - Support for all types of drift detection (model inputs, model output, target distribution).
+  - A new synthetic toy dataset.
 
 ### Changed
 - Removed the ``identifier`` property from the ``ModelMetadata`` class. Joining ``analysis`` data and
@@ -19,11 +28,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All ``fit`` methods now return the fitted object. This allows chaining ``Calculator``/``Estimator`` instantiation
   and fitting into a single line.
 - Custom metrics are no longer supported in the ``PerformanceCalculator``. Only the predefined metrics remain supported.
+- Big documentation revamp: we've tweaked overall structure, page structure and incorporated lots of feedback.
+- Improvements to consistency and readability for the 'hover' visualization in the step plots, including consistent
+  color usage, conditional formatting, icon usage etc.
+- Improved indication of "realized" and "estimated" performance in all ``CBPE`` step plots
+  (changes to hover, axes and legends)
 
 ### Fixed
 - Updated homepage in project metadata
 - Added missing metadata modification to the *quickstart*
 - Perform some additional check on reference data during preprocessing
+- Various documentation suggestions [(#58)](https://github.com/NannyML/nannyml/issues/58)
 
 ## [0.3.2] - 2022-05-03
 
