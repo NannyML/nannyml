@@ -70,8 +70,9 @@ Ready to contribute code? Here's how to set up `nannyml` for local development.
 
     $ git clone git@github.com:your_name_here/nannyml.git
 
-3. Ensure poetry_ is installed.
-4. Install dependencies and start your virtualenv: ::
+3. Ensure poetry_ is installed. Note that when installing poetry on Mac OSX Monterey, if you get a permission denied error for .zshrc, you will have to add the following manually using sudo: export PATH="$HOME/.poetry/bin:$PATH”
+
+4. Install dependencies and start your virtualenv. Execute the following from within your local repository directory: ::
 
     $ poetry install -E test -E doc -E dev
 
@@ -82,7 +83,7 @@ Ready to contribute code? Here's how to set up `nannyml` for local development.
   Now you can make your changes locally.
 
 6. When you're done making changes, check that your changes pass the
-   tests, including testing other Python versions, with tox: ::
+   tests, including testing other Python versions, with tox. (“pip install tox” if it is not already installed): ::
 
     $ poetry run tox
 
