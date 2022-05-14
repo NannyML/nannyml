@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://assets.website-files.com/6099466e98d9381b3f745b9a/60994ab2b5bd890780db9c84_NannyML%20logo%20horizontal%20typfont.png">
+    <img src="media/thumbnail-4.png">
 </p>
 <p align="center">
     <a href="https://pypi.org/project/nannyml/">
@@ -31,7 +31,7 @@
 </p>
 
 <p align="center">
-  <img src="media/estimate-post-deployment-model-performance.gif" alt="animated">
+  <img src="media/CBPE_v3.gif " alt="animated">
 </p>
 
 # 💡 What is NannyML?
