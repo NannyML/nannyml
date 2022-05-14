@@ -31,7 +31,7 @@
 </p>
 
 <p align="center">
-  <img src="media/CBPE_v3.gif " alt="animated">
+  <img src="media/CBPE_v3.gif" alt="animated">
 </p>
 
 # 💡 What is NannyML?
