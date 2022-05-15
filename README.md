@@ -18,6 +18,10 @@
         <img src='https://readthedocs.org/projects/nannyml/badge/?version=main' alt='Documentation Status' />
     </a>
     <img alt="PyPI - License" src="https://img.shields.io/pypi/l/nannyml?color=green">
+    <br>
+    <br>
+    <a href="https://www.producthunt.com/posts/nannyml?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-nannyml" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=346412&theme=light&period=daily" alt="NannyML - OSS&#0032;Python&#0032;library&#0032;for&#0032;detecting&#0032;silent&#0032;ML&#0032;model&#0032;failure | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+
 </p>
 
 <p align="center">
@@ -33,6 +37,7 @@
 <p align="center">
   <img src="media/cbpe_v3.gif" alt="animated">
 </p>
+
 
 # 💡 What is NannyML?
 NannyML is an open-source python library that allows you to **estimate post-deployment model performance** (without access to targets), detect data drift, and intelligently link data drift alerts back to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, interactive visualizations, is completely model-agnostic and currently supports all tabular binary classification use cases.
