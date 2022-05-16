@@ -132,6 +132,7 @@ python -m pip install git+https://github.com/NannyML/nannyml
 
 ### Quick Start
 
+*The following snippet is based on our [latest release](https://github.com/NannyML/nannyml/releases/latest)*.
 
 ```python
 import pandas as pd
