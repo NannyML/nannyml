@@ -70,7 +70,12 @@ Ready to contribute code? Here's how to set up `nannyml` for local development.
 
     $ git clone git@github.com:your_name_here/nannyml.git
 
-3. Ensure poetry_ is installed. Note that when installing poetry on Mac OSX Monterey, if you get a permission denied error for .zshrc, you will have to add the following manually using sudo: export PATH="$HOME/.poetry/bin:$PATH”
+3. Ensure poetry_ is installed.
+
+.. note::
+
+    When installing poetry on Mac OSX Monterey, if you get a permission denied error for ``.zshrc``,
+    you will have to add the following manually using ``sudo``: ``export PATH="$HOME/.poetry/bin:$PATH”``
 
 4. Install dependencies and start your virtualenv. Execute the following from within your local repository directory: ::
 
