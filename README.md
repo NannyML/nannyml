@@ -44,7 +44,7 @@ NannyML is an open-source python library that allows you to **estimate post-depl
 
 The core contributors of NannyML have researched and developed a novel algorithm for estimating model performance: [confidence-based performance estimation (CBPE)](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html). The nansters also invented a new approach to detect [multivariate data drift](https://nannyml.readthedocs.io/en/stable/how_it_works/data_reconstruction.html) using PCA-based data reconstruction.
 
-If you like what we are working on, be sure to become an Nanster yourself, join our [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ) <img src="media/slack.png" width='25'> and champion us with a GitHub <img src="media/github.png" width='25'> star ⭐.
+If you like what we are working on, be sure to become a Nanster yourself, join our [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ) <img src="media/slack.png" width='25'> and support us with a GitHub <img src="media/github.png" width='25'> star ⭐.
 
 # ☔ Why use NannyML?
 NannyML closes the loop with performance monitoring and post deployment data science, empowering data scientist to quickly understand and **automatically detect silent model failure**. By using NannyML, data scientists can finally maintain complete visibility and trust in their deployed machine learning models.
