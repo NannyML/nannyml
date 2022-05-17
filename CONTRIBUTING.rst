@@ -88,7 +88,7 @@ Ready to contribute code? Here's how to set up `nannyml` for local development.
   Now you can make your changes locally.
 
 6. When you're done making changes, check that your changes pass the
-   tests, including testing other Python versions, with tox. (“pip install tox” if it is not already installed): ::
+   tests, including testing other Python versions, with tox: ::
 
     $ poetry run tox
 
