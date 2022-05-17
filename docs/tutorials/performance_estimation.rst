@@ -508,6 +508,15 @@ performance on reference period (where the target was available).
   performance.
 
 
+Regression
+==========
+
+
+.. warning::
+
+    Performance calculation does not support *regression* use cases yet.
+
+
 Insights and Follow Ups
 ==========================
 

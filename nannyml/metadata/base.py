@@ -40,6 +40,7 @@ class ModelType(str, Enum):
 
     CLASSIFICATION_BINARY = 'classification_binary'
     CLASSIFICATION_MULTICLASS = 'classification_multiclass'
+    REGRESSION = 'regression'
 
     @staticmethod
     def parse(model_type_str: str):
@@ -48,6 +49,8 @@ class ModelType(str, Enum):
             return ModelType.CLASSIFICATION_BINARY
         elif model_type_str == 'classification_multiclass':
             return ModelType.CLASSIFICATION_MULTICLASS
+        elif model_type_str == 'regression':
+            return ModelType.REGRESSION
         else:
             raise InvalidArgumentsException(f"unknown model type '{model_type_str}'")
 

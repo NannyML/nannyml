@@ -32,6 +32,8 @@ class CBPE(PerformanceEstimator):
             return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
         elif isinstance(model_metadata, MulticlassClassificationMetadata):
             return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
+        else:
+            raise NotImplementedError
 
     def __init__(
         self,

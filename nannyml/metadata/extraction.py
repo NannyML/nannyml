@@ -12,6 +12,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata.base import ModelType
 from nannyml.metadata.binary_classification import BinaryClassificationMetadata
 from nannyml.metadata.multiclass_classification import MulticlassClassificationMetadata
+from nannyml.metadata.regression import RegressionMetadata
 
 
 def extract_metadata(data: pd.DataFrame, model_type: str, model_name: str = None, exclude_columns: List[str] = None):
@@ -111,6 +112,7 @@ class ModelMetadataFactory:
     mapping = {
         ModelType.CLASSIFICATION_BINARY: BinaryClassificationMetadata,
         ModelType.CLASSIFICATION_MULTICLASS: MulticlassClassificationMetadata,
+        ModelType.REGRESSION: RegressionMetadata,
     }
 
     @classmethod

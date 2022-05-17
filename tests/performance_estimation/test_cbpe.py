@@ -14,7 +14,7 @@ from pytest_mock import MockerFixture
 from nannyml.calibration import Calibrator, IsotonicCalibrator
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata import BinaryClassificationMetadata, extract_metadata
+from nannyml.metadata import BinaryClassificationMetadata, RegressionMetadata, extract_metadata
 from nannyml.performance_estimation import CBPE
 from nannyml.performance_estimation.base import PerformanceEstimatorResult
 
@@ -223,3 +223,8 @@ def test_cbpe_results_plot_raises_invalid_arguments_exception_given_invalid_metr
 ):
     with pytest.raises(InvalidArgumentsException, match="unknown 'metric' value: 'foo'."):
         estimates.plot(kind="performance", metric="foo")
+
+
+def test_cbpe_for_regression_metadata_raises_not_implemented_error():  # noqa: D103
+    with pytest.raises(NotImplementedError):
+        _ = CBPE(model_metadata=RegressionMetadata(), metrics=['f1'])

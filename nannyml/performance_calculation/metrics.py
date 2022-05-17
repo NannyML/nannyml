@@ -763,7 +763,7 @@ class MetricFactory:
             raise RuntimeError(
                 f"metric '{key}' is currently not supported for model type {metadata_class_name}. "
                 "Please specify another metric or use one of these supported model types for this metric: "
-                f"{[metadata_class_name for md in cls._metrics[key]]}"
+                f"{[md for md in cls._metrics[key]]}"
             )
         metric_class = cls._metrics[key][metadata_class_name]
         return metric_class(metadata=metadata)  # type: ignore

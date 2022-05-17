@@ -61,6 +61,7 @@ from .metadata import (
     ModelMetadata,
     ModelType,
     MulticlassClassificationMetadata,
+    RegressionMetadata,
     extract_metadata,
 )
 from .performance_calculation import PerformanceCalculator

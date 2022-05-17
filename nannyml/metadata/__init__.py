@@ -9,3 +9,4 @@ from .binary_classification import BinaryClassificationMetadata
 from .extraction import extract_metadata
 from .feature import Feature, FeatureType
 from .multiclass_classification import MulticlassClassificationMetadata
+from .regression import RegressionMetadata

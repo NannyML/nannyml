@@ -4,7 +4,7 @@
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 from nannyml.chunk import Chunk
 from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata
+from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata, RegressionMetadata
 from nannyml.metadata.base import Feature, FeatureType, ModelMetadata
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._joy_plot import _joy_plot
@@ -197,6 +197,8 @@ def _plot_prediction_drift(
         if class_label not in metadata.predicted_probabilities_column_names:
             raise InvalidArgumentsException(f"no classes found named '{class_label}'. Please review the given value.")
         prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
+    elif isinstance(metadata, RegressionMetadata):
+        prediction_column_name = metadata.prediction_column_name
     else:
         raise NotImplementedError
 
@@ -293,27 +295,32 @@ def _plot_prediction_distribution(
     fig: plotly.graph_objects.Figure
         A visualization of the data distribution and drift using joy-plots.
     """
+    clip: Optional[Tuple[int, int]] = None
     if isinstance(metadata, BinaryClassificationMetadata):
-        predicted_probability_column_name = metadata.predicted_probability_column_name
+        prediction_column_name = metadata.predicted_probability_column_name
+        clip = (0, 1)
     elif isinstance(metadata, MulticlassClassificationMetadata):
         if not class_label or class_label == "":
             raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
-        predicted_probability_column_name = metadata.predicted_probabilities_column_names[class_label]
+        prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
+        clip = (0, 1)
+    elif isinstance(metadata, RegressionMetadata):
+        prediction_column_name = metadata.prediction_column_name
     else:
         raise NotImplementedError
 
-    x_axis_title = f'{predicted_probability_column_name}'
-    drift_column_name = f'{predicted_probability_column_name}_alert'
-    title = f'Distribution over time for {predicted_probability_column_name}'
+    x_axis_title = f'{prediction_column_name}'
+    drift_column_name = f'{prediction_column_name}_alert'
+    title = f'Distribution over time for {prediction_column_name}'
 
     fig = _joy_plot(
         feature_table=_create_feature_table(data=data),
         drift_table=drift_data,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
-        feature_column_name=predicted_probability_column_name,
+        feature_column_name=prediction_column_name,
         x_axis_title=x_axis_title,
-        post_kde_clip=(0, 1),
+        post_kde_clip=clip,
         title=title,
         style='vertical',
     )

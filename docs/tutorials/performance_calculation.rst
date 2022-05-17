@@ -424,6 +424,15 @@ The results can be plotted for vizual inspection:
 .. image:: /_static/tutorial-perf-guide-mc-ROC_AUC.svg
 
 
+Regression
+==========
+
+
+.. warning::
+
+    Performance calculation does not support *regression* use cases yet.
+
+
 
 Insights and Follow Ups
 =======================
