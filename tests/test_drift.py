@@ -241,7 +241,7 @@ def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(
     calc = TestDriftCalculator(sample_drift_metadata, chunk_number=100).fit(ref_data)
     sut = calc.calculate(sample_drift_data)['keys']
 
-    assert 100 == len(sut)
+    assert 101 == len(sut)
 
 
 def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period(  # noqa: D103

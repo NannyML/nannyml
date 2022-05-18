@@ -322,13 +322,16 @@ class SizeBasedChunker(Chunker):
 
     """
 
-    def __init__(self, chunk_size: int):
+    def __init__(self, chunk_size: int, drop_incomplete: bool = False):
         """Create a new SizeBasedChunker.
 
         Parameters
         ----------
         chunk_size: int
             The preferred size of the resulting Chunks, i.e. the number of observations in each Chunk.
+        drop_incomplete: bool, default=False
+            Indicates whether the final Chunk after splitting should be dropped if it doesn't contain
+            ``chunk_size`` observations. Defaults to ``False``, i.e. the final chunk will always be kept.
 
         Returns
         -------
@@ -352,6 +355,7 @@ class SizeBasedChunker(Chunker):
             )
 
         self.chunk_size = chunk_size
+        self.drop_incomplete = drop_incomplete
 
     def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
@@ -359,7 +363,7 @@ class SizeBasedChunker(Chunker):
             min_date = pd.to_datetime(chunk_data[NML_METADATA_TIMESTAMP_COLUMN_NAME].min())
             max_date = pd.to_datetime(chunk_data[NML_METADATA_TIMESTAMP_COLUMN_NAME].max())
             return Chunk(
-                key=f'[{index}:{index + self.chunk_size - 1}]',
+                key=f'[{index}:{index + chunk_size - 1}]',
                 data=chunk_data,
                 start_datetime=min_date,
                 end_datetime=max_date,
@@ -371,6 +375,15 @@ class SizeBasedChunker(Chunker):
             for i in range(0, len(data), self.chunk_size)
             if i + self.chunk_size - 1 < len(data)
         ]
+
+        if not self.drop_incomplete and (data.shape[0] % self.chunk_size != 0):
+            chunks += [
+                _create_chunk(
+                    index=self.chunk_size * (data.shape[0] // self.chunk_size),
+                    data=data,
+                    chunk_size=(data.shape[0] % self.chunk_size),
+                )
+            ]
 
         return chunks
 
@@ -433,7 +446,7 @@ class CountBasedChunker(Chunker):
 
 
 class DefaultChunker(Chunker):
-    """Splits data into chunks sized 3 times the minimum chunk size.
+    """Splits data into about 10 chunks.
 
     Examples
     --------
@@ -443,13 +456,18 @@ class DefaultChunker(Chunker):
     >>> chunks = chunker.split(data=df)
     """
 
+    DEFAULT_CHUNK_COUNT = 10
+
     def __init__(self):
         """Creates a new DefaultChunker."""
         super(DefaultChunker, self).__init__()
 
     def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
-        if not minimum_chunk_size:
-            raise InvalidArgumentsException("could not use DefaultChunker: 'minimum_chunk_size' should be specified")
-        chunk_size = minimum_chunk_size * 3
-        chunks = SizeBasedChunker(chunk_size).split(data, minimum_chunk_size=minimum_chunk_size)
+        if data.shape[0] == 0:
+            return []
+
+        data = data.copy().reset_index()
+
+        chunk_size = data.shape[0] // self.DEFAULT_CHUNK_COUNT
+        chunks = SizeBasedChunker(chunk_size=chunk_size).split(data=data, minimum_chunk_size=minimum_chunk_size)
         return chunks

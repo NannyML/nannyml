@@ -349,20 +349,50 @@ def test_size_based_chunker_returns_chunks_of_required_size(sample_chunk_data): 
     chunker = SizeBasedChunker(chunk_size=chunk_size)
     sut = chunker.split(sample_chunk_data)
     assert len(sut[0]) == chunk_size
-    assert len(sut) == sample_chunk_data.shape[0] // chunk_size
+    assert len(sut) == math.ceil(sample_chunk_data.shape[0] / chunk_size)
+
+
+def test_size_based_chunker_returns_last_chunk_that_is_partially_filled(sample_chunk_data):  # noqa: D103
+    chunk_size = 3333
+    expected_last_chunk_size = sample_chunk_data.shape[0] % chunk_size
+    chunker = SizeBasedChunker(chunk_size)
+    sut = chunker.split(sample_chunk_data)
+    assert len(sut[-1]) == expected_last_chunk_size
+
+
+def test_size_based_chunker_works_when_data_set_is_multiple_of_chunk_size(sample_chunk_data):
+    chunk_size = 1000
+    data = sample_chunk_data.loc[0:19999, :]
+    chunker = SizeBasedChunker(chunk_size)
+    sut = []
+    try:
+        sut = chunker.split(data)
+    except Exception as exc:
+        pytest.fail(f'an unexpected exception occurred: {exc}')
+
+    assert len(sut[-1]) == chunk_size
+
+
+def test_size_based_chunker_drops_last_incomplete_chunk_when_set_drop_incomplete_is_true(  # noqa: D103
+    sample_chunk_data,
+):
+    chunk_size = 3333
+    chunker = SizeBasedChunker(chunk_size, drop_incomplete=True)
+    sut = chunker.split(sample_chunk_data)
+    assert len(sut[-1]) == chunk_size
 
 
 def test_size_based_chunker_uses_observations_to_set_chunk_date_boundaries(sample_chunk_data):  # noqa: D103
     chunker = SizeBasedChunker(chunk_size=5000)
     sut = chunker.split(sample_chunk_data)
     assert sut[0].start_datetime == Timestamp(year=2020, month=1, day=6, hour=0, minute=0, second=0)
-    assert sut[-1].end_datetime == Timestamp(year=2020, month=5, day=23, hour=21, minute=10, second=0)
+    assert sut[-1].end_datetime == Timestamp(year=2020, month=5, day=24, hour=23, minute=50, second=0)
 
 
 def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
     chunk_size = 1500
-    last_chunk_start = (math.floor(sample_chunk_data.shape[0] / chunk_size) - 1) * chunk_size
-    last_chunk_end = math.floor(sample_chunk_data.shape[0] / chunk_size) * chunk_size - 1
+    last_chunk_start = (sample_chunk_data.shape[0] // chunk_size) * chunk_size
+    last_chunk_end = sample_chunk_data.shape[0] - 1
 
     chunker = SizeBasedChunker(chunk_size=chunk_size)
     sut = chunker.split(sample_chunk_data)
@@ -417,11 +447,10 @@ def test_count_based_chunker_assigns_observation_range_to_chunk_keys(sample_chun
     assert sut[-1].key == '[16128:20159]'
 
 
-def test_default_chunker_uses_3_times_minimum_chunk_size_for_size(sample_chunk_data):  # noqa: D103
-    minimum_chunk_size = 300
-    sut = DefaultChunker().split(sample_chunk_data, minimum_chunk_size=minimum_chunk_size)
-    expected = minimum_chunk_size * 3
-    assert len(sut) == sample_chunk_data.shape[0] // expected
-    assert len(sut[0]) == expected
-    assert len(sut[1]) == expected
-    assert len(sut[-1]) == expected
+def test_default_chunker_splits_into_ten_chunks(sample_chunk_data):  # noqa: D103
+    expected_size = sample_chunk_data.shape[0] / 10
+    sut = DefaultChunker().split(sample_chunk_data)
+    assert len(sut) == 10
+    assert len(sut[0]) == expected_size
+    assert len(sut[1]) == expected_size
+    assert len(sut[-1]) == expected_size
