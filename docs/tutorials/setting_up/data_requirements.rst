@@ -148,7 +148,7 @@ Predicted probability
 
 The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` that is emitted by the model, most likely a float.
 
-In the sample data this is the ``y_pred`` column.
+In the sample data this is the ``y_pred_proba`` column.
 
 
 Prediction
@@ -156,7 +156,7 @@ Prediction
 
 The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresholding) the prediction scores or probabilities.
 
-In the sample data this is the ``y_pred_proba`` column.
+In the sample data this is the ``y_pred`` column.
 
 
 Multiclass classification columns
@@ -176,6 +176,19 @@ Prediction
 ^^^^^^^^^^
 
 The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresholding) the prediction scores or probabilities.
+
+In the sample data this is the ``y_pred`` column.
+
+
+Regression columns
+-----------------------------
+
+Prediction
+^^^^^^^^^^
+
+The values predicted by the model.
+
+In the sample data this is the ``y_pred`` column.
 
 
 Insights and Follow Ups

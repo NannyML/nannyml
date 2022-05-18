@@ -37,6 +37,8 @@ plotly = "^5.6.0"
 scipy = "~1.7.3"
 seaborn = "^0.11.2"
 pytest-mock = "^3.7.0"
+Sphinx = "^4.5.0"
+sphinx-rtd-theme = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 black  = { version = "^22.3.0", optional = true}
@@ -53,7 +55,7 @@ twine  = { version = "^3.3.0", optional = true}
 pre-commit = {version = "^2.12.0", optional = true}
 toml = {version = "^0.10.2", optional = true}
 bump2version = {version = "^1.0.1", optional = true}
-Sphinx = {version = "^4.4.0", optional = true}
+sphinx = {version = "^4.4.0", optional = true}
 sphinx-rtd-theme = {version = "^1.0.0", optional = true}
 guzzle_sphinx_theme = {version = "^0.7.11", optional = true}
 jupyterlab = {version = "^3.2.9", optional = true }

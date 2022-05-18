@@ -127,4 +127,3 @@ Let's now see the metadata that NannyML has inferred about the model.
 +----+-----------------------------------+------------------------------+-------------+-------------------------------------------------+
 
 For more information about specifying metadata look at :ref:`Providing Metadata<import-data>`.
-
