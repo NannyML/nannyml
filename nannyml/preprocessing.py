@@ -45,7 +45,7 @@ def preprocess(data: pd.DataFrame, metadata: ModelMetadata, reference: bool = Fa
             f'metadata is still missing values for {missing_properties}.\n'
             'Please rectify by renaming columns following automated extraction conventions\n'
             'and re-running preprocessing or set metadata properties manually.\n'
-            'See https://docs.nannyml.com/metadata-extraction for more information\n'
+            'See https://nannyml.readthedocs.io/en/stable/how_it_works/metadata_extraction.html for more information\n'
         )
 
     if data.empty:
