@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.1] - 2022-05-19
+
+### Added
+- Added limited support for ``regression`` use cases: create or extract ``RegressionMetadata`` and use it for drift
+  detection. Performance estimation and calculation require more research.
+
+### Changed
+- ``DefaultChunker`` splits into 10 chunks of equal size.
+- ``SizeBasedChunker`` no longer drops incomplete last chunk by default, but this is now configurable behavior.
+
 ## [0.4.0] - 2022-05-13
 
 ### Added
