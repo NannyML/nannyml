@@ -216,14 +216,14 @@ what it does on the butterfly dataset.
 
 .. code-block:: python
 
-    # Let's compute multivariate drift
-    rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=DPP).fit(reference_data=reference)
-    # let's compute (and visualize) results across all the dataset.
-    rcerror_results = rcerror_calculator.calculate(data=data)
+    >>> # Let's compute multivariate drift
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=DPP).fit(reference_data=reference)
+    >>> # let's compute (and visualize) results across all the dataset.
+    >>> rcerror_results = rcerror_calculator.calculate(data=data)
 
-    # let's create plot with results
-    figure = rcerror_results.plot()
-    figure.show()
+    >>> # let's create plot with results
+    >>> figure = rcerror_results.plot()
+    >>> figure.show()
 
 
 .. image:: ../_static/butterfly-multivariate-drift.svg
