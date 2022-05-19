@@ -34,7 +34,6 @@ Let's see first how we can construct an instance of the Butterfly dataset:
     >>> import seaborn as sns
     >>> import nannyml as nml
     >>> from scipy.spatial.transform import Rotation
-    >>> from sklearn.datasets import make_classification
 
     >>> # 10 reference periods
     >>> # 10 analysis periods
