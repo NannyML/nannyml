@@ -1,0 +1,2 @@
+sphinx-toggleprompt==0.2.0
+sphinx-copybutton==0.5.0
