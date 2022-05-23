@@ -79,7 +79,7 @@ Ready to contribute code? Here's how to set up `nannyml` for local development.
 
 4. Install dependencies and start your virtualenv. Execute the following from within your local repository directory: ::
 
-    $ poetry install -E test -E doc -E dev
+    $ poetry install
 
 5. Create a branch for local development: ::
 
