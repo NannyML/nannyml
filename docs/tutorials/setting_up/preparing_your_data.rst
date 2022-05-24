@@ -4,11 +4,11 @@
 Providing metadata
 ==================
 
-Why is data preparation required?
+Why is providing metadata required?
 =================================
 
-NannyML can process any data used in supported models. It requires *model metadata* to
-assign a correct role to each column of the data set. You can provide a
+NannyML can process any data used in supported models. It requires model metadata to
+assign the correct role to each column of the data set. You can provide a
 :class:`~nannyml.metadata.base.ModelMetadata` object that allows NannyML to make sense of your data.
 It allows you to specify what the :term:`model inputs<Model inputs>`, :term:`model predictions<Model predictions>`
 and :term:`targets <Target>` are for your monitored model.
@@ -20,9 +20,9 @@ This guide will illustrate how to use NannyML to help your create this
 Metadata for binary classification
 ======================================
 
-We'll use a sample data set for this guide.
+We'll use the same sample dataset for this guide as we use in our :ref:`quick start<quick-start>`.
 The dataset describes a machine learning model that tries to predict whether an employee will work from
-home on the next day.
+home on the next day, and is included in the library.
 You can read more about it on the :ref:`dataset introduction page<dataset-synthetic-binary>`.
 
 
@@ -97,9 +97,9 @@ Just the code
 Walkthrough
 -----------
 
-The first line loads the demo data. Remark that it returns three different ``DataFrames``. The first two correspond to
-the different :term:`data periods<Data Period>`, containing the data of the *reference* and *analysis* periods.
-The third ``DataFrame`` contains the *target* values for the *analysis* period. It can be joined with this period by
+First we load the demo data. This returns three different ``DataFrames``. The first two correspond to
+the different :term:`data periods<Data Period>`, containing the data of the reference and analysis periods.
+The third ``DataFrame`` contains the target values for the analysis period. It can be joined with this period by
 using the shared ``identifier`` column.
 
 .. code-block:: python
@@ -109,15 +109,7 @@ using the shared ``identifier`` column.
 
 -----
 
-The next lines takes a quick peek at the data inside the *reference* period.
-
-.. code-block:: python
-
-    >>> Index(['distance_from_office', 'salary_range', 'gas_price_per_litre',
-       'public_transportation_cost', 'wfh_prev_workday', 'workday', 'tenure',
-       'identifier', 'work_home_actual', 'timestamp', 'y_pred_proba',
-       'partition', 'y_pred'],
-      dtype='object')
+Next we inspect the data inside the reference period.
 
 The ``y_pred`` and ``y_pred_proba`` columns are housing the predicted labels and prediction scores or
 probabilities, i.e. the model outputs.
@@ -135,51 +127,62 @@ for the model.
 
 The rest of the columns are the model inputs containing either continuous or categorical feature values.
 
+.. code-block:: python
+
+    >>> Index(['distance_from_office', 'salary_range', 'gas_price_per_litre',
+       'public_transportation_cost', 'wfh_prev_workday', 'workday', 'tenure',
+       'identifier', 'work_home_actual', 'timestamp', 'y_pred_proba',
+       'partition', 'y_pred'],
+      dtype='object')
+
 -----
 
 We can now leverage the :func:`nannyml.metadata.extraction.extract_metadata` function to create a
-:class:`~nannyml.metadata.base.ModelMetadata` object from the *reference* data.
+:class:`~nannyml.metadata.base.ModelMetadata` object from the reference data.
+
+The ``data`` argument is used to pass the data sample for the extraction.
+
+The ``model_type`` argument allows us to specify the type of the model that is monitored -
+either ``classification_binary`` or ``classification_multiclass``.
+
+The exact algorithm does not matter, as NannyML doesn't use the model when analysing data.
+This argument allows the :func:`nannyml.metadata.extraction.extract_metadata`
+function to look for specific patterns in the columns, based on the type of model specified.
+
+The ``exclude_columns`` argument is used to identify columns that are not relevant to the model.
+In this example case the ``identifier`` column is only used as a helper to perform the join
+between the analysis period data and its target values. By excluding it we can ensure it is not picked up as a
+model feature by NannyML.
 
 .. code-block:: python
 
     >>> metadata = nml.extract_metadata(data=reference, model_type='classification_binary', exclude_columns=['identifier'])
 
-The ``data`` argument is used to pass the data sample for the extraction.
-
-The ``model_type``The model_type argument allows us to specify the type of the model that is monitored -
-either ``classification_binary`` or ``classification_multiclass``.
-The exact algorithm does not matter, as NannyML doesn't use the model when analysing data.
-This argument allows the :func:`nannyml.metadata.extraction.extract_metadata`
-function to look for specific patterns in the columns.
-
-The ``exclude_columns`` argument is used to pass along the names of columns that are not relevant to the model.
-In this example case the ``identifier`` column is such a column: it is only used as a helper to perform the join
-between the *analysis* period data and its *target* values. By excluding it we can ensure it is not picked up as a
-model feature by NannyML.
 
 -----
+
+The :func:`nannyml.metadata.extraction.extract_metadata` function uses some simple heuristics to yield its results.
+You can read more on the inner workings of this function in :ref:`metadata extraction <deep_dive_metadata_extraction>`
+This means that in some cases it will not succeed in extracting all required information.
 
 The :func:`nannyml.metadata.base.is_complete` function checks if all required metadata properties have been provided.
 It is normally used internally to validate user inputs. The function returns a ``bool`` indicating if metadata is
 complete. The second return argument is an array containing the name of any missing properties.
-Running this step is not necessary but can be done to double-check everything is in order in advance.
+Running this step is not necessary but can be done to double-check everything is in order before doing anything else.
+
+We can see that the extraction was not able to find the ``target_column_name``, i.e. the column containing the target
+values (``work_home_actual``) in our case.
 
 .. code-block:: python
 
     >>> metadata.is_complete()
     (False, ['target_column_name'])
 
-We can see that the extraction was not able to find the ``target_column_name``, i.e. the column containing the target
-values (``work_home_actual``) in our case.
 
 -----
 
-The :func:`nannyml.metadata.extraction.extract_metadata` function uses some simple heuristics to yield its results.
-You can read more on the inner workings of this function in the :ref:`how it works section <deep_dive_metadata_extraction>`
-This means that in some cases it will not succeed in extracting all required information.
-
-The following line of code modifies the :class:`~nannyml.metadata.base.ModelMetadata` object returned by the
-:func:`nannyml.metadata.extraction.extract_metadata` function by setting its ``target_column_name`` property.
+We can fix this missing metadata by modifying the :class:`~nannyml.metadata.base.ModelMetadata` object returned by the
+:func:`nannyml.metadata.extraction.extract_metadata` function to set its ``target_column_name`` property.
 
 .. code-block:: python
 
@@ -239,8 +242,7 @@ object as a ``DataFrame`` for easy inspection.
 Metadata for multiclass classification
 =======================================
 
-We'll use a sample data set for this guide.
-The dataset describes a machine learning model that tries to predict
+We'll use a sample dataset for this guide. The dataset describes a machine learning model that tries to predict
 the most appropriate product for new customers applying for a credit card.
 You can read more about it on the :ref:`dataset introduction page<dataset-synthetic-multiclass>`.
 
@@ -323,9 +325,9 @@ Just the code
 Walkthrough
 -----------
 
-The first line loads the demo data. Remark that it returns three different ``DataFrames``. The first two correspond to
-the different :term:`data periods<Data Period>`, containing the data of the *reference* and *analysis* periods.
-The third ``DataFrame`` contains the *target* values for the *analysis* period. It can be joined with this period by
+The first line loads the demo data. This returns three different ``DataFrames``. The first two correspond to
+the different :term:`data periods<Data Period>`, containing the data of the reference and analysis periods.
+The third ``DataFrame`` contains the target values for the analysis period. It can be joined with this period by
 using the shared ``identifier`` column.
 
 .. code-block:: python
@@ -335,16 +337,7 @@ using the shared ``identifier`` column.
 
 -----
 
-The next lines takes a quick peek at the data inside the *reference* period.
-
-.. code-block:: python
-
-    >>> Index(['acq_channel', 'app_behavioral_score', 'requested_credit_limit',
-       'app_channel', 'credit_bureau_score', 'stated_income', 'is_customer',
-       'partition', 'identifier', 'timestamp', 'y_pred_proba_prepaid_card',
-       'y_pred_proba_highstreet_card', 'y_pred_proba_upmarket_card', 'y_pred',
-       'y_true'],
-      dtype='object')
+Next we inspect the data inside the reference period.
 
 The ``y_pred`` column contains the labels predicted by the model.
 
@@ -365,14 +358,21 @@ for the model.
 
 The rest of the columns are the model inputs containing either continuous or categorical feature values.
 
+.. code-block:: python
+
+    >>> Index(['acq_channel', 'app_behavioral_score', 'requested_credit_limit',
+       'app_channel', 'credit_bureau_score', 'stated_income', 'is_customer',
+       'partition', 'identifier', 'timestamp', 'y_pred_proba_prepaid_card',
+       'y_pred_proba_highstreet_card', 'y_pred_proba_upmarket_card', 'y_pred',
+       'y_true'],
+      dtype='object')
+
+
+
 -----
 
 We can now leverage the :func:`nannyml.metadata.extraction.extract_metadata` function to create a
-:class:`~nannyml.metadata.base.ModelMetadata` object from the *reference* data.
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_multiclass', exclude_columns=['identifier'])
+:class:`~nannyml.metadata.base.ModelMetadata` object from the reference data.
 
 The ``data`` argument is used to pass the data sample for the extraction.
 
@@ -384,22 +384,32 @@ function to look for specific patterns in the columns.
 
 The ``exclude_columns`` argument is used to pass along the names of columns that are not relevant to the model.
 In this example case the ``identifier`` column is such a column: it is only used as a helper to perform the join
-between the *analysis* period data and its *target* values. By excluding it we can ensure it is not picked up as a
+between the *analysis* period data and its target values. By excluding it we can ensure it is not picked up as a
 model feature by NannyML.
+
+.. code-block:: python
+
+    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_multiclass', exclude_columns=['identifier'])
+
+
 
 -----
 
+The :func:`nannyml.metadata.extraction.extract_metadata` function uses some simple heuristics to yield its results.
+You can read more on the inner workings of this function in :ref:`metadata extraction <deep_dive_metadata_extraction>`
+This means that in some cases it will not succeed in extracting all required information.
+
 The :func:`nannyml.metadata.base.is_complete` function checks if all required metadata properties have been provided.
-It is normally used internally to validate user inputs. The function returns a ``bool`` indicating if metadata is
-complete. The second return argument is an array containing the name of any missing properties.
-Running this step is not necessary but can be done to double-check everything is in order in advance.
+The function returns a ``bool`` indicating if metadata is complete. The second return argument is an array 
+containing the name of any missing properties. Running this step is not necessary but can be done to 
+double-check everything is in order.
 
 .. code-block:: python
 
     >>> metadata.is_complete()
     (True, [])
 
-We can see that the extraction was able to find all required properties. The metadata is considered to be *complete*.
+We can see that the extraction was able to find all required properties. The metadata is considered to be complete.
 
 .. note::
     All :class:`~nannyml.metadata.multiclass_classification.MulticlassClassificationMetadata` properties can be updated
@@ -477,9 +487,9 @@ Metadata for regression
     This sample is sufficient to illustrate data preparation for regression cases to be used in drift detection.
 
 
-We'll use a sample data set for this guide.
+We'll use the same sample dataset for this guide as we use in our :ref:`quick start<quick-start>`.
 The dataset describes a machine learning model that tries to predict whether an employee will work from
-home on the next day.
+home on the next day, and is included in the library.
 You can read more about it on the :ref:`dataset introduction page<dataset-synthetic-binary>`.
 
 
@@ -555,16 +565,18 @@ Just the code
 Walkthrough
 -----------
 
-The first line loads the demo data. Remark that it returns three different ``DataFrames``. The first two correspond to
-the different :term:`data periods<Data Period>`, containing the data of the *reference* and *analysis* periods.
-The third ``DataFrame`` contains the *target* values for the *analysis* period. It can be joined with this period by
+The first line loads the demo data. This returns three different ``DataFrames``. The first two correspond to
+the different :term:`data periods<Data Period>`, containing the data of the reference and analysis periods.
+The third ``DataFrame`` contains the target values for the analysis period. It can be joined with this period by
 using the shared ``identifier`` column.
 
 .. note::
 
-    We are manually altering the existing :ref:`binary classification dataset<dataset-synthetic-binary>`.
-    First we drop the *predicted probabilities* from both the *reference* and *analysis* sets.
-    Then we set the *predictions* to be random `float` values.
+    We are manually altering the existing :ref:`binary classification dataset<dataset-synthetic-binary>` 
+    to make it appear to be data from a regression model.
+    First we drop the predicted probabilities from both the reference and analysis periods.
+    Then we set the predictions to be random `float` values.
+    If you have a regression model dataset already, this is obviously unnecessary.
 
 .. code-block:: python
 
@@ -577,15 +589,7 @@ using the shared ``identifier`` column.
 
 -----
 
-The next lines takes a quick peek at the data inside the *reference* period.
-
-.. code-block:: python
-
-    >>> Index(['distance_from_office', 'salary_range', 'gas_price_per_litre',
-       'public_transportation_cost', 'wfh_prev_workday', 'workday', 'tenure',
-       'identifier', 'work_home_actual', 'timestamp',
-       'partition', 'y_pred'],
-      dtype='object')
+Next we inspect the data inside the reference period.
 
 The ``y_pred`` column is housing the predictions, i.e. the model outputs.
 
@@ -602,14 +606,19 @@ for the model.
 
 The rest of the columns are the model inputs containing either continuous or categorical feature values.
 
+.. code-block:: python
+
+    >>> Index(['distance_from_office', 'salary_range', 'gas_price_per_litre',
+       'public_transportation_cost', 'wfh_prev_workday', 'workday', 'tenure',
+       'identifier', 'work_home_actual', 'timestamp',
+       'partition', 'y_pred'],
+      dtype='object')
+
+
 -----
 
 We can now leverage the :func:`nannyml.metadata.extraction.extract_metadata` function to create a
-:class:`~nannyml.metadata.base.ModelMetadata` object from the *reference* data.
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_binary', exclude_columns=['identifier'])
+:class:`~nannyml.metadata.base.ModelMetadata` object from the reference data.
 
 The ``data`` argument is used to pass the data sample for the extraction.
 
@@ -621,10 +630,19 @@ function to look for specific patterns in the columns.
 
 The ``exclude_columns`` argument is used to pass along the names of columns that are not relevant to the model.
 In this example case the ``identifier`` column is such a column: it is only used as a helper to perform the join
-between the *analysis* period data and its *target* values. By excluding it we can ensure it is not picked up as a
+between the *analysis* period data and its target values. By excluding it we can ensure it is not picked up as a
 model feature by NannyML.
 
+.. code-block:: python
+
+    >>> metadata = nml.extract_metadata(data=reference, model_type='classification_binary', exclude_columns=['identifier'])
+
+
 -----
+
+The :func:`nannyml.metadata.extraction.extract_metadata` function uses some simple heuristics to yield its results.
+You can read more on the inner workings of this function in :ref:`metadata extraction <deep_dive_metadata_extraction>`
+This means that in some cases it will not succeed in extracting all required information.
 
 The :func:`nannyml.metadata.base.is_complete` function checks if all required metadata properties have been provided.
 It is normally used internally to validate user inputs. The function returns a ``bool`` indicating if metadata is
@@ -641,12 +659,9 @@ values (``work_home_actual``) in our case.
 
 -----
 
-The :func:`nannyml.metadata.extraction.extract_metadata` function uses some simple heuristics to yield its results.
-You can read more on the inner workings of this function in the :ref:`how it works section <deep_dive_metadata_extraction>`
-This means that in some cases it will not succeed in extracting all required information.
 
-The following line of code modifies the :class:`~nannyml.metadata.base.ModelMetadata` object returned by the
-:func:`nannyml.metadata.extraction.extract_metadata` function by setting its ``target_column_name`` property.
+To fix this we can modify the set the ``target_column_name`` property of the :class:`~nannyml.metadata.base.ModelMetadata` 
+object returned by the :func:`nannyml.metadata.extraction.extract_metadata` function.
 
 .. code-block:: python
 
@@ -700,7 +715,7 @@ object as a ``DataFrame`` for easy inspection.
 +----+----------------------------+----------------------------+-------------+-----------------------------------------------+
 
 
-Insights and Follow Ups
+Insights
 =======================
 
 .. warning::
@@ -714,6 +729,10 @@ Insights and Follow Ups
 .. note::
     We are aware that this boilerplate setup step creates some friction. We're actively working
     on reducing it.
+
+
+What next
+=======================
 
 To find out more about the columns that should in your dataset, check out the
 :ref:`data requirements<data_requirements>` documentation.
