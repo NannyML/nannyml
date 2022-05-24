@@ -274,7 +274,7 @@ see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 .. image:: ./_static/drift-guide-multivariate.svg
 
 -----------------------
-Insights and Follow Ups
+Insights
 -----------------------
 
 With NannyML we were able to estimate performance in the absence of ground truth. The estimation has shown
@@ -285,5 +285,12 @@ Putting everything together, we see that 4 features exhibit data drift from late
 ``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
 This drift is responsible for the potential negative impact in performance that we observed in this time period.
 
+-----------------------
+What next
+-----------------------
+
 This could be further investigated by analyzing changes of distributions of the input variables. Check
 :ref:`tutorials<tutorials>` on :ref:`data drift<data-drift>` to find out how to plot distributions with NannyML.
+
+You can now try using NannyML on your own data. Our tutorials on :ref:`data requirements<data_requirements>`
+and :ref:`providing metadata<import-data>` are good places to find out what to do for this.
