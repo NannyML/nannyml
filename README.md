@@ -11,9 +11,6 @@
     <a href="https://github.com/nannyml/nannyml/actions/workflows/dev.yml">
         <img src="https://github.com/NannyML/nannyml/actions/workflows/dev.yml/badge.svg">
     </a>
-    <a href="https://codecov.io/gh/NannyML/nannyml">
-        <img src="https://codecov.io/gh/NannyML/nannyml/branch/main/graph/badge.svg?token=OGpF5gVzfR">
-    </a>
     <a href='https://nannyml.readthedocs.io/en/main/?badge=main'>
         <img src='https://readthedocs.org/projects/nannyml/badge/?version=main' alt='Documentation Status' />
     </a>
