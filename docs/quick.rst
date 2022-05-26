@@ -48,9 +48,6 @@ on other datasets or ML problems look through our :ref:`examples<examples>`.
 Just the code
 -------------
 
-Feel free to copy-paste the code below and experiment with the results yourself. The 
-:ref:`walkthrough<walk_through_the_quickstart>` below will explain everything here in detail.
-
 .. code-block:: python
 
     >>> import pandas as pd
@@ -100,7 +97,7 @@ Feel free to copy-paste the code below and experiment with the results yourself.
 .. _walk_through_the_quickstart:
 
 ---------------------------
-Walk through the quickstart
+Walkthrough
 ---------------------------
 
 We start by loading the synthetic dataset included in the library. This synthetic dataset 
