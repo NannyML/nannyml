@@ -19,9 +19,9 @@ to review example results.
 Walkthrough on creating chunks
 ------------------------------
 
-To allow for flexibility there are many ways to create chunks. The examples provided will explain how chunks are
-created depending on the instructions provided. The examples will be run based on the performance estimation flow on
-synthetic dataset provided by NannyML. Set up first with:
+To allow for flexibility there are many ways to create chunks. The examples below will show how different 
+kinds of chunks can be created. The examples will be run based on the performance estimation flow on the
+synthetic binary classification dataset provided by NannyML. First we set up this dataset.
 
 .. code-block:: python
 
@@ -39,8 +39,7 @@ Time-based chunking
 
 Time-based chunking creates chunks based on time intervals. One chunk can contain all the observations
 from a single hour, day, week, month etc. In most cases, such chunks will vary in the number of observations they
-contain. Specify ``chunk_period``
-argument to get appropriate split. See the example below that chunks data quarterly:
+contain. Specify the ``chunk_period`` argument to get appropriate split. The example below chunks data quarterly.
 
 .. code-block:: python
 
@@ -62,8 +61,7 @@ argument to get appropriate split. See the example below that chunks data quarte
     Notice that each calendar quarter was taken into account, even if it was not fully covered with records.
     This means some chunks contain fewer observations (usually the last and the first). See the first row above - Q3 is
     July-September, but the first record in the data is from the last day of August. The first chunk has ~1200 of
-    observations while the 2nd
-    and 3rd contain above 3000.
+    observations while the 2nd and 3rd contain above 3000. This can cause some chunks to be less relibaly estimated or calculated.
 
 Possible time offsets are listed in the table below:
 
@@ -91,8 +89,8 @@ Possible time offsets are listed in the table below:
 Size-based chunking
 ~~~~~~~~~~~~~~~~~~~
 
-Chunks can be of fixed size, i.e. each chunk contains the same number of observations. Set this up by specifying
-``chunk_size`` parameter:
+Chunks can be of fixed size, i.e. each chunk contains the same number of observations. Set this up by specifying the
+``chunk_size`` parameter.
 
 .. code-block:: python
 
@@ -114,8 +112,8 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 .. note::
     If the number of observations is not divisible by the chunk size required, the number of rows equal to the
     remainder of a division will be dropped. This ensures that each chunk has the same size, but in worst case
-    scenario it results in dropping ``chunk_size-1`` rows. Notice that the last index in last chunk is 48999 while
-    the last index in raw data is 49999:
+    scenario it results in dropping ``chunk_size-1`` rows. Notice that the last index in the last chunk is 48999 
+    while the last index in the raw data is 49999:
 
     .. code-block:: python
 
@@ -149,8 +147,7 @@ The total number of chunks can be set by the ``chunk_number`` parameter:
 
 .. note::
     Chunks created this way will be equal in size. If the number of observations is not divisible by the
-    ``chunk_number`` then
-    the number of observations equal to the residual of the division will be dropped. See:
+    ``chunk_number`` then the number of observations equal to the residual of the division will be dropped.
 
     .. code-block:: python
 
@@ -183,7 +180,7 @@ Automatic chunking
 
 The default chunking method is size-based, with the size being three times the
 estimated minimum size for the monitored data and model (see how NannyML estimates minimum chunk size in
-:ref:`minimum chunk size<minimum-chunk-size>`):
+:ref:`minimum chunk size<minimum-chunk-size>`). This is used if a chunking method isn't specified.
 
 .. code-block:: python
 
@@ -204,7 +201,12 @@ estimated minimum size for the monitored data and model (see how NannyML estimat
 Chunks on plots with results
 ----------------------------
 
-Finally, once the chunking method is selected, the full performance estimation can be run:
+Finally, once the chunking method is selected, the full performance estimation can be run.
+
+Each point on the plot represents a single chunk, with the y-axis showing the performance.
+They are aligned on the x axis with the date at the end of the chunk, not the date in the middle of the chunk.
+Plots are interactive - hovering over the point will display the precise information about the period, 
+to help prevent any confusion.
 
     .. code-block:: python
 
@@ -213,7 +215,3 @@ Finally, once the chunking method is selected, the full performance estimation c
         >>> est_perf.plot(kind='performance').show()
 
 .. image:: /_static/guide-chunking_your_data-pe_plot.svg
-
-Each marker on the plot represents estimated performance (y axis) for a single chunk.
-Markers are placed at the end of the period covered by the chunk i.e. they indicate the last timestamp in the
-chunk (x axis). Plots are interactive - hovering over the marker will display the information about the period.
