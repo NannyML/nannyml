@@ -2,16 +2,17 @@
 Binary Classification: California Housing Dataset
 =================================================
 
-This document outlines a typical workflow for estimating performance of a model without access to ground truth, detecting performance issues and identifying potential root causes for these issues.
-Below, one can find an example use of NannyML on the modified California Housing Prices dataset.
+This example outlines a typical workflow for estimating performance of a model without access to ground truth, 
+detecting performance issues and identifying potential root causes for these issues. In this examples, we are
+using NannyML on the modified California Housing Prices dataset.
 
-See what modifications were made to the data to make it suitable for the
-use case :ref:`here<dataset-california>`.
+You can see what modifications were made to the data to make it suitable for the
+use case in :ref:`California Housing Dataset<dataset-california>`.
 
 Load and prepare data
 =====================
 
-Let's load the dataset from NannyML datasets:
+Let's load the dataset from NannyML's included datasets.
 
 .. code:: python
 
@@ -31,7 +32,7 @@ Let's load the dataset from NannyML datasets:
 |  2 |   8.72   |         44 |    6.16318 |     1.04603 |          668 |    2.79498 |      34.2  |     -118.18 | 2020-10-01 02:00:00 | reference   |            1 |           1    |        1 |            2 |
 +----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
 
-Let's extract metadata.
+Next we extract metadata.
 
 .. code:: python
 
@@ -43,7 +44,7 @@ Let's extract metadata.
 Performance Estimation
 ======================
 
-Let's estimate performance for reference and analysis partitions:
+We first want to estimate performance for the analysis period, using the reference period as our performance baseline.
 
 .. code:: python
 
@@ -54,9 +55,9 @@ Let's estimate performance for reference and analysis partitions:
 
 .. parsed-literal::
 
-    UserWarning: The resulting list of chunks contains 1 underpopulated chunks.They contain too few records to be statistically relevant and might negatively influence the quality of calculations.Please consider splitting your data in a different way or continue at your own risk.
+    UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be statistically relevant and might negatively influence the quality of calculations. Please consider splitting your data in a different way or continue at your own risk.
 
-Some chunks are too small, let's  quickly check:
+We get a warning that some chunks are too small. Let's quickly check what's going on here.
 
 .. code:: python
 
@@ -85,8 +86,8 @@ Some chunks are too small, let's  quickly check:
     dtype: int64
 
 
-The last one is smaller than the others due to the selected chunking method. Let's remove it for clarity of
-visualizations.
+The last chunk is smaller than the others due to the selected chunking method. Let's remove it to make sure 
+everything we visualise is reliable.
 
 .. code:: python
 
@@ -101,7 +102,7 @@ visualizations.
 | 18 | 2022-04 |         13128 |       13847 | 2022-04-01 00:00:00 | 2022-04-30 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.910661 |                  0.708336 |                         1 | False           |
 +----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
 
-Let's plot the estimated performance:
+Now we can plot the estimated performance confidently.
 
 .. code:: python
 
@@ -116,8 +117,8 @@ to the month of September.
 Comparison with the actual performance
 ======================================
 
-Let's use the ground truth that we have to
-calculate ROC AUC on relevant chunks and compare:
+Because we have the ground truth for our dataset, we can use it to calculate ROC AUC on the relevant chunks, 
+and compare it to the estimated values.
 
 .. code:: python
 
@@ -148,7 +149,7 @@ calculate ROC AUC on relevant chunks and compare:
 
 .. image:: ../_static/example_california_performance_estimation_tmp.svg
 
-The significant drop at the first few chunks of the analysis period was
+We can see that the significant drop at the first few chunks of the analysis period was
 estimated accurately. After that, the overall trend seems to be well
 represented. The estimation of performance has a lower variance than
 actual performance.
@@ -156,8 +157,8 @@ actual performance.
 Drift detection
 ===============
 
-The next step is to dig deeper to find out what might be responsible for this drop in ROC AUC. Let's do it using
-univariate drift detection.
+The next step is to find out what might be responsible for this drop in ROC AUC. Let's try using
+univariate drift detection, and see what we discover.
 
 .. code:: python
 
@@ -187,7 +188,9 @@ univariate drift detection.
 +----+--------------+--------------------+--------+
 
 
-It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period, top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift by looking at the KS distance statistics.
+It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period, 
+we can see that the top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift 
+by examining the KS distance statistics.
 
 .. code:: python
 
@@ -213,7 +216,7 @@ It looks like there is a lot of drift in this dataset. Since we have 12 chunks i
 | Population_dstat | 0.0713122 |
 +------------------+-----------+
 
-The mean value of D-statistic for Longitude and Latitude on analysis chunks is the largest. Let's plot their
+The mean value of D-statistic for Longitude and Latitude on the analysis chunks is the largest. Let's plot their
 distributions for the analysis period.
 
 .. code:: python
@@ -229,9 +232,9 @@ distributions for the analysis period.
 
 .. image:: ../_static/example_california_performance_distribution_Latitude.svg
 
-Indeed, distributions of these variables are completely different in each
+Indeed, we can see the distributions of these variables are completely different in each
 chunk. This was expected, as the original dataset has observations from
-nearby locations next to each other. Let's see it on a scatter plot:
+nearby locations. Let's see it on a scatter plot:
 
 .. code:: python
 
@@ -247,6 +250,7 @@ nearby locations next to each other. Let's see it on a scatter plot:
 
 .. image:: ../_static/example_california_latitude_longitude_scatter.svg
 
-In summary, NannyML estimated the performance (ROC AUC) of a model without accessing the target data. The estimate is
-quite accurate. Next, the potential root causes of the drop in performance were indicated by
-detecting data drift. This was achieved using univariate methods that identify features which drifted the most.
+In this example, NannyML estimated the performance (ROC AUC) of a model without accessing the target data. We can see 
+from our comparison with the targets that the estimate is quite accurate. Next, the potential root causes of the drop in 
+performance were indicated by detecting data drift. This was achieved using univariate methods that identified the features 
+which drifted the most.
