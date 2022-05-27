@@ -349,11 +349,11 @@ In the next step a :class:`~nannyml.performance_calculation.calculator.Performan
 extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional :ref:`chunking<chunking>` specification.
 The list of metrics specifies which metrics should be calculated. The following metrics are currently supported:
 
-- ``roc_auc``
-- ``f1``
-- ``precision``
-- ``recall``
-- ``specificity``
+- ``roc_auc`` - one vs. the rest, macro averaged
+- ``f1`` - macro averaged
+- ``precision`` - macro averaged
+- ``recall`` - macro averaged
+- ``specificity`` - macro averaged
 - ``accuracy``
 
 For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
