@@ -142,7 +142,7 @@ Insights and Follow Ups
 
 Looking at the results we see that we have a false alert on the first chunk of the analysis data. This is similar
 to the ``tenure`` variable in the :ref:`univariate drift results<univariate_drift_detection_tenure>` where there is also
-a false alert because the drift measured by the KS d-statistic is very low. This
+a false alert because the drift measured by the :term:`KS statistic<Kolmogorov-Smirnov test>` is very low. This
 can happen when the statistical tests consider significant a small change in the distribution of a variable
 in the chunks. But because the change is small it is usually not significant from a model monitoring perspective.
 

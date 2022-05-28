@@ -70,8 +70,9 @@ Walkthrough on univariate drift detection
 
 NannyML's Univariate approach for data drift looks at each variable individually and conducts
 statistical tests comparing the chunks created from the data provided with the reference dataset.
-NannyML uses the KS Test for continuous features and the 2 sample
-Chi squared test for categorical features. Both tests provide a statistic where they measure the
+NannyML uses the :term:`2 sample Kolmogorov-Smirnov Test<Kolmogorov-Smirnov test>` for continuous features and the
+:term:`Chi squared test<Chi Squared test>` for categorical features.
+Both tests provide a statistic where they measure the
 observed drift and a p-value that shows how likely we are to get the observed sample
 under the assumption that there was no drift. If the p-value is less than 0.05 NannyML considers
 the result unlikely to be due to chance and issues an alert for the associated chunk and feature.

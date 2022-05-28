@@ -75,8 +75,9 @@ Let's start by loading some synthetic data provided by the NannyML package.
 
 NannyML uses :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
 in order to monitor drift in :term:`Target` distribution. It can calculate the mean occurrence of positive
-events for binary classification problems. It can also  calculates the chi-squared statistic,
-from the 2 sample Chi Squared test, of the target values for each chunk which is available for both binary
+events for binary classification problems. It can also  calculates the chi squared statistic,
+from the :term:`Chi Squared test<Chi Squared test>`,
+of the target values for each chunk which is available for both binary
 and multiclass classification problems.
 
 In order to calculate target drift, the target values must be available. Let's manually add the target data to the analysis
