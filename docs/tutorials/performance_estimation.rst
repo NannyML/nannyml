@@ -518,7 +518,8 @@ Regression
 Insights
 ==========================
 
-After reviewing the performance estimation results we have to decide if further investigation is needed.
+After reviewing the performance estimation results, we should be able to see any indications of performance change that
+NannyML has detected based upon the model's inputs and outputs alone.
 
 
 What's next
