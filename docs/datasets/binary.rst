@@ -39,7 +39,7 @@ A sample of the dataset can be seen below.
 The model uses 7 features:
 
 - `distance_from_office`: A numerical feature. The distance in kilometers from the employee's house to the workplace.
-- `salary_range`: A categorical feature with 4 categories that bin the employee's yearly income.
+- `salary_range`: A categorical feature with 4 categories that identify the range the employee's yearly income falls within.
 - `gas_price_per_litre`: A numerical feature. The price of gas per litre close to the employee's residence.
 - `public_transportation_cost`: A numerical feature. The price, in euros, of public transportation from
   the employee's residence to the workplace.
@@ -49,7 +49,7 @@ The model uses 7 features:
   will work from home.
 - `tenure`: A numerical feature describing how many years the employee has been at the company.
 
-The model predicts both a probability of the employee working from home that is available from the `y_pred_proba` column.
+The model predicts the probability of the employee working from home, recorded in the `y_pred_proba` column.
 A binary prediction is also available from the `y_pred` column. The `work_home_actual` is the :term:`Target` column describing
 what actually happened.
 
@@ -57,7 +57,7 @@ what actually happened.
 There are also three auxiliarry columns that are helpful but not used by the monitored model:
 
 - `identifier`: A unique number referencing each employee. This is very useful for joining the target
-  results on the analysis dataset when we want to compare estimated with realized performace.
+  results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`
 - `timestamp`: A date column informing us of the date the prediction was made.
 - `partition`: The partition column tells us which :term:`Data Period` each row comes from.
 
@@ -65,8 +65,8 @@ There are also three auxiliarry columns that are helpful but not used by the mon
 Metadata Extraction
 ===================
 
-The dataset's columns are name such that the heuristics NannyML uses to extract metadata can
-identify them. We can see below how to extract metadata
+The dataset's columns are named so that the heuristics NannyML uses to extract metadata can
+identify them. We can see below how to extract metadata.
 
 
 .. code-block:: python
@@ -83,7 +83,7 @@ We see that the `target_column_name` has not been correctly idenfied. We need to
     >>> metadata.is_complete()
     (True, [])
 
-Let's now see the metadata that NannyML has inferred about the model.
+We can now see all the metadata that NannyML has inferred about the model.
 
 .. code-block:: python
 
