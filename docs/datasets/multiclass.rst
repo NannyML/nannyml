@@ -4,15 +4,15 @@
 Synthetic Multiclass Classification Dataset
 ===========================================
 
-NannyML provides a synthetic dataset describing a multiclass classification problem in
-order to make it easier to test and document its features.
+NannyML provides a synthetic dataset describing a multiclass classification problem, 
+to make it easier to test and document its features.
 
 Problem Description
 ===================
 
 The dataset describes a machine learning model that tries to predict the most appropriate product
-for new customers applying for a credit card. There are three options. Prepaid cards for with low
-credit limits, highstreet cards with low credit limits and high interest rates and upmarket cards
+for new customers applying for a credit card. There are three options. Prepaid cards with low
+credit limits, highstreet cards with low credit limits and high interest rates, and upmarket cards
 with higher credit limits and lower interest rates.
 
 Dataset Description
@@ -41,21 +41,21 @@ A sample of the dataset can be seen below.
 The model uses 7 features:
 
 - `acq_channel`: A categorical feature with 5 categories describing the acquisition channel for the new customer.
-  Organic refers to customers brought on by the company whereas Partner1-4 referes to customers brought on by
+  Organic refers to customers brought on by the company whereas Partner1-4 refers to customers brought on by
   outside partners.
 - `app_behavioral_score`:  A numerical feature. This score is determined by characteristics derived from how the
-  new customer fileld and submitted their application.
+  new customer filled in and submitted their application.
 - `requested_credit_limit`: A numerical feature. The credit limit the customer selected as appropriate for their
   needs.
 - `app_channel`: A categorical feature with 3 categories describing how the application was submitted. It can
   be in-store, from the website or from a mobile device.
 - `credit_bureau_score`: A numerical feature. The credit score provided by the credit bureau that assesses the credit
-  worthiness of the new customer. The higher the score the more creidt worthy the customer.
-- `stated_income`: A numerical feature. The yearly income of the customer as stated by them.
+  worthiness of the new customer. The higher the score the more credit-worthy the customer.
+- `stated_income`: A numerical feature. The yearly income of the customer, as stated by them.
 - `is_customer`:  A categorical feature with 2 categories describing whether the new customer has an existing
   relationship with the business.
 
-The model predicts both a probability for all classes with the `y_pred_proba_prepaid_card`,
+The model predicts a probability for all classes with the `y_pred_proba_prepaid_card`,
 `y_pred_proba_highstreet_card`, `y_pred_proba_upmarket_card` columns.
 A class prediction is also available from the `y_pred` column. The `y_true` is the :term:`Target` column
 with the most appropriate product choice for a given customer.
@@ -64,7 +64,7 @@ with the most appropriate product choice for a given customer.
 There are also three auxiliarry columns that are helpful but not used by the monitored model:
 
 - `identifier`: A unique number referencing each new customer. This is very useful for joining the target
-  results on the analysis dataset when we want to compare estimated with realized performace.
+  results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`.
 - `timestamp`: A date column informing us of the date the prediction was made.
 - `partition`: The partition column tells us which :term:`Data Period` each row comes from.
 
@@ -72,8 +72,8 @@ There are also three auxiliarry columns that are helpful but not used by the mon
 Metadata Extraction
 ===================
 
-The dataset's columns are name such that the heuristics NannyML uses to extract metadata can
-identify them. We can see below how to extract metadata:
+The dataset's columns are named so that the heuristics NannyML uses to extract metadata can
+identify them. We can see below how to extract metadata.
 
 
 .. code-block:: python
@@ -86,7 +86,7 @@ identify them. We can see below how to extract metadata:
     >>> )
     >>> metadata.is_complete()
 
-Let's now see the metadata that NannyML has inferred about the model.
+We can now see all the metadata that NannyML has inferred about the model.
 
 .. code-block:: python
 

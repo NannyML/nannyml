@@ -4,8 +4,8 @@
 Synthetic Binary Classification Dataset
 =======================================
 
-NannyML provides a synthetic dataset describing a binary classification problem in
-order to make it easier to test and document its features.
+NannyML provides a synthetic dataset describing a binary classification problem, 
+to make it easier to test and document its features.
 
 Problem Description
 ===================
@@ -57,7 +57,7 @@ what actually happened.
 There are also three auxiliarry columns that are helpful but not used by the monitored model:
 
 - `identifier`: A unique number referencing each employee. This is very useful for joining the target
-  results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`
+  results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`.
 - `timestamp`: A date column informing us of the date the prediction was made.
 - `partition`: The partition column tells us which :term:`Data Period` each row comes from.
 
