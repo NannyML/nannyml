@@ -7,14 +7,12 @@ Multivariate Data Drift Detection
 Why Perform Multivariate Drift Detection
 ----------------------------------------
 
-Multivariate data drift detection addresses the shortcomings of univariate data detection methods.
-It provides one summary number reducing the risk of false alerts and detects more subtle changes
+Multivariate data drift detection addresses the shortcomings of :ref:`univariate data detection methods<univariate_drift_detection>`.
+It provides one summary number reducing the risk of false alerts, and detects more subtle changes
 in the data structure that cannot be detected with univariate approaches.
 
 Just The Code
 -------------
-
-If you just want the code to experiment yourself within a Jupyter Notebook, here you go:
 
 .. code-block:: python
 
@@ -54,16 +52,17 @@ If you just want the code to experiment yourself within a Jupyter Notebook, here
     >>> figure = rcerror_results.plot(kind='drift')
     >>> figure.show()
 
-Walkthrough on multivariate drift detection
+Walkthrough
 -------------------------------------------
 
 NannyML uses Data Reconstruction with PCA to detect such changes. For a detailed explanation of
-the method see
-:ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
-The method returns a single number, :term:`Reconstruction Error`. The changes in this value
-reflect a change in the structure of the model inputs. NannyML calculates the
-reconstruction error over time for the monitored model and raises an alert if the
-values get outside of a range defined by the variance in the reference period.
+the method see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+
+The method returns a single number, measuring the :term:`Reconstruction Error`. The changes in this value
+reflect a change in the structure of the model inputs. 
+
+NannyML calculates the reconstruction error over time for the monitored model, and raises an alert if the
+values get outside of a range defined by the variance in the reference :ref:`data period<data-drift-periods>`.
 
 Let's start by loading some synthetic data provided by the NannyML package.
 
@@ -99,7 +98,8 @@ the :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculat
 to be called on the reference data where results will be based off. Then the
 :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.calculate` method will
 calculate the multivariate drift results on the data provided to it.
-One way to use it can be seen below:
+
+One way to use it can be seen below.
 
 
 .. code-block:: python
@@ -115,9 +115,9 @@ One way to use it can be seen below:
 
 Missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
 the most frequent value for categorical features and the mean for continuous features. These defaults can be
-overridden with an instance of `SimpleImputer`_ class
-in which cases NannyML will perform the imputation as instructed. An example where custom imputation strategies are used can be seen below:
+overridden with an instance of `SimpleImputer`_ class in which cases NannyML will perform the imputation as instructed. 
 
+An example where custom imputation strategies are used can be seen below.
 
 .. code-block:: python
 
@@ -135,7 +135,7 @@ in which cases NannyML will perform the imputation as instructed. An example whe
     >>> rcerror_results = rcerror_calculator.calculate(data=data)
 
 
-Because our synthetic dataset does not have missing values, the results are the same in both cases:
+Because our synthetic dataset does not have missing values, the results are the same in both cases.
 
 .. code-block:: python
 
@@ -186,7 +186,7 @@ Because our synthetic dataset does not have missing values, the results are the 
 | 19 | [95000:99999] |         95000 |       99999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 | analysis    |                1.24258 |           1.09658 |           1.13801 | True    |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
 
-NannyML can also visualize multivariate drift results with the following code:
+NannyML can also visualize multivariate drift results.
 
 .. code-block:: python
 
@@ -201,15 +201,19 @@ is happening in our input data.
 .. _SimpleImputer: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
 
 
-Insights and Follow Ups
+Insights
 -----------------------
 
-After reviewing the results we may want to look at the
-:ref:`drift results of individual features<univariate_drift_detection>`
+Using this method of detecting drift we can identify changes that we may not have seen using solely univariate methods.
+
+What Next
+-----------------------
+
+After reviewing the results we may want to look at the :ref:`drift results of individual features<univariate_drift_detection>`
 to see what changed in the model's feature's individually.
-Moreover the :ref:`Performance Estimation<performance-estimation>` functionality can be used to
+
+The :ref:`Performance Estimation<performance-estimation>` functionality can be used to
 estimate the impact of the observed changes.
 
-
-For more information on how multivariate drift works the
+For more information on how multivariate drift detection works the
 :ref:`Data Reconstruction with PCA<data-reconstruction-pca>` explanation page gives more details.
