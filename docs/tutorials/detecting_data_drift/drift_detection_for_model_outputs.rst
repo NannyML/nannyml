@@ -7,7 +7,7 @@ Drift Detection for Model Outputs
 Why Perform Drift Detection for Model Outputs
 ---------------------------------------------
 
-The distribution of model outputs tells us how likely our population
+The distribution of model outputs tells us how likely it is that our population
 will do what the model predicts. If the model's
 population changes, then our populations' actions will be different.
 The difference in actions is very important to know as soon as possible because
@@ -16,8 +16,6 @@ they directly affect the business results from operating a machine learning mode
 
 Just The Code
 -------------
-
-If you just want the code to experiment yourself within a Jupyter Notebook, here you go:
 
 .. code-block:: python
 
@@ -48,7 +46,7 @@ If you just want the code to experiment yourself within a Jupyter Notebook, here
     >>> figure.show()
 
 
-Walkthrough on Drift Detection for Model Outputs
+Walkthrough
 ------------------------------------------------
 
 NannyML detects data drift for :term:`Model Outputs` using the
@@ -82,14 +80,16 @@ Let's start by loading some synthetic data provided by the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
-class implements the functionality needed for drift detection in model outputs as well.
-Following the process shown at :ref:`univariate_drift_detection`
+class implements the functionality needed for drift detection in model outputs.
+
+Following the process shown in :ref:`univariate drift detection<univariate_drift_detection>`,
 :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
 is instantiated with appropriate parameters and the
 :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method
-is called on the reference data where results will be based off. Then the
-:meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method
-calculates the drift results on the data provided to it. An example using it can be seen below:
+is called on the reference data that the results will be based off. 
+
+Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method
+calculates the drift results on the data provided. An example using it can be seen below.
 
 .. code-block:: python
 
@@ -118,7 +118,7 @@ calculates the drift results on the data provided to it. An example using it can
 +----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
 
 
-NannyML can visualize the statistical properties of the drift in model outputs with:
+NannyML can visualize the statistical properties of the drift in model outputs.
 
 .. code-block:: python
 
@@ -127,7 +127,7 @@ NannyML can visualize the statistical properties of the drift in model outputs w
 
 .. image:: /_static/drift-guide-predictions.svg
 
-NannyML can also show how the distributions of the model predictions evolved over time:
+NannyML can also show how the distributions of the model predictions evolved over time.
 
 .. code-block:: python
 
@@ -137,14 +137,17 @@ NannyML can also show how the distributions of the model predictions evolved ove
 .. image:: /_static/drift-guide-predictions-joyplot.svg
 
 
-Insights and Follow Ups
+Insights
 -----------------------
 
-Looking at the results we see that we have a false alert on the first chunk of the analysis data. This is similar
-to the ``tenure`` variable in the :ref:`univariate drift results<univariate_drift_detection_tenure>` where there is also
+Looking at the results we can see that we have a false alert on the first chunk of the analysis data. This is similar
+to the ``tenure`` variable in the :ref:`univariate drift results<univariate_drift_detection_tenure>`, where there is also
 a false alert because the drift measured by the :term:`KS statistic<Kolmogorov-Smirnov test>` is very low. This
-can happen when the statistical tests consider significant a small change in the distribution of a variable
-in the chunks. But because the change is small it is usually not significant from a model monitoring perspective.
+can happen when the statistical tests consider a small change in the distribution of a variable
+to be significant. But because the change is small it is usually not significant from a model monitoring perspective.
+
+What Next
+-----------------------
 
 If required the :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
 observed changes to Model Outputs.
