@@ -7,6 +7,8 @@ Synthetic Multiclass Classification Dataset
 NannyML provides a synthetic dataset describing a multiclass classification problem, 
 to make it easier to test and document its features.
 
+To find out what requirements NannyML has for datasets, check out :ref:`Data Requirements<data_requirements>`.
+
 Problem Description
 ===================
 

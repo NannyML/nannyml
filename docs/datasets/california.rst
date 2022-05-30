@@ -14,6 +14,7 @@ NannyML. There are three steps needed for this process:
 - Training a Machine Learning Model
 - Meeting NannyML Data Requirements
 
+To find out what requirements NannyML has for datasets, check out :ref:`Data Requirements<data_requirements>`.
 
 We need to start by loading the dataset.
 
