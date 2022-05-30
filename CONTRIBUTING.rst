@@ -66,7 +66,7 @@ Get Started!
 Ready to contribute code? Here's how to set up `nannyml` for local development.
 
 1. Fork the `nannyml` repo on GitHub.
-2. Clone your fork locally ::
+2. Clone your fork locally: ::
 
     $ git clone git@github.com:your_name_here/nannyml.git
 

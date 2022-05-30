@@ -14,8 +14,9 @@ NannyML. There are three steps needed for this process:
 - Training a Machine Learning Model
 - Meeting NannyML Data Requirements
 
+To find out what requirements NannyML has for datasets, check out :ref:`Data Requirements<data_requirements>`.
 
-Let's start by loading the dataset:
+We need to start by loading the dataset.
 
 .. code-block:: python
 
@@ -114,7 +115,7 @@ The data are now being split to satisfy NannyML format requirements.
 
 The ``reference`` dataframe represents the reference :term:`Data Period` and the ``analysis``
 dataframe represents the analysis period. The ``analysis_target`` dataframe contains the targets
-for the analysis period that is provided separately.
+for the analysis period, which is provided separately.
 
 
 .. _California Housing Dataset: https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_california_housing.html

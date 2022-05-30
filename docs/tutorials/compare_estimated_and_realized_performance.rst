@@ -6,10 +6,9 @@ Comparing Estimated and Realized Performance
 
 
 
-When the ground truth becomes available, the quality of estimation can be evaluated. For the synthetic dataset, the
-ground truth is given in ``analysis_targets`` variable. It consists of ``identifier`` that allows to match it with
-``analysis`` data and the target for monitored model - ``work_home_actual``. Start with the code from :ref:`tutorial on
-performance estimation with binary classification data<performance-estimation-binary-just-the-code>` and continue:
+When the :term:`targets<Target>` become available, the quality of estimations provided by NannyML can be evaluated. For the synthetic datasets
+included in the library, the targets are given in the ``analysis_targets`` variable. It consists of ``identifier``, which allows to match it with
+``analysis`` data, and the target for the monitored model - ``work_home_actual``. 
 
 .. code-block:: python
 
@@ -25,6 +24,12 @@ performance estimation with binary classification data<performance-estimation-bi
 +----+--------------+--------------------+
 |  2 |        50002 |                  1 |
 +----+--------------+--------------------+
+
+Before following the guide below, you should run through the :ref:`tutorial on
+performance estimation with binary classification data<performance-estimation-binary-just-the-code>`.
+
+Then you can combine the estimated performance with the :ref:`realised performance calculation<performance-calculation>`
+and plot the two on the same graph.
 
 .. code-block:: python
 

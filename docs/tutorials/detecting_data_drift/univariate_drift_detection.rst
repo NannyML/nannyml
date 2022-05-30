@@ -14,8 +14,6 @@ and is the most straightforward to understand and communicate.
 Just The Code
 -------------
 
-If you just want the code to experiment yourself, here you go:
-
 .. code-block:: python
 
     >>> import nannyml as nml
@@ -65,18 +63,19 @@ If you just want the code to experiment yourself, here you go:
     >>> display(ranked_features)
 
 
-Walkthrough on univariate drift detection
+Walkthrough
 -----------------------------------------
 
 NannyML's Univariate approach for data drift looks at each variable individually and conducts
-statistical tests comparing the chunks created from the data provided with the reference dataset.
-NannyML uses the KS Test for continuous features and the 2 sample
-Chi squared test for categorical features. Both tests provide a statistic where they measure the
-observed drift and a p-value that shows how likely we are to get the observed sample
-under the assumption that there was no drift. If the p-value is less than 0.05 NannyML considers
-the result unlikely to be due to chance and issues an alert for the associated chunk and feature.
+statistical tests comparing the chunks created from the analysis :ref:`data period<data-drift-periods>` with the reference period.
 
-Let's start by loading some synthetic data provided by the NannyML package.
+NannyML uses the :term:`2 sample Kolmogorov-Smirnov Test<Kolmogorov-Smirnov test>` for continuous features and the
+:term:`Chi squared test<Chi Squared test>` for categorical features. Both tests provide a statistic where they measure 
+the observed drift and a p-value that shows how likely we are to get the observed sample under the assumption that there was no drift. 
+
+If the p-value is less than 0.05 NannyML considers the result unlikely to be due to chance and issues an alert for the associated chunk and feature.
+
+We begin by loading some synthetic data provided in the NannyML package.
 
 .. code-block:: python
 
@@ -106,10 +105,11 @@ Let's start by loading some synthetic data provided by the NannyML package.
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection. After instantiating it with appropriate parameters
 the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method needs
-to be called on the reference data where results will be based off. Then the
+to be called on the reference data, which provides the baseline that the analysis data will be compared with. Then the
 :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method will
 calculate the drift results on the data provided to it.
-An example using it can be seen below:
+
+An example using it can be seen below.
 
 .. code-block:: python
 
@@ -161,7 +161,7 @@ NannyML returns a dataframe with 3 columns for each feature. The first column co
 statistic. The second column contains the corresponding p-value and the third column says whether there
 is a drift alert for that feature and chunk.
 
-NannyML can also visualize those results with the following code:
+NannyML can also visualize those results on plots.
 
 .. code-block:: python
 
@@ -186,9 +186,18 @@ NannyML can also visualize those results with the following code:
 .. image:: /_static/drift-guide-salary_range.svg
 
 
-NannyML also shows details about the distributions of continuous variables and
-stacked bar charts for categorical variables. It does so with the following code:
+NannyML can also plot details about the distributions of continuous variables and
+stacked bar charts for categorical variables.
 
+In these plots, NannyML highlights the areas with possible data drift.
+
+Below, the ``tenure`` feature has two alerts that are false positives, from a model monitoring
+point of view. This is because the measure of the drift, as shown by the KS d-statistic, is very low. This is
+in contrast to the alerts for the ``public_transportation_cost`` for example, where
+the KS d-statistic grows significantly.
+
+The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
+``wfh_prev_workday`` have been correctly identified as drifted.
 
 .. code-block:: python
 
@@ -224,17 +233,9 @@ stacked bar charts for categorical variables. It does so with the following code
 
 .. image:: /_static/drift-guide-stacked-workday.svg
 
-NannyML highlights the areas with possible data drift.
-Here, the ``tenure`` feature has two alerts that are false positives, from a model monitoring
-point of view. That is so because the measure of the drift, as shown by the KS d-statistic is very low. This is
-in contrast to the alerts for the ``public_transportation_cost`` for example, where
-the KS d-statistic grows significantly.
-The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
-``wfh_prev_workday`` have been correctly identified as drifted.
-
 NannyML can rank features according to how many alerts they have had within the data analyzed
-for data drift. NannyML allows viewing the ranking of all the model inputs or just the ones that have drifted.
-NannyML provides a dataframe with the resulting ranking of features using the code below:
+for data drift. NannyML allows viewing the ranking of all the model inputs, or just the ones that have drifted.
+NannyML provides a dataframe with the resulting ranking of features.
 
 .. code-block:: python
 
@@ -260,14 +261,17 @@ NannyML provides a dataframe with the resulting ranking of features using the co
 |  6 | gas_price_per_litre        |                  0 |      7 |
 +----+----------------------------+--------------------+--------+
 
-Insights and Follow Ups
+Insights
 -----------------------
 
 After reviewing the above results we have a good understanding of what has changed in our
 model's population.
 
-If needed, we can investigate further as to why our population characteristics have
-changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.
+What Next
+-----------------------
 
 The :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
 observed changes to Model Performance.
+
+If needed, we can investigate further as to why our population characteristics have
+changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.

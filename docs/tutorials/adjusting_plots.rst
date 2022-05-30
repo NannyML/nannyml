@@ -5,8 +5,10 @@ Adjusting Plots
 ======================================
 
 NannyML uses Plotly [1]_ to generate figures and returns ``plotly.graph_objs._figure.Figure`` from ``.plot`` methods.
-When there's a need to e.g. add another curve or indicate a specific time period in the figure one can do this by
-updating the plot. See example below:
+When you need the plot to do something other than the default plotting, e.g. add another curve or indicate a specific 
+time period in the figure, you can do this by updating the plot. 
+
+The example below adds an additional indicator for a particular period of interest using this method.
 
 .. code-block:: python
 

@@ -20,6 +20,21 @@ Glossary
         A family of methods to estimate model performance in the absence of ground truth that take advantage of the
         confidence which is expressed in the monitored model output probability/score prediction.
 
+    Chi Squared test
+        The Chi Squared test, or chi2 test as is sometimes called, is a non parametric statistical test regarding
+        discrete distributions. It is be used to examine whether there is statistically significant difference
+        between expected and observed frequencies for one or more categories of a `contigency table`_.
+        In NannyML we use the Chi Squared test to answer whether the two samples of a categorical variable
+        come from a different distribution.
+
+        The Chi Squared test results include the chi squared statistic and a p-value. The bigger the chi squared statistic
+        the more different the results between the two samples we are comparing are. The p value
+        represents the chance that we would get the results we have provided they came from the same
+        distribution.
+
+        You can find more information on the `wikipedia Chi-squared test page`_. At NannyML we use the `scipy implementation of the
+        Chi-square test of independence of variables in a contingency table`_.
+
     Concept Drift
         A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
 
@@ -33,6 +48,23 @@ Glossary
         the selected interval. They can be also size-based so that each chunk contains *n* observations, or
         number-based so the whole data is splt into *k* chunks. In each case chronology of data between chunks is
         maintained.
+
+    Data Period
+        A data period is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two data periods.
+
+        The first data period is called the ``reference`` period. It contains all the observations for a period with an *accepted*
+        level of performance. It most likely also includes ``target`` data.
+
+        The second subset of the data is the ``analysis`` period. It contains the observations you want NannyML to analyse.
+        In the absence of targets performance in the analysis period can be estimated.
+
+        NannyML needs the period information to understand which data it can use as a reference to compare other periods by.
+        This is contained in the :term:`Partition Column`.
+
+        .. warning::
+            We currently only support the following partition column values: ``reference`` and ``analysis``.
+
+            Please map your own values to them accordingly.
 
     Estimated Performance
         The performance the monitored model is expected to have as a result of the :term:`Performance Estimation` process.
@@ -70,6 +102,21 @@ Glossary
 
     Imputation
         The process of substituting missing values with actual values on a dataset.
+    
+    Kolmogorov-Smirnov test
+        The Kolmogorov-Smirnov test, or KS test as is more commonly called, is a non parametric statistical test regarding
+        the equality of continuous one dimensional probability distributions. It can be used to compare a sample with a
+        reference probability distribution, called one-sample KS test, or to compare two samples. In NannyML we use the two
+        sample KS test looking to answer whether the two samples in question come from a different distribution.
+
+        The KS test results include the KS statistic, or d-statistic as is more commonly called, and a p-value.
+        The d-statistic takes values between 0 and 1. The bigger the d-statistic
+        the more different the results between the two samples we are comparing are.
+        The p value represents the chance that we would get the results we have provided they come from the same
+        distribution.
+
+        You can find more information on the `wikipedia KS test page`_. At NannyML we use the `scipy implementation of the
+        two sample KS test`_.
 
     Model inputs
         Every :term:`Feature` used by the model.
@@ -91,30 +138,17 @@ Glossary
         Drift Detection steps that involve all model features in order to
         create appropriate drift measures.
 
-    Data Period
-        A data period is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two data periods.
-
-        The first data period is called the ``reference`` period. It contains all the observations for a period with an *accepted*
-        level of performance. It most likely also includes ``target`` data.
-
-        The second subset of the data is the ``analysis`` period. It contains the observations you want NannyML to analyse.
-        In the absence of targets performance in the analysis period can be estimated.
-
-        NannyML needs the period information to understand which data it can use as a reference to compare other periods by.
-        This is contained in the :term:`Partition Column`.
-
-        .. warning::
-            We currently only support the following partition column values: ``reference`` and ``analysis``.
-
-            Please map your own values to them accordingly.
-
 
     Partition Column
         A column that tells us what :term:`Data Period` the data is in. A partition column is necessary for NannyML
         in order to produce model monitoring results.
 
     PCA
-        Principal Component Analysis. A method used for dimensionality reduction.
+        Principal Component Analysisi is a method used for dimensionality reduction. The method produces
+        a linear transofrmation of the input data that results in a space with orthogonal components that maximise
+        the available variance of the input data.
+
+        More information are available on the `PCA Wikipedia page`_.
 
     Performance Estimation
         Estimating performance of a deployed ML model without having access to :term:`Target`.
@@ -143,6 +177,9 @@ Glossary
 
     Reconstruction Error
         The average euclidean distance between the original and the reconstructed data points in a dataset.
+        The reconstructed dataset is created by transorming our model inputs to a :term:`Latent space` and
+        then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be lossless there will alsways be a difference
+        between the original and the reconstructed data. This difference is captured by the reconstruction error.
 
     Target
         The actual outcome of the event the machine learning model is trying to predict. Also referred to as
@@ -165,3 +202,12 @@ Glossary
     Univariate Drift Detection
         Drift Detection methods that use each model feature individually
         in order to detect change in :term:`Model Inputs`.
+
+
+.. _`wikipedia KS test page`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
+.. _`scipy implementation of the two sample KS test`: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ks_2samp.html
+.. _`contigency table`: https://en.wikipedia.org/wiki/Contingency_table
+.. _`wikipedia Chi-squared test page`: https://en.wikipedia.org/wiki/Chi-squared_test
+.. _`scipy implementation of the Chi-square test of independence of variables in a contingency table`:
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2_contingency.html
+.. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_analysis

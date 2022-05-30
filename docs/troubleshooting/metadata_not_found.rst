@@ -21,13 +21,14 @@ The solution
 The :class:`~nannyml.exceptions.MissingMetadataException` is raised when the :class:`model metadata<nannyml.metadata.base.ModelMetadata>`
 used to create the ``Calculator`` or ``Estimator`` is not complete, i.e. it is missing some required properties.
 
-The exception will list the properties it is missing, as shown in the problem statement.
+The exception will list the properties it is missing, as shown in the problem statement. 
+You can fix this by specifying the column of data which should be attributed to the missing metadata.
 
-Assume ``md`` is the :class:`model metadata<nannyml.metadata.base.ModelMetadata>` object used,
-``predicted_probability_column_name`` is the property missing and in your data the predicted probabilities are located
+For example, assume ``md`` is the :class:`model metadata<nannyml.metadata.base.ModelMetadata>` object used,
+``predicted_probability_column_name`` is the property missing, and in your data the predicted probabilities are located
 in the ``model_probas`` column.
 
-The following snippet should help you prevent the exception by completing the metadata manually:
+The following snippet completes the metadata manually, preventing the exception from occuring:
 
 .. code-block:: python
 
@@ -37,7 +38,7 @@ The following snippet should help you prevent the exception by completing the me
     >>> md.is_complete()
     (True, [])
 
-Any metadata property can be set or updated.
+Any metadata property can be set or updated in this way.
 
 
 Related reads

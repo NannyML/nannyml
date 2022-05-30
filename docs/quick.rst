@@ -9,7 +9,8 @@ What is NannyML?
 ----------------
 
 NannyML detects silent model failure, estimates performance of ML models after deployment
-before target data become available and robustly detects data drift potentially responsible for the failure.
+before target data become available, and robustly detects data drift potentially responsible for the failure.
+It can also monitor performance once target data is available.
 
 
 ------------------
@@ -23,31 +24,29 @@ From the shell of your python environment type:
     $ pip install nannyml
 
 
----------------------
-Content of quickstart
----------------------
+--------------------------
+Contents of the quickstart
+--------------------------
 
 
-This quickstart presents core functionalities of NannyML on an example of binary classification model
-that
-predicts whether an employee will work
-from home the next day or not. First, the whole code is shown so experiment-first users can get their hands dirty
-right away.
-This is followed by detailed walk through so read-first minds can get familiar with the flow before coding.
-:ref:`The synthetic dataset<dataset-synthetic-binary>` used is already preprocessed - it is merged with model
+This quickstart presents core functionalities of NannyML on an example binary classification model
+that predicts whether an employee will work from home the next day or not. First, the whole code is shown 
+so you can jump in and experiment right away if you want.
+
+This is followed by a detailed walk-through to help you get familiar with the flow, and explain the details.
+:ref:`The synthetic dataset<dataset-synthetic-binary>` used contains inputs that are already merged with model
 predictions and ready to be directly used by NannyML.  In order to find out how to prepare your
-own dataset check these :ref:`tutorials<tutorials>`. This is also a good place to go to get detailed guides on main
-concepts and functionalities. If you want to know
-what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
-on other datasets or ML problems look at :ref:`examples<examples>`.
+own dataset check the :ref:`Setting Up tutorials<setting_up>`. 
+
+All :ref:`our tutorials<tutorials>` are a good place to get detailed guides on main
+concepts and functionalities. If you want to know what is implemented under the hood - 
+visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
+on other datasets or ML problems look through our :ref:`examples<examples>`.
 
 
 -------------
 Just the code
 -------------
-
-Feel free to copy-paste the code below and experiment with the results yourself. If you want us to guide you go to
-the :ref:`Walkthrough<walk_through_the_quickstart>`.
 
 .. code-block:: python
 
@@ -98,10 +97,24 @@ the :ref:`Walkthrough<walk_through_the_quickstart>`.
 .. _walk_through_the_quickstart:
 
 ---------------------------
-Walk through the quickstart
+Walkthrough
 ---------------------------
 
-Let's start with loading the synthetic dataset included in the library:
+We start by loading the synthetic dataset included in the library. This synthetic dataset 
+contains inputs and predictions of a binary classification model that predicts whether an employee will 
+work from home the next workday or not.
+
+The probability of the employee working from home is included in the ``y_pred_proba`` column, while the 
+prediction is in ``y_pred`` column. The model inputs are ``distance_from_office``, ``salary_range``, 
+``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``. 
+``identifier`` is the :term:`Identifier` column and ``timestamp`` is the :term:`Timestamp` column.
+
+The data are split into a ``reference period`` and an ``analysis period``. NannyML uses the reference period to
+establish a baseline for expected model performance. The analysis period is where we estimate or
+monitor performance, as well as detect data drift.
+
+For more information about periods check :ref:`data-drift-periods`. A key thing to remember is that
+the analysis period doesn't need to contain the :term:`Target` data.
 
 .. code-block:: python
 
@@ -109,7 +122,7 @@ Let's start with loading the synthetic dataset included in the library:
     >>> import nannyml as nml
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> reference.head()
-
+    >>> analysis.head()
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -125,35 +138,6 @@ Let's start with loading the synthetic dataset included in the library:
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
-The synthetic dataset provided contains inputs and predictions of a binary classification model that predicts whether
-an employee will work from home the next workday or not. The probability of the employee
-working from home is included in the ``y_pred_proba`` column, while the prediction is in ``y_pred`` column. The model
-inputs are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``,
-``wfh_prev_workday``, ``workday`` and ``tenure``. ``identifier`` is the :term:`Identifier` column
-and ``timestamp`` is the :term:`Timestamp` column.
-
-The next step is to have NannyML extract  :term:`model metadata<Model Metadata>` from the dataset and make a choice
-about the
-way we will split our data into :term:`Data Chunks<Data Chunk>`.
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> chunk_size = 5000
-
-The data are already split into a reference and an analysis periods. NannyML uses the **reference period** to
-establish a baseline for expected model performance. The **analysis period** is where we estimate or
-monitor performance, as well as detect data drift.
-For more information about periods check :ref:`data-drift-periods`. The key thing is that
-the analysis period doesn't need to contain the :term:`Target` data.
-Therefore in our example it is provided as a separate object.
-
-.. code-block:: python
-
-    >>> analysis.head()
-
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier | timestamp           |   y_pred_proba | partition   |   y_pred |
 +====+========================+================+=======================+==============================+====================+===========+==========+==============+=====================+================+=============+==========+
@@ -168,13 +152,27 @@ Therefore in our example it is provided as a separate object.
 |  4 |               4.7867   | 0 - 20K €      |               2.36854 |                      8.39497 | False              | Monday    | 0.906738 |        50004 | 2017-08-31 06:29:38 |           0.92 | analysis    |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
 
+The next step is to have NannyML extract  :term:`model metadata<Model Metadata>` from the reference dataset and make a choice
+about the way we will split our data into :term:`Data Chunks<Data Chunk>`.
+
+.. code-block:: python
+
+    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
+    >>> metadata.target_column_name = 'work_home_actual'
+    >>> data = pd.concat([reference, analysis], ignore_index=True)
+    >>> chunk_size = 5000
+
+    
+
 
 Estimating Performance without Targets
 ======================================
 
 NannyML can estimate the performance on a machine learning model in production
-without access to its :term:`Target`. For more details on how to use performance estimation see :ref:`here<performance-estimation>`,
-while for more details on how it works see :ref:`here<performance-estimation-deep-dive>`.
+without access to its :term:`Target`. For more details on how to use performance estimation see 
+:ref:`our tutorial on performance estimation<performance-estimation>`,
+while for more details on how the algorithm behind it works see 
+:ref:`Confidence-based Performance Estimation (CBPE)<performance-estimation-deep-dive>`.
 
 .. code-block:: python
 
@@ -272,16 +270,24 @@ see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 
 .. image:: ./_static/drift-guide-multivariate.svg
 
-Putting everything together, we see that 4 features exhibit data drift from late 2019 onwards. They are
-``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
-This drift is responsible for the potential negative impact in performance that we observed.
-
 -----------------------
-Insights and Follow Ups
+Insights
 -----------------------
 
 With NannyML we were able to estimate performance in the absence of ground truth. The estimation has shown
 potential drop in ROC AUC in the second half of the analysis period. Univariate and multivariate
-data drift detection algorithms have identified data drift in this period, potentially justifying the drop. This could
-be further investigated by analyzing changes of distributions of the input variables. Check
+data drift detection algorithms have identified data drift.
+
+Putting everything together, we see that 4 features exhibit data drift from late 2019 onwards. They are
+``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
+This drift is responsible for the potential negative impact in performance that we observed in this time period.
+
+-----------------------
+What next
+-----------------------
+
+This could be further investigated by analyzing changes of distributions of the input variables. Check
 :ref:`tutorials<tutorials>` on :ref:`data drift<data-drift>` to find out how to plot distributions with NannyML.
+
+You can now try using NannyML on your own data. Our tutorials on :ref:`data requirements<data_requirements>`
+and :ref:`providing metadata<import-data>` are good places to find out what to do for this.

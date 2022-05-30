@@ -4,8 +4,8 @@
 Setting Up
 ======================================
 
-To use NannyML with a custom dataset some setup is required.
-These guides will detail the different steps to take and basic principles to grasp
+To use NannyML with a new dataset some setup is required.
+These guides detail the different steps to take, and basic principles to grasp,
 before getting started with monitoring models.
 
 .. note::

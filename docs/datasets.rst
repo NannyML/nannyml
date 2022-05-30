@@ -1,8 +1,8 @@
 .. _datasets:
 
-########
-Datasets
-########
+########################
+Example Datasets
+########################
 
 .. toctree::
     :maxdepth: 2

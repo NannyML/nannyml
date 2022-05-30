@@ -10,6 +10,9 @@ Naming conventions
 NannyML uses some simple naming conventions to recognize metadata columns.
 By using the right column names in your dataset, NannyML can extract all required metadata automatically.
 
+To find out how to perform metadata extraction, check out :ref:`our tutorial on extracting metadata<import-data>`. 
+Below you will find the naming conventions we use to identify each column.
+
 
 Common metadata columns
 ^^^^^^^^^^^^^^^^^^^^^^^
