@@ -144,8 +144,8 @@ Glossary
         in order to produce model monitoring results.
 
     PCA
-        Principal Component Analysisi is a method used for dimensionality reduction. The method produces
-        a linear transofrmation of the input data that results in a space with orthogonal components that maximise
+        Principal Component Analysis is a method used for dimensionality reduction. The method produces
+        a linear transformation of the input data that results in a space with orthogonal components that maximise
         the available variance of the input data.
 
         More information are available on the `PCA Wikipedia page`_.
@@ -177,7 +177,7 @@ Glossary
 
     Reconstruction Error
         The average euclidean distance between the original and the reconstructed data points in a dataset.
-        The reconstructed dataset is created by transorming our model inputs to a :term:`Latent space` and
+        The reconstructed dataset is created by transforming our model inputs to a :term:`Latent space` and
         then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be lossless there will alsways be a difference
         between the original and the reconstructed data. This difference is captured by the reconstruction error.
 
