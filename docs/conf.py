@@ -182,6 +182,15 @@ autoclass_content = 'both'
 
 toggleprompt_offset_right = 35
 
+# -- RTD theme settings
+html_theme_options = {
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False,
+}
+
 
 def run_apidoc(_):
     import os

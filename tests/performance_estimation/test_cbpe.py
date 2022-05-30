@@ -228,3 +228,17 @@ def test_cbpe_results_plot_raises_invalid_arguments_exception_given_invalid_metr
 def test_cbpe_for_regression_metadata_raises_not_implemented_error():  # noqa: D103
     with pytest.raises(NotImplementedError):
         _ = CBPE(model_metadata=RegressionMetadata(), metrics=['f1'])
+
+
+def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_of_reference_data(  # noqa: D103
+    metadata, data
+):
+    reference = data[0].loc[40000:, :]
+    estimator = CBPE(model_metadata=metadata, metrics=['f1'])
+    try:
+        estimator.fit(reference_data=reference)
+    except KeyError:
+        pytest.fail(
+            'fitting on subset resulted in KeyError => misaligned indices between data and stratified shuffle'
+            'split results.'
+        )

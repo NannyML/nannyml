@@ -142,16 +142,17 @@ class _BinaryClassificationCBPE(CBPE):
         self.minimum_chunk_size = _minimum_chunk_size(reference_data)
 
         # Fit calibrator if calibration is needed
+        aligned_reference_data = reference_data.reset_index(drop=True)  # fix mismatch between data and shuffle split
         self.needs_calibration = needs_calibration(
-            y_true=reference_data[NML_METADATA_TARGET_COLUMN_NAME],
-            y_pred_proba=reference_data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+            y_true=aligned_reference_data[NML_METADATA_TARGET_COLUMN_NAME],
+            y_pred_proba=aligned_reference_data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
             calibrator=self.calibrator,
         )
 
         if self.needs_calibration:
             self.calibrator.fit(
-                reference_data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
-                reference_data[NML_METADATA_TARGET_COLUMN_NAME],
+                aligned_reference_data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME],
+                aligned_reference_data[NML_METADATA_TARGET_COLUMN_NAME],
             )
 
         return self
