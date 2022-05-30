@@ -5,7 +5,7 @@ Providing metadata
 ==================
 
 Why is providing metadata required?
-=================================
+=======================================
 
 NannyML can process any data used in supported models. It requires model metadata to
 assign the correct role to each column of the data set. You can provide a
