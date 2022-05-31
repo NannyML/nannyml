@@ -53,19 +53,25 @@ Just the code
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
+
+    >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> display(analysis.head())
     >>> display(reference.head())
 
+    >>> # Extract meta data
     >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
     >>> metadata.target_column_name = 'work_home_actual'
     >>> data = pd.concat([reference, analysis], ignore_index=True)
+
+    >>> # Choose a chunker or set a chunk size
     >>> chunk_size = 5000
 
     >>> # initialize, fit estimator and estimate
     >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc'])
     >>> estimator = estimator.fit(reference)
     >>> estimated_performance = estimator.estimate(data=data)
+
     >>> # show results
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
     >>> figure.show()
@@ -79,6 +85,7 @@ Just the code
     ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
     ...     figure.show()
 
+    >>> # Rank features based on number of alerts
     >>> ranker = nml.Ranker.by('alert_count')
     >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
     >>> display(ranked_features)
