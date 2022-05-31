@@ -54,7 +54,7 @@ Just the code
     >>> import nannyml as nml
     >>> from IPython.display import display
 
-    >>> # Load dummy data
+    >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> display(analysis.head())
     >>> display(reference.head())
