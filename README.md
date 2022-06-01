@@ -135,12 +135,12 @@ python -m pip install git+https://github.com/NannyML/nannyml
 import pandas as pd
 import nannyml as nml
 
-# Load dummy data
+# Load synthetic data
 reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
 data = pd.concat([reference, analysis], ignore_index=True)
 
 # Extract meta data
-metadata = nml.extract_metadata(data = reference, model_type='classification_binary', exclude_columns=['identifier'])
+metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
 metadata.target_column_name = 'work_home_actual'
 
 # Choose a chunker or set a chunk size
