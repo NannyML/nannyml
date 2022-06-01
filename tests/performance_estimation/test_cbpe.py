@@ -242,3 +242,25 @@ def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_o
             'fitting on subset resulted in KeyError => misaligned indices between data and stratified shuffle'
             'split results.'
         )
+
+
+def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
+    monkeypatch, metadata, data
+):
+    reference, analysis = data
+    estimator = CBPE(model_metadata=metadata, metrics=['roc_auc'])
+    estimator.fit(reference_data=reference)
+    results = estimator.estimate(pd.concat([reference, analysis]))
+    min_confidence = results.data['lower_confidence_roc_auc'].min()
+    max_confidence = results.data['upper_confidence_roc_auc'].max()
+
+    # When changing the boundaries to values inside the current range of values
+    new_lower_bound = min_confidence + 0.001
+    new_upper_bound = max_confidence - 0.001
+    monkeypatch.setattr(estimator, 'metric_lower_bound', new_lower_bound)
+    monkeypatch.setattr(estimator, 'metric_upper_bound', new_upper_bound)
+
+    # assert values have been clipped to stay on the narrower range of values
+    results = estimator.estimate(analysis)
+    assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
+    assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)

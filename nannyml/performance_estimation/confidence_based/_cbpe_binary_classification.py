@@ -104,6 +104,8 @@ class _BinaryClassificationCBPE(CBPE):
         )
 
         self.model_metadata = model_metadata  # seems to be required for typing to kick in
+        self.metric_upper_bound = 1
+        self.metric_lower_bound = 0
 
     def fit(self, reference_data: pd.DataFrame) -> PerformanceEstimator:
         """Fits the drift calculator using a set of reference data.
@@ -216,9 +218,10 @@ class _BinaryClassificationCBPE(CBPE):
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
             estimated_metric = _estimate_metric(data=chunk.data, metric=metric)
-            estimates[f'confidence_{metric}'] = self._confidence_deviations[metric]
             estimates[f'realized_{metric}'] = _calculate_realized_performance(chunk, metric)
             estimates[f'estimated_{metric}'] = estimated_metric
+            estimates[f'upper_confidence_{metric}'] = min(self.metric_upper_bound, estimated_metric + self._confidence_deviations[metric])
+            estimates[f'lower_confidence_{metric}'] = max(self.metric_lower_bound, estimated_metric - self._confidence_deviations[metric])
             estimates[f'upper_threshold_{metric}'] = self._alert_thresholds[metric][0]
             estimates[f'lower_threshold_{metric}'] = self._alert_thresholds[metric][1]
             estimates[f'alert_{metric}'] = (
