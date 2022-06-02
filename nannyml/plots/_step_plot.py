@@ -274,7 +274,11 @@ def _step_plot(
     y = [np.nan, np.nan]
 
     # Add confidence band
-    if lower_confidence_column_name and upper_confidence_column_name and {lower_confidence_column_name, upper_confidence_column_name}.issubset(data.columns):
+    if (
+        lower_confidence_column_name
+        and upper_confidence_column_name
+        and {lower_confidence_column_name, upper_confidence_column_name}.issubset(data.columns)
+    ):
         fig.add_traces(
             [
                 go.Scatter(

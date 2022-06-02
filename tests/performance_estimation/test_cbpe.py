@@ -257,8 +257,8 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
     # When changing the boundaries to values inside the current range of values
     new_lower_bound = min_confidence + 0.001
     new_upper_bound = max_confidence - 0.001
-    monkeypatch.setattr(estimator, 'metric_lower_bound', new_lower_bound)
-    monkeypatch.setattr(estimator, 'metric_upper_bound', new_upper_bound)
+    monkeypatch.setattr(estimator, 'confidence_lower_bound', new_lower_bound)
+    monkeypatch.setattr(estimator, 'confidence_upper_bound', new_upper_bound)
 
     # assert values have been clipped to stay on the narrower range of values
     results = estimator.estimate(analysis)
