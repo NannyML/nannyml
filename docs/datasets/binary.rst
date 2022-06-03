@@ -56,7 +56,7 @@ A binary prediction is also available from the `y_pred` column. The `work_home_a
 what actually happened.
 
 
-There are also three auxiliarry columns that are helpful but not used by the monitored model:
+There are also three auxiliary columns that are helpful but not used by the monitored model:
 
 - `identifier`: A unique number referencing each employee. This is very useful for joining the target
   results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`.
@@ -77,7 +77,7 @@ identify them. We can see below how to extract metadata.
     >>> metadata.is_complete()
     (False, ['target_column_name'])
 
-We see that the `target_column_name` has not been correctly idenfied. We need to manually specify it.
+We see that the `target_column_name` has not been correctly identified. We need to manually specify it.
 
 .. code-block:: python
 
