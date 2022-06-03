@@ -288,7 +288,6 @@ def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_o
         )
 
 
-@pytest.mark.skip(reason="This is a test util function to factor code")
 def reduce_confidence_bounds(monkeypatch, ref_df, ana_df, metadata):
     estimator = CBPE(model_metadata=metadata, metrics=['roc_auc'])
     estimator.fit(reference_data=ref_df)
@@ -296,16 +295,12 @@ def reduce_confidence_bounds(monkeypatch, ref_df, ana_df, metadata):
     min_confidence = results.data['lower_confidence_roc_auc'].min()
     max_confidence = results.data['upper_confidence_roc_auc'].max()
 
-    # When changing the boundaries to values inside the current range of values
     new_lower_bound = min_confidence + 0.001
     new_upper_bound = max_confidence - 0.001
     monkeypatch.setattr(estimator, 'confidence_lower_bound', new_lower_bound)
     monkeypatch.setattr(estimator, 'confidence_upper_bound', new_upper_bound)
 
-    # assert values have been clipped to stay on the narrower range of values
-    results = estimator.estimate(ana_df)
-    assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
-    assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)
+    return estimator, new_lower_bound, new_upper_bound
 
 
 def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
@@ -313,7 +308,10 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
 ):
     reference, analysis = binary_classification_data
     metadata = binary_classification_metadata
-    reduce_confidence_bounds(monkeypatch, reference, analysis, metadata)
+    estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, reference, analysis, metadata)
+    results = estimator.estimate(analysis)
+    assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
+    assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)
 
 
 def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
@@ -321,4 +319,7 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
 ):
     reference, analysis = multiclass_classification_data
     metadata = multiclass_classification_metadata
-    reduce_confidence_bounds(monkeypatch, reference, analysis, metadata)
+    estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, reference, analysis, metadata)
+    results = estimator.estimate(analysis)
+    assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
+    assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)
