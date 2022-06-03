@@ -23,7 +23,7 @@ Glossary
     Chi Squared test
         The Chi Squared test, or chi2 test as is sometimes called, is a non parametric statistical test regarding
         discrete distributions. It is be used to examine whether there is statistically significant difference
-        between expected and observed frequencies for one or more categories of a `contigency table`_.
+        between expected and observed frequencies for one or more categories of a `contingency table`_.
         In NannyML we use the Chi Squared test to answer whether the two samples of a categorical variable
         come from a different distribution.
 
@@ -178,7 +178,7 @@ Glossary
     Reconstruction Error
         The average euclidean distance between the original and the reconstructed data points in a dataset.
         The reconstructed dataset is created by transforming our model inputs to a :term:`Latent space` and
-        then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be lossless there will alsways be a difference
+        then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be lossless there will always be a difference
         between the original and the reconstructed data. This difference is captured by the reconstruction error.
 
     Target
