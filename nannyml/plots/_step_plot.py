@@ -67,7 +67,8 @@ def _step_plot(
     table,
     metric_column_name,
     estimated_column_name=None,
-    confidence_column_name=None,
+    lower_confidence_column_name=None,
+    upper_confidence_column_name=None,
     threshold_column_name=None,
     statistically_significant_column_name=None,
     drift_column_name=None,
@@ -187,7 +188,8 @@ def _step_plot(
         chunk_type_column_name,
         chunk_types,
         colors_transparent,
-        confidence_column_name,
+        lower_confidence_column_name,
+        upper_confidence_column_name,
         start_date_column_name,
         end_date_column_name,
         estimated_column_name,
@@ -272,7 +274,11 @@ def _step_plot(
     y = [np.nan, np.nan]
 
     # Add confidence band
-    if confidence_column_name and confidence_column_name in data.columns:
+    if (
+        lower_confidence_column_name
+        and upper_confidence_column_name
+        and {lower_confidence_column_name, upper_confidence_column_name}.issubset(data.columns)
+    ):
         fig.add_traces(
             [
                 go.Scatter(
@@ -538,16 +544,18 @@ def _plot_confidence_band(
     chunk_type_column_name: str,
     chunk_types: List[str],
     colors_transparent: List[str],
-    confidence_column_name: str,
+    lower_confidence_column_name: str,
+    upper_confidence_column_name: str,
     start_date_column_name: str,
     end_date_column_name: str,
     estimated_column_name: str,
     metric_column_name: str,
 ):
     if (
-        confidence_column_name
+        lower_confidence_column_name
+        and upper_confidence_column_name
         and estimated_column_name
-        and {confidence_column_name, estimated_column_name}.issubset(data.columns)
+        and {lower_confidence_column_name, upper_confidence_column_name, estimated_column_name}.issubset(data.columns)
     ):
         data_subset = data.loc[data[chunk_type_column_name] == chunk_types[1]]
         data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
@@ -556,7 +564,7 @@ def _plot_confidence_band(
                 go.Scatter(
                     mode='lines',
                     x=data_subset[start_date_column_name],
-                    y=data_subset[metric_column_name] + data_subset[confidence_column_name],
+                    y=data_subset[upper_confidence_column_name],
                     line=dict(shape='hv', color='rgba(0,0,0,0)'),
                     hoverinfo='skip',
                     showlegend=False,
@@ -564,7 +572,7 @@ def _plot_confidence_band(
                 go.Scatter(
                     mode='lines',
                     x=data_subset[start_date_column_name],
-                    y=data_subset[metric_column_name] - data_subset[confidence_column_name],
+                    y=data_subset[lower_confidence_column_name],
                     line=dict(shape='hv', color='rgba(0,0,0,0)'),
                     fill='tonexty',
                     fillcolor=colors_transparent[1],
