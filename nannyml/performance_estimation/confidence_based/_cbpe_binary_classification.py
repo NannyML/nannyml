@@ -372,6 +372,7 @@ def _calculate_realized_performance(chunk: Chunk, metric: str):
     y_pred_proba.dropna(inplace=True)
 
     y_pred_proba = y_pred_proba[~y_true.isna()]
+    y_pred = y_pred[~y_true.isna()]
     y_true.dropna(inplace=True)
 
     if metric == 'roc_auc':
