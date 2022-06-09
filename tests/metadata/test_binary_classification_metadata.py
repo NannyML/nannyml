@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from nannyml.datasets import load_synthetic_binary_classification_dataset
-from nannyml.metadata import BinaryClassificationMetadata, FeatureType, ModelMetadata, ModelType, extract_metadata
+from nannyml.metadata import BinaryClassificationMetadata, ModelMetadata, ModelType, extract_metadata
 from nannyml.metadata.base import (
     NML_METADATA_PARTITION_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
@@ -173,57 +173,6 @@ def test_enrich_adds_nan_ground_truth_column_if_no_ground_truth_in_original_data
     sut = metadata.enrich(data[1])
     assert NML_METADATA_TARGET_COLUMN_NAME in sut.columns
     assert sut[NML_METADATA_TARGET_COLUMN_NAME].isna().all()
-
-
-def test_complete_returns_all_missing_properties_when_metadata_is_incomplete(data, metadata):  # noqa: D103
-    metadata.timestamp_column_name = None
-    metadata.prediction_column_name = None
-    metadata.predicted_probability_column_name = None
-    sut = metadata.is_complete()
-    assert sut[0] is False
-    assert 'timestamp_column_name' in sut[1]
-    assert 'prediction_column_name' in sut[1]
-    assert 'predicted_probability_column_name' in sut[1]
-
-
-def test_complete_returns_complete_if_prediction_is_none_but_predicted_probabilities_are_not(  # noqa: D103
-    data, metadata
-):
-    metadata.prediction_column_name = None
-    sut = metadata.is_complete()
-    assert sut[0] is True
-    assert 'prediction_column_name' not in sut[1]
-    assert 'predicted_probability_column_name' not in sut[1]
-
-
-def test_complete_returns_complete_if_predicted_probabilities_is_none_but_prediction_is_not(  # noqa: D103
-    data, metadata
-):
-    metadata.predicted_probability_column_name = None
-    sut = metadata.is_complete()
-    assert sut[0] is True
-    assert 'prediction_column_name' not in sut[1]
-    assert 'predicted_probability_column_name' not in sut[1]
-
-
-def test_complete_returns_incomplete_and_both_prediction_props_when_none_of_both_set(data, metadata):  # noqa: D103
-    metadata.prediction_column_name = None
-    metadata.predicted_probability_column_name = None
-    sut = metadata.is_complete()
-    assert sut[0] is False
-    assert 'prediction_column_name' in sut[1]
-    assert 'predicted_probability_column_name' in sut[1]
-
-
-def test_complete_returns_false_when_features_of_unknown_feature_type_exist(data, metadata):  # noqa: D103
-    # Rig the data
-    metadata.features[0].feature_type = FeatureType.UNKNOWN
-    metadata.features[1].feature_type = FeatureType.UNKNOWN
-
-    is_complete, missing = metadata.is_complete()
-    assert not is_complete
-    assert metadata.features[0].label in missing
-    assert metadata.features[1].label in missing
 
 
 def test_extract_metadata_should_set_binary_classification_properties(data):  # noqa: D103

@@ -442,3 +442,27 @@ def test_metadata_factory_creates_correct_model_metadata_instance_given_model_ty
 ):
     sut = ModelMetadataFactory.create(model_type=model_type)
     assert isinstance(sut, metadata_class)
+
+
+def test_metadata_check_has_fields_doesnt_raise_exception_when_all_fields_present(sample_model_metadata):  # noqa: D103
+    try:
+        sample_model_metadata.check_has_fields(fields=['target_column_name', 'timestamp_column_name'])
+    except Exception as exc:
+        pytest.fail(f'an unexpected exception occurred: {exc}')
+
+
+@pytest.mark.parametrize('fields', [['target_column_name'], ['target_column_name', 'timestamp_column_name']])
+def test_metadata_check_has_fields_raises_missing_metadata_exception_when_fields_missing(  # noqa: D103
+    sample_model_metadata, fields
+):
+    sample_model_metadata.target_column_name = None
+    with pytest.raises(MissingMetadataException, match="target_column_name"):
+        sample_model_metadata.check_has_fields(fields=fields)
+
+
+def test_metadata_check_has_fields_raises_missing_metadata_exception_when_missing_features(  # noqa: D103
+    sample_model_metadata,
+):
+    sample_model_metadata.features = None
+    with pytest.raises(MissingMetadataException, match="features"):
+        sample_model_metadata.check_has_fields(fields=['features'])

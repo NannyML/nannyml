@@ -98,6 +98,8 @@ class TargetDistributionCalculator:
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
+        self.metadata.check_has_fields(['target_column_name'])
+
         if self.metadata.target_column_name not in reference_data.columns:
             raise InvalidArgumentsException(
                 f"data does not contain target data column '{self.metadata.target_column_name}'."

@@ -9,7 +9,7 @@ from typing import Union
 
 import pandas as pd
 
-from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException, MissingMetadataException
+from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException
 from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata
 from nannyml.metadata.base import ModelMetadata
 
@@ -38,16 +38,6 @@ def preprocess(data: pd.DataFrame, metadata: ModelMetadata, reference: bool = Fa
         Will be ``None`` when the extracted/provided metadata was not complete.
 
     """
-    # Check metadata for completeness.
-    metadata_complete, missing_properties = metadata.is_complete()  # type: ignore
-    if not metadata_complete:
-        raise MissingMetadataException(
-            f'metadata is still missing values for {missing_properties}.\n'
-            'Please rectify by renaming columns following automated extraction conventions\n'
-            'and re-running preprocessing or set metadata properties manually.\n'
-            'See https://nannyml.readthedocs.io/en/stable/how_it_works/metadata_extraction.html for more information\n'
-        )
-
     if data.empty:
         raise InvalidArgumentsException("provided data cannot be empty.")
 

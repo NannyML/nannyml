@@ -10,17 +10,16 @@ import plotly.graph_objects
 import pytest
 from sklearn.impute import SimpleImputer
 
-from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.chunk import PeriodBasedChunker
 from nannyml.drift import DriftCalculator
 from nannyml.drift.base import DriftResult
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import (
     DataReconstructionDriftCalculator,
     _minimum_chunk_size,
 )
-from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
-from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
+from nannyml.exceptions import MissingMetadataException
 from nannyml.metadata import extract_metadata
-from nannyml.metadata.base import NML_METADATA_COLUMNS, FeatureType
+from nannyml.metadata.base import NML_METADATA_COLUMNS
 from nannyml.preprocessing import preprocess
 
 
@@ -151,231 +150,6 @@ class SimpleDriftCalculator(DriftCalculator):
         return SimpleDriftResult(
             analysis_data=chunks, drift_data=pd.DataFrame(columns=df.columns), model_metadata=self.model_metadata
         )
-
-
-def test_base_drift_calculator_given_empty_reference_data_should_raise_invalid_args_exception(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    ref_data = pd.DataFrame(columns=sample_drift_data.columns)
-    calc = SimpleDriftCalculator(sample_drift_metadata)
-    with pytest.raises(InvalidArgumentsException):
-        calc.fit(ref_data)
-
-
-def test_base_drift_calculator_given_empty_analysis_data_should_raise_invalid_args_exception(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    calc = SimpleDriftCalculator(sample_drift_metadata, chunk_size=1000)
-    with pytest.raises(InvalidArgumentsException):
-        calc.calculate(data=pd.DataFrame(columns=sample_drift_data.columns))
-
-
-def test_base_drift_calculator_given_empty_features_list_should_calculate_for_all_features(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = SimpleDriftCalculator(sample_drift_metadata, chunk_size=1000).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data)
-
-    md = extract_metadata(sample_drift_data, model_name='model', model_type='classification_binary')
-    assert len(sut.data.columns) == len(md.features)
-    for f in md.features:
-        assert f.column_name in sut.data.columns
-
-
-def test_base_drift_calculator_given_non_empty_features_list_should_only_calculate_for_these_features(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = SimpleDriftCalculator(sample_drift_metadata, features=['f1', 'f3'], chunk_size=1000).fit(ref_data)
-    _ = calc.calculate(data=sample_drift_data)
-    sut = calc.calculate(data=sample_drift_data)
-
-    assert len(sut.data.columns) == 2
-    assert 'f1' in sut.data.columns
-    assert 'f3' in sut.data.columns
-
-
-def test_base_drift_calculator_uses_size_based_chunker_when_given_chunk_size(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    class TestDriftCalculator(DriftCalculator):
-        def fit(self, reference_data: pd.DataFrame) -> DriftCalculator:
-            return self
-
-        def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
-            data = preprocess(data, self.model_metadata)
-            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
-            chunk_keys = [c.key for c in chunks]
-            return pd.DataFrame({'keys': chunk_keys})
-
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = TestDriftCalculator(sample_drift_metadata, chunk_size=1000).fit(ref_data)
-    sut = calc.calculate(sample_drift_data)['keys']
-    expected = [
-        c.key
-        for c in SizeBasedChunker(1000).split(sample_drift_metadata.enrich(sample_drift_data), minimum_chunk_size=1)
-    ]
-
-    assert len(expected) == len(sut)
-    assert sorted(expected) == sorted(sut)
-
-
-def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    class TestDriftCalculator(DriftCalculator):
-        def fit(self, reference_data: pd.DataFrame) -> DriftCalculator:
-            self._suggested_minimum_chunk_size = 50
-            return self
-
-        def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
-            data = preprocess(data, self.model_metadata)
-            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
-            chunk_keys = [c.key for c in chunks]
-            return pd.DataFrame({'keys': chunk_keys})
-
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = TestDriftCalculator(sample_drift_metadata, chunk_number=100).fit(ref_data)
-    sut = calc.calculate(sample_drift_data)['keys']
-
-    assert 101 == len(sut)
-
-
-def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    class TestDriftCalculator(DriftCalculator):
-        def fit(self, reference_data: pd.DataFrame) -> DriftCalculator:
-            return self
-
-        def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
-            data = preprocess(data, self.model_metadata)
-            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
-            chunk_keys = [c.key for c in chunks]
-            return pd.DataFrame({'keys': chunk_keys})
-
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = TestDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
-    sut = calc.calculate(sample_drift_data)['keys']
-
-    assert 20 == len(sut)
-
-
-def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    class TestDriftCalculator(DriftCalculator):
-        def fit(self, reference_data: pd.DataFrame) -> DriftCalculator:
-            return self
-
-        def calculate(self, data: pd.DataFrame) -> pd.DataFrame:
-            data = preprocess(data, self.model_metadata)
-            features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-            chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
-            chunk_keys = [c.key for c in chunks]
-            return pd.DataFrame({'keys': chunk_keys})
-
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = TestDriftCalculator(sample_drift_metadata).fit(ref_data)
-    sut = calc.calculate(sample_drift_data)['keys']
-    expected = [
-        c.key for c in DefaultChunker().split(sample_drift_metadata.enrich(sample_drift_data), minimum_chunk_size=500)
-    ]
-
-    assert len(expected) == len(sut)
-    assert sorted(expected) == sorted(sut)
-
-
-def test_univariate_statistical_drift_calc_raises_missing_metadata_exception_when_predicted_proba_not_set(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    sample_drift_metadata.predicted_probability_column_name = None
-    with pytest.raises(MissingMetadataException, match="missing value for 'predicted_probability_column_name'"):
-        _ = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=5000)
-
-
-@pytest.mark.parametrize(
-    'chunker',
-    [
-        (PeriodBasedChunker(offset='W')),
-        (PeriodBasedChunker(offset='M')),
-        (SizeBasedChunker(chunk_size=1000)),
-        CountBasedChunker(chunk_count=25),
-    ],
-    ids=['chunk_period_weekly', 'chunk_period_monthly', 'chunk_size_1000', 'chunk_count_25'],
-)
-def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_analysis_chunk_key(  # noqa: D103
-    sample_drift_data, sample_drift_metadata, chunker
-):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunker=chunker).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data)
-
-    chunks = chunker.split(sample_drift_metadata.enrich(sample_drift_data))
-    assert len(chunks) == sut.data.shape[0]
-    chunk_keys = [c.key for c in chunks]
-    assert 'key' in sut.data.columns
-    assert sorted(chunk_keys) == sorted(sut.data['key'].values)
-
-
-def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
-
-    drift = calc.calculate(data=sample_drift_data)
-
-    sut = drift.data.columns
-    assert 'key' in sut
-    assert 'start_index' in sut
-    assert 'start_date' in sut
-    assert 'end_index' in sut
-    assert 'end_date' in sut
-    assert 'partition' in sut
-
-
-def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value_column_for_each_feature(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=1000).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).data.columns
-
-    for f in sample_drift_metadata.features:
-        if f.feature_type == FeatureType.CONTINUOUS:
-            assert f'{f.column_name}_dstat' in sut
-        else:
-            assert f'{f.column_name}_chi2' in sut
-        assert f'{f.column_name}_p_value' in sut
-    assert f'{sample_drift_metadata.predicted_probability_column_name}_dstat' in sut
-
-
-def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
-    try:
-        _ = calc.calculate(data=analysis_data)
-    except Exception:
-        pytest.fail()
-
-
-def test_statistical_drift_calculator_deals_with_missing_class_labels(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    # rig the data by setting all f3-values in first analysis chunk to 0
-    sample_drift_data.loc[10080:16000, 'f3'] = 0
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=5000).fit(ref_data)
-    results = calc.calculate(data=analysis_data)
-    assert not np.isnan(results.data.loc[0, 'f3_chi2'])
-    assert not np.isnan(results.data.loc[0, 'f3_p_value'])
 
 
 def test_data_reconstruction_drift_calculator_with_params_should_not_fail(  # noqa: D103
@@ -597,3 +371,15 @@ def test_data_reconstruction_drift_calculator_given_wrong_cont_imputer_object_ra
             imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='most_frequent'),
             imputer_continuous=5,
         )
+
+
+def test_data_reconstruction_drift_calculator_raises_missing_metadata_exception_when_missing_features(  # noqa: D103
+    sample_drift_data, sample_drift_metadata
+):
+    sample_drift_metadata.features = None
+    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+
+    calc = DataReconstructionDriftCalculator(model_metadata=sample_drift_metadata)
+
+    with pytest.raises(MissingMetadataException, match='features'):
+        calc.fit(ref_data)

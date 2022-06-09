@@ -98,6 +98,7 @@ class PerformanceCalculator:
         """
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
+
         reference_data = preprocess(data=reference_data, metadata=self.metadata, reference=True)
 
         for metric in self.metrics:

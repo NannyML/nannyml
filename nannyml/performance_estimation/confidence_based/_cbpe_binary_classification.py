@@ -129,6 +129,8 @@ class _BinaryClassificationCBPE(CBPE):
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
         """
+        self.model_metadata.check_has_fields(['target_column_name', 'predicted_probability_column_name'])
+
         reference_data = preprocess(
             data=reference_data, metadata=cast(BinaryClassificationMetadata, self.model_metadata), reference=True
         )
@@ -184,6 +186,11 @@ class _BinaryClassificationCBPE(CBPE):
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> estimates = estimator.estimate(data)
         """
+        required_fields = ['predicted_probability_column_name']
+        if 'roc_auc' in self.metrics:
+            required_fields += ['prediction_column_name']
+        self.model_metadata.check_has_fields(required_fields)
+
         data = preprocess(data=data, metadata=self.model_metadata)
 
         _validate_data_requirements_for_metrics(data, self.model_metadata, self.metrics)
