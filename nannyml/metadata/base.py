@@ -527,70 +527,32 @@ def _extract_features(data: pd.DataFrame, exclude_columns: List[str] = None) -> 
     if len(feature_columns) == 0:
         return []
 
-    feature_types = _predict_feature_types(data[feature_columns])
+    feature_types = {col: extract_feature_type(data[col]) for col in feature_columns}
 
     return [
         Feature(
             label=col,
             column_name=col,
             description=f'extracted feature: {col}',
-            feature_type=feature_types.loc[col, 'predicted_feature_type'],
+            feature_type=feature_types[col],
         )
         for col in feature_columns
     ]
 
 
-INFERENCE_NUM_ROWS_THRESHOLD = 5
-INFERENCE_HIGH_CARDINALITY_THRESHOLD = 0.1
-INFERENCE_MEDIUM_CARDINALITY_THRESHOLD = 0.01
-INFERENCE_LOW_CARDINALITY_THRESHOLD = 0.0
-INFERENCE_INT_NUNIQUE_THRESHOLD = 40
+def extract_feature_type(column: pd.Series) -> FeatureType:
+    data_type = column.dtype
+    if data_type == 'float64':
+        return FeatureType.CONTINUOUS
 
+    elif data_type == 'int64':
+        return FeatureType.CONTINUOUS
 
-def _predict_feature_types(df: pd.DataFrame):
-    def _determine_type(data_type, row_count, unique_count, unique_fraction):
-        if row_count < INFERENCE_NUM_ROWS_THRESHOLD:
-            return FeatureType.UNKNOWN
+    elif data_type == 'object' or data_type == 'category' or data_type == 'string':
+        return FeatureType.CATEGORICAL
 
-        elif data_type == 'float64':
-            return FeatureType.CONTINUOUS
-
-        elif data_type == 'int64' and unique_count >= INFERENCE_INT_NUNIQUE_THRESHOLD:
-            return FeatureType.CONTINUOUS
-
-        elif data_type == 'object':
-            return FeatureType.CATEGORICAL
-
-        elif unique_fraction >= INFERENCE_HIGH_CARDINALITY_THRESHOLD:
-            return FeatureType.CONTINUOUS
-
-        elif INFERENCE_LOW_CARDINALITY_THRESHOLD <= unique_fraction <= INFERENCE_MEDIUM_CARDINALITY_THRESHOLD:
-            return FeatureType.CATEGORICAL
-
-        else:
-            return FeatureType.UNKNOWN
-
-    # nunique: number of unique values
-    # count: number of not-None values
-    # size: number of values (including None)
-    stats = df.agg(['nunique', 'count']).T
-    stats['column_data_type'] = df.dtypes
-
-    stats['unique_count_fraction'] = stats['nunique'] / stats['count']
-    stats['predicted_feature_type'] = stats.apply(
-        lambda r: _determine_type(
-            data_type=r['column_data_type'],
-            row_count=r['count'],
-            unique_count=r['nunique'],
-            unique_fraction=r['unique_count_fraction'],
-        ),
-        axis=1,
-    )
-
-    # Just for serialization purposes
-    stats['column_data_type'] = str(stats['column_data_type'])
-
-    return stats
+    else:
+        return FeatureType.UNKNOWN
 
 
 def _check_for_nan(data: pd.DataFrame, column_names: List[str]):

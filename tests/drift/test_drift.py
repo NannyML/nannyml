@@ -104,6 +104,8 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data.loc[data.week >= 16, ['f2']] = np.sqrt(data.loc[data.week >= 16, ['f2']])
     data.drop(columns=['week'], inplace=True)
 
+    data['f3'] = data['f3'].astype("category")
+
     return data
 
 
