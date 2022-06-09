@@ -21,7 +21,7 @@ from nannyml.metadata.base import (
     _guess_partitions,
     _guess_targets,
     _guess_timestamps,
-    _predict_feature_types,
+    extract_feature_type,
 )
 from nannyml.metadata.extraction import ModelMetadataFactory
 
@@ -274,12 +274,13 @@ def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names
 
 
 # TODO verify behaviour
-def test_extract_metadata_for_empty_dataframe_should_return_features_with_feature_type_unknown():  # noqa: D103
+def test_extract_metadata_for_empty_dataframe_should_return_features_with_feature_type_categorical():  # noqa: D103
     data = pd.DataFrame(columns=['actual', 'partition', 'ts', 'feat1', 'feat2'])
     sut = extract_metadata(data, model_type='classification_binary')
     assert len(sut.features) == 2
-    assert sut.features[0].feature_type is FeatureType.UNKNOWN
-    assert sut.features[1].feature_type is FeatureType.UNKNOWN
+    # Categorical because default pd.dtype is 'object'
+    assert sut.features[0].feature_type is FeatureType.CATEGORICAL
+    assert sut.features[1].feature_type is FeatureType.CATEGORICAL
 
 
 def test_extract_metadata_without_matching_columns_should_set_them_to_none():  # noqa: D103
@@ -354,40 +355,34 @@ def test_guess_features_yields_correct_results(col, expected):  # noqa: D103
     assert col == sut[0] if expected else len(sut) == 0
 
 
-def test_feature_type_detection_with_rows_under_num_rows_threshold_should_return_none():  # noqa: D103
-    data = pd.DataFrame(columns=['a', 'b', 'c', 'd'])
-    sut = _predict_feature_types(data)
-    assert sut['predicted_feature_type'].map(lambda t: t == FeatureType.UNKNOWN).all()
-
-
 def test_feature_type_detection_sets_float_cols_to_continuous():  # noqa: D103
     data = pd.DataFrame({'A': [math.pi for i in range(1000)]})
-    sut = _predict_feature_types(data)
-    assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CONTINUOUS
+    sut = extract_feature_type(data['A'])
+    assert sut == FeatureType.CONTINUOUS
 
 
-def test_feature_type_detection_sets_int_cols_with_high_unique_value_count_to_continuous():  # noqa: D103
+def test_feature_type_detection_sets_int_cols_to_continuous():  # noqa: D103
     data = pd.DataFrame({'A': np.random.randint(75, size=10000)})
-    sut = _predict_feature_types(data)
-    assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CONTINUOUS
+    sut = extract_feature_type(data['A'])
+    assert sut == FeatureType.CONTINUOUS
 
 
-def test_feature_type_detection_sets_above_high_cardinality_threshold_to_nominal():  # noqa: D103
-    data = pd.DataFrame({'A': np.random.randint(75, size=100)})
-    sut = _predict_feature_types(data)
-    assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CONTINUOUS
+def test_feature_type_detection_sets_object_cols_to_categorical():  # noqa: D103
+    data = pd.DataFrame({'A': np.random.choice(['A', 'B', 'C'], size=10000)})
+    sut = extract_feature_type(data['A'])
+    assert sut == FeatureType.CATEGORICAL
 
 
-def test_feature_type_detection_sets_between_mid_and_high_cardinality_threshold_to_none():  # noqa: D103
-    data = pd.DataFrame({'A': np.random.randint(39, size=1000)})
-    sut = _predict_feature_types(data)
-    assert sut.loc['A', 'predicted_feature_type'] == FeatureType.UNKNOWN
+def test_feature_type_detection_sets_categorical_cols_to_categorical():  # noqa: D103
+    data = pd.DataFrame({'A': np.random.choice([1, 2, 3], size=10000)}, dtype="category")
+    sut = extract_feature_type(data['A'])
+    assert sut == FeatureType.CATEGORICAL
 
 
-def test_feature_type_detection_sets_between_low_and_mid_cardinality_threshold_to_nominal():  # noqa: D103
-    data = pd.DataFrame({'A': np.random.randint(6, size=1000)})
-    sut = _predict_feature_types(data)
-    assert sut.loc['A', 'predicted_feature_type'] == FeatureType.CATEGORICAL
+def test_feature_type_detection_sets_string_cols_to_categorical():  # noqa: D103
+    data = pd.DataFrame({'A': np.random.choice([1, 2, 3], size=10000)}, dtype="string")
+    sut = extract_feature_type(data['A'])
+    assert sut == FeatureType.CATEGORICAL
 
 
 def test_categorical_features_returns_only_nominal_features(sample_model_metadata):  # noqa: D103
