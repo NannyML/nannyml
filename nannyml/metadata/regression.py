@@ -1,7 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -58,15 +58,6 @@ class RegressionMetadata(ModelMetadata):
             df[NML_METADATA_PREDICTION_COLUMN_NAME] = np.NAN
 
         return df
-
-    def is_complete(self) -> Tuple[bool, List[str]]:
-        ok, missing = super().is_complete()
-
-        if self.prediction_column_name is None:
-            ok = False
-            missing.append('prediction_column_name')
-
-        return ok, missing
 
     def extract(self, data: pd.DataFrame, model_name: str = None, exclude_columns: List[str] = None):
         if super().extract(data, model_name, exclude_columns) is None:

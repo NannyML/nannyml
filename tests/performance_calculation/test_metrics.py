@@ -8,8 +8,13 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 import pytest
 
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.datasets import (
+    load_synthetic_binary_classification_dataset,
+    load_synthetic_multiclass_classification_dataset,
+)
+from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata import BinaryClassificationMetadata, ModelMetadata, ModelType, MulticlassClassificationMetadata
+from nannyml.metadata.extraction import extract_metadata
 from nannyml.performance_calculation import BinaryClassificationAUROC
 from nannyml.performance_calculation.metrics import (
     BinaryClassificationAccuracy,
@@ -28,6 +33,35 @@ from nannyml.performance_calculation.metrics import (
 
 binary_classification_metadata = BinaryClassificationMetadata()
 multiclass_classification_metadata = MulticlassClassificationMetadata()
+
+
+@pytest.fixture
+def binary_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
+    ref_df, ana_df, tgt_df = load_synthetic_binary_classification_dataset()
+    ref_df['y_pred'] = ref_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
+    ana_df['y_pred'] = ana_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
+
+    return ref_df, ana_df, tgt_df
+
+
+@pytest.fixture
+def binary_metadata(binary_data) -> ModelMetadata:  # noqa: D103
+    md = extract_metadata(binary_data[0], model_type='classification_binary')
+    md.target_column_name = 'work_home_actual'
+    return md
+
+
+@pytest.fixture
+def multiclass_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
+    ref_df, ana_df, tgt_df = load_synthetic_multiclass_classification_dataset()
+
+    return ref_df, ana_df, tgt_df
+
+
+@pytest.fixture
+def multiclass_metadata(multiclass_data) -> ModelMetadata:  # noqa: D103
+    md = extract_metadata(multiclass_data[0], model_type='classification_multiclass')
+    return md
 
 
 @pytest.mark.parametrize(
@@ -119,3 +153,69 @@ def test_metric_factory_raises_runtime_error_when_invalid_metadata_type_given():
         "these supported model types for this metric",
     ):
         _ = MetricFactory.create('roc_auc', FakeModelMetadata())
+
+
+# cannot combine fixtures and parametrization in pytest, so need to split binary/multiclass cases
+@pytest.mark.parametrize('metric', ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'])
+def test_metric_calculation_raises_invalid_metadata_exception_when_missing_binary_target_metadata(  # noqa: D103
+    metric, binary_data, binary_metadata
+):
+    binary_metadata.target_column_name = None
+    m = MetricFactory.create(key=metric, metadata=binary_metadata)
+    with pytest.raises(MissingMetadataException):
+        # m.fit(binary_data[0], chunker=DefaultChunker())  # not really required, but for completeness
+        m.calculate(binary_data[1])
+
+
+@pytest.mark.parametrize('metric', ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'])
+def test_metric_calculation_raises_invalid_metadata_exception_when_missing_target_multiclass_metadata(  # noqa: D103
+    metric, multiclass_data, multiclass_metadata
+):
+    multiclass_metadata.target_column_name = None
+    m = MetricFactory.create(key=metric, metadata=multiclass_metadata)
+    with pytest.raises(MissingMetadataException):
+        # m.fit(multiclass_data[0], chunker=DefaultChunker())  # not really required, but for completeness
+        m.calculate(multiclass_data[1])
+
+
+# cannot combine fixtures and parametrization in pytest, so need to split binary/multiclass cases
+@pytest.mark.parametrize('metric', ['f1', 'precision', 'recall', 'specificity', 'accuracy'])
+def test_metric_calculation_raises_invalid_metadata_exception_when_missing_binary_prediction_metadata(  # noqa: D103
+    metric, binary_data, binary_metadata
+):
+    binary_metadata.prediction_column_name = None
+    m = MetricFactory.create(key=metric, metadata=binary_metadata)
+    with pytest.raises(MissingMetadataException):
+        # m.fit(binary_data[0], chunker=DefaultChunker())  # not really required, but for completeness
+        m.calculate(binary_data[1])
+
+
+@pytest.mark.parametrize('metric', ['f1', 'precision', 'recall', 'specificity', 'accuracy'])
+def test_metric_calculation_raises_invalid_metadata_exception_when_missing_multiclass_target_metadata(  # noqa: D103
+    metric, multiclass_data, multiclass_metadata
+):
+    multiclass_metadata.prediction_column_name = None
+    m = MetricFactory.create(key=metric, metadata=multiclass_metadata)
+    with pytest.raises(MissingMetadataException):
+        # m.fit(multiclass_data[0], chunker=DefaultChunker())  # not really required, but for completeness
+        m.calculate(multiclass_data[1])
+
+
+def test_metric_roc_auc_calculation_raises_invalid_metadata_exception_when_missing_binary_score_metadata(  # noqa: D103
+    binary_data, binary_metadata
+):
+    binary_metadata.predicted_probability_column_name = None
+    m = MetricFactory.create(key='roc_auc', metadata=binary_metadata)
+    with pytest.raises(MissingMetadataException):
+        # m.fit(binary_data[0], chunker=DefaultChunker())  # not really required, but for completeness
+        m.calculate(binary_data[1])
+
+
+def test_metric_roc_auc_calculation_raises_invalid_metadata_exception_when_missing_mc_score_metadata(  # noqa: D103
+    multiclass_data, multiclass_metadata
+):
+    multiclass_metadata.predicted_probabilities_column_names = None
+    m = MetricFactory.create(key='roc_auc', metadata=multiclass_metadata)
+    with pytest.raises(MissingMetadataException):
+        # m.fit(binary_data[0], chunker=DefaultChunker())  # not really required, but for completeness
+        m.calculate(multiclass_data[1])

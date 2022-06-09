@@ -120,7 +120,7 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: 
         v_line_separating_analysis_period=plot_partition_separator,
         estimated_column_name='estimated',
         lower_confidence_column_name=f'lower_confidence_{metric}',
-        upper_confidence_column_name=f'upper_confidence_{metric}'
+        upper_confidence_column_name=f'upper_confidence_{metric}',
     )
 
     return fig

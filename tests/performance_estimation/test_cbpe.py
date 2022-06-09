@@ -224,12 +224,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predicted_probabilities_are
     binary_classification_metadata.predicted_probability_column_name = None
 
     estimator = CBPE(model_metadata=binary_classification_metadata, metrics=['roc_auc'])
-    with pytest.raises(
-        MissingMetadataException,
-        match="missing value for 'predicted_probability_column_name'. "
-        "Please ensure predicted label values are specified and present "
-        "in the sample.",
-    ):
+    with pytest.raises(MissingMetadataException):
         estimator.fit(reference)
 
 
@@ -323,3 +318,75 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
     results = estimator.estimate(analysis)
     assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
     assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)
+
+
+@pytest.mark.parametrize(
+    'properties',
+    [
+        ['target_column_name'],
+        ['predicted_probability_column_name'],
+        ['target_column_name', 'predicted_probability_column_name'],
+    ],
+)
+def test_cbpe_for_binary_raises_missing_metadata_exception_when_fitting_without_required_metadata(  # noqa: D103
+    binary_classification_data, binary_classification_metadata, properties
+):
+    reference, analysis = binary_classification_data
+
+    for prop in properties:
+        setattr(binary_classification_metadata, prop, None)
+
+    estimator = CBPE(model_metadata=binary_classification_metadata, metrics=['roc_auc'])
+    with pytest.raises(MissingMetadataException):
+        estimator.fit(reference_data=reference)
+
+
+@pytest.mark.parametrize('properties', [['predicted_probability_column_name']])
+def test_cbpe_for_binary_raises_missing_metadata_exception_when_estimating_without_required_metadata(  # noqa: D103
+    binary_classification_data, binary_classification_metadata, properties
+):
+    reference, analysis = binary_classification_data
+
+    for prop in properties:
+        setattr(binary_classification_metadata, prop, None)
+
+    estimator = CBPE(model_metadata=binary_classification_metadata, metrics=['roc_auc'])
+    with pytest.raises(MissingMetadataException):
+        estimator.fit(reference_data=reference)
+        estimator.estimate(data=analysis)
+
+
+@pytest.mark.parametrize(
+    'properties',
+    [
+        ['target_column_name'],
+        ['predicted_probabilities_column_names'],
+        ['target_column_name', 'predicted_probabilities_column_names'],
+    ],
+)
+def test_cbpe_for_multiclass_raises_missing_metadata_exception_when_fitting_without_required_metadata(  # noqa: D103
+    multiclass_classification_data, multiclass_classification_metadata, properties
+):
+    reference, analysis = multiclass_classification_data
+
+    for prop in properties:
+        setattr(multiclass_classification_metadata, prop, None)
+
+    estimator = CBPE(model_metadata=multiclass_classification_metadata, metrics=['roc_auc'])
+    with pytest.raises(MissingMetadataException):
+        estimator.fit(reference_data=reference)
+
+
+@pytest.mark.parametrize('properties', [['predicted_probabilities_column_names']])
+def test_cbpe_for_multiclass_raises_missing_metadata_exception_when_estimating_without_required_metadata(  # noqa: D103
+    multiclass_classification_data, multiclass_classification_metadata, properties
+):
+    reference, analysis = multiclass_classification_data
+
+    for prop in properties:
+        setattr(multiclass_classification_metadata, prop, None)
+
+    estimator = CBPE(model_metadata=multiclass_classification_metadata, metrics=['roc_auc'])
+    with pytest.raises(MissingMetadataException):
+        estimator.fit(reference_data=reference)
+        estimator.estimate(data=analysis)

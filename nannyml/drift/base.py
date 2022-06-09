@@ -82,7 +82,10 @@ class DriftCalculator(abc.ABC):
         """
         self.model_metadata = model_metadata
         if not features:
-            features = [f.column_name for f in self.model_metadata.features]
+            if self.model_metadata.features:
+                features = [f.column_name for f in self.model_metadata.features]
+            else:
+                features = []
         self.selected_features = features
 
         if chunker is None:
@@ -106,7 +109,7 @@ class DriftCalculator(abc.ABC):
     def calculate(
         self,
         data: pd.DataFrame,
-    ) -> pd.DataFrame:
+    ) -> DriftResult:
         """Executes the drift calculation.
 
         NannyML will use the model metadata to provide additional information about the features.

@@ -104,15 +104,6 @@ class Metric(abc.ABC):
             The data to calculate performance metrics on. Requires presence of either the predicted labels or
             prediction scores/probabilities (depending on the metric to be calculated), as well as the target data.
         """
-        if NML_METADATA_TARGET_COLUMN_NAME not in data.columns:
-            raise RuntimeError('data does not contain target column')
-
-        if (
-            NML_METADATA_PREDICTION_COLUMN_NAME not in data.columns
-            and NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME not in data.columns
-        ):
-            raise RuntimeError('data does contains neither prediction column or predicted probabilities column')
-
         return self._calculate(data)
 
     def _calculate(self, data: pd.DataFrame):
@@ -365,6 +356,8 @@ class BinaryClassificationAUROC(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
+        self.metadata.check_has_fields(['target_column_name', 'predicted_probability_column_name'])
+
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]  # TODO: this should be predicted_probabilities
 
@@ -388,6 +381,8 @@ class BinaryClassificationF1(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -410,6 +405,8 @@ class BinaryClassificationPrecision(Metric):
         self._min_chunk_size = _minimum_chunk_size_precision(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -432,6 +429,8 @@ class BinaryClassificationRecall(Metric):
         self._min_chunk_size = _minimum_chunk_size_recall(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -454,6 +453,8 @@ class BinaryClassificationSpecificity(Metric):
         self._min_chunk_size = _minimum_chunk_size_specificity(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -482,6 +483,8 @@ class BinaryClassificationAccuracy(Metric):
         self._min_chunk_size = _minimum_chunk_size_accuracy(reference_data)
 
     def _calculate(self, data: pd.DataFrame):
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
 
@@ -514,6 +517,8 @@ class MulticlassClassificationAUROC(Metric):
         """Redefine to handle NaNs and edge cases."""
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        self.metadata.check_has_fields(['target_column_name', 'predicted_probabilities_column_names'])
 
         labels, class_probability_columns = [], []
         for label in sorted(list(self.metadata.predicted_class_probability_metadata_columns())):
@@ -551,6 +556,8 @@ class MulticlassClassificationF1(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
@@ -582,6 +589,8 @@ class MulticlassClassificationPrecision(Metric):
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
 
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
@@ -615,6 +624,8 @@ class MulticlassClassificationRecall(Metric):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
@@ -646,6 +657,8 @@ class MulticlassClassificationSpecificity(Metric):
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
 
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
@@ -682,6 +695,8 @@ class MulticlassClassificationAccuracy(Metric):
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+
+        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
         y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]

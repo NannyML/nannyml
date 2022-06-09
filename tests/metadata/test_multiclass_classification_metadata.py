@@ -153,35 +153,6 @@ def test_extract_metadata_should_set_multiclass_classification_properties(data):
     assert sut.timestamp_column_name == 'timestamp'
 
 
-def test_complete_returns_complete_if_prediction_is_none_but_predicted_probabilities_are_not(  # noqa: D103
-    data, metadata
-):
-    metadata.prediction_column_name = None
-    sut = metadata.is_complete()
-    assert sut[0] is True
-    assert 'prediction_column_name' not in sut[1]
-    assert 'predicted_probabilities_column_names' not in sut[1]
-
-
-def test_complete_returns_complete_if_predicted_probabilities_is_none_but_prediction_is_not(metadata):  # noqa: D103
-    metadata.predicted_probabilities_column_names = None
-    sut = metadata.is_complete()
-    assert sut[0] is True
-    assert 'prediction_column_name' not in sut[1]
-    assert 'predicted_probabilities_column_names' not in sut[1]
-
-
-def test_is_complete_raises_missing_metadata_exception_if_both_predicted_class_and_probabilities_missing(  # noqa: D103
-    metadata,
-):
-    metadata.prediction_column_name = None
-    metadata.predicted_probabilities_column_names = None
-    ok, missing = metadata.is_complete()
-    assert not ok
-    assert 'predicted_probabilities_column_names' in missing
-    assert 'prediction_column_name' in missing
-
-
 def test_setting_prediction_column_name_after_extracting_metadata_updates_the_features_list(  # noqa: D103
     data: pd.DataFrame,
 ):
@@ -276,4 +247,4 @@ def test_validate_predicted_class_labels_in_class_probability_mapping(  # noqa: 
     metadata.predicted_probabilities_column_names = mapping
     _ok, _missing = metadata.validate_predicted_class_labels_in_class_probability_mapping(data[0])
     assert _ok == ok
-    assert _missing == missing
+    assert set(_missing) == set(missing)

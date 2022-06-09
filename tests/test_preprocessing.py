@@ -32,6 +32,7 @@ def metadata(data) -> ModelMetadata:  # noqa: D103
     return md
 
 
+@pytest.mark.skip
 def test_preprocess_raises_missing_metadata_exception_when_metadata_is_not_complete(data, metadata):  # noqa: D103
     analysis_data = data[0]
     metadata.partition_column_name = None

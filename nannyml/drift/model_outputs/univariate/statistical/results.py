@@ -4,7 +4,7 @@
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -12,10 +12,10 @@ import plotly.graph_objects as go
 from nannyml.chunk import Chunk
 from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata, RegressionMetadata
 from nannyml.metadata.base import Feature, FeatureType, ModelMetadata
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._joy_plot import _joy_plot
-from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
 
 
@@ -29,15 +29,13 @@ class UnivariateDriftResult(DriftResult):
 
     def plot(
         self,
-        kind: str = 'feature',
+        kind: str = 'prediction_drift',
         metric: str = 'statistic',
-        feature_label: str = None,
-        feature_column_name: str = None,
         class_label: str = None,
         *args,
         **kwargs,
     ) -> go.Figure:
-        """Renders a line plot for a chosen metric of statistical drift calculation results.
+        """Renders a line plot for a chosen metric of statistical statistical drift calculation results.
 
         Given either a feature label (check ``model_metadata.features``) or the actual feature column name
         and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
@@ -48,24 +46,19 @@ class UnivariateDriftResult(DriftResult):
 
         The different plot kinds that are available:
 
-        - ``feature_drift``: plots drift per :class:`~nannyml.chunk.Chunk` for a single feature of a chunked data set.
-        - ``feature_distribution``: plots feature distribution per :class:`~nannyml.chunk.Chunk`.
-          Joyplot for continuous features, stacked bar charts for categorical features.
+        - ``prediction_drift``: plots drift per :class:`~nannyml.chunk.Chunk` for the predictions of a chunked data set.
+        - ``prediction_distribution``: plots the prediction distribution per :class:`~nannyml.chunk.Chunk` of a chunked
+          data set as a joyplot.
+
 
         Parameters
         ----------
-        kind: str, default=`feature_drift`
-            The kind of plot you want to have. Value must be one of ``feature_drift``, ``feature_distribution``.
+        kind: str, default=`prediction_drift`
+            The kind of plot you want to have. Value must be one of ``prediction_drift``, ``prediction_distribution``.
         metric : str, default=``statistic``
             The metric to plot. Value must be one of ``statistic`` or ``p_value``
-        feature_label : str
-            Feature label identifying a feature according to the preset model metadata. The function will raise an
-            exception when no feature of that label was found in the metadata.
-            Either ``feature_label`` or ``feature_column_name`` should be specified.
-        feature_column_name : str
-            Column name identifying a feature according to the preset model metadata. The function will raise an
-            exception when no feature using that column name was found in the metadata.
-            Either ``feature_column_name`` or ``feature_label`` should be specified.
+        class_label: str, default=None
+            The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
 
         Returns
@@ -89,19 +82,16 @@ class UnivariateDriftResult(DriftResult):
         >>>     drifts.plot(kind='feature_distribution', feature_label=f.label).show()
 
         """
-        if kind == 'feature_drift':
-            feature = _get_feature(self.metadata, feature_label, feature_column_name)
-            return _plot_feature_drift(self.data, feature, metric, args, kwargs)
-        elif kind == 'feature_distribution':
-            feature = _get_feature(self.metadata, feature_label, feature_column_name)
-            return _plot_feature_distribution(
-                data=self._analysis_data,
-                drift_data=self.data,
-                feature=feature,
+        if kind == 'prediction_drift':
+            return _plot_prediction_drift(self.data, self.metadata, metric, class_label)
+        elif kind == 'prediction_distribution':
+            return _plot_prediction_distribution(
+                data=self._analysis_data, drift_data=self.data, metadata=self.metadata, class_label=class_label
             )
         else:
             raise InvalidArgumentsException(
-                f"unknown plot kind '{kind}'. " f"Please provide on of: ['feature_drift', 'feature_distribution']."
+                f"unknown plot kind '{kind}'. "
+                f"Please provide on of: ['prediction_drift', 'prediction_distribution']."
             )
 
 
@@ -142,15 +132,30 @@ def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: 
     return metric_column_name, metric_label, threshold_column_name, drift_column_name, title
 
 
-def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'statistic', *args, **kwargs) -> go.Figure:
-    """Renders a line plot for a chosen metric of statistical statistical drift calculation results."""
+def _plot_prediction_drift(
+    data: pd.DataFrame, metadata: ModelMetadata, metric: str = 'statistic', class_label: str = None
+) -> go.Figure:
+    """Renders a line plot of the drift metric for a given feature."""
+    if isinstance(metadata, BinaryClassificationMetadata):
+        prediction_column_name = metadata.predicted_probability_column_name
+    elif isinstance(metadata, MulticlassClassificationMetadata):
+        if not class_label or class_label == "":
+            raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
+        if class_label not in metadata.predicted_probabilities_column_names:
+            raise InvalidArgumentsException(f"no classes found named '{class_label}'. Please review the given value.")
+        prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
+    elif isinstance(metadata, RegressionMetadata):
+        prediction_column_name = metadata.prediction_column_name
+    else:
+        raise NotImplementedError
+
     (
         metric_column_name,
         metric_label,
         threshold_column_name,
         drift_column_name,
         title,
-    ) = _get_drift_column_names_for_feature(feature.column_name, feature.feature_type, metric)
+    ) = _get_drift_column_names_for_feature(prediction_column_name, FeatureType.CONTINUOUS, metric)
 
     plot_partition_separator = len(data.value_counts()) > 1
 
@@ -169,49 +174,55 @@ def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'sta
     return fig
 
 
-def _plot_feature_distribution(data: List[Chunk], drift_data: pd.DataFrame, feature: Feature) -> go.Figure:
-    """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-    if feature.feature_type is FeatureType.CONTINUOUS:
-        return _plot_continuous_feature_distribution(data, drift_data, feature)
-    elif feature.feature_type is FeatureType.CATEGORICAL:
-        return _plot_categorical_feature_distribution(data, drift_data, feature)
+def _plot_prediction_distribution(
+    data: List[Chunk], drift_data: pd.DataFrame, metadata: ModelMetadata, class_label: str = None
+) -> go.Figure:
+    """Plots the data distribution and associated drift for each chunk of the model predictions.
 
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The original model inputs and outputs
+    drift_data : pd.DataFrame
+        The results of the drift calculation
+    metadata: ModelMetadata
+        The metadata for the monitored model
+    class_label: str, default=None
+        The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
-def _plot_continuous_feature_distribution(data: List[Chunk], drift_data: pd.DataFrame, feature: Feature) -> go.Figure:
-    """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-    feature_column_name = feature.column_name
-    x_axis_title = f'{feature_column_name}'
-    drift_column_name = f'{feature_column_name}_alert'
-    title = f'Distribution over time for {feature.label}'
+    Returns
+    -------
+    fig: plotly.graph_objects.Figure
+        A visualization of the data distribution and drift using joy-plots.
+    """
+    clip: Optional[Tuple[int, int]] = None
+    if isinstance(metadata, BinaryClassificationMetadata):
+        prediction_column_name = metadata.predicted_probability_column_name
+        clip = (0, 1)
+    elif isinstance(metadata, MulticlassClassificationMetadata):
+        if not class_label or class_label == "":
+            raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
+        prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
+        clip = (0, 1)
+    elif isinstance(metadata, RegressionMetadata):
+        prediction_column_name = metadata.prediction_column_name
+    else:
+        raise NotImplementedError
+
+    x_axis_title = f'{prediction_column_name}'
+    drift_column_name = f'{prediction_column_name}_alert'
+    title = f'Distribution over time for {prediction_column_name}'
 
     fig = _joy_plot(
         feature_table=_create_feature_table(data=data),
         drift_table=drift_data,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
-        feature_column_name=feature_column_name,
+        feature_column_name=prediction_column_name,
         x_axis_title=x_axis_title,
+        post_kde_clip=clip,
         title=title,
         style='vertical',
-    )
-    return fig
-
-
-def _plot_categorical_feature_distribution(data: List[Chunk], drift_data: pd.DataFrame, feature: Feature) -> go.Figure:
-    """Plots the data distribution and associated drift for each chunk of a given categorical feature."""
-    feature_column_name = feature.column_name
-    yaxis_title = f'{feature_column_name}'
-    drift_column_name = f'{feature_column_name}_alert'
-    title = f'Distribution over time for {feature.label}'
-
-    fig = _stacked_bar_plot(
-        feature_table=_create_feature_table(data=data),
-        drift_table=drift_data,
-        chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-        drift_column_name=drift_column_name,
-        feature_column_name=feature_column_name,
-        yaxis_title=yaxis_title,
-        title=title,
     )
     return fig
 

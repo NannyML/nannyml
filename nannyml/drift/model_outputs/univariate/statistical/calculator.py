@@ -3,16 +3,17 @@
 #  License: Apache Software License 2.0
 
 """Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2_contingency, ks_2samp
+from scipy.stats import ks_2samp
 
 from nannyml.chunk import Chunker
 from nannyml.drift.base import DriftCalculator
-from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateDriftResult
-from nannyml.exceptions import CalculatorNotFittedException
+from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
+from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
+from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata, RegressionMetadata
 from nannyml.metadata.base import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, ModelMetadata
 from nannyml.preprocessing import preprocess
 
@@ -25,7 +26,6 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
     def __init__(
         self,
         model_metadata: ModelMetadata,
-        features: List[str] = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -61,7 +61,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
         """
         super(UnivariateStatisticalDriftCalculator, self).__init__(
-            model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
+            model_metadata, None, chunk_size, chunk_number, chunk_period, chunker
         )
 
         self._reference_data = None
@@ -89,7 +89,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
 
         """
         # check metadata for required properties
-        self.model_metadata.check_has_fields(['features'])
+        self.model_metadata.check_has_fields(['prediction_column_name'])
 
         reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
 
@@ -127,15 +127,10 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         >>> drift = drift_calc.calculate(data)
         """
         # Check metadata for required properties
-        self.model_metadata.check_has_fields(['features'])
-
+        prediction_column_names, predicted_probabilities_column_names = _get_predictions_and_scores(self.model_metadata)
         data = preprocess(data=data, metadata=self.model_metadata)
 
-        # Get lists of categorical <-> categorical features
-        categorical_column_names = [f.column_name for f in self.model_metadata.categorical_features]
-        continuous_column_names = [f.column_name for f in self.model_metadata.continuous_features]
-
-        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
+        features_and_metadata = NML_METADATA_COLUMNS + prediction_column_names + predicted_probabilities_column_names
         chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
 
         chunk_drifts = []
@@ -151,25 +146,9 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
                 'partition': 'analysis' if chunk.is_transition else chunk.partition,
             }
 
-            present_categorical_column_names = list(set(chunk.data.columns) & set(categorical_column_names))
-            for column in present_categorical_column_names:
-                statistic, p_value, _, _ = chi2_contingency(
-                    pd.concat(
-                        [
-                            self._reference_data[column].value_counts(),  # type: ignore
-                            chunk.data[column].value_counts(),
-                        ],
-                        axis=1,
-                    ).fillna(0)
-                )
-                chunk_drift[f'{column}_chi2'] = statistic
-                chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
-                chunk_drift[f'{column}_alert'] = (p_value < ALERT_THRESHOLD_P_VALUE) and (
-                    chunk.data[NML_METADATA_PARTITION_COLUMN_NAME] == 'analysis'
-                ).all()
-                chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
-
-            present_continuous_column_names = list(set(chunk.data.columns) & set(continuous_column_names))
+            present_continuous_column_names = list(
+                set(chunk.data.columns) & set(prediction_column_names + predicted_probabilities_column_names)
+            )
             for column in present_continuous_column_names:
                 statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])  # type: ignore
                 chunk_drift[f'{column}_dstat'] = statistic
@@ -193,3 +172,40 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
             )
 
         return UnivariateDriftResult(analysis_data=chunks, drift_data=res, model_metadata=self.model_metadata)
+
+
+def _get_predictions_and_scores(model_metadata: ModelMetadata) -> Tuple[List[str], List[str]]:
+    prediction_column_names: List[str] = []
+    predicted_probabilities_column_names: List[str] = []
+
+    # add continuous predictions or predicted probabilities from metadata to the selected features
+    if isinstance(model_metadata, BinaryClassificationMetadata):
+        if model_metadata.predicted_probability_column_name is None:
+            raise MissingMetadataException(
+                "missing value for 'predicted_probability_column_name'. "
+                "Please update your model metadata accordingly."
+            )
+        prediction_column_names = []
+        predicted_probabilities_column_names = [
+            cast(BinaryClassificationMetadata, model_metadata).predicted_probability_column_name
+        ]
+
+    elif isinstance(model_metadata, MulticlassClassificationMetadata):
+        if model_metadata.predicted_probabilities_column_names is None:
+            raise MissingMetadataException(
+                "missing value for 'predicted_probability_column_name'. "
+                "Please update your model metadata accordingly."
+            )
+        md = cast(MulticlassClassificationMetadata, model_metadata)
+        prediction_column_names = []
+        predicted_probabilities_column_names = list(md.predicted_probabilities_column_names.values())
+
+    elif isinstance(model_metadata, RegressionMetadata):
+        if model_metadata.prediction_column_name is None:
+            raise MissingMetadataException(
+                "missing value for 'prediction_column_name'. " "Please update your model metadata accordingly."
+            )
+        prediction_column_names = [model_metadata.prediction_column_name]
+        predicted_probabilities_column_names = []
+
+    return prediction_column_names, predicted_probabilities_column_names

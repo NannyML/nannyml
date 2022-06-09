@@ -173,43 +173,6 @@ class MulticlassClassificationMetadata(ModelMetadata):
 
         return df
 
-    def is_complete(self) -> Tuple[bool, List[str]]:
-        """Flags if the ModelMetadata is considered complete or still missing values.
-
-        Returns
-        -------
-        complete: bool
-            True when all required fields are present, False otherwise
-        missing: List[str]
-            A list of all missing properties. Empty when metadata is complete.
-
-        Examples
-        --------
-        >>> from nannyml.metadata import MulticlassClassificationMetadata, Feature, FeatureType
-        >>> metadata = MulticlassClassificationMetadata(target_column_name='work_home_actual')
-        >>> metadata.features = [
-        >>>     Feature('cat1', 'cat1', FeatureType.CATEGORICAL), Feature('cat2', 'cat2', FeatureType.CATEGORICAL),
-        >>>     Feature('cont1', 'cont1', FeatureType.CONTINUOUS), Feature('cont2', 'cont2', FeatureType.UNKNOWN)]
-        >>> # missing either predicted labels or predicted probabilities, 'cont2' has an unknown feature type
-        >>> metadata.is_complete()
-        (False, ['predicted_probabilities_column_names', 'prediction_column_name'])
-        >>> metadata.predicted_probabilities_column_names = {'A': 'y_pred_proba_A', 'B': 'y_pred_proba_B'}
-        >>> metadata.feature(feature='cont2').feature_type = FeatureType.CONTINUOUS
-        >>> metadata.is_complete()
-        (True, [])
-        """
-        ok, missing = super().is_complete()
-
-        # Either predicted probabilities or predicted labels should be specified
-        if self.prediction_column_name is None and (
-            self.predicted_probabilities_column_names is None or len(self.predicted_probabilities_column_names) == 0
-        ):
-            ok = False
-            missing.append('predicted_probabilities_column_names')
-            missing.append('prediction_column_name')
-
-        return ok, missing
-
     def extract(self, data: pd.DataFrame, model_name: str = None, exclude_columns: List[str] = None):
         """Tries to extract model metadata from a given data set.
 
