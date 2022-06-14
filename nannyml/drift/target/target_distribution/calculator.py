@@ -98,7 +98,7 @@ class TargetDistributionCalculator:
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        self.metadata.check_has_fields(['target_column_name'])
+        self.metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'target_column_name'])
 
         if self.metadata.target_column_name not in reference_data.columns:
             raise InvalidArgumentsException(
@@ -133,6 +133,8 @@ class TargetDistributionCalculator:
         """
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        self.metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'target_column_name'])
 
         if self.metadata.target_column_name not in data.columns:
             raise InvalidArgumentsException(

@@ -6,7 +6,9 @@
 
 # TODO wording
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Union
+
+from nannyml.exceptions import InvalidArgumentsException
 
 
 class FeatureType(str, Enum):
@@ -37,7 +39,13 @@ class Feature:
     The Feature class allows you to provide this information.
     """
 
-    def __init__(self, column_name: str, label: str, feature_type: FeatureType, description: str = None):
+    def __init__(
+        self,
+        column_name: str,
+        feature_type: Union[FeatureType, str],
+        description: str = None,
+        label: str = None,
+    ):
         """Creates a new Feature instance.
 
         The ModelMetadata class contains a list of Features that describe the values that serve as model input.
@@ -48,8 +56,9 @@ class Feature:
             The name of the column where the feature is found in the (to be provided) model input/output data.
         label : str
             A (human-friendly) label for the feature.
-        feature_type : FeatureType
-            The kind of values the data for this feature are.
+        feature_type : Union[FeatureType, str]
+            The kind of values the data for this feature are. Should be either a FeatureType instance or one of the
+            following string values: 'categorical' or 'continuous'.
         description : str
             Some additional information to display within results and visualizations.
 
@@ -67,8 +76,21 @@ class Feature:
         'description': 'Distance from home to the office'})
         """
         self.column_name = column_name
-        self.label = label
+        self.label = label if label else column_name
         self.description = description
+
+        if isinstance(feature_type, str):
+            if feature_type == 'continuous':
+                feature_type = FeatureType.CONTINUOUS
+            elif feature_type == 'categorical':
+                feature_type = FeatureType.CATEGORICAL
+            elif feature_type == 'unknown':
+                feature_type = FeatureType.UNKNOWN
+            else:
+                raise InvalidArgumentsException(
+                    f"feature type value given was '{feature_type}' "
+                    f"but should be either 'unknown', 'continuous' or 'categorical'"
+                )
         self.feature_type = feature_type
 
     def to_dict(self) -> Dict[str, Any]:

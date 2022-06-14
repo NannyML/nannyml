@@ -89,7 +89,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
 
         """
         # check metadata for required properties
-        self.model_metadata.check_has_fields(['features'])
+        self.model_metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'features'])
 
         reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
 
@@ -127,7 +127,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         >>> drift = drift_calc.calculate(data)
         """
         # Check metadata for required properties
-        self.model_metadata.check_has_fields(['features'])
+        self.model_metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'features'])
 
         data = preprocess(data=data, metadata=self.model_metadata)
 
