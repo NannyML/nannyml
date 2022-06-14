@@ -120,7 +120,15 @@ class _MulticlassClassificationCBPE(CBPE):
         if not isinstance(self.model_metadata, MulticlassClassificationMetadata):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
-        self.model_metadata.check_has_fields(['target_column_name', 'predicted_probabilities_column_names'])
+        self.model_metadata.check_has_fields(
+            [
+                'timestamp_column_name',
+                'partition_column_name',
+                'target_column_name',
+                'prediction_column_name',
+                'predicted_probabilities_column_names',
+            ]
+        )
 
         reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
 
@@ -152,7 +160,14 @@ class _MulticlassClassificationCBPE(CBPE):
         return self
 
     def estimate(self, data: pd.DataFrame) -> CBPEPerformanceEstimatorResult:
-        self.model_metadata.check_has_fields(['prediction_column_name', 'predicted_probabilities_column_names'])
+        self.model_metadata.check_has_fields(
+            [
+                'timestamp_column_name',
+                'partition_column_name',
+                'prediction_column_name',
+                'predicted_probabilities_column_names',
+            ]
+        )
 
         data = preprocess(data=data, metadata=self.model_metadata)
 

@@ -37,9 +37,6 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         ----------
         model_metadata: ModelMetadata
             Metadata for the model whose data is to be processed.
-        features: List[str], default=None
-            An optional list of feature names to use during drift calculation. None by default, in this case
-            all features are used during calculation.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -89,7 +86,9 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
 
         """
         # check metadata for required properties
-        self.model_metadata.check_has_fields(['prediction_column_name'])
+        self.model_metadata.check_has_fields(
+            ['partition_column_name', 'timestamp_column_name', 'prediction_column_name']
+        )
 
         reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
 
@@ -127,6 +126,9 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         >>> drift = drift_calc.calculate(data)
         """
         # Check metadata for required properties
+        self.model_metadata.check_has_fields(
+            ['partition_column_name', 'timestamp_column_name', 'prediction_column_name']
+        )
         prediction_column_names, predicted_probabilities_column_names = _get_predictions_and_scores(self.model_metadata)
         data = preprocess(data=data, metadata=self.model_metadata)
 

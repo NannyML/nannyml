@@ -86,10 +86,11 @@ class ModelMetadata(abc.ABC):
         self,
         model_type: ModelType,
         model_name: str = None,
-        features: List[Feature] = None,
-        target_column_name: str = 'target',
-        partition_column_name: str = 'partition',
-        timestamp_column_name: str = 'date',
+        continuous_features: List[str] = None,
+        categorical_features: List[str] = None,
+        target_column_name: str = None,
+        partition_column_name: str = None,
+        timestamp_column_name: str = None,
     ):
         """Creates a new ModelMetadata instance.
 
@@ -146,7 +147,16 @@ class ModelMetadata(abc.ABC):
         self._partition_column_name = partition_column_name
         self._timestamp_column_name = timestamp_column_name
 
-        self.features = [] if features is None else features
+        # self.features = [] if features is None else features
+        if continuous_features is None:
+            continuous_features = []
+
+        if categorical_features is None:
+            categorical_features = []
+
+        self.features = [
+            Feature(column_name=col, feature_type=FeatureType.CONTINUOUS) for col in continuous_features
+        ] + [Feature(column_name=col, feature_type=FeatureType.CATEGORICAL) for col in categorical_features]
 
     @property
     def target_column_name(self):  # noqa: D102
@@ -548,7 +558,7 @@ def extract_feature_type(column: pd.Series) -> FeatureType:
     elif data_type == 'int64':
         return FeatureType.CONTINUOUS
 
-    elif data_type == 'object' or data_type == 'category' or data_type == 'string':
+    elif data_type == 'object' or data_type == 'category' or data_type == 'string' or data_type == 'bool':
         return FeatureType.CATEGORICAL
 
     else:

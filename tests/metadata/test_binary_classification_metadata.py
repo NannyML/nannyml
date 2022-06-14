@@ -49,9 +49,9 @@ def test_model_metadata_creation_with_defaults_has_correct_properties():  # noqa
     assert len(sut.features) == 0
     assert sut.prediction_column_name is None
     assert sut.predicted_probability_column_name is None
-    assert sut.target_column_name == 'target'
-    assert sut.partition_column_name == 'partition'
-    assert sut.timestamp_column_name == 'date'
+    assert sut.target_column_name is None
+    assert sut.partition_column_name is None
+    assert sut.timestamp_column_name is None
 
 
 def test_model_metadata_creation_sets_correct_values_for_special_attributes():  # noqa: D103

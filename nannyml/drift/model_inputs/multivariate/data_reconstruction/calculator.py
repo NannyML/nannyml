@@ -121,7 +121,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
         """
-        self.model_metadata.check_has_fields(['features'])
+        self.model_metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'features'])
         reference_data = preprocess(reference_data, self.model_metadata, reference=True)
 
         selected_categorical_column_names = _get_selected_feature_names(
@@ -194,7 +194,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> drift = drift_calc.calculate(data)
         """
-        self.model_metadata.check_has_fields(['features'])
+        self.model_metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'features'])
         data = preprocess(data, self.model_metadata)
 
         selected_categorical_column_names = _get_selected_feature_names(

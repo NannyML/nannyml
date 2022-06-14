@@ -33,7 +33,7 @@ def sample_feature() -> Feature:  # noqa: D103
 
 @pytest.fixture
 def sample_model_metadata(sample_feature) -> ModelMetadata:  # noqa: D103
-    return BinaryClassificationMetadata(model_name='my_model', features=[sample_feature])
+    return BinaryClassificationMetadata(model_name='my_model', categorical_features=[sample_feature])
 
 
 @pytest.fixture
@@ -142,7 +142,7 @@ def test_binary_classification_metadata_creation_with_custom_values_has_correct_
 ):
     sut = BinaryClassificationMetadata(
         model_name='model',
-        features=[sample_feature],
+        categorical_features=[sample_feature.column_name],
         prediction_column_name='pred',
         predicted_probability_column_name='pred_proba',
         target_column_name='gt',
@@ -152,9 +152,9 @@ def test_binary_classification_metadata_creation_with_custom_values_has_correct_
     assert sut.name == 'model'
     assert sut.model_type == ModelType.CLASSIFICATION_BINARY
     assert len(sut.features) == 1
-    assert sut.features[0].label == 'label'
+    assert sut.features[0].label == 'col'
     assert sut.features[0].column_name == 'col'
-    assert sut.features[0].description == 'desc'
+    assert sut.features[0].description is None
     assert sut.features[0].feature_type == FeatureType.CATEGORICAL
     assert sut.prediction_column_name == 'pred'
     assert sut.predicted_probability_column_name == 'pred_proba'
@@ -167,18 +167,18 @@ def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_dict()
     assert sut['prediction_column_name'] is None
     assert sut['predicted_probability_column_name'] is None
-    assert sut['partition_column_name'] == 'partition'
-    assert sut['timestamp_column_name'] == 'date'
-    assert sut['target_column_name'] == 'target'
+    assert sut['partition_column_name'] is None
+    assert sut['timestamp_column_name'] is None
+    assert sut['target_column_name'] is None
 
 
 def test_to_pd_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_df()
     assert sut.loc[sut['label'] == 'prediction_column_name', 'column_name'].iloc[0] is None
     assert sut.loc[sut['label'] == 'predicted_probability_column_name', 'column_name'].iloc[0] is None
-    assert sut.loc[sut['label'] == 'partition_column_name', 'column_name'].iloc[0] == 'partition'
-    assert sut.loc[sut['label'] == 'timestamp_column_name', 'column_name'].iloc[0] == 'date'
-    assert sut.loc[sut['label'] == 'target_column_name', 'column_name'].iloc[0] == 'target'
+    assert sut.loc[sut['label'] == 'partition_column_name', 'column_name'].iloc[0] is None
+    assert sut.loc[sut['label'] == 'timestamp_column_name', 'column_name'].iloc[0] is None
+    assert sut.loc[sut['label'] == 'target_column_name', 'column_name'].iloc[0] is None
 
 
 def test_feature_filtering_by_index_delivers_correct_result(sample_model_metadata):  # noqa: D103
@@ -440,6 +440,8 @@ def test_metadata_factory_creates_correct_model_metadata_instance_given_model_ty
 
 
 def test_metadata_check_has_fields_doesnt_raise_exception_when_all_fields_present(sample_model_metadata):  # noqa: D103
+    sample_model_metadata.target_column_name = 'target'
+    sample_model_metadata.timestamp_column_name = 'timestamp'
     try:
         sample_model_metadata.check_has_fields(fields=['target_column_name', 'timestamp_column_name'])
     except Exception as exc:

@@ -156,12 +156,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predictions_are_required_bu
 
     reference, _ = binary_classification_data
     estimator = CBPE(model_metadata=binary_classification_metadata, metrics=['f1'])  # requires predictions!
-    with pytest.raises(
-        MissingMetadataException,
-        match="missing value for 'prediction_column_name'. "
-        "Please ensure predicted label values are specified and present "
-        "in the sample.",
-    ):
+    with pytest.raises(MissingMetadataException, match='prediction_column_name'):
         estimator.fit(reference)
 
 

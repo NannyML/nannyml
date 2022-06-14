@@ -7,7 +7,7 @@
 import pandas as pd
 import pytest
 
-from nannyml import BinaryClassificationMetadata, Feature, FeatureType
+from nannyml import BinaryClassificationMetadata
 from nannyml.drift import UnivariateDriftResult
 from nannyml.drift.ranking import AlertCountRanking
 from nannyml.exceptions import InvalidArgumentsException
@@ -35,14 +35,7 @@ def sample_drift_result() -> UnivariateDriftResult:  # noqa: D103
 
 @pytest.fixture
 def sample_metadata(sample_drift_result):  # noqa: D103
-    md = BinaryClassificationMetadata(
-        features=[
-            Feature(column_name='f1', label='f1', feature_type=FeatureType.CONTINUOUS),
-            Feature(column_name='f2', label='f2', feature_type=FeatureType.CONTINUOUS),
-            Feature(column_name='f3', label='f3', feature_type=FeatureType.CONTINUOUS),
-            Feature(column_name='f4', label='f4', feature_type=FeatureType.CONTINUOUS),
-        ]
-    )
+    md = BinaryClassificationMetadata(continuous_features=['f1', 'f2', 'f3', 'f4'])
     md.predicted_probability_column_name = 'y_pred_proba'
     return md
 
