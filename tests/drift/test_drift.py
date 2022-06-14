@@ -27,9 +27,9 @@ from nannyml.preprocessing import preprocess
 def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
-    data['partition'] = 'reference'
-    data.loc[data.week >= 11, ['partition']] = 'analysis'
-    # data[NML_METADATA_PARTITION_COLUMN_NAME] = data['partition']  # simulate preprocessing
+    data['period'] = 'reference'
+    data.loc[data.week >= 11, ['period']] = 'analysis'
+    # data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(167)
     data['f1'] = np.random.randn(data.shape[0])
     data['f2'] = np.random.rand(data.shape[0])
@@ -174,7 +174,7 @@ def test_base_drift_calculator_given_empty_analysis_data_should_raise_invalid_ar
 def test_base_drift_calculator_given_empty_features_list_should_calculate_for_all_features(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = SimpleDriftCalculator(sample_drift_metadata, chunk_size=1000).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data)
 
@@ -187,7 +187,7 @@ def test_base_drift_calculator_given_empty_features_list_should_calculate_for_al
 def test_base_drift_calculator_given_non_empty_features_list_should_only_calculate_for_these_features(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = SimpleDriftCalculator(sample_drift_metadata, features=['f1', 'f3'], chunk_size=1000).fit(ref_data)
     _ = calc.calculate(data=sample_drift_data)
     sut = calc.calculate(data=sample_drift_data)
@@ -211,7 +211,7 @@ def test_base_drift_calculator_uses_size_based_chunker_when_given_chunk_size(  #
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = TestDriftCalculator(sample_drift_metadata, chunk_size=1000).fit(ref_data)
     sut = calc.calculate(sample_drift_data)['keys']
     expected = [
@@ -238,7 +238,7 @@ def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = TestDriftCalculator(sample_drift_metadata, chunk_number=100).fit(ref_data)
     sut = calc.calculate(sample_drift_data)['keys']
 
@@ -259,7 +259,7 @@ def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = TestDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
     sut = calc.calculate(sample_drift_data)['keys']
 
@@ -280,7 +280,7 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  
             chunk_keys = [c.key for c in chunks]
             return pd.DataFrame({'keys': chunk_keys})
 
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = TestDriftCalculator(sample_drift_metadata).fit(ref_data)
     sut = calc.calculate(sample_drift_data)['keys']
     expected = [
@@ -304,7 +304,7 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(  
 def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_analysis_chunk_key(  # noqa: D103
     sample_drift_data, sample_drift_metadata, chunker
 ):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunker=chunker).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data)
 
@@ -318,7 +318,7 @@ def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_an
 def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
 
     drift = calc.calculate(data=sample_drift_data)
@@ -329,13 +329,13 @@ def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  
     assert 'start_date' in sut
     assert 'end_index' in sut
     assert 'end_date' in sut
-    assert 'partition' in sut
+    assert 'period' in sut
 
 
 def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value_column_for_each_feature(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=1000).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data).data.columns
 
@@ -348,8 +348,8 @@ def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value
 
 
 def test_univariate_statistical_drift_calculator(sample_drift_data, sample_drift_metadata):  # noqa: D103
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
     try:
         _ = calc.calculate(data=analysis_data)
@@ -362,8 +362,8 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(  # noqa: 
 ):
     # rig the data by setting all f3-values in first analysis chunk to 0
     sample_drift_data.loc[10080:16000, 'f3'] = 0
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=5000).fit(ref_data)
     results = calc.calculate(data=analysis_data)
     assert not np.isnan(results.data.loc[0, 'f3_chi2'])
@@ -374,7 +374,7 @@ def test_statistical_drift_calculator_raises_missing_metadata_exception_when_fea
     sample_drift_data, sample_drift_metadata
 ):
     sample_drift_metadata.features = None
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
     with pytest.raises(MissingMetadataException, match='features'):
         UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_size=5000).fit(ref_data)
@@ -383,8 +383,8 @@ def test_statistical_drift_calculator_raises_missing_metadata_exception_when_fea
 def test_statistical_drift_calculator_runs_without_unnecessary_metadata_properties(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
-    analysis_data = sample_drift_data.loc[sample_drift_data['partition'] == 'analysis']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    analysis_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
     sample_drift_metadata.target_column_name = None
     sample_drift_metadata.prediction_column_name = None

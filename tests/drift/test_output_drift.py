@@ -14,9 +14,9 @@ from nannyml.metadata.extraction import extract_metadata
 def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
-    data['partition'] = 'reference'
-    data.loc[data.week >= 11, ['partition']] = 'analysis'
-    # data[NML_METADATA_PARTITION_COLUMN_NAME] = data['partition']  # simulate preprocessing
+    data['period'] = 'reference'
+    data.loc[data.week >= 11, ['period']] = 'analysis'
+    # data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(167)
     data['f1'] = np.random.randn(data.shape[0])
     data['f2'] = np.random.rand(data.shape[0])
@@ -112,7 +112,7 @@ def sample_drift_metadata(sample_drift_data):  # noqa: D103
 
 
 def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data, sample_drift_metadata):  # noqa: D103
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
@@ -123,7 +123,7 @@ def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data, 
 def test_output_drift_calculator_with_default_params_should_not_fail(  # noqa: D103
     sample_drift_data, sample_drift_metadata
 ):
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
@@ -135,7 +135,7 @@ def test_output_drift_calculator_raises_missing_metadata_exception_when_missing_
     sample_drift_data, sample_drift_metadata
 ):
     sample_drift_metadata.prediction_column_name = None
-    ref_data = sample_drift_data.loc[sample_drift_data['partition'] == 'reference']
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
     calc = UnivariateStatisticalDriftCalculator(model_metadata=sample_drift_metadata)
 

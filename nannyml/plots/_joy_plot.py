@@ -326,7 +326,7 @@ def _joy_plot(
     chunk_column_name='chunk',
     start_date_column_name='start_date',
     end_date_column_name='end_date',
-    chunk_type_column_name='partition',
+    chunk_type_column_name='period',
     drift_column_name='drift',
     chunk_types=None,
     hue_legend_labels=None,

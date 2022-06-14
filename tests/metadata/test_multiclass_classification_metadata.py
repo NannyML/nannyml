@@ -13,7 +13,7 @@ import pytest
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.metadata import ModelType, MulticlassClassificationMetadata, extract_metadata
 from nannyml.metadata.base import (
-    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
@@ -149,7 +149,7 @@ def test_extract_metadata_should_set_multiclass_classification_properties(data):
 
     # check base properties
     assert sut.target_column_name is None
-    assert sut.partition_column_name == 'partition'
+    assert sut.period_column_name == 'period'
     assert sut.timestamp_column_name == 'timestamp'
 
 
@@ -199,7 +199,7 @@ def test_enrich_copies_each_metadata_column_to_new_fixed_column(data, metadata):
 
     assert NML_METADATA_TIMESTAMP_COLUMN_NAME in sut
     assert NML_METADATA_TARGET_COLUMN_NAME in sut
-    assert NML_METADATA_PARTITION_COLUMN_NAME in sut
+    assert NML_METADATA_PERIOD_COLUMN_NAME in sut
 
 
 def test_enrich_adds_nan_prediction_column_if_no_prediction_column_in_original_data(data, metadata):  # noqa: D103

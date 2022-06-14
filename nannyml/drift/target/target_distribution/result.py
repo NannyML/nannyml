@@ -25,8 +25,8 @@ class TargetDistributionResult:
         """Renders a line plot of the target distribution.
 
         Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple partitions.
+        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
+        a vertical separation if the drift results contain multiple periods.
 
         Parameters
         ----------
@@ -60,7 +60,7 @@ class TargetDistributionResult:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['distribution'].")
 
     def _plot_distribution(self, distribution: str) -> go.Figure:
-        plot_partition_separator = len(self.data.value_counts()) > 1
+        plot_period_separator = len(self.data.value_counts()) > 1
 
         if distribution == 'metric':
             fig = _step_plot(
@@ -71,7 +71,7 @@ class TargetDistributionResult:
                 hover_labels=['Chunk', 'Rate', 'Target data'],
                 title=f'Target distribution over time for {self.metadata.target_column_name}',
                 y_axis_title='Rate of positive occurrences',
-                v_line_separating_analysis_period=plot_partition_separator,
+                v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
             )
@@ -85,7 +85,7 @@ class TargetDistributionResult:
                 hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
                 title=f'Chi-square statistic over time for {self.metadata.target_column_name} ',
                 y_axis_title='Chi-square statistic',
-                v_line_separating_analysis_period=plot_partition_separator,
+                v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
             )

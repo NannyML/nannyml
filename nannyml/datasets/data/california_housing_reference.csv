@@ -1,4 +1,4 @@
-MedInc,HouseAge,AveRooms,AveBedrms,Population,AveOccup,Latitude,Longitude,timestamp,partition,clf_target,y_pred_proba,y_pred,identifier
+MedInc,HouseAge,AveRooms,AveBedrms,Population,AveOccup,Latitude,Longitude,timestamp,period,clf_target,y_pred_proba,y_pred,identifier
 9.8413,32.0,7.17004048582996,1.0148448043184886,4353.0,2.937246963562753,34.22,-118.19,2020-10-01 00:00:00,reference,1,0.99,1,0
 8.3695,37.0,7.458745874587459,1.0627062706270627,941.0,3.1056105610561056,34.22,-118.21,2020-10-01 01:00:00,reference,1,1.0,1,1
 8.72,44.0,6.163179916317992,1.0460251046025104,668.0,2.794979079497908,34.2,-118.18,2020-10-01 02:00:00,reference,1,1.0,1,2

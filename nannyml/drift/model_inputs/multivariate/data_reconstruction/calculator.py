@@ -121,7 +121,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
         """
-        self.model_metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'features'])
+        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'features'])
         reference_data = preprocess(reference_data, self.model_metadata, reference=True)
 
         selected_categorical_column_names = _get_selected_feature_names(
@@ -194,7 +194,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> drift = drift_calc.calculate(data)
         """
-        self.model_metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'features'])
+        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'features'])
         data = preprocess(data, self.model_metadata)
 
         selected_categorical_column_names = _get_selected_feature_names(
@@ -217,7 +217,7 @@ class DataReconstructionDriftCalculator(DriftCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                    'period': 'analysis' if chunk.is_transition else chunk.period,
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
                         selected_features=self.selected_features,
                         selected_categorical_features=selected_categorical_column_names,
@@ -371,7 +371,7 @@ def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_th
     alert = drift_result.apply(
         lambda row: True
         if (row['reconstruction_error'] > upper_threshold or row['reconstruction_error'] < lower_threshold)
-        and row['partition'] == 'analysis'
+        and row['period'] == 'analysis'
         else False,
         axis=1,
     )

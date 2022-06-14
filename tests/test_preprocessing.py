@@ -35,8 +35,8 @@ def metadata(data) -> ModelMetadata:  # noqa: D103
 @pytest.mark.skip
 def test_preprocess_raises_missing_metadata_exception_when_metadata_is_not_complete(data, metadata):  # noqa: D103
     analysis_data = data[0]
-    metadata.partition_column_name = None
-    analysis_data.drop(columns=['partition'], inplace=True)
+    metadata.period_column_name = None
+    analysis_data.drop(columns=['period'], inplace=True)
 
     with pytest.raises(MissingMetadataException):
         _ = preprocess(data=analysis_data, metadata=metadata)

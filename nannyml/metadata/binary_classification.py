@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from nannyml.metadata.base import (
-    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
     ModelMetadata,
@@ -77,7 +77,7 @@ class BinaryClassificationMetadata(ModelMetadata):
     def metadata_columns(self):
         """Returns all metadata columns that are added to the data by the ``enrich`` method."""
         return [
-            NML_METADATA_PARTITION_COLUMN_NAME,
+            NML_METADATA_PERIOD_COLUMN_NAME,
             NML_METADATA_PREDICTION_COLUMN_NAME,
             NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
             NML_METADATA_TARGET_COLUMN_NAME,

@@ -123,7 +123,7 @@ class _MulticlassClassificationCBPE(CBPE):
         self.model_metadata.check_has_fields(
             [
                 'timestamp_column_name',
-                'partition_column_name',
+                'period_column_name',
                 'target_column_name',
                 'prediction_column_name',
                 'predicted_probabilities_column_names',
@@ -163,7 +163,7 @@ class _MulticlassClassificationCBPE(CBPE):
         self.model_metadata.check_has_fields(
             [
                 'timestamp_column_name',
-                'partition_column_name',
+                'period_column_name',
                 'prediction_column_name',
                 'predicted_probabilities_column_names',
             ]
@@ -186,7 +186,7 @@ class _MulticlassClassificationCBPE(CBPE):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                    'period': 'analysis' if chunk.is_transition else chunk.period,
                     **self._estimate(chunk),
                 }
                 for chunk in chunks
@@ -216,7 +216,7 @@ class _MulticlassClassificationCBPE(CBPE):
             estimates[f'alert_{metric}'] = (
                 estimated_metric > self._alert_thresholds[metric][1]
                 or estimated_metric < self._alert_thresholds[metric][0]
-            ) and chunk.partition == 'analysis'
+            ) and chunk.period == 'analysis'
         return estimates
 
 

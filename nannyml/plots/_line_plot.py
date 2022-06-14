@@ -46,7 +46,7 @@ def _line_plot(
     chunk_column_name='chunk',
     start_date_column_name='start_date',
     end_date_column_name='end_date',
-    chunk_type_column_name='partition',
+    chunk_type_column_name='period',
     chunk_types=None,
     confidence_label='Confidence band',
     threshold_label='Data drift threshold',

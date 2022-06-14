@@ -66,8 +66,8 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: 
     """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
     Chunks are set on a time-based X-axis by using the period containing their observations.
-    Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
-    a vertical separation if the drift results contain multiple partitions.
+    Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
+    a vertical separation if the drift results contain multiple periods.
 
     If the ``realized_performance`` data is also provided, an extra line shall be plotted to allow an easy
     comparison of the estimated versus realized performance.
@@ -91,16 +91,16 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: 
         zip(estimation_results[f'lower_threshold_{metric}'], estimation_results[f'upper_threshold_{metric}'])
     )
 
-    estimation_results['estimated'] = estimation_results['partition'].apply(lambda r: r == 'analysis')
+    estimation_results['estimated'] = estimation_results['period'].apply(lambda r: r == 'analysis')
 
-    plot_partition_separator = len(estimation_results['partition'].value_counts()) > 1
+    plot_period_separator = len(estimation_results['period'].value_counts()) > 1
 
     # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
     estimation_results['plottable'] = estimation_results.apply(
-        lambda r: r[f'estimated_{metric}'] if r['partition'] == 'analysis' else r[f'realized_{metric}'], axis=1
+        lambda r: r[f'estimated_{metric}'] if r['period'] == 'analysis' else r[f'realized_{metric}'], axis=1
     )
     estimation_results['alert'] = estimation_results.apply(
-        lambda r: r[f'alert_{metric}'] if r['partition'] == 'analysis' else False, axis=1
+        lambda r: r[f'alert_{metric}'] if r['period'] == 'analysis' else False, axis=1
     )
 
     # Plot estimated performance
@@ -117,7 +117,7 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: 
         threshold_legend_label='Performance threshold',
         title=f'CBPE - Estimated {metric}',
         y_axis_title=f'{metric}',
-        v_line_separating_analysis_period=plot_partition_separator,
+        v_line_separating_analysis_period=plot_period_separator,
         estimated_column_name='estimated',
         lower_confidence_column_name=f'lower_confidence_{metric}',
         upper_confidence_column_name=f'upper_confidence_{metric}',

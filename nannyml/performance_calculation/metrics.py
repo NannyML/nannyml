@@ -22,10 +22,10 @@ from sklearn.metrics import (
 from nannyml import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata.base import (
-    NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_REFERENCE_PARTITION_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     ModelMetadata,
+    NML_METADATA_REFERENCE_period_NAME,
 )
 from nannyml.metadata.binary_classification import (
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
@@ -143,7 +143,7 @@ def _floor_chunk_size(calculated_min_chunk_size: float, lower_limit_on_chunk_siz
 
 def _minimum_chunk_size_roc_auc(
     data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
     predicted_probability_column_name: str = NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
@@ -152,9 +152,9 @@ def _minimum_chunk_size_roc_auc(
 
     Estimation takes advantage of Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
     """
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
+    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
     y_pred_proba = data.loc[
-        data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, predicted_probability_column_name
+        data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, predicted_probability_column_name
     ]
 
     y_true, y_pred_proba = np.asarray(y_true), np.asarray(y_pred_proba)
@@ -193,7 +193,7 @@ def _minimum_chunk_size_roc_auc(
 
 def _minimum_chunk_size_f1(
     data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
@@ -202,8 +202,8 @@ def _minimum_chunk_size_f1(
 
     Estimation takes advantage of Standard Error of the Mean formula.
     """
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
 
@@ -229,7 +229,7 @@ def _minimum_chunk_size_f1(
 
 def _minimum_chunk_size_precision(
     data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
@@ -238,8 +238,8 @@ def _minimum_chunk_size_precision(
 
     Estimation takes advantage of Standard Error of the Mean formula.
     """
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
 
@@ -260,7 +260,7 @@ def _minimum_chunk_size_precision(
 
 def _minimum_chunk_size_recall(
     data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
@@ -269,8 +269,8 @@ def _minimum_chunk_size_recall(
 
     Estimation takes advantage of Standard Error of the Mean formula.
     """
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
 
@@ -291,7 +291,7 @@ def _minimum_chunk_size_recall(
 
 def _minimum_chunk_size_specificity(
     data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
@@ -300,8 +300,8 @@ def _minimum_chunk_size_specificity(
 
     Estimation takes advantage of Standard Error of the Mean formula.
     """
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     TN = np.where((y_true == y_pred) & (y_pred == 0), 1, np.nan)
@@ -320,7 +320,7 @@ def _minimum_chunk_size_specificity(
 
 def _minimum_chunk_size_accuracy(
     data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     required_std: float = 0.02,
@@ -329,8 +329,8 @@ def _minimum_chunk_size_accuracy(
 
     Estimation takes advantage of Standard Error of the Mean formula.
     """
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
 
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     y_true = np.asarray(y_true).astype(int)
@@ -406,7 +406,7 @@ class BinaryClassificationPrecision(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
@@ -432,7 +432,7 @@ class BinaryClassificationRecall(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
@@ -458,7 +458,7 @@ class BinaryClassificationSpecificity(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
@@ -490,7 +490,7 @@ class BinaryClassificationAccuracy(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
@@ -528,7 +528,7 @@ class MulticlassClassificationAUROC(Metric):
 
         self.metadata.check_has_fields(
             [
-                'partition_column_name',
+                'period_column_name',
                 'timestamp_column_name',
                 'target_column_name',
                 'predicted_probabilities_column_names',
@@ -572,7 +572,7 @@ class MulticlassClassificationF1(Metric):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
@@ -608,7 +608,7 @@ class MulticlassClassificationPrecision(Metric):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
@@ -644,7 +644,7 @@ class MulticlassClassificationRecall(Metric):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
@@ -680,7 +680,7 @@ class MulticlassClassificationSpecificity(Metric):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
@@ -720,7 +720,7 @@ class MulticlassClassificationAccuracy(Metric):
             raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
         self.metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
+            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
         )
 
         y_true = data[NML_METADATA_TARGET_COLUMN_NAME]

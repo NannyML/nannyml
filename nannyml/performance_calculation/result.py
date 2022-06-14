@@ -84,8 +84,8 @@ def _plot_performance_metric(
     """Renders a line plot of a selected metric of the performance calculation results.
 
     Chunks are set on a time-based X-axis by using the period containing their observations.
-    Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
-    a vertical separation if the drift results contain multiple partitions.
+    Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
+    a vertical separation if the drift results contain multiple periods.
 
 
     Parameters
@@ -112,7 +112,7 @@ def _plot_performance_metric(
     """
     performance_calculation_results = performance_calculation_results.copy(deep=True)
 
-    plot_partition_separator = len(performance_calculation_results['partition'].value_counts()) > 1
+    plot_period_separator = len(performance_calculation_results['period'].value_counts()) > 1
 
     if not isinstance(metric, Metric):
         metric = MetricFactory.create(metric, metadata)  # type: ignore
@@ -134,7 +134,7 @@ def _plot_performance_metric(
         partial_target_column_name='targets_missing_rate',
         title=f'Realized performance: {metric_display_name}',
         y_axis_title='Realized performance',
-        v_line_separating_analysis_period=plot_partition_separator,
+        v_line_separating_analysis_period=plot_period_separator,
     )
 
     return fig

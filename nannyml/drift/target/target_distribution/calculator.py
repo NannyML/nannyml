@@ -17,7 +17,7 @@ from nannyml.drift.target.target_distribution.result import TargetDistributionRe
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata.base import (
     NML_METADATA_COLUMNS,
-    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     ModelMetadata,
 )
@@ -98,7 +98,7 @@ class TargetDistributionCalculator:
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        self.metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'target_column_name'])
+        self.metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'target_column_name'])
 
         if self.metadata.target_column_name not in reference_data.columns:
             raise InvalidArgumentsException(
@@ -134,7 +134,7 @@ class TargetDistributionCalculator:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        self.metadata.check_has_fields(['partition_column_name', 'timestamp_column_name', 'target_column_name'])
+        self.metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'target_column_name'])
 
         if self.metadata.target_column_name not in data.columns:
             raise InvalidArgumentsException(
@@ -159,7 +159,7 @@ class TargetDistributionCalculator:
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                    'period': 'analysis' if chunk.is_transition else chunk.period,
                     'targets_missing_rate': (
                         chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()
                     ),
@@ -180,7 +180,7 @@ def _calculate_target_drift_for_chunk(reference_targets: pd.Series, data: pd.Dat
 
     _ALERT_THRESHOLD_P_VALUE = 0.05
 
-    is_analysis = 'analysis' in set(data[NML_METADATA_PARTITION_COLUMN_NAME].unique())
+    is_analysis = 'analysis' in set(data[NML_METADATA_PERIOD_COLUMN_NAME].unique())
 
     is_binary_targets = data[NML_METADATA_TARGET_COLUMN_NAME].nunique() > 2
     if is_binary_targets:

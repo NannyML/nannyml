@@ -14,7 +14,7 @@ from nannyml.drift.base import DriftCalculator
 from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
 from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata, RegressionMetadata
-from nannyml.metadata.base import NML_METADATA_COLUMNS, NML_METADATA_PARTITION_COLUMN_NAME, ModelMetadata
+from nannyml.metadata.base import NML_METADATA_COLUMNS, NML_METADATA_PERIOD_COLUMN_NAME, ModelMetadata
 from nannyml.preprocessing import preprocess
 
 ALERT_THRESHOLD_P_VALUE = 0.05
@@ -86,9 +86,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
 
         """
         # check metadata for required properties
-        self.model_metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'prediction_column_name']
-        )
+        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'prediction_column_name'])
 
         reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
 
@@ -126,9 +124,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         >>> drift = drift_calc.calculate(data)
         """
         # Check metadata for required properties
-        self.model_metadata.check_has_fields(
-            ['partition_column_name', 'timestamp_column_name', 'prediction_column_name']
-        )
+        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'prediction_column_name'])
         prediction_column_names, predicted_probabilities_column_names = _get_predictions_and_scores(self.model_metadata)
         data = preprocess(data=data, metadata=self.model_metadata)
 
@@ -145,7 +141,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
-                'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                'period': 'analysis' if chunk.is_transition else chunk.period,
             }
 
             present_continuous_column_names = list(
@@ -156,7 +152,7 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
                 chunk_drift[f'{column}_dstat'] = statistic
                 chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
                 chunk_drift[f'{column}_alert'] = (p_value < ALERT_THRESHOLD_P_VALUE) and (
-                    chunk.data[NML_METADATA_PARTITION_COLUMN_NAME] == 'analysis'
+                    chunk.data[NML_METADATA_PERIOD_COLUMN_NAME] == 'analysis'
                 ).all()
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 

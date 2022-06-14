@@ -14,7 +14,7 @@ import pandas as pd
 from nannyml import Chunker, InvalidArgumentsException, ModelMetadata
 from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import CalculatorNotFittedException
-from nannyml.metadata.base import NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
+from nannyml.metadata.base import NML_METADATA_PERIOD_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
 from nannyml.performance_calculation.metrics import MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
 from nannyml.preprocessing import preprocess
@@ -159,7 +159,7 @@ class PerformanceCalculator:
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                    'period': 'analysis' if chunk.is_transition else chunk.period,
                     'targets_missing_rate': chunk.data[TARGET_COMPLETENESS_RATE_COLUMN_NAME].sum()
                     / chunk.data[TARGET_COMPLETENESS_RATE_COLUMN_NAME].count(),
                     **self._calculate_metrics_for_chunk(chunk),
@@ -178,5 +178,5 @@ class PerformanceCalculator:
             metrics_results[f'{metric.column_name}_thresholds'] = (metric.lower_threshold, metric.upper_threshold)
             metrics_results[f'{metric.column_name}_alert'] = (
                 metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
-            ) and (chunk.data[NML_METADATA_PARTITION_COLUMN_NAME] == 'analysis').all()
+            ) and (chunk.data[NML_METADATA_PERIOD_COLUMN_NAME] == 'analysis').all()
         return metrics_results

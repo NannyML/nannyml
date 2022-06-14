@@ -1,4 +1,4 @@
-MedInc,HouseAge,AveRooms,AveBedrms,Population,AveOccup,Latitude,Longitude,timestamp,partition,y_pred_proba,y_pred,identifier
+MedInc,HouseAge,AveRooms,AveBedrms,Population,AveOccup,Latitude,Longitude,timestamp,period,y_pred_proba,y_pred,identifier
 3.4583,24.0,5.207100591715976,1.106508875739645,507.0,3.0,33.81,-116.25,2021-06-01 00:00:00,analysis,0.18,0,5832
 2.025,33.0,3.432098765432099,1.123456790123457,375.0,4.62962962962963,33.75,-116.25,2021-06-01 01:00:00,analysis,0.09,0,5833
 3.775,25.0,5.6,1.1112299465240643,2725.0,2.914438502673797,33.72,-116.24,2021-06-01 02:00:00,analysis,0.27,0,5834

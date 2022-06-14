@@ -54,7 +54,7 @@ def extract_metadata(data: pd.DataFrame, model_type: str, model_name: str = None
     >>> metadata.to_dict()
     {'identifier_column_name': 'identifier',
      'timestamp_column_name': 'timestamp',
-     'partition_column_name': 'partition',
+     'period_column_name': 'period',
      'target_column_name': None,
      'prediction_column_name': None,
      'predicted_probability_column_name': 'y_pred_proba',
