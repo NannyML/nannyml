@@ -41,8 +41,8 @@ class UnivariateDriftResult(DriftResult):
         and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
         the metric value for the selected feature per chunk.
         Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple partitions.
+        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
+        a vertical separation if the drift results contain multiple periods.
 
         The different plot kinds that are available:
 
@@ -157,7 +157,7 @@ def _plot_prediction_drift(
         title,
     ) = _get_drift_column_names_for_feature(prediction_column_name, FeatureType.CONTINUOUS, metric)
 
-    plot_partition_separator = len(data.value_counts()) > 1
+    plot_period_separator = len(data.value_counts()) > 1
 
     fig = _step_plot(
         table=data,
@@ -168,7 +168,7 @@ def _plot_prediction_drift(
         hover_labels=['Chunk', metric_label, 'Target data'],
         title=title,
         y_axis_title=metric_label,
-        v_line_separating_analysis_period=plot_partition_separator,
+        v_line_separating_analysis_period=plot_period_separator,
         statistically_significant_column_name=drift_column_name,
     )
     return fig

@@ -15,7 +15,7 @@ from pandas import Timestamp
 from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata.base import (
-    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
@@ -28,7 +28,7 @@ rng = np.random.default_rng()
 def sample_chunk() -> Chunk:  # noqa: D103
     df = pd.DataFrame(rng.uniform(0, 100, size=(100, 4)), columns=list('ABCD'))
     chunk = Chunk(key='key', data=df)
-    chunk.partition = 'reference'
+    chunk.period = 'reference'
     chunk.start_index = 0
     chunk.end_index = 100
     chunk.start_datetime = datetime.datetime.min
@@ -40,9 +40,9 @@ def sample_chunk() -> Chunk:  # noqa: D103
 def sample_chunk_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['ordered_at'])
     data['week'] = data.ordered_at.dt.isocalendar().week - 1
-    data['partition'] = 'reference'
-    data.loc[data.week >= 11, ['partition']] = 'analysis'
-    data[NML_METADATA_PARTITION_COLUMN_NAME] = data['partition']  # simulate preprocessing
+    data['period'] = 'reference'
+    data.loc[data.week >= 11, ['period']] = 'analysis'
+    data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(13)
     data['f1'] = np.random.randn(data.shape[0])
     data['f2'] = np.random.rand(data.shape[0])
@@ -125,7 +125,7 @@ def sample_chunk_data() -> pd.DataFrame:  # noqa: D103
         'key=key',
         'data=pd.DataFrame[[100x4]]',
         'is_transition=False',
-        'partition=reference',
+        'period=reference',
         f'start_datetime={datetime.datetime.min}',
         f'end_datetime={datetime.datetime.max}',
         'start_index=0',
@@ -167,7 +167,7 @@ def test_chunker_should_log_warning_when_some_chunks_are_underpopulated(sample_c
         _ = c.split(sample_chunk_data, minimum_chunk_size=100000)
 
 
-def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_from_multiple_partitions(  # noqa: D103
+def test_chunker_should_set_chunk_transition_flag_when_it_contains_observations_from_multiple_periods(  # noqa: D103
     sample_chunk_data,
 ):
     class SimpleChunker(Chunker):
@@ -221,7 +221,7 @@ def test_chunker_should_only_include_listed_columns_when_given_columns_param(sam
         def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
             return [Chunk(key='row0', data=data)]
 
-    columns = ['f1', 'f3', 'partition']
+    columns = ['f1', 'f3', 'period']
     c = SimpleChunker()
     sut = c.split(sample_chunk_data, columns=columns)[0].data.columns
     assert sorted(sut) == sorted(columns)
@@ -239,7 +239,7 @@ def test_chunker_should_raise_chunker_exception_upon_exception_during_inherited_
         _ = c.split(sample_chunk_data)
 
 
-def test_chunker_get_partition_should_raise_missing_metadata_exception_when_partition_column_not_present(  # noqa: D103
+def test_chunker_get_period_should_raise_missing_metadata_exception_when_period_column_not_present(  # noqa: D103
     sample_chunk_data,
 ):
     class SimpleChunker(Chunker):
@@ -247,9 +247,7 @@ def test_chunker_get_partition_should_raise_missing_metadata_exception_when_part
             return [Chunk(key='row0', data=data)]
 
     c = SimpleChunker()
-    with pytest.raises(
-        MissingMetadataException, match=f"missing partition column '{NML_METADATA_PARTITION_COLUMN_NAME}'"
-    ):
+    with pytest.raises(MissingMetadataException, match=f"missing period column '{NML_METADATA_PERIOD_COLUMN_NAME}'"):
         _ = c.split(pd.DataFrame(columns=['a', 'b', 'c', 'nml_meta_timestamp']))
 
 

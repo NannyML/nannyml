@@ -20,8 +20,8 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
         """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
         Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different partitions (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple partitions.
+        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
+        a vertical separation if the drift results contain multiple periods.
 
         The different plot kinds that are available:
 
@@ -55,7 +55,7 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
 
 
 def _plot_drift(data: pd.DataFrame, *args, **kwargs) -> go.Figure:
-    plot_partition_separator = len(data.value_counts()) > 1
+    plot_period_separator = len(data.value_counts()) > 1
     data['thresholds'] = list(zip(data.lower_threshold, data.upper_threshold))
     fig = _step_plot(
         table=data,
@@ -66,7 +66,7 @@ def _plot_drift(data: pd.DataFrame, *args, **kwargs) -> go.Figure:
         hover_labels=['Chunk', 'Reconstruction error', 'Target data'],
         title='Data Reconstruction Drift',
         y_axis_title='Reconstruction Error',
-        v_line_separating_analysis_period=plot_partition_separator,
+        v_line_separating_analysis_period=plot_period_separator,
     )
 
     return fig

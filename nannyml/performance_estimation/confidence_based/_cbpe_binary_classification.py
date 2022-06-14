@@ -21,10 +21,10 @@ from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata.base import (
-    NML_METADATA_PARTITION_COLUMN_NAME,
-    NML_METADATA_REFERENCE_PARTITION_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     ModelMetadata,
+    NML_METADATA_REFERENCE_period_NAME,
 )
 from nannyml.metadata.binary_classification import (
     NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
@@ -132,7 +132,7 @@ class _BinaryClassificationCBPE(CBPE):
         self.model_metadata.check_has_fields(
             [
                 'timestamp_column_name',
-                'partition_column_name',
+                'period_column_name',
                 'target_column_name',
                 'prediction_column_name',
                 'predicted_probability_column_name',
@@ -196,7 +196,7 @@ class _BinaryClassificationCBPE(CBPE):
         """
         required_fields = [
             'timestamp_column_name',
-            'partition_column_name',
+            'period_column_name',
             'prediction_column_name',
             'predicted_probability_column_name',
         ]
@@ -224,7 +224,7 @@ class _BinaryClassificationCBPE(CBPE):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'partition': 'analysis' if chunk.is_transition else chunk.partition,
+                    'period': 'analysis' if chunk.is_transition else chunk.period,
                     **self._estimate(chunk),
                 }
                 for chunk in chunks
@@ -251,7 +251,7 @@ class _BinaryClassificationCBPE(CBPE):
             estimates[f'alert_{metric}'] = (
                 estimated_metric > self._alert_thresholds[metric][1]
                 or estimated_metric < self._alert_thresholds[metric][0]
-            ) and chunk.partition == 'analysis'
+            ) and chunk.period == 'analysis'
         return estimates
 
 
@@ -431,7 +431,7 @@ def _calculate_alert_thresholds(
 
 def _minimum_chunk_size(
     data: pd.DataFrame,
-    partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME,
+    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
     prediction_column_name: str = NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
     lower_threshold: int = 300,
@@ -463,8 +463,8 @@ def _minimum_chunk_size(
     class_balance = np.mean(data[target_column_name])
 
     # Clean up NaN values
-    y_true = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, target_column_name]
-    y_pred = data.loc[data[partition_column_name] == NML_METADATA_REFERENCE_PARTITION_NAME, prediction_column_name]
+    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
 
     y_true = y_true[~y_pred.isna()]
     y_pred.dropna(inplace=True)

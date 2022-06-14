@@ -67,7 +67,7 @@ def test_calculator_calculate_should_include_chunk_information_columns(data, met
     assert 'end_index' in sut.data.columns
     assert 'start_date' in sut.data.columns
     assert 'end_date' in sut.data.columns
-    assert 'partition' in sut.data.columns
+    assert 'period' in sut.data.columns
 
 
 def test_calculator_calculate_should_include_target_completeness_rate(data, metadata):  # noqa: D103

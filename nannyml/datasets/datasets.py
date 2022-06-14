@@ -34,11 +34,11 @@ def load_synthetic_binary_classification_dataset():
     Returns
     -------
     reference : pd.DataFrame
-        A DataFrame containing reference partition of synthetic binary classification dataset
+        A DataFrame containing reference period of synthetic binary classification dataset
     analysis : pd.DataFrame
-        A DataFrame containing analysis partition of synthetic binary classification dataset
+        A DataFrame containing analysis period of synthetic binary classification dataset
     analysis_tgt : pd.DataFrame
-        A DataFrame containing target values for the analysis partition of synthetic binary
+        A DataFrame containing target values for the analysis period of synthetic binary
         classification dataset
 
     Examples
@@ -60,11 +60,11 @@ def load_synthetic_multiclass_classification_dataset():
     Returns
     -------
     reference : pd.DataFrame
-        A DataFrame containing reference partition of synthetic multiclass classification dataset
+        A DataFrame containing reference period of synthetic multiclass classification dataset
     analysis : pd.DataFrame
-        A DataFrame containing analysis partition of synthetic multiclass classification dataset
+        A DataFrame containing analysis period of synthetic multiclass classification dataset
     analysis_tgt : pd.DataFrame
-        A DataFrame containing target values for the analysis partition of synthetic
+        A DataFrame containing target values for the analysis period of synthetic
         multiclass classification dataset
 
     Examples
@@ -90,11 +90,11 @@ def load_modified_california_housing_dataset():
     Returns
     -------
     reference : pd.DataFrame
-        A DataFrame containing reference partition of modified california housing dataset
+        A DataFrame containing reference period of modified california housing dataset
     analysis : pd.DataFrame
-        A DataFrame containing analysis partition of modified california housing dataset
+        A DataFrame containing analysis period of modified california housing dataset
     analysis_tgt : pd.DataFrame
-        A DataFrame containing target values for the analysis partition of modified california housing dataset
+        A DataFrame containing target values for the analysis period of modified california housing dataset
 
     Examples
     --------

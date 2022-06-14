@@ -255,7 +255,7 @@ def _stacked_bar_plot(
     feature_column_name,
     start_date_column_name='start_date',
     end_date_column_name='end_date',
-    chunk_type_column_name='partition',
+    chunk_type_column_name='period',
     chunk_column_name='chunk',
     drift_column_name='drift',
     chunk_types=None,

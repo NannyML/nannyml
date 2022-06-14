@@ -35,12 +35,12 @@ def _data_prep_step_plot(
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
 
-    data['hover_partition'] = data['partition'].apply(
+    data['hover_period'] = data['period'].apply(
         lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
         if x == 'reference'
         else f'<b style="color:{Colors.INDIGO_PERSIAN};line-height:60px">Analysis</b>'
     )
-    # data['hover_partition'] = data['partition'].str.capitalize()
+    # data['hover_period'] = data['period'].str.capitalize()
     data['hover_alert'] = data[drift_column_name].apply(lambda x: "⚠ <b>Drift detected</b>" if x else "")
 
     if partial_target_column_name and partial_target_column_name in data:
@@ -76,7 +76,7 @@ def _step_plot(
     chunk_column_name='chunk',
     start_date_column_name='start_date',
     end_date_column_name='end_date',
-    chunk_type_column_name='partition',
+    chunk_type_column_name='period',
     chunk_types=None,
     confidence_legend_label='Confidence band',
     threshold_legend_label='Data drift threshold',
@@ -148,7 +148,7 @@ def _step_plot(
         'start_date_label',
         'end_date_label',
         'metric_label',
-        'hover_partition',
+        'hover_period',
         'hover_alert',
         'incomplete_target_percentage',
     ]

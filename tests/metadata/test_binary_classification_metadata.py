@@ -12,7 +12,7 @@ import pytest
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.metadata import BinaryClassificationMetadata, ModelMetadata, ModelType, extract_metadata
 from nannyml.metadata.base import (
-    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 )
@@ -50,7 +50,7 @@ def test_model_metadata_creation_with_defaults_has_correct_properties():  # noqa
     assert sut.prediction_column_name is None
     assert sut.predicted_probability_column_name is None
     assert sut.target_column_name is None
-    assert sut.partition_column_name is None
+    assert sut.period_column_name is None
     assert sut.timestamp_column_name is None
 
 
@@ -119,7 +119,7 @@ def test_setting_predicted_probability_column_name_after_extracting_metadata_upd
 
 
 def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
-    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'period', 'ts', 'feat1', 'feat2'])
     md = extract_metadata(data, model_name='model', model_type='classification_binary')
     sut = md.enrich(data).columns
 
@@ -127,11 +127,11 @@ def test_enrich_copies_each_metadata_column_to_new_fixed_column():  # noqa: D103
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME in sut
     assert NML_METADATA_TARGET_COLUMN_NAME in sut
-    assert NML_METADATA_PARTITION_COLUMN_NAME in sut
+    assert NML_METADATA_PERIOD_COLUMN_NAME in sut
 
 
 def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
-    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    data = pd.DataFrame(columns=['identity', 'prediction', 'actual', 'period', 'ts', 'feat1', 'feat2'])
     old_column_count = len(data.columns)
     md = extract_metadata(data, model_name='model', model_type='classification_binary')
     sut = md.enrich(data).columns
@@ -143,10 +143,10 @@ def test_enrich_works_on_copy_of_data_by_default():  # noqa: D103
     assert NML_METADATA_PREDICTION_COLUMN_NAME in sut
     assert NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME in sut
     assert NML_METADATA_TARGET_COLUMN_NAME in sut
-    assert NML_METADATA_PARTITION_COLUMN_NAME in sut
+    assert NML_METADATA_PERIOD_COLUMN_NAME in sut
     assert 'prediction' in sut
     assert 'actual' in sut
-    assert 'partition' in sut
+    assert 'period' in sut
     assert 'feat1' in sut
     assert 'feat2' in sut
 
@@ -185,5 +185,5 @@ def test_extract_metadata_should_set_binary_classification_properties(data):  # 
 
     # check base properties
     assert sut.target_column_name is None
-    assert sut.partition_column_name == 'partition'
+    assert sut.period_column_name == 'period'
     assert sut.timestamp_column_name == 'timestamp'

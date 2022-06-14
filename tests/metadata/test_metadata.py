@@ -18,7 +18,7 @@ from nannyml.metadata.base import (
     ModelMetadata,
     ModelType,
     _guess_features,
-    _guess_partitions,
+    _guess_periods,
     _guess_targets,
     _guess_timestamps,
     extract_feature_type,
@@ -40,9 +40,9 @@ def sample_model_metadata(sample_feature) -> ModelMetadata:  # noqa: D103
 def sample_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
-    data['partition'] = 'reference'
-    data.loc[data.week >= 11, ['partition']] = 'analysis'
-    # data[NML_METADATA_PARTITION_COLUMN_NAME] = data['partition']  # simulate preprocessing
+    data['period'] = 'reference'
+    data.loc[data.week >= 11, ['period']] = 'analysis'
+    # data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(167)
     data['f1'] = np.random.randn(data.shape[0])
     data['f2'] = np.random.rand(data.shape[0])
@@ -146,7 +146,7 @@ def test_binary_classification_metadata_creation_with_custom_values_has_correct_
         prediction_column_name='pred',
         predicted_probability_column_name='pred_proba',
         target_column_name='gt',
-        partition_column_name='part',
+        period_column_name='part',
         timestamp_column_name='ts',
     )
     assert sut.name == 'model'
@@ -159,7 +159,7 @@ def test_binary_classification_metadata_creation_with_custom_values_has_correct_
     assert sut.prediction_column_name == 'pred'
     assert sut.predicted_probability_column_name == 'pred_proba'
     assert sut.target_column_name == 'gt'
-    assert sut.partition_column_name == 'part'
+    assert sut.period_column_name == 'part'
     assert sut.timestamp_column_name == 'ts'
 
 
@@ -167,7 +167,7 @@ def test_to_dict_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_dict()
     assert sut['prediction_column_name'] is None
     assert sut['predicted_probability_column_name'] is None
-    assert sut['partition_column_name'] is None
+    assert sut['period_column_name'] is None
     assert sut['timestamp_column_name'] is None
     assert sut['target_column_name'] is None
 
@@ -176,7 +176,7 @@ def test_to_pd_contains_all_properties(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.to_df()
     assert sut.loc[sut['label'] == 'prediction_column_name', 'column_name'].iloc[0] is None
     assert sut.loc[sut['label'] == 'predicted_probability_column_name', 'column_name'].iloc[0] is None
-    assert sut.loc[sut['label'] == 'partition_column_name', 'column_name'].iloc[0] is None
+    assert sut.loc[sut['label'] == 'period_column_name', 'column_name'].iloc[0] is None
     assert sut.loc[sut['label'] == 'timestamp_column_name', 'column_name'].iloc[0] is None
     assert sut.loc[sut['label'] == 'target_column_name', 'column_name'].iloc[0] is None
 
@@ -254,7 +254,7 @@ def test_extract_metadata_for_no_cols_dataframe_should_return_none():  # noqa: D
 
 
 def test_extract_metadata_without_any_feature_columns_should_return_metadata_without_features():  # noqa: D103
-    data = pd.DataFrame(columns=['actual', 'partition', 'ts'])
+    data = pd.DataFrame(columns=['actual', 'period', 'ts'])
     sut = extract_metadata(data, model_type='classification_binary')
     assert len(sut.features) == 0
 
@@ -265,17 +265,17 @@ def test_extract_metadata_should_not_consider_excluded_columns(sample_model_meta
 
 
 def test_extract_metadata_for_empty_dataframe_should_return_correct_column_names(sample_model_metadata):  # noqa: D103
-    data = pd.DataFrame(columns=['y_pred', 'y_pred_proba', 'actual', 'partition', 'ts', 'feat1', 'feat2'])
+    data = pd.DataFrame(columns=['y_pred', 'y_pred_proba', 'actual', 'period', 'ts', 'feat1', 'feat2'])
     sut = extract_metadata(data, model_type='classification_binary')
     assert sut is not None
     assert sut.target_column_name == 'actual'
-    assert sut.partition_column_name == 'partition'
+    assert sut.period_column_name == 'period'
     assert sut.timestamp_column_name == 'ts'
 
 
 # TODO verify behaviour
 def test_extract_metadata_for_empty_dataframe_should_return_features_with_feature_type_categorical():  # noqa: D103
-    data = pd.DataFrame(columns=['actual', 'partition', 'ts', 'feat1', 'feat2'])
+    data = pd.DataFrame(columns=['actual', 'period', 'ts', 'feat1', 'feat2'])
     sut = extract_metadata(data, model_type='classification_binary')
     assert len(sut.features) == 2
     # Categorical because default pd.dtype is 'object'
@@ -288,7 +288,7 @@ def test_extract_metadata_without_matching_columns_should_set_them_to_none():  #
     sut = extract_metadata(data, model_type='classification_binary')
     assert sut.prediction_column_name is None
     assert sut.target_column_name is None
-    assert sut.partition_column_name is None
+    assert sut.period_column_name is None
     assert sut.timestamp_column_name is None
 
 
@@ -308,7 +308,7 @@ def test_extract_metadata_with_multiple_matching_columns_should_return_first_mat
 
 
 def test_extract_metadata_does_not_fail_when_adding_metadata_parameter_fails():  # noqa: D103
-    cols = ['actual', 'partition', 'timestamp_non_standard', 'feat1', 'feat2']
+    cols = ['actual', 'period', 'timestamp_non_standard', 'feat1', 'feat2']
     df = pd.DataFrame(columns=cols)
     try:
         _ = extract_metadata(df, model_type='classification_binary')
@@ -316,7 +316,7 @@ def test_extract_metadata_does_not_fail_when_adding_metadata_parameter_fails(): 
         pytest.fail("should not have failed because of inner exception")
 
 
-@pytest.mark.parametrize('metadata_column', ['timestamp', 'actual', 'partition'])
+@pytest.mark.parametrize('metadata_column', ['timestamp', 'actual', 'period'])
 def test_extract_metadata_raises_missing_metadata_exception_when_missing_metadata_values(metadata_column):  # noqa: D103
     df = pd.DataFrame({metadata_column: [np.NaN]})
     with pytest.raises(MissingMetadataException):
@@ -339,17 +339,13 @@ def test_guess_ground_truths_yields_correct_results(col, expected):  # noqa: D10
     assert col == sut[0] if expected else len(sut) == 0
 
 
-@pytest.mark.parametrize(
-    'col,expected', [('part', False), ('partition', True), ('data_partition', True), ('nope', False)]
-)
-def test_guess_partitions_yields_correct_results(col, expected):  # noqa: D103
-    sut = _guess_partitions(data=pd.DataFrame(columns=[col]))
+@pytest.mark.parametrize('col,expected', [('part', False), ('period', True), ('data_period', True), ('nope', False)])
+def test_guess_periods_yields_correct_results(col, expected):  # noqa: D103
+    sut = _guess_periods(data=pd.DataFrame(columns=[col]))
     assert col == sut[0] if expected else len(sut) == 0
 
 
-@pytest.mark.parametrize(
-    'col,expected', [('part', True), ('A', True), ('partition', False), ('id', True), ('nope', True)]
-)
+@pytest.mark.parametrize('col,expected', [('part', True), ('A', True), ('period', False), ('id', True), ('nope', True)])
 def test_guess_features_yields_correct_results(col, expected):  # noqa: D103
     sut = _guess_features(data=pd.DataFrame(columns=[col]))
     assert col == sut[0] if expected else len(sut) == 0
@@ -415,7 +411,7 @@ def test_continuous_features_returns_only_continuous_features(sample_model_metad
 
 def test_metadata_columns_returns_common_metadata_columns(sample_model_metadata):  # noqa: D103
     sut = sample_model_metadata.metadata_columns
-    assert 'nml_meta_partition' in sut
+    assert 'nml_meta_period' in sut
     assert 'nml_meta_target' in sut
     assert 'nml_meta_timestamp' in sut
 

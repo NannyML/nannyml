@@ -14,15 +14,15 @@ import pandas as pd
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
 from nannyml.metadata.feature import Feature, FeatureType
 
-NML_METADATA_PARTITION_COLUMN_NAME = 'nml_meta_partition'
+NML_METADATA_PERIOD_COLUMN_NAME = 'nml_meta_period'
 NML_METADATA_TARGET_COLUMN_NAME = 'nml_meta_target'
 NML_METADATA_TIMESTAMP_COLUMN_NAME = 'nml_meta_timestamp'
 
-NML_METADATA_REFERENCE_PARTITION_NAME = 'reference'
-NML_METADATA_ANALYSIS_PARTITION_NAME = 'analysis'
+NML_METADATA_REFERENCE_period_NAME = 'reference'
+NML_METADATA_ANALYSIS_period_NAME = 'analysis'
 
 NML_METADATA_COLUMNS = [
-    NML_METADATA_PARTITION_COLUMN_NAME,
+    NML_METADATA_PERIOD_COLUMN_NAME,
     NML_METADATA_TARGET_COLUMN_NAME,
     NML_METADATA_TIMESTAMP_COLUMN_NAME,
 ]
@@ -75,8 +75,8 @@ class ModelMetadata(abc.ABC):
     observation, i.e. it is unique over all observations.
     - `prediction_column_name` : name of the column that contains the models' predictions
     - `target_column_name` : name of the column that contains the ground truth / target / actual.
-    - `partition_column_name` : name of the column that contains the partition the observation belongs to.
-    Allowed partition values are 'reference' and 'analysis'.
+    - `period_column_name` : name of the column that contains the period the observation belongs to.
+    Allowed period values are 'reference' and 'analysis'.
     - `timestamp_column_name` : name of the column that contains the timestamp indicating when the observation occurred.
 
     """
@@ -89,7 +89,7 @@ class ModelMetadata(abc.ABC):
         continuous_features: List[str] = None,
         categorical_features: List[str] = None,
         target_column_name: str = None,
-        partition_column_name: str = None,
+        period_column_name: str = None,
         timestamp_column_name: str = None,
     ):
         """Creates a new ModelMetadata instance.
@@ -105,9 +105,9 @@ class ModelMetadata(abc.ABC):
             The list of Features for the model. Optional, defaults to `None`.
         target_column_name : string
             The name of the column that contains the ground truth / target / actual. Optional, defaults to `target`
-        partition_column_name : string
-            The name of the column that contains the partition the observation belongs to.
-            Allowed partition values are 'reference' and 'analysis'. Optional, defaults to `partition`
+        period_column_name : string
+            The name of the column that contains the period the observation belongs to.
+            Allowed period values are 'reference' and 'analysis'. Optional, defaults to `period`
         timestamp_column_name : string
             The name of the column that contains the timestamp indicating when the observation occurred.
             Optional, defaults to `date`.
@@ -126,7 +126,7 @@ class ModelMetadata(abc.ABC):
         >>> Feature(column_name='salary_range', label='salary_range', feature_type=FeatureType.CATEGORICAL)]
         >>> metadata.to_dict()
         {'timestamp_column_name': 'date',
-         'partition_column_name': 'partition',
+         'period_column_name': 'period',
          'target_column_name': 'work_home_actual',
          'prediction_column_name': None,
          'predicted_probability_column_name': None,
@@ -144,7 +144,7 @@ class ModelMetadata(abc.ABC):
         self.name = model_name
 
         self._target_column_name = target_column_name
-        self._partition_column_name = partition_column_name
+        self._period_column_name = period_column_name
         self._timestamp_column_name = timestamp_column_name
 
         # self.features = [] if features is None else features
@@ -168,12 +168,12 @@ class ModelMetadata(abc.ABC):
         self._remove_from_features(column_name)
 
     @property
-    def partition_column_name(self):  # noqa: D102
-        return self._partition_column_name
+    def period_column_name(self):  # noqa: D102
+        return self._period_column_name
 
-    @partition_column_name.setter
-    def partition_column_name(self, column_name: str):  # noqa: D102
-        self._partition_column_name = column_name
+    @period_column_name.setter
+    def period_column_name(self, column_name: str):  # noqa: D102
+        self._period_column_name = column_name
         self._remove_from_features(column_name)
 
     @property
@@ -196,7 +196,7 @@ class ModelMetadata(abc.ABC):
         """Converts a ModelMetadata instance into a Dictionary."""
         return {
             'timestamp_column_name': self.timestamp_column_name,
-            'partition_column_name': self.partition_column_name,
+            'period_column_name': self.period_column_name,
             'target_column_name': self.target_column_name,
             'features': [feature.to_dict() for feature in self.features],
         }
@@ -223,10 +223,10 @@ class ModelMetadata(abc.ABC):
                     'description': 'timestamp',
                 },
                 {
-                    'label': 'partition_column_name',
-                    'column_name': self.partition_column_name,
+                    'label': 'period_column_name',
+                    'column_name': self.period_column_name,
                     'type': FeatureType.CATEGORICAL.value,
-                    'description': 'partition',
+                    'description': 'period',
                 },
                 {
                     'label': 'target_column_name',
@@ -257,7 +257,7 @@ class ModelMetadata(abc.ABC):
         --
         Model problem                       binary_classification
         Timestamp column                    date
-        Partition column                    partition
+        period column                       period
         Prediction column                   ~ UNKNOWN ~
         Predicted probability column        ~ UNKNOWN ~
         Target column                       work_home_actual
@@ -278,7 +278,7 @@ class ModelMetadata(abc.ABC):
             f"{'Model type':35} {self.model_type or UNKNOWN:35}",
             '',
             f"{'Timestamp column':35} {self.timestamp_column_name or UNKNOWN:35}",
-            f"{'Partition column':35} {self.partition_column_name or UNKNOWN:35}",
+            f"{'period column':35} {self.period_column_name or UNKNOWN:35}",
             # f"{'Prediction column':35} {self.prediction_column_name or UNKNOWN:35}",
             # f"{'Predicted probability column':35} {self.predicted_probability_column_name or UNKNOWN:35}",
             f"{'Target column':35} {self.target_column_name or UNKNOWN:35}",
@@ -368,7 +368,7 @@ class ModelMetadata(abc.ABC):
         data = data.copy()
 
         data[NML_METADATA_TIMESTAMP_COLUMN_NAME] = data[self.timestamp_column_name]
-        data[NML_METADATA_PARTITION_COLUMN_NAME] = data[self.partition_column_name]
+        data[NML_METADATA_PERIOD_COLUMN_NAME] = data[self.period_column_name]
         if self.target_column_name in data.columns:
             data[NML_METADATA_TARGET_COLUMN_NAME] = data[self.target_column_name]
         else:
@@ -481,9 +481,9 @@ class ModelMetadata(abc.ABC):
         _check_for_nan(data, targets)
         self.target_column_name = None if len(targets) == 0 else targets[0]  # type: ignore
 
-        partitions = _guess_partitions(data)
-        _check_for_nan(data, partitions)
-        self.partition_column_name = None if len(partitions) == 0 else partitions[0]  # type: ignore
+        periods = _guess_periods(data)
+        _check_for_nan(data, periods)
+        self.period_column_name = None if len(periods) == 0 else periods[0]  # type: ignore
 
         timestamps = _guess_timestamps(data)
         _check_for_nan(data, timestamps)
@@ -513,16 +513,16 @@ def _guess_targets(data: pd.DataFrame) -> List[str]:
     return [col for col in data.columns if _guess_if_ground_truth(data[col])]
 
 
-def _guess_partitions(data: pd.DataFrame) -> List[str]:
-    def _guess_if_partition(col: pd.Series) -> bool:
-        return 'partition' in col.name
+def _guess_periods(data: pd.DataFrame) -> List[str]:
+    def _guess_if_period(col: pd.Series) -> bool:
+        return 'period' in col.name
 
-    return [col for col in data.columns if _guess_if_partition(data[col])]
+    return [col for col in data.columns if _guess_if_period(data[col])]
 
 
 def _guess_features(data: pd.DataFrame) -> List[str]:
     def _guess_if_feature(col: pd.Series) -> bool:
-        return (col.name not in _guess_partitions(data) + _guess_timestamps(data) + _guess_targets(data)) and (
+        return (col.name not in _guess_periods(data) + _guess_timestamps(data) + _guess_targets(data)) and (
             col.name not in NML_METADATA_COLUMNS
         )
 

@@ -17,7 +17,7 @@ from dateutil.parser import ParserError  # type: ignore
 from pandas import Period
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata.base import NML_METADATA_PARTITION_COLUMN_NAME, NML_METADATA_TIMESTAMP_COLUMN_NAME
+from nannyml.metadata.base import NML_METADATA_PERIOD_COLUMN_NAME, NML_METADATA_TIMESTAMP_COLUMN_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class Chunk:
         data: pd.DataFrame,
         start_datetime: datetime = datetime.max,
         end_datetime: datetime = datetime.max,
-        partition: str = None,
+        period: str = None,
     ):
         """Creates a new chunk.
 
@@ -45,12 +45,12 @@ class Chunk:
             The starting point in time for this chunk.
         end_datetime: datetime
             The end point in time for this chunk.
-        partition : string, optional
-            The 'partition' this chunk belongs to, for example 'reference' or 'analysis'.
+        period : string, optional
+            The 'period' this chunk belongs to, for example 'reference' or 'analysis'.
         """
         self.key = key
         self.data = data
-        self.partition = partition
+        self.period = period
 
         self.is_transition: bool = False
 
@@ -69,7 +69,7 @@ class Chunk:
         """
         return (
             f'Chunk[key={self.key}, data=pd.DataFrame[[{self.data.shape[0]}x{self.data.shape[1]}]], '
-            f'partition={self.partition}, is_transition={self.is_transition},'
+            f'period={self.period}, is_transition={self.is_transition},'
             f'start_datetime={self.start_datetime}, end_datetime={self.end_datetime},'
             f'start_index={self.start_index}, end_index={self.end_index}]'
         )
@@ -86,21 +86,21 @@ class Chunk:
         return self.data.shape[0]
 
 
-def _get_partition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME):
-    if partition_column_name not in c.data.columns:
+def _get_period(c: Chunk, period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME):
+    if period_column_name not in c.data.columns:
         raise MissingMetadataException(
-            f"missing partition column '{NML_METADATA_PARTITION_COLUMN_NAME}'." "Please provide valid metadata."
+            f"missing period column '{NML_METADATA_PERIOD_COLUMN_NAME}'." "Please provide valid metadata."
         )
 
-    if _is_transition(c, partition_column_name):
+    if _is_transition(c, period_column_name):
         return None
 
-    return c.data[partition_column_name].iloc[0]
+    return c.data[period_column_name].iloc[0]
 
 
-def _is_transition(c: Chunk, partition_column_name: str = NML_METADATA_PARTITION_COLUMN_NAME) -> bool:
+def _is_transition(c: Chunk, period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME) -> bool:
     if c.data.shape[0] > 1:
-        return c.data[partition_column_name].nunique() > 1
+        return c.data[period_column_name].nunique() > 1
     else:
         return False
 
@@ -167,7 +167,7 @@ class Chunker(abc.ABC):
             if _is_transition(c):
                 c.is_transition = True
 
-            c.partition = _get_partition(c)
+            c.period = _get_period(c)
 
             c.start_index, c.end_index = _get_boundary_indices(c)
 
