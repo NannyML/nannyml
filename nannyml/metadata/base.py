@@ -432,10 +432,9 @@ class ModelMetadata(abc.ABC):
         if not complete:
             raise MissingMetadataException(
                 f'metadata is still missing values for {missing}.\n'
-                'Please rectify by renaming columns following automated extraction conventions\n'
-                'and re-running preprocessing or set metadata properties manually.\n'
-                'See https://nannyml.readthedocs.io/en/stable/how_it_works/metadata_extraction.html '
-                'for more information\n'
+                'Please set the missing metadata properties and rerun.\n'
+                'See https://nannyml.readthedocs.io/en/stable/tutorials/setting_up/preparing_your_data.html '
+                'for more information.\n'
             )
 
     @abc.abstractmethod
