@@ -207,3 +207,6 @@ def run_apidoc(_):
 
 def setup(app):
     app.connect('builder-inited', run_apidoc)
+
+    app.add_js_file('js/gtm.js')
+    app.add_js_file('js/track-copy-paste.js')
