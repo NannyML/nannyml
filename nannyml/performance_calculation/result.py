@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Module containing the results of performance calculations and associated plots."""
-from typing import Union
+from typing import Dict, List, Union
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -22,6 +22,7 @@ class PerformanceCalculatorResult:
         self,
         performance_data: pd.DataFrame,
         model_metadata: ModelMetadata,
+        metrics: List[str],
     ):
         """Creates a new PerformanceCalculatorResult instance.
 
@@ -34,6 +35,8 @@ class PerformanceCalculatorResult:
         """
         self.data = performance_data
         self.metadata = model_metadata
+        self.calculator_name = "performance_calculator"
+        self._metrics = metrics
 
     def plot(self, kind: str = 'performance', metric: Union[str, Metric] = None, *args, **kwargs) -> go.Figure:
         """Render plots based on CBPE estimation results.
@@ -76,6 +79,10 @@ class PerformanceCalculatorResult:
             return _plot_performance_metric(self.data, self.metadata, metric)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
+
+    @property
+    def plots(self) -> Dict[str, go.Figure]:
+        return {metric: self.plot(kind='performance', metric=metric) for metric in self._metrics}
 
 
 def _plot_performance_metric(
@@ -129,7 +136,8 @@ def _plot_performance_metric(
         drift_legend_label='Degraded performance',
         hover_labels=['Chunk', metric_display_name, 'Target data'],
         hover_marker_labels=['Reference', 'No change', 'Change'],
-        threshold_column_name=f'{metric_column_name}_thresholds',
+        lower_threshold_column_name=f'{metric_column_name}_lower_threshold',
+        upper_threshold_column_name=f'{metric_column_name}_upper_threshold',
         threshold_legend_label='Performance threshold',
         partial_target_column_name='targets_missing_rate',
         title=f'Realized performance: {metric_display_name}',

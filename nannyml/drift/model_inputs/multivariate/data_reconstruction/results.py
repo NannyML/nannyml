@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Implementation of the Data Reconstruction Drift Calculator."""
+from typing import Dict
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,6 +16,8 @@ from nannyml.plots._step_plot import _step_plot
 
 class DataReconstructionDriftCalculatorResult(DriftResult):
     """Contains the results of the data reconstruction drift calculation and adds functionality like plotting."""
+
+    calculator_name: str = "multivariate_data_reconstruction_feature_drift"
 
     def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
         """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
@@ -53,16 +56,20 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
                 f"'prediction_drift', 'prediction_distribution']."
             )
 
+    @property
+    def plots(self) -> Dict[str, go.Figure]:
+        return {'multivariate_feature_drift': _plot_drift(self.data)}
+
 
 def _plot_drift(data: pd.DataFrame, *args, **kwargs) -> go.Figure:
     plot_period_separator = len(data.value_counts()) > 1
-    data['thresholds'] = list(zip(data.lower_threshold, data.upper_threshold))
     fig = _step_plot(
         table=data,
         metric_column_name='reconstruction_error',
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name='alert',
-        threshold_column_name='thresholds',
+        lower_threshold_column_name='lower_threshold',
+        upper_threshold_column_name='upper_threshold',
         hover_labels=['Chunk', 'Reconstruction error', 'Target data'],
         title='Data Reconstruction Drift',
         y_axis_title='Reconstruction Error',

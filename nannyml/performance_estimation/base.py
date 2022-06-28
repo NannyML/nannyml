@@ -18,7 +18,7 @@ from nannyml.metadata import ModelMetadata
 class PerformanceEstimatorResult(abc.ABC):
     """Contains performance estimation results and provides additional functionality on them."""
 
-    def __init__(self, estimated_data: pd.DataFrame, model_metadata: ModelMetadata):
+    def __init__(self, estimated_data: pd.DataFrame, model_metadata: ModelMetadata, metrics: List[str]):
         """Creates a new DriftResult instance.
 
         Parameters
@@ -30,6 +30,7 @@ class PerformanceEstimatorResult(abc.ABC):
         """
         self.data = estimated_data.copy(deep=True)
         self.metadata = model_metadata
+        self.metrics = metrics
 
     def plot(self, *args, **kwargs) -> go.Figure:
         """Plot drift results."""

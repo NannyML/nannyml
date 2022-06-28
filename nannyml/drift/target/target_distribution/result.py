@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """The classes representing the results of a target distribution calculation."""
+from typing import Dict
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,6 +16,8 @@ from nannyml.plots._step_plot import _step_plot
 
 class TargetDistributionResult:
     """Contains target distribution data and utilities to plot it."""
+
+    calculator_name: str = 'target_distribution'
 
     def __init__(self, target_distribution: pd.DataFrame, model_metadata: ModelMetadata):
         """Creates a new instance of the TargetDistributionResults."""
@@ -58,6 +61,13 @@ class TargetDistributionResult:
             return self._plot_distribution(distribution)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['distribution'].")
+
+    @property
+    def plots(self) -> Dict[str, go.Figure]:
+        return {
+            f'{self.metadata.target_column_name}_distribution_metric': self._plot_distribution('metric'),
+            f'{self.metadata.target_column_name}_distribution_statistical': self._plot_distribution('statistical'),
+        }
 
     def _plot_distribution(self, distribution: str) -> go.Figure:
         plot_period_separator = len(self.data.value_counts()) > 1

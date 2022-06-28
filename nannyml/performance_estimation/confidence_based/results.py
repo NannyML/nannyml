@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Module containing CBPE estimation results and plotting implementations."""
+from typing import Dict
 
 import pandas as pd
 from plotly import graph_objects as go
@@ -17,6 +18,8 @@ SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity'
 
 class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
     """Contains results for CBPE estimation and adds plotting functionality."""
+
+    calculator_name: str = 'confidence_based_performance_estimation'
 
     def plot(self, kind: str = 'performance', metric: str = None, *args, **kwargs) -> go.Figure:
         """Render plots based on CBPE estimation results.
@@ -61,6 +64,13 @@ class CBPEPerformanceEstimatorResult(PerformanceEstimatorResult):
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
+    @property
+    def plots(self) -> Dict[str, go.Figure]:
+        plots: Dict[str, go.Figure] = {}
+        for metric in self.metrics:
+            plots[f'estimated_{metric}'] = _plot_cbpe_performance_estimation(self.data, metric)
+        return plots
+
 
 def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: str) -> go.Figure:
     """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
@@ -87,10 +97,6 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: 
     """
     estimation_results = estimation_results.copy(deep=True)
 
-    estimation_results['thresholds'] = list(
-        zip(estimation_results[f'lower_threshold_{metric}'], estimation_results[f'upper_threshold_{metric}'])
-    )
-
     estimation_results['estimated'] = estimation_results['period'].apply(lambda r: r == 'analysis')
 
     plot_period_separator = len(estimation_results['period'].value_counts()) > 1
@@ -113,7 +119,8 @@ def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, metric: 
         drift_legend_label='Degraded performance',
         hover_labels=['Chunk', f'{metric}', 'Target data'],
         hover_marker_labels=['Reference', 'No change', 'Change'],
-        threshold_column_name='thresholds',
+        lower_threshold_column_name=f'lower_threshold_{metric}',
+        upper_threshold_column_name=f'upper_threshold_{metric}',
         threshold_legend_label='Performance threshold',
         title=f'CBPE - Estimated {metric}',
         y_axis_title=f'{metric}',

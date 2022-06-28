@@ -351,6 +351,9 @@ class BinaryClassificationAUROC(Metric):
         """Creates a new AUROC instance."""
         super().__init__(display_name='ROC AUC', column_name='roc_auc', metadata=metadata)
 
+    def __str__(self):
+        return "roc_auc"
+
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_roc_auc(reference_data)
 
@@ -376,6 +379,9 @@ class BinaryClassificationF1(Metric):
         """Creates a new F1 instance."""
         super().__init__(display_name='F1', column_name='f1', metadata=metadata)
 
+    def __str__(self):
+        return "f1"
+
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_f1(reference_data)
 
@@ -400,6 +406,9 @@ class BinaryClassificationPrecision(Metric):
     def __init__(self, metadata: ModelMetadata):
         """Creates a new Precision instance."""
         super().__init__(display_name='Precision', column_name='precision', metadata=metadata)
+
+    def __str__(self):
+        return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_precision(reference_data)
@@ -427,6 +436,9 @@ class BinaryClassificationRecall(Metric):
         """Creates a new Recall instance."""
         super().__init__(display_name='Recall', column_name='recall', metadata=metadata)
 
+    def __str__(self):
+        return "recall"
+
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_recall(reference_data)
 
@@ -452,6 +464,9 @@ class BinaryClassificationSpecificity(Metric):
     def __init__(self, metadata: ModelMetadata):
         """Creates a new F1 instance."""
         super().__init__(display_name='Specificity', column_name='specificity', metadata=metadata)
+
+    def __str__(self):
+        return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_specificity(reference_data)
@@ -485,6 +500,9 @@ class BinaryClassificationAccuracy(Metric):
         """Creates a new Accuracy instance."""
         super().__init__(display_name='Accuracy', column_name='accuracy', metadata=metadata)
 
+    def __str__(self):
+        return "accuracy"
+
     def _fit(self, reference_data: pd.DataFrame):
         self._min_chunk_size = _minimum_chunk_size_accuracy(reference_data)
 
@@ -517,6 +535,9 @@ class MulticlassClassificationAUROC(Metric):
         """Creates a new AUROC instance."""
         super().__init__(display_name='ROC AUC', column_name='roc_auc', metadata=metadata)
         self._min_chunk_size = 300
+
+    def __str__(self):
+        return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
         pass
@@ -564,6 +585,9 @@ class MulticlassClassificationF1(Metric):
         super().__init__(display_name='F1', column_name='f1', metadata=metadata)
         self._min_chunk_size = 300
 
+    def __str__(self):
+        return "f1"
+
     def _fit(self, reference_data: pd.DataFrame):
         pass
 
@@ -599,6 +623,9 @@ class MulticlassClassificationPrecision(Metric):
         """Creates a new Precision instance."""
         super().__init__(display_name='Precision', column_name='precision', metadata=metadata)
         self._min_chunk_size = 300
+
+    def __str__(self):
+        return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
         pass
@@ -636,6 +663,9 @@ class MulticlassClassificationRecall(Metric):
         super().__init__(display_name='Recall', column_name='recall', metadata=metadata)
         self._min_chunk_size = 300
 
+    def __str__(self):
+        return "recall"
+
     def _fit(self, reference_data: pd.DataFrame):
         pass
 
@@ -671,6 +701,9 @@ class MulticlassClassificationSpecificity(Metric):
         """Creates a new Specificity instance."""
         super().__init__(display_name='Specificity', column_name='specificity', metadata=metadata)
         self._min_chunk_size = 300
+
+    def __str__(self):
+        return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
         pass
@@ -711,6 +744,9 @@ class MulticlassClassificationAccuracy(Metric):
         """Creates a new Accuracy instance."""
         super().__init__(display_name='Accuracy', column_name='accuracy', metadata=metadata)
         self._min_chunk_size = 300
+
+    def __str__(self):
+        return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
         pass

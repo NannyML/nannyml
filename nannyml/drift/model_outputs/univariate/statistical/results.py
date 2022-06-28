@@ -4,7 +4,7 @@
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
 
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -21,6 +21,8 @@ from nannyml.plots._step_plot import _step_plot
 
 class UnivariateDriftResult(DriftResult):
     """Contains the univariate statistical drift calculation results and provides additional plotting functionality."""
+
+    calculator_name: str = 'univariate_statistical_output_drift'
 
     # TODO: this is messing up functionality in scratch files (sets runtime class to DataFrame). Check this!
     def __repr__(self):
@@ -94,6 +96,46 @@ class UnivariateDriftResult(DriftResult):
                 f"Please provide on of: ['prediction_drift', 'prediction_distribution']."
             )
 
+    @property
+    def plots(self) -> Dict[str, go.Figure]:
+        plots: Dict[str, go.Figure] = {}
+
+        if isinstance(self.metadata, BinaryClassificationMetadata):
+            prediction_column_name = self.metadata.predicted_probability_column_name
+            plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
+                self.data, self.metadata, 'statistic'
+            )
+            plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
+                self.data, self.metadata, 'p_value'
+            )
+            plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
+                data=self._analysis_data, drift_data=self.data, metadata=self.metadata
+            )
+        elif isinstance(self.metadata, MulticlassClassificationMetadata):
+            for class_label, prediction_column_name in self.metadata.predicted_probabilities_column_names.items():
+                plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
+                    self.data, self.metadata, 'statistic', class_label
+                )
+                plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
+                    self.data, self.metadata, 'p_value', class_label
+                )
+                plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
+                    data=self._analysis_data, drift_data=self.data, metadata=self.metadata, class_label=class_label
+                )
+        elif isinstance(self.metadata, RegressionMetadata):
+            prediction_column_name = self.metadata.prediction_column_name
+            plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
+                self.data, self.metadata, 'statistic'
+            )
+            plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
+                self.data, self.metadata, 'p_value'
+            )
+            plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
+                data=self._analysis_data, drift_data=self.data, metadata=self.metadata
+            )
+
+        return plots
+
 
 def _get_feature(model_metadata: ModelMetadata, feature_label: str = None, feature_column_name: str = None) -> Feature:
     if feature_label is None and feature_column_name is None:
@@ -164,7 +206,7 @@ def _plot_prediction_drift(
         metric_column_name=metric_column_name,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
-        threshold_column_name=threshold_column_name,
+        lower_threshold_column_name=threshold_column_name,
         hover_labels=['Chunk', metric_label, 'Target data'],
         title=title,
         y_axis_title=metric_label,

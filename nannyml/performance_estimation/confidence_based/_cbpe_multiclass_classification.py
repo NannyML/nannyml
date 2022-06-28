@@ -194,7 +194,9 @@ class _MulticlassClassificationCBPE(CBPE):
         )
 
         res = res.reset_index(drop=True)
-        return CBPEPerformanceEstimatorResult(estimated_data=res, model_metadata=self.model_metadata)
+        return CBPEPerformanceEstimatorResult(
+            estimated_data=res, model_metadata=self.model_metadata, metrics=self.metrics
+        )
 
     def _estimate(self, chunk: Chunk) -> Dict:
         if not isinstance(self.model_metadata, MulticlassClassificationMetadata):
