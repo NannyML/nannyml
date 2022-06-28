@@ -54,6 +54,24 @@ class ModelType(str, Enum):
         else:
             raise InvalidArgumentsException(f"unknown model type '{model_type_str}'")
 
+    # TODO: add support for column mappings?
+    @staticmethod
+    def from_data(data: pd.DataFrame):
+        """Looks at input data to determine what kind of model it represents."""
+        if 'y_pred' not in data.columns:
+            raise InvalidArgumentsException("missing prediction values column 'y_pred'")
+
+        y_pred_dt = data['y_pred'].dtype
+        if y_pred_dt == 'float64':
+            return ModelType.REGRESSION
+
+        if y_pred_dt in ['object', 'category', 'string', 'bool', 'int64']:
+            has_multiple_score_columns = len([col for col in data.columns if col.startswith('y_pred_proba')]) > 1
+            if has_multiple_score_columns:
+                return ModelType.CLASSIFICATION_MULTICLASS
+            else:
+                return ModelType.CLASSIFICATION_BINARY
+
 
 # TODO wording
 class ModelMetadata(abc.ABC):

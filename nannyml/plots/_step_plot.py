@@ -69,7 +69,8 @@ def _step_plot(
     estimated_column_name=None,
     lower_confidence_column_name=None,
     upper_confidence_column_name=None,
-    threshold_column_name=None,
+    lower_threshold_column_name=None,
+    upper_threshold_column_name=None,
     statistically_significant_column_name=None,
     drift_column_name=None,
     partial_target_column_name=None,
@@ -174,7 +175,9 @@ def _step_plot(
     # ____Plot elements, order matters___#
 
     # Plot thresholds
-    _plot_thresholds(fig, data, threshold_column_name, threshold_value_format, colors)
+    _plot_thresholds(
+        fig, data, lower_threshold_column_name, upper_threshold_column_name, threshold_value_format, colors
+    )
 
     # Plot line separating reference and analysis period
     _plot_reference_analysis_separator(
@@ -317,7 +320,9 @@ def _step_plot(
         )
 
     # Add threshold to legend
-    if threshold_column_name and threshold_column_name in data.columns:
+    if (lower_threshold_column_name and lower_threshold_column_name in data.columns) or (
+        upper_threshold_column_name and upper_threshold_column_name in data.columns
+    ):
         fig.add_traces(
             [
                 go.Scatter(
@@ -502,21 +507,34 @@ def _plot_drifted_markers_and_areas(
 
 
 def _plot_thresholds(
-    fig: go.Figure, data: pd.DataFrame, threshold_column_name: str, threshold_value_format: str, colors: List[str]
+    fig: go.Figure,
+    data: pd.DataFrame,
+    upper_threshold_column_name: str,
+    lower_threshold_column_name: str,
+    threshold_value_format: str,
+    colors: List[str],
 ):
-    if threshold_column_name and threshold_column_name in data.columns:
-        threshold_values = data[threshold_column_name].values[0]
-        if not isinstance(threshold_values, tuple):
-            threshold_values = [threshold_values]
-        for threshold_value in threshold_values:
-            fig.add_hline(
-                threshold_value,
-                annotation_text=threshold_value_format.format(threshold_value),
-                annotation_position="top right",
-                annotation=dict(font_color=colors[-1]),
-                line=dict(color=colors[-1], width=1, dash='dash'),
-                layer='below',
-            )
+    if lower_threshold_column_name and lower_threshold_column_name in data.columns:
+        threshold_value = data[lower_threshold_column_name].values[0]
+        fig.add_hline(
+            threshold_value,
+            annotation_text=threshold_value_format.format(threshold_value),
+            annotation_position="top right",
+            annotation=dict(font_color=colors[-1]),
+            line=dict(color=colors[-1], width=1, dash='dash'),
+            layer='below',
+        )
+
+    if upper_threshold_column_name and upper_threshold_column_name in data.columns:
+        threshold_value = data[upper_threshold_column_name].values[0]
+        fig.add_hline(
+            threshold_value,
+            annotation_text=threshold_value_format.format(threshold_value),
+            annotation_position="top right",
+            annotation=dict(font_color=colors[-1]),
+            line=dict(color=colors[-1], width=1, dash='dash'),
+            layer='below',
+        )
 
 
 def _plot_reference_analysis_separator(

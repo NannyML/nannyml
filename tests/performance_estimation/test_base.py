@@ -49,6 +49,7 @@ class SimpleEstimator(PerformanceEstimator):  # noqa: D101
         return PerformanceEstimatorResult(
             model_metadata=self.model_metadata,
             estimated_data=pd.DataFrame(columns=self.selected_features).assign(key=[chunk.key for chunk in chunks]),
+            metrics=[],
         )
 
 

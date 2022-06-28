@@ -4,7 +4,7 @@
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
 
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -22,6 +22,8 @@ from nannyml.plots._step_plot import _step_plot
 class UnivariateDriftResult(DriftResult):
     """Contains the univariate statistical drift calculation results and provides additional plotting functionality."""
 
+    calculator_name: str = "univariate_statistical_drift"
+
     # TODO: this is messing up functionality in scratch files (sets runtime class to DataFrame). Check this!
     def __repr__(self):
         """Represent the DriftResults object as the data it contains."""
@@ -33,7 +35,6 @@ class UnivariateDriftResult(DriftResult):
         metric: str = 'statistic',
         feature_label: str = None,
         feature_column_name: str = None,
-        class_label: str = None,
         *args,
         **kwargs,
     ) -> go.Figure:
@@ -104,6 +105,19 @@ class UnivariateDriftResult(DriftResult):
                 f"unknown plot kind '{kind}'. " f"Please provide on of: ['feature_drift', 'feature_distribution']."
             )
 
+    @property
+    def plots(self) -> Dict[str, go.Figure]:
+        plots: Dict[str, go.Figure] = {}
+        for feature in self.metadata.features:
+            plots[f'{feature.label}_drift_statistic'] = _plot_feature_drift(self.data, feature, 'statistic')
+            plots[f'{feature.label}_drift_p_value'] = _plot_feature_drift(self.data, feature, 'p_value')
+            plots[f'{feature.label}_distribution'] = _plot_feature_distribution(
+                data=self._analysis_data,
+                drift_data=self.data,
+                feature=feature,
+            )
+        return plots
+
 
 def _get_feature(model_metadata: ModelMetadata, feature_label: str = None, feature_column_name: str = None) -> Feature:
     if feature_label is None and feature_column_name is None:
@@ -159,7 +173,7 @@ def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'sta
         metric_column_name=metric_column_name,
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
         drift_column_name=drift_column_name,
-        threshold_column_name=threshold_column_name,
+        lower_threshold_column_name=threshold_column_name,
         hover_labels=['Chunk', metric_label, 'Target data'],
         title=title,
         y_axis_title=metric_label,

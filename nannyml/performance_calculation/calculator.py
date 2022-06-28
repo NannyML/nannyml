@@ -168,14 +168,17 @@ class PerformanceCalculator:
             ]
         )
 
-        return PerformanceCalculatorResult(performance_data=res, model_metadata=self.metadata)
+        return PerformanceCalculatorResult(
+            performance_data=res, model_metadata=self.metadata, metrics=[str(m) for m in self.metrics]
+        )
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         metrics_results = {}
         for metric in self.metrics:
             chunk_metric = metric.calculate(chunk.data)
             metrics_results[metric.column_name] = chunk_metric
-            metrics_results[f'{metric.column_name}_thresholds'] = (metric.lower_threshold, metric.upper_threshold)
+            metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
+            metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
             metrics_results[f'{metric.column_name}_alert'] = (
                 metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
             ) and (chunk.data[NML_METADATA_PERIOD_COLUMN_NAME] == 'analysis').all()
