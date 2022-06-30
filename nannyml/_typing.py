@@ -8,7 +8,6 @@ from plotly.graph_objs import Figure
 
 
 class Result(Protocol):
-
     """the data that was calculated or estimated"""
 
     data: pd.DataFrame
@@ -21,16 +20,16 @@ class Result(Protocol):
 
 
 class Calculator(Protocol):
-    def fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the calculator on reference data."""
 
-    def calculate(self, analysis_data: pd.DataFrame):
+    def calculate(self, data: pd.DataFrame, *args, **kwargs):
         """Perform a calculation based on analysis data."""
 
 
 class Estimator(Protocol):
-    def fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the estimator on reference data."""
 
-    def estimate(self, analysis_data: pd.DataFrame) -> Result:
+    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Perform an estimation based on analysis data."""

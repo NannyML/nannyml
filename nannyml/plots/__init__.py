@@ -8,4 +8,7 @@
 
 """Module containing plotting implementations."""
 
+
+from .feature_drift import feature_drift
+
 CHUNK_KEY_COLUMN_NAME = 'key'

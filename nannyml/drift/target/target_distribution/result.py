@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.metadata.base import ModelMetadata
-from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
 
@@ -76,7 +75,7 @@ class TargetDistributionResult:
             fig = _step_plot(
                 table=self.data,
                 metric_column_name='metric_target_drift',
-                chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+                chunk_column_name='key',
                 drift_column_name='alert',
                 hover_labels=['Chunk', 'Rate', 'Target data'],
                 title=f'Target distribution over time for {self.metadata.target_column_name}',
@@ -90,7 +89,7 @@ class TargetDistributionResult:
             fig = _step_plot(
                 table=self.data,
                 metric_column_name='statistical_target_drift',
-                chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+                chunk_column_name='key',
                 drift_column_name='alert',
                 hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
                 title=f'Chi-square statistic over time for {self.metadata.target_column_name} ',

@@ -305,14 +305,16 @@ def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_an
     sample_drift_data, sample_drift_metadata, chunker
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunker=chunker).fit(ref_data)
+    calc = UnivariateStatisticalDriftCalculator(
+        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
+    ).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data)
 
-    chunks = chunker.split(sample_drift_metadata.enrich(sample_drift_data))
-    assert len(chunks) == sut.data.shape[0]
+    chunks = chunker.split(sample_drift_data, timestamp_column_name='timestamp')
+    assert len(chunks) == sut.shape[0]
     chunk_keys = [c.key for c in chunks]
-    assert 'key' in sut.data.columns
-    assert sorted(chunk_keys) == sorted(sut.data['key'].values)
+    assert 'key' in sut.columns
+    assert sorted(chunk_keys) == sorted(sut['key'].values)
 
 
 def test_univariate_statistical_drift_calculator_should_contain_chunk_details(  # noqa: D103

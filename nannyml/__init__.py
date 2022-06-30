@@ -48,6 +48,7 @@ from .drift import (
     DataReconstructionDriftCalculator,
     DataReconstructionDriftCalculatorResult,
     DriftCalculator,
+    DriftResult,
     Ranker,
     Ranking,
     TargetDistributionCalculator,
@@ -66,5 +67,6 @@ from .metadata import (
 )
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, PerformanceEstimator
+from .plots import feature_drift
 
 logger = logging.getLogger(__name__)

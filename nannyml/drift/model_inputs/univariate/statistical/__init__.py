@@ -5,4 +5,4 @@
 """Package containing the implementation of the Univariate Statistical Drift Calculator."""
 
 from .calculator import UnivariateStatisticalDriftCalculator
-from .results import UnivariateDriftResult
+from .results import UnivariateStatisticalDriftCalculatorResult

@@ -17,7 +17,7 @@ from dateutil.parser import ParserError  # type: ignore
 from pandas import Period
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata.base import NML_METADATA_PERIOD_COLUMN_NAME, NML_METADATA_TIMESTAMP_COLUMN_NAME
+from nannyml.metadata.base import NML_METADATA_PERIOD_COLUMN_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -118,10 +118,12 @@ class Chunker(abc.ABC):
     """
 
     def __init__(self):
-        """Creates a new Chunker. Not used directly."""
+        """Creates a new Chunker."""
         pass
 
-    def split(self, data: pd.DataFrame, columns=None, minimum_chunk_size: int = None) -> List[Chunk]:
+    def split(
+        self, data: pd.DataFrame, timestamp_column_name: str, columns=None, minimum_chunk_size: int = None
+    ) -> List[Chunk]:
         """Splits a given data frame into a list of chunks.
 
         This method provides a uniform interface across Chunker implementations to keep them interchangeable.
@@ -138,6 +140,8 @@ class Chunker(abc.ABC):
         ----------
         data: DataFrame
             The data to be split into chunks
+        timestamp_column_name: str
+            Name of the column containing the timestamp of an observation.
         columns: List[str], default=None
             A list of columns to be included in the resulting chunk data. Unlisted columns will be dropped.
         minimum_chunk_size: int, default=None
@@ -151,15 +155,15 @@ class Chunker(abc.ABC):
             The list of chunks
 
         """
-        if NML_METADATA_TIMESTAMP_COLUMN_NAME not in data.columns:
+        if timestamp_column_name not in data.columns:
             raise MissingMetadataException(
-                f"missing timestamp column '{NML_METADATA_TIMESTAMP_COLUMN_NAME}'." "Please provide valid metadata."
+                f"missing timestamp column '{timestamp_column_name}'." "Please provide valid metadata."
             )
 
-        data = data.sort_values(by=[NML_METADATA_TIMESTAMP_COLUMN_NAME]).reset_index(drop=True)
+        data = data.sort_values(by=[timestamp_column_name]).reset_index(drop=True)
 
         try:
-            chunks = self._split(data, minimum_chunk_size)
+            chunks = self._split(data, timestamp_column_name, minimum_chunk_size)
         except Exception as exc:
             raise ChunkerException(f"could not split data into chunks: {exc}")
 
@@ -198,7 +202,7 @@ class Chunker(abc.ABC):
 
     # TODO wording
     @abc.abstractmethod
-    def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         """Splits the DataFrame into chunks.
 
         Abstract method, to be implemented within inheriting classes.
@@ -231,6 +235,27 @@ class Chunker(abc.ABC):
         pass  # pragma: no cover
 
 
+class ChunkerFactory:
+    @classmethod
+    def get_chunker(
+        cls,
+        chunk_size: int = None,
+        chunk_number: int = None,
+        chunk_period: str = None,
+        chunker: Chunker = None,
+    ) -> Chunker:
+        if chunker is not None:
+            return chunker
+        if chunk_size:
+            return SizeBasedChunker(chunk_size=chunk_size)  # type: ignore
+        elif chunk_number:
+            return CountBasedChunker(chunk_count=chunk_number)  # type: ignore
+        elif chunk_period:
+            return PeriodBasedChunker(offset=chunk_period)  # type: ignore
+        else:
+            return DefaultChunker()  # type: ignore
+
+
 class PeriodBasedChunker(Chunker):
     """A Chunker that will split data into Chunks based on a date column in the data.
 
@@ -254,17 +279,12 @@ class PeriodBasedChunker(Chunker):
 
     def __init__(
         self,
-        date_column_name: str = NML_METADATA_TIMESTAMP_COLUMN_NAME,
         offset: str = 'W',
     ):
         """Creates a new PeriodBasedChunker.
 
         Parameters
         ----------
-        date_column_name: string
-            The name of the column in the DataFrame that contains the date used for chunking.
-            Defaults to the metadata timestamp column added by the `ModelMetadata.extract_metadata` function.
-
         offset: a frequency string representing a pandas.tseries.offsets.DateOffset
             The offset determines how the time-based grouping will occur. A list of possible values
             is to be found at https://pandas.pydata.org/docs/user_guide/timeseries.html#offset-aliases.
@@ -275,14 +295,12 @@ class PeriodBasedChunker(Chunker):
         """
         super().__init__()
 
-        self.date_column_name = date_column_name
         self.offset = offset
 
-    def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         chunks = []
-        date_column_name = self.date_column_name or self.date_column.name  # type: ignore
         try:
-            grouped_data = data.groupby(pd.to_datetime(data[date_column_name]).dt.to_period(self.offset))
+            grouped_data = data.groupby(pd.to_datetime(data[timestamp_column_name]).dt.to_period(self.offset))
 
             k: Period
             for k in grouped_data.groups.keys():
@@ -291,11 +309,11 @@ class PeriodBasedChunker(Chunker):
                 )
                 chunks.append(chunk)
         except KeyError:
-            raise ChunkerException(f"could not find date_column '{date_column_name}' in given data")
+            raise ChunkerException(f"could not find date_column '{timestamp_column_name}' in given data")
 
         except ParserError:
             raise ChunkerException(
-                f"could not parse date_column '{date_column_name}' values as dates."
+                f"could not parse date_column '{timestamp_column_name}' values as dates."
                 f"Please verify if you've specified the correct date column."
             )
 
@@ -357,11 +375,11 @@ class SizeBasedChunker(Chunker):
         self.chunk_size = chunk_size
         self.drop_incomplete = drop_incomplete
 
-    def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
             chunk_data = data.loc[index : index + chunk_size - 1, :]
-            min_date = pd.to_datetime(chunk_data[NML_METADATA_TIMESTAMP_COLUMN_NAME].min())
-            max_date = pd.to_datetime(chunk_data[NML_METADATA_TIMESTAMP_COLUMN_NAME].max())
+            min_date = pd.to_datetime(chunk_data[timestamp_column_name].min())
+            max_date = pd.to_datetime(chunk_data[timestamp_column_name].max())
             return Chunk(
                 key=f'[{index}:{index + chunk_size - 1}]',
                 data=chunk_data,
@@ -434,14 +452,16 @@ class CountBasedChunker(Chunker):
 
         self.chunk_count = chunk_count
 
-    def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
         data = data.copy().reset_index()
 
         chunk_size = data.shape[0] // self.chunk_count
-        chunks = SizeBasedChunker(chunk_size=chunk_size).split(data=data, minimum_chunk_size=minimum_chunk_size)
+        chunks = SizeBasedChunker(chunk_size=chunk_size).split(
+            data=data, timestamp_column_name=timestamp_column_name, minimum_chunk_size=minimum_chunk_size
+        )
         return chunks
 
 
@@ -462,12 +482,14 @@ class DefaultChunker(Chunker):
         """Creates a new DefaultChunker."""
         super(DefaultChunker, self).__init__()
 
-    def _split(self, data: pd.DataFrame, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
         data = data.copy().reset_index()
 
         chunk_size = data.shape[0] // self.DEFAULT_CHUNK_COUNT
-        chunks = SizeBasedChunker(chunk_size=chunk_size).split(data=data, minimum_chunk_size=minimum_chunk_size)
+        chunks = SizeBasedChunker(chunk_size=chunk_size).split(
+            data=data, timestamp_column_name=timestamp_column_name, minimum_chunk_size=minimum_chunk_size
+        )
         return chunks

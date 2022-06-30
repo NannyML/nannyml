@@ -109,7 +109,8 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         Returns
         -------
         reconstruction_drift: UnivariateDriftResult
-            A :class:`result<nannyml.drift.model_inputs.univariate.statistical.results.UnivariateDriftResult>`
+            A :class:`result<nannyml.drift.model_inputs.univariate.statistical.results.
+            UnivariateStatisticalDriftCalculatorResult>`
             object where each row represents a :class:`~nannyml.chunk.Chunk`,
             containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
             for that :class:`~nannyml.chunk.Chunk`.

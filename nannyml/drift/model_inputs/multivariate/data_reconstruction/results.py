@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 
 from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
 
@@ -66,7 +65,7 @@ def _plot_drift(data: pd.DataFrame, *args, **kwargs) -> go.Figure:
     fig = _step_plot(
         table=data,
         metric_column_name='reconstruction_error',
-        chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+        chunk_column_name='key',
         drift_column_name='alert',
         lower_threshold_column_name='lower_threshold',
         upper_threshold_column_name='upper_threshold',

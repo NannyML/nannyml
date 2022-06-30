@@ -8,14 +8,14 @@ import pandas as pd
 import pytest
 
 from nannyml import BinaryClassificationMetadata
-from nannyml.drift import UnivariateDriftResult
+from nannyml.drift import UnivariateStatisticalDriftCalculatorResult
 from nannyml.drift.ranking import AlertCountRanking
 from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture
-def sample_drift_result() -> UnivariateDriftResult:  # noqa: D103
-    return UnivariateDriftResult(
+def sample_drift_result() -> UnivariateStatisticalDriftCalculatorResult:  # noqa: D103
+    return UnivariateStatisticalDriftCalculatorResult(
         analysis_data=[],
         model_metadata=BinaryClassificationMetadata(),
         drift_data=pd.DataFrame(
@@ -46,7 +46,7 @@ def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_resul
     ranking = AlertCountRanking()
     with pytest.raises(InvalidArgumentsException, match='drift results contain no data to use for ranking'):
         ranking.rank(
-            UnivariateDriftResult(
+            UnivariateStatisticalDriftCalculatorResult(
                 analysis_data=[], drift_data=pd.DataFrame(columns=['f1', 'f1_alert']), model_metadata=sample_metadata
             ),
             sample_metadata,
@@ -83,7 +83,7 @@ def test_alert_count_ranking_should_raise_invalid_arguments_exception_when_given
 ):
     with pytest.raises(InvalidArgumentsException, match="drift results are not statistical drift results."):
         _ = AlertCountRanking().rank(
-            UnivariateDriftResult(
+            UnivariateStatisticalDriftCalculatorResult(
                 analysis_data=[],
                 drift_data=pd.DataFrame({'alert': [False, False, True]}),
                 model_metadata=sample_metadata,
