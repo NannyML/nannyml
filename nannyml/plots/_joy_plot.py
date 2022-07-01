@@ -60,9 +60,9 @@ def _create_kde_table(
     feature_table,
     feature_column_name,
     chunk_column_name,
-    kde_cut,
-    kde_clip,
-    post_kde_clip: tuple,
+    kde_cut=3,
+    kde_clip=(-np.inf, np.inf),
+    post_kde_clip=None,
 ):
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
     data = (

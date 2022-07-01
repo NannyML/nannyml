@@ -5,7 +5,7 @@
 """Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ from scipy.stats import chi2_contingency, ks_2samp
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateStatisticalDriftCalculatorResult
-from nannyml.metadata.base import NML_METADATA_PERIOD_COLUMN_NAME
+from nannyml.plots._joy_plot import _create_kde_table
 
 ALERT_THRESHOLD_P_VALUE = 0.05
 
@@ -66,7 +66,10 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
 
         self.timestamp_column_name = timestamp_column_name
 
-        self._reference_data = None
+        # required for distribution plots
+        self.previous_reference_data: Optional[pd.DataFrame] = None
+        self.previous_reference_results: Optional[pd.DataFrame] = None
+        self.previous_analysis_data: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateStatisticalDriftCalculator:
         """Fits the drift calculator using a set of reference data.
@@ -90,14 +93,8 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
         """
-        # check metadata for required properties
-        # self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'features'])
-
-        # reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
-
-        # store state
-        self._reference_data = reference_data.copy(deep=True)
-        self._reference_data[NML_METADATA_PERIOD_COLUMN_NAME] = 'reference'  # type: ignore
+        self.previous_reference_data = reference_data.copy()
+        self.previous_reference_results = self._calculate(self.previous_reference_data).data
 
         return self
 
@@ -126,16 +123,14 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> drift = drift_calc.calculate(data)
         """
-        # Check metadata for required properties
-        # self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'features'])
 
-        # data = preprocess(data=data, metadata=self.model_metadata)
-        data[NML_METADATA_PERIOD_COLUMN_NAME] = 'analysis'
+        data = data.copy()
 
         # Get lists of categorical <-> categorical features
         self.continuous_column_names = [
             col for col in data[self.feature_column_names].select_dtypes(include=['float64', 'int64']).columns
         ]
+
         self.categorical_column_names = [
             col
             for col in data[self.feature_column_names]
@@ -147,7 +142,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         chunks = self.chunker.split(
             data,
             self.timestamp_column_name,
-            columns=self.feature_column_names + [NML_METADATA_PERIOD_COLUMN_NAME],
+            # columns=self.feature_column_names + [NML_METADATA_PERIOD_COLUMN_NAME],
             minimum_chunk_size=500,
         )
 
@@ -161,14 +156,13 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
-                'period': 'analysis' if chunk.is_transition else chunk.period,
             }
 
             for column in self.categorical_column_names:
                 statistic, p_value, _, _ = chi2_contingency(
                     pd.concat(
                         [
-                            self._reference_data[column].value_counts(),  # type: ignore
+                            self.previous_reference_data[column].value_counts(),  # type: ignore
                             chunk.data[column].value_counts(),
                         ],
                         axis=1,
@@ -176,27 +170,22 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
                 )
                 chunk_drift[f'{column}_chi2'] = statistic
                 chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
-                chunk_drift[f'{column}_alert'] = (p_value < ALERT_THRESHOLD_P_VALUE) and (
-                    chunk.data[NML_METADATA_PERIOD_COLUMN_NAME] == 'analysis'
-                ).all()
+                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             for column in self.continuous_column_names:
-                statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])  # type: ignore
+                statistic, p_value = ks_2samp(self.previous_reference_data[column], chunk.data[column])  # type: ignore
                 chunk_drift[f'{column}_dstat'] = statistic
                 chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
-                chunk_drift[f'{column}_alert'] = (p_value < ALERT_THRESHOLD_P_VALUE) and (
-                    chunk.data[NML_METADATA_PERIOD_COLUMN_NAME] == 'analysis'
-                ).all()
+                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             chunk_drifts.append(chunk_drift)
 
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
-        res.attrs['nml_drift_calculator'] = __name__
 
-        self.result = res
+        self.previous_analysis_data = data
 
         from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateStatisticalDriftCalculatorResult
 
