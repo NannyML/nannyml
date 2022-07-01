@@ -103,6 +103,7 @@ class AbstractCalculator(ABC):
         """Performs a calculation on the provided data."""
         try:
             self._logger.debug(f"calculating {str(self)}")
+            data = data.copy()
             return self._calculate(data, *args, **kwargs)
         except InvalidArgumentsException:
             raise

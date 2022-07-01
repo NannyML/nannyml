@@ -3,13 +3,17 @@
 #  License: Apache Software License 2.0
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
+from typing import List, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult
+from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.feature_drift import feature_drift
+from nannyml.plots._joy_plot import _joy_plot
+from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
+from nannyml.plots._step_plot import _step_plot
 
 
 class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
@@ -35,6 +39,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         kind: str = 'feature',
         metric: str = 'statistic',
         feature_column_name: str = None,
+        reference_data: pd.DataFrame = None,
         *args,
         **kwargs,
     ) -> go.Figure:
@@ -63,6 +68,9 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
+        reference_data: pd.DataFrame
+            A DataFrame that holds your reference data. When provided, the drift values for your reference data will
+            be included in the plot. If not, only the drift values for the analysis data will be shown.
 
 
         Returns
@@ -87,15 +95,202 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
 
         """
         if kind == 'feature_drift':
-            return feature_drift(self, feature_column_name, metric)
-        # elif kind == 'feature_distribution':
-        #     feature = _get_feature(self.metadata, feature_label, feature_column_name)
-        #     return _plot_feature_distribution(
-        #         data=self._analysis_data,
-        #         drift_data=self.data,
-        #         feature=feature,
-        #     )
+            return _feature_drift(self.data, self.calculator, feature_column_name, metric, reference_data)
+        elif kind == 'feature_distribution':
+            if 'analysis_data' not in kwargs:
+                raise InvalidArgumentsException(
+                    "plotting a distribution requires the analysis_data to passed as the 'analysis_data' parameter"
+                )
+            return self._plot_feature_distribution(
+                analysis_data=kwargs['analysis_data'],
+                reference_data=reference_data,
+                drift_data=self.data,
+                feature_column_name=feature_column_name,
+            )
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. " f"Please provide on of: ['feature_drift', 'feature_distribution']."
             )
+
+    def _plot_feature_distribution(
+        self,
+        analysis_data: pd.DataFrame,
+        drift_data: pd.DataFrame,
+        feature_column_name: str,
+        reference_data: pd.DataFrame = None,
+    ) -> go.Figure:
+        """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
+        if feature_column_name in self.calculator.continuous_column_names:
+            return _plot_continuous_feature_distribution(
+                analysis_data, reference_data, drift_data, feature_column_name, self.calculator
+            )
+        if feature_column_name in self.calculator.categorical_column_names:
+            return _plot_categorical_feature_distribution(
+                analysis_data, reference_data, drift_data, feature_column_name, self.calculator
+            )
+
+
+def _feature_drift(
+    data: pd.DataFrame,
+    calculator,
+    feature_column_name: str,
+    metric: str = 'statistic',
+    reference_data: pd.DataFrame = None,
+) -> go.Figure:
+    """Renders a line plot for a chosen metric of univariate statistical feature drift calculation results."""
+
+    (
+        metric_column_name,
+        metric_label,
+        threshold_column_name,
+        drift_column_name,
+        title,
+    ) = _get_drift_column_names_for_feature(
+        feature_column_name, metric, calculator.continuous_column_names, calculator.categorical_column_names
+    )
+
+    plot_period_separator = False
+
+    if reference_data is not None:
+        plot_period_separator = True
+        reference_results = calculator.calculate(reference_data)
+        reference_results.data['period'] = 'reference'
+        data = pd.concat([reference_results.data, data], ignore_index=True)
+
+    fig = _step_plot(
+        table=data,
+        metric_column_name=metric_column_name,
+        chunk_column_name='key',
+        drift_column_name=drift_column_name,
+        lower_threshold_column_name=threshold_column_name,
+        hover_labels=['Chunk', metric_label, 'Target data'],
+        title=title,
+        y_axis_title=metric_label,
+        v_line_separating_analysis_period=plot_period_separator,
+        statistically_significant_column_name=drift_column_name,
+    )
+    return fig
+
+
+def _get_drift_column_names_for_feature(
+    feature_column_name: str,
+    metric: str,
+    continuous_feature_column_names: List[str],
+    categorical_feature_column_names: List[str],
+) -> Tuple:
+    metric_column_name, metric_label, threshold_column_name = None, None, None
+    if metric == 'statistic':
+        if feature_column_name in categorical_feature_column_names:
+            metric_column_name = f'{feature_column_name}_chi2'
+            metric_label = 'Chi-square statistic'
+        elif feature_column_name in continuous_feature_column_names:
+            metric_column_name = f'{feature_column_name}_dstat'
+            metric_label = 'KS statistic'
+        threshold_column_name = None
+    elif metric == 'p_value':
+        metric_column_name = f'{feature_column_name}_p_value'
+        metric_label = 'P-value'
+        threshold_column_name = f'{feature_column_name}_threshold'
+
+    drift_column_name = f'{feature_column_name}_alert'
+    title = f'{metric_label} for {feature_column_name}'
+
+    return metric_column_name, metric_label, threshold_column_name, drift_column_name, title
+
+
+def _plot_continuous_feature_distribution(
+    data: pd.DataFrame, reference_data: pd.DataFrame, drift_data: pd.DataFrame, feature_column_name: str, calculator
+) -> go.Figure:
+    """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
+    from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
+
+    if not isinstance(calculator, UnivariateStatisticalDriftCalculator):
+        raise InvalidArgumentsException(
+            f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
+        )
+
+    x_axis_title = f'{feature_column_name}'
+    drift_column_name = f'{feature_column_name}_alert'
+    title = f'Distribution over time for {feature_column_name}'
+
+    if reference_data is not None:
+        drift_data, data = _recalculate_distributions_with_reference_data(calculator, reference_data, data, drift_data)
+
+    data_chunks = calculator.chunker.split(
+        data, timestamp_column_name=calculator.timestamp_column_name, period_column_name='period'
+    )
+
+    fig = _joy_plot(
+        feature_table=_create_feature_table(chunks=data_chunks),
+        drift_table=drift_data,
+        chunk_column_name='key',
+        drift_column_name=drift_column_name,
+        feature_column_name=feature_column_name,
+        x_axis_title=x_axis_title,
+        title=title,
+        style='vertical',
+    )
+    return fig
+
+
+def _plot_categorical_feature_distribution(
+    data: pd.DataFrame, reference_data: pd.DataFrame, drift_data: pd.DataFrame, feature_column_name: str, calculator
+) -> go.Figure:
+    """Plots the data distribution and associated drift for each chunk of a given categorical feature."""
+    from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
+
+    if not isinstance(calculator, UnivariateStatisticalDriftCalculator):
+        raise InvalidArgumentsException(
+            f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
+        )
+
+    yaxis_title = f'{feature_column_name}'
+    drift_column_name = f'{feature_column_name}_alert'
+    title = f'Distribution over time for {feature_column_name}'
+
+    if reference_data is not None:
+        drift_data, data = _recalculate_distributions_with_reference_data(calculator, reference_data, data, drift_data)
+
+    data_chunks = calculator.chunker.split(data, timestamp_column_name=calculator.timestamp_column_name)
+
+    fig = _stacked_bar_plot(
+        feature_table=_create_feature_table(chunks=data_chunks),
+        drift_table=drift_data,
+        chunk_column_name='key',
+        drift_column_name=drift_column_name,
+        feature_column_name=feature_column_name,
+        yaxis_title=yaxis_title,
+        title=title,
+    )
+    return fig
+
+
+def _create_feature_table(chunks: List[Chunk]) -> pd.DataFrame:
+    return pd.concat([chunk.data.assign(key=chunk.key) for chunk in chunks])
+
+
+def _recalculate_distributions_with_reference_data(
+    calculator, reference_data: pd.DataFrame, data: pd.DataFrame, drift_data: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    if isinstance(calculator.chunker, DefaultChunker):
+        combined_chunk_size = (reference_data.shape[0] + data.shape[0]) // calculator.chunker.DEFAULT_CHUNK_COUNT
+        reference_chunks_num = reference_data.shape[0] // combined_chunk_size
+        combined_drift_results = calculator.calculate(pd.concat([reference_data, data], ignore_index=True)).data
+        for idx in range(reference_chunks_num):
+            combined_drift_results.at[idx, 'period'] = 'reference'
+        drift_data = combined_drift_results
+    elif isinstance(calculator.chunker, CountBasedChunker):
+        combined_chunk_size = (reference_data.shape[0] + data.shape[0]) // calculator.chunker.chunk_count
+        reference_chunks_num = reference_data.shape[0] // combined_chunk_size
+        combined_drift_results = calculator.calculate(pd.concat([reference_data, data], ignore_index=True)).data
+        for idx in range(reference_chunks_num):
+            combined_drift_results.at[idx, 'period'] = 'reference'
+        drift_data = combined_drift_results
+    else:
+        reference_drift = calculator.calculate(reference_data)
+        reference_drift.data['period'] = 'reference'
+        drift_data = pd.concat([reference_drift.data, drift_data], ignore_index=True)
+
+    data = pd.concat([reference_data, data], ignore_index=True)
+
+    return drift_data, data

@@ -86,7 +86,7 @@ class Chunk:
         return self.data.shape[0]
 
 
-def _get_period(c: Chunk, period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME):
+def _get_period(c: Chunk, period_column_name: str):
     if period_column_name not in c.data.columns:
         raise MissingMetadataException(
             f"missing period column '{NML_METADATA_PERIOD_COLUMN_NAME}'." "Please provide valid metadata."
@@ -98,7 +98,7 @@ def _get_period(c: Chunk, period_column_name: str = NML_METADATA_PERIOD_COLUMN_N
     return c.data[period_column_name].iloc[0]
 
 
-def _is_transition(c: Chunk, period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME) -> bool:
+def _is_transition(c: Chunk, period_column_name: str) -> bool:
     if c.data.shape[0] > 1:
         return c.data[period_column_name].nunique() > 1
     else:
@@ -122,7 +122,12 @@ class Chunker(abc.ABC):
         pass
 
     def split(
-        self, data: pd.DataFrame, timestamp_column_name: str, columns=None, minimum_chunk_size: int = None
+        self,
+        data: pd.DataFrame,
+        timestamp_column_name: str,
+        period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
+        columns=None,
+        minimum_chunk_size: int = None,
     ) -> List[Chunk]:
         """Splits a given data frame into a list of chunks.
 
@@ -142,6 +147,8 @@ class Chunker(abc.ABC):
             The data to be split into chunks
         timestamp_column_name: str
             Name of the column containing the timestamp of an observation.
+        period_column_name: str
+            Name of the column containing the period of an observation, if any.
         columns: List[str], default=None
             A list of columns to be included in the resulting chunk data. Unlisted columns will be dropped.
         minimum_chunk_size: int, default=None
@@ -163,15 +170,15 @@ class Chunker(abc.ABC):
         data = data.sort_values(by=[timestamp_column_name]).reset_index(drop=True)
 
         try:
-            chunks = self._split(data, timestamp_column_name, minimum_chunk_size)
+            chunks = self._split(data, timestamp_column_name, period_column_name, minimum_chunk_size)
         except Exception as exc:
             raise ChunkerException(f"could not split data into chunks: {exc}")
 
         for c in chunks:
-            if _is_transition(c):
-                c.is_transition = True
-
-            c.period = _get_period(c)
+            if period_column_name in c.data.columns:
+                if _is_transition(c, period_column_name):
+                    c.is_transition = True
+                c.period = _get_period(c, period_column_name)
 
             c.start_index, c.end_index = _get_boundary_indices(c)
 
@@ -202,7 +209,9 @@ class Chunker(abc.ABC):
 
     # TODO wording
     @abc.abstractmethod
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(
+        self, data: pd.DataFrame, timestamp_column_name: str, period_column_name: str, minimum_chunk_size: int = None
+    ) -> List[Chunk]:
         """Splits the DataFrame into chunks.
 
         Abstract method, to be implemented within inheriting classes.
@@ -297,7 +306,9 @@ class PeriodBasedChunker(Chunker):
 
         self.offset = offset
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(
+        self, data: pd.DataFrame, timestamp_column_name: str, period_column_name: str, minimum_chunk_size: int = None
+    ) -> List[Chunk]:
         chunks = []
         try:
             grouped_data = data.groupby(pd.to_datetime(data[timestamp_column_name]).dt.to_period(self.offset))
@@ -375,7 +386,9 @@ class SizeBasedChunker(Chunker):
         self.chunk_size = chunk_size
         self.drop_incomplete = drop_incomplete
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(
+        self, data: pd.DataFrame, timestamp_column_name: str, period_column_name: str, minimum_chunk_size: int = None
+    ) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
             chunk_data = data.loc[index : index + chunk_size - 1, :]
             min_date = pd.to_datetime(chunk_data[timestamp_column_name].min())
@@ -387,7 +400,7 @@ class SizeBasedChunker(Chunker):
                 end_datetime=max_date,
             )
 
-        data = data.copy().reset_index()
+        data = data.copy().reset_index(drop=True)
         chunks = [
             _create_chunk(index=i, data=data, chunk_size=self.chunk_size)
             for i in range(0, len(data), self.chunk_size)
@@ -452,7 +465,9 @@ class CountBasedChunker(Chunker):
 
         self.chunk_count = chunk_count
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(
+        self, data: pd.DataFrame, timestamp_column_name: str, period_column_name: str, minimum_chunk_size: int = None
+    ) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
@@ -482,14 +497,19 @@ class DefaultChunker(Chunker):
         """Creates a new DefaultChunker."""
         super(DefaultChunker, self).__init__()
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(
+        self, data: pd.DataFrame, timestamp_column_name: str, period_column_name: str, minimum_chunk_size: int = None
+    ) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
-        data = data.copy().reset_index()
+        data = data.copy().reset_index(drop=True)
 
         chunk_size = data.shape[0] // self.DEFAULT_CHUNK_COUNT
         chunks = SizeBasedChunker(chunk_size=chunk_size).split(
-            data=data, timestamp_column_name=timestamp_column_name, minimum_chunk_size=minimum_chunk_size
+            data=data,
+            timestamp_column_name=timestamp_column_name,
+            period_column_name=period_column_name,
+            minimum_chunk_size=minimum_chunk_size,
         )
         return chunks

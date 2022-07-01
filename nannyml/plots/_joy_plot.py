@@ -122,7 +122,7 @@ def _create_joy_table(
     if chunk_types is None:
         chunk_types = ['reference', 'analysis']
 
-    joy_table = pd.merge(drift_table, kde_table, on=chunk_column_name)
+    joy_table = pd.merge(drift_table, kde_table)
 
     joy_table['hue'] = 0
     if chunk_types and chunk_type_column_name and chunk_column_name in drift_table.columns:
