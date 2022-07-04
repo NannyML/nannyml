@@ -1,10 +1,13 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+from enum import Enum
 from typing import Dict, Protocol, Union  # noqa: TYP001
 
 import pandas as pd
 from plotly.graph_objs import Figure
+
+from nannyml.exceptions import InvalidArgumentsException
 
 
 class Result(Protocol):
@@ -36,3 +39,21 @@ class Estimator(Protocol):
 
 
 ModelOutputsType = Union[str, Dict[str, str]]
+
+
+class UseCase(str, Enum):
+    CLASSIFICATION_BINARY = 'classification_binary'
+    CLASSIFICATION_MULTICLASS = 'classification_multiclass'
+    REGRESSION = 'regression'
+
+
+def derive_use_case(y_pred_proba: ModelOutputsType) -> UseCase:
+    if isinstance(y_pred_proba, Dict):
+        return UseCase.CLASSIFICATION_MULTICLASS
+    elif isinstance(y_pred_proba, str):
+        return UseCase.CLASSIFICATION_BINARY
+    else:
+        raise InvalidArgumentsException(
+            "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
+            "but should be of type 'Union[str, Dict[str, str].'"
+        )

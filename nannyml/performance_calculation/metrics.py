@@ -4,8 +4,9 @@
 
 """Module containing metric utilities and implementations."""
 import abc
-from typing import Type  # noqa: TYP001
-from typing import Dict, List, Tuple
+import logging
+from logging import Logger
+from typing import Any, Callable, Dict, List, Tuple  # noqa: TYP001
 
 import numpy as np
 import pandas as pd
@@ -19,20 +20,10 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from nannyml import Chunk, Chunker
+from nannyml._typing import UseCase
+from nannyml.base import AbstractCalculator
+from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata.base import (
-    NML_METADATA_PERIOD_COLUMN_NAME,
-    NML_METADATA_TARGET_COLUMN_NAME,
-    ModelMetadata,
-    NML_METADATA_REFERENCE_period_NAME,
-)
-from nannyml.metadata.binary_classification import (
-    NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
-    NML_METADATA_PREDICTION_COLUMN_NAME,
-    BinaryClassificationMetadata,
-)
-from nannyml.metadata.multiclass_classification import MulticlassClassificationMetadata
 
 
 class Metric(abc.ABC):
@@ -42,7 +33,7 @@ class Metric(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        metadata: ModelMetadata,
+        calculator: AbstractCalculator,
         upper_threshold: float = None,
         lower_threshold: float = None,
     ):
@@ -64,7 +55,14 @@ class Metric(abc.ABC):
         """
         self.display_name = display_name
         self.column_name = column_name
-        self.metadata = metadata
+
+        from .calculator import PerformanceCalculator
+
+        if not isinstance(calculator, PerformanceCalculator):
+            raise RuntimeError(
+                f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
+            )
+        self.calculator = calculator
         self.lower_threshold = lower_threshold
         self.upper_threshold = upper_threshold
 
@@ -87,7 +85,11 @@ class Metric(abc.ABC):
 
         # Calculate alert thresholds
         if self.upper_threshold is None and self.lower_threshold is None:
-            reference_chunks = chunker.split(reference_data, minimum_chunk_size=self.minimum_chunk_size())
+            reference_chunks = chunker.split(
+                reference_data,
+                minimum_chunk_size=self.minimum_chunk_size(),
+                timestamp_column_name=self.calculator.timestamp_column_name,
+            )
             self.lower_threshold, self.upper_threshold = self._calculate_alert_thresholds(reference_chunks)
 
         return
@@ -137,232 +139,281 @@ class Metric(abc.ABC):
         )
 
 
-def _floor_chunk_size(calculated_min_chunk_size: float, lower_limit_on_chunk_size: int = 300) -> int:
-    return int(np.maximum(calculated_min_chunk_size, lower_limit_on_chunk_size))
+class MetricFactory:
+    """A factory class that produces Metric instances based on a given magic string or a metric specification."""
+
+    registry: Dict[str, Dict[UseCase, Metric]] = {}
+
+    @classmethod
+    def _logger(cls) -> Logger:
+        return logging.getLogger(__name__)
+
+    @classmethod
+    def create(cls, key: str, use_case: UseCase, kwargs: Dict[str, Any] = {}) -> Metric:
+        """Returns a Metric instance for a given key."""
+        if not isinstance(key, str):
+            raise InvalidArgumentsException(
+                f"cannot create metric given a '{type(key)}'" "Please provide a string, function or Metric"
+            )
+
+        if key not in cls.registry:
+            raise InvalidArgumentsException(
+                f"unknown metric key '{key}' given. "
+                "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
+                "'accuracy']."
+            )
+
+        if use_case not in cls.registry[key]:
+            raise RuntimeError(
+                f"metric '{key}' is currently not supported for use case {use_case}. "
+                "Please specify another metric or use one of these supported model types for this metric: "
+                f"{[md for md in cls.registry[key]]}"
+            )
+        metric_class = cls.registry[key][use_case]
+        return metric_class(**kwargs)  # type: ignore
+
+    @classmethod
+    def register(cls, metric: str, use_case: UseCase) -> Callable:
+        def inner_wrapper(wrapped_class: Metric) -> Metric:
+            if metric in cls.registry:
+                if use_case in cls.registry[metric]:
+                    cls._logger().warning(f"re-registering Metric for metric='{metric}' and use_case='{use_case}'")
+                cls.registry[metric][use_case] = wrapped_class
+            else:
+                cls.registry[metric] = {use_case: wrapped_class}
+            return wrapped_class
+
+        return inner_wrapper
 
 
-def _minimum_chunk_size_roc_auc(
-    data: pd.DataFrame,
-    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
-    predicted_probability_column_name: str = NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
-    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-    required_std: float = 0.02,
-) -> int:
-    """Estimation of minimum sample size to get required standard deviation of AUROC.
+# def _floor_chunk_size(calculated_min_chunk_size: float, lower_limit_on_chunk_size: int = 300) -> int:
+#     return int(np.maximum(calculated_min_chunk_size, lower_limit_on_chunk_size))
+#
+#
+# def _minimum_chunk_size_roc_auc(
+#     data: pd.DataFrame,
+#     period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
+#     predicted_probability_column_name: str = NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME,
+#     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+#     required_std: float = 0.02,
+# ) -> int:
+#     """Estimation of minimum sample size to get required standard deviation of AUROC.
+#
+#     Estimation takes advantage of Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
+#     """
+#     y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+#     y_pred_proba = data.loc[
+#         data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, predicted_probability_column_name
+#     ]
+#
+#     y_true, y_pred_proba = np.asarray(y_true), np.asarray(y_pred_proba)
+#     if np.mean(y_true) > 0.5:
+#         y_true = abs(np.asarray(y_true) - 1)
+#         y_pred_proba = 1 - y_pred_proba
+#
+#     sorted_idx = np.argsort(y_pred_proba)
+#     y_pred_proba = y_pred_proba[sorted_idx]
+#     y_true = y_true[sorted_idx]
+#     rank_order = np.asarray(range(len(y_pred_proba)))
+#     positive_ranks = y_true * rank_order
+#     indexes = np.unique(positive_ranks)[1:]
+#     ser = []
+#
+#     for i, index in enumerate(indexes):
+#         ser.append(index - i)
+#
+#     n_pos = np.sum(y_true)
+#     n_neg = len(y_true) - n_pos
+#     ser_divided = ser / (n_pos * n_neg)
+#     ser_multi = ser_divided * n_pos
+#
+#     pos_targets = y_true
+#     # neg_targets = abs(y_true - 1)
+#
+#     n_pos_targets = np.sum(pos_targets)
+#
+#     fraction = n_pos_targets / len(y_true)
+#     sample_size = (np.std(ser_multi)) ** 2 / ((required_std**2) * fraction)
+#     sample_size = np.minimum(sample_size, len(y_true))
+#     sample_size = np.round(sample_size, -2)
+#
+#     return _floor_chunk_size(sample_size)
+#
+#
+# def _minimum_chunk_size_f1(
+#     data: pd.DataFrame,
+#     period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
+#     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+#     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+#     required_std: float = 0.02,
+# ):
+#     """Estimation of minimum sample size to get required standard deviation of F1.
+#
+#     Estimation takes advantage of Standard Error of the Mean formula.
+#     """
+#     y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+#     y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
+#
+#     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+#
+#     TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
+#     FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
+#     FN = np.where((y_true != y_pred) & (y_pred == 0), 0, np.nan)
+#
+#     TP = TP[~np.isnan(TP)]
+#     FN = FN[~np.isnan(FN)]
+#     FP = FP[~np.isnan(FP)]
+#
+#     tp_fp_fn = np.concatenate([TP, FN, FP])
+#
+#     correcting_factor = len(tp_fp_fn) / ((len(FN) + len(FP)) * 0.5 + len(TP))
+#     obs_level_f1 = tp_fp_fn * correcting_factor
+#     fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
+#     sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std**2) * fraction_of_relevant)
+#     sample_size = np.minimum(sample_size, len(y_true))
+#     sample_size = np.round(sample_size, -2)
+#
+#     return _floor_chunk_size(sample_size)
+#
+#
+# def _minimum_chunk_size_precision(
+#     data: pd.DataFrame,
+#     period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
+#     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+#     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+#     required_std: float = 0.02,
+# ):
+#     """Estimation of minimum sample size to get required standard deviation of Precision.
+#
+#     Estimation takes advantage of Standard Error of the Mean formula.
+#     """
+#     y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+#     y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
+#
+#     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+#
+#     TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
+#     FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
+#
+#     TP = TP[~np.isnan(TP)]
+#     FP = FP[~np.isnan(FP)]
+#     obs_level_precision = np.concatenate([TP, FP])
+#     amount_positive_pred = np.sum(y_pred)
+#     fraction_of_pos_pred = amount_positive_pred / len(y_pred)
+#     sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std**2) * fraction_of_pos_pred)
+#     sample_size = np.minimum(sample_size, len(y_true))
+#     sample_size = np.round(sample_size, -2)
+#
+#     return _floor_chunk_size(sample_size)
+#
+#
+# def _minimum_chunk_size_recall(
+#     data: pd.DataFrame,
+#     period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
+#     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+#     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+#     required_std: float = 0.02,
+# ):
+#     """Estimation of minimum sample size to get required standard deviation of Recall.
+#
+#     Estimation takes advantage of Standard Error of the Mean formula.
+#     """
+#     y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+#     y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
+#
+#     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+#
+#     TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
+#     FN = np.where((y_true != y_pred) & (y_pred == 0), 0, np.nan)
+#     TP = TP[~np.isnan(TP)]
+#     FN = FN[~np.isnan(FN)]
+#
+#     obs_level_recall = np.concatenate([TP, FN])
+#     fraction_of_relevant = sum(obs_level_recall) / len(y_pred)
+#
+#     sample_size = ((np.std(obs_level_recall)) ** 2) / ((required_std**2) * fraction_of_relevant)
+#     sample_size = np.minimum(sample_size, len(y_true))
+#     sample_size = np.round(sample_size, -2)
+#
+#     return _floor_chunk_size(sample_size)
+#
+#
+# def _minimum_chunk_size_specificity(
+#     data: pd.DataFrame,
+#     period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
+#     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+#     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+#     required_std: float = 0.02,
+# ):
+#     """Estimation of minimum sample size to get required standard deviation of Specificity.
+#
+#     Estimation takes advantage of Standard Error of the Mean formula.
+#     """
+#     y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+#     y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
+#
+#     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+#     TN = np.where((y_true == y_pred) & (y_pred == 0), 1, np.nan)
+#     FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
+#     TN = TN[~np.isnan(TN)]
+#     FP = FP[~np.isnan(FP)]
+#
+#     obs_level_specificity = np.concatenate([TN, FP])
+#     fraction_of_relevant = len(obs_level_specificity) / len(y_pred)
+#     sample_size = ((np.std(obs_level_specificity)) ** 2) / ((required_std**2) * fraction_of_relevant)
+#     sample_size = np.minimum(sample_size, len(y_true))
+#     sample_size = np.round(sample_size, -2)
+#
+#     return _floor_chunk_size(sample_size)
+#
+#
+# def _minimum_chunk_size_accuracy(
+#     data: pd.DataFrame,
+#     period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
+#     prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
+#     target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
+#     required_std: float = 0.02,
+# ):
+#     """Estimation of minimum sample size to get required standard deviation of Accuracy.
+#
+#     Estimation takes advantage of Standard Error of the Mean formula.
+#     """
+#     y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
+#     y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
+#
+#     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+#     y_true = np.asarray(y_true).astype(int)
+#
+#     y_pred = np.asarray(y_pred).astype(int)
+#     correct_table = (y_true == y_pred).astype(int)
+#     sample_size = (np.std(correct_table) ** 2) / (required_std**2)
+#     sample_size = np.minimum(sample_size, len(y_true))
+#     sample_size = np.round(sample_size, -2)
+#
+#     return _floor_chunk_size(sample_size)
 
-    Estimation takes advantage of Standard Error of the Mean formula and expressing AUROC as Mann-Whitney U statistic.
-    """
-    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
-    y_pred_proba = data.loc[
-        data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, predicted_probability_column_name
-    ]
 
-    y_true, y_pred_proba = np.asarray(y_true), np.asarray(y_pred_proba)
-    if np.mean(y_true) > 0.5:
-        y_true = abs(np.asarray(y_true) - 1)
-        y_pred_proba = 1 - y_pred_proba
-
-    sorted_idx = np.argsort(y_pred_proba)
-    y_pred_proba = y_pred_proba[sorted_idx]
-    y_true = y_true[sorted_idx]
-    rank_order = np.asarray(range(len(y_pred_proba)))
-    positive_ranks = y_true * rank_order
-    indexes = np.unique(positive_ranks)[1:]
-    ser = []
-
-    for i, index in enumerate(indexes):
-        ser.append(index - i)
-
-    n_pos = np.sum(y_true)
-    n_neg = len(y_true) - n_pos
-    ser_divided = ser / (n_pos * n_neg)
-    ser_multi = ser_divided * n_pos
-
-    pos_targets = y_true
-    # neg_targets = abs(y_true - 1)
-
-    n_pos_targets = np.sum(pos_targets)
-
-    fraction = n_pos_targets / len(y_true)
-    sample_size = (np.std(ser_multi)) ** 2 / ((required_std**2) * fraction)
-    sample_size = np.minimum(sample_size, len(y_true))
-    sample_size = np.round(sample_size, -2)
-
-    return _floor_chunk_size(sample_size)
-
-
-def _minimum_chunk_size_f1(
-    data: pd.DataFrame,
-    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
-    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-    required_std: float = 0.02,
-):
-    """Estimation of minimum sample size to get required standard deviation of F1.
-
-    Estimation takes advantage of Standard Error of the Mean formula.
-    """
-    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
-    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
-
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-
-    TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
-    FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
-    FN = np.where((y_true != y_pred) & (y_pred == 0), 0, np.nan)
-
-    TP = TP[~np.isnan(TP)]
-    FN = FN[~np.isnan(FN)]
-    FP = FP[~np.isnan(FP)]
-
-    tp_fp_fn = np.concatenate([TP, FN, FP])
-
-    correcting_factor = len(tp_fp_fn) / ((len(FN) + len(FP)) * 0.5 + len(TP))
-    obs_level_f1 = tp_fp_fn * correcting_factor
-    fraction_of_relevant = len(tp_fp_fn) / len(y_pred)
-    sample_size = ((np.std(obs_level_f1)) ** 2) / ((required_std**2) * fraction_of_relevant)
-    sample_size = np.minimum(sample_size, len(y_true))
-    sample_size = np.round(sample_size, -2)
-
-    return _floor_chunk_size(sample_size)
-
-
-def _minimum_chunk_size_precision(
-    data: pd.DataFrame,
-    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
-    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-    required_std: float = 0.02,
-):
-    """Estimation of minimum sample size to get required standard deviation of Precision.
-
-    Estimation takes advantage of Standard Error of the Mean formula.
-    """
-    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
-    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
-
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-
-    TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
-    FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
-
-    TP = TP[~np.isnan(TP)]
-    FP = FP[~np.isnan(FP)]
-    obs_level_precision = np.concatenate([TP, FP])
-    amount_positive_pred = np.sum(y_pred)
-    fraction_of_pos_pred = amount_positive_pred / len(y_pred)
-    sample_size = ((np.std(obs_level_precision)) ** 2) / ((required_std**2) * fraction_of_pos_pred)
-    sample_size = np.minimum(sample_size, len(y_true))
-    sample_size = np.round(sample_size, -2)
-
-    return _floor_chunk_size(sample_size)
-
-
-def _minimum_chunk_size_recall(
-    data: pd.DataFrame,
-    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
-    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-    required_std: float = 0.02,
-):
-    """Estimation of minimum sample size to get required standard deviation of Recall.
-
-    Estimation takes advantage of Standard Error of the Mean formula.
-    """
-    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
-    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
-
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-
-    TP = np.where((y_true == y_pred) & (y_pred == 1), 1, np.nan)
-    FN = np.where((y_true != y_pred) & (y_pred == 0), 0, np.nan)
-    TP = TP[~np.isnan(TP)]
-    FN = FN[~np.isnan(FN)]
-
-    obs_level_recall = np.concatenate([TP, FN])
-    fraction_of_relevant = sum(obs_level_recall) / len(y_pred)
-
-    sample_size = ((np.std(obs_level_recall)) ** 2) / ((required_std**2) * fraction_of_relevant)
-    sample_size = np.minimum(sample_size, len(y_true))
-    sample_size = np.round(sample_size, -2)
-
-    return _floor_chunk_size(sample_size)
-
-
-def _minimum_chunk_size_specificity(
-    data: pd.DataFrame,
-    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
-    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-    required_std: float = 0.02,
-):
-    """Estimation of minimum sample size to get required standard deviation of Specificity.
-
-    Estimation takes advantage of Standard Error of the Mean formula.
-    """
-    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
-    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
-
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-    TN = np.where((y_true == y_pred) & (y_pred == 0), 1, np.nan)
-    FP = np.where((y_true != y_pred) & (y_pred == 1), 0, np.nan)
-    TN = TN[~np.isnan(TN)]
-    FP = FP[~np.isnan(FP)]
-
-    obs_level_specificity = np.concatenate([TN, FP])
-    fraction_of_relevant = len(obs_level_specificity) / len(y_pred)
-    sample_size = ((np.std(obs_level_specificity)) ** 2) / ((required_std**2) * fraction_of_relevant)
-    sample_size = np.minimum(sample_size, len(y_true))
-    sample_size = np.round(sample_size, -2)
-
-    return _floor_chunk_size(sample_size)
-
-
-def _minimum_chunk_size_accuracy(
-    data: pd.DataFrame,
-    period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
-    prediction_column_name: str = NML_METADATA_PREDICTION_COLUMN_NAME,
-    target_column_name: str = NML_METADATA_TARGET_COLUMN_NAME,
-    required_std: float = 0.02,
-):
-    """Estimation of minimum sample size to get required standard deviation of Accuracy.
-
-    Estimation takes advantage of Standard Error of the Mean formula.
-    """
-    y_true = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, target_column_name]
-    y_pred = data.loc[data[period_column_name] == NML_METADATA_REFERENCE_period_NAME, prediction_column_name]
-
-    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
-    y_true = np.asarray(y_true).astype(int)
-
-    y_pred = np.asarray(y_pred).astype(int)
-    correct_table = (y_true == y_pred).astype(int)
-    sample_size = (np.std(correct_table) ** 2) / (required_std**2)
-    sample_size = np.minimum(sample_size, len(y_true))
-    sample_size = np.round(sample_size, -2)
-
-    return _floor_chunk_size(sample_size)
-
-
+@MetricFactory.register(metric='roc_auc', use_case=UseCase.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new AUROC instance."""
-        super().__init__(display_name='ROC AUC', column_name='roc_auc', metadata=metadata)
+        super().__init__(display_name='ROC AUC', column_name='roc_auc', calculator=calculator)
 
     def __str__(self):
         return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._min_chunk_size = _minimum_chunk_size_roc_auc(reference_data)
+        # self._min_chunk_size = _minimum_chunk_size_roc_auc(reference_data)
+        _list_missing([self.calculator.y_true, self.calculator.y_pred_proba], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        self.metadata.check_has_fields(['target_column_name', 'predicted_probability_column_name'])
+        _list_missing([self.calculator.y_true, self.calculator.y_pred_proba], list(data.columns))
 
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTED_PROBABILITY_COLUMN_NAME]  # TODO: this should be predicted_probabilities
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred_proba]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -372,25 +423,27 @@ class BinaryClassificationAUROC(Metric):
             return roc_auc_score(y_true, y_pred)
 
 
+@MetricFactory.register(metric='f1', use_case=UseCase.CLASSIFICATION_BINARY)
 class BinaryClassificationF1(Metric):
     """F1 score metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new F1 instance."""
-        super().__init__(display_name='F1', column_name='f1', metadata=metadata)
+        super().__init__(display_name='F1', column_name='f1', calculator=calculator)
 
     def __str__(self):
         return "f1"
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._min_chunk_size = _minimum_chunk_size_f1(reference_data)
+        # self._min_chunk_size = _minimum_chunk_size_f1(reference_data)
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        self.metadata.check_has_fields(['target_column_name', 'prediction_column_name'])
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -400,26 +453,26 @@ class BinaryClassificationF1(Metric):
             return f1_score(y_true, y_pred)
 
 
+@MetricFactory.register(metric='precision', use_case=UseCase.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
     """Precision metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new Precision instance."""
-        super().__init__(display_name='Precision', column_name='precision', metadata=metadata)
+        super().__init__(display_name='Precision', column_name='precision', calculator=calculator)
 
     def __str__(self):
         return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._min_chunk_size = _minimum_chunk_size_precision(reference_data)
+        # self._min_chunk_size = _minimum_chunk_size_precision(reference_data)
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -429,26 +482,26 @@ class BinaryClassificationPrecision(Metric):
             return precision_score(y_true, y_pred)
 
 
+@MetricFactory.register(metric='recall', use_case=UseCase.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new Recall instance."""
-        super().__init__(display_name='Recall', column_name='recall', metadata=metadata)
+        super().__init__(display_name='Recall', column_name='recall', calculator=calculator)
 
     def __str__(self):
         return "recall"
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._min_chunk_size = _minimum_chunk_size_recall(reference_data)
+        # self._min_chunk_size = _minimum_chunk_size_recall(reference_data)
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -458,26 +511,26 @@ class BinaryClassificationRecall(Metric):
             return recall_score(y_true, y_pred)
 
 
+@MetricFactory.register(metric='specificity', use_case=UseCase.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
     """Specificity metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new F1 instance."""
-        super().__init__(display_name='Specificity', column_name='specificity', metadata=metadata)
+        super().__init__(display_name='Specificity', column_name='specificity', calculator=calculator)
 
     def __str__(self):
         return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._min_chunk_size = _minimum_chunk_size_specificity(reference_data)
+        # self._min_chunk_size = _minimum_chunk_size_specificity(reference_data)
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         if y_pred.isna().all():
             raise InvalidArgumentsException(
@@ -493,26 +546,26 @@ class BinaryClassificationSpecificity(Metric):
             return tn / (tn + fp)
 
 
+@MetricFactory.register(metric='accuracy', use_case=UseCase.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
     """Accuracy metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new Accuracy instance."""
-        super().__init__(display_name='Accuracy', column_name='accuracy', metadata=metadata)
+        super().__init__(display_name='Accuracy', column_name='accuracy', calculator=calculator)
 
     def __str__(self):
         return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._min_chunk_size = _minimum_chunk_size_accuracy(reference_data)
+        # self._min_chunk_size = _minimum_chunk_size_accuracy(reference_data)
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         if y_pred.isna().all():
             raise InvalidArgumentsException(
@@ -528,40 +581,39 @@ class BinaryClassificationAccuracy(Metric):
             return (tp + tn) / (tp + tn + fp + fn)
 
 
+@MetricFactory.register(metric='roc_auc', use_case=UseCase.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new AUROC instance."""
-        super().__init__(display_name='ROC AUC', column_name='roc_auc', metadata=metadata)
+        super().__init__(display_name='ROC AUC', column_name='roc_auc', calculator=calculator)
         self._min_chunk_size = 300
 
     def __str__(self):
         return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        """Redefine to handle NaNs and edge cases."""
-        if not isinstance(self.metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+        if not isinstance(self.calculator.y_pred_proba, Dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"multiclass use cases require 'y_pred_proba' to "
+                "be a dictionary mapping classes to columns."
+            )
 
-        self.metadata.check_has_fields(
-            [
-                'period_column_name',
-                'timestamp_column_name',
-                'target_column_name',
-                'predicted_probabilities_column_names',
-            ]
+        _list_missing(
+            [self.calculator.y_true] + [v for k, v in self.calculator.y_pred_proba.items()], list(data.columns)
         )
 
         labels, class_probability_columns = [], []
-        for label in sorted(list(self.metadata.predicted_class_probability_metadata_columns())):
+        for label in sorted(list(self.calculator.y_pred_proba.keys())):
             labels.append(label)
-            class_probability_columns.append(self.metadata.predicted_class_probability_metadata_columns()[label])
+            class_probability_columns.append(self.calculator.y_pred_proba[label])
 
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
+        y_true = data[self.calculator.y_true]
         y_pred = data[class_probability_columns]
 
         if y_pred.isna().all().any():
@@ -569,46 +621,45 @@ class MulticlassClassificationAUROC(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
-
         if y_true.nunique() <= 1:
             return np.nan
         else:
             return roc_auc_score(y_true, y_pred, multi_class='ovr', average='macro', labels=labels)
 
 
+@MetricFactory.register(metric='f1', use_case=UseCase.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
     """F1 score metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new F1 instance."""
-        super().__init__(display_name='F1', column_name='f1', metadata=metadata)
+        super().__init__(display_name='F1', column_name='f1', calculator=calculator)
         self._min_chunk_size = 300
 
     def __str__(self):
         return "f1"
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+        if not isinstance(self.calculator.y_pred_proba, Dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"multiclass use cases require 'y_pred_proba' to "
+                "be a dictionary mapping classes to columns."
+            )
 
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        labels = sorted(list(self.calculator.y_pred_proba.keys()))
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
-
-        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -616,38 +667,39 @@ class MulticlassClassificationF1(Metric):
             return f1_score(y_true, y_pred, average='macro', labels=labels)
 
 
+@MetricFactory.register(metric='precision', use_case=UseCase.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(Metric):
     """Precision metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new Precision instance."""
-        super().__init__(display_name='Precision', column_name='precision', metadata=metadata)
+        super().__init__(display_name='Precision', column_name='precision', calculator=calculator)
         self._min_chunk_size = 300
 
     def __str__(self):
         return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+        if not isinstance(self.calculator.y_pred_proba, Dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"multiclass use cases require 'y_pred_proba' to "
+                "be a dictionary mapping classes to columns."
+            )
 
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        labels = sorted(list(self.calculator.y_pred_proba.keys()))
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
-
-        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -655,38 +707,39 @@ class MulticlassClassificationPrecision(Metric):
             return precision_score(y_true, y_pred, average='macro', labels=labels)
 
 
+@MetricFactory.register(metric='recall', use_case=UseCase.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new Recall instance."""
-        super().__init__(display_name='Recall', column_name='recall', metadata=metadata)
+        super().__init__(display_name='Recall', column_name='recall', calculator=calculator)
         self._min_chunk_size = 300
 
     def __str__(self):
         return "recall"
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+        if not isinstance(self.calculator.y_pred_proba, Dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"multiclass use cases require 'y_pred_proba' to "
+                "be a dictionary mapping classes to columns."
+            )
 
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        labels = sorted(list(self.calculator.y_pred_proba.keys()))
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
-
-        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -694,38 +747,39 @@ class MulticlassClassificationRecall(Metric):
             return recall_score(y_true, y_pred, average='macro', labels=labels)
 
 
+@MetricFactory.register(metric='specificity', use_case=UseCase.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new Specificity instance."""
-        super().__init__(display_name='Specificity', column_name='specificity', metadata=metadata)
+        super().__init__(display_name='Specificity', column_name='specificity', calculator=calculator)
         self._min_chunk_size = 300
 
     def __str__(self):
         return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+        if not isinstance(self.calculator.y_pred_proba, Dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"multiclass use cases require 'y_pred_proba' to "
+                "be a dictionary mapping classes to columns."
+            )
 
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        labels = sorted(list(self.metadata.predicted_class_probability_metadata_columns().keys()))
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        labels = sorted(list(self.calculator.y_pred_proba.keys()))
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
-                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
+                f"could not calculate metric {self.display_name}: prediction column contains no data"
             )
-
-        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -737,37 +791,31 @@ class MulticlassClassificationSpecificity(Metric):
             return np.mean(class_wise_specificity)
 
 
+@MetricFactory.register(metric='accuracy', use_case=UseCase.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(Metric):
     """Accuracy metric."""
 
-    def __init__(self, metadata: ModelMetadata):
+    def __init__(self, calculator):
         """Creates a new Accuracy instance."""
-        super().__init__(display_name='Accuracy', column_name='accuracy', metadata=metadata)
+        super().__init__(display_name='Accuracy', column_name='accuracy', calculator=calculator)
         self._min_chunk_size = 300
 
     def __str__(self):
         return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
-        pass
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
 
-        self.metadata.check_has_fields(
-            ['period_column_name', 'timestamp_column_name', 'target_column_name', 'prediction_column_name']
-        )
-
-        y_true = data[NML_METADATA_TARGET_COLUMN_NAME]
-        y_pred = data[NML_METADATA_PREDICTION_COLUMN_NAME]
+        y_true = data[self.calculator.y_true]
+        y_pred = data[self.calculator.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
                 f"could not calculate metric '{self.display_name}': " "prediction column contains no data"
             )
-
-        # y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
@@ -789,57 +837,7 @@ def _common_data_cleaning(y_true, y_pred):
     return y_true, y_pred
 
 
-class MetricFactory:
-    """A factory class that produces Metric instances based on a given magic string or a metric specification."""
-
-    _metrics: Dict[str, Dict[str, Type[Metric]]] = {
-        'roc_auc': {
-            BinaryClassificationMetadata.__name__: BinaryClassificationAUROC,
-            MulticlassClassificationMetadata.__name__: MulticlassClassificationAUROC,
-        },
-        'f1': {
-            BinaryClassificationMetadata.__name__: BinaryClassificationF1,
-            MulticlassClassificationMetadata.__name__: MulticlassClassificationF1,
-        },
-        'precision': {
-            BinaryClassificationMetadata.__name__: BinaryClassificationPrecision,
-            MulticlassClassificationMetadata.__name__: MulticlassClassificationPrecision,
-        },
-        'recall': {
-            BinaryClassificationMetadata.__name__: BinaryClassificationRecall,
-            MulticlassClassificationMetadata.__name__: MulticlassClassificationRecall,
-        },
-        'specificity': {
-            BinaryClassificationMetadata.__name__: BinaryClassificationSpecificity,
-            MulticlassClassificationMetadata.__name__: MulticlassClassificationSpecificity,
-        },
-        'accuracy': {
-            BinaryClassificationMetadata.__name__: BinaryClassificationAccuracy,
-            MulticlassClassificationMetadata.__name__: MulticlassClassificationAccuracy,
-        },
-    }
-
-    @classmethod
-    def create(cls, key: str, metadata: ModelMetadata) -> Metric:
-        """Returns a Metric instance for a given key."""
-        if not isinstance(key, str):
-            raise InvalidArgumentsException(
-                f"cannot create metric given a '{type(key)}'" "Please provide a string, function or Metric"
-            )
-
-        if key not in cls._metrics:
-            raise InvalidArgumentsException(
-                f"unknown metric key '{key}' given. "
-                "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
-                "'accuracy']."
-            )
-
-        metadata_class_name = type(metadata).__name__
-        if metadata_class_name not in cls._metrics[key]:
-            raise RuntimeError(
-                f"metric '{key}' is currently not supported for model type {metadata_class_name}. "
-                "Please specify another metric or use one of these supported model types for this metric: "
-                f"{[md for md in cls._metrics[key]]}"
-            )
-        metric_class = cls._metrics[key][metadata_class_name]
-        return metric_class(metadata=metadata)  # type: ignore
+def _list_missing(columns_to_find: List, dataset_columns: List):
+    missing = [col for col in columns_to_find if col not in dataset_columns]
+    if len(missing) > 0:
+        raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")

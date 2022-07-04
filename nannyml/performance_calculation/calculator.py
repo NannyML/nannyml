@@ -6,29 +6,31 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
-from nannyml import Chunker, InvalidArgumentsException, ModelMetadata
-from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.exceptions import CalculatorNotFittedException
-from nannyml.metadata.base import NML_METADATA_PERIOD_COLUMN_NAME, NML_METADATA_TARGET_COLUMN_NAME
-from nannyml.performance_calculation.metrics import MetricFactory
+from nannyml._typing import ModelOutputsType, derive_use_case
+from nannyml.base import AbstractCalculator
+from nannyml.chunk import Chunk, Chunker
+from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
+from nannyml.performance_calculation.metrics import Metric, MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
-from nannyml.preprocessing import preprocess
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
 
-class PerformanceCalculator:
+class PerformanceCalculator(AbstractCalculator):
     """Base class for performance metric calculation."""
 
     def __init__(
         self,
-        model_metadata: ModelMetadata,
+        timestamp_column_name: str,
         metrics: List[str],
+        y_true: str,
+        y_pred_proba: Optional[ModelOutputsType],
+        y_pred: Optional[str],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -38,8 +40,17 @@ class PerformanceCalculator:
 
         Parameters
         ----------
-        model_metadata : ModelMetadata
-            The metadata describing the monitored model.
+        y_true: str
+            The name of the column containing target values.
+        y_pred_proba: ModelOutputsType
+            Name(s) of the column(s) containing your model output.
+            Pass a single string when there is only a single model output column, e.g. in binary classification cases.
+            Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
+            The dictionary maps a class/label string to the column name containing model outputs for that class/label.
+        y_pred: str
+            The name of the column containing your model predictions.
+        timestamp_column_name: str
+            The name of the column containing the timestamp of the model prediction.
         metrics: List[str]
             A list of metrics to calculate.
         chunk_size: int
@@ -63,23 +74,22 @@ class PerformanceCalculator:
         >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
 
         """
-        self.metadata = model_metadata
-        self.metrics = [MetricFactory.create(m, self.metadata) for m in metrics]
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+
+        self.y_true = y_true
+        self.y_pred = y_pred
+        self.y_pred_proba = y_pred_proba
+        self.timestamp_column_name = timestamp_column_name
+        self.metrics: List[Metric] = [
+            MetricFactory.create(m, derive_use_case(self.y_pred_proba), {'calculator': self})  # type: ignore
+            for m in metrics
+        ]
+
         self._minimum_chunk_size = None
+        self.previous_reference_data: Optional[pd.DataFrame] = None
+        self.previous_reference_results: Optional[pd.DataFrame] = None
 
-        if chunker is None:
-            if chunk_size:
-                self.chunker = SizeBasedChunker(chunk_size=chunk_size)  # type: ignore
-            elif chunk_number:
-                self.chunker = CountBasedChunker(chunk_count=chunk_number)  # type: ignore
-            elif chunk_period:
-                self.chunker = PeriodBasedChunker(offset=chunk_period)  # type: ignore
-            else:
-                self.chunker = DefaultChunker()  # type: ignore
-        else:
-            self.chunker = chunker  # type: ignore
-
-    def fit(self, reference_data: pd.DataFrame) -> PerformanceCalculator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset.
 
         Parameters
@@ -99,16 +109,26 @@ class PerformanceCalculator:
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
 
-        reference_data = preprocess(data=reference_data, metadata=self.metadata, reference=True)
+        if self.y_true not in reference_data.columns:
+            raise InvalidArgumentsException(
+                f"target data column '{self.y_true}' not found in data columns: {reference_data.columns}."
+            )
+
+        reference_data = reference_data.copy()
+
+        # data validation is performed during the _fit for each metric
 
         for metric in self.metrics:
-            metric.fit(reference_data, self.chunker)
+            metric.fit(reference_data=reference_data, chunker=self.chunker)
 
         self._minimum_chunk_size = np.max([metric.minimum_chunk_size() for metric in self.metrics])
 
+        self.previous_reference_data = reference_data
+        self.previous_reference_results = self._calculate(reference_data).data
+
         return self
 
-    def calculate(self, analysis_data: pd.DataFrame) -> PerformanceCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculatorResult:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation.
 
         Parameters
@@ -126,29 +146,29 @@ class PerformanceCalculator:
         >>> # calculate realized performance on analysis data
         >>> realized_performance = calculator.calculate(ana_df)
         """
-        if analysis_data.empty:
+        if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        if self.metadata.target_column_name not in analysis_data.columns:
-            raise InvalidArgumentsException(
-                f"data does not contain target data column '{self.metadata.target_column_name}'."
-            )
+        if self.y_true not in data.columns:
+            raise InvalidArgumentsException(f"data does not contain target data column '{self.y_true}'.")
 
-        # Preprocess data
-        data: pd.DataFrame = preprocess(data=analysis_data, metadata=self.metadata)
+        data = data.copy()
 
         # Setup for target completeness rate
-        data['NML_TARGET_INCOMPLETE'] = data[NML_METADATA_TARGET_COLUMN_NAME].isna().astype(np.int16)
+        data['NML_TARGET_INCOMPLETE'] = data[self.y_true].isna().astype(np.int16)
 
         # Generate chunks
-        features_and_metadata = self.metadata.metadata_columns + [TARGET_COMPLETENESS_RATE_COLUMN_NAME]
         if self.chunker is None:
             raise CalculatorNotFittedException(
                 'chunker has not been set. '
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=self._minimum_chunk_size)
+        chunks = self.chunker.split(
+            data,
+            minimum_chunk_size=self._minimum_chunk_size,
+            timestamp_column_name=self.timestamp_column_name,
+        )
 
         # Construct result frame
         res = pd.DataFrame.from_records(
@@ -168,9 +188,7 @@ class PerformanceCalculator:
             ]
         )
 
-        return PerformanceCalculatorResult(
-            performance_data=res, model_metadata=self.metadata, metrics=[str(m) for m in self.metrics]
-        )
+        return PerformanceCalculatorResult(results_data=res, calculator=self)
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         metrics_results = {}
@@ -181,5 +199,6 @@ class PerformanceCalculator:
             metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
             metrics_results[f'{metric.column_name}_alert'] = (
                 metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
-            ) and (chunk.data[NML_METADATA_PERIOD_COLUMN_NAME] == 'analysis').all()
+            )
+
         return metrics_results

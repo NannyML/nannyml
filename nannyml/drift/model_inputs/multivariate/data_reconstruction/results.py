@@ -41,6 +41,13 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
 
         - ``drift``: plots drift per :class:`~nannyml.chunk.Chunk` for a chunked data set.
 
+        Parameters
+        ----------
+        kind: str, default=`feature_drift`
+            The kind of plot you want to have. Value can currently only be ``drift``.
+        plot_reference: bool, default=False
+            Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
+
         Returns
         -------
         fig: plotly.graph_objects.Figure
