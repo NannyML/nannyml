@@ -3,22 +3,34 @@
 #  License: Apache Software License 2.0
 
 """Implementation of the Data Reconstruction Drift Calculator."""
-from typing import Dict
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.drift.base import DriftResult
+from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._step_plot import _step_plot
 
 
-class DataReconstructionDriftCalculatorResult(DriftResult):
+class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
     """Contains the results of the data reconstruction drift calculation and adds functionality like plotting."""
 
-    calculator_name: str = "multivariate_data_reconstruction_feature_drift"
+    def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
+        super().__init__(results_data)
 
-    def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
+        from . import DataReconstructionDriftCalculator
+
+        if not isinstance(calculator, DataReconstructionDriftCalculator):
+            raise RuntimeError(
+                f"{calculator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
+            )
+        self.calculator = calculator
+
+    @property
+    def calculator_name(self) -> str:
+        return "multivariate_data_reconstruction_feature_drift"
+
+    def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> go.Figure:
         """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
         Chunks are set on a time-based X-axis by using the period containing their observations.
@@ -47,7 +59,7 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
         >>> drifts.plot(kind='drift').show()
         """
         if kind == 'drift':
-            return _plot_drift(self.data, args, kwargs)
+            return _plot_drift(self.data, self.calculator, plot_reference)
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. "
@@ -55,13 +67,21 @@ class DataReconstructionDriftCalculatorResult(DriftResult):
                 f"'prediction_drift', 'prediction_distribution']."
             )
 
-    @property
-    def plots(self) -> Dict[str, go.Figure]:
-        return {'multivariate_feature_drift': _plot_drift(self.data)}
+    # @property
+    # def plots(self) -> Dict[str, go.Figure]:
+    #     return {'multivariate_feature_drift': _plot_drift(self.data)}
 
 
-def _plot_drift(data: pd.DataFrame, *args, **kwargs) -> go.Figure:
-    plot_period_separator = len(data.value_counts()) > 1
+def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figure:
+    plot_period_separator = plot_reference
+
+    data['period'] = 'analysis'
+
+    if plot_reference:
+        reference_results = calculator.previous_reference_results
+        reference_results['period'] = 'reference'
+        data = pd.concat([reference_results, data], ignore_index=True)
+
     fig = _step_plot(
         table=data,
         metric_column_name='reconstruction_error',

@@ -11,10 +11,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml.base import AbstractCalculator
+from nannyml.base import AbstractCalculator, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateStatisticalDriftCalculatorResult
-from nannyml.plots._joy_plot import _create_kde_table
+from nannyml.exceptions import InvalidArgumentsException
 
 ALERT_THRESHOLD_P_VALUE = 0.05
 
@@ -38,6 +38,8 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         feature_column_names: List[str]
             A list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
+        timestamp_column_name: str
+            The name of the column containing the timestamp of the model prediction.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -93,6 +95,15 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
         """
+        if reference_data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        reference_data = reference_data.copy()
+
+        missing_columns = self.feature_column_names[~np.isin(self.feature_column_names, reference_data.columns)]
+        if len(missing_columns) > 0:
+            raise InvalidArgumentsException(f"data does not contain columns '{missing_columns}'.")
+
         self.previous_reference_data = reference_data.copy()
         self.previous_reference_results = self._calculate(self.previous_reference_data).data
 
@@ -123,20 +134,18 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> drift = drift_calc.calculate(data)
         """
+        if data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         data = data.copy()
 
-        # Get lists of categorical <-> categorical features
-        self.continuous_column_names = [
-            col for col in data[self.feature_column_names].select_dtypes(include=['float64', 'int64']).columns
-        ]
+        missing_columns = self.feature_column_names[~np.isin(self.feature_column_names, data.columns)]
+        if len(missing_columns) > 0:
+            raise InvalidArgumentsException(f"data does not contain columns '{missing_columns}'.")
 
-        self.categorical_column_names = [
-            col
-            for col in data[self.feature_column_names]
-            .select_dtypes(include=['object', 'string', 'category', 'bool'])
-            .columns
-        ]
+        self.continuous_column_names, self.categorical_column_names = _split_features_by_type(
+            data, self.feature_column_names
+        )
 
         # features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
         chunks = self.chunker.split(

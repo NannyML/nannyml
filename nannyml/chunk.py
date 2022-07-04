@@ -185,9 +185,7 @@ class Chunker(abc.ABC):
 
     # TODO wording
     @abc.abstractmethod
-    def _split(
-        self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None
-    ) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         """Splits the DataFrame into chunks.
 
         Abstract method, to be implemented within inheriting classes.
@@ -282,9 +280,7 @@ class PeriodBasedChunker(Chunker):
 
         self.offset = offset
 
-    def _split(
-        self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None
-    ) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         chunks = []
         try:
             grouped_data = data.groupby(pd.to_datetime(data[timestamp_column_name]).dt.to_period(self.offset))
@@ -362,9 +358,7 @@ class SizeBasedChunker(Chunker):
         self.chunk_size = chunk_size
         self.drop_incomplete = drop_incomplete
 
-    def _split(
-        self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None
-    ) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
             chunk_data = data.loc[index : index + chunk_size - 1, :]
             min_date = pd.to_datetime(chunk_data[timestamp_column_name].min())
@@ -441,9 +435,7 @@ class CountBasedChunker(Chunker):
 
         self.chunk_count = chunk_count
 
-    def _split(
-        self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None
-    ) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
@@ -473,9 +465,7 @@ class DefaultChunker(Chunker):
         """Creates a new DefaultChunker."""
         super(DefaultChunker, self).__init__()
 
-    def _split(
-        self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None
-    ) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 

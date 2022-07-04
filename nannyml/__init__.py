@@ -51,6 +51,7 @@ from .drift import (
     DriftResult,
     Ranker,
     Ranking,
+    StatisticalOutputDriftCalculator,
     TargetDistributionCalculator,
     UnivariateStatisticalDriftCalculator,
 )

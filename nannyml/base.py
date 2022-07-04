@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from typing import List, Tuple
 
 import pandas as pd
 import plotly.graph_objects
@@ -119,3 +120,19 @@ class AbstractCalculator(ABC):
     @abstractmethod
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractCalculatorResult:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
+
+
+def _split_features_by_type(data: pd.DataFrame, feature_column_names: List[str]) -> Tuple[List[str], List[str]]:
+    continuous_column_names = [col for col in feature_column_names if _column_is_continuous(data[col])]
+
+    categorical_column_names = [col for col in feature_column_names if _column_is_categorical(data[col])]
+
+    return continuous_column_names, categorical_column_names
+
+
+def _column_is_categorical(column: pd.Series) -> bool:
+    return column.dtype in ['object', 'string', 'category', 'bool']
+
+
+def _column_is_continuous(column: pd.Series) -> bool:
+    return column.dtype in ['float64', 'int64']

@@ -1,7 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import Dict, Protocol  # noqa: TYP001
+from typing import Dict, Protocol, Union  # noqa: TYP001
 
 import pandas as pd
 from plotly.graph_objs import Figure
@@ -33,3 +33,6 @@ class Estimator(Protocol):
 
     def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Perform an estimation based on analysis data."""
+
+
+ModelOutputsType = Union[str, Dict[str, str]]

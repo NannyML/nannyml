@@ -9,9 +9,9 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult
-from nannyml.chunk import Chunk, CountBasedChunker, DefaultChunker
+from nannyml.chunk import Chunk
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots._joy_plot import _joy_plot, _create_kde_table, _create_joy_table
+from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
 
@@ -25,7 +25,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
 
         if not isinstance(calculator, UnivariateStatisticalDriftCalculator):
-            raise InvalidArgumentsException(
+            raise RuntimeError(
                 f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
             )
         self.calculator = calculator
@@ -94,8 +94,16 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
 
         """
         if kind == 'feature_drift':
+            if feature_column_name is None:
+                raise InvalidArgumentsException(
+                    "must specify a feature to plot " "using the 'feature_column_name' parameter"
+                )
             return _feature_drift(self.data, self.calculator, feature_column_name, metric, plot_reference)
         elif kind == 'feature_distribution':
+            if feature_column_name is None:
+                raise InvalidArgumentsException(
+                    "must specify a feature to plot " "using the 'feature_column_name' parameter"
+                )
             return self._plot_feature_distribution(
                 analysis_data=self.calculator.previous_analysis_data,
                 plot_reference=plot_reference,
@@ -214,11 +222,17 @@ def _plot_continuous_feature_distribution(
 
     if plot_reference:
         reference_drift = calculator.previous_reference_results
+        if reference_drift is None:
+            raise RuntimeError(
+                f"could not plot continuous distribution for feature '{feature_column_name}': "
+                f"calculator is missing reference results\n{calculator}"
+            )
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
-        reference_feature_table = _create_feature_table(calculator.chunker.split(
-            calculator.previous_reference_data, calculator.timestamp_column_name))
+        reference_feature_table = _create_feature_table(
+            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
+        )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     fig = _joy_plot(
@@ -256,11 +270,17 @@ def _plot_categorical_feature_distribution(
 
     if plot_reference:
         reference_drift = calculator.previous_reference_results
+        if reference_drift is None:
+            raise RuntimeError(
+                f"could not plot categorical distribution for feature '{feature_column_name}': "
+                f"calculator is missing reference results\n{calculator}"
+            )
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
-        reference_feature_table = _create_feature_table(calculator.chunker.split(
-            calculator.previous_reference_data, calculator.timestamp_column_name))
+        reference_feature_table = _create_feature_table(
+            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
+        )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     fig = _stacked_bar_plot(
@@ -277,32 +297,3 @@ def _plot_categorical_feature_distribution(
 
 def _create_feature_table(chunks: List[Chunk]) -> pd.DataFrame:
     return pd.concat([chunk.data.assign(key=chunk.key) for chunk in chunks])
-
-
-def _reassemble_datasets_for_reference_data(
-    calculator, reference_data: pd.DataFrame, data: pd.DataFrame, drift_data: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    if isinstance(calculator.chunker, DefaultChunker):
-        combined_chunk_size = (reference_data.shape[0] + data.shape[0]) // calculator.chunker.DEFAULT_CHUNK_COUNT
-        reference_chunks_num = reference_data.shape[0] // combined_chunk_size
-        combined_drift_results = calculator.calculate(pd.concat([reference_data, data], ignore_index=True)).data
-        combined_drift_results['period'] = 'analysis'
-        for idx in range(reference_chunks_num):
-            combined_drift_results.at[idx, 'period'] = 'reference'
-        drift_data = combined_drift_results
-    elif isinstance(calculator.chunker, CountBasedChunker):
-        combined_chunk_size = (reference_data.shape[0] + data.shape[0]) // calculator.chunker.chunk_count
-        reference_chunks_num = reference_data.shape[0] // combined_chunk_size
-        combined_drift_results = calculator.calculate(pd.concat([reference_data, data], ignore_index=True)).data
-        combined_drift_results['period'] = 'analysis'
-        for idx in range(reference_chunks_num):
-            combined_drift_results.at[idx, 'period'] = 'reference'
-        drift_data = combined_drift_results
-    else:
-        reference_drift = calculator.calculate(reference_data)
-        reference_drift.data['period'] = 'reference'
-        drift_data = pd.concat([reference_drift.data, drift_data], ignore_index=True)
-
-    data = pd.concat([reference_data, data], ignore_index=True)
-
-    return drift_data, data

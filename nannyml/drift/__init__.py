@@ -18,5 +18,6 @@ from .model_inputs.multivariate.data_reconstruction import (
     DataReconstructionDriftCalculatorResult,
 )
 from .model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
+from .model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 from .ranking import AlertCountRanking, Ranker, Ranking
 from .target.target_distribution import TargetDistributionCalculator, TargetDistributionResult
