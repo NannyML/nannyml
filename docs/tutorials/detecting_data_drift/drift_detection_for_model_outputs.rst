@@ -19,31 +19,28 @@ Just The Code
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head())
+    import nannyml as nml
+    import pandas as pd
+    from IPython.display import display
 
-    >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
-    >>> # let's see drift statistics for all available data
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> univariate_results = univariate_calculator.calculate(data=data)
-    >>> # let's view a small subset of our results:
-    >>> # We use the data property of the results class to view the relevant data.
-    >>> y_pred_proba_result_columns = list(univariate_results.data.columns)[:5] + [s for s in list(univariate_results.data.columns) if "y_pred_proba" in s]
-    >>> display(univariate_results.data[y_pred_proba_result_columns][-7:-3])
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
 
-    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
-    >>> figure.show()
+    display(reference_df.head())
 
-    >>> figure = univariate_results.plot(kind='prediction_distribution', metric='statistic')
-    >>> figure.show()
+    calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+
+    calc.fit(reference_df)
+
+    results = calc.calculate(analysis_df)
+
+    display(results.data)
+
+    drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    drift_fig.show()
+
+    distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+    distribution_fig.show()
 
 
 Walkthrough
@@ -52,18 +49,21 @@ Walkthrough
 NannyML detects data drift for :term:`Model Outputs` using the
 :ref:`Univariate Drift Detection methodology<univariate_drift_detection>`.
 
-Let's start by loading some synthetic data provided by the NannyML package.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+
+Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head())
+    import nannyml as nml
+    import pandas as pd
+    from IPython.display import display
 
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    
+    display(reference_df.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -79,31 +79,26 @@ Let's start by loading some synthetic data provided by the NannyML package.
 |  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
-The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
-class implements the functionality needed for drift detection in model outputs.
+The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator`
+class implements the functionality needed for drift detection in model outputs. First, the class is instantiated with appropriate parameters. 
+To check the model outputs for data drift, we only need to pass in the column header of the outputs as `y_pred` and `y_pred_proba`.
 
-Following the process shown in :ref:`univariate drift detection<univariate_drift_detection>`,
-:class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
-is instantiated with appropriate parameters and the
-:meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method
-is called on the reference data that the results will be based off. 
+Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator.fit` method
+is called on the reference data, so that the data baseline can be established.
 
-Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method
+Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator.calculate` method
 calculates the drift results on the data provided. An example using it can be seen below.
 
 .. code-block:: python
 
-    >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
-    >>> # let's see drift statistics for all available data
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> univariate_results = univariate_calculator.calculate(data=data)
-    >>> # let's view a small subset of our results:
-    >>> # We use the data property of the results class to view the relevant data.
-    >>> y_pred_proba_result_columns = list(univariate_results.data.columns)[:5] + [s for s in list(univariate_results.data.columns) if "y_pred_proba" in s]
-    >>> display(univariate_results.data[y_pred_proba_result_columns][-7:-3])
+    calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    calc.fit(reference_df)
+    results = calc.calculate(analysis_df)
+
+We can then display the results in a table, or as plots.
+
+.. code-block:: python
+    display(results.data)
 
 +----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            |   y_pred_proba_dstat |   y_pred_proba_p_value | y_pred_proba_alert   |   y_pred_proba_threshold |
@@ -117,22 +112,21 @@ calculates the drift results on the data provided. An example using it can be se
 | 16 | [80000:84999] |         80000 |       84999 | 2019-09-01 00:28:54 | 2019-12-31 09:09:12 |              0.1273  |                  0     | True                 |                     0.05 |
 +----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+
 
-
-NannyML can visualize the statistical properties of the drift in model outputs.
+NannyML can show the statistical properties of the drift in model outputs as a plot.
 
 .. code-block:: python
 
-    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
-    >>> figure.show()
+    drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    drift_fig.show()
 
 .. image:: /_static/drift-guide-predictions.svg
 
-NannyML can also show how the distributions of the model predictions evolved over time.
+NannyML can also visualise how the distributions of the model predictions evolved over time.
 
 .. code-block:: python
 
-    >>> figure = univariate_results.plot(kind='prediction_distribution', metric='statistic')
-    >>> figure.show()
+    distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+    distribution_fig.show()
 
 .. image:: /_static/drift-guide-predictions-joyplot.svg
 
@@ -149,5 +143,5 @@ to be significant. But because the change is small it is usually not significant
 What Next
 -----------------------
 
-If required the :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
+If required, the :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
 observed changes to Model Outputs.

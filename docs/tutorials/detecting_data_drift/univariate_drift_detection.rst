@@ -16,58 +16,43 @@ Just The Code
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head())
+    import nannyml as nml
+    import pandas as pd
+    from IPython.display import display
 
-    >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
-    >>> # let's see drift statistics for all available data
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> univariate_results = univariate_calculator.calculate(data=data)
-    >>> # let's view a small subset of our results:
-    >>> # We use the data property of the results class to view the relevant data.
-    >>> display(univariate_results.data.iloc[:5, :9])
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
 
-    >>> display(univariate_results.data.iloc[-5:, :9])
+    display(reference_df.head())
 
-    >>> # let's plot drift results for all model inputs
-    >>> for feature in metadata.features:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
-    ...     figure.show()
+    feature_column_names = [
+        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
 
-    >>> # let's plot distribution drift results for continuous model inputs
-    >>> for feature in metadata.continuous_features:
-    ...     figure = univariate_results.plot(
-    ...         kind='feature_distribution',
-    ...         feature_label=feature.label
-    ...     )
-    ...     figure.show()
+    calc = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp')
 
-    >>> # let's plot distribution drift results for categorical model inputs
-    >>> for feature in metadata.categorical_features:
-    ...     figure = univariate_results.plot(
-    ...         kind='feature_distribution',
-    ...         feature_label=feature.label
-    ...     )
-    ...     figure.show()
+    calc.fit(reference_df)
 
-    >>> ranker = nml.Ranker.by('alert_count')
-    >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
-    >>> display(ranked_features)
+    results = calc.calculate(analysis_df)
+
+    display(results.data.iloc[:5, :9])
+    display(results.data.iloc[:-5, :9])
+
+    for feature in calc.feature_column_names:
+        drift_fig = results.plot(kind='feature_drift', feature_column_name=feature, plot_reference=True)
+        drift_fig.show()
+
+    for cat_feat in calc.categorical_column_names:
+        results.plot(kind='feature_distribution', plot_reference=True).show()
+
+    ranker = nml.Ranker.by('alert_count')
+    ranked_features = ranker.rank(results, only_drifting = False)
+    display(ranked_features)
 
 
 Walkthrough
 -----------------------------------------
 
-NannyML's Univariate approach for data drift looks at each variable individually and conducts
-statistical tests comparing the chunks created from the analysis :ref:`data period<data-drift-periods>` with the reference period.
+NannyML's Univariate approach for data drift looks at each variable individually and conducts statistical tests comparing the :ref:`chunks` created from the analysis :ref:`data period<data-drift-periods>` with the reference period. You can read more about the data required in our section on :ref:`data periods<data-drift-periods>`
 
 NannyML uses the :term:`2 sample Kolmogorov-Smirnov Test<Kolmogorov-Smirnov test>` for continuous features and the
 :term:`Chi squared test<Chi Squared test>` for categorical features. Both tests provide a statistic where they measure 
@@ -75,18 +60,18 @@ the observed drift and a p-value that shows how likely we are to get the observe
 
 If the p-value is less than 0.05 NannyML considers the result unlikely to be due to chance and issues an alert for the associated chunk and feature.
 
-We begin by loading some synthetic data provided in the NannyML package.
+We begin by loading some synthetic data provided in the NannyML package. This is data for a binary classification model, but other model types operate in the same way.
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head())
+    import nannyml as nml
+    import pandas as pd
+    from IPython.display import display
 
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+
+    display(reference_df.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -103,26 +88,32 @@ We begin by loading some synthetic data provided in the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
-class implements the functionality needed for Univariate Drift Detection. After instantiating it with appropriate parameters
-the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method needs
+class implements the functionality needed for Univariate Drift Detection. We need to instantiate it with appropriate parameters - the column headers of the features that we want to run drift detection on, and the timestamp column header. The features can be passed in as a simple list of strings, but here we have created this list by excluding the columns in the dataframe that are not features, and passed that into the argument.
+
+.. code-block:: python 
+    feature_column_names = [
+        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+
+    calc = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp')
+
+Next, the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method needs
 to be called on the reference data, which provides the baseline that the analysis data will be compared with. Then the
 :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method will
 calculate the drift results on the data provided to it.
 
-An example using it can be seen below.
+We then display a small subset of our results by specifying columns in the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate.results` method.
+
+NannyML returns a dataframe with 3 columns for each feature. The first column contains the corresponding test
+statistic. The second column contains the corresponding p-value and the third column says whether there
+is a drift alert for that feature and chunk.
 
 .. code-block:: python
 
-    >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
-    >>> # let's see drift statistics for all available data
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> univariate_results = univariate_calculator.calculate(data=data)
-    >>> # let's view a small subset of our results:
-    >>> # We use the data property of the results class to view the relevant data.
-    >>> display(univariate_results.data.iloc[:5, :9])
+    calc.fit(reference_df)
+
+    results = calc.calculate(analysis_df)
+
+    display(results.data.iloc[:5, :9])
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+------------------------+----------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   salary_range_chi2 |   salary_range_p_value | salary_range_alert   |
@@ -141,7 +132,7 @@ An example using it can be seen below.
 
 .. code-block:: python
 
-    >>> display(univariate_results.data.iloc[-5:, :9])
+    display(univariate_results.data.iloc[-5:, :9])
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+------------------------+----------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   salary_range_chi2 |   salary_range_p_value | salary_range_alert   |
@@ -157,18 +148,13 @@ An example using it can be seen below.
 | 19 | [95000:99999] |         95000 |       99999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 | analysis    |             474.892 |                      0 | True                 |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+------------------------+----------------------+
 
-NannyML returns a dataframe with 3 columns for each feature. The first column contains the corresponding test
-statistic. The second column contains the corresponding p-value and the third column says whether there
-is a drift alert for that feature and chunk.
-
 NannyML can also visualize those results on plots.
 
 .. code-block:: python
 
-    >>> # let's plot drift results for all model inputs
-    >>> for feature in metadata.features:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
-    ...     figure.show()
+    for feature in calc.feature_column_names:
+        drift_fig = results.plot(kind='feature_drift', feature_column_name=feature, plot_reference=True)
+        drift_fig.show()
 
 .. image:: /_static/drift-guide-distance_from_office.svg
 
@@ -186,46 +172,14 @@ NannyML can also visualize those results on plots.
 .. image:: /_static/drift-guide-salary_range.svg
 
 
-NannyML can also plot details about the distributions of continuous variables and
-stacked bar charts for categorical variables.
+NannyML can also plot details about the distributions of different features. In these plots, NannyML highlights the areas with possible data drift.
 
-In these plots, NannyML highlights the areas with possible data drift.
-
-Below, the ``tenure`` feature has two alerts that are false positives, from a model monitoring
-point of view. This is because the measure of the drift, as shown by the KS d-statistic, is very low. This is
-in contrast to the alerts for the ``public_transportation_cost`` for example, where
-the KS d-statistic grows significantly.
-
-The features ``distance_from_office``, ``salary_range``, ``public_transportation_cost``,
-``wfh_prev_workday`` have been correctly identified as drifted.
+If we want to focus only on the categorical plots, we can specify that only these be plotted.
 
 .. code-block:: python
 
-    >>> # let's plot distribution drift results for continuous model inputs
-    >>> for feature in metadata.continuous_features:
-    ...     figure = univariate_results.plot(
-    ...         kind='feature_distribution',
-    ...         feature_label=feature.label
-    ...     )
-    ...     figure.show()
-
-.. image:: /_static/drift-guide-joyplot-distance_from_office.svg
-
-.. image:: /_static/drift-guide-joyplot-gas_price_per_litre.svg
-
-.. image:: /_static/drift-guide-joyplot-public_transportation_cost.svg
-
-.. image:: /_static/drift-guide-joyplot-tenure.svg
-
-.. code-block:: python
-
-    >>> # let's plot distribution drift results for categorical model inputs
-    >>> for feature in metadata.categorical_features:
-    ...     figure = univariate_results.plot(
-    ...         kind='feature_distribution',
-    ...         feature_label=feature.label
-    ...     )
-    ...     figure.show()
+    for cat_feat in calc.categorical_column_names:
+        results.plot(kind='feature_distribution', plot_reference=True).show()
 
 .. image:: /_static/drift-guide-stacked-salary_range.svg
 
@@ -233,15 +187,15 @@ The features ``distance_from_office``, ``salary_range``, ``public_transportation
 
 .. image:: /_static/drift-guide-stacked-workday.svg
 
-NannyML can rank features according to how many alerts they have had within the data analyzed
+NannyML can also rank features according to how many alerts they have had within the data analyzed
 for data drift. NannyML allows viewing the ranking of all the model inputs, or just the ones that have drifted.
 NannyML provides a dataframe with the resulting ranking of features.
 
 .. code-block:: python
 
-    >>> ranker = nml.Ranker.by('alert_count')
-    >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
-    >>> display(ranked_features)
+    ranker = nml.Ranker.by('alert_count')
+    ranked_features = ranker.rank(results, only_drifting = False)
+    display(ranked_features)
 
 +----+----------------------------+--------------------+--------+
 |    | feature                    |   number_of_alerts |   rank |

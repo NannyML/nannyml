@@ -16,41 +16,30 @@ Just The Code
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head())
+    import nannyml as nml
+    import pandas as pd
+    from IPython.display import display
 
-    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> rcerror_calculator = rcerror_calculator.fit(reference_data=reference)
-    >>> # let's see RC error statistics for all available data
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
 
-    >>> from sklearn.impute import SimpleImputer
+    display(reference_df.head())
 
-    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(
-    >>>     model_metadata=metadata,
-    >>>     chunk_size=5000,
-    >>>     imputer_categorical=SimpleImputer(strategy='constant', fill_value='missing'),
-    >>>     imputer_continuous=SimpleImputer(strategy='median')
-    >>> )
-    >>> # NannyML compares drift versus the full reference dataset.
-    >>> rcerror_calculator.fit(reference_data=reference)
-    >>> # let's see RC error statistics for all available data
-    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    feature_column_names = [
+        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
 
-    >>> # We use the data property of the results class to view the relevant data.
-    >>> display(rcerror_results.data)
+    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names,
+                                                timestamp_column_name='timestamp')
 
-    >>> figure = rcerror_results.plot(kind='drift')
-    >>> figure.show()
+    calc.fit(reference_df)
+
+    results = calc.calculate(analysis_df)
+
+    display(results.data)
+
+    figure = results.plot(kind='drift')
+    figure.show()
+
 
 Walkthrough
 -------------------------------------------
@@ -64,18 +53,21 @@ reflect a change in the structure of the model inputs.
 NannyML calculates the reconstruction error over time for the monitored model, and raises an alert if the
 values get outside of a range defined by the variance in the reference :ref:`data period<data-drift-periods>`.
 
-Let's start by loading some synthetic data provided by the NannyML package.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+
+Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head())
+    import nannyml as nml
+    import pandas as pd
+    from IPython.display import display
 
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+
+    display(reference_df.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -92,28 +84,26 @@ Let's start by loading some synthetic data provided by the NannyML package.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
-module implements this functionality.
-After instantiating it with appropriate parameters
-the :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.fit` method needs
+module implements this functionality.  We need to instantiate it with appropriate parameters - the column headers of the features that we want to run drift detection on, and the timestamp column header. The features can be passed in as a simple list of strings, but here we have created this list by excluding the columns in the dataframe that are not features, and passed that into the argument.
+
+Next the :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.fit` method needs
 to be called on the reference data where results will be based off. Then the
 :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.calculate` method will
 calculate the multivariate drift results on the data provided to it.
 
-One way to use it can be seen below.
-
-
 .. code-block:: python
 
-    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> # Let's use a chunk size of 5000 data points to create our drift statistics
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> rcerror_calculator = rcerror_calculator.fit(reference_data=reference)
-    >>> # let's see RC error statistics for all available data
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    feature_column_names = [
+        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
 
+    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names,
+                                                timestamp_column_name='timestamp')
 
-Missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
+    calc.fit(reference_df)
+
+    results = calc.calculate(analysis_df)
+
+Any missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
 the most frequent value for categorical features and the mean for continuous features. These defaults can be
 overridden with an instance of `SimpleImputer`_ class in which cases NannyML will perform the imputation as instructed. 
 
@@ -121,26 +111,26 @@ An example where custom imputation strategies are used can be seen below.
 
 .. code-block:: python
 
-    >>> from sklearn.impute import SimpleImputer
-    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(
-    >>>     model_metadata=metadata,
-    >>>     chunk_size=5000,
-    >>>     imputer_categorical=SimpleImputer(strategy='constant', fill_value='missing'),
-    >>>     imputer_continuous=SimpleImputer(strategy='median')
-    >>> )
-    >>> # NannyML compares drift versus the full reference dataset.
-    >>> rcerror_calculator.fit(reference_data=reference)
-    >>> # let's see RC error statistics for all available data
-    >>> rcerror_results = rcerror_calculator.calculate(data=data)
+    feature_column_names = [
+        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+
+    from sklearn.impute import SimpleImputer
+
+    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names,
+                                                timestamp_column_name='timestamp',
+                                                imputer_categorical=SimpleImputer(strategy='constant', fill_value='missing'),
+                                                imputer_continuous=SimpleImputer(strategy='median'))
+
+    calc.fit(reference_df)
+
+    results = calc.calculate(analysis_df)
 
 
-Because our synthetic dataset does not have missing values, the results are the same in both cases.
+Because our synthetic dataset does not have missing values, the results are the same in both cases. We can see these results as a dataframe.
 
 .. code-block:: python
 
-    >>> # We use the data property of the results class to view the relevant data.
-    >>> display(rcerror_results.data)
+    display(results.data)
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   reconstruction_error |   lower_threshold |   upper_threshold | alert   |
@@ -186,12 +176,12 @@ Because our synthetic dataset does not have missing values, the results are the 
 | 19 | [95000:99999] |         95000 |       99999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 | analysis    |                1.24258 |           1.09658 |           1.13801 | True    |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
 
-NannyML can also visualize multivariate drift results.
+NannyML can also visualize the multivariate drift results in a plot.
 
 .. code-block:: python
 
-    >>> figure = rcerror_results.plot(kind='drift')
-    >>> figure.show()
+    figure = results.plot(kind='drift')
+    figure.show()
 
 .. image:: /_static/drift-guide-multivariate.svg
 
