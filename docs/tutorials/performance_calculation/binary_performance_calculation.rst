@@ -30,34 +30,34 @@ Just The Code
 
 .. code-block:: python
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
-    >>> display(reference.head(3))
+    import pandas as pd
+    import nannyml as nml
+    from IPython.display import display
 
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
-    >>> display(data.loc[data['partition'] == 'analysis'].head(3))
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
 
-    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(metadata.is_complete())
+    display(reference_df.head(3))
 
-    >>> performance_calculator = nml.PerformanceCalculator(
-    ...     model_metadata=metadata,
-    ...     # use NannyML to tell us what metrics are supported
-    ...     metrics=nml.performance_estimation.confidence_based.results.SUPPORTED_METRIC_VALUES,
-    ...     chunk_size=5000
-    ... ).fit(reference_data=reference)
+    calc = nml.PerformanceCalculator( 
+        y_pred_proba='y_pred_proba', 
+        y_pred='y_pred', 
+        y_true='work_home_actual', 
+        timestamp_column_name='timestamp', 
+        metrics=nml.performance_estimation.confidence_based.results.SUPPORTED_METRIC_VALUES,
+        chunk_size=5000)
 
-    >>> realized_performance = performance_calculator.calculate(data)
+    calc.fit(reference_df)
 
-    >>> display(realized_performance.data.head(3))
+    results = calc.calculate(analysis_df)
 
-    >>> for metric in performance_calculator.metrics:
-    ...     figure = realized_performance.plot(kind='performance', metric=metric)
-    ...     figure.show()
+    display(results.data.head(3))
 
+    for metric in calc.metrics:
+        figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+        figure.show()
 
 
 Walkthrough
@@ -70,19 +70,24 @@ Prepare the data
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
 whether an employee will work from home. You can :ref:`read more about this synthetic dataset<dataset-synthetic-binary>`.
 
-The dataset is split into ``reference`` and ``analysis`` dataframes, which correspond to ``reference`` and ``analysis`` periods of
-the monitored data. To understand more about what they are read :ref:`data periods<data-drift-periods>`. 
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`
 
-The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate because it is
-not used during :ref:`performance estimation.<performance-estimation>`
+The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
+not used during :ref:`performance estimation.<performance-estimation>`. But it is required to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.  The analysis target values are joined on the analysis frame by the ``identifier`` column.
 
 .. code-block:: python
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
-    >>> display(reference.head(3))
+    import pandas as pd
+    import nannyml as nml
+    from IPython.display import display
+
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+
+    display(reference_df.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -94,78 +99,42 @@ not used during :ref:`performance estimation.<performance-estimation>`
 |  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
-The realized performance will be calculated on both reference and analysis data. The analysis target
-values are joined on the analysis frame by the ``identifier`` column.
 
-.. code-block:: python
-
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
-    >>> display(data.loc[data['partition'] == 'analysis'].head(3))
-
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|       |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
-+=======+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
-| 50000 |               0.527691 | 0 - 20K €      |               1.8     |                      8.96072 | False              | Tuesday   |  4.22463 |          nan |                  1 | 2017-08-31 04:20:00 |           0.99 | analysis    |        1 |
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-| 50001 |               8.48513  | 20K - 40K €    |               2.22207 |                      8.76879 | False              | Friday    |  4.9631  |          nan |                  1 | 2017-08-31 05:16:16 |           0.98 | analysis    |        1 |
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-| 50002 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    |  4.58895 |          nan |                  1 | 2017-08-31 05:56:44 |           0.98 | analysis    |        1 |
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-
-
-One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
-Some information is inferred automatically and we provide the rest.
-
-We can see that the metadata are complete. Full information on how to extract metadata can be found in the :ref:`providing metadata guide<import-data>`.
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(metadata.is_complete())
-    (True, [])
-
-
-Fit calculator and calculate
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In the next step a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using the previously
-extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics and an optional :ref:`chunking<chunking>` specification.
+Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using a list of metrics to calculate (or just one metric), the data columns required for these metrics, and an optional :ref:`chunking<chunking>` specification.
 
 The list of metrics specifies which performance metrics of the monitored model will be calculated. 
 The following metrics are currently supported:
 
-- ``roc_auc``
-- ``f1``
-- ``precision``
-- ``recall``
-- ``specificity``
+- ``roc_auc`` - one vs. the rest, macro averaged
+- ``f1`` - macro averaged
+- ``precision`` - macro averaged
+- ``recall`` - macro averaged
+- ``specificity`` - macro averaged
 - ``accuracy``
 
 For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
-The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is then fitted using the
-:meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.fit` method on the ``reference`` data.
-
 .. code-block:: python
 
-    >>> performance_calculator = nml.PerformanceCalculator(
-    ...     model_metadata=metadata,
-    ...     # use NannyML to tell us what metrics are supported
-    ...     metrics=nml.performance_estimation.confidence_based.results.SUPPORTED_METRIC_VALUES,
-    ...     chunk_size=5000
-    ... ).fit(reference_data=reference)
+    calc = nml.PerformanceCalculator( 
+        y_pred_proba='y_pred_proba', 
+        y_pred='y_pred', 
+        y_true='work_home_actual', 
+        timestamp_column_name='timestamp', 
+        metrics=nml.performance_estimation.confidence_based.results.SUPPORTED_METRIC_VALUES,
+        chunk_size=5000)
+
+The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
+:meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.fit` method on the ``reference`` data.
 
 The fitted :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` can then be used to calculate
 realized performance metrics on all data which has target values available.
 
 .. code-block:: python
 
-    >>> realized_performance = performance_calculator.calculate(data)
+    calc.fit(reference_df)
 
-
-View the results
-~~~~~~~~~~~~~~~~
+    results = calc.calculate(analysis_df)
 
 NannyML can output a dataframe that contains all the results.
 
@@ -181,7 +150,7 @@ calculated metric. When taking ``roc_auc`` as an example:
 
 .. code-block:: python
 
-    >>> display(realized_performance.data.head(3))
+    display(results.data.head(3))
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------+-----------------------------------------+-----------------+----------+------------------------------------------+------------+-------------+------------------------------------------+-------------------+----------+-----------------------------------------+----------------+---------------+------------------------------------------+---------------------+------------+------------------------------------------+------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   targets_missing_rate |   roc_auc | roc_auc_thresholds                      | roc_auc_alert   |       f1 | f1_thresholds                            | f1_alert   |   precision | precision_thresholds                     | precision_alert   |   recall | recall_thresholds                       | recall_alert   |   specificity | specificity_thresholds                   | specificity_alert   |   accuracy | accuracy_thresholds                      | accuracy_alert   |
@@ -198,9 +167,9 @@ The results can be plotted for visual inspection.
 
 .. code-block:: python
 
-    >>> for metric in performance_calculator.metrics:
-    ...     figure = realized_performance.plot(kind='performance', metric=metric)
-    ...     figure.show()
+    for metric in calc.metrics:
+        figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+        figure.show()
 
 .. image:: /_static/tutorial-perf-guide-Accuracy.svg
 
