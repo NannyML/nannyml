@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 from copy import deepcopy
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,14 +16,11 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import label_binarize
 
+from nannyml._typing import ModelOutputsType
 from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata.base import NML_METADATA_TARGET_COLUMN_NAME, ModelMetadata
-from nannyml.metadata.multiclass_classification import (
-    NML_METADATA_PREDICTION_COLUMN_NAME,
-    MulticlassClassificationMetadata,
-)
+
 from nannyml.performance_estimation.base import PerformanceEstimator
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based._cbpe_binary_classification import (
@@ -51,9 +48,11 @@ from nannyml.preprocessing import preprocess
 class _MulticlassClassificationCBPE(CBPE):
     def __init__(
         self,
-        model_metadata: MulticlassClassificationMetadata,
         metrics: List[str],
-        features: List[str] = None,
+        y_pred: str,
+        y_pred_proba: ModelOutputsType,
+        y_true: str,
+        timestamp_column_name: str,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -100,8 +99,10 @@ class _MulticlassClassificationCBPE(CBPE):
 
         """
         super().__init__(
-            model_metadata=model_metadata,
-            features=features,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
             metrics=metrics,
             chunk_size=chunk_size,
             chunk_number=chunk_number,
@@ -111,30 +112,25 @@ class _MulticlassClassificationCBPE(CBPE):
             calibrator=calibrator,
         )
 
-        self.model_metadata = model_metadata  # seems to be required for typing to kick in
+        if not isinstance(y_pred_proba, Dict):
+            raise InvalidArgumentsException(f"'y_pred_proba' is of type '{type(y_pred_proba)}'. "
+                                            "Binary use cases require 'y_pred_proba' to be a dictionary mapping "
+                                            "class labels to column names.")
+
         self._calibrators: Dict[str, Calibrator] = {}
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
 
-    def fit(self, reference_data: pd.DataFrame) -> PerformanceEstimator:
-        if not isinstance(self.model_metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+        self.previous_reference_results: Optional[pd.DataFrame] = None
 
-        self.model_metadata.check_has_fields(
-            [
-                'timestamp_column_name',
-                'period_column_name',
-                'target_column_name',
-                'prediction_column_name',
-                'predicted_probabilities_column_names',
-            ]
-        )
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceEstimator:
+        if reference_data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
+        _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
 
-        _validate_data_requirements_for_metrics(data=reference_data, metadata=self.model_metadata, metrics=self.metrics)
-
-        reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=300)
+        reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=300,
+                                              timestamp_column_name=self.timestamp_column_name)
 
         self._alert_thresholds = _calculate_alert_thresholds(
             reference_chunks, metadata=self.model_metadata, metrics=self.metrics
@@ -144,16 +140,7 @@ class _MulticlassClassificationCBPE(CBPE):
             reference_chunks, metadata=self.model_metadata, metrics=self.metrics
         )
 
-        # self.minimum_chunk_size = _minimum_chunk_size(reference_data)
         self.minimum_chunk_size = 300
-
-        # Fit calibrator if calibration is needed
-        # This is just a flag, might just want to skip this
-        # self.needs_calibration = needs_calibration(
-        #     y_true=reference_data[NML_METADATA_TARGET_COLUMN_NAME],
-        #     y_pred_proba=reference_data[self.model_metadata.predicted_class_probability_metadata_columns()],
-        #     calibrator=self.calibrator,
-        # )
 
         self._calibrators = _fit_calibrators(reference_data, self.model_metadata, self.calibrator)
 
@@ -331,18 +318,18 @@ def _estimate_accuracy(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray
 def _calculate_alert_thresholds(
     reference_chunks: List[Chunk],
     metrics: List[str],
-    metadata: ModelMetadata,
+    y_true: str,
+    y_pred: str,
+    y_pred_proba: Dict[str, str],
     std_num: int = 3,
     lower_limit: int = 0,
     upper_limit: int = 1,
 ) -> Dict[str, Tuple[float, float]]:
-    if not isinstance(metadata, MulticlassClassificationMetadata):
-        raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
 
     alert_thresholds = {}
     for metric in metrics:
         realised_performance_chunks = [
-            _calculate_realized_performance(chunk, metadata, metric) for chunk in reference_chunks
+            _calculate_realized_performance(chunk, y_true, y_pred, y_pred_proba, metric) for chunk in reference_chunks
         ]
         deviation = np.std(realised_performance_chunks) * std_num
         mean_realised_performance = np.mean(realised_performance_chunks)
@@ -353,13 +340,10 @@ def _calculate_alert_thresholds(
     return alert_thresholds
 
 
-def _calculate_realized_performance(chunk: Chunk, metadata: ModelMetadata, metric: str):
-    if not isinstance(metadata, MulticlassClassificationMetadata):
-        raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
-
+def _calculate_realized_performance(chunk: Chunk, y_true: str, y_pred: str, y_pred_proba: Dict[str, str], metric: str):
     if (
-        NML_METADATA_TARGET_COLUMN_NAME not in chunk.data.columns
-        or chunk.data[NML_METADATA_TARGET_COLUMN_NAME].isna().all()
+        y_true not in chunk.data.columns
+        or chunk.data[y_true].isna().all()
     ):
         return np.NaN
 
@@ -369,15 +353,9 @@ def _calculate_realized_performance(chunk: Chunk, metadata: ModelMetadata, metri
         labels.append(label)
         class_probability_columns.append(metadata.predicted_class_probability_metadata_columns()[label])
 
-    y_true = chunk.data[NML_METADATA_TARGET_COLUMN_NAME]
+    y_true = chunk.data[y_true]
     y_pred_probas = chunk.data[class_probability_columns]
-    y_pred = chunk.data[NML_METADATA_PREDICTION_COLUMN_NAME]
-
-    # y_true = y_true[~y_pred_proba.isna()]
-    # y_pred_proba.dropna(inplace=True)
-    #
-    # y_pred_proba = y_pred_proba[~y_true.isna()]
-    # y_true.dropna(inplace=True)
+    y_pred = chunk.data[y_pred]
 
     if metric == 'roc_auc':
         return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
@@ -472,3 +450,9 @@ def _calibrate_predicted_probabilities(
         calibrated_data[predicted_class_proba_column_names[idx]] = calibrated_probas[:, idx]
 
     return calibrated_data
+
+
+def _list_missing(columns_to_find: List, dataset_columns: List):
+    missing = [col for col in columns_to_find if col not in dataset_columns]
+    if len(missing) > 0:
+        raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")
