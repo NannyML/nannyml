@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 from copy import deepcopy
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -20,7 +20,6 @@ from nannyml._typing import ModelOutputsType
 from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
-
 from nannyml.performance_estimation.base import PerformanceEstimator
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based._cbpe_binary_classification import (
@@ -113,9 +112,11 @@ class _MulticlassClassificationCBPE(CBPE):
         )
 
         if not isinstance(y_pred_proba, Dict):
-            raise InvalidArgumentsException(f"'y_pred_proba' is of type '{type(y_pred_proba)}'. "
-                                            "Binary use cases require 'y_pred_proba' to be a dictionary mapping "
-                                            "class labels to column names.")
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type '{type(y_pred_proba)}'. "
+                "Binary use cases require 'y_pred_proba' to be a dictionary mapping "
+                "class labels to column names."
+            )
 
         self._calibrators: Dict[str, Calibrator] = {}
         self.confidence_upper_bound = 1
@@ -123,47 +124,50 @@ class _MulticlassClassificationCBPE(CBPE):
 
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceEstimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
 
-        reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=300,
-                                              timestamp_column_name=self.timestamp_column_name)
+        reference_chunks = self.chunker.split(
+            reference_data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name
+        )
 
         self._alert_thresholds = _calculate_alert_thresholds(
-            reference_chunks, metadata=self.model_metadata, metrics=self.metrics
+            reference_chunks,
+            self.metrics,
+            self.y_true,
+            self.y_pred,
+            self.y_pred_proba,
         )
 
-        self._confidence_deviations = _calculate_confidence_deviations(
-            reference_chunks, metadata=self.model_metadata, metrics=self.metrics
-        )
+        self._confidence_deviations = _calculate_confidence_deviations(reference_chunks, metrics=self.metrics)
 
         self.minimum_chunk_size = 300
 
-        self._calibrators = _fit_calibrators(reference_data, self.model_metadata, self.calibrator)
+        self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator)
 
+        self.previous_reference_results = self._estimate(reference_data)
         return self
 
-    def estimate(self, data: pd.DataFrame) -> CBPEPerformanceEstimatorResult:
-        self.model_metadata.check_has_fields(
-            [
-                'timestamp_column_name',
-                'period_column_name',
-                'prediction_column_name',
-                'predicted_probabilities_column_names',
-            ]
-        )
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
+        # self.model_metadata.check_has_fields(
+        #     [
+        #         'timestamp_column_name',
+        #         'period_column_name',
+        #         'prediction_column_name',
+        #         'predicted_probabilities_column_names',
+        #     ]
+        # )
+        #
+        # data = preprocess(data=data, metadata=self.model_metadata)
 
-        data = preprocess(data=data, metadata=self.model_metadata)
+        # _validate_data_requirements_for_metrics(data, self.model_metadata, self.metrics)
 
-        _validate_data_requirements_for_metrics(data, self.model_metadata, self.metrics)
+        data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
 
-        data = _calibrate_predicted_probabilities(data, self.model_metadata, self._calibrators)
-
-        features_and_metadata = self.model_metadata.metadata_columns + self.selected_features
-        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=300)
+        chunks = self.chunker.split(data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name)
 
         res = pd.DataFrame.from_records(
             [
@@ -173,26 +177,25 @@ class _MulticlassClassificationCBPE(CBPE):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis' if chunk.is_transition else chunk.period,
-                    **self._estimate(chunk),
+                    **self.__estimate(chunk),
                 }
                 for chunk in chunks
             ]
         )
 
         res = res.reset_index(drop=True)
-        return CBPEPerformanceEstimatorResult(
-            estimated_data=res, model_metadata=self.model_metadata, metrics=self.metrics
-        )
+        return CBPEPerformanceEstimatorResult(results_data=res, estimator=self)
 
-    def _estimate(self, chunk: Chunk) -> Dict:
-        if not isinstance(self.model_metadata, MulticlassClassificationMetadata):
-            raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+    def __estimate(self, chunk: Chunk, y_true: str, y_pred: str, y_pred_proba: Dict[str, str]) -> Dict:
 
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
-            estimated_metric = _estimate_metric(data=chunk.data, metadata=self.model_metadata, metric=metric)
-            estimates[f'realized_{metric}'] = _calculate_realized_performance(chunk, self.model_metadata, metric)
+            estimated_metric = _estimate_metric(
+                data=chunk.data, y_pred=y_pred, y_pred_proba=y_pred_proba, metric=metric
+            )
+            estimates[f'realized_{metric}'] = _calculate_realized_performance(
+                chunk, y_true, y_pred, y_pred_proba, metric
+            )
             estimates[f'estimated_{metric}'] = estimated_metric
             estimates[f'upper_confidence_{metric}'] = min(
                 self.confidence_upper_bound, estimated_metric + self._confidence_deviations[metric]
@@ -205,54 +208,35 @@ class _MulticlassClassificationCBPE(CBPE):
             estimates[f'alert_{metric}'] = (
                 estimated_metric > self._alert_thresholds[metric][1]
                 or estimated_metric < self._alert_thresholds[metric][0]
-            ) and chunk.period == 'analysis'
+            )
         return estimates
 
 
-def _validate_data_requirements_for_metrics(data: pd.DataFrame, metadata: ModelMetadata, metrics: List[str]):
-    if not isinstance(metadata, MulticlassClassificationMetadata):
-        raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
+def _get_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str]):
+    classes = sorted(y_pred_proba.keys())
+    y_preds = list(label_binarize(data[y_pred], classes=classes).T)
 
-    if 'roc_auc' in metrics:
-        if metadata.predicted_probabilities_column_names is None:
-            raise MissingMetadataException(
-                "missing value for 'predicted_probabilities_column_names'. Please ensure predicted "
-                "class probabilities are specified and present in the sample."
-            )
-
-    if metadata.prediction_column_name is None:
-        raise MissingMetadataException(
-            "missing value for 'prediction_column_name'. Please ensure predicted "
-            "label values are specified and present in the sample."
-        )
-
-
-def _get_predictions(data: pd.DataFrame, metadata: MulticlassClassificationMetadata):
-    classes = sorted(list(metadata.predicted_probabilities_column_names.keys()))
-    y_preds = list(label_binarize(data[NML_METADATA_PREDICTION_COLUMN_NAME], classes=classes).T)
-
-    class_probability_column_names = metadata.predicted_class_probability_metadata_columns()
-    y_pred_probas = [data[class_probability_column_names[clazz]] for clazz in classes]
+    y_pred_probas = [data[y_pred_proba[clazz]] for clazz in classes]
     return y_preds, y_pred_probas
 
 
-def _estimate_metric(data: pd.DataFrame, metadata: MulticlassClassificationMetadata, metric: str) -> float:
+def _estimate_metric(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str], metric: str) -> float:
     if metric == 'roc_auc':
-        return _estimate_roc_auc(data[list(metadata.predicted_class_probability_metadata_columns().values())])
+        return _estimate_roc_auc(data[[v for k, v in y_pred_proba.items()]])
     elif metric == 'f1':
-        y_preds, y_pred_probas = _get_predictions(data, metadata)
+        y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
         return _estimate_f1(y_preds, y_pred_probas)
     elif metric == 'precision':
-        y_preds, y_pred_probas = _get_predictions(data, metadata)
+        y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
         return _estimate_precision(y_preds, y_pred_probas)
     elif metric == 'recall':
-        y_preds, y_pred_probas = _get_predictions(data, metadata)
+        y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
         return _estimate_recall(y_preds, y_pred_probas)
     elif metric == 'specificity':
-        y_preds, y_pred_probas = _get_predictions(data, metadata)
+        y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
         return _estimate_specificity(y_preds, y_pred_probas)
     elif metric == 'accuracy':
-        y_preds, y_pred_probas = _get_predictions(data, metadata)
+        y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
         return _estimate_accuracy(y_preds, y_pred_probas)
     else:
         raise InvalidArgumentsException(
@@ -341,17 +325,14 @@ def _calculate_alert_thresholds(
 
 
 def _calculate_realized_performance(chunk: Chunk, y_true: str, y_pred: str, y_pred_proba: Dict[str, str], metric: str):
-    if (
-        y_true not in chunk.data.columns
-        or chunk.data[y_true].isna().all()
-    ):
+    if y_true not in chunk.data.columns or chunk.data[y_true].isna().all():
         return np.NaN
 
     # Make sure labels and class_probability_columns have the same ordering
     labels, class_probability_columns = [], []
-    for label in sorted(list(metadata.predicted_class_probability_metadata_columns())):
+    for label in sorted(y_pred_proba.keys()):
         labels.append(label)
-        class_probability_columns.append(metadata.predicted_class_probability_metadata_columns()[label])
+        class_probability_columns.append(y_pred_proba[label])
 
     y_true = chunk.data[y_true]
     y_pred_probas = chunk.data[class_probability_columns]
@@ -379,28 +360,20 @@ def _calculate_realized_performance(chunk: Chunk, y_true: str, y_pred: str, y_pr
         )
 
 
-def _calculate_confidence_deviations(reference_chunks: List[Chunk], metadata: ModelMetadata, metrics: List[str]):
-    if not isinstance(metadata, MulticlassClassificationMetadata):
-        raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
-
-    return {
-        metric: np.std([_estimate_metric(chunk.data, metadata, metric) for chunk in reference_chunks])
-        for metric in metrics
-    }
+def _calculate_confidence_deviations(reference_chunks: List[Chunk], metrics: List[str]):
+    return {metric: np.std([_estimate_metric(chunk.data, metric) for chunk in reference_chunks]) for metric in metrics}
 
 
-def _get_class_splits(data: pd.DataFrame, metadata: ModelMetadata, include_targets: bool = True) -> List[Tuple]:
-    if not isinstance(metadata, MulticlassClassificationMetadata):
-        raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
-
-    classes = sorted(list(metadata.predicted_probabilities_column_names.keys()))
+def _get_class_splits(
+    data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], include_targets: bool = True
+) -> List[Tuple]:
+    classes = sorted(y_pred_proba.keys())
     y_trues: List[np.ndarray] = []
 
     if include_targets:
-        y_trues = list(label_binarize(data[NML_METADATA_TARGET_COLUMN_NAME], classes=classes).T)
+        y_trues = list(label_binarize(data[y_true], classes=classes).T)
 
-    class_probability_column_names = metadata.predicted_class_probability_metadata_columns()
-    y_pred_probas = [data[class_probability_column_names[clazz]] for clazz in classes]
+    y_pred_probas = [data[y_pred_proba[clazz]] for clazz in classes]
 
     return [
         (classes[idx], y_trues[idx] if include_targets else None, y_pred_probas[idx]) for idx in range(len(classes))
@@ -408,12 +381,12 @@ def _get_class_splits(data: pd.DataFrame, metadata: ModelMetadata, include_targe
 
 
 def _fit_calibrators(
-    reference_data: pd.DataFrame, metadata: ModelMetadata, calibrator: Calibrator
+    reference_data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], calibrator: Calibrator
 ) -> Dict[str, Calibrator]:
     fitted_calibrators = {}
     noop_calibrator = NoopCalibrator()
 
-    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, metadata):
+    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true, y_pred_proba):
         if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
             calibrator = noop_calibrator
 
@@ -424,12 +397,9 @@ def _fit_calibrators(
 
 
 def _calibrate_predicted_probabilities(
-    data: pd.DataFrame, metadata: ModelMetadata, calibrators: Dict[str, Calibrator]
+    data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], calibrators: Dict[str, Calibrator]
 ) -> pd.DataFrame:
-    if not isinstance(metadata, MulticlassClassificationMetadata):
-        raise InvalidArgumentsException('metadata was not an instance of MulticlassClassificationMetadata')
-
-    class_splits = _get_class_splits(data, metadata, include_targets=False)
+    class_splits = _get_class_splits(data, y_true, y_pred_proba, include_targets=False)
     number_of_observations = len(data)
     number_of_classes = len(class_splits)
 
@@ -445,7 +415,7 @@ def _calibrate_predicted_probabilities(
     calibrated_probas = np.divide(calibrated_probas, denominator, out=uniform_proba, where=denominator != 0)
 
     calibrated_data = data.copy(deep=True)
-    predicted_class_proba_column_names = sorted(metadata.predicted_class_probability_metadata_columns())
+    predicted_class_proba_column_names = sorted([v for k, v in y_pred_proba.items()])
     for idx in range(number_of_classes):
         calibrated_data[predicted_class_proba_column_names[idx]] = calibrated_probas[:, idx]
 
