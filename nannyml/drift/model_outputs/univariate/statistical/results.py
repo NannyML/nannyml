@@ -254,20 +254,6 @@ def _plot_prediction_distribution(
     fig: plotly.graph_objects.Figure
         A visualization of the data distribution and drift using joy-plots.
     """
-    clip: Optional[Tuple[int, int]] = None
-    # if isinstance(metadata, BinaryClassificationMetadata):
-    #     prediction_column_name = metadata.predicted_probability_column_name
-    #     clip = (0, 1)
-    # elif isinstance(metadata, MulticlassClassificationMetadata):
-    #     if not class_label or class_label == "":
-    #         raise InvalidArgumentsException("value for 'class_label' must be set when plotting for multiclass models")
-    #     prediction_column_name = metadata.predicted_probabilities_column_names[class_label]
-    #     clip = (0, 1)
-    # elif isinstance(metadata, RegressionMetadata):
-    #     prediction_column_name = metadata.prediction_column_name
-    # else:
-    #     raise NotImplementedError
-
     y_pred = calculator.y_pred
     clip = (0, 1)
 

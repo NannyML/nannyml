@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import pandas as pd
 import plotly.graph_objects
@@ -189,7 +189,7 @@ class AbstractEstimator(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractCalculator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Trains the calculator using reference data."""
         try:
             self._logger.debug(f"fitting {str(self)}")
@@ -202,7 +202,7 @@ class AbstractEstimator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractCalculatorResult:
+    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
         """Performs a calculation on the provided data."""
         try:
             self._logger.debug(f"calculating {str(self)}")
@@ -216,11 +216,11 @@ class AbstractEstimator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractCalculator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractCalculatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
@@ -238,3 +238,12 @@ def _column_is_categorical(column: pd.Series) -> bool:
 
 def _column_is_continuous(column: pd.Series) -> bool:
     return column.dtype in ['float64', 'int64']
+
+
+def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFrame]):
+    if isinstance(dataset_columns, pd.DataFrame):
+        dataset_columns = dataset_columns.columns
+
+    missing = [col for col in columns_to_find if col not in dataset_columns]
+    if len(missing) > 0:
+        raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")

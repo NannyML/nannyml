@@ -20,8 +20,8 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from nannyml._typing import UseCase
-from nannyml.base import AbstractCalculator
+from nannyml._typing import UseCase, model_output_column_names
+from nannyml.base import AbstractCalculator, _list_missing
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -604,9 +604,7 @@ class MulticlassClassificationAUROC(Metric):
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing(
-            [self.calculator.y_true] + [v for k, v in self.calculator.y_pred_proba.items()], list(data.columns)
-        )
+        _list_missing([self.calculator.y_true] + model_output_column_names(self.calculator.y_pred_proba), data)
 
         labels, class_probability_columns = [], []
         for label in sorted(list(self.calculator.y_pred_proba.keys())):
@@ -640,7 +638,7 @@ class MulticlassClassificationF1(Metric):
         return "f1"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -650,7 +648,7 @@ class MulticlassClassificationF1(Metric):
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
 
         labels = sorted(list(self.calculator.y_pred_proba.keys()))
         y_true = data[self.calculator.y_true]
@@ -680,7 +678,7 @@ class MulticlassClassificationPrecision(Metric):
         return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -690,7 +688,7 @@ class MulticlassClassificationPrecision(Metric):
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
 
         labels = sorted(list(self.calculator.y_pred_proba.keys()))
         y_true = data[self.calculator.y_true]
@@ -720,7 +718,7 @@ class MulticlassClassificationRecall(Metric):
         return "recall"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -730,7 +728,7 @@ class MulticlassClassificationRecall(Metric):
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
 
         labels = sorted(list(self.calculator.y_pred_proba.keys()))
         y_true = data[self.calculator.y_true]
@@ -760,7 +758,7 @@ class MulticlassClassificationSpecificity(Metric):
         return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -770,7 +768,7 @@ class MulticlassClassificationSpecificity(Metric):
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
 
         labels = sorted(list(self.calculator.y_pred_proba.keys()))
         y_true = data[self.calculator.y_true]
@@ -804,10 +802,10 @@ class MulticlassClassificationAccuracy(Metric):
         return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
 
     def _calculate(self, data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
 
         y_true = data[self.calculator.y_true]
         y_pred = data[self.calculator.y_pred]
@@ -835,9 +833,3 @@ def _common_data_cleaning(y_true, y_pred):
     y_true.dropna(inplace=True)
 
     return y_true, y_pred
-
-
-def _list_missing(columns_to_find: List, dataset_columns: List):
-    missing = [col for col in columns_to_find if col not in dataset_columns]
-    if len(missing) > 0:
-        raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")

@@ -3,14 +3,12 @@
 #  License: Apache Software License 2.0
 
 """Module containing CBPE estimation results and plotting implementations."""
-from typing import Dict
 
 import pandas as pd
 from plotly import graph_objects as go
 
 from nannyml import InvalidArgumentsException
-from nannyml.base import AbstractEstimatorResult, AbstractEstimator
-from nannyml.performance_estimation.base import PerformanceEstimatorResult
+from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
@@ -35,8 +33,9 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
     def estimator_name(self) -> str:
         return 'confidence_based_performance_estimation'
 
-    def plot(self, kind: str = 'performance', metric: str = None, plot_reference: bool = False,
-             *args, **kwargs) -> go.Figure:
+    def plot(
+        self, kind: str = 'performance', metric: str = None, plot_reference: bool = False, *args, **kwargs
+    ) -> go.Figure:
         """Render plots based on CBPE estimation results.
 
         This function will return a :class:`plotly.graph_objects.Figure` object.
@@ -87,8 +86,9 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
     #     return plots
 
 
-def _plot_cbpe_performance_estimation(estimation_results: pd.DataFrame, estimator,
-                                      metric: str, plot_reference: bool) -> go.Figure:
+def _plot_cbpe_performance_estimation(
+    estimation_results: pd.DataFrame, estimator, metric: str, plot_reference: bool
+) -> go.Figure:
     """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
     Chunks are set on a time-based X-axis by using the period containing their observations.

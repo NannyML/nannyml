@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
-from nannyml.base import AbstractCalculator, _split_features_by_type
+from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
@@ -129,11 +129,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        reference_data = reference_data.copy()
-
-        missing_columns = self.feature_column_names[~np.isin(self.feature_column_names, reference_data.columns)]
-        if len(missing_columns) > 0:
-            raise InvalidArgumentsException(f"data does not contain columns '{missing_columns}'.")
+        _list_missing(self.feature_column_names, reference_data)
 
         self.continuous_feature_column_names, self.categorical_feature_column_names = _split_features_by_type(
             reference_data, self.feature_column_names
@@ -204,11 +200,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        reference_data = data.copy()
-
-        missing_columns = self.feature_column_names[~np.isin(self.feature_column_names, reference_data.columns)]
-        if len(missing_columns) > 0:
-            raise InvalidArgumentsException(f"data does not contain columns '{missing_columns}'.")
+        _list_missing(self.feature_column_names, data)
 
         self.continuous_feature_column_names, self.categorical_feature_column_names = _split_features_by_type(
             data, self.feature_column_names

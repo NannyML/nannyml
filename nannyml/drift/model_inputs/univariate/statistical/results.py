@@ -38,7 +38,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         self,
         kind: str = 'feature',
         metric: str = 'statistic',
-        feature_column_name: str = None,
+        feature: str = None,
         plot_reference: bool = False,
         *args,
         **kwargs,
@@ -64,7 +64,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
             The kind of plot you want to have. Value must be one of ``feature_drift``, ``feature_distribution``.
         metric : str, default=``statistic``
             The metric to plot. Value must be one of ``statistic`` or ``p_value``
-        feature_column_name : str
+        feature : str
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
@@ -94,13 +94,13 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
 
         """
         if kind == 'feature_drift':
-            if feature_column_name is None:
+            if feature is None:
                 raise InvalidArgumentsException(
                     "must specify a feature to plot " "using the 'feature_column_name' parameter"
                 )
-            return _feature_drift(self.data, self.calculator, feature_column_name, metric, plot_reference)
+            return _feature_drift(self.data, self.calculator, feature, metric, plot_reference)
         elif kind == 'feature_distribution':
-            if feature_column_name is None:
+            if feature is None:
                 raise InvalidArgumentsException(
                     "must specify a feature to plot " "using the 'feature_column_name' parameter"
                 )
@@ -108,7 +108,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
                 analysis_data=self.calculator.previous_analysis_data,
                 plot_reference=plot_reference,
                 drift_data=self.data,
-                feature_column_name=feature_column_name,
+                feature_column_name=feature,
             )
         else:
             raise InvalidArgumentsException(
@@ -136,7 +136,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
 def _feature_drift(
     data: pd.DataFrame,
     calculator,
-    feature_column_name: str,
+    feature: str,
     metric: str = 'statistic',
     plot_reference: bool = False,
 ) -> go.Figure:
@@ -149,7 +149,7 @@ def _feature_drift(
         drift_column_name,
         title,
     ) = _get_drift_column_names_for_feature(
-        feature_column_name, metric, calculator.continuous_column_names, calculator.categorical_column_names
+        feature, metric, calculator.continuous_column_names, calculator.categorical_column_names
     )
 
     data['period'] = 'analysis'

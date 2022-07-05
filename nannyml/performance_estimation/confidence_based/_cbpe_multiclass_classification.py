@@ -16,11 +16,11 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import label_binarize
 
-from nannyml._typing import ModelOutputsType
+from nannyml._typing import ModelOutputsType, model_output_column_names
+from nannyml.base import _list_missing
 from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
-from nannyml.exceptions import InvalidArgumentsException, MissingMetadataException
-from nannyml.performance_estimation.base import PerformanceEstimator
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based._cbpe_binary_classification import (
     _estimate_f1 as estimate_binary_f1,
@@ -41,7 +41,6 @@ from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
     CBPEPerformanceEstimatorResult,
 )
-from nannyml.preprocessing import preprocess
 
 
 class _MulticlassClassificationCBPE(CBPE):
@@ -117,6 +116,7 @@ class _MulticlassClassificationCBPE(CBPE):
                 "Binary use cases require 'y_pred_proba' to be a dictionary mapping "
                 "class labels to column names."
             )
+        self.y_pred_proba: Dict[str, str] = y_pred_proba
 
         self._calibrators: Dict[str, Calibrator] = {}
         self.confidence_upper_bound = 1
@@ -128,7 +128,7 @@ class _MulticlassClassificationCBPE(CBPE):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
 
         reference_chunks = self.chunker.split(
             reference_data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name
@@ -142,28 +142,22 @@ class _MulticlassClassificationCBPE(CBPE):
             self.y_pred_proba,
         )
 
-        self._confidence_deviations = _calculate_confidence_deviations(reference_chunks, metrics=self.metrics)
+        self._confidence_deviations = _calculate_confidence_deviations(
+            reference_chunks, self.y_pred, self.y_pred_proba, metrics=self.metrics
+        )
 
         self.minimum_chunk_size = 300
 
         self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator)
 
-        self.previous_reference_results = self._estimate(reference_data)
+        self.previous_reference_results = self._estimate(reference_data).data
         return self
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
-        # self.model_metadata.check_has_fields(
-        #     [
-        #         'timestamp_column_name',
-        #         'period_column_name',
-        #         'prediction_column_name',
-        #         'predicted_probabilities_column_names',
-        #     ]
-        # )
-        #
-        # data = preprocess(data=data, metadata=self.model_metadata)
+        if data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        # _validate_data_requirements_for_metrics(data, self.model_metadata, self.metrics)
+        _list_missing([self.y_true, self.y_pred] + [v for k, v in self.y_pred_proba.items()], data)
 
         data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
 
@@ -177,7 +171,7 @@ class _MulticlassClassificationCBPE(CBPE):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    **self.__estimate(chunk),
+                    **self.__estimate(chunk, self.y_true, self.y_pred, self.y_pred_proba),
                 }
                 for chunk in chunks
             ]
@@ -187,7 +181,6 @@ class _MulticlassClassificationCBPE(CBPE):
         return CBPEPerformanceEstimatorResult(results_data=res, estimator=self)
 
     def __estimate(self, chunk: Chunk, y_true: str, y_pred: str, y_pred_proba: Dict[str, str]) -> Dict:
-
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
             estimated_metric = _estimate_metric(
@@ -360,8 +353,13 @@ def _calculate_realized_performance(chunk: Chunk, y_true: str, y_pred: str, y_pr
         )
 
 
-def _calculate_confidence_deviations(reference_chunks: List[Chunk], metrics: List[str]):
-    return {metric: np.std([_estimate_metric(chunk.data, metric) for chunk in reference_chunks]) for metric in metrics}
+def _calculate_confidence_deviations(
+    reference_chunks: List[Chunk], y_pred: str, y_pred_proba: Dict[str, str], metrics: List[str]
+):
+    return {
+        metric: np.std([_estimate_metric(chunk.data, y_pred, y_pred_proba, metric) for chunk in reference_chunks])
+        for metric in metrics
+    }
 
 
 def _get_class_splits(
@@ -420,9 +418,3 @@ def _calibrate_predicted_probabilities(
         calibrated_data[predicted_class_proba_column_names[idx]] = calibrated_probas[:, idx]
 
     return calibrated_data
-
-
-def _list_missing(columns_to_find: List, dataset_columns: List):
-    missing = [col for col in columns_to_find if col not in dataset_columns]
-    if len(missing) > 0:
-        raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")

@@ -8,12 +8,11 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from nannyml._typing import ModelOutputsType, derive_use_case, UseCase
+from nannyml._typing import ModelOutputsType, UseCase, derive_use_case
 from nannyml.base import AbstractEstimator
 from nannyml.calibration import Calibrator, CalibratorFactory
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.base import PerformanceEstimator
 from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
     CBPEPerformanceEstimatorResult,
@@ -115,7 +114,7 @@ class CBPE(AbstractEstimator):
         self.minimum_chunk_size: int = None  # type: ignore
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceEstimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Fits the drift calculator using a set of reference data.
 
         Parameters

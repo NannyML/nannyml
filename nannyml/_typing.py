@@ -1,8 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
 from enum import Enum
-from typing import Dict, Protocol, Union  # noqa: TYP001
+from typing import Dict, List, Protocol, Union  # noqa: TYP001
 
 import pandas as pd
 from plotly.graph_objs import Figure
@@ -39,6 +40,18 @@ class Estimator(Protocol):
 
 
 ModelOutputsType = Union[str, Dict[str, str]]
+
+
+def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
+    if isinstance(model_outputs, str):
+        return [model_outputs]
+    elif isinstance(model_outputs, Dict):
+        return [column_name for label, column_name in model_outputs.items()]
+    else:
+        raise InvalidArgumentsException(
+            f"received object of type {type(model_outputs)}. ModelOutputsType should be "
+            f"either a 'str' or a 'Dict[str, str]'"
+        )
 
 
 class UseCase(str, Enum):

@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,6 @@ from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics import _list_missing
-from nannyml.performance_estimation.base import PerformanceEstimator
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
@@ -98,8 +97,11 @@ class _BinaryClassificationCBPE(CBPE):
         )
 
         if not isinstance(y_pred_proba, str):
-            raise InvalidArgumentsException(f"'y_pred_proba' is of type '{type(y_pred_proba)}'. "
-                                            f"Binary use cases require 'y_pred_proba' to be a string.")
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type '{type(y_pred_proba)}'. "
+                f"Binary use cases require 'y_pred_proba' to be a string."
+            )
+        self.y_pred_proba: str = y_pred_proba  # redeclare as str type to ease mypy
 
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
@@ -128,33 +130,20 @@ class _BinaryClassificationCBPE(CBPE):
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
         """
-        # self.model_metadata.check_has_fields(
-        #     [
-        #         'timestamp_column_name',
-        #         'period_column_name',
-        #         'target_column_name',
-        #         'prediction_column_name',
-        #         'predicted_probability_column_name',
-        #     ]
-        # )
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
 
-        # reference_data = preprocess(
-        #     data=reference_data, metadata=cast(BinaryClassificationMetadata, self.model_metadata), reference=True
-        # )
-
-        # _validate_data_requirements_for_metrics(reference_data, self.model_metadata, self.metrics)
-
-        reference_chunks = self.chunker.split(reference_data, minimum_chunk_size=300,
-                                              timestamp_column_name=self.timestamp_column_name)
+        reference_chunks = self.chunker.split(
+            reference_data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name
+        )
 
         self._alert_thresholds = self._calculate_alert_thresholds(reference_chunks, metrics=self.metrics)
 
-        self._confidence_deviations = _calculate_confidence_deviations(reference_chunks, self.y_pred,
-                                                                       self.y_pred_proba, metrics=self.metrics)
+        self._confidence_deviations = _calculate_confidence_deviations(
+            reference_chunks, self.y_pred, self.y_pred_proba, metrics=self.metrics
+        )
 
         self.minimum_chunk_size = _minimum_chunk_size(reference_data, self.y_pred, self.y_true)
 
@@ -201,29 +190,13 @@ class _BinaryClassificationCBPE(CBPE):
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> estimates = estimator.estimate(data)
         """
-        # required_fields = [
-        #     'timestamp_column_name',
-        #     'period_column_name',
-        #     'prediction_column_name',
-        #     'predicted_probability_column_name',
-        # ]
-        # if 'roc_auc' in self.metrics:
-        #     required_fields += ['prediction_column_name']
-        # self.model_metadata.check_has_fields(required_fields)
-
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(data.columns))
 
-        # data = preprocess(data=data, metadata=self.model_metadata)
-
-        # _validate_data_requirements_for_metrics(data, self.model_metadata, self.metrics)
-
         if self.needs_calibration:
-            data[self.y_pred_proba] = self.calibrator.calibrate(
-                data[self.y_pred_proba]
-            )
+            data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])
 
         chunks = self.chunker.split(data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name)
 
@@ -247,10 +220,12 @@ class _BinaryClassificationCBPE(CBPE):
     def __estimate(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
-            estimated_metric = _estimate_metric(data=chunk.data, y_pred=self.y_pred,
-                                                y_pred_proba=self.y_pred_proba, metric=metric)
-            estimates[f'realized_{metric}'] = _calculate_realized_performance(chunk, self.y_true,
-                                                                              self.y_pred, self.y_pred_proba, metric)
+            estimated_metric = _estimate_metric(
+                data=chunk.data, y_pred=self.y_pred, y_pred_proba=self.y_pred_proba, metric=metric
+            )
+            estimates[f'realized_{metric}'] = _calculate_realized_performance(
+                chunk, self.y_true, self.y_pred, self.y_pred_proba, metric
+            )
             estimates[f'estimated_{metric}'] = estimated_metric
             estimates[f'upper_confidence_{metric}'] = min(
                 self.confidence_upper_bound, estimated_metric + self._confidence_deviations[metric]
@@ -266,14 +241,20 @@ class _BinaryClassificationCBPE(CBPE):
             ) and chunk.period == 'analysis'
         return estimates
 
-    def _calculate_alert_thresholds(self, reference_chunks: List[Chunk], metrics: List[str],
-                                    std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+    def _calculate_alert_thresholds(
+        self,
+        reference_chunks: List[Chunk],
+        metrics: List[str],
+        std_num: int = 3,
+        lower_limit: int = 0,
+        upper_limit: int = 1,
     ) -> Dict[str, Tuple[float, float]]:
         alert_thresholds = {}
         for metric in metrics:
             realised_performance_chunks = [
                 _calculate_realized_performance(chunk, self.y_true, self.y_pred, self.y_pred_proba, metric)
-                for chunk in reference_chunks]
+                for chunk in reference_chunks
+            ]
             deviation = np.std(realised_performance_chunks) * std_num
             mean_realised_performance = np.mean(realised_performance_chunks)
             lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
@@ -390,16 +371,13 @@ def _calculate_confidence_deviations(reference_chunks: List[Chunk], y_pred: str,
     }
 
 
-def _calculate_realized_performance(chunk: Chunk, y_true: str, y_pred: str, y_pred_proba: str, metric: str):
-    if (
-        y_true not in chunk.data.columns
-        or chunk.data[y_true].isna().all()
-    ):
+def _calculate_realized_performance(chunk: Chunk, y_true_col: str, y_pred_col: str, y_pred_proba_col: str, metric: str):
+    if y_true_col not in chunk.data.columns or chunk.data[y_true_col].isna().all():
         return np.NaN
 
-    y_true = chunk.data[y_true]
-    y_pred_proba = chunk.data[y_pred_proba]
-    y_pred = chunk.data[y_pred]
+    y_true = chunk.data[y_true_col]
+    y_pred_proba = chunk.data[y_pred_proba_col]
+    y_pred = chunk.data[y_pred_col]
 
     y_true = y_true[~y_pred_proba.isna()]
     y_pred_proba.dropna(inplace=True)

@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml._typing import ModelOutputsType
-from nannyml.base import AbstractCalculator, _split_features_by_type
+from nannyml._typing import ModelOutputsType, model_output_column_names
+from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
@@ -99,13 +99,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        reference_data = reference_data.copy()
-
-        if self.y_pred not in reference_data.columns:
-            raise InvalidArgumentsException(f"data does not contain prediction column '{self.y_pred}'.")
-
-        if self.y_pred_proba not in reference_data.columns:
-            raise InvalidArgumentsException(f"data does not contain model output column '{self.y_pred_proba}'.")
+        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
 
         self.previous_reference_data = reference_data.copy()
         self.previous_reference_results = self._calculate(reference_data).data
@@ -141,13 +135,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        reference_data = data.copy()
-
-        if self.y_pred not in reference_data.columns:
-            raise InvalidArgumentsException(f"data does not contain target data column '{self.y_pred}'.")
-
-        if self.y_pred_proba not in reference_data.columns:
-            raise InvalidArgumentsException(f"data does not contain target data column '{self.y_pred_proba}'.")
+        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
 
         columns = [self.y_pred]
         if isinstance(self.y_pred_proba, Dict):

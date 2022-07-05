@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml.base import AbstractCalculator, _split_features_by_type
+from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateStatisticalDriftCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
@@ -98,11 +98,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        reference_data = reference_data.copy()
-
-        missing_columns = self.feature_column_names[~np.isin(self.feature_column_names, reference_data.columns)]
-        if len(missing_columns) > 0:
-            raise InvalidArgumentsException(f"data does not contain columns '{missing_columns}'.")
+        _list_missing(self.feature_column_names, reference_data)
 
         self.previous_reference_data = reference_data.copy()
         self.previous_reference_results = self._calculate(self.previous_reference_data).data
@@ -137,11 +133,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        data = data.copy()
-
-        missing_columns = self.feature_column_names[~np.isin(self.feature_column_names, data.columns)]
-        if len(missing_columns) > 0:
-            raise InvalidArgumentsException(f"data does not contain columns '{missing_columns}'.")
+        _list_missing(self.feature_column_names, data)
 
         self.continuous_column_names, self.categorical_column_names = _split_features_by_type(
             data, self.feature_column_names
