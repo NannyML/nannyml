@@ -5,13 +5,13 @@
 """Module containing ways to rank drifting features."""
 
 import abc
-from typing import Dict, Optional
+import logging
+from typing import Any, Callable, Dict
 
 import pandas as pd
 
-from nannyml.drift.base import DriftResult
+from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata.base import ModelMetadata
 
 
 class Ranking(abc.ABC):
@@ -19,8 +19,7 @@ class Ranking(abc.ABC):
 
     def rank(
         self,
-        drift_calculation_result: DriftResult,
-        model_metadata: ModelMetadata,
+        drift_calculation_result: UnivariateStatisticalDriftCalculatorResult,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Ranks the features within a drift calculation according to impact.
@@ -29,8 +28,6 @@ class Ranking(abc.ABC):
         ----------
         drift_calculation_result : pd.DataFrame
             The drift calculation results.
-        model_metadata: ModelMetadata
-            Metadata describing the monitored model.
         only_drifting : bool
             Omits non-drifting features from the ranking if True.
 
@@ -42,6 +39,9 @@ class Ranking(abc.ABC):
         """
         raise NotImplementedError
 
+    def __call__(self, *args, **kwargs):
+        return self(**kwargs)
+
 
 class AlertCountRanking(Ranking):
     """Ranks drifting features by the number of 'alerts' they've caused."""
@@ -50,8 +50,7 @@ class AlertCountRanking(Ranking):
 
     def rank(
         self,
-        drift_calculation_result: DriftResult,
-        model_metadata: ModelMetadata,
+        drift_calculation_result: UnivariateStatisticalDriftCalculatorResult,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Compares the number of alerts for each feature and uses that for ranking.
@@ -61,10 +60,7 @@ class AlertCountRanking(Ranking):
         drift_calculation_result : pd.DataFrame
             The drift calculation results. Requires alert columns to be present. These are recognized and parsed
             using the ALERT_COLUMN_SUFFIX pattern, currently equal to ``'_alert'``.
-        model_metadata: ModelMetadata
-            Metadata describing the monitored model, used to check what the features are and exclude predictions
-            from ranking results.
-        only_drifting : bool
+        only_drifting : bool, default=False
             Omits features without alerts from the ranking results.
 
         Returns
@@ -89,16 +85,9 @@ class AlertCountRanking(Ranking):
         if drift_calculation_result.data.empty:
             raise InvalidArgumentsException('drift results contain no data to use for ranking')
 
-        alert_column_names = [f'{feature.column_name}{self.ALERT_COLUMN_SUFFIX}' for feature in model_metadata.features]
-
-        if len(alert_column_names) == 0:
-            raise InvalidArgumentsException('drift results are not statistical drift results.')
-
-        if (
-            len(list(filter(lambda col: col.endswith(self.ALERT_COLUMN_SUFFIX), drift_calculation_result.data.columns)))
-            == 0
-        ):
-            raise InvalidArgumentsException('drift results are not statistical drift results.')
+        alert_column_names = [
+            f'{name}{self.ALERT_COLUMN_SUFFIX}' for name in drift_calculation_result.calculator.feature_column_names
+        ]
 
         ranking = pd.DataFrame(drift_calculation_result.data[alert_column_names].sum()).reset_index()
         ranking.columns = ['feature', 'number_of_alerts']
@@ -113,30 +102,27 @@ class AlertCountRanking(Ranking):
 class Ranker:
     """Factory class to easily access Ranking implementations."""
 
-    _rankings: Dict[str, Ranking] = {'alert_count': AlertCountRanking()}
+    registry: Dict[str, Ranking] = {}
 
     @classmethod
-    def register_ranking(cls, key: str, ranking: Ranking):
-        """Registers a new calibrator to the index.
-
-        This index associates a certain key with a Ranking instance.
-
-        Parameters
-        ----------
-        key: str
-            The key used to retrieve a Calibrator. When providing a key that is already in the index, the value
-            will be overwritten.
-        ranking: Ranking
-            An instance of a Ranking subclass.
-
-        Examples
-        --------
-        >>> Ranker.register_ranking('alert_count', AlertCountRanking())
-        """
-        cls._rankings[key] = ranking
+    def _logger(cls) -> logging.Logger:
+        return logging.getLogger(__name__)
 
     @classmethod
-    def by(cls, key: Optional[str], **kwargs):
+    def register(cls, key: str) -> Callable:
+        """Adds a Ranking to the registry using the provided key."""
+
+        def inner_wrapper(wrapped_class: Ranking) -> Ranking:
+            if key in cls.registry:
+                cls._logger().warning(f"re-registering Ranking for key='{key}'")
+            cls.registry[key] = wrapped_class
+
+            return wrapped_class
+
+        return inner_wrapper
+
+    @classmethod
+    def by(cls, key: str = 'alert_count', ranking_args: Dict[str, Any] = None) -> Ranking:
         """Returns a Ranking subclass instance given a key value.
 
         If the provided key equals ``None``, then a new instance of the default Ranking (AlertCountRanking)
@@ -146,9 +132,11 @@ class Ranker:
 
         Parameters
         ----------
-        key : str
+        key : str, default='alert_count'
             The key used to retrieve a Ranking. When providing a key that is already in the index, the value
             will be overwritten.
+        ranking_args: Dict[str, Any], default=None
+            A dictionary of arguments that will be passed to the Ranking during creation.
 
         Returns
         -------
@@ -159,13 +147,13 @@ class Ranker:
         --------
         >>> ranking = Ranker.by('alert_count')
         """
-        default = AlertCountRanking()
-        if key is None:
-            return default
+        if ranking_args is None:
+            ranking_args = {}
 
-        if key not in cls._rankings:
+        if key not in cls.registry:
             raise InvalidArgumentsException(
-                f"ranking {key} unknown. " f"Please provide one of the following: {cls._rankings.keys()}"
+                f"ranking {key} unknown. " f"Please provide one of the following: {cls.registry.keys()}"
             )
 
-        return cls._rankings.get(key, default)
+        ranking_class = cls.registry[key]
+        return ranking_class(**ranking_args)

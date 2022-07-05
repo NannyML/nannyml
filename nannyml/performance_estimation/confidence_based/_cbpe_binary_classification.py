@@ -193,7 +193,7 @@ class _BinaryClassificationCBPE(CBPE):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(data.columns))
+        _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
 
         if self.needs_calibration:
             data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])

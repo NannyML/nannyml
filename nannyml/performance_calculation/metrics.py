@@ -59,9 +59,7 @@ class Metric(abc.ABC):
         from .calculator import PerformanceCalculator
 
         if not isinstance(calculator, PerformanceCalculator):
-            raise RuntimeError(
-                f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
-            )
+            raise RuntimeError(f"{calculator.__class__.__name__} is not an instance of type " f"PerformanceCalculator")
         self.calculator = calculator
         self.lower_threshold = lower_threshold
         self.upper_threshold = upper_threshold

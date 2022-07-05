@@ -16,8 +16,7 @@ import pandas as pd
 from dateutil.parser import ParserError  # type: ignore
 from pandas import Period
 
-from nannyml.exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from nannyml.metadata.base import NML_METADATA_PERIOD_COLUMN_NAME
+from nannyml.exceptions import ChunkerException, InvalidArgumentsException
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +105,6 @@ class Chunker(abc.ABC):
         self,
         data: pd.DataFrame,
         timestamp_column_name: str,
-        period_column_name: str = NML_METADATA_PERIOD_COLUMN_NAME,
         columns=None,
         minimum_chunk_size: int = None,
     ) -> List[Chunk]:
@@ -144,8 +142,8 @@ class Chunker(abc.ABC):
 
         """
         if timestamp_column_name not in data.columns:
-            raise MissingMetadataException(
-                f"missing timestamp column '{timestamp_column_name}'." "Please provide valid metadata."
+            raise InvalidArgumentsException(
+                f"timestamp column '{timestamp_column_name}' not in columns: {list(data.columns)}."
             )
 
         data = data.sort_values(by=[timestamp_column_name]).reset_index(drop=True)

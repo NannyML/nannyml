@@ -157,7 +157,7 @@ class _MulticlassClassificationCBPE(CBPE):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_true, self.y_pred] + [v for k, v in self.y_pred_proba.items()], data)
+        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
 
         data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
 
@@ -379,12 +379,12 @@ def _get_class_splits(
 
 
 def _fit_calibrators(
-    reference_data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], calibrator: Calibrator
+    reference_data: pd.DataFrame, y_true_col: str, y_pred_proba_col: Dict[str, str], calibrator: Calibrator
 ) -> Dict[str, Calibrator]:
     fitted_calibrators = {}
     noop_calibrator = NoopCalibrator()
 
-    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true, y_pred_proba):
+    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true_col, y_pred_proba_col):
         if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
             calibrator = noop_calibrator
 
@@ -404,8 +404,8 @@ def _calibrate_predicted_probabilities(
     calibrated_probas = np.zeros((number_of_observations, number_of_classes))
 
     for idx, split in enumerate(class_splits):
-        clazz, _, y_pred_proba = split
-        calibrated_probas[:, idx] = calibrators[clazz].calibrate(y_pred_proba)
+        clazz, _, y_pred_proba_zz = split
+        calibrated_probas[:, idx] = calibrators[clazz].calibrate(y_pred_proba_zz)
 
     denominator = np.sum(calibrated_probas, axis=1)[:, np.newaxis]
     uniform_proba = np.full_like(calibrated_probas, 1 / number_of_classes)

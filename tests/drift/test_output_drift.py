@@ -5,9 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.drift.model_outputs.univariate.statistical import UnivariateStatisticalDriftCalculator
-from nannyml.exceptions import MissingMetadataException
-from nannyml.metadata.extraction import extract_metadata
+from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 
 
 @pytest.fixture
@@ -90,6 +88,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data.loc[data.week >= 16, ['f1']] = data.loc[data.week >= 16, ['f1']] + 0.6
     data.loc[data.week >= 16, ['f2']] = np.sqrt(data.loc[data.week >= 16, ['f2']])
     data.drop(columns=['week'], inplace=True)
+    data['f3'] = data['f3'].astype("category")
 
     return data
 
@@ -106,38 +105,23 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     return data
 
 
-@pytest.fixture
-def sample_drift_metadata(sample_drift_data):  # noqa: D103
-    return extract_metadata(sample_drift_data, model_name='model', model_type='classification_binary')
-
-
-def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data, sample_drift_metadata):  # noqa: D103
+def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
+    calc = StatisticalOutputDriftCalculator(
+        y_pred='output', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp', chunk_period='W'
+    ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
 
 
-def test_output_drift_calculator_with_default_params_should_not_fail(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
+def test_output_drift_calculator_with_default_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
+    calc = StatisticalOutputDriftCalculator(
+        y_pred='output', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp', chunk_period='W'
+    ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
-
-
-def test_output_drift_calculator_raises_missing_metadata_exception_when_missing_predictions(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    sample_drift_metadata.prediction_column_name = None
-    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-
-    calc = UnivariateStatisticalDriftCalculator(model_metadata=sample_drift_metadata)
-
-    with pytest.raises(MissingMetadataException, match='prediction_column_name'):
-        calc.fit(ref_data)

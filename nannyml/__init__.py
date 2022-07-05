@@ -47,8 +47,6 @@ from .drift import (
     AlertCountRanking,
     DataReconstructionDriftCalculator,
     DataReconstructionDriftCalculatorResult,
-    DriftCalculator,
-    DriftResult,
     Ranker,
     Ranking,
     StatisticalOutputDriftCalculator,
@@ -56,18 +54,8 @@ from .drift import (
     UnivariateStatisticalDriftCalculator,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from .metadata import (
-    BinaryClassificationMetadata,
-    Feature,
-    FeatureType,
-    ModelMetadata,
-    ModelType,
-    MulticlassClassificationMetadata,
-    RegressionMetadata,
-    extract_metadata,
-)
 from .performance_calculation import PerformanceCalculator
-from .performance_estimation import CBPE, PerformanceEstimator
+from .performance_estimation import CBPE
 from .plots import feature_drift
 
 logger = logging.getLogger(__name__)

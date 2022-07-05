@@ -17,7 +17,6 @@ from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_t
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata.base import Feature
 
 
 class DataReconstructionDriftCalculator(AbstractCalculator):
@@ -146,7 +145,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                 imputed_reference_data[self.continuous_feature_column_names]
             )
 
-        encoder = CountEncoder(cols=self.feature_column_names, normalize=True)
+        encoder = CountEncoder(cols=self.categorical_feature_column_names, normalize=True)
         encoded_reference_data = imputed_reference_data.copy(deep=True)
         encoded_reference_data[self.feature_column_names] = encoder.fit_transform(
             encoded_reference_data[self.feature_column_names]
@@ -221,7 +220,6 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis' if chunk.is_transition else chunk.period,
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
                         feature_column_names=self.feature_column_names,
                         categorical_feature_column_names=self.categorical_feature_column_names,
@@ -342,12 +340,6 @@ def _calculate_reconstruction_error_for_data(
 
     res = data['rc_error'].mean()
     return res
-
-
-def _get_selected_feature_names(selected_features: List[str], features: List[Feature]) -> List[str]:
-    feature_column_names = [f.column_name for f in features]
-    # Calculate intersection
-    return list(set(selected_features) & set(feature_column_names))
 
 
 def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], features_reconstructed: List[str]):
