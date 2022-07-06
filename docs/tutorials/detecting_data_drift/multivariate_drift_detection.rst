@@ -16,28 +16,31 @@ Just The Code
 
 .. code-block:: python
 
-    import nannyml as nml
-    import pandas as pd
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-
-    display(reference_df.head())
-
-    feature_column_names = [
-        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
-
-    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp')
-
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
-
-    display(results.data)
-
-    figure = results.plot(kind='drift')
-    figure.show()
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> 
+    >>> # Load synthetic data
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> display(reference.head())
+    >>> 
+    >>> # Define feature columns
+    >>> feature_column_names = [
+    ...     col for col in reference.columns if col not in [
+    ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+    ...     ]]
+    >>> 
+    >>> calc = nml.DataReconstructionDriftCalculator(
+    ...     feature_column_names=feature_column_names,
+    ...     timestamp_column_name='timestamp',
+    ...     chunk_size=5000
+    >>> )
+    >>> calc.fit(reference)
+    >>> results = calc.calculate(analysis)
+    >>> display(results.data)
+    >>> 
+    >>> figure = results.plot(kind='drift', plot_reference=True)
+    >>> figure.show()
 
 
 Walkthrough
@@ -59,14 +62,13 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
 
 .. code-block:: python
 
-    import nannyml as nml
-    import pandas as pd
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-
-    display(reference_df.head())
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> 
+    >>> # Load synthetic data
+    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> display(reference.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -92,15 +94,19 @@ calculate the multivariate drift results on the data provided to it.
 
 .. code-block:: python
 
-    feature_column_names = [
-        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
-
-    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names,
-                                                timestamp_column_name='timestamp')
-
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
+    >>> # Define feature columns
+    >>> feature_column_names = [
+    ...     col for col in reference.columns if col not in [
+    ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+    ...     ]]
+    >>> 
+    >>> calc = nml.DataReconstructionDriftCalculator(
+    ...     feature_column_names=feature_column_names,
+    ...     timestamp_column_name='timestamp',
+    ...     chunk_size=5000
+    >>> )
+    >>> calc.fit(reference)
+    >>> results = calc.calculate(analysis)
 
 Any missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
 the most frequent value for categorical features and the mean for continuous features. These defaults can be
@@ -110,77 +116,64 @@ An example where custom imputation strategies are used can be seen below.
 
 .. code-block:: python
 
-    feature_column_names = [
-        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+    >>> # Define feature columns
+    >>> feature_column_names = [
+    ...     col for col in reference.columns if col not in [
+    ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+    ...     ]]
+    >>>
+    >>> from sklearn.impute import SimpleImputer
+    >>>
+    >>> calc = nml.DataReconstructionDriftCalculator(
+    ...     feature_column_names=feature_column_names,
+    ...     timestamp_column_name='timestamp',
+    ...     chunk_size=5000,
+    ...     imputer_categorical=SimpleImputer(strategy='constant', fill_value='missing'),
+    ...     imputer_continuous=SimpleImputer(strategy='median')
+    >>> )
+    >>> calc.fit(reference)
+    >>> results = calc.calculate(analysis)
 
-    from sklearn.impute import SimpleImputer
 
-    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names,
-                                                timestamp_column_name='timestamp',
-                                                imputer_categorical=SimpleImputer(strategy='constant', fill_value='missing'),
-                                                imputer_continuous=SimpleImputer(strategy='median'))
-
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
-
-
-Because our synthetic dataset does not have missing values, the results are the same in both cases. We can see these results as a dataframe.
+Because our synthetic dataset does not have missing values, the results are the same in both cases.
+We can see these results of the data provided to the
+:meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.calculate`
+method as a dataframe.
 
 .. code-block:: python
 
-    display(results.data)
+    >>> display(results.data)
 
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   reconstruction_error |   lower_threshold |   upper_threshold | alert   |
-+====+===============+===============+=============+=====================+=====================+=============+========================+===================+===================+=========+
-|  0 | [0:4999]      |             0 |        4999 | 2014-05-09 22:27:20 | 2014-09-09 08:18:27 | reference   |                1.12096 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  1 | [5000:9999]   |          5000 |        9999 | 2014-09-09 09:13:35 | 2015-01-09 00:02:51 | reference   |                1.11807 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  2 | [10000:14999] |         10000 |       14999 | 2015-01-09 00:04:43 | 2015-05-09 15:54:26 | reference   |                1.11724 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  3 | [15000:19999] |         15000 |       19999 | 2015-05-09 16:02:08 | 2015-09-07 07:14:37 | reference   |                1.12551 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  4 | [20000:24999] |         20000 |       24999 | 2015-09-07 07:27:47 | 2016-01-08 16:02:05 | reference   |                1.10945 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  5 | [25000:29999] |         25000 |       29999 | 2016-01-08 17:22:00 | 2016-05-09 11:09:39 | reference   |                1.12276 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  6 | [30000:34999] |         30000 |       34999 | 2016-05-09 11:19:36 | 2016-09-04 03:30:35 | reference   |                1.10714 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  7 | [35000:39999] |         35000 |       39999 | 2016-09-04 04:09:35 | 2017-01-03 18:48:21 | reference   |                1.12713 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  8 | [40000:44999] |         40000 |       44999 | 2017-01-03 19:00:51 | 2017-05-03 02:34:24 | reference   |                1.11424 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-|  9 | [45000:49999] |         45000 |       49999 | 2017-05-03 02:49:38 | 2017-08-31 03:10:29 | reference   |                1.11045 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 10 | [50000:54999] |         50000 |       54999 | 2017-08-31 04:20:00 | 2018-01-02 00:45:44 | analysis    |                1.11854 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 11 | [55000:59999] |         55000 |       59999 | 2018-01-02 01:13:11 | 2018-05-01 13:10:10 | analysis    |                1.11504 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 12 | [60000:64999] |         60000 |       64999 | 2018-05-01 14:25:25 | 2018-09-01 15:40:40 | analysis    |                1.12546 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 13 | [65000:69999] |         65000 |       69999 | 2018-09-01 16:19:07 | 2018-12-31 10:11:21 | analysis    |                1.12845 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 14 | [70000:74999] |         70000 |       74999 | 2018-12-31 10:38:45 | 2019-04-30 11:01:30 | analysis    |                1.12289 |           1.09658 |           1.13801 | False   |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 15 | [75000:79999] |         75000 |       79999 | 2019-04-30 11:02:00 | 2019-09-01 00:24:27 | analysis    |                1.22839 |           1.09658 |           1.13801 | True    |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 16 | [80000:84999] |         80000 |       84999 | 2019-09-01 00:28:54 | 2019-12-31 09:09:12 | analysis    |                1.22003 |           1.09658 |           1.13801 | True    |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 17 | [85000:89999] |         85000 |       89999 | 2019-12-31 10:07:15 | 2020-04-30 11:46:53 | analysis    |                1.23739 |           1.09658 |           1.13801 | True    |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 18 | [90000:94999] |         90000 |       94999 | 2020-04-30 12:04:32 | 2020-09-01 02:46:02 | analysis    |                1.20605 |           1.09658 |           1.13801 | True    |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
-| 19 | [95000:99999] |         95000 |       99999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 | analysis    |                1.24258 |           1.09658 |           1.13801 | True    |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-------------------+-------------------+---------+
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|    | key           |   start_index |   end_index | start_date          | end_date            |   reconstruction_error |   lower_threshold |   upper_threshold | alert   |
++====+===============+===============+=============+=====================+=====================+========================+===================+===================+=========+
+|  0 | [0:4999]      |             0 |        4999 | 2017-08-31 04:20:00 | 2018-01-02 00:45:44 |                1.11854 |           1.09658 |           1.13801 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  1 | [5000:9999]   |          5000 |        9999 | 2018-01-02 01:13:11 | 2018-05-01 13:10:10 |                1.11504 |           1.09658 |           1.13801 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  2 | [10000:14999] |         10000 |       14999 | 2018-05-01 14:25:25 | 2018-09-01 15:40:40 |                1.12546 |           1.09658 |           1.13801 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  3 | [15000:19999] |         15000 |       19999 | 2018-09-01 16:19:07 | 2018-12-31 10:11:21 |                1.12845 |           1.09658 |           1.13801 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  4 | [20000:24999] |         20000 |       24999 | 2018-12-31 10:38:45 | 2019-04-30 11:01:30 |                1.12289 |           1.09658 |           1.13801 | False   |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  5 | [25000:29999] |         25000 |       29999 | 2019-04-30 11:02:00 | 2019-09-01 00:24:27 |                1.22839 |           1.09658 |           1.13801 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  6 | [30000:34999] |         30000 |       34999 | 2019-09-01 00:28:54 | 2019-12-31 09:09:12 |                1.22003 |           1.09658 |           1.13801 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  7 | [35000:39999] |         35000 |       39999 | 2019-12-31 10:07:15 | 2020-04-30 11:46:53 |                1.23739 |           1.09658 |           1.13801 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  8 | [40000:44999] |         40000 |       44999 | 2020-04-30 12:04:32 | 2020-09-01 02:46:02 |                1.20605 |           1.09658 |           1.13801 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
+|  9 | [45000:49999] |         45000 |       49999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 |                1.24258 |           1.09658 |           1.13801 | True    |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
 
 NannyML can also visualize the multivariate drift results in a plot.
 
 .. code-block:: python
 
-    figure = results.plot(kind='drift')
-    figure.show()
+    >>> figure = results.plot(kind='drift', plot_reference=True)
+    >>> figure.show()
 
 .. image:: /_static/drift-guide-multivariate.svg
 
