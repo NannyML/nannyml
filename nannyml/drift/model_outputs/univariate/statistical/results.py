@@ -284,8 +284,6 @@ def _plot_prediction_distribution(
         A visualization of the data distribution and drift using joy-plots.
     """
     y_pred = calculator.y_pred
-    clip = (0, 1)
-
     axis_title = f'{y_pred}'
     drift_column_name = f'{y_pred}_alert'
     title = f'Distribution over time for {y_pred}'
@@ -310,34 +308,16 @@ def _plot_prediction_distribution(
         )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-    if _column_is_categorical(data[y_pred]):
-        fig = _stacked_bar_plot(
-            feature_table=feature_table,
-            drift_table=drift_data,
-            chunk_column_name='key',
-            drift_column_name=drift_column_name,
-            feature_column_name=y_pred,
-            yaxis_title=axis_title,
-            title=title,
-        )
-    elif _column_is_continuous(data[y_pred]):
-        fig = _joy_plot(
-            feature_table=feature_table,
-            drift_table=drift_data,
-            chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-            drift_column_name=drift_column_name,
-            feature_column_name=y_pred,
-            x_axis_title=axis_title,
-            post_kde_clip=clip,
-            title=title,
-            style='vertical',
-        )
-    else:
-        raise RuntimeError(
-            f"dtype '{data[y_pred].dtype}' is not supported yet.\nPlease convert to one of "
-            f"the following dtypes: ['object', 'string', 'category', 'bool'] for categorical data\n"
-            f"or ['float64', 'int64'] for continuous data."
-        )
+    fig = _stacked_bar_plot(
+        feature_table=feature_table,
+        drift_table=drift_data,
+        chunk_column_name='key',
+        drift_column_name=drift_column_name,
+        feature_column_name=y_pred,
+        yaxis_title=axis_title,
+        title=title,
+    )
+
     return fig
 
 
