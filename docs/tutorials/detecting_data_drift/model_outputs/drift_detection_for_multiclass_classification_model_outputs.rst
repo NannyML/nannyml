@@ -19,44 +19,43 @@ Just The Code
 
 .. code-block:: python
 
-    import nannyml as nml
-    import pandas as pd
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-
-    display(reference_df.head())
-
-    calc = nml.StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        y_pred_proba={
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card'
-        },
-        timestamp_column_name='timestamp')
-
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
-
-    display(results.data)
-
-
-    predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    predicted_labels_drift_fig.show()
-
-    predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
-    predicted_labels_distribution_fig.show()
-
-    for label in calc.y_pred_proba.keys():
-        prediction_drift_fig = results.plot(kind='prediction_drift', class_label=label, plot_reference=True)
-        prediction_drift_fig.show()
-
-    for label in calc.y_pred_proba.keys():
-        prediction_distribution_fig = results.plot(kind='prediction_distribution', class_label=label, plot_reference=True)
-        prediction_distribution_fig.show()
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> 
+    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
+    >>> 
+    >>> display(reference_df.head())
+    >>> 
+    >>> calc = nml.StatisticalOutputDriftCalculator(
+    ...     y_pred='y_pred',
+    ...     y_pred_proba={
+    ...         'prepaid_card': 'y_pred_proba_prepaid_card',
+    ...         'upmarket_card': 'y_pred_proba_upmarket_card',
+    ...         'highstreet_card': 'y_pred_proba_highstreet_card'
+    ...     },
+    ...     timestamp_column_name='timestamp')
+    >>> 
+    >>> calc.fit(reference_df)
+    >>> 
+    >>> results = calc.calculate(analysis_df)
+    >>> 
+    >>> display(results.data)
+    >>>
+    >>> figure = results.plot(kind='predicted_labels_drift', plot_reference=True)
+    >>> figure.show()
+    >>> 
+    >>> figure = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    >>> figure.show()
+    >>> 
+    >>> for label in calc.y_pred_proba.keys():
+    ...     figure = results.plot(kind='prediction_drift', class_label=label, plot_reference=True)
+    ...     figure.show()
+    >>> 
+    >>> for label in calc.y_pred_proba.keys():
+    ...     figure = results.plot(kind='prediction_distribution', class_label=label, plot_reference=True)
+    ...     figure.show()
 
 Walkthrough
 ------------------------------------------------
@@ -71,14 +70,14 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
 
 .. code-block:: python
 
-    import nannyml as nml
-    import pandas as pd
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-
-    display(reference_df.head())
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> 
+    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
+    >>> 
+    >>> display(reference_df.head())
 
 +----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-----------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
 |    | acq_channel   |   app_behavioral_score |   requested_credit_limit | app_channel   |   credit_bureau_score |   stated_income | is_customer   | period    |   identifier | timestamp           |   y_pred_proba_prepaid_card |   y_pred_proba_highstreet_card |   y_pred_proba_upmarket_card | y_pred          | y_true        |
@@ -106,24 +105,24 @@ calculates the drift results on the data provided. An example using it can be se
 
 .. code-block:: python
 
-    calc = nml.StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        y_pred_proba={
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card'
-        },
-        timestamp_column_name='timestamp')
-
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
+    >>> calc = nml.StatisticalOutputDriftCalculator(
+    ...     y_pred='y_pred',
+    ...     y_pred_proba={
+    ...         'prepaid_card': 'y_pred_proba_prepaid_card',
+    ...         'upmarket_card': 'y_pred_proba_upmarket_card',
+    ...         'highstreet_card': 'y_pred_proba_highstreet_card'
+    ...     },
+    ...     timestamp_column_name='timestamp')
+    >>> 
+    >>> calc.fit(reference_df)
+    >>> 
+    >>> results = calc.calculate(analysis_df)
 
 We can then display the results in a table, or as plots.
 
 .. code-block:: python
 
-    display(results.data)
+    >>> display(results.data)
 
 +----+---------------+---------------+-------------+---------------------+---------------------+----------+---------------+------------------+----------------+--------------------+-----------------------------------+-------------------------------------+-----------------------------------+---------------------------------------+------------------------------------+--------------------------------------+------------------------------------+----------------------------------------+--------------------------------------+----------------------------------------+--------------------------------------+------------------------------------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | period   |   y_pred_chi2 |   y_pred_p_value | y_pred_alert   |   y_pred_threshold |   y_pred_proba_prepaid_card_dstat |   y_pred_proba_prepaid_card_p_value | y_pred_proba_prepaid_card_alert   |   y_pred_proba_prepaid_card_threshold |   y_pred_proba_upmarket_card_dstat |   y_pred_proba_upmarket_card_p_value | y_pred_proba_upmarket_card_alert   |   y_pred_proba_upmarket_card_threshold |   y_pred_proba_highstreet_card_dstat |   y_pred_proba_highstreet_card_p_value | y_pred_proba_highstreet_card_alert   |   y_pred_proba_highstreet_card_threshold |
@@ -153,9 +152,9 @@ NannyML can show the statistical properties of the drift in model outputs as a p
 
 .. code-block:: python
 
-    for label in calc.y_pred_proba.keys():
-        prediction_drift_fig = results.plot(kind='prediction_drift', class_label=label, plot_reference=True)
-        prediction_drift_fig.show()
+    >>> for label in calc.y_pred_proba.keys():
+    ...     figure = results.plot(kind='prediction_drift', class_label=label, plot_reference=True)
+    ...     figure.show()
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-drift-prepaid_card.svg
 
@@ -167,9 +166,9 @@ NannyML can also visualise how the distributions of the model predictions evolve
 
 .. code-block:: python
 
-    for label in calc.y_pred_proba.keys():
-        prediction_distribution_fig = results.plot(kind='prediction_distribution', class_label=label, plot_reference=True)
-        prediction_distribution_fig.show()
+    >>> for label in calc.y_pred_proba.keys():
+    ...     figure = results.plot(kind='prediction_distribution', class_label=label, plot_reference=True)
+    ...     figure.show()
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-distribution-prepaid_card.svg
 
@@ -181,8 +180,8 @@ NannyML can show the statistical properties of the drift in the predicted labels
 
 .. code-block:: python
 
-    predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    predicted_labels_drift_fig.show()
+     >>> figure = results.plot(kind='predicted_labels_drift', plot_reference=True)
+     >>> figure.show()
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-predicted-labels-drift.svg
 
@@ -190,8 +189,8 @@ NannyML can also visualise how the distributions of the predicted labels evolved
 
 .. code-block:: python
 
-    predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
-    predicted_labels_distribution_fig.show()
+     >>> figure = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+     >>> figure.show()
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-predicted-labels-distribution.svg
 
