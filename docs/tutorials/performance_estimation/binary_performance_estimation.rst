@@ -119,8 +119,7 @@ For more information about :term:`chunking<Data Chunk>` you can check the :ref:`
       y_true='y_true',
       timestamp_column_name='timestamp',
       metrics=['roc_auc', 'f1']
-      chunk_size=5000,
-    )
+      chunk_size=5000,)
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the

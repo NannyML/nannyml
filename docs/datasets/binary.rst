@@ -37,7 +37,6 @@ A sample of the dataset can be seen below.
 |  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
-
 The model uses 7 features:
 
 - `distance_from_office`: A numerical feature. The distance in kilometers from the employee's house to the workplace.
@@ -63,60 +62,3 @@ There are also three auxiliary columns that are helpful but not used by the moni
 - `timestamp`: A date column informing us of the date the prediction was made.
 - `partition`: The partition column tells us which :term:`Data Period` each row comes from.
 
-
-Metadata Extraction
-===================
-
-The dataset's columns are named so that the heuristics NannyML uses to extract metadata can
-identify them. We can see below how to extract metadata.
-
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.is_complete()
-    (False, ['target_column_name'])
-
-We see that the `target_column_name` has not been correctly identified. We need to manually specify it.
-
-.. code-block:: python
-
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> metadata.is_complete()
-    (True, [])
-
-We can now see all the metadata that NannyML has inferred about the model.
-
-.. code-block:: python
-
-    >>> metadata.to_df()
-
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|    | label                             | column_name                | type        | description                                   |
-+====+===================================+============================+=============+===============================================+
-|  0 | timestamp_column_name             | timestamp                  | continuous  | timestamp                                     |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  1 | partition_column_name             | partition                  | categorical | partition                                     |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  2 | target_column_name                | work_home_actual           | categorical | target                                        |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  3 | distance_from_office              | distance_from_office       | continuous  | extracted feature: distance_from_office       |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  4 | salary_range                      | salary_range               | categorical | extracted feature: salary_range               |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  5 | gas_price_per_litre               | gas_price_per_litre        | continuous  | extracted feature: gas_price_per_litre        |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  6 | public_transportation_cost        | public_transportation_cost | continuous  | extracted feature: public_transportation_cost |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  7 | wfh_prev_workday                  | wfh_prev_workday           | categorical | extracted feature: wfh_prev_workday           |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  8 | workday                           | workday                    | categorical | extracted feature: workday                    |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-|  9 | tenure                            | tenure                     | continuous  | extracted feature: tenure                     |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-| 10 | prediction_column_name            | y_pred                     | continuous  | predicted label                               |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-| 11 | predicted_probability_column_name | y_pred_proba               | continuous  | predicted score/probability                   |
-+----+-----------------------------------+----------------------------+-------------+-----------------------------------------------+
-
-For more information about specifying metadata look at :ref:`Providing Metadata<import-data>`.

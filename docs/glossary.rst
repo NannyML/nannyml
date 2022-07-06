@@ -23,7 +23,7 @@ Glossary
     Chi Squared test
         The Chi Squared test, or chi2 test as is sometimes called, is a non parametric statistical test regarding
         discrete distributions. It is be used to examine whether there is statistically significant difference
-        between expected and observed frequencies for one or more categories of a `contingency table`_.
+        between expected and observed frequencies for one or more categories of a contingency table.
         In NannyML we use the Chi Squared test to answer whether the two samples of a categorical variable
         come from a different distribution.
 

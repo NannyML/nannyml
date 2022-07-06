@@ -52,7 +52,7 @@ Just The Code
 Walkthrough
 -----------------------------------------
 
-NannyML's Univariate approach for data drift looks at each variable individually and conducts statistical tests comparing the :ref:`chunks` created from the analysis :ref:`data period<data-drift-periods>` with the reference period. You can read more about the data required in our section on :ref:`data periods<data-drift-periods>`
+NannyML's Univariate approach for data drift looks at each variable individually and conducts statistical tests comparing the :ref:`chunks<chunking>` created from the analysis :ref:`data period<data-drift-periods>` with the reference period. You can read more about the data required in our section on :ref:`data periods<data-drift-periods>`
 
 NannyML uses the :term:`2 sample Kolmogorov-Smirnov Test<Kolmogorov-Smirnov test>` for continuous features and the
 :term:`Chi squared test<Chi Squared test>` for categorical features. Both tests provide a statistic where they measure

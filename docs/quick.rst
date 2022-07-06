@@ -35,8 +35,7 @@ so you can jump in and experiment right away if you want.
 
 This is followed by a detailed walk-through to help you get familiar with the flow, and explain the details.
 :ref:`The synthetic dataset<dataset-synthetic-binary>` used contains inputs that are already merged with model
-predictions and ready to be directly used by NannyML.  In order to find out how to prepare your
-own dataset check the :ref:`Setting Up tutorials<setting_up>`. 
+predictions and ready to be directly used by NannyML.
 
 All :ref:`our tutorials<tutorials>` are a good place to get detailed guides on main
 concepts and functionalities. If you want to know what is implemented under the hood - 
