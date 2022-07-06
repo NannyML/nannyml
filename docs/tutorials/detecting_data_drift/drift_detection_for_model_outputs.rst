@@ -36,12 +36,17 @@ Just The Code
 
     display(results.data)
 
-    drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
-    drift_fig.show()
+    predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
+    predicted_labels_drift_fig.show()
 
-    distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
-    distribution_fig.show()
+    predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    predicted_labels_distribution_fig.show()
 
+    prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    prediction_drift_fig.show()
+
+    prediction_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+    prediction_distribution_fig.show()
 
 Walkthrough
 ------------------------------------------------
