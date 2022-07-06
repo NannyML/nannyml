@@ -27,7 +27,7 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 class Metric(abc.ABC):
-    """Represents a performance metric."""
+    """A performance metric used to calculate realized model performance."""
 
     def __init__(
         self,
@@ -46,8 +46,8 @@ class Metric(abc.ABC):
             ``calculation_function``.
         column_name: str
             The name used to indicate the metric in columns of a DataFrame.
-        metadata: ModelMetadata
-            Metadata describing the model being monitored.
+        calculator: AbstractCalculator
+            The calculator using the Metric instance.
         upper_threshold : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold : float, default=None

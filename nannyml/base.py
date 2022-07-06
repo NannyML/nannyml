@@ -22,23 +22,23 @@ from nannyml.exceptions import (
 
 
 class AbstractCalculatorResult(ABC):
-    """Contains the results of a drift calculation and provides additional functionality such as plotting.
+    """Contains the results of a calculation and provides plotting functionality.
 
-    The result of the :meth:`~nannyml.drift.base.DriftCalculator.calculate` method of a
-    :class:`~nannyml.drift.base.DriftCalculator`.
+    The result of the :meth:`~nannyml.base.AbstractCalculator.calculate` method of a
+    :class:`~nannyml.base.AbstractCalculator`.
 
     It is an abstract class containing shared properties and methods across implementations.
-    For each :class:`~nannyml.drift.base.DriftCalculator` class there will be an associated
-    :class:`~nannyml.drift.base.DriftResult` implementation.
+    For each :class:`~nannyml.base.AbstractCalculator` class there will be a corresponding
+    :class:`~nannyml.base.AbstractCalculatorResult` implementation.
     """
 
     def __init__(self, results_data: pd.DataFrame):
-        """Creates a new DriftResult instance.
+        """Creates a new :class:`~nannyml.base.AbstractCalculatorResult` instance.
 
         Parameters
         ----------
         results_data: pd.DataFrame
-            The result data of the performed calculation.
+            The data returned by the Calculator.
         """
         self.data = results_data.copy(deep=True)
 
@@ -52,7 +52,7 @@ class AbstractCalculatorResult(ABC):
         raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
-        """Plot drift results."""
+        """Plots calculation results."""
         raise NotImplementedError
 
 

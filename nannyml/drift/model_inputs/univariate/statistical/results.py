@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module containing univariate statistical drift calculation results and associated plotting implementations."""
+"""Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 from typing import List, Tuple
 
 import pandas as pd
@@ -17,7 +17,7 @@ from nannyml.plots._step_plot import _step_plot
 
 
 class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
-    """Contains the univariate statistical drift calculation results and provides additional plotting functionality."""
+    """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator):
         super().__init__(results_data)
@@ -43,27 +43,24 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """Renders a line plot for a chosen metric of statistical drift calculation results.
+        """Renders plots for metrics returned by the univariate statistical drift calculator.
 
-        Given either a feature label (check ``model_metadata.features``) or the actual feature column name
-        and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
-        the metric value for the selected feature per chunk.
-        Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple periods.
+        For any feature you can render the statistic value or p-values as a step plot, or create a distribution plot.
+        Select a plot using the ``kind`` parameter:
 
-        The different plot kinds that are available:
-
-        - ``feature_drift``: plots drift per :class:`~nannyml.chunk.Chunk` for a single feature of a chunked data set.
-        - ``feature_distribution``: plots feature distribution per :class:`~nannyml.chunk.Chunk`.
-          Joyplot for continuous features, stacked bar charts for categorical features.
+        - ``feature_drift``
+                plots drift per :class:`~nannyml.chunk.Chunk` for a single feature of a chunked data set.
+        - ``feature_distribution``
+                plots feature distribution per :class:`~nannyml.chunk.Chunk`.
+                Joyplot for continuous features, stacked bar charts for categorical features.
 
         Parameters
         ----------
         kind: str, default=`feature_drift`
-            The kind of plot you want to have. Value must be one of ``feature_drift``, ``feature_distribution``.
+            The kind of plot you want to have. Allowed values are `feature_drift`` and ``feature_distribution``.
         metric : str, default=``statistic``
-            The metric to plot. Value must be one of ``statistic`` or ``p_value``
+            The metric to plot. Allowed values are ``statistic`` and ``p_value``.
+            Not applicable when plotting distributions.
         feature : str
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
@@ -71,26 +68,43 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
-
         Returns
         -------
-        fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
-            using ``fig.show()``.
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
 
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
-        >>> drift_calc.fit(ref_df)
-        >>> drifts = drift_calc.calculate(ana_df)
-        >>> # loop over all features and plot the feature drift and feature distribution for each
-        >>> for f in metadata.features:
-        >>>     drifts.plot(kind='feature_drift', feature_label=f.label).show()
-        >>>     drifts.plot(kind='feature_distribution', feature_label=f.label).show()
+        >>>
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> feature_column_names = [col for col in reference_df.columns
+        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> calc = nml.UnivariateStatisticalDriftCalculator(
+        >>>     feature_column_names=feature_column_names,
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>> print(results.data)  # check the numbers
+                     key  start_index  ...  identifier_alert identifier_threshold
+        0       [0:4999]            0  ...              True                 0.05
+        1    [5000:9999]         5000  ...              True                 0.05
+        2  [10000:14999]        10000  ...              True                 0.05
+        3  [15000:19999]        15000  ...              True                 0.05
+        4  [20000:24999]        20000  ...              True                 0.05
+        5  [25000:29999]        25000  ...              True                 0.05
+        6  [30000:34999]        30000  ...              True                 0.05
+        7  [35000:39999]        35000  ...              True                 0.05
+        8  [40000:44999]        40000  ...              True                 0.05
+        9  [45000:49999]        45000  ...              True                 0.05
+        >>> for feature in cal.feature_column_names:
+        >>>     fig = results.plot(kind='feature_drift', metric='statistic', plot_reference=True, feature=feature)
+        >>>     fig.show()
 
         """
         if kind == 'feature_drift':
@@ -218,7 +232,7 @@ def _plot_continuous_feature_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name, 'period'))
+    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
         reference_drift = calculator.previous_reference_results
@@ -266,7 +280,7 @@ def _plot_categorical_feature_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name, 'period'))
+    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
         reference_drift = calculator.previous_reference_results

@@ -2,7 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module for target distribution monitoring."""
+"""Calculates drift for model targets and target distributions using statistical tests."""
+
 from __future__ import annotations
 
 import warnings
@@ -21,7 +22,7 @@ _ALERT_THRESHOLD_P_VALUE = 0.05
 
 
 class TargetDistributionCalculator(AbstractCalculator):
-    """Calculates target distribution for a given dataset."""
+    """Calculates drift for model targets and target distributions using statistical tests."""
 
     def __init__(
         self,
@@ -32,12 +33,14 @@ class TargetDistributionCalculator(AbstractCalculator):
         chunk_period: str = None,
         chunker: Chunker = None,
     ):
-        """Constructs a new TargetDistributionCalculator.
+        """creates a new TargetDistributionCalculator.
 
         Parameters
         ----------
-        model_metadata: ModelMetadata
-            Metadata for the model whose data is to be processed.
+        y_true: str
+            The name of the column containing your model target values.
+        timestamp_column_name: str
+            The name of the column containing the timestamp of the model prediction.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -53,10 +56,30 @@ class TargetDistributionCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator that will chunk by week
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.TargetDistributionCalculator(
+        >>>     y_true='work_home_actual',
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>> print(results.data)  # check the numbers
+                     key  start_index  end_index  ... thresholds  alert significant
+        0       [0:4999]            0       4999  ...       0.05   True        True
+        1    [5000:9999]         5000       9999  ...       0.05  False       False
+        2  [10000:14999]        10000      14999  ...       0.05  False       False
+        3  [15000:19999]        15000      19999  ...       0.05  False       False
+        4  [20000:24999]        20000      24999  ...       0.05  False       False
+        5  [25000:29999]        25000      29999  ...       0.05  False       False
+        6  [30000:34999]        30000      34999  ...       0.05  False       False
+        7  [35000:39999]        35000      39999  ...       0.05  False       False
+        8  [40000:44999]        40000      44999  ...       0.05  False       False
+        9  [45000:49999]        45000      49999  ...       0.05  False       False
+        >>>
+        >>> results.plot(distribution='metric', plot_reference=True).show()
+        >>> results.plot(distribution='statistical', plot_reference=True).show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker)
 
@@ -72,19 +95,7 @@ class TargetDistributionCalculator(AbstractCalculator):
         self._minimum_chunk_size = 300
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
-        """Fits the calculator to reference data.
-
-        During fitting the reference target data is validated and stored for later use.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
-        >>> # fit the calculator on reference data
-        >>> target_distribution_calc.fit(ref_df)
-        """
+        """Fits the calculator to reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -101,25 +112,7 @@ class TargetDistributionCalculator(AbstractCalculator):
         return self
 
     def _calculate(self, data: pd.DataFrame, *args, **kwargs):
-        """Calculates the target distribution of a binary classifier.
-
-        Requires fitting the calculator on reference data first.
-
-        Parameters
-        ----------
-        data: pd.DataFrame
-            Data for the model, i.e. model inputs, predictions and targets.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
-        >>> target_distribution_calc.fit(ref_df)
-        >>> # calculate target distribution
-        >>> target_distribution = target_distribution_calc.calculate(ana_df)
-        """
+        """Calculates the target distribution of a binary classifier."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 

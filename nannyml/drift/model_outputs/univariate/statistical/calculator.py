@@ -2,7 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
-"""Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
+"""Calculates drift for model predictions and model outputs using statistical tests."""
+
 from typing import Any, Dict, Optional
 
 import numpy as np
@@ -19,7 +20,7 @@ ALERT_THRESHOLD_P_VALUE = 0.05
 
 
 class StatisticalOutputDriftCalculator(AbstractCalculator):
-    """A drift calculator that relies on statistics to detect drift."""
+    """Calculates drift for model predictions and model outputs using statistical tests."""
 
     def __init__(
         self,
@@ -31,7 +32,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         chunk_period: str = None,
         chunker: Chunker = None,
     ):
-        """Constructs a new StatisticalOutputDriftCalculator.
+        """Creates a new StatisticalOutputDriftCalculator.
 
         Parameters
         ----------
@@ -59,10 +60,34 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # Create a calculator that will chunk by week
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
+        >>>
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.StatisticalOutputDriftCalculator(
+        >>>     y_pred_proba='y_pred_proba',
+        >>>     y_pred='y_pred',
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>>
+        >>> print(results.data)  # check the numbers
+                     key  start_index  ...  y_pred_proba_alert y_pred_proba_threshold
+        0       [0:4999]            0  ...                True                   0.05
+        1    [5000:9999]         5000  ...               False                   0.05
+        2  [10000:14999]        10000  ...               False                   0.05
+        3  [15000:19999]        15000  ...               False                   0.05
+        4  [20000:24999]        20000  ...               False                   0.05
+        5  [25000:29999]        25000  ...                True                   0.05
+        6  [30000:34999]        30000  ...                True                   0.05
+        7  [35000:39999]        35000  ...                True                   0.05
+        8  [40000:44999]        40000  ...                True                   0.05
+        9  [45000:49999]        45000  ...                True                   0.05
+        >>>
+        >>> results.plot(kind='prediction_drift', metric='p_value', plot_reference=True).show()
+        >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
+        >>> results.plot(kind='output_drift', plot_reference=True).show()
+        >>> results.plot(kind='output_distribution', plot_reference=True).show()
         """
         super(StatisticalOutputDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
 
@@ -75,27 +100,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
-        """Fits the drift calculator using a set of reference data.
-
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            A reference data set containing predictions (labels and/or probabilities) and target values.
-
-        Returns
-        -------
-        calculator: StatisticalOutputDriftCalculator
-            The fitted calculator.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-
-        """
+        """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -107,31 +112,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         return self
 
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> UnivariateDriftResult:
-        """Calculates the data reconstruction drift for a given data set.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The dataset to calculate the reconstruction drift for.
-
-        Returns
-        -------
-        reconstruction_drift: UnivariateDriftResult
-            A :class:`result<nannyml.drift.model_inputs.univariate.statistical.results.
-            UnivariateStatisticalDriftCalculatorResult>`
-            object where each row represents a :class:`~nannyml.chunk.Chunk`,
-            containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
-            for that :class:`~nannyml.chunk.Chunk`.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> drift = drift_calc.calculate(data)
-        """
+        """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
