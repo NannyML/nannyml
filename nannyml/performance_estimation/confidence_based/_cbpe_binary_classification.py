@@ -44,44 +44,7 @@ class _BinaryClassificationCBPE(CBPE):
         calibration: str = None,
         calibrator: Calibrator = None,
     ):
-        """Creates a new CBPE performance estimator.
-
-        Parameters
-        ----------
-        model_metadata: ModelMetadata
-            Metadata telling the DriftCalculator what columns are required for drift calculation.
-        metrics: List[str]
-            A list of metrics to calculate.
-        features: List[str], default=None
-            An optional list of feature column names. When set only these columns will be included in the
-            drift calculation. If not set all feature columns will be used.
-        chunk_size: int, default=None
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int, default=None
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str, default=None
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker, default=None
-            The `Chunker` used to split the data sets into a lists of chunks.
-        calibration: str, default='isotonic'
-            Determines which calibration will be applied to the model predictions. Defaults to ``isotonic``, currently
-            the only supported value.
-        calibrator: Calibrator, default=None
-            A specific instance of a Calibrator to be applied to the model predictions.
-            If not set NannyML will use the value of the ``calibration`` variable instead.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # create a new estimator, chunking by week
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
-
-        """
+        """Creates a new CBPE performance estimator."""
         super().__init__(
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
@@ -109,27 +72,7 @@ class _BinaryClassificationCBPE(CBPE):
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
-        """Fits the drift calculator using a set of reference data.
-
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            A reference data set containing predictions (labels and/or probabilities) and target values.
-
-        Returns
-        -------
-        estimator: PerformanceEstimator
-            The fitted estimator.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # create a new estimator and fit it on reference data
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
-
-        """
+        """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -166,30 +109,7 @@ class _BinaryClassificationCBPE(CBPE):
         return self
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
-        """Calculates the data reconstruction drift for a given data set.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The dataset to calculate the reconstruction drift for.
-
-        Returns
-        -------
-        estimates: PerformanceEstimatorResult
-            A :class:`result<nannyml.performance_estimation.confidence_based.results.CBPEPerformanceEstimatorResult>`
-            object where each row represents a :class:`~nannyml.chunk.Chunk`,
-            containing :class:`~nannyml.chunk.Chunk` properties and the estimated metrics
-            for that :class:`~nannyml.chunk.Chunk`.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # create a new estimator and fit it on reference data
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> estimates = estimator.estimate(data)
-        """
+        """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -238,7 +158,7 @@ class _BinaryClassificationCBPE(CBPE):
             estimates[f'alert_{metric}'] = (
                 estimated_metric > self._alert_thresholds[metric][1]
                 or estimated_metric < self._alert_thresholds[metric][0]
-            ) and chunk.period == 'analysis'
+            )
         return estimates
 
     def _calculate_alert_thresholds(

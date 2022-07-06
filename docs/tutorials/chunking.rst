@@ -27,9 +27,10 @@ synthetic binary classification dataset provided by NannyML. First we set up thi
 
     >>> import pandas as pd
     >>> import nannyml as nml
-    >>> reference, analysis, _ = nml.datasets.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
+    >>> from IPython.display import display
+    >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
+    >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
+
 
 
 .. _setting_up_time_based_chunking:
@@ -43,7 +44,14 @@ contain. Specify the ``chunk_period`` argument to get appropriate split. The exa
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q").fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='work_home_actual',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc'],
+    >>>    chunk_period="Q")
+    >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> est_perf.data.iloc[:3,:5]
 
@@ -94,7 +102,14 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_size=3500).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='work_home_actual',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc'],
+    >>>    chunk_size=3500)
+    >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> est_perf.data.iloc[:3,:5]
 
@@ -140,7 +155,14 @@ The total number of chunks can be set by the ``chunk_number`` parameter:
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='work_home_actual',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc'],
+    >>>    chunk_number=9)
+    >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> len(est_perf.data)
     9
@@ -184,7 +206,13 @@ estimated minimum size for the monitored data and model (see how NannyML estimat
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='work_home_actual',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc'])
+    >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
     >>> est_perf.data.iloc[:3,:5]
 

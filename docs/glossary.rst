@@ -58,13 +58,7 @@ Glossary
         The second subset of the data is the ``analysis`` period. It contains the observations you want NannyML to analyse.
         In the absence of targets performance in the analysis period can be estimated.
 
-        NannyML needs the period information to understand which data it can use as a reference to compare other periods by.
-        This is contained in the :term:`Partition Column`.
-
-        .. warning::
-            We currently only support the following partition column values: ``reference`` and ``analysis``.
-
-            Please map your own values to them accordingly.
+        You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
 
     Estimated Performance
         The performance the monitored model is expected to have as a result of the :term:`Performance Estimation` process.

@@ -55,8 +55,8 @@ Just the code
 
     >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> display(analysis.head())
     >>> display(reference.head())
+    >>> display(analysis.head())
 
     >>> # Choose a chunker or set a chunk size
     >>> chunk_size = 5000
@@ -65,9 +65,9 @@ Just the code
     >>> estimator = nml.CBPE(
     >>>    y_pred_proba='y_pred_proba',
     >>>    y_pred='y_pred',
-    >>>    y_true='y_true',
+    >>>    y_true='work_home_actual',
     >>>    timestamp_column_name='timestamp',
-    >>>    metrics=['roc_auc']
+    >>>    metrics=['roc_auc'],
     >>>    chunk_size=chunk_size,
     >>> )
     >>> estimator = estimator.fit(reference)
@@ -79,15 +79,26 @@ Just the code
 
     >>> # Define feature columns
     >>> feature_column_names = [
-    >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+    >>>     col for col in reference.columns if col not in [
+    ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+    ...     ]]
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
+    ...     feature_column_names=feature_column_names,
+    ...     timestamp_column_name='timestamp',
+    ...     chunk_size=chunk_size
+    ... )
     >>> univariate_calculator = univariate_calculator.fit(reference)
     >>> univariate_results = univariate_calculator.calculate(analysis)
     >>> # Plot drift results for all model inputs
     >>> for feature in univariate_calculator.feature_column_names:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', plot_reference=True)
+    ...     figure = univariate_results.plot(
+    ...         kind='feature_drift',
+    ...         metric='statistic',
+    ...         feature=feature,
+    ...         plot_reference=True
+    ...     )
     ...     figure.show()
 
     >>> # Rank features based on number of alerts
@@ -95,7 +106,15 @@ Just the code
     >>> ranked_features = ranker.rank(univariate_results, only_drifting = False)
     >>> display(ranked_features)
 
-    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic', plot_reference=True)
+    >>> calc = nml.StatisticalOutputDriftCalculator(
+    ...     y_pred='y_pred',
+    ...     y_pred_proba='y_pred_proba',
+    ...     timestamp_column_name='timestamp'
+    >>> )
+    >>> calc.fit(reference)
+    >>> results = calc.calculate(analysis)
+
+    >>> figure = results.plot(kind='prediction_drift', plot_reference=True)
     >>> figure.show()
 
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
@@ -108,9 +127,9 @@ Just the code
 
 .. _walk_through_the_quickstart:
 
----------------------------
+-----------
 Walkthrough
----------------------------
+-----------
 
 We start by loading the synthetic dataset included in the library. This synthetic dataset 
 contains inputs and predictions of a binary classification model that predicts whether an employee will 
@@ -121,12 +140,15 @@ prediction is in ``y_pred`` column. The model inputs are ``distance_from_office`
 ``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``. 
 ``identifier`` is the :term:`Identifier` column and ``timestamp`` is the :term:`Timestamp` column.
 
-The data are split into a ``reference period`` and an ``analysis period``. NannyML uses the reference period to
+The data are split into a :ref:`reference period<data-drift-periods-reference>` and an
+:ref:`analysis period<data-drift-periods-analysis>`. NannyML uses the reference period to
 establish a baseline for expected model performance. The analysis period is where we estimate or
 monitor performance, as well as detect data drift.
 
 For more information about periods check :ref:`data-drift-periods`. A key thing to remember is that
 the analysis period doesn't need to contain the :term:`Target` data.
+
+Let's load and preview the data:
 
 .. code-block:: python
 
@@ -136,8 +158,8 @@ the analysis period doesn't need to contain the :term:`Target` data.
 
     >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> display(analysis.head())
     >>> display(reference.head())
+    >>> display(analysis.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -166,7 +188,14 @@ the analysis period doesn't need to contain the :term:`Target` data.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
 |  4 |               4.7867   | 0 - 20K €      |               2.36854 |                      8.39497 | False              | Monday    | 0.906738 |        50004 | 2017-08-31 06:29:38 |           0.92 | analysis    |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-    
+
+We need to make a choice about the way we will split our data into :term:`Data Chunks<Data Chunk>`.
+
+.. code-block:: python
+
+    >>> # Choose a chunker or set a chunk size
+    >>> chunk_size = 5000
+
 
 Estimating Performance without Targets
 ======================================
@@ -183,9 +212,9 @@ while for more details on how the algorithm behind it works see
     >>> estimator = nml.CBPE(
     >>>    y_pred_proba='y_pred_proba',
     >>>    y_pred='y_pred',
-    >>>    y_true='y_true',
+    >>>    y_true='work_home_actual',
     >>>    timestamp_column_name='timestamp',
-    >>>    metrics=['roc_auc']
+    >>>    metrics=['roc_auc'],
     >>>    chunk_size=chunk_size,
     >>> )
     >>> estimator = estimator.fit(reference)
@@ -210,14 +239,25 @@ functionality. See :ref:`data-drift` for more details.
 
     >>> # Define feature columns
     >>> feature_column_names = [
-    >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+    >>>     col for col in reference.columns if col not in [
+    ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+    ...     ]]
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
+    ...     feature_column_names=feature_column_names,
+    ...     timestamp_column_name='timestamp',
+    ...     chunk_size=chunk_size
+    ... )
     >>> univariate_calculator = univariate_calculator.fit(reference)
     >>> univariate_results = univariate_calculator.calculate(analysis)
     >>> # Plot drift results for all model inputs
     >>> for feature in univariate_calculator.feature_column_names:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', plot_reference=True)
+    ...     figure = univariate_results.plot(
+    ...         kind='feature_drift',
+    ...         metric='statistic',
+    ...         feature=feature,
+    ...         plot_reference=True
+    ...     )
     ...     figure.show()
 
 .. image:: ./_static/drift-guide-distance_from_office.svg
@@ -260,11 +300,19 @@ When there are a lot of drifted features, NannyML can also rank them by the numb
 |  6 | gas_price_per_litre        |                  0 |      7 |
 +----+----------------------------+--------------------+--------+
 
-Drift in the model outputs can be also visualized:
+There is also functionality for visualizing data drift for model outputs. We can see how it works below:
 
 .. code-block:: python
 
-    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic', plot_reference=True)
+    >>> calc = nml.StatisticalOutputDriftCalculator(
+    ...     y_pred='y_pred',
+    ...     y_pred_proba='y_pred_proba',
+    ...     timestamp_column_name='timestamp'
+    >>> )
+    >>> calc.fit(reference)
+    >>> results = calc.calculate(analysis)
+
+    >>> figure = results.plot(kind='prediction_drift', plot_reference=True)
     >>> figure.show()
 
 .. image:: ./_static/drift-guide-predictions.svg

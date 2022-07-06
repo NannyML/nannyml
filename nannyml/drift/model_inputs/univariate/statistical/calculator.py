@@ -2,7 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
-"""Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
+"""Calculates drift for individual features using the `Kolmogorov-Smirnov` and `chi2-contingency` statistical tests."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -20,7 +21,7 @@ ALERT_THRESHOLD_P_VALUE = 0.05
 
 
 class UnivariateStatisticalDriftCalculator(AbstractCalculator):
-    """A drift calculator that relies on statistics to detect drift."""
+    """Calculates drift for individual features using statistical tests."""
 
     def __init__(
         self,
@@ -31,7 +32,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         chunk_period: str = None,
         chunker: Chunker = None,
     ):
-        """Constructs a new UnivariateStatisticalDriftCalculator.
+        """Creates a new UnivariateStatisticalDriftCalculator instance.
 
         Parameters
         ----------
@@ -55,10 +56,31 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # Create a calculator that will chunk by week
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
+        >>>
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> feature_column_names = [col for col in reference_df.columns
+        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> calc = nml.UnivariateStatisticalDriftCalculator(
+        >>>     feature_column_names=feature_column_names,
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>> print(results.data)  # check the numbers
+                     key  start_index  ...  identifier_alert identifier_threshold
+        0       [0:4999]            0  ...              True                 0.05
+        1    [5000:9999]         5000  ...              True                 0.05
+        2  [10000:14999]        10000  ...              True                 0.05
+        3  [15000:19999]        15000  ...              True                 0.05
+        4  [20000:24999]        20000  ...              True                 0.05
+        5  [25000:29999]        25000  ...              True                 0.05
+        6  [30000:34999]        30000  ...              True                 0.05
+        7  [35000:39999]        35000  ...              True                 0.05
+        8  [40000:44999]        40000  ...              True                 0.05
+        9  [45000:49999]        45000  ...              True                 0.05
+        >>> fig = results.plot(kind='feature_drift', plot_reference=True, feature='distance_from_office')
+        >>> fig.show()
         """
         super(UnivariateStatisticalDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
 
@@ -74,27 +96,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateStatisticalDriftCalculator:
-        """Fits the drift calculator using a set of reference data.
-
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            A reference data set containing predictions (labels and/or probabilities) and target values.
-
-        Returns
-        -------
-        calculator: DriftCalculator
-            The fitted calculator.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-
-        """
+        """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -106,30 +108,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         return self
 
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> UnivariateStatisticalDriftCalculatorResult:
-        """Calculates the data reconstruction drift for a given data set.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The dataset to calculate the reconstruction drift for.
-
-        Returns
-        -------
-        reconstruction_drift: UnivariateStatisticalDriftCalculatorResult
-            A :class:`result<nannyml.drift.model_inputs.univariate.statistical.results.UnivariateDriftResult>`
-            object where each row represents a :class:`~nannyml.chunk.Chunk`,
-            containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
-            for that :class:`~nannyml.chunk.Chunk`.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> drift = drift_calc.calculate(data)
-        """
+        """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -191,4 +170,3 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateStatisticalDriftCalculatorResult
 
         return UnivariateStatisticalDriftCalculatorResult(results_data=res, calculator=self)
-        # return self.result

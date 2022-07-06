@@ -58,44 +58,7 @@ class _MulticlassClassificationCBPE(CBPE):
         calibration: str = None,
         calibrator: Calibrator = None,
     ):
-        """Creates a new CBPE performance estimator.
-
-        Parameters
-        ----------
-        model_metadata: ModelMetadata
-            Metadata telling the DriftCalculator what columns are required for drift calculation.
-        metrics: List[str]
-            A list of metrics to calculate.
-        features: List[str], default=None
-            An optional list of feature column names. When set only these columns will be included in the
-            drift calculation. If not set all feature columns will be used.
-        chunk_size: int, default=None
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int, default=None
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str, default=None
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker, default=None
-            The `Chunker` used to split the data sets into a lists of chunks.
-        calibration: str, default='isotonic'
-            Determines which calibration will be applied to the model predictions. Defaults to ``isotonic``, currently
-            the only supported value.
-        calibrator: Calibrator, default=None
-            A specific instance of a Calibrator to be applied to the model predictions.
-            If not set NannyML will use the value of the ``calibration`` variable instead.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # create a new estimator, chunking by week
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
-
-        """
+        """Creates a new CBPE performance estimator."""
         super().__init__(
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,

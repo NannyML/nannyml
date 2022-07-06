@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Implementation of the Data Reconstruction Drift Calculator."""
+"""Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -13,7 +13,7 @@ from nannyml.plots._step_plot import _step_plot
 
 
 class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
-    """Contains the results of the data reconstruction drift calculation and adds functionality like plotting."""
+    """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         super().__init__(results_data)
@@ -31,39 +31,56 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
         return "multivariate_data_reconstruction_feature_drift"
 
     def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> go.Figure:
-        """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
-
-        Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple periods.
+        """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
         The different plot kinds that are available:
 
-        - ``drift``: plots drift per :class:`~nannyml.chunk.Chunk` for a chunked data set.
+        - ``drift``
+                plots the multivariate reconstruction error over the provided features
+                per :class:`~nannyml.chunk.Chunk`.
 
         Parameters
         ----------
-        kind: str, default=`feature_drift`
+        kind: str, default=`drift`
             The kind of plot you want to have. Value can currently only be ``drift``.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
         Returns
         -------
-        fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
-            using ``fig.show()``.
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
+
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W')
-        >>> drift_calc.fit(ref_df)
-        >>> drifts = drift_calc.calculate(ana_df)
-        >>> # create the data reconstruction drift plot and display it
-        >>> drifts.plot(kind='drift').show()
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> feature_column_names = [col for col in reference_df.columns
+        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> calc = nml.DataReconstructionDriftCalculator(
+        >>>     feature_column_names=feature_column_names,
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>> print(results.data)  # access the numbers
+                             key  start_index  ...  upper_threshold alert
+        0       [0:4999]            0  ...         1.511762  True
+        1    [5000:9999]         5000  ...         1.511762  True
+        2  [10000:14999]        10000  ...         1.511762  True
+        3  [15000:19999]        15000  ...         1.511762  True
+        4  [20000:24999]        20000  ...         1.511762  True
+        5  [25000:29999]        25000  ...         1.511762  True
+        6  [30000:34999]        30000  ...         1.511762  True
+        7  [35000:39999]        35000  ...         1.511762  True
+        8  [40000:44999]        40000  ...         1.511762  True
+        9  [45000:49999]        45000  ...         1.511762  True
+        >>> fig = results.plot(plot_reference=True)
+        >>> fig.show()
         """
         if kind == 'drift':
             return _plot_drift(self.data, self.calculator, plot_reference)

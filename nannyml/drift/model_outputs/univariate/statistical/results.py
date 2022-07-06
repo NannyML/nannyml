@@ -17,9 +17,11 @@ from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
 
+"""Contains the results of the model output statistical drift calculation and provides plotting functionality."""
+
 
 class UnivariateDriftResult(AbstractCalculatorResult):
-    """Contains the univariate statistical drift calculation results and provides additional plotting functionality."""
+    """Contains the results of the model output statistical drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         super().__init__(results_data)
@@ -45,56 +47,82 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """Renders a line plot for a chosen metric of statistical statistical drift calculation results.
+        """Renders plots for metrics returned by the univariate statistical drift calculator.
 
-        Given either a feature label (check ``model_metadata.features``) or the actual feature column name
-        and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
-        the metric value for the selected feature per chunk.
-        Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple periods.
+        For both model predictions and outputs you can render the statistic value or p-values as a step plot,
+        or create a distribution plot. For multiclass use cases it is required to provide a ``class_label`` parameter
+        when rendering model output plots.
 
-        The different plot kinds that are available:
+        Select a plot using the ``kind`` parameter:
 
-        - ``prediction_drift``: plots drift per :class:`~nannyml.chunk.Chunk` for the predictions of a chunked data set.
-        - ``prediction_distribution``: plots the prediction distribution per :class:`~nannyml.chunk.Chunk` of a chunked
-          data set as a joyplot.
+        - ``predicted_labels_drift``
+                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
+        - ``predicted_labels_distribution``
+                plots the distribution per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
+        - ``prediction_drift``
+                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model outputs ``y_pred_proba``.
+        - ``prediction_distribution``
+                plots the distribution per per :class:`~nannyml.chunk.Chunk` for the model outputs ``y_pred_proba``
 
 
         Parameters
         ----------
-        kind: str, default=`prediction_drift`
-            The kind of plot you want to have. Value must be one of ``prediction_drift``, ``prediction_distribution``.
+        kind: str, default=`predicted_labels_drift`
+            The kind of plot you want to have. Allowed values are ``predicted_labels_drift``,
+            ``predicted_labels_distribution``, ``prediction_drift`` and ``prediction_distribution``.
         metric : str, default=``statistic``
-            The metric to plot. Value must be one of ``statistic`` or ``p_value``
+            The metric to plot. Allowed values are ``statistic`` and ``p_value``.
+            Not applicable when plotting distributions.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
         class_label: str, default=None
-            The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
+            The label of the class to plot the prediction distribution for.
+            Only required in case of multiclass use cases.
 
 
         Returns
         -------
-        fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
-            using ``fig.show()``.
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
+
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
 
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
-        >>> drift_calc.fit(ref_df)
-        >>> drifts = drift_calc.calculate(ana_df)
-        >>> # loop over all features and plot the feature drift and feature distribution for each
-        >>> for f in metadata.features:
-        >>>     drifts.plot(kind='feature_drift', feature_label=f.label).show()
-        >>>     drifts.plot(kind='feature_distribution', feature_label=f.label).show()
+        >>>
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.StatisticalOutputDriftCalculator(
+        >>>     y_pred_proba='y_pred_proba',
+        >>>     y_pred='y_pred',
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>>
+        >>> print(results.data)  # check the numbers
+                     key  start_index  ...  y_pred_proba_alert y_pred_proba_threshold
+        0       [0:4999]            0  ...                True                   0.05
+        1    [5000:9999]         5000  ...               False                   0.05
+        2  [10000:14999]        10000  ...               False                   0.05
+        3  [15000:19999]        15000  ...               False                   0.05
+        4  [20000:24999]        20000  ...               False                   0.05
+        5  [25000:29999]        25000  ...                True                   0.05
+        6  [30000:34999]        30000  ...                True                   0.05
+        7  [35000:39999]        35000  ...                True                   0.05
+        8  [40000:44999]        40000  ...                True                   0.05
+        9  [45000:49999]        45000  ...                True                   0.05
+        >>>
+        >>> results.plot(kind='predicted_labels_drift', metric='p_value', plot_reference=True).show()
+        >>> results.plot(kind='predicted_labels_distribution', plot_reference=True).show()
+        >>> results.plot(kind='prediction_drift', plot_reference=True).show()
+        >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
 
         """
-        if kind == 'prediction_drift':
+        if kind == 'predicted_labels_drift':
             return _plot_prediction_drift(
                 self.data,
                 self.calculator,
@@ -102,16 +130,16 @@ class UnivariateDriftResult(AbstractCalculatorResult):
                 plot_reference,
                 metric,
             )
-        elif kind == 'prediction_distribution':
+        elif kind == 'predicted_labels_distribution':
             return _plot_prediction_distribution(
                 data=self.calculator.previous_analysis_data,
                 drift_data=self.data,
                 calculator=self.calculator,
                 plot_reference=plot_reference,
             )
-        elif kind == 'output_drift':
+        elif kind == 'prediction_drift':
             return _plot_output_drift(self.data, self.calculator, plot_reference, metric, class_label)
-        elif kind == 'output_distribution':
+        elif kind == 'prediction_distribution':
             return _plot_output_distribution(
                 data=self.calculator.previous_analysis_data,
                 drift_data=self.data,
@@ -122,7 +150,8 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. "
-                f"Please provide on of: ['prediction_drift', 'prediction_distribution']."
+                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'predicted_labels_drift',"
+                "'predicted_labels_distribution']."
             )
 
     # @property
@@ -264,7 +293,7 @@ def _plot_prediction_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name, 'period'))
+    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
         reference_drift = calculator.previous_reference_results
@@ -432,7 +461,7 @@ def _plot_output_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name, 'period'))
+    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
         reference_drift = calculator.previous_reference_results

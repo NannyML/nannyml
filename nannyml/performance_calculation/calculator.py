@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module containing base classes for performance calculation."""
+"""Calculates realized performance metrics when target data is available."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
 
 class PerformanceCalculator(AbstractCalculator):
-    """Base class for performance metric calculation."""
+    """Calculates realized performance metrics when target data is available."""
 
     def __init__(
         self,
@@ -68,11 +68,29 @@ class PerformanceCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # create a new calculator, chunking by week
-        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
-
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.PerformanceCalculator(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
+        >>>                                  timestamp_column_name='timestamp', metrics=['f1', 'roc_auc'])
+        >>>
+        >>> calc.fit(reference_df)
+        >>>
+        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>> print(results.data)
+                     key  start_index  ...  roc_auc_upper_threshold roc_auc_alert
+        0       [0:4999]            0  ...                  0.97866         False
+        1    [5000:9999]         5000  ...                  0.97866         False
+        2  [10000:14999]        10000  ...                  0.97866         False
+        3  [15000:19999]        15000  ...                  0.97866         False
+        4  [20000:24999]        20000  ...                  0.97866         False
+        5  [25000:29999]        25000  ...                  0.97866          True
+        6  [30000:34999]        30000  ...                  0.97866          True
+        7  [35000:39999]        35000  ...                  0.97866          True
+        8  [40000:44999]        40000  ...                  0.97866          True
+        9  [45000:49999]        45000  ...                  0.97866          True
+        >>> for metric in calc.metrics:
+        >>>     results.plot(metric=metric, plot_reference=True).show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker)
 
@@ -90,22 +108,7 @@ class PerformanceCalculator(AbstractCalculator):
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
-        """Fits the calculator on the reference data, calibrating it for further use on the full dataset.
-
-        Parameters
-        ----------
-        reference_data: pd.DataFrame
-            Reference data for the model, i.e. model inputs and predictions enriched with target data.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
-        >>> # fit the calculator on reference data
-        >>> calculator.fit(ref_df)
-        """
+        """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
         if reference_data.empty:
             raise InvalidArgumentsException('reference data contains no rows. Provide a valid reference data set.')
 
@@ -129,23 +132,7 @@ class PerformanceCalculator(AbstractCalculator):
         return self
 
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculatorResult:
-        """Calculates performance on the analysis data, using the metrics specified on calculator creation.
-
-        Parameters
-        ----------
-        analysis_data: pd.DataFrame
-            Analysis data for the model, i.e. model inputs and predictions.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
-        >>> calculator.fit(ref_df)
-        >>> # calculate realized performance on analysis data
-        >>> realized_performance = calculator.calculate(ana_df)
-        """
+        """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 

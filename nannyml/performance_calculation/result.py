@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module containing the results of performance calculations and associated plots."""
+"""Contains the results of the realized performance calculation and provides plotting functionality."""
 from typing import Union
 
 import pandas as pd
@@ -18,19 +18,14 @@ from .metrics import Metric, MetricFactory
 
 
 class PerformanceCalculatorResult(AbstractCalculatorResult):
-    """Contains the results of performance calculation and adds plotting functionality."""
+    """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     def __init__(
         self,
         results_data: pd.DataFrame,
         calculator: AbstractCalculator,
     ):
-        """Creates a new PerformanceCalculatorResult instance.
-
-        Parameters
-        ----------
-
-        """
+        """Creates a new PerformanceCalculatorResult instance."""
         super().__init__(results_data)
 
         from .calculator import PerformanceCalculator
@@ -52,14 +47,13 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """Render plots based on CBPE estimation results.
+        """Render realized performance metrics.
 
-        This function will return a :class:`plotly.graph_objects.Figure` object.
-        The following kinds of plots are available:
+            The following kinds of plots are available:
 
-        - ``performance``: a line plot rendering the estimated performance per :class:`~nannyml.chunk.Chunk` after
-            applying the :meth:`~nannyml.performance_estimation.confidence_based.CBPE.calculate` method on a chunked
-            dataset.
+        - ``performance``
+                a step plot showing the realized performance metric per :class:`~nannyml.chunk.Chunk` for
+                a given metric.
 
         Parameters
         ----------
@@ -76,18 +70,40 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
+        Returns
+        -------
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
+
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
+
         Examples
         --------
-        >>> import nannyml.metadata.extraction
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nannyml.metadata.extraction.extract_metadata(ref_df)
-        >>> calculator = nml.PerformanceCalculator(model_metadata=metadata, chunk_period='W')
-        >>> calculator.fit(ref_df)
-        >>> realized_performance = calculator.calculate(ana_df)
-        >>> # plot the calculated performance metrics
-        >>> for m in calculator.metrics:
-        >>>     realized_performance.plot(kind='performance', metric=m).show()
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.PerformanceCalculator(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
+        >>>                                  timestamp_column_name='timestamp', metrics=['f1', 'roc_auc'])
+        >>>
+        >>> calc.fit(reference_df)
+        >>>
+        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>> print(results.data)
+                     key  start_index  ...  roc_auc_upper_threshold roc_auc_alert
+        0       [0:4999]            0  ...                  0.97866         False
+        1    [5000:9999]         5000  ...                  0.97866         False
+        2  [10000:14999]        10000  ...                  0.97866         False
+        3  [15000:19999]        15000  ...                  0.97866         False
+        4  [20000:24999]        20000  ...                  0.97866         False
+        5  [25000:29999]        25000  ...                  0.97866          True
+        6  [30000:34999]        30000  ...                  0.97866          True
+        7  [35000:39999]        35000  ...                  0.97866          True
+        8  [40000:44999]        40000  ...                  0.97866          True
+        9  [45000:49999]        45000  ...                  0.97866          True
+        >>> for metric in calc.metrics:
+        >>>     results.plot(metric=metric, plot_reference=True).show()
         """
         if kind == 'performance':
             if 'metric' not in kwargs:

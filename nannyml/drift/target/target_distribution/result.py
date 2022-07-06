@@ -34,39 +34,59 @@ class TargetDistributionResult(AbstractCalculatorResult):
     def plot(
         self, kind: str = 'distribution', distribution: str = 'metric', plot_reference: bool = False, *args, **kwargs
     ) -> go.Figure:
-        """Renders a line plot of the target distribution.
+        """Renders plots for metrics returned by the target distribution calculator.
 
-        Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple periods.
+        You can render a step plot of the mean target distribution or the statistical tests per chunk.
+
+        Select a plot using the ``kind`` parameter:
+
+        - ``distribution``
+                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
 
         Parameters
         ----------
-        kind: str
-            The kind of plot to show. Restricted to the value 'distribution'.
+        kind: str, default='distribution'
+            The kind of plot to show. Allowed values are ``distribution``.
         distribution: str, default='metric'
-            The kind of distribution to plot. Restricted to the values 'metric' or 'statistical'.
+            The kind of distribution to plot. Allowed values are ``metric`` and ``statistical``.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
         Returns
         -------
-        fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
-            using ``fig.show()``.
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
+
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
-        >>> target_distribution_calc.fit(ref_df)
-        >>> target_distribution = target_distribution_calc.calculate(ana_df)
-        >>> # plot the distribution of the mean
-        >>> target_distribution.plot(kind='metric').show()
-        >>> # plot the Chi square statistic
-        >>> target_distribution.plot(kind='statistical').show()
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.TargetDistributionCalculator(
+        >>>     y_true='work_home_actual',
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>> print(results.data)  # check the numbers
+                     key  start_index  end_index  ... thresholds  alert significant
+        0       [0:4999]            0       4999  ...       0.05   True        True
+        1    [5000:9999]         5000       9999  ...       0.05  False       False
+        2  [10000:14999]        10000      14999  ...       0.05  False       False
+        3  [15000:19999]        15000      19999  ...       0.05  False       False
+        4  [20000:24999]        20000      24999  ...       0.05  False       False
+        5  [25000:29999]        25000      29999  ...       0.05  False       False
+        6  [30000:34999]        30000      34999  ...       0.05  False       False
+        7  [35000:39999]        35000      39999  ...       0.05  False       False
+        8  [40000:44999]        40000      44999  ...       0.05  False       False
+        9  [45000:49999]        45000      49999  ...       0.05  False       False
+        >>>
+        >>> results.plot(distribution='metric', plot_reference=True).show()
+        >>> results.plot(distribution='statistical', plot_reference=True).show()
         """
         if kind == 'distribution':
             return _plot_distribution(self.data, self.calculator, distribution, plot_reference)

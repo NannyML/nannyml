@@ -65,10 +65,30 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator that will chunk by week
-        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W')
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> feature_column_names = [col for col in reference_df.columns
+        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> calc = nml.DataReconstructionDriftCalculator(
+        >>>     feature_column_names=feature_column_names,
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>> print(results.data)  # access the numbers
+                             key  start_index  ...  upper_threshold alert
+        0       [0:4999]            0  ...         1.511762  True
+        1    [5000:9999]         5000  ...         1.511762  True
+        2  [10000:14999]        10000  ...         1.511762  True
+        3  [15000:19999]        15000  ...         1.511762  True
+        4  [20000:24999]        20000  ...         1.511762  True
+        5  [25000:29999]        25000  ...         1.511762  True
+        6  [30000:34999]        30000  ...         1.511762  True
+        7  [35000:39999]        35000  ...         1.511762  True
+        8  [40000:44999]        40000  ...         1.511762  True
+        9  [45000:49999]        45000  ...         1.511762  True
+        >>> fig = results.plot(kind='drift', plot_reference=True)
+        >>> fig.show()
         """
         super(DataReconstructionDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
         self.feature_column_names = feature_column_names
@@ -104,27 +124,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
-        """Fits the drift calculator using a set of reference data.
-
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            A reference data set containing predictions (labels and/or probabilities) and target values.
-
-        Returns
-        -------
-        calculator: DriftCalculator
-            The fitted calculator.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-
-        """
+        """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -171,31 +171,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         return self
 
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> DataReconstructionDriftCalculatorResult:
-        """Calculates the data reconstruction drift for a given data set.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The dataset to calculate the reconstruction drift for.
-
-        Returns
-        -------
-        reconstruction_drift: DataReconstructionDriftCalculatorResult
-            A
-            :class:`result<nannyml.drift.model_inputs.multivariate.data_reconstruction.results.DataReconstructionDriftCalculatorResult>`
-            object where each row represents a :class:`~nannyml.chunk.Chunk`,
-            containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
-            for that :class:`~nannyml.chunk.Chunk`.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> drift = drift_calc.calculate(data)
-        """
+        """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
