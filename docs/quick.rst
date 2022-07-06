@@ -55,8 +55,8 @@ Just the code
 
     >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> display(analysis.head())
     >>> display(reference.head())
+    >>> display(analysis.head())
 
     >>> # Choose a chunker or set a chunk size
     >>> chunk_size = 5000
@@ -65,7 +65,7 @@ Just the code
     >>> estimator = nml.CBPE(
     >>>    y_pred_proba='y_pred_proba',
     >>>    y_pred='y_pred',
-    >>>    y_true='y_true',
+    >>>    y_true='work_home_actual',
     >>>    timestamp_column_name='timestamp',
     >>>    metrics=['roc_auc'],
     >>>    chunk_size=chunk_size,
@@ -79,7 +79,7 @@ Just the code
 
     >>> # Define feature columns
     >>> feature_column_names = [
-    >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+    >>>     col for col in reference.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual']]
 
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size)
@@ -87,7 +87,12 @@ Just the code
     >>> univariate_results = univariate_calculator.calculate(analysis)
     >>> # Plot drift results for all model inputs
     >>> for feature in univariate_calculator.feature_column_names:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', plot_reference=True)
+    ...     figure = univariate_results.plot(
+    ...         kind='feature_drift',
+    ...         metric='statistic',
+    ...         feature=feature,
+    ...         plot_reference=True
+    ...     )
     ...     figure.show()
 
     >>> # Rank features based on number of alerts
