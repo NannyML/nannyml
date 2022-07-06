@@ -55,21 +55,21 @@ class UnivariateDriftResult(AbstractCalculatorResult):
 
         Select a plot using the ``kind`` parameter:
 
-        - ``prediction_drift``
+        - ``predicted_labels_drift``
                 plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
-        - ``feature_distribution``
+        - ``predicted_labels_distribution``
                 plots the distribution per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
-        - ``output_drift``
+        - ``prediction_drift``
                 plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model outputs ``y_pred_proba``.
-        - ``output_distribution``
+        - ``prediction_distribution``
                 plots the distribution per per :class:`~nannyml.chunk.Chunk` for the model outputs ``y_pred_proba``
 
 
         Parameters
         ----------
-        kind: str, default=`prediction_drift`
-            The kind of plot you want to have. Allowed values are ``prediction_drift``, ``prediction_distribution``,
-            ``output_drift`` and ``output_distribution``.
+        kind: str, default=`predicted_labels_drift`
+            The kind of plot you want to have. Allowed values are ``predicted_labels_drift``,
+            ``predicted_labels_distribution``, ``prediction_drift`` and ``prediction_distribution``.
         metric : str, default=``statistic``
             The metric to plot. Allowed values are ``statistic`` and ``p_value``.
             Not applicable when plotting distributions.
@@ -116,10 +116,10 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         8  [40000:44999]        40000  ...                True                   0.05
         9  [45000:49999]        45000  ...                True                   0.05
         >>>
-        >>> results.plot(kind='prediction_drift', metric='p_value', plot_reference=True).show()
+        >>> results.plot(kind='predicted_labels_drift', metric='p_value', plot_reference=True).show()
+        >>> results.plot(kind='predicted_labels_distribution', plot_reference=True).show()
+        >>> results.plot(kind='prediction_drift', plot_reference=True).show()
         >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
-        >>> results.plot(kind='output_drift', plot_reference=True).show()
-        >>> results.plot(kind='output_distribution', plot_reference=True).show()
 
         """
         if kind == 'prediction_drift':
