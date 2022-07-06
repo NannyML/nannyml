@@ -1,7 +1,7 @@
 .. _regression-performance-estimation:
 
 ========================================================================================
-Estimating Performance for Multiclass Classification
+Estimating Performance for Regression
 ========================================================================================
 
 .. warning::
