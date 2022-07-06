@@ -19,34 +19,34 @@ Just The Code
 
 .. code-block:: python
 
-    import nannyml as nml
-    import pandas as pd
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-
-    display(reference_df.head())
-
-    calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
-
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
-
-    display(results.data)
-
-    predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    predicted_labels_drift_fig.show()
-
-    predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
-    predicted_labels_distribution_fig.show()
-
-    prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
-    prediction_drift_fig.show()
-
-    prediction_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
-    prediction_distribution_fig.show()
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> 
+    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    >>> 
+    >>> display(reference_df.head())
+    >>> 
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> 
+    >>> calc.fit(reference_df)
+    >>> 
+    >>> results = calc.calculate(analysis_df)
+    >>> 
+    >>> display(results.data)
+    >>> 
+    >>> predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
+    >>> predicted_labels_drift_fig.show()
+    >>> 
+    >>> predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    >>> predicted_labels_distribution_fig.show()
+    >>> 
+    >>> prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    >>> prediction_drift_fig.show()
+    >>> 
+    >>> prediction_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+    >>> prediction_distribution_fig.show()
 
 Walkthrough
 ------------------------------------------------
@@ -61,14 +61,14 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
 
 .. code-block:: python
 
-    import nannyml as nml
-    import pandas as pd
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-
-    display(reference_df.head())
+    >>> import nannyml as nml
+    >>> import pandas as pd
+    >>> from IPython.display import display
+    >>> 
+    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    >>> 
+    >>> display(reference_df.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -96,9 +96,9 @@ calculates the drift results on the data provided. An example using it can be se
 
 .. code-block:: python
 
-    calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
-    calc.fit(reference_df)
-    results = calc.calculate(analysis_df)
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> calc.fit(reference_df)
+    >>> results = calc.calculate(analysis_df)
 
 We can then display the results in a table, or as plots.
 
@@ -134,8 +134,8 @@ NannyML can show the statistical properties of the drift in model outputs as a p
 
 .. code-block:: python
 
-    predictions_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
-    predictions_drift_fig.show()
+    >>> predictions_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    >>> predictions_drift_fig.show()
 
 .. image:: /_static/drift-guide-predictions.svg
 
@@ -143,8 +143,8 @@ NannyML can also visualise how the distributions of the model predictions evolve
 
 .. code-block:: python
 
-    predictions_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
-    predictions_distribution_fig.show()
+    >>> predictions_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+    >>> predictions_distribution_fig.show()
 
 .. image:: /_static/drift-guide-predictions-joyplot.svg
 
@@ -152,8 +152,8 @@ NannyML can show the statistical properties of the drift in the predicted labels
 
 .. code-block:: python
 
-    predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    predicted_labels_drift_fig.show()
+    >>> predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
+    >>> predicted_labels_drift_fig.show()
 
 .. image:: /_static/drift-guide-predicted-labels.svg
 
@@ -161,8 +161,8 @@ NannyML can also visualise how the distributions of the predicted labels evolved
 
 .. code-block:: python
 
-    predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
-    predicted_labels_distribution_fig.show()
+    >>> predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    >>> predicted_labels_distribution_fig.show()
 
 .. image:: /_static/drift-guide-predicted-labels-barchart.svg
 
