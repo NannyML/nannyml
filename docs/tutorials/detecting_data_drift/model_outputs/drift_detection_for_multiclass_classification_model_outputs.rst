@@ -22,12 +22,12 @@ Just The Code
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
     >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-    >>> 
+    >>>
     >>> display(reference_df.head())
-    >>> 
+    >>>
     >>> calc = nml.StatisticalOutputDriftCalculator(
     ...     y_pred='y_pred',
     ...     y_pred_proba={
@@ -36,23 +36,23 @@ Just The Code
     ...         'highstreet_card': 'y_pred_proba_highstreet_card'
     ...     },
     ...     timestamp_column_name='timestamp')
-    >>> 
+    >>>
     >>> calc.fit(reference_df)
-    >>> 
+    >>>
     >>> results = calc.calculate(analysis_df)
-    >>> 
+    >>>
     >>> display(results.data)
     >>>
     >>> figure = results.plot(kind='predicted_labels_drift', plot_reference=True)
     >>> figure.show()
-    >>> 
+    >>>
     >>> figure = results.plot(kind='predicted_labels_distribution', plot_reference=True)
     >>> figure.show()
-    >>> 
+    >>>
     >>> for label in calc.y_pred_proba.keys():
     ...     figure = results.plot(kind='prediction_drift', class_label=label, plot_reference=True)
     ...     figure.show()
-    >>> 
+    >>>
     >>> for label in calc.y_pred_proba.keys():
     ...     figure = results.plot(kind='prediction_distribution', class_label=label, plot_reference=True)
     ...     figure.show()
@@ -73,10 +73,10 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
     >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-    >>> 
+    >>>
     >>> display(reference_df.head())
 
 +----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-----------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+-----------------+---------------+
@@ -113,9 +113,9 @@ calculates the drift results on the data provided. An example using it can be se
     ...         'highstreet_card': 'y_pred_proba_highstreet_card'
     ...     },
     ...     timestamp_column_name='timestamp')
-    >>> 
+    >>>
     >>> calc.fit(reference_df)
-    >>> 
+    >>>
     >>> results = calc.calculate(analysis_df)
 
 We can then display the results in a table, or as plots.

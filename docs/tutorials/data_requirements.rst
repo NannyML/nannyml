@@ -40,8 +40,8 @@ Analysis Period
 ^^^^^^^^^^^^^^^
 
 The analysis period is where NannyML analyzes the data drift and the performance of the monitored
-model using the knowledge gained from analyzing the reference period. In the average use case, it will 
-consist of the latest production data up to a desired point in the past, which should be after 
+model using the knowledge gained from analyzing the reference period. In the average use case, it will
+consist of the latest production data up to a desired point in the past, which should be after
 the reference period ends. The analysis period is not required to have targets available.
 
 When performing drift analysis, NannyML compares each :term:`Data Chunk` of the analysis period
@@ -134,7 +134,7 @@ Required as part of the reference data for :ref:`performance estimation<performa
 Features
 ^^^^^^^^^
 
-The features of your model. These can be categorical or continuous, and NannyML identified this based on their declared pandas data types. 
+The features of your model. These can be categorical or continuous, and NannyML identified this based on their declared pandas data types.
 
 In the sample data, the features are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``.
 
@@ -148,7 +148,7 @@ Binary classification columns
 Predicted probability
 ^^^^^^^^^^^^^^^^^^^^^
 
-The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` that is emitted by the model, most likely a float. 
+The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` that is emitted by the model, most likely a float.
 
 In the sample data this is the ``y_pred_proba`` column.
 
@@ -182,5 +182,5 @@ Required for running :ref:`performance estimation<performance-estimation>` or :r
 What next
 -----------------------
 
-You can check out our tutorials on how to :ref:`estimate performance<performance-estimation>`, 
+You can check out our tutorials on how to :ref:`estimate performance<performance-estimation>`,
 :ref:`calculate performance<performance-calculation>`, and :ref:`detect data drift<data-drift>`.

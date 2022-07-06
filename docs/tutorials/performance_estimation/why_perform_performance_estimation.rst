@@ -16,5 +16,3 @@ Some specific examples of when you could benefit from estimating your performanc
 The following tutorials explain how to use NannyML to estimate the performance of ML
 models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
-
-

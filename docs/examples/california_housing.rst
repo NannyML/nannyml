@@ -2,7 +2,7 @@
 Binary Classification: California Housing Dataset
 =================================================
 
-This example outlines a typical workflow for estimating performance of a model without access to ground truth, 
+This example outlines a typical workflow for estimating performance of a model without access to ground truth,
 detecting performance issues and identifying potential root causes for these issues. In this examples, we are
 using NannyML on the modified California Housing Prices dataset.
 
@@ -85,7 +85,7 @@ We get a warning that some chunks are too small. Let's quickly check what's goin
     dtype: int64
 
 
-The last chunk is smaller than the others due to the selected chunking method. Let's remove it to make sure 
+The last chunk is smaller than the others due to the selected chunking method. Let's remove it to make sure
 everything we visualise is reliable.
 
 .. code:: python
@@ -116,7 +116,7 @@ to the month of September.
 Comparison with the actual performance
 ======================================
 
-Because we have the ground truth for our dataset, we can use it to calculate ROC AUC on the relevant chunks, 
+Because we have the ground truth for our dataset, we can use it to calculate ROC AUC on the relevant chunks,
 and compare it to the estimated values.
 
 .. code:: python
@@ -189,8 +189,8 @@ univariate drift detection, and see what we discover.
 +----+--------------+--------------------+--------+
 
 
-It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period, 
-we can see that the top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift 
+It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period,
+we can see that the top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift
 by examining the KS distance statistics.
 
 .. code:: python
@@ -251,7 +251,7 @@ nearby locations. Let's see it on a scatter plot:
 
 .. image:: ../_static/example_california_latitude_longitude_scatter.svg
 
-In this example, NannyML estimated the performance (ROC AUC) of a model without accessing the target data. We can see 
-from our comparison with the targets that the estimate is quite accurate. Next, the potential root causes of the drop in 
-performance were indicated by detecting data drift. This was achieved using univariate methods that identified the features 
+In this example, NannyML estimated the performance (ROC AUC) of a model without accessing the target data. We can see
+from our comparison with the targets that the estimate is quite accurate. Next, the potential root causes of the drop in
+performance were indicated by detecting data drift. This was achieved using univariate methods that identified the features
 which drifted the most.

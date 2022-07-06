@@ -22,29 +22,29 @@ Just The Code
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
     >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-    >>> 
+    >>>
     >>> display(reference_df.head())
-    >>> 
+    >>>
     >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
-    >>> 
+    >>>
     >>> calc.fit(reference_df)
-    >>> 
+    >>>
     >>> results = calc.calculate(analysis_df)
-    >>> 
+    >>>
     >>> display(results.data)
-    >>> 
+    >>>
     >>> predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
     >>> predicted_labels_drift_fig.show()
-    >>> 
+    >>>
     >>> predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
     >>> predicted_labels_distribution_fig.show()
-    >>> 
+    >>>
     >>> prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
     >>> prediction_drift_fig.show()
-    >>> 
+    >>>
     >>> prediction_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
     >>> prediction_distribution_fig.show()
 
@@ -64,10 +64,10 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
     >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-    >>> 
+    >>>
     >>> display(reference_df.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+

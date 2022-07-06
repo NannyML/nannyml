@@ -38,11 +38,11 @@ Just The Code
     display(results.data.iloc[:-5, :9])
 
     for feature in calc.feature_column_names:
-        drift_fig = results.plot(kind='feature_drift', feature=feature, plot_reference=True)
+        drift_fig = results.plot(kind='feature_drift', feature_column_name=feature, plot_reference=True)
         drift_fig.show()
 
     for cat_feat in calc.categorical_column_names:
-        results.plot(kind='feature_distribution', feature=cat_feat, plot_reference=True).show()
+        results.plot(kind='feature_distribution', feature_column_name=cat_feat, plot_reference=True).show()
 
     ranker = nml.Ranker.by('alert_count')
     ranked_features = ranker.rank(results, only_drifting = False)
@@ -154,7 +154,7 @@ NannyML can also visualize those results on plots.
 .. code-block:: python
 
     for feature in calc.feature_column_names:
-        drift_fig = results.plot(kind='feature_drift', feature=feature, plot_reference=True)
+        drift_fig = results.plot(kind='feature_drift', feature_column_name=feature, plot_reference=True)
         drift_fig.show()
 
 .. image:: /_static/drift-guide-distance_from_office.svg
@@ -180,7 +180,7 @@ If we want to focus only on the categorical plots, we can specify that only thes
 .. code-block:: python
 
     for cat_feat in calc.categorical_column_names:
-        results.plot(kind='feature_distribution', feature=cat_feat, plot_reference=True).show()
+        results.plot(kind='feature_distribution', feature_column_name=cat_feat, plot_reference=True).show()
 
 .. image:: /_static/drift-guide-stacked-salary_range.svg
 

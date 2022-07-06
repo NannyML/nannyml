@@ -38,7 +38,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         self,
         kind: str = 'feature',
         metric: str = 'statistic',
-        feature: str = None,
+        feature_column_name: str = None,
         plot_reference: bool = False,
         *args,
         **kwargs,
@@ -61,7 +61,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         metric : str, default=``statistic``
             The metric to plot. Allowed values are ``statistic`` and ``p_value``.
             Not applicable when plotting distributions.
-        feature : str
+        feature_column_name : str
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
@@ -103,18 +103,19 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         8  [40000:44999]        40000  ...              True                 0.05
         9  [45000:49999]        45000  ...              True                 0.05
         >>> for feature in cal.feature_column_names:
-        >>>     fig = results.plot(kind='feature_drift', metric='statistic', plot_reference=True, feature=feature)
+        >>>     fig = results.plot(kind='feature_drift', metric='statistic', plot_reference=True,
+        >>>                        feature_column_name=feature)
         >>>     fig.show()
 
         """
         if kind == 'feature_drift':
-            if feature is None:
+            if feature_column_name is None:
                 raise InvalidArgumentsException(
                     "must specify a feature to plot " "using the 'feature_column_name' parameter"
                 )
-            return _feature_drift(self.data, self.calculator, feature, metric, plot_reference)
+            return _feature_drift(self.data, self.calculator, feature_column_name, metric, plot_reference)
         elif kind == 'feature_distribution':
-            if feature is None:
+            if feature_column_name is None:
                 raise InvalidArgumentsException(
                     "must specify a feature to plot " "using the 'feature_column_name' parameter"
                 )
@@ -122,7 +123,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
                 analysis_data=self.calculator.previous_analysis_data,
                 plot_reference=plot_reference,
                 drift_data=self.data,
-                feature_column_name=feature,
+                feature_column_name=feature_column_name,
             )
         else:
             raise InvalidArgumentsException(

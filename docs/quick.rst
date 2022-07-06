@@ -30,7 +30,7 @@ Contents of the quickstart
 
 
 This quickstart presents core functionalities of NannyML on an example binary classification model
-that predicts whether an employee will work from home the next day or not. First, the whole code is shown 
+that predicts whether an employee will work from home the next day or not. First, the whole code is shown
 so you can jump in and experiment right away if you want.
 
 This is followed by a detailed walk-through to help you get familiar with the flow, and explain the details.
@@ -38,7 +38,7 @@ This is followed by a detailed walk-through to help you get familiar with the fl
 predictions and ready to be directly used by NannyML.
 
 All :ref:`our tutorials<tutorials>` are a good place to get detailed guides on main
-concepts and functionalities. If you want to know what is implemented under the hood - 
+concepts and functionalities. If you want to know what is implemented under the hood -
 visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
 on other datasets or ML problems look through our :ref:`examples<examples>`.
 
@@ -96,7 +96,7 @@ Just the code
     ...     figure = univariate_results.plot(
     ...         kind='feature_drift',
     ...         metric='statistic',
-    ...         feature=feature,
+    ...         feature_column_name=feature,
     ...         plot_reference=True
     ...     )
     ...     figure.show()
@@ -131,13 +131,13 @@ Just the code
 Walkthrough
 -----------
 
-We start by loading the synthetic dataset included in the library. This synthetic dataset 
-contains inputs and predictions of a binary classification model that predicts whether an employee will 
+We start by loading the synthetic dataset included in the library. This synthetic dataset
+contains inputs and predictions of a binary classification model that predicts whether an employee will
 work from home the next workday or not.
 
-The probability of the employee working from home is included in the ``y_pred_proba`` column, while the 
-prediction is in ``y_pred`` column. The model inputs are ``distance_from_office``, ``salary_range``, 
-``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``. 
+The probability of the employee working from home is included in the ``y_pred_proba`` column, while the
+prediction is in ``y_pred`` column. The model inputs are ``distance_from_office``, ``salary_range``,
+``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``.
 ``identifier`` is the :term:`Identifier` column and ``timestamp`` is the :term:`Timestamp` column.
 
 The data are split into a :ref:`reference period<data-drift-periods-reference>` and an
@@ -201,9 +201,9 @@ Estimating Performance without Targets
 ======================================
 
 NannyML can estimate the performance on a machine learning model in production
-without access to its :term:`Target`. For more details on how to use performance estimation see 
+without access to its :term:`Target`. For more details on how to use performance estimation see
 :ref:`our tutorial on performance estimation<performance-estimation>`,
-while for more details on how the algorithm behind it works see 
+while for more details on how the algorithm behind it works see
 :ref:`Confidence-based Performance Estimation (CBPE)<performance-estimation-deep-dive>`.
 
 .. code-block:: python
@@ -255,7 +255,7 @@ functionality. See :ref:`data-drift` for more details.
     ...     figure = univariate_results.plot(
     ...         kind='feature_drift',
     ...         metric='statistic',
-    ...         feature=feature,
+    ...         feature_column_name=feature,
     ...         plot_reference=True
     ...     )
     ...     figure.show()
@@ -281,7 +281,7 @@ When there are a lot of drifted features, NannyML can also rank them by the numb
     >>> ranker = nml.Ranker.by('alert_count')
     >>> ranked_features = ranker.rank(univariate_results, only_drifting = False)
     >>> display(ranked_features)
-    
+
 +----+----------------------------+--------------------+--------+
 |    | feature                    |   number_of_alerts |   rank |
 +====+============================+====================+========+

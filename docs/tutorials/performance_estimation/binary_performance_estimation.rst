@@ -217,7 +217,7 @@ NannyML has detected based upon the model's inputs and outputs alone.
 
 
 What's next
-----------
+-----------
 
 The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
 When the target values become    available they can be :ref:`compared with the estimated

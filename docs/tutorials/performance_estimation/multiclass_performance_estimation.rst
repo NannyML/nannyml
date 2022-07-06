@@ -213,14 +213,14 @@ performance on reference period (where the target was available).
 
 
 Insights
--------
+--------
 
 After reviewing the performance estimation results, we should be able to see any indications of performance change that
 NannyML has detected based upon the model's inputs and outputs alone.
 
 
 What's next
-----------
+-----------
 
 The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
 When the target results become available they can be :ref:`compared with the estimated results<compare_estimated_and_realized_performance>`.

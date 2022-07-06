@@ -18,5 +18,3 @@ All monitoring metrics available by NannyML for monitoring will be showed.
     calculating the performance results. If there are so many missing values that the available data are below the
     :ref:`minimum-chunk-size` then the performance results are omitted from the resulting visualizations because they are
     too noisy, to be reliable.
-
-

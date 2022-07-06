@@ -19,17 +19,17 @@ Just The Code
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> display(reference.head())
-    >>> 
+    >>>
     >>> # Define feature columns
     >>> feature_column_names = [
     ...     col for col in reference.columns if col not in [
     ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
     ...     ]]
-    >>> 
+    >>>
     >>> calc = nml.DataReconstructionDriftCalculator(
     ...     feature_column_names=feature_column_names,
     ...     timestamp_column_name='timestamp',
@@ -38,7 +38,7 @@ Just The Code
     >>> calc.fit(reference)
     >>> results = calc.calculate(analysis)
     >>> display(results.data)
-    >>> 
+    >>>
     >>> figure = results.plot(plot_reference=True)
     >>> figure.show()
 
@@ -50,7 +50,7 @@ NannyML uses Data Reconstruction with PCA to detect such changes. For a detailed
 the method see :ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
 
 The method returns a single number, measuring the :term:`Reconstruction Error`. The changes in this value
-reflect a change in the structure of the model inputs. 
+reflect a change in the structure of the model inputs.
 
 NannyML calculates the reconstruction error over time for the monitored model, and raises an alert if the
 values get outside of a range defined by the variance in the reference :ref:`data period<data-drift-periods>`.
@@ -65,7 +65,7 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
     >>> display(reference.head())
@@ -99,7 +99,7 @@ calculate the multivariate drift results on the data provided to it.
     ...     col for col in reference.columns if col not in [
     ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
     ...     ]]
-    >>> 
+    >>>
     >>> calc = nml.DataReconstructionDriftCalculator(
     ...     feature_column_names=feature_column_names,
     ...     timestamp_column_name='timestamp',
@@ -110,7 +110,7 @@ calculate the multivariate drift results on the data provided to it.
 
 Any missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
 the most frequent value for categorical features and the mean for continuous features. These defaults can be
-overridden with an instance of `SimpleImputer`_ class in which cases NannyML will perform the imputation as instructed. 
+overridden with an instance of `SimpleImputer`_ class in which cases NannyML will perform the imputation as instructed.
 
 An example where custom imputation strategies are used can be seen below.
 

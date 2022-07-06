@@ -79,7 +79,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         7  [35000:39999]        35000  ...              True                 0.05
         8  [40000:44999]        40000  ...              True                 0.05
         9  [45000:49999]        45000  ...              True                 0.05
-        >>> fig = results.plot(kind='feature_drift', plot_reference=True, feature='distance_from_office')
+        >>> fig = results.plot(kind='feature_drift', plot_reference=True, feature_column_name='distance_from_office')
         >>> fig.show()
         """
         super(UnivariateStatisticalDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)

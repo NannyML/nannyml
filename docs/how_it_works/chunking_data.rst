@@ -8,7 +8,7 @@ Chunking considerations
 ----------------------------------
 
 For an introduction on :term:`chunks<Data Chunk>` please have a look at
-:ref:`Setting Up: Chunking<chunking>`. This guide focuses on the potential issues that may 
+:ref:`Setting Up: Chunking<chunking>`. This guide focuses on the potential issues that may
 arise from using chunks. They are described below.
 
 
@@ -39,7 +39,7 @@ are smaller than the minimum chunk size, a warning will be raised.
     UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be statistically robust and might negatively influence the quality of calculations. Please consider splitting your data in a different way or continue at your own risk.
 
 When the warning is about a single chunk, it is usually the last chunk. This is due to the reasons described in
-:ref:`the chunking tutorial<chunking>`. 
+:ref:`the chunking tutorial<chunking>`.
 
 When there are more than one underpopulated chunks staying with the selected chunking method
 may be suboptimal. Read :ref:`minimum chunk size <minimum-chunk-size>` to get more information about the effect of
@@ -120,7 +120,7 @@ stronger for more complex metrics like ROC AUC.
 When there are many chunks, it is easy to spot the noisy nature of fluctuations. However, with only a few chunks, it
 is difficult to tell whether the observed changes are significant. To minimize this risk, NannyML
 estimates a minimum chunk size for the monitored data and raises a warning if the selected chunking method results in
-chunks that are smaller. 
+chunks that are smaller.
 
 The minimum chunk size is estimated in order to
 keep variation of performance of the monitored model low. The variation is expressed in terms of standard deviation and
@@ -191,7 +191,7 @@ Minimum Chunk Size for Multivariate Drift
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To ensure that there is no significant noise present in :ref:`multivariate drift<multivariate_drift_detection>`
-results NannyML suggests a minimum chunk size based on the number of features used to perform data reconstruction 
+results NannyML suggests a minimum chunk size based on the number of features used to perform data reconstruction
 according to the function below.
 
 .. math::

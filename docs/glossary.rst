@@ -96,7 +96,7 @@ Glossary
 
     Imputation
         The process of substituting missing values with actual values on a dataset.
-    
+
     Kolmogorov-Smirnov test
         The Kolmogorov-Smirnov test, or KS test as is more commonly called, is a non parametric statistical test regarding
         the equality of continuous one dimensional probability distributions. It can be used to compare a sample with a

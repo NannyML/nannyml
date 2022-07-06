@@ -5,7 +5,7 @@ Data Reconstruction with PCA
 ============================
 
 Here we will explain why data reconstruction with PCA is useful, and how it is performed.
-For information on how to use this feature of the library, read the tutorial on 
+For information on how to use this feature of the library, read the tutorial on
 :ref:`Multivariate Data Drift Detection<multivariate_drift_detection>`.
 
 Limitations of Univariate Drift Detection
@@ -18,8 +18,8 @@ space. However the world is not static, and the structure of a model's input dat
 change. This change can then cause our existing decision boundary to be suboptimal.
 
 :ref:`The Univariate Drift Detection tutorial<univariate_drift_detection>` describes how NannyML analyzes
-each feature individually, and observes whether there are changes in the resulting feature 
-distributions over time. 
+each feature individually, and observes whether there are changes in the resulting feature
+distributions over time.
 
 However, this is not enough to capture all the changes that may affect a machine learning model.
 The changes in correlations and more complex changes in relationships between model inputs might have
@@ -112,7 +112,7 @@ resulting data drift.
 The plot shows that the univariate distribution of features `feature1` and
 `feature2` are unchanged. With blue color you can see the original distribution
 of the two features and with red color you can see the resulting distribution
-after we have applied our transformation. 
+after we have applied our transformation.
 
 Using NannyML to compute and plot the univariate
 drift statistics shows that on the individual feature level no changes are visible.
@@ -124,9 +124,9 @@ drift statistics shows that on the individual feature level no changes are visib
     >>> reference.drop(['week', 'partition'], axis=1, inplace=True)
     >>> analysis = datadf.loc[datadf['partition'] == 'analysis'].reset_index(drop=True)
     >>> analysis.drop(['y_true', 'week', 'partition'], axis=1, inplace=True)
-    >>> 
+    >>>
     >>> feature_column_names = ['feature1', 'feature2', 'feature3']
-    >>> 
+    >>>
     >>> # Let's instantiate and calibrate univariate drift
     >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
     ...     feature_column_names=feature_column_names,
@@ -134,13 +134,13 @@ drift statistics shows that on the individual feature level no changes are visib
     ...     chunk_size=DPP
     >>> )
     >>> univariate_calculator.fit(reference_data=reference)
-    >>> 
+    >>>
     >>> # let's compute (and visualize) results across all the dataset.
     >>> univariate_results = univariate_calculator.calculate(data=analysis)
     >>> for feature in feature_column_names:
     ...     figure = univariate_results.plot(
     ...         kind='feature_distribution',
-    ...         feature=feature,
+    ...         feature_column_name=feature,
     ...         plot_reference=True
     ...     )
     ...     figure.show()
@@ -153,14 +153,14 @@ drift statistics shows that on the individual feature level no changes are visib
 
 These results make it clear that the univariate distribution results do not detect any drift.
 However, we know there is data drift in the butterfly dataset. As mentioned, the correlation between features
-`feature1` and `feature2` has changed from positive to negative. 
+`feature1` and `feature2` has changed from positive to negative.
 A methodology that is able to identify this change is needed. This is where :term:`Multivariate Drift Detection`
 using Data Reconstruction with PCA can be applied.
 
 Data Reconstruction with PCA
 ----------------------------
 
-This method is able to capture complex changes in our data. The algorithm implementing Data 
+This method is able to capture complex changes in our data. The algorithm implementing Data
 Reconstruction with PCA works in three steps as described below.
 
 The first step is data preparation. This includes missing values :term:`Imputation`,
@@ -197,18 +197,18 @@ When applying PCA we lose some information about our dataset.
 This means that the reconstructed data will always be slightly different compared to the original,
 and the reconstruction error reflects that.
 Because of this the valuable insight doesn't come from the value of the reconstruction
-error but from the change in reconstruction error values over time. The change tells if there is data drift. 
+error but from the change in reconstruction error values over time. The change tells if there is data drift.
 
 This is because when there is data drift the principal components the PCA method has learnt become suboptimal.
 This will result in worse reconstruction of the new data and therefore a different reconstruction error.
 
 Because of the noise present in real world datasets, there will always be some
 variability in the reconstruction error results. So not every change in reconstruction
-error values means that we have data drift. 
+error values means that we have data drift.
 
 The variability of reconstruction error values on a known good dataset is used to determine an acceptable
 variance on the reconstruction error values. Any reconstruction error values outside of that
-variance represent a significant change in reconstruction error. 
+variance represent a significant change in reconstruction error.
 
 NannyMl computes the mean and standard deviation of the reconstruction error with PCA on the reference
 dataset based on the different results for each :term:`Data Chunk`. This establishes
@@ -233,7 +233,7 @@ what it does on the butterfly dataset.
     >>> ).fit(reference_data=reference)
     >>> # let's compute results for analysis period
     >>> rcerror_results = rcerror_calculator.calculate(data=analysis)
-    >>> 
+    >>>
     >>> # let's visualize results across all the dataset
     >>> figure = rcerror_results.plot(plot_reference=True)
     >>> figure.show()
