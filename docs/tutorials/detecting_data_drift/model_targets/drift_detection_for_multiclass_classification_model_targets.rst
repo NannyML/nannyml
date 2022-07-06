@@ -29,33 +29,31 @@ Just The Code
 
 .. code-block:: python
 
-    import pandas as pd
-    import nannyml as nml
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-    analysis_target_df = nml.load_synthetic_multiclass_classification_dataset()[2]
-    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
-
-    display(reference_df.head(3))
-
-    calc = nml.TargetDistributionCalculator(
-        y_true='y_true',
-        timestamp_column_name='timestamp'
-    )
-
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
-
-    display(results.data.head(3))
-
-    distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
-    distribution_fig1.show()
-
-    distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
-    distribution_fig2.show()
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> from IPython.display import display
+    >>> 
+    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
+    >>> analysis_target_df = nml.load_synthetic_multiclass_classification_dataset()[2]
+    >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+    >>> 
+    >>> display(reference_df.head(3))
+    >>> 
+    >>> calc = nml.TargetDistributionCalculator(
+    ...     y_true='y_true',
+    ...     timestamp_column_name='timestamp'
+    >>> )
+    >>> 
+    >>> calc.fit(reference_df)
+    >>> results = calc.calculate(analysis_df)
+    >>> display(results.data.head(3))
+    >>> 
+    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    >>> distribution_fig1.show()
+    >>> 
+    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
+    >>> distribution_fig2.show()
 
 
 Walkthrough
@@ -71,16 +69,16 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
 
 .. code-block:: python
 
-    import pandas as pd
-    import nannyml as nml
-    from IPython.display import display
-
-    reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-    analysis_target_df = nml.load_synthetic_multiclass_classification_dataset()[2]
-    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
-
-    display(reference_df.head(3))
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> from IPython.display import display
+    >>> 
+    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
+    >>> analysis_target_df = nml.load_synthetic_multiclass_classification_dataset()[2]
+    >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+    >>> 
+    >>> display(reference_df.head(3))
 
 
 +----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-----------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
@@ -99,10 +97,10 @@ instantiating it with the appropriate parameters. We only need the target (``y_t
 
 .. code-block:: python
 
-    calc = nml.TargetDistributionCalculator(
-        y_true='y_true',
-        timestamp_column_name='timestamp'
-    )
+    >>> calc = nml.TargetDistributionCalculator(
+    ...     y_true='y_true',
+    ...     timestamp_column_name='timestamp'
+    >>> )
 
 Afterwards, the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
 method gets called on the reference :term:`period<Data Period>`, which represent an accepted target distribution
@@ -115,11 +113,9 @@ We can display the results of this calculation in a dataframe.
 
 .. code-block:: python
 
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
-
-    display(results.data.head(3))
+    >>> calc.fit(reference_df)
+    >>> results = calc.calculate(analysis_df)
+    >>> display(results.data.head(3))
 
 +----+---------------+---------------+-------------+---------------------+---------------------+----------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | period   |   targets_missing_rate |   metric_target_drift |   statistical_target_drift |   p_value |   thresholds | alert   | significant   |
@@ -136,8 +132,8 @@ The results can be also easily plotted by using the
 
 .. code-block:: python
 
-    distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
-    distribution_fig1.show()
+    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    >>> distribution_fig1.show()
 
 
 .. warning::
@@ -153,8 +149,8 @@ The results can be also easily plotted by using the
 
 .. code-block:: python
 
-    distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
-    distribution_fig2.show()
+    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
+    >>> distribution_fig2.show()
 
 .. image:: /_static/tutorials/detecting_data_drift/model_targets/multiclass/target-distribution-statistical.svg
 
