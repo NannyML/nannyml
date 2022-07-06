@@ -151,7 +151,7 @@ def _plot_cbpe_performance_estimation(
     if plot_reference:
         reference_results = estimator.previous_reference_results
         reference_results['period'] = 'reference'
-        estimation_results['estimated'] = False
+        reference_results['estimated'] = False
         estimation_results = pd.concat([reference_results, estimation_results], ignore_index=True)
 
     # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
