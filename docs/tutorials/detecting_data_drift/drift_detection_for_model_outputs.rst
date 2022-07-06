@@ -62,7 +62,7 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
 
     reference_df = nml.load_synthetic_binary_classification_dataset()[0]
     analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-    
+
     display(reference_df.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -80,7 +80,7 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator`
-class implements the functionality needed for drift detection in model outputs. First, the class is instantiated with appropriate parameters. 
+class implements the functionality needed for drift detection in model outputs. First, the class is instantiated with appropriate parameters.
 To check the model outputs for data drift, we only need to pass in the column header of the outputs as `y_pred` and `y_pred_proba`.
 
 Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator.fit` method
@@ -98,6 +98,7 @@ calculates the drift results on the data provided. An example using it can be se
 We can then display the results in a table, or as plots.
 
 .. code-block:: python
+
     display(results.data)
 
 +----+---------------+---------------+-------------+---------------------+---------------------+----------------------+------------------------+----------------------+--------------------------+

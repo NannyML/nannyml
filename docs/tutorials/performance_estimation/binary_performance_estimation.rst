@@ -8,8 +8,8 @@ Why Perform Performance Estimation
 ============================================
 
 NannyML allows estimating the performance of a classification model when :term:`targets<Target>` are absent.
-This can be very helpful when targets are delayed, only partially available, or not available at all, because 
-it allows you to potentially identify performance issues before they would otherwise be detected. 
+This can be very helpful when targets are delayed, only partially available, or not available at all, because
+it allows you to potentially identify performance issues before they would otherwise be detected.
 
 Some specific examples of when you could benefit from estimating your performance include:
 
@@ -17,7 +17,7 @@ Some specific examples of when you could benefit from estimating your performanc
 - When performing sentiment analysis, targets may be entirely unavailable without significant human effort, so estimation is the only feasible way to attain metrics.
 - When dealing with huge datasets, where human verification can only cover a small sample, estimation of performance can help confirm confidence or question the efficacy.
 
-This tutorial explains how to use NannyML to estimate the performance of binary classification 
+This tutorial explains how to use NannyML to estimate the performance of binary classification
 models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
 
@@ -98,9 +98,9 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
 estimator with a list of metrics, and an optional
-:ref:`chunking<chunking>` specification. 
+:ref:`chunking<chunking>` specification.
 
-The list of metrics specifies which performance metrics of the monitored model will be estimated. 
+The list of metrics specifies which performance metrics of the monitored model will be estimated.
 The following metrics are currently supported:
 
 - ``roc_auc`` - one vs. the rest, macro averaged
@@ -207,7 +207,7 @@ performance on the reference period (where the target was available).
 * The purple dashed vertical line splits the reference and analysis periods.
 
 * On the left-hand side of the line, the actual model performance (not estimation!) is plotted with a solid light blue
-  line. This facilitates comparison of the estimation against the reference period, and sets expectations on the 
+  line. This facilitates comparison of the estimation against the reference period, and sets expectations on the
   variability of the performance.
 
 .. code-block:: python
@@ -232,8 +232,8 @@ NannyML has detected based upon the model's inputs and outputs alone.
 What's next
 ==========================
 
-The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem. 
-When the target results become available they can be :ref:`compared with the estimated results<compare_estimated_and_realized_performance>`. 
+The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
+When the target results become available they can be :ref:`compared with the estimated results<compare_estimated_and_realized_performance>`.
 
 You can learn more about the Confidence Based Performance Estimation and its limitations in the
 :ref:`How it Works page<performance-estimation-deep-dive>`

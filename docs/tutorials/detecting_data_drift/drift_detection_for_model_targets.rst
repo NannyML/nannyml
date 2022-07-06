@@ -15,7 +15,7 @@ used may need to be revisited.
 
 NannyML uses :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
 in order to monitor drift in the :term:`Target` distribution. It can calculate the mean occurrence of positive
-events for binary classification problems. 
+events for binary classification problems.
 
 It can also calculate the chi squared statistic (from the :term:`Chi Squared test<Chi Squared test>`)
 of the available target values for each chunk, for both binary and multiclass classification problems.
@@ -98,6 +98,7 @@ Now that the data is in place we'll create a new
 instantiating it with the appropriate parameters. We only need the target (``y_true``) and timestamp.
 
 .. code-block:: python
+
     calc = nml.TargetDistributionCalculator(
         y_true='y_true',
         timestamp_column_name='timestamp'
@@ -117,7 +118,7 @@ We can display the results of this calculation in a dataframe.
     calc.fit(reference_df)
 
     results = calc.calculate(analysis_df)
-    
+
     display(results.data.head(3))
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
@@ -154,7 +155,7 @@ Insights
 -----------------------
 
 Looking at the results we see that we have a false alert on the first chunk of the analysis data. This
-can happen when the statistical tests consider a small change in the distribution of a variable to be significant. 
+can happen when the statistical tests consider a small change in the distribution of a variable to be significant.
 But because the change is small it is usually not significant from a model monitoring perspective.
 
 What Next

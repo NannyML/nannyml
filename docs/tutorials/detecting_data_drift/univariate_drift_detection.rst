@@ -55,8 +55,8 @@ Walkthrough
 NannyML's Univariate approach for data drift looks at each variable individually and conducts statistical tests comparing the :ref:`chunks` created from the analysis :ref:`data period<data-drift-periods>` with the reference period. You can read more about the data required in our section on :ref:`data periods<data-drift-periods>`
 
 NannyML uses the :term:`2 sample Kolmogorov-Smirnov Test<Kolmogorov-Smirnov test>` for continuous features and the
-:term:`Chi squared test<Chi Squared test>` for categorical features. Both tests provide a statistic where they measure 
-the observed drift and a p-value that shows how likely we are to get the observed sample under the assumption that there was no drift. 
+:term:`Chi squared test<Chi Squared test>` for categorical features. Both tests provide a statistic where they measure
+the observed drift and a p-value that shows how likely we are to get the observed sample under the assumption that there was no drift.
 
 If the p-value is less than 0.05 NannyML considers the result unlikely to be due to chance and issues an alert for the associated chunk and feature.
 
@@ -90,7 +90,8 @@ We begin by loading some synthetic data provided in the NannyML package. This is
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection. We need to instantiate it with appropriate parameters - the column headers of the features that we want to run drift detection on, and the timestamp column header. The features can be passed in as a simple list of strings, but here we have created this list by excluding the columns in the dataframe that are not features, and passed that into the argument.
 
-.. code-block:: python 
+.. code-block:: python
+
     feature_column_names = [
         col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
 
