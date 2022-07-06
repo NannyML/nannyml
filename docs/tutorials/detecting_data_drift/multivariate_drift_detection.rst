@@ -28,8 +28,7 @@ Just The Code
     feature_column_names = [
         col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
 
-    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names,
-                                                timestamp_column_name='timestamp')
+    calc = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp')
 
     calc.fit(reference_df)
 

@@ -28,38 +28,37 @@ Just The Code
 
 .. code-block:: python
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
-    >>> display(reference.head(3))
+  import pandas as pd
+  import nannyml as nml
+  from IPython.display import display
 
-    >>> metadata = nml.extract_metadata(
-    ...     reference,
-    ...     model_type="classification_binary",
-    ...     exclude_columns=['identifier']
-    ... )
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(metadata.is_complete())
+  reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+  analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
 
-    >>> cbpe = nml.CBPE(
-    ...     model_metadata=metadata,
-    ...     chunk_size=5000,
-    ...     metrics=['roc_auc', 'f1']
-    ... )
-    >>> cbpe.fit(reference_data=reference)
+  display(reference_df.head(3))
 
-    >>> est_perf_analysis = cbpe.estimate(analysis)
-    >>> display(est_perf_analysis.data.head(3))
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
-    ...     figure.show()
+  estimator = nml.CBPE(
+      y_pred_proba='y_pred_proba',
+      y_pred='y_pred',
+      y_true='y_true',
+      timestamp_column_name='timestamp',
+      metrics=['roc_auc', 'f1']
+      chunk_size=5000,
+  )
 
-    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
-    ...     figure.show()
+  estimator.fit(reference_df)
 
+  results = estimator.estimate(analysis_df)
+
+  display(results.data.head(3))
+
+  for metric in estimator.metrics:
+      fig1 = results.plot(kind='performance', metric=metric)
+      fig1.show()
+
+  for metric in estimator.metrics:
+      fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
+      fig2.show()
 
 
 Walkthrough
@@ -71,19 +70,19 @@ Prepare the data
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
 whether an employee will work from home. You can :ref:`read more about this synthetic dataset<dataset-synthetic-binary>`.
 
-The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
-the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. 
-
-The ``analysis_targets`` dataframe contains the target (ground truth) results of the analysis period and will not be used
-during Performance Estimation.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`
 
 .. code-block:: python
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_binary_classification_dataset()
-    >>> display(reference.head(3))
+    import pandas as pd
+    import nannyml as nml
+    from IPython.display import display
+
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+
+    display(reference_df.head(3))
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -96,103 +95,69 @@ during Performance Estimation.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 
-One of the first steps in using NannyML is providing metadata information about the model that is monitored.
-Some information is inferred automatically and the rest should be provided.
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(
-    ...     reference,
-    ...     model_type="classification_binary",
-    ...     exclude_columns=['identifier']
-    ... )
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(metadata.is_complete())
-    (True, [])
-
-
-We see that the metadata are complete. Full information on how the data should be prepared can be found in 
-the :ref:`guide on importing data<import-data>`.
-
-Create and fit the estimator
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In the next step the Confidence-based Performance Estimation
+Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
-estimator is created using the previously extracted :class:`~nannyml.metadata.base.ModelMetadata`, 
-a list of metrics and an optional :ref:`chunking<chunking>` specification. 
+estimator with a list of metrics, and an optional
+:ref:`chunking<chunking>` specification. 
 
 The list of metrics specifies which performance metrics of the monitored model will be estimated. 
 The following metrics are currently supported:
 
-- ``roc_auc``
-- ``f1``
-- ``precision``
-- ``recall``
-- ``specificity``
+- ``roc_auc`` - one vs. the rest, macro averaged
+- ``f1`` - macro averaged
+- ``precision`` - macro averaged
+- ``recall`` - macro averaged
+- ``specificity`` - macro averaged
 - ``accuracy``
 
-For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` 
-and :ref:`chunking data guide<chunk-data>`.
+For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
+.. code-block:: python
+
+    estimator = nml.CBPE(
+      y_pred_proba='y_pred_proba',
+      y_pred='y_pred',
+      y_true='y_true',
+      timestamp_column_name='timestamp',
+      metrics=['roc_auc', 'f1']
+      chunk_size=5000,
+    )
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
-estimator is then fitted using the :meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` 
-method on the ``reference`` data.
-
-.. code-block:: python
-
-    >>> cbpe = nml.CBPE(
-    ...     model_metadata=metadata,
-    ...     chunk_size=5000,
-    ...     metrics=['roc_auc', 'f1']
-    ... )
-    >>> cbpe.fit(reference_data=reference)
+estimator is then fitted using the
+:meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` method on the ``reference`` data.
 
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
-Typically, this would be used on the latest production data where targets are missing. In our example this is
-the analysis data.
+Typically, this would be used on the latest production data where target is missing. In our example this is
+the ``analysis_df`` data.
 
-.. code-block:: python
-
-    >>> est_perf_analysis = cbpe.estimate(analysis)
-
-However, it can be also be used on the combined reference and analysis data. This will estimate performance for 
-the analysis period, but calculate performance for the reference period, using the targets available for it. 
-
-This can help build better understanding of the performance changes of the analysis data, as it can be directly compared
-with the changes of calculated performance within the reference period.
-
-.. code-block:: python
-
-    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-
-
-View the results
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-NannyML can output a dataframe that contains all the results. Let's have a look at the results for analysis period
+NannyML can then output a dataframe that contains all the results. Let's have a look at the results for analysis period
 only.
 
 .. _performance-estimation-thresholds:
 
-Apart from chunk and period-related data, the results data have the following columns for each metric
+Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
 that was estimated:
 
- - ``estimated_<metric>`` - the estimate of selected ``metric`` for a specific chunk,
+ - ``estimated_<metric>`` - the estimate of a metric for a specific chunk,
  - ``confidence_<metric>`` - the width of the confidence band. It is equal to 1 standard deviation of performance estimates on
    `reference` data (hence calculated during ``fit`` phase).
  - ``upper_threshold_<metric>`` and ``lower_threshold_<metric>`` - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
    the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
-   chunks. They are calculated during ``fit`` phase.
+   chunks.
+   They are calculated during ``fit`` phase.
  - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also
    be calculated and included within the results.
  - ``alert_<metric>`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
 
-.. code-block:: python
+   .. code-block:: python
 
-    >>> display(est_perf_analysis.data.head(3))
+  estimator.fit(reference_df)
+
+  results = estimator.estimate(analysis_df)
+
+  display(results.data.head(3))
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   confidence_f1 |   realized_f1 |   estimated_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
@@ -205,18 +170,18 @@ that was estimated:
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
 
 
-These results can be also plotted. Our plots contain several key elements.
+These results can be also plotted. Our plot contains several key elements.
 
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
-  markers indicate the middle of each chunk.
+  marker indicates the middle of this period.
 
-* The thick, pale purple area around this indicates the width of the confidence band.
+* The solid, low-saturated purple line *behind* indicates the confidence band.
 
-* The red, horizontal dashed lines show upper and lower thresholds.
+* The red horizontal dashed lines show upper and lower thresholds.
 
-* If the estimated performance crosses the upper or lower threshold an alert is raised. This is indicated with a pale red
-  background in the whole width of the relevant chunk. This is additionally indicated by a red, diamond-shaped point marker 
-  in the middle of the chunk.
+* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red,
+  low-saturated background in the whole width of the relevant chunk. This is additionally
+  indicated by a red point marker in the middle of the chunk.
 
 Description of tabular results above explains how the
 confidence bands and thresholds are calculated. Additional information is shown in the hover (these are
@@ -224,9 +189,9 @@ interactive plots, though only static views are included here).
 
 .. code-block:: python
 
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
-    ...     figure.show()
+    for metric in estimator.metrics:
+      fig1 = results.plot(kind='performance', metric=metric)
+      fig1.show()
 
 
 .. image:: ../../_static/tutorial-perf-est-guide-analysis-roc_auc.svg
@@ -247,9 +212,9 @@ performance on the reference period (where the target was available).
 
 .. code-block:: python
 
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
-    ...     figure.show()
+    for metric in estimator.metrics:
+      fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
+      fig2.show()
 
 
 .. image:: ../../_static/tutorial-perf-est-guide-with-ref-roc_auc.svg

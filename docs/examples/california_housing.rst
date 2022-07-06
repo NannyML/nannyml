@@ -32,14 +32,6 @@ Let's load the dataset from NannyML's included datasets.
 |  2 |   8.72   |         44 |    6.16318 |     1.04603 |          668 |    2.79498 |      34.2  |     -118.18 | 2020-10-01 02:00:00 | reference   |            1 |           1    |        1 |            2 |
 +----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
 
-Next we extract metadata.
-
-.. code:: python
-
-    >>> # extract metadata, add target column name
-    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'], model_type='classification_binary')
-    >>> metadata.target_column_name = 'clf_target'
-    >>> metadata.timestamp_column_name = 'timestamp'
 
 Performance Estimation
 ======================
@@ -49,8 +41,15 @@ We first want to estimate performance for the analysis period, using the referen
 .. code:: python
 
     >>> # fit performance estimator and estimate for combined reference and analysis
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period='M', metrics=['roc_auc'])
-    >>> cbpe.fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='clf_target',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc']
+    >>>    chunk_period='M'
+    >>> )
+    >>> cbpe.fit(reference)
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
 
 .. parsed-literal::
@@ -162,7 +161,9 @@ univariate drift detection, and see what we discover.
 
 .. code:: python
 
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='M').fit(reference_data=reference)
+    >>> feature_column_names = [
+    >>>    col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'lf_target', 'identifier', 'partition']]
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp' chunk_period='M').fit(reference_data=reference)
     >>> univariate_results = univariate_calculator.calculate(data=analysis)
     >>> nml.Ranker.by('alert_count').rank(univariate_results, metadata)
 

@@ -59,45 +59,51 @@ Just the code
     >>> display(analysis.head())
     >>> display(reference.head())
 
-    >>> # Extract meta data
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-
     >>> # Choose a chunker or set a chunk size
     >>> chunk_size = 5000
 
-    >>> # initialize, fit estimator and estimate
-    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc'])
+    >>> # initialize, specify required data columns, fit estimator and estimate
+    >>> estimator = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='y_true',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc']
+    >>>    chunk_size=chunk_size,
+    >>> )
     >>> estimator = estimator.fit(reference)
-    >>> estimated_performance = estimator.estimate(data=data)
+    >>> estimated_performance = estimator.estimate(analysis)
 
-    >>> # show results
-    >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
+    >>> # Show results
+    >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
     >>> figure.show()
 
+    >>> # Define feature columns
+    >>> feature_column_names = [
+    >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
-    >>> univariate_results = univariate_calculator.calculate(data=data)
-    >>> # let's plot drift results for all model inputs
-    >>> for feature in metadata.features:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size)
+    >>> univariate_calculator = univariate_calculator.fit(reference)
+    >>> univariate_results = univariate_calculator.calculate(analysis)
+    >>> # Plot drift results for all model inputs
+    >>> for feature in univariate_calculator.feature_column_names:
+    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', plot_reference=True)
     ...     figure.show()
 
     >>> # Rank features based on number of alerts
     >>> ranker = nml.Ranker.by('alert_count')
-    >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
+    >>> ranked_features = ranker.rank(univariate_results, only_drifting = False)
     >>> display(ranked_features)
 
-    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
+    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic', plot_reference=True)
     >>> figure.show()
 
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size).fit(reference_data=reference)
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size).fit(reference_data=reference)
     >>> # let's see Reconstruction error statistics for all available data
-    >>> rcerror_results = rcerror_calculator.calculate(data=data)
-    >>> figure = rcerror_results.plot(kind='drift')
+    >>> rcerror_results = rcerror_calculator.calculate(analysis)
+    >>> figure = rcerror_results.plot(kind='drift', plot_reference=True)
     >>> figure.show()
 
 
@@ -127,9 +133,12 @@ the analysis period doesn't need to contain the :term:`Target` data.
 
     >>> import pandas as pd
     >>> import nannyml as nml
+    >>> from IPython.display import display
+
+    >>> # Load synthetic data
     >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> reference.head()
-    >>> analysis.head()
+    >>> display(analysis.head())
+    >>> display(reference.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
@@ -158,19 +167,7 @@ the analysis period doesn't need to contain the :term:`Target` data.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
 |  4 |               4.7867   | 0 - 20K €      |               2.36854 |                      8.39497 | False              | Monday    | 0.906738 |        50004 | 2017-08-31 06:29:38 |           0.92 | analysis    |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-
-The next step is to have NannyML extract  :term:`model metadata<Model Metadata>` from the reference dataset and make a choice
-about the way we will split our data into :term:`Data Chunks<Data Chunk>`.
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-    >>> chunk_size = 5000
-
     
-
 
 Estimating Performance without Targets
 ======================================
@@ -183,12 +180,20 @@ while for more details on how the algorithm behind it works see
 
 .. code-block:: python
 
-    >>> # initialize, fit estimator and estimate
-    >>> estimator = nml.CBPE(model_metadata=metadata, chunk_size=chunk_size, metrics=['roc_auc'])
+    >>> # initialize, specify required data columns, fit estimator and estimate
+    >>> estimator = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='y_true',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc']
+    >>>    chunk_size=chunk_size,
+    >>> )
     >>> estimator = estimator.fit(reference)
-    >>> estimated_performance = estimator.estimate(data=data)
-    >>> # show results
-    >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc')
+    >>> estimated_performance = estimator.estimate(analysis)
+
+    >>> # Show results
+    >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
     >>> figure.show()
 
 .. image:: ./_static/quick_start_perf_est.svg
@@ -204,13 +209,16 @@ functionality. See :ref:`data-drift` for more details.
 
 .. code-block:: python
 
+    >>> # Define feature columns
+    >>> feature_column_names = [
+    >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
     >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-    >>> univariate_calculator = univariate_calculator.fit(reference_data=reference)
-    >>> univariate_results = univariate_calculator.calculate(data=data)
-    >>> # let's plot drift results for all model inputs
-    >>> for feature in metadata.features:
-    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', feature_label=feature.label)
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size)
+    >>> univariate_calculator = univariate_calculator.fit(reference)
+    >>> univariate_results = univariate_calculator.calculate(analysis)
+    >>> # Plot drift results for all model inputs
+    >>> for feature in univariate_calculator.feature_column_names:
+    ...     figure = univariate_results.plot(kind='feature_drift', metric='statistic', plot_reference=True)
     ...     figure.show()
 
 .. image:: ./_static/drift-guide-distance_from_office.svg
@@ -232,9 +240,9 @@ When there are a lot of drifted features, NannyML can also rank them by the numb
 .. code-block:: python
 
     >>> ranker = nml.Ranker.by('alert_count')
-    >>> ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
-    >>> ranked_features
-
+    >>> ranked_features = ranker.rank(univariate_results, only_drifting = False)
+    >>> display(ranked_features)
+    
 +----+----------------------------+--------------------+--------+
 |    | feature                    |   number_of_alerts |   rank |
 +====+============================+====================+========+
@@ -257,7 +265,7 @@ Drift in the model outputs can be also visualized:
 
 .. code-block:: python
 
-    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic')
+    >>> figure = univariate_results.plot(kind='prediction_drift', metric='statistic', plot_reference=True)
     >>> figure.show()
 
 .. image:: ./_static/drift-guide-predictions.svg
@@ -269,10 +277,10 @@ see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 .. code-block:: python
 
     >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size).fit(reference_data=reference)
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size).fit(reference_data=reference)
     >>> # let's see Reconstruction error statistics for all available data
-    >>> rcerror_results = rcerror_calculator.calculate(data=data)
-    >>> figure = rcerror_results.plot(kind='drift')
+    >>> rcerror_results = rcerror_calculator.calculate(analysis)
+    >>> figure = rcerror_results.plot(kind='drift', plot_reference=True)
     >>> figure.show()
 
 .. image:: ./_static/drift-guide-multivariate.svg
@@ -296,5 +304,4 @@ What next
 This could be further investigated by analyzing changes of distributions of the input variables. Check
 :ref:`tutorials<tutorials>` on :ref:`data drift<data-drift>` to find out how to plot distributions with NannyML.
 
-You can now try using NannyML on your own data. Our tutorials on :ref:`data requirements<data_requirements>`
-and :ref:`providing metadata<import-data>` are good places to find out what to do for this.
+You can now try using NannyML on your own data. Our :ref:`tutorials` are a good placs to find out what to do for this.

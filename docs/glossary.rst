@@ -121,11 +121,6 @@ Glossary
     Model inputs
         Every :term:`Feature` used by the model.
 
-    Model Metadata
-        Additional information regarding the model inputs such as the type of a particular
-        feature (continuous, categorical, nominal, ordinal). Information regarding when a
-        prediction was made as well as which data partition it is assigned to are also considered
-        metadata.
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.

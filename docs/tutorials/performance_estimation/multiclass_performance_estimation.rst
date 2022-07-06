@@ -26,39 +26,40 @@ Just The Code
 
 .. code-block:: python
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
+  import pandas as pd
+  import nannyml as nml
+  from IPython.display import display
 
-    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_multiclass_classification_dataset()
-    >>> display(reference.head(3))
+  reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+  analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
 
-    >>> metadata = nml.extract_metadata(
-    ...     reference,
-    ...     model_name='credit_card_segment',
-    ...     model_type="classification_multiclass",
-    ...     exclude_columns=['identifier']
-    >>> )
-    >>> metadata.target_column_name = 'y_true'
-    >>> display(metadata.is_complete())
+  display(reference_df.head(3))
 
-    >>> cbpe = nml.CBPE(
-    ...     model_metadata=metadata,
-    ...     chunk_size=6000,
-    ...     metrics=['roc_auc', 'f1']
-    >>> )
-    >>> cbpe = cbpe.fit(reference_data=reference)
+  estimator = nml.CBPE(
+      y_pred_proba={
+        'prepaid_card': 'y_pred_proba_prepaid_card', 
+        'highstreet_card': 'y_pred_proba_highstreet_card', 
+        'upmarket_card': 'y_pred_proba_upmarket_card'},
+      y_pred='y_pred',
+      y_true='y_true',
+      timestamp_column_name='timestamp',
+      metrics=['roc_auc', 'f1']
+      chunk_size=6000,
+  )
 
-    >>> est_perf_analysis = cbpe.estimate(analysis)
-    >>> display(est_perf_analysis.data.head(3))
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
-    ...     figure.show()
+  estimator.fit(reference_df)
 
-    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
-    ...     figure.show()
+  results = estimator.estimate(analysis_df)
+
+  display(results.data.head(3))
+
+  for metric in estimator.metrics:
+      fig1 = results.plot(kind='performance', metric=metric)
+      fig1.show()
+
+  for metric in estimator.metrics:
+      fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
+      fig2.show()
 
 
 Walkthrough
@@ -70,19 +71,19 @@ Prepare the data
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts
 which type of credit card product new customers should be assigned to. You can :ref:`learn more about this dataset<dataset-synthetic-multiclass>`.
 
-The ``reference`` and ``analysis`` dataframes correspond to ``reference`` and ``analysis`` periods of
-the monitored data. To understand what they are read :ref:`data periods<data-drift-periods>`. The
-``analysis_targets`` dataframe contains the target results of the analysis period and will not be used
-during Performance Estimation.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`
 
 .. code-block:: python
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
+  import pandas as pd
+  import nannyml as nml
+  from IPython.display import display
 
-    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_multiclass_classification_dataset()
-    >>> display(reference.head(3))
+  reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+  analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
+
+  display(reference_df.head(3))
 
 
 +----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
@@ -95,35 +96,9 @@ during Performance Estimation.
 |  2 | Partner2      |              -0.787575 |                      400 | web           |                   507 |           24000 | False         | reference   |        60002 | 2020-05-02 02:04:49 |                        0.47 |                           0.35 |                         0.18 | prepaid_card | upmarket_card |
 +----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
 
-One of the first steps in using NannyML is providing metadata information about the model we are monitoring.
-Some information is inferred automatically and we provide the rest.
-
-The difference between binary and multiclass classification is that metadata for multiclass classification should
-contain mapping between classes (i.e. values that are in target and prediction columns) to column names with predicted
-probabilities that correspond to these classes. This mapping can be specified or it can be automatically extracted
-if predicted probability column names meet specific requirements as in the example presented. Read more in the
-:ref:`Setting Up, Providing Metadata<import-data>` section.
-
-.. code-block:: python
-
-    >>> metadata = nml.extract_metadata(
-    ...     reference,
-    ...     model_name='credit_card_segment',
-    ...     model_type="classification_multiclass",
-    ...     exclude_columns=['identifier']
-    >>> )
-    >>> metadata.target_column_name = 'y_true'
-    >>> display(metadata.is_complete())
-    (True, [])
-
-
-Create and fit the estimator
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
-estimator the previously
-extracted :class:`~nannyml.metadata.base.ModelMetadata`, a list of metrics, and an optional
+estimator with a list of metrics, and an optional
 :ref:`chunking<chunking>` specification. 
 
 The list of metrics specifies which performance metrics of the monitored model will be estimated. 
@@ -138,41 +113,29 @@ The following metrics are currently supported:
 
 For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
+.. code-block:: python
+
+    estimator = nml.CBPE(
+      y_pred_proba={
+        'prepaid_card': 'y_pred_proba_prepaid_card', 
+        'highstreet_card': 'y_pred_proba_highstreet_card', 
+        'upmarket_card': 'y_pred_proba_upmarket_card'},
+      y_pred='y_pred',
+      y_true='y_true',
+      timestamp_column_name='timestamp',
+      metrics=['roc_auc', 'f1']
+      chunk_size=6000,
+  )
+
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
 :meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` method on the ``reference`` data.
 
-.. code-block:: python
-
-    >>> cbpe = nml.CBPE(
-    ...     model_metadata=metadata,
-    ...     chunk_size=6000,
-    ...     metrics=['roc_auc', 'f1']
-    >>> )
-    >>> cbpe = cbpe.fit(reference_data=reference)
-
 The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where target is missing. In our example this is
-the ``analysis`` data.
+the ``analysis_df`` data.
 
-.. code-block:: python
-
-    >>> est_perf_analysis = cbpe.estimate(analysis)
-
-However, it can be also be used on the combined reference and analysis data. This will estimate performance for 
-the analysis period, but calculate performance for the reference period, using the targets available for it. 
-
-This can help build better understanding of the performance changes of the analysis data, as it can be directly compared
-with the changes of calculated performance within the reference period.
-
-.. code-block:: python
-
-    >>> est_perf_with_ref = cbpe.estimate(pd.concat([reference, analysis], ignore_index=True))
-
-View the results
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-NannyML can output a dataframe that contains all the results. Let's have a look at the results for analysis period
+NannyML can then output a dataframe that contains all the results. Let's have a look at the results for analysis period
 only.
 
 Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
@@ -193,7 +156,11 @@ that was estimated:
 
 .. code-block:: python
 
-    >>> display(est_perf_analysis.data.head(3))
+  estimator.fit(reference_df)
+
+  results = estimator.estimate(analysis_df)
+
+  display(results.data.head(3))
 
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
@@ -207,7 +174,7 @@ that was estimated:
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+-----------------+---------------+----------------+----------------------+----------------------+------------+
 
 
-These results can be also plotted. Our plto contains several key elements.
+These results can be also plotted. Our plot contains several key elements.
 
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
   marker indicates the middle of this period.
@@ -227,9 +194,9 @@ interactive plots, though only static views are included here).
 
 .. code-block:: python
 
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_analysis.plot(kind='performance', metric=metric)
-    ...     figure.show()
+    for metric in estimator.metrics:
+      fig1 = results.plot(kind='performance', metric=metric)
+      fig1.show()
 
 
 .. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-roc_auc.svg
@@ -251,9 +218,9 @@ performance on reference period (where the target was available).
 
 .. code-block:: python
 
-    >>> for metric in cbpe.metrics:
-    ...     figure = est_perf_with_ref.plot(kind='performance', metric=metric)
-    ...     figure.show()
+    for metric in estimator.metrics:
+      fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
+      fig2.show()
 
 
 .. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-roc_auc.svg

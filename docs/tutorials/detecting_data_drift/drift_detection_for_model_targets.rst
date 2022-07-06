@@ -13,51 +13,74 @@ The target distribution can change both because of data drift but also because o
 A change in the target distribution may mean that business assumptions on which the model is
 used may need to be revisited.
 
+NannyML uses :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
+in order to monitor drift in the :term:`Target` distribution. It can calculate the mean occurrence of positive
+events for binary classification problems. 
+
+It can also calculate the chi squared statistic (from the :term:`Chi Squared test<Chi Squared test>`)
+of the available target values for each chunk, for both binary and multiclass classification problems.
+
+.. note::
+    The Target Drift detection process can handle missing target values across all :term:`data periods<Data Period>`.
+
+
 Just The Code
 -------------
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_targets = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head(3))
+    import pandas as pd
+    import nannyml as nml
+    from IPython.display import display
 
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
-    >>> display(data.loc[data['partition'] == 'analysis'].head(3))
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
 
-    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> target_distribution_calculator = target_distribution_calculator.fit(reference_data=reference)
+    display(reference_df.head(3))
 
-    >>> target_distribution = target_distribution_calculator.calculate(data)
-    >>> display(target_distribution.data.head(3))
+    calc = nml.TargetDistributionCalculator(
+        y_true='y_true',
+        timestamp_column_name='timestamp'
+    )
 
-    >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
-    >>> fig.show()
+    calc.fit(reference_df)
 
-    >>> fig = target_distribution.plot(kind='distribution', distribution='statistical')
-    >>> fig.show()
+    results = calc.calculate(analysis_df)
 
+    display(results.data.head(3))
 
+    distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    distribution_fig1.show()
+
+    distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
+    distribution_fig2.show()
 
 
 Walkthrough
 ------------------------------------------------
 
-Let's start by loading some synthetic data provided by the NannyML package.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
+
+Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
+
+The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
+not used during :ref:`performance estimation.<performance-estimation>`. But it is required to detect drift for the targets, so the first thing we need to in this case is set up the right data in the right dataframes.  The analysis target values are joined on the analysis frame by the ``identifier`` column.
 
 .. code-block:: python
 
-    >>> import nannyml as nml
-    >>> import pandas as pd
-    >>> from IPython.display import display
-    >>> reference, analysis, analysis_targets = nml.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> display(reference.head(3))
+    import pandas as pd
+    import nannyml as nml
+    from IPython.display import display
+
+    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+
+    display(reference_df.head(3))
 
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -70,52 +93,32 @@ Let's start by loading some synthetic data provided by the NannyML package.
 |  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
-
-NannyML uses :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
-in order to monitor drift in the :term:`Target` distribution. It can calculate the mean occurrence of positive
-events for binary classification problems. 
-
-It can also calculate the chi squared statistic (from the :term:`Chi Squared test<Chi Squared test>`)
-of the available target values for each chunk, for both binary and multiclass classification problems.
-
-In order to calculate target drift, the target values must be available. Let's manually add the target data to the analysis
-data first.
-
-.. note::
-    The Target Drift detection process can handle missing target values across all :term:`data periods<Data Period>`.
-
-.. code-block:: python
-
-    >>> data = pd.concat([reference, analysis.set_index('identifier').join(analysis_targets.set_index('identifier'), on='identifier', rsuffix='_r')], ignore_index=True).reset_index(drop=True)
-    >>> display(data.loc[data['partition'] == 'analysis'].head(3))
-
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|       |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
-+=======+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
-| 50000 |               0.527691 | 0 - 20K €      |               1.8     |                      8.96072 | False              | Tuesday   |  4.22463 |          nan |                  1 | 2017-08-31 04:20:00 |           0.99 | analysis    |        1 |
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-| 50001 |               8.48513  | 20K - 40K €    |               2.22207 |                      8.76879 | False              | Friday    |  4.9631  |          nan |                  1 | 2017-08-31 05:16:16 |           0.98 | analysis    |        1 |
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-| 50002 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    |  4.58895 |          nan |                  1 | 2017-08-31 05:56:44 |           0.98 | analysis    |        1 |
-+-------+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-
 Now that the data is in place we'll create a new
 :class:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator`
-instantiating it with appropriate parameters.
+instantiating it with the appropriate parameters. We only need the target (``y_true``) and timestamp.
+
+.. code-block:: python
+    calc = nml.TargetDistributionCalculator(
+        y_true='y_true',
+        timestamp_column_name='timestamp'
+    )
 
 Afterwards, the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
 method gets called on the reference :term:`period<Data Period>`, which represent an accepted target distribution
 which we will compare against the analysis :term:`period<Data Period>`.
 
-Then the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.calculate` method gets
+Then the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.calculate` method is
 called to calculate the target drift results on the data provided. We use the previously assembled data as an argument.
+
+We can display the results of this calculation in a dataframe.
 
 .. code-block:: python
 
-    >>> target_distribution_calculator = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_size=5000)
-    >>> target_distribution_calculator = target_distribution_calculator.fit(reference_data=reference)
-    >>> target_distribution = target_distribution_calculator.calculate(data)
-    >>> display(target_distribution.data.head(3))
+    calc.fit(reference_df)
+
+    results = calc.calculate(analysis_df)
+    
+    display(results.data.head(3))
 
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
 |    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   targets_missing_rate |   metric_target_drift |   statistical_target_drift |   p_value |   thresholds | alert   | significant   |
@@ -127,14 +130,13 @@ called to calculate the target drift results on the data provided. We use the pr
 |  2 | [10000:14999] |         10000 |       14999 | 2015-01-09 00:04:43 | 2015-05-09 15:54:26 | reference   |                      0 |                0.505  |                   0.512656 |  0.473991 |         0.05 | False   | False         |
 +----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------------------+----------------------------+-----------+--------------+---------+---------------+
 
-The results can be easily plotted by using the
+The results can be also easily plotted by using the
 :meth:`~nannyml.drift.target.target_distribution.result.TargetDistributionResult.plot` method.
-
 
 .. code-block:: python
 
-    >>> fig = target_distribution.plot(kind='distribution', distribution='metric')
-    >>> fig.show()
+    distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    distribution_fig1.show()
 
 Note that a dashed line, instead of a solid line, will be used for chunks that have missing target values.
 
@@ -143,8 +145,8 @@ Note that a dashed line, instead of a solid line, will be used for chunks that h
 
 .. code-block:: python
 
-    >>> fig = target_distribution.plot(kind='distribution', distribution='statistical')
-    >>> fig.show()
+    distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
+    distribution_fig2.show()
 
 .. image:: /_static/target_distribution_statistical.svg
 
