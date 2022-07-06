@@ -10,38 +10,38 @@ Just The Code
 
 .. code-block:: python
 
-    import pandas as pd
-    import nannyml as nml
-    from IPython.display import display
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> from IPython.display import display
 
-    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-    analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
-    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
 
-    display(reference_df.head(3))
+    >>> display(reference_df.head(3))
 
-    calc = nml.PerformanceCalculator(
-        y_pred_proba={
-            'prepaid_card': 'y_pred_proba_prepaid_card', 
-            'highstreet_card': 'y_pred_proba_highstreet_card', 
-            'upmarket_card': 'y_pred_proba_upmarket_card'
-        }, 
-        y_pred='y_pred', 
-        y_true='y_true', 
-        timestamp_column_name='timestamp', 
-        metrics=['roc_auc', 'f1', 'accuracy'],
-        chunk_size=6000)
+    >>> calc = nml.PerformanceCalculator(
+    ...     y_pred_proba={
+    ...         'prepaid_card': 'y_pred_proba_prepaid_card',
+    ...         'highstreet_card': 'y_pred_proba_highstreet_card',
+    ...         'upmarket_card': 'y_pred_proba_upmarket_card'
+    ...     },
+    ...     y_pred='y_pred',
+    ...     y_true='work_home_actual',
+    ...     timestamp_column_name='timestamp',
+    ...     metrics=['f1', 'roc_auc'],
+    ...     chunk_size=6000)
 
-    calc.fit(reference_df)
+    >>> calc.fit(reference_df)
 
-    results = calc.calculate(analysis_df)
+    >>> results = calc.calculate(analysis_df)
 
-    display(results.data.head(3))
+    >>> display(results.data.head(3))
 
-    for metric in calc.metrics:
-        figure = results.plot(kind='performance', plot_reference=True, metric=metric)
-        figure.show()
+    >>> for metric in calc.metrics:
+    ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+    ...     figure.show()
 
 
 
@@ -60,16 +60,16 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
 
 .. code-block:: python
 
-    import pandas as pd
-    import nannyml as nml
-    from IPython.display import display
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> from IPython.display import display
 
-    reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-    analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
-    analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+    >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
 
-    display(reference_df.head(3))
+    >>> display(reference_df.head(3))
 
 +----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
 |    | acq_channel   |   app_behavioral_score |   requested_credit_limit | app_channel   |   credit_bureau_score |   stated_income | is_customer   | partition   |   identifier | timestamp           |   y_pred_proba_prepaid_card |   y_pred_proba_highstreet_card |   y_pred_proba_upmarket_card | y_pred       | y_true        |
@@ -84,31 +84,33 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
 
 Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using a list of metrics to calculate (or just one metric), the data columns required for these metrics, and an optional :ref:`chunking<chunking>` specification.
 
-The list of metrics specifies which performance metrics of the monitored model will be calculated. 
+The list of metrics specifies which performance metrics of the monitored model will be calculated.
 The following metrics are currently supported:
 
-- ``roc_auc`` - one vs. the rest, macro averaged
-- ``f1`` - macro averaged
-- ``precision`` - macro averaged
-- ``recall`` - macro averaged
-- ``specificity`` - macro averaged
+- ``roc_auc`` - one-vs-the-rest, macro-averaged
+- ``f1`` - macro-averaged
+- ``precision`` - macro-averaged
+- ``recall`` - macro-averaged
+- ``specificity`` - macro-averaged
 - ``accuracy``
 
 For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
 .. code-block:: python
 
-    calc = nml.PerformanceCalculator(
-        y_pred_proba={
-            'prepaid_card': 'y_pred_proba_prepaid_card', 
-            'highstreet_card': 'y_pred_proba_highstreet_card', 
-            'upmarket_card': 'y_pred_proba_upmarket_card'
-        }, 
-        y_pred='y_pred', 
-        y_true='y_true', 
-        timestamp_column_name='timestamp', 
-        metrics=['roc_auc', 'f1', 'accuracy'],
-        chunk_size=6000)
+    >>> calc = nml.PerformanceCalculator(
+    ...     y_pred_proba={
+    ...         'prepaid_card': 'y_pred_proba_prepaid_card',
+    ...         'highstreet_card': 'y_pred_proba_highstreet_card',
+    ...         'upmarket_card': 'y_pred_proba_upmarket_card'
+    ...     },
+    ...     y_pred='y_pred',
+    ...     y_true='work_home_actual',
+    ...     timestamp_column_name='timestamp',
+    ...     metrics=['f1', 'roc_auc'],
+    ...     chunk_size=6000)
+
+    >>> calc.fit(reference_df)
 
 
 The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
@@ -119,45 +121,31 @@ realized performance metrics on all data which has target values available.
 
 .. code-block:: python
 
-    calc.fit(reference_df)
-
-    results = calc.calculate(analysis_df)
+    >>> results = calc.calculate(analysis_df)
+    >>> display(results.data.head(3))
 
 NannyML can output a dataframe that contains all the results.
 
-Apart from chunking and chunk and partition-related data, the results data have the a set of columns for each
+Apart from chunking and chunk and period-related columns, the results data have the a set of columns for each
 calculated metric. When taking ``roc_auc`` as an example:
 
- - ``roc_auc`` - The value of the metric for a specific chunk.
- - ``roc_auc_thresholds`` - A tuple containing the lower and upper thresholds. Crossing them will raise an alert on significant
-   metric change. The thresholds are calculated based on the realized performance metric of the monitored model on chunks in
-   the ``reference`` period. The thresholds are 3 standard deviations away from the mean performance calculated on
-   ``reference`` chunks.
- - ``roc_auc_alert`` - Flag indicating potentially significant performance change. ``True`` if realized performance crosses
+ - ``targets_missing_rate`` - The fraction of missing target data.
+ - ``<metric>`` - The value of the metric for a specific chunk.
+ - ``<metric>_thresholds`` - A tuple containing the lower and upper thresholds. Crossing them will raise an alert that
+   there is a significant
+   metric change. The thresholds are calculated based on the realized performance of chunks in    the ``reference`` period.
+   The thresholds are 3 standard deviations away from the mean performance calculated on ``reference`` chunks.
+ - ``<metric>_alert`` - A flag indicating potentially significant performance change. ``True`` if realized performance
+   crosses
    upper or lower threshold.
-
-.. code-block:: python
-
-    display(results.data.head(3))
-
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------+-----------------------------------------+-----------------+----------+-----------------------------------------+------------+
-|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   targets_missing_rate |   roc_auc | roc_auc_thresholds                      | roc_auc_alert   |       f1 | f1_thresholds                           | f1_alert   |
-+====+===============+===============+=============+=====================+=====================+=============+========================+===========+=========================================+=================+==========+=========================================+============+
-|  0 | [0:5999]      |             0 |        5999 | 2020-05-02 02:01:30 | 2020-05-14 12:25:35 | reference   |                      0 |  0.90476  | (0.900902260737325, 0.9135156728918074) | False           | 0.750532 | (0.741253919065521, 0.7649438592270994) | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------+-----------------------------------------+-----------------+----------+-----------------------------------------+------------+
-|  1 | [6000:11999]  |          6000 |       11999 | 2020-05-14 12:29:25 | 2020-05-26 18:27:42 | reference   |                      0 |  0.905917 | (0.900902260737325, 0.9135156728918074) | False           | 0.751148 | (0.741253919065521, 0.7649438592270994) | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------+-----------------------------------------+-----------------+----------+-----------------------------------------+------------+
-|  2 | [12000:17999] |         12000 |       17999 | 2020-05-26 18:31:06 | 2020-06-07 19:55:45 | reference   |                      0 |  0.909329 | (0.900902260737325, 0.9135156728918074) | False           | 0.75714  | (0.741253919065521, 0.7649438592270994) | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+------------------------+-----------+-----------------------------------------+-----------------+----------+-----------------------------------------+------------+
-
 
 The results can be plotted for visual inspection:
 
 .. code-block:: python
 
-    for metric in calc.metrics:
-        figure = results.plot(kind='performance', plot_reference=True, metric=metric)
-        figure.show()
+    >>> for metric in calc.metrics:
+    ...    figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+    ...    figure.show()
 
 
 .. image:: /_static/tutorial-perf-guide-mc-F1.svg
