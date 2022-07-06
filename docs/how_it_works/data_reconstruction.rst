@@ -121,25 +121,27 @@ drift statistics shows that on the individual feature level no changes are visib
 
     >>> # Let's first create the analysis and reference datasets NannyML needs.
     >>> reference = datadf.loc[datadf['partition'] == 'reference'].reset_index(drop=True)
-    >>> reference.drop(['week'], axis=1, inplace=True)
+    >>> reference.drop(['week', 'partition'], axis=1, inplace=True)
     >>> analysis = datadf.loc[datadf['partition'] == 'analysis'].reset_index(drop=True)
-    >>> analysis.drop(['y_true', 'week'], axis=1, inplace=True)
-    >>> data = pd.concat([reference, analysis], ignore_index=True)
-
-    >>> # Let's create the model metadata object
-    >>> metadata = nml.extract_metadata(data = reference, model_name='3d_rotation', model_type='classification_binary')
-    >>> metadata.timestamp_column_name = 'ordered'
-    >>> metadata.target_column_name = 'y_true'
-
-    >>> # Let's compute univariate drift
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=DPP).fit(reference_data=reference)
+    >>> analysis.drop(['y_true', 'week', 'partition'], axis=1, inplace=True)
+    >>> 
+    >>> feature_column_names = ['feature1', 'feature2', 'feature3']
+    >>> 
+    >>> # Let's instantiate and calibrate univariate drift
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
+    ...     feature_column_names=feature_column_names,
+    ...     timestamp_column_name='ordered',
+    ...     chunk_size=DPP
+    >>> )
+    >>> univariate_calculator.fit(reference_data=reference)
+    >>> 
     >>> # let's compute (and visualize) results across all the dataset.
-    >>> univariate_results = univariate_calculator.calculate(data=data)
-
-    >>> for feature in metadata.continuous_features:
+    >>> univariate_results = univariate_calculator.calculate(data=analysis)
+    >>> for feature in feature_column_names:
     ...     figure = univariate_results.plot(
     ...         kind='feature_distribution',
-    ...         feature_label=feature.label
+    ...         feature=feature,
+    ...         plot_reference=True
     ...     )
     ...     figure.show()
 
@@ -224,12 +226,16 @@ what it does on the butterfly dataset.
 .. code-block:: python
 
     >>> # Let's compute multivariate drift
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=DPP).fit(reference_data=reference)
-    >>> # let's compute (and visualize) results across all the dataset.
-    >>> rcerror_results = rcerror_calculator.calculate(data=data)
-
-    >>> # let's create plot with results
-    >>> figure = rcerror_results.plot()
+    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(
+    ...     feature_column_names=feature_column_names,
+    ...     timestamp_column_name='ordered',
+    ...     chunk_size=DPP
+    >>> ).fit(reference_data=reference)
+    >>> # let's compute results for analysis period
+    >>> rcerror_results = rcerror_calculator.calculate(data=analysis)
+    >>> 
+    >>> # let's visualize results across all the dataset
+    >>> figure = rcerror_results.plot(plot_reference=True)
     >>> figure.show()
 
 

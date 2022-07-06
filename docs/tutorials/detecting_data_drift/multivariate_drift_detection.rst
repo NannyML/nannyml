@@ -39,7 +39,7 @@ Just The Code
     >>> results = calc.calculate(analysis)
     >>> display(results.data)
     >>> 
-    >>> figure = results.plot(kind='drift', plot_reference=True)
+    >>> figure = results.plot(plot_reference=True)
     >>> figure.show()
 
 
@@ -172,7 +172,7 @@ NannyML can also visualize the multivariate drift results in a plot.
 
 .. code-block:: python
 
-    >>> figure = results.plot(kind='drift', plot_reference=True)
+    >>> figure = results.plot(plot_reference=True)
     >>> figure.show()
 
 .. image:: /_static/drift-guide-multivariate.svg
