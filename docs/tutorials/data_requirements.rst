@@ -11,7 +11,7 @@ In this guide we'll present an overview of the different kinds of data NannyML r
 Data Periods
 ------------
 
-NannyML works with two :term:`Data-Periods`. The first one is called the :ref:`reference period<data-drift-periods-reference>`,
+NannyML works with two :term:`Data Periods<data period>`. The first one is called the :ref:`reference period<data-drift-periods-reference>`,
 is represented by the **reference dataset**, and is used to establish the expectations of the model's performance.
 The second is called the :ref:`analysis period<data-drift-periods-analysis>`, is represented by the **analysis period**,
 and is used to whether the model is still performing according to expectations.
