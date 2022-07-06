@@ -1,4 +1,4 @@
-.. _drift_detection_for_model_outputs:
+.. _drift_detection_for_binary_classification_model_outputs:
 
 =======================================================
 Drift Detection for Binary Classification Model Outputs
