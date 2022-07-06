@@ -44,55 +44,7 @@ class _BinaryClassificationCBPE(CBPE):
         calibration: str = None,
         calibrator: Calibrator = None,
     ):
-        """Creates a new CBPE performance estimator.
-
-        Parameters
-        ----------
-        y_true: str
-            The name of the column containing target values.
-        y_pred_proba: ModelOutputsType
-            Name(s) of the column(s) containing your model output.
-            Pass a single string when there is only a single model output column, e.g. in binary classification cases.
-            Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
-            The dictionary maps a class/label string to the column name containing model outputs for that class/label.
-        y_pred: str
-            The name of the column containing your model predictions.
-        metrics: List[str]
-            A list of metrics to calculate.
-        chunk_size: int, default=None
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int, default=None
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str, default=None
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker, default=None
-            The `Chunker` used to split the data sets into a lists of chunks.
-        calibration: str, default='isotonic'
-            Determines which calibration will be applied to the model predictions. Defaults to ``isotonic``, currently
-            the only supported value.
-        calibrator: Calibrator, default=None
-            A specific instance of a Calibrator to be applied to the model predictions.
-            If not set NannyML will use the value of the ``calibration`` variable instead.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> estimator = nml.CBPE(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
-        >>>                      timestamp_column_name='timestamp', metrics=['f1', 'roc_auc'])
-        >>>
-        >>> estimator.fit(reference_df)
-        >>>
-        >>> results = estimator.estimate(analysis_df)
-        >>> print(results.data)
-        >>> for metric in estimator.metrics:
-        >>>     results.plot(metric=metric, plot_reference=True).show()
-        """
+        """Creates a new CBPE performance estimator."""
         super().__init__(
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,

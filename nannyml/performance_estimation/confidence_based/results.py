@@ -52,18 +52,48 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
             The kind of plot to render. Only the 'performance' plot is currently available.
         metric: str, default=None
             The metric to plot when rendering a plot of kind 'performance'.
+        plot_reference: bool, default=False
+            Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
+
+        Returns
+        -------
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
+
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
-        >>> estimator.fit(ref_df)
-        >>> estimates = estimator.estimate(ana_df)
-        >>> # plot the estimated performance
-        >>> estimates.plot(kind='performance').show()
-
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> estimator = nml.CBPE(
+        >>>     y_true='work_home_actual',
+        >>>     y_pred='y_pred',
+        >>>     y_pred_proba='y_pred_proba',
+        >>>     timestamp_column_name='timestamp',
+        >>>     metrics=['f1', 'roc_auc']
+        >>> )
+        >>>
+        >>> estimator.fit(reference_df)
+        >>>
+        >>> results = estimator.estimate(analysis_df)
+        >>> print(results.data)
+                     key  start_index  ...  lower_threshold_roc_auc alert_roc_auc
+        0       [0:4999]            0  ...                  0.97866         False
+        1    [5000:9999]         5000  ...                  0.97866         False
+        2  [10000:14999]        10000  ...                  0.97866         False
+        3  [15000:19999]        15000  ...                  0.97866         False
+        4  [20000:24999]        20000  ...                  0.97866         False
+        5  [25000:29999]        25000  ...                  0.97866          True
+        6  [30000:34999]        30000  ...                  0.97866          True
+        7  [35000:39999]        35000  ...                  0.97866          True
+        8  [40000:44999]        40000  ...                  0.97866          True
+        9  [45000:49999]        45000  ...                  0.97866          True
+        >>> for metric in estimator.metrics:
+        >>>     results.plot(metric=metric, plot_reference=True).show()
         """
         if kind == 'performance':
             if metric is None:
