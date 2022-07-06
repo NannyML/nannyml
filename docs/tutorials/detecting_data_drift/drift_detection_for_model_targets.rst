@@ -24,8 +24,8 @@ of the available target values for each chunk, for both binary and multiclass cl
     The Target Drift detection process can handle missing target values across all :term:`data periods<Data Period>`.
 
 
-Just The Code
--------------
+Binary Classification: Just The Code
+------------------------------------
 
 .. code-block:: python
 
@@ -151,12 +151,22 @@ Note that a dashed line, instead of a solid line, will be used for chunks that h
 
 .. image:: /_static/target_distribution_statistical.svg
 
+
 Insights
 -----------------------
 
 Looking at the results we see that we have a false alert on the first chunk of the analysis data. This
 can happen when the statistical tests consider a small change in the distribution of a variable to be significant.
 But because the change is small it is usually not significant from a model monitoring perspective.
+
+What about Multiclass Classification
+------------------------------------
+
+.. code-block:: python
+
+    calc.multi-class
+
+
 
 What Next
 -----------------------

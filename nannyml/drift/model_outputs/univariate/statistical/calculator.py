@@ -107,6 +107,10 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
 
         self.previous_reference_data = reference_data.copy()
+
+        # predicted labels should always be considered categorical
+        reference_data[self.y_pred] = reference_data[self.y_pred].astype('category')
+
         self.previous_reference_results = self._calculate(reference_data).data
 
         return self
@@ -117,6 +121,9 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
+
+        # predicted labels should always be considered categorical
+        data[self.y_pred] = data[self.y_pred].astype('category')
 
         columns = [self.y_pred]
         if isinstance(self.y_pred_proba, Dict):

@@ -19,7 +19,7 @@ to review example results.
 Walkthrough on creating chunks
 ------------------------------
 
-To allow for flexibility there are many ways to create chunks. The examples below will show how different 
+To allow for flexibility there are many ways to create chunks. The examples below will show how different
 kinds of chunks can be created. The examples will be run based on the performance estimation flow on the
 synthetic binary classification dataset provided by NannyML. First we set up this dataset.
 
@@ -51,7 +51,7 @@ contain. Specify the ``chunk_period`` argument to get appropriate split. The exa
     >>>    timestamp_column_name='timestamp',
     >>>    metrics=['roc_auc'],
     >>>    chunk_period="Q")
-    >>> cbpe.fit(reference_data=reference)
+    >>> cbpe.fit(reference)
     >>> est_perf = cbpe.estimate(analysis)
     >>> est_perf.data.iloc[:3,:5]
 
@@ -127,7 +127,7 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 .. note::
     If the number of observations is not divisible by the chunk size required, the number of rows equal to the
     remainder of a division will be dropped. This ensures that each chunk has the same size, but in worst case
-    scenario it results in dropping ``chunk_size-1`` rows. Notice that the last index in the last chunk is 48999 
+    scenario it results in dropping ``chunk_size-1`` rows. Notice that the last index in the last chunk is 48999
     while the last index in the raw data is 49999:
 
     .. code-block:: python
@@ -200,9 +200,7 @@ The total number of chunks can be set by the ``chunk_number`` parameter:
 Automatic chunking
 ~~~~~~~~~~~~~~~~~~
 
-The default chunking method is size-based, with the size being three times the
-estimated minimum size for the monitored data and model (see how NannyML estimates minimum chunk size in
-:ref:`minimum chunk size<minimum-chunk-size>`). This is used if a chunking method isn't specified.
+The default chunking method is count-based, with the desired count set to `10`. This is used if a chunking method isn't specified.
 
 .. code-block:: python
 
@@ -214,17 +212,9 @@ estimated minimum size for the monitored data and model (see how NannyML estimat
     >>>    metrics=['roc_auc'])
     >>> cbpe.fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
-    >>> est_perf.data.iloc[:3,:5]
+    >>> len(est_perf.data)
+    10
 
-+----+-------------+---------------+-------------+---------------------+---------------------+
-|    | key         |   start_index |   end_index | start_date          | end_date            |
-+====+=============+===============+=============+=====================+=====================+
-|  0 | [0:899]     |             0 |         899 | 2014-05-09 00:00:00 | 2014-06-01 23:59:59 |
-+----+-------------+---------------+-------------+---------------------+---------------------+
-|  1 | [900:1799]  |           900 |        1799 | 2014-06-01 00:00:00 | 2014-06-23 23:59:59 |
-+----+-------------+---------------+-------------+---------------------+---------------------+
-|  2 | [1800:2699] |          1800 |        2699 | 2014-06-23 00:00:00 | 2014-07-15 23:59:59 |
-+----+-------------+---------------+-------------+---------------------+---------------------+
 
 Chunks on plots with results
 ----------------------------
@@ -233,7 +223,7 @@ Finally, once the chunking method is selected, the full performance estimation c
 
 Each point on the plot represents a single chunk, with the y-axis showing the performance.
 They are aligned on the x axis with the date at the end of the chunk, not the date in the middle of the chunk.
-Plots are interactive - hovering over the point will display the precise information about the period, 
+Plots are interactive - hovering over the point will display the precise information about the period,
 to help prevent any confusion.
 
     .. code-block:: python
