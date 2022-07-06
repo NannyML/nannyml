@@ -11,47 +11,6 @@ For an introduction on :term:`chunks<Data Chunk>` please have a look at
 :ref:`Setting Up: Chunking<chunking>`. This guide focuses on the potential issues that may 
 arise from using chunks. They are described below.
 
-Different periods within one chunk
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When using :ref:`performance estimation<performance-estimation>` or :ref:`data drift detection<data-drift>` on a dataset that contains a
-`reference` :term:`Data Period` and an ``analysis`` data period, there may be a chunk that contains observations from both of
-them. Such a chunk will be considered as an ``analysis`` chunk, even if only one observation belongs to ``analysis``.
-In the example below, the chunk which contains observations from 44444 to 55554 is considered an analysis
-chunk but indices from 44444 to 49999 point to reference observations.
-
-.. code-block:: python
-
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> reference, analysis, _ = nml.datasets.load_synthetic_binary_classification_dataset()
-    >>> metadata = nml.extract_metadata(reference, model_type='classification_binary', exclude_columns=['identifier'])
-    >>> metadata.target_column_name = 'work_home_actual'
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=9, metrics=['roc_auc']).fit(reference_data=reference)
-    >>> # Estimate on concatenated reference and analysis
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
-    >>> est_perf.data.iloc[3:5,:7]
-
-
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
-|    | key           |   start_index |   end_index | start_date          | end_date            | partition   |   estimated_roc_auc |
-+====+===============+===============+=============+=====================+=====================+=============+=====================+
-|  3 | [33333:44443] |         33333 |       44443 | 2016-07-25 00:00:00 | 2017-04-19 23:59:59 | reference   |            0.968876 |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
-|  4 | [44444:55554] |         44444 |       55554 | 2017-04-19 00:00:00 | 2018-01-15 23:59:59 | analysis    |            0.968921 |
-+----+---------------+---------------+-------------+---------------------+---------------------+-------------+---------------------+
-
-.. code-block:: python
-
-    >>> reference.index.max()
-    49999
-
-.. note::
-    This is especially important for Performance Estimation. Since the Performance Estimation algorithm is calibrated
-    on the ``reference`` dataset (see :ref:`our deep dive into CBPE<performance-estimation-deep-dive>` for more details), it will perform better on
-    it. If the first ``analysis`` chunk contains ``reference`` data, the performance estimation may perform better on this
-    chunk as well. Keep this in mind when interpreting the results.
-
 
 Underpopulated chunks
 ~~~~~~~~~~~~~~~~~~~~~
@@ -64,11 +23,20 @@ are smaller than the minimum chunk size, a warning will be raised.
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period="Q", metrics=['roc_auc']).fit(reference_data=reference)
+    >>> import pandas as pd
+    >>> import nannyml as nml
+    >>> reference, analysis, _ = nml.datasets.load_synthetic_binary_classification_dataset()
+    >>>
+    >>> cbpe = nml.CBPE(
+    ...     y_pred_proba='y_pred_proba',
+    ...     y_pred='y_pred',
+    ...     y_true='work_home_actual',
+    ...     timestamp_column_name='timestamp',
+    ...     chunk_period="Q",
+    ...     metrics=['roc_auc']
+    >>> ).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
-    UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be
-    statistically relevant and might negatively influence the quality of calculations. Please consider splitting
-    your data in a different way or continue at your own risk.
+    UserWarning: The resulting list of chunks contains 1 underpopulated chunks. They contain too few records to be statistically robust and might negatively influence the quality of calculations. Please consider splitting your data in a different way or continue at your own risk.
 
 When the warning is about a single chunk, it is usually the last chunk. This is due to the reasons described in
 :ref:`the chunking tutorial<chunking>`. 
@@ -88,10 +56,16 @@ far from optimal, but is a reasonable minimum. If there are less than 6 chunks, 
 
 .. code-block:: python
 
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_number=5, metrics=['roc_auc']).fit(reference_data=reference)
+    >>> cbpe = nml.CBPE(
+    ...     y_pred_proba='y_pred_proba',
+    ...     y_pred='y_pred',
+    ...     y_true='work_home_actual',
+    ...     timestamp_column_name='timestamp',
+    ...     chunk_number=5,
+    ...     metrics=['roc_auc']
+    >>> ).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
-    UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or
-    continue at your own risk.
+    UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or continue at your own risk.
 
 
 .. _minimum-chunk-size:
