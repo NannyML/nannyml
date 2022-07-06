@@ -11,8 +11,12 @@ In this guide we'll present an overview of the different kinds of data NannyML r
 Data Periods
 ------------
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset (``reference period``).
-Then it can monitor the data that is subject to actual analysis (``analysis period``).
+NannyML works with two :term:`Data-Periods`. The first one is called the :ref:`reference period<data-drift-periods-reference>`,
+is represented by the **reference dataset**, and is used to establish the expectations of the model's performance.
+The second is called the :ref:`analysis period<data-drift-periods-analysis>`, is represented by the **analysis period**,
+and is used to whether the model is still performing according to expectations.
+
+.. _data-drift-periods-reference:
 
 Reference Period
 ^^^^^^^^^^^^^^^^
@@ -27,8 +31,10 @@ are available, so the model performance can be calculated for this set.
 The ranges and distribution of model inputs, outputs and targets need to be well-known and validated for this set.
 
 .. warning::
-    Don't use training data as a reference dataset to prevent overfitting, e.g during model score calibration.
+    Don't use model training data as a reference dataset. Machine learning models tend to overfit on their training data.
+    Therefore expectations for model performance will be unrealistic.
 
+.. _data-drift-periods-analysis:
 
 Analysis Period
 ^^^^^^^^^^^^^^^
