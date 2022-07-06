@@ -14,8 +14,8 @@ The difference in actions is very important to know as soon as possible because
 they directly affect the business results from operating a machine learning model.
 
 
-Just The Code
--------------
+Binary Classification: Just The Code
+------------------------------------
 
 .. code-block:: python
 
@@ -163,6 +163,14 @@ to the ``tenure`` variable in the :ref:`univariate drift results<univariate_drif
 a false alert because the drift measured by the :term:`KS statistic<Kolmogorov-Smirnov test>` is very low. This
 can happen when the statistical tests consider a small change in the distribution of a variable
 to be significant. But because the change is small it is usually not significant from a model monitoring perspective.
+
+What about Multiclass Classification
+------------------------------------
+
+.. code-block:: python
+
+    calc.multi-class
+
 
 What Next
 -----------------------
