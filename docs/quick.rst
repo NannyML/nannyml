@@ -67,7 +67,7 @@ Just the code
     >>>    y_pred='y_pred',
     >>>    y_true='y_true',
     >>>    timestamp_column_name='timestamp',
-    >>>    metrics=['roc_auc']
+    >>>    metrics=['roc_auc'],
     >>>    chunk_size=chunk_size,
     >>> )
     >>> estimator = estimator.fit(reference)
