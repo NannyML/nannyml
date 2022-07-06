@@ -26,7 +26,7 @@ Just The Code
     display(reference_df.head())
 
     feature_column_names = [
-        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier']]
 
     calc = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp')
 
@@ -38,11 +38,11 @@ Just The Code
     display(results.data.iloc[:-5, :9])
 
     for feature in calc.feature_column_names:
-        drift_fig = results.plot(kind='feature_drift', feature_column_name=feature, plot_reference=True)
+        drift_fig = results.plot(kind='feature_drift', feature=feature, plot_reference=True)
         drift_fig.show()
 
     for cat_feat in calc.categorical_column_names:
-        results.plot(kind='feature_distribution', plot_reference=True).show()
+        results.plot(kind='feature_distribution', feature=cat_feat, plot_reference=True).show()
 
     ranker = nml.Ranker.by('alert_count')
     ranked_features = ranker.rank(results, only_drifting = False)
@@ -73,19 +73,19 @@ We begin by loading some synthetic data provided in the NannyML package. This is
 
     display(reference_df.head())
 
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
-+====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
-|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |        0 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  3 |               2.53041  | 20K - 40K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------------+---------------------+----------------+-------------+----------+
+|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
++====+========================+================+=======================+==============================+====================+===========+==========+====================+=====================+================+=============+==========+
+|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |        1 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------------+---------------------+----------------+-------------+----------+
+|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |        0 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------------+---------------------+----------------+-------------+----------+
+|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------------+---------------------+----------------+-------------+----------+
+|  3 |               2.53041  | 20K - 40K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------------+---------------------+----------------+-------------+----------+
+|  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
++----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection. We need to instantiate it with appropriate parameters - the column headers of the features that we want to run drift detection on, and the timestamp column header. The features can be passed in as a simple list of strings, but here we have created this list by excluding the columns in the dataframe that are not features, and passed that into the argument.
@@ -93,7 +93,7 @@ class implements the functionality needed for Univariate Drift Detection. We nee
 .. code-block:: python
 
     feature_column_names = [
-        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'repaid']]
+        col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual']]
 
     calc = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp')
 
@@ -154,7 +154,7 @@ NannyML can also visualize those results on plots.
 .. code-block:: python
 
     for feature in calc.feature_column_names:
-        drift_fig = results.plot(kind='feature_drift', feature_column_name=feature, plot_reference=True)
+        drift_fig = results.plot(kind='feature_drift', feature=feature, plot_reference=True)
         drift_fig.show()
 
 .. image:: /_static/drift-guide-distance_from_office.svg
@@ -180,7 +180,7 @@ If we want to focus only on the categorical plots, we can specify that only thes
 .. code-block:: python
 
     for cat_feat in calc.categorical_column_names:
-        results.plot(kind='feature_distribution', plot_reference=True).show()
+        results.plot(kind='feature_distribution', feature=cat_feat, plot_reference=True).show()
 
 .. image:: /_static/drift-guide-stacked-salary_range.svg
 
