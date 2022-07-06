@@ -122,8 +122,8 @@ NannyML can show the statistical properties of the drift in model outputs as a p
 
 .. code-block:: python
 
-    drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
-    drift_fig.show()
+    predictions_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    predictions_drift_fig.show()
 
 .. image:: /_static/drift-guide-predictions.svg
 
@@ -131,10 +131,28 @@ NannyML can also visualise how the distributions of the model predictions evolve
 
 .. code-block:: python
 
-    distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
-    distribution_fig.show()
+    predictions_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+    predictions_distribution_fig.show()
 
 .. image:: /_static/drift-guide-predictions-joyplot.svg
+
+NannyML can show the statistical properties of the drift in the predicted labels as a plot.
+
+.. code-block:: python
+
+    predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
+    predicted_labels_drift_fig.show()
+
+.. image:: /_static/drift-guide-predicted-labels.svg
+
+NannyML can also visualise how the distributions of the predicted labels evolved over time.
+
+.. code-block:: python
+
+    predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    predicted_labels_distribution_fig.show()
+
+.. image:: /_static/drift-guide-predicted-labels-joyplot.svg
 
 
 Insights

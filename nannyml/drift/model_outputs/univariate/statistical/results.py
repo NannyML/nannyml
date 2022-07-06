@@ -122,7 +122,7 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
 
         """
-        if kind == 'prediction_drift':
+        if kind == 'predicted_labels_drift':
             return _plot_prediction_drift(
                 self.data,
                 self.calculator,
@@ -130,16 +130,16 @@ class UnivariateDriftResult(AbstractCalculatorResult):
                 plot_reference,
                 metric,
             )
-        elif kind == 'prediction_distribution':
+        elif kind == 'predicted_labels_distribution':
             return _plot_prediction_distribution(
                 data=self.calculator.previous_analysis_data,
                 drift_data=self.data,
                 calculator=self.calculator,
                 plot_reference=plot_reference,
             )
-        elif kind == 'output_drift':
+        elif kind == 'prediction_drift':
             return _plot_output_drift(self.data, self.calculator, plot_reference, metric, class_label)
-        elif kind == 'output_distribution':
+        elif kind == 'prediction_distribution':
             return _plot_output_distribution(
                 data=self.calculator.previous_analysis_data,
                 drift_data=self.data,
@@ -150,7 +150,8 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. "
-                f"Please provide on of: ['prediction_drift', 'prediction_distribution']."
+                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'predicted_labels_drift',"
+                "'predicted_labels_distribution']."
             )
 
     # @property
