@@ -174,6 +174,28 @@ In the sample data this is the ``y_pred`` column.
 Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multi-class, and regression models.
 
 
+NannyML Calculator Requirements
+-------------------------------
+
+After version 0.5 NannyML has relaxed the column requirements so that each functionality only requires what it needs.
+You can see those requirements in the table below:
+
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| Data         | Performance Estimation              | Realized Performance                | Univariate Feature Drift          | Multivariate Feature Drift        | Target Drift                      | Output Drift                      |
++==============+=====================================+=====================================+===================================+===================================+===================================+===================================+
+| timestamp    | Required (reference and analysis)   | Required (reference and analysis)   | Required (reference and analysis) | Required (reference and analysis) | Required (reference and analysis) | Required (reference and analysis) |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| features     |                                     |                                     | Required (reference and analysis) | Required (reference and analysis) |                                   |                                   |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_pred_proba | Required (reference and analysis)   |                                     |                                   |                                   |                                   | Required (reference and analysis) |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_pred       | | Required (reference and analysis) | | Required (reference and analysis) |                                   |                                   |                                   | Required (reference and analysis) |
+|              | | Not needed for ROC_AUC metric     | | Not needed for ROC_AUC metric     |                                   |                                   |                                   |                                   |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_true       | Required (reference only)           | Required (reference and analysis)   |                                   |                                   | Required (reference and analysis) |                                   |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+
+
 What next
 ---------
 
