@@ -130,9 +130,9 @@ calculated metric. When taking ``roc_auc`` as an example:
 
  - ``targets_missing_rate`` - The fraction of missing target data.
  - ``<metric>`` - The value of the metric for a specific chunk.
- - ``<metric>_thresholds`` - A tuple containing the lower and upper thresholds. Crossing them will raise an alert that
-   there is a significant
-   metric change. The thresholds are calculated based on the realized performance of chunks in    the ``reference`` period.
+ - ``<metric>_lower_threshold>`` and ``<metric>_upper_threshold>`` - Lower and upper thresholds for performance metric.
+   Crossing them will raise an alert that there is a significant
+   metric change. The thresholds are calculated based on the realized performance of chunks in the ``reference`` period.
    The thresholds are 3 standard deviations away from the mean performance calculated on ``reference`` chunks.
  - ``<metric>_alert`` - A flag indicating potentially significant performance change. ``True`` if realized performance
    crosses
