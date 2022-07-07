@@ -54,11 +54,12 @@ when estimating the performance.
 
 
 Columns
---------------
+-------
 
 The following sections describe the different data columns that are required by NannyML. These will differ based on
 the type of the model being monitored, and the function being used. There will be columns that are common across model types, where others will
-be specific to a given model type.
+be specific to a given model type. Also note that there is an expectation that the columns have the same name between reference and
+analysis datasets when they describe the same thing.
 
 We will illustrate this using the fictional ``work_from_home`` model included with the library,
 a binary classifier trying to predict whether someone will be working from home on a given day or not.
@@ -171,6 +172,28 @@ The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresh
 In the sample data this is the ``y_pred`` column.
 
 Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multi-class, and regression models.
+
+
+NannyML Functionality Requirements
+----------------------------------
+
+After version 0.5 NannyML has relaxed the column requirements so that each functionality only requires what it needs.
+You can see those requirements in the table below:
+
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| Data         | Performance Estimation              | Realized Performance                | Univariate Feature Drift          | Multivariate Feature Drift        | Target Drift                      | Output Drift                      |
++==============+=====================================+=====================================+===================================+===================================+===================================+===================================+
+| timestamp    | Required (reference and analysis)   | Required (reference and analysis)   | Required (reference and analysis) | Required (reference and analysis) | Required (reference and analysis) | Required (reference and analysis) |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| features     |                                     |                                     | Required (reference and analysis) | Required (reference and analysis) |                                   |                                   |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_pred_proba | Required (reference and analysis)   |                                     |                                   |                                   |                                   | Required (reference and analysis) |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_pred       | | Required (reference and analysis) | | Required (reference and analysis) |                                   |                                   |                                   | Required (reference and analysis) |
+|              | | Not needed for ROC_AUC metric     | | Not needed for ROC_AUC metric     |                                   |                                   |                                   |                                   |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_true       | Required (reference only)           | Required (reference and analysis)   |                                   |                                   | Required (reference and analysis) |                                   |
++--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 
 
 What next
