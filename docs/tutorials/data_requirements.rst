@@ -4,7 +4,7 @@
 Data requirements
 ==================
 
-In this guide we'll present an overview of the different kinds of data NannyML requires to run it's various features. The specifics for each feature are also covered in the various :ref:`Tutorials`, but an overview of all the different requirements is presented here for reference.
+In this guide we'll present an overview of the different kinds of data NannyML requires to run its various features. The specifics for each feature are also covered in the various :ref:`Tutorials`, but an overview of all the different requirements is presented here for reference.
 
 .. _data-drift-periods:
 
@@ -13,8 +13,9 @@ Data Periods
 
 NannyML works with two :term:`Data Periods<data period>`. The first one is called the :ref:`reference period<data-drift-periods-reference>`,
 is represented by the **reference dataset**, and is used to establish the expectations of the model's performance.
-The second is called the :ref:`analysis period<data-drift-periods-analysis>`, is represented by the **analysis period**,
-and is used to whether the model is still performing according to expectations.
+The second is called the :ref:`analysis period<data-drift-periods-analysis>`, is represented by the **analysis
+dataset** which is, as the name suggests, analyzed by NannyML to check whether model performance meets the
+expectations set based on **reference dataset**.
 
 .. _data-drift-periods-reference:
 
@@ -134,7 +135,8 @@ Required as part of the reference data for :ref:`performance estimation<performa
 Features
 ^^^^^^^^^
 
-The features of your model. These can be categorical or continuous, and NannyML identified this based on their declared pandas data types.
+The features of your model. These can be categorical or continuous and NannyML identifies this based on their
+declared pandas data types.
 
 In the sample data, the features are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``.
 
@@ -174,7 +176,7 @@ The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresh
 
 In the sample data this is the ``y_pred`` column.
 
-Required for running :ref:`performance estimation<performance-estimation>` or :ref:`calculate performance<performance-calculation>` on binary classification, multi-class, and regression models.
+Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multi-class, and regression models.
 
 
 
