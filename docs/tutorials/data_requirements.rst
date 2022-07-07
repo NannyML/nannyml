@@ -54,11 +54,12 @@ when estimating the performance.
 
 
 Columns
---------------
+-------
 
 The following sections describe the different data columns that are required by NannyML. These will differ based on
 the type of the model being monitored, and the function being used. There will be columns that are common across model types, where others will
-be specific to a given model type.
+be specific to a given model type. Also note that there is an expectation that the columns have the same name between reference and
+analysis datasets when they describe the same thing.
 
 We will illustrate this using the fictional ``work_from_home`` model included with the library,
 a binary classifier trying to predict whether someone will be working from home on a given day or not.
