@@ -97,6 +97,7 @@ Training a Machine Learning Model
     test 0.8737681614409617
     production 0.8224322932364313
 
+
 Meeting NannyML Data Requirements
 =================================
 
@@ -112,6 +113,10 @@ The data are now being split to satisfy NannyML format requirements.
     >>> analysis = df_for_nanny[df_for_nanny['partition']=='analysis'].copy()
     >>> analysis_target = analysis[['identifier', 'clf_target']].copy()
     >>> analysis = analysis.drop('clf_target', axis=1)
+
+    >>> # dropping partition column that is now removed from requirements.
+    >>> reference.drop('partition', axis=1, inplace=True)
+    >>> analysis.drop('partition', axis=1, inplace=True)
 
 The ``reference`` dataframe represents the reference :term:`Data Period` and the ``analysis``
 dataframe represents the analysis period. The ``analysis_target`` dataframe contains the targets
