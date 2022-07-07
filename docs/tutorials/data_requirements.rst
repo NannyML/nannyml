@@ -174,8 +174,8 @@ In the sample data this is the ``y_pred`` column.
 Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multi-class, and regression models.
 
 
-NannyML Calculator Requirements
--------------------------------
+NannyML Functionality Requirements
+----------------------------------
 
 After version 0.5 NannyML has relaxed the column requirements so that each functionality only requires what it needs.
 You can see those requirements in the table below:
