@@ -63,7 +63,7 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                            | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                           | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                     | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.4.1]**                                  | New features, bug fixes.                                                               |
+| 💎 **[New in v0.5.0]**                                  | New features, bug fixes.                                                               |
 | 🧑‍💻 **[Contribute]**                                     | How to contribute to the NannyML project and codebase.                                 |
 | <img src="media/slack.png" width='25'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
