@@ -2,8 +2,14 @@
 #
 #  License: Apache Software License 2.0
 
+import typing
 from enum import Enum
-from typing import Dict, List, Protocol, Union  # noqa: TYP001
+from typing import Dict, List, Union  # noqa: TYP001
+
+if typing.TYPE_CHECKING:
+    from typing_extensions import Protocol
+else:
+    Protocol = object
 
 import pandas as pd
 from plotly.graph_objs import Figure
