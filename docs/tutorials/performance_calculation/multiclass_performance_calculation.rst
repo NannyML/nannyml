@@ -14,9 +14,9 @@ Just The Code
     >>> import nannyml as nml
     >>> from IPython.display import display
 
-    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-    >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
+    >>> analysis_target_df = nml.load_synthetic_multiclass_classification_dataset()[2]
     >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
 
     >>> display(reference_df.head(3))
@@ -28,7 +28,7 @@ Just The Code
     ...         'upmarket_card': 'y_pred_proba_upmarket_card'
     ...     },
     ...     y_pred='y_pred',
-    ...     y_true='work_home_actual',
+    ...     y_true='y_true',
     ...     timestamp_column_name='timestamp',
     ...     metrics=['f1', 'roc_auc'],
     ...     chunk_size=6000)
@@ -64,9 +64,9 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
     >>> import nannyml as nml
     >>> from IPython.display import display
 
-    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-    >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
+    >>> analysis_target_df = nml.load_synthetic_multiclass_classification_dataset()[2]
     >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
 
     >>> display(reference_df.head(3))
@@ -105,7 +105,7 @@ For more information on metrics, check the :mod:`~nannyml.performance_calculatio
     ...         'upmarket_card': 'y_pred_proba_upmarket_card'
     ...     },
     ...     y_pred='y_pred',
-    ...     y_true='work_home_actual',
+    ...     y_true='y_true',
     ...     timestamp_column_name='timestamp',
     ...     metrics=['f1', 'roc_auc'],
     ...     chunk_size=6000)
@@ -124,6 +124,17 @@ realized performance metrics on all data which has target values available.
     >>> results = calc.calculate(analysis_df)
     >>> display(results.data.head(3))
 
+
++----+---------------+---------------+-------------+---------------------+---------------------+----------+------------------------+----------+----------------------+----------------------+------------+-----------+---------------------------+---------------------------+-----------------+
+|    | key           |   start_index |   end_index | start_date          | end_date            | period   |   targets_missing_rate |       f1 |   f1_lower_threshold |   f1_upper_threshold | f1_alert   |   roc_auc |   roc_auc_lower_threshold |   roc_auc_upper_threshold | roc_auc_alert   |
++====+===============+===============+=============+=====================+=====================+==========+========================+==========+======================+======================+============+===========+===========================+===========================+=================+
+|  0 | [0:5999]      |             0 |        5999 | 2020-09-01 03:10:01 | 2020-09-13 16:15:10 |          |                      0 | 0.751103 |             0.741254 |             0.764944 | False      |  0.907595 |                  0.900902 |                  0.913516 | False           |
++----+---------------+---------------+-------------+---------------------+---------------------+----------+------------------------+----------+----------------------+----------------------+------------+-----------+---------------------------+---------------------------+-----------------+
+|  1 | [6000:11999]  |          6000 |       11999 | 2020-09-13 16:15:32 | 2020-09-25 19:48:42 |          |                      0 | 0.763045 |             0.741254 |             0.764944 | False      |  0.910534 |                  0.900902 |                  0.913516 | False           |
++----+---------------+---------------+-------------+---------------------+---------------------+----------+------------------------+----------+----------------------+----------------------+------------+-----------+---------------------------+---------------------------+-----------------+
+|  2 | [12000:17999] |         12000 |       17999 | 2020-09-25 19:50:04 | 2020-10-08 02:53:47 |          |                      0 | 0.758487 |             0.741254 |             0.764944 | False      |  0.909414 |                  0.900902 |                  0.913516 | False           |
++----+---------------+---------------+-------------+---------------------+---------------------+----------+------------------------+----------+----------------------+----------------------+------------+-----------+---------------------------+---------------------------+-----------------+
+
 NannyML can output a dataframe that contains all the results.
 
 Apart from chunking and chunk and period-related columns, the results data have the a set of columns for each
@@ -131,9 +142,9 @@ calculated metric. When taking ``roc_auc`` as an example:
 
  - ``targets_missing_rate`` - The fraction of missing target data.
  - ``<metric>`` - The value of the metric for a specific chunk.
- - ``<metric>_thresholds`` - A tuple containing the lower and upper thresholds. Crossing them will raise an alert that
-   there is a significant
-   metric change. The thresholds are calculated based on the realized performance of chunks in    the ``reference`` period.
+ - ``<metric>_lower_threshold>`` and ``<metric>_upper_threshold>`` - Lower and upper thresholds for performance metric.
+   Crossing them will raise an alert that there is a significant
+   metric change. The thresholds are calculated based on the realized performance of chunks in the ``reference`` period.
    The thresholds are 3 standard deviations away from the mean performance calculated on ``reference`` chunks.
  - ``<metric>_alert`` - A flag indicating potentially significant performance change. ``True`` if realized performance
    crosses
@@ -144,8 +155,8 @@ The results can be plotted for visual inspection:
 .. code-block:: python
 
     >>> for metric in calc.metrics:
-    ...    figure = results.plot(kind='performance', plot_reference=True, metric=metric)
-    ...    figure.show()
+    ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+    ...     figure.show()
 
 
 .. image:: /_static/tutorial-perf-guide-mc-F1.svg
