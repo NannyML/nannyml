@@ -139,7 +139,7 @@ only.
 
 .. _performance-estimation-thresholds:
 
-Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
+Apart from chunk-related data, the results data have the following columns for each metric
 that was estimated:
 
  - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also

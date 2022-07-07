@@ -58,7 +58,7 @@ For simplicity the guide is based on a synthetic dataset where the monitored mod
 which type of credit card product new customers should be assigned to. You can :ref:`learn more about this dataset<dataset-synthetic-multiclass>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
-You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 .. code-block:: python
 
@@ -141,7 +141,7 @@ only.
 |  2 | [12000:17999] |         12000 |       17999 | 2020-09-25 19:50:04 | 2020-10-08 02:53:47 |                nan |            0.909958 |                   0.910786 |                   0.909131 |                  0.900902 |                  0.913516 | False           |           nan |       0.758166 |              0.759917 |              0.756414 |             0.741254 |             0.764944 | False      |
 +----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
 
-Apart from chunking and chunk and partition-related data, the results data have the following columns for each metric
+Apart from chunk-related data, the results data have the following columns for each metric
 that was estimated:
 
  - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also
