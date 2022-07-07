@@ -62,34 +62,36 @@ be specific to a given model type.
 
 We will illustrate this using the fictional ``work_from_home`` model included with the library,
 a binary classifier trying to predict whether someone will be working from home on a given day or not.
+Below we see the columns our dataset contains and explain their purpose.
 
 
 .. code-block:: python
 
     >>> import nannyml as nml
     >>> reference, _, _ = nml.load_synthetic_binary_classification_dataset()
-    >>> reference[['identifier', 'work_home_actual', 'timestamp', 'y_pred_proba',
-       'partition', 'y_pred']].head()
+    >>> reference[['identifier', 'work_home_actual', 'timestamp', 'y_pred_proba', 'y_pred']].head()
 
-+----+--------------+--------------------+---------------------+----------------+-------------+----------+
-|    |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
-+====+==============+====================+=====================+================+=============+==========+
-|  0 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |        1 |
-+----+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  1 |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |        0 |
-+----+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  2 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
-+----+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  3 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
-+----+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  4 |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
-+----+--------------+--------------------+---------------------+----------------+-------------+----------+
++----+--------------+--------------------+---------------------+----------------+----------+
+|    |   identifier |   work_home_actual | timestamp           |   y_pred_proba |   y_pred |
++====+==============+====================+=====================+================+==========+
+|  0 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 |        1 |
++----+--------------+--------------------+---------------------+----------------+----------+
+|  1 |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 |        0 |
++----+--------------+--------------------+---------------------+----------------+----------+
+|  2 |            2 |                  1 | 2014-05-09 23:48:25 |           1    |        1 |
++----+--------------+--------------------+---------------------+----------------+----------+
+|  3 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 |        1 |
++----+--------------+--------------------+---------------------+----------------+----------+
+|  4 |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 |        1 |
++----+--------------+--------------------+---------------------+----------------+----------+
+
 
 .. code-block:: python
 
-    >>> reference, _, _ = nml.load_synthetic_binary_classification_dataset()
-    >>> reference[['distance_from_office', 'salary_range', 'gas_price_per_litre',
-       'public_transportation_cost', 'wfh_prev_workday', 'workday', 'tenure']].head()
+    >>> reference[[
+    ...     'distance_from_office', 'salary_range', 'gas_price_per_litre', 'public_transportation_cost',
+    ...     'wfh_prev_workday', 'workday', 'tenure'
+    >>> ]].head()
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
 |    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |
@@ -107,7 +109,7 @@ a binary classifier trying to predict whether someone will be working from home 
 
 
 Timestamp
-^^^^^^^^^^^^
+^^^^^^^^^
 
 The column containing the timestamp at which the observation occurred, i.e. when the model was invoked
 using the given inputs and yielding the resulting prediction. See :term:`Timestamp`.
@@ -130,25 +132,26 @@ The actual outcome of the event the machine learning model is trying to predict.
 
 In the sample data this is the ``work_home_actual`` column.
 
-Required as part of the reference data for :ref:`performance estimation<performance-estimation>`, and as part of both reference and analysis data to :ref:`calculate performance<performance-calculation>`.
+Required as part of the reference data for :ref:`performance estimation<performance-estimation>`,
+and as part of both reference and analysis data to :ref:`calculate performance<performance-calculation>`.
 
 Features
-^^^^^^^^^
+^^^^^^^^
 
 The features of your model. These can be categorical or continuous and NannyML identifies this based on their
 declared pandas data types.
 
-In the sample data, the features are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``.
+In the sample data, the features are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``,
+``wfh_prev_workday``, ``workday`` and ``tenure``.
 
 Required to :ref:`detect data drift<data-drift>` on features.
 
 
+Model Output columns
+--------------------
 
-Binary classification columns
------------------------------
-
-Predicted probability
-^^^^^^^^^^^^^^^^^^^^^
+Predicted class probabilities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` that is emitted by the model, most likely a float.
 
@@ -156,21 +159,12 @@ In the sample data this is the ``y_pred_proba`` column.
 
 Required for running :ref:`performance estimation<performance-estimation>` on binary classification models.
 
+In multiclass classification problems there are expected to be one column of 
+:term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>`
+for each class. They are required for running :ref:`performance estimation<performance-estimation>` on multi-class models.
 
-Predicted class probabilities
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The :term:`scores<Predicted scores>` or :term:`probabilities<Predicted probabilities>` emitted by the model, a single
-column for each class.
-
-.. warning::
-    Either this or the prediction should be set for the metadata to be complete.
-
-Required for running :ref:`performance estimation<performance-estimation>` on multi-class models.
-
-
-Prediction
-^^^^^^^^^^
+Prediction class labels
+^^^^^^^^^^^^^^^^^^^^^^^
 
 The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresholding) the prediction scores or probabilities.
 
@@ -179,10 +173,8 @@ In the sample data this is the ``y_pred`` column.
 Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multi-class, and regression models.
 
 
-
-
 What next
------------------------
+---------
 
 You can check out our tutorials on how to :ref:`estimate performance<performance-estimation>`,
 :ref:`calculate performance<performance-calculation>`, and :ref:`detect data drift<data-drift>`.
