@@ -18,7 +18,7 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 class Result(Protocol):
-    """the data that was calculated or estimated"""
+    """The data that was calculated or estimated."""
 
     data: pd.DataFrame
 
@@ -30,6 +30,7 @@ class Result(Protocol):
 
 
 class Calculator(Protocol):
+    """Calculator base class."""
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the calculator on reference data."""
 
@@ -38,6 +39,7 @@ class Calculator(Protocol):
 
 
 class Estimator(Protocol):
+    """Estimator base class."""
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the estimator on reference data."""
 
@@ -49,6 +51,7 @@ ModelOutputsType = Union[str, Dict[str, str]]
 
 
 def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
+    """Get model output column nanmes from inputs."""
     if isinstance(model_outputs, str):
         return [model_outputs]
     elif isinstance(model_outputs, Dict):
@@ -61,12 +64,14 @@ def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
 
 
 class UseCase(str, Enum):
+    """Use cases NannyML supports."""
     CLASSIFICATION_BINARY = 'classification_binary'
     CLASSIFICATION_MULTICLASS = 'classification_multiclass'
     REGRESSION = 'regression'
 
 
 def derive_use_case(y_pred_proba: ModelOutputsType) -> UseCase:
+    """Derive NannyML use case from model outputs type."""
     if isinstance(y_pred_proba, Dict):
         return UseCase.CLASSIFICATION_MULTICLASS
     elif isinstance(y_pred_proba, str):
