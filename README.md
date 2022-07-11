@@ -200,7 +200,7 @@ The best place to ask for help is in the [community slack](https://join.slack.co
 If you want to stay up to date with recent changes to the NannyML library, you can subscribe to our [release notes](https://nannyml.substack.com). For thoughts on post-deployment data science from the NannyML team, feel free to visit our [blog](https://www.nannyml.com/blog). You can also sing up for our [newsletter](https://mailchi.mp/022c62281d13/postdeploymentnewsletter), which brings together the best papers, articles, news, and open-source libraries highlighting the ML challenges after deployment.
 
 # 📍 Roadmap
-Curious what we are working on next? Have a look at our [roadmap](https://nannyml.notion.site/a72188b5fe3b4b628f809a8daa8ad473?v=6eeb5967926147d3b6a42321d55c1cbd). If you have any questions or if you would like to see things prioritised in a different way, let us know!
+Curious what we are working on next? Have a look at our [roadmap](https://bit.ly/nannymlroadmap). If you have any questions or if you would like to see things prioritised in a different way, let us know!
 
 # 📄 License
 
