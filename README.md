@@ -134,46 +134,79 @@ python -m pip install git+https://github.com/NannyML/nannyml
 ```python
 import pandas as pd
 import nannyml as nml
+from IPython.display import display
 
 # Load synthetic data
 reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-data = pd.concat([reference, analysis], ignore_index=True)
-
-# Extract meta data
-metadata = nml.extract_metadata(data = reference, model_name='wfh_predictor', model_type='classification_binary', exclude_columns=['identifier'])
-metadata.target_column_name = 'work_home_actual'
+display(reference.head())
+display(analysis.head())
 
 # Choose a chunker or set a chunk size
 chunk_size = 5000
 
 # Estimate model performance
-estimator = nml.CBPE(model_metadata=metadata, metrics=['roc_auc'], chunk_size=chunk_size)
-estimator.fit(reference)
-estimated_performance = estimator.estimate(data=data)
+# initialize, specify required data columns, fit estimator and estimate
+estimator = nml.CBPE(
+   y_pred_proba='y_pred_proba',
+   y_pred='y_pred',
+   y_true='work_home_actual',
+   timestamp_column_name='timestamp',
+   metrics=['roc_auc'],
+   chunk_size=chunk_size,
+)
+estimator = estimator.fit(reference)
+estimated_performance = estimator.estimate(analysis)
 
-figure = estimated_performance.plot(metric='roc_auc', kind='performance')
+# Show results
+figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
 figure.show()
 
-# Detect multivariate feature drift
-multivariate_calculator = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-multivariate_calculator.fit(reference_data=reference)
-multivariate_results = multivariate_calculator.calculate(data=data)
+# Define feature columns
+feature_column_names = [
+    col for col in reference.columns if col not in [
+        'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+    ]]
 
-figure = multivariate_results.plot(kind='drift')
-figure.show()
-
-# Detect univariate feature drift
-univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_size=chunk_size)
-univariate_calculator.fit(reference_data=reference)
-univariate_results = univariate_calculator.calculate(data=data)
+# Let's initialize the object that will perform the Univariate Drift calculations
+univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
+    feature_column_names=feature_column_names,
+    timestamp_column_name='timestamp',
+    chunk_size=chunk_size
+)
+univariate_calculator = univariate_calculator.fit(reference)
+univariate_results = univariate_calculator.calculate(analysis)
+# Plot drift results for all model inputs
+for feature in univariate_calculator.feature_column_names:
+    figure = univariate_results.plot(
+        kind='feature_drift',
+        metric='statistic',
+        feature_column_name=feature,
+        plot_reference=True
+    )
+    figure.show()
 
 # Rank features based on number of alerts
 ranker = nml.Ranker.by('alert_count')
-ranked_features = ranker.rank(univariate_results, model_metadata=metadata, only_drifting = False)
+ranked_features = ranker.rank(univariate_results, only_drifting = False)
+display(ranked_features)
 
-for feature in ranked_features.feature:
-    figure = univariate_results.plot(kind='feature_distribution', feature_label=feature)
-    figure.show()
+calc = nml.StatisticalOutputDriftCalculator(
+    y_pred='y_pred',
+    y_pred_proba='y_pred_proba',
+    timestamp_column_name='timestamp'
+)
+calc.fit(reference)
+results = calc.calculate(analysis)
+
+figure = results.plot(kind='prediction_drift', plot_reference=True)
+figure.show()
+
+# Let's initialize the object that will detect Multivariate Drift
+rcerror_calculator = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size).fit(reference_data=reference)
+# let's see Reconstruction error statistics for all available data
+rcerror_results = rcerror_calculator.calculate(analysis)
+figure = rcerror_results.plot(kind='drift', plot_reference=True)
+figure.show()
 ```
 
 # 📖 Documentation
