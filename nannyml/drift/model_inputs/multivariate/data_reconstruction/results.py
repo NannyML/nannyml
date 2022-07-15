@@ -87,8 +87,7 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. "
-                f"Please provide on of: ['feature_drift', 'feature_distribution', "
-                f"'prediction_drift', 'prediction_distribution']."
+                f"Please provide one of: ['drift']."
             )
 
     # @property
