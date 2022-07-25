@@ -2,41 +2,49 @@
 #
 #  License: Apache Software License 2.0
 
-"""Statistical drift calculation using `Kolmogorov-Smirnov` and `chi2-contingency` tests."""
-from typing import Any, Dict, List, Tuple, cast
+"""Calculates drift for model predictions and model outputs using statistical tests."""
+
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import ks_2samp
+from scipy.stats import chi2_contingency, ks_2samp
 
+from nannyml._typing import ModelOutputsType, model_output_column_names
+from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift.base import DriftCalculator
 from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
-from nannyml.exceptions import CalculatorNotFittedException, MissingMetadataException
-from nannyml.metadata import BinaryClassificationMetadata, MulticlassClassificationMetadata, RegressionMetadata
-from nannyml.metadata.base import NML_METADATA_COLUMNS, NML_METADATA_PERIOD_COLUMN_NAME, ModelMetadata
-from nannyml.preprocessing import preprocess
+from nannyml.exceptions import InvalidArgumentsException
 
 ALERT_THRESHOLD_P_VALUE = 0.05
 
 
-class UnivariateStatisticalDriftCalculator(DriftCalculator):
-    """A drift calculator that relies on statistics to detect drift."""
+class StatisticalOutputDriftCalculator(AbstractCalculator):
+    """Calculates drift for model predictions and model outputs using statistical tests."""
 
     def __init__(
         self,
-        model_metadata: ModelMetadata,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        timestamp_column_name: str,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
     ):
-        """Constructs a new UnivariateStatisticalDriftCalculator.
+        """Creates a new StatisticalOutputDriftCalculator.
 
         Parameters
         ----------
-        model_metadata: ModelMetadata
-            Metadata for the model whose data is to be processed.
+        y_pred_proba: ModelOutputsType
+            Name(s) of the column(s) containing your model output.
+            Pass a single string when there is only a single model output column, e.g. in binary classification cases.
+            Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
+            The dictionary maps a class/label string to the column name containing model outputs for that class/label.
+        y_pred: str
+            The name of the column containing your model predictions.
+        timestamp_column_name: str
+            The name of the column containing the timestamp of the model prediction.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -52,84 +60,87 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # Create a calculator that will chunk by week
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
+        >>>
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.StatisticalOutputDriftCalculator(
+        >>>     y_pred_proba='y_pred_proba',
+        >>>     y_pred='y_pred',
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>>
+        >>> print(results.data)  # check the numbers
+                     key  start_index  ...  y_pred_proba_alert y_pred_proba_threshold
+        0       [0:4999]            0  ...                True                   0.05
+        1    [5000:9999]         5000  ...               False                   0.05
+        2  [10000:14999]        10000  ...               False                   0.05
+        3  [15000:19999]        15000  ...               False                   0.05
+        4  [20000:24999]        20000  ...               False                   0.05
+        5  [25000:29999]        25000  ...                True                   0.05
+        6  [30000:34999]        30000  ...                True                   0.05
+        7  [35000:39999]        35000  ...                True                   0.05
+        8  [40000:44999]        40000  ...                True                   0.05
+        9  [45000:49999]        45000  ...                True                   0.05
+        >>>
+        >>> results.plot(kind='predicted_labels_drift', metric='p_value', plot_reference=True).show()
+        >>> results.plot(kind='predicted_labels_distribution', plot_reference=True).show()
+        >>> results.plot(kind='prediction_drift', plot_reference=True).show()
+        >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
         """
-        super(UnivariateStatisticalDriftCalculator, self).__init__(
-            model_metadata, None, chunk_size, chunk_number, chunk_period, chunker
-        )
+        super(StatisticalOutputDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
 
-        self._reference_data = None
+        self.y_pred_proba = y_pred_proba
+        self.y_pred = y_pred
+        self.timestamp_column_name = timestamp_column_name
 
-    def fit(self, reference_data: pd.DataFrame):
-        """Fits the drift calculator using a set of reference data.
+        self.previous_reference_data: Optional[pd.DataFrame] = None
+        self.previous_reference_results: Optional[pd.DataFrame] = None
+        self.previous_analysis_data: Optional[pd.DataFrame] = None
 
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            A reference data set containing predictions (labels and/or probabilities) and target values.
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
+        """Fits the drift calculator using a set of reference data."""
+        if reference_data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        Returns
-        -------
-        calculator: DriftCalculator
-            The fitted calculator.
+        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
+        self.previous_reference_data = reference_data.copy()
 
-        """
-        # check metadata for required properties
-        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'prediction_column_name'])
+        # predicted labels should always be considered categorical
+        reference_data[self.y_pred] = reference_data[self.y_pred].astype('category')
 
-        reference_data = preprocess(data=reference_data, metadata=self.model_metadata, reference=True)
-
-        # store state
-        self._reference_data = reference_data.copy(deep=True)
+        self.previous_reference_results = self._calculate(reference_data).data
 
         return self
 
-    def calculate(
-        self,
-        data: pd.DataFrame,
-    ) -> UnivariateDriftResult:
-        """Calculates the data reconstruction drift for a given data set.
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> UnivariateDriftResult:
+        """Calculates the data reconstruction drift for a given data set."""
+        if data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The dataset to calculate the reconstruction drift for.
+        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
 
-        Returns
-        -------
-        reconstruction_drift: UnivariateDriftResult
-            A :class:`result<nannyml.drift.model_inputs.univariate.statistical.results.UnivariateDriftResult>`
-            object where each row represents a :class:`~nannyml.chunk.Chunk`,
-            containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
-            for that :class:`~nannyml.chunk.Chunk`.
+        # predicted labels should always be considered categorical
+        data[self.y_pred] = data[self.y_pred].astype('category')
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> drift = drift_calc.calculate(data)
-        """
-        # Check metadata for required properties
-        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'prediction_column_name'])
-        prediction_column_names, predicted_probabilities_column_names = _get_predictions_and_scores(self.model_metadata)
-        data = preprocess(data=data, metadata=self.model_metadata)
+        columns = [self.y_pred]
+        if isinstance(self.y_pred_proba, Dict):
+            columns += [v for _, v in self.y_pred_proba.items()]
+        elif isinstance(self.y_pred_proba, str):
+            columns += [self.y_pred_proba]
+        else:
+            raise InvalidArgumentsException(
+                "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
+                "but should be of type 'Union[str, Dict[str, str].'"
+            )
 
-        features_and_metadata = NML_METADATA_COLUMNS + prediction_column_names + predicted_probabilities_column_names
-        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=500)
+        continuous_columns, categorical_columns = _split_features_by_type(data, columns)
+
+        chunks = self.chunker.split(
+            data, columns=columns, minimum_chunk_size=500, timestamp_column_name=self.timestamp_column_name
+        )
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.
@@ -144,66 +155,33 @@ class UnivariateStatisticalDriftCalculator(DriftCalculator):
                 'period': 'analysis' if chunk.is_transition else chunk.period,
             }
 
-            present_continuous_column_names = list(
-                set(chunk.data.columns) & set(prediction_column_names + predicted_probabilities_column_names)
-            )
-            for column in present_continuous_column_names:
-                statistic, p_value = ks_2samp(self._reference_data[column], chunk.data[column])  # type: ignore
+            for column in categorical_columns:
+                statistic, p_value, _, _ = chi2_contingency(
+                    pd.concat(
+                        [
+                            self.previous_reference_data[column].value_counts(),  # type: ignore
+                            chunk.data[column].value_counts(),
+                        ],
+                        axis=1,
+                    ).fillna(0)
+                )
+                chunk_drift[f'{column}_chi2'] = statistic
+                chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
+                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
+                chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
+
+            for column in continuous_columns:
+                statistic, p_value = ks_2samp(self.previous_reference_data[column], chunk.data[column])  # type: ignore
                 chunk_drift[f'{column}_dstat'] = statistic
                 chunk_drift[f'{column}_p_value'] = np.round(p_value, decimals=3)
-                chunk_drift[f'{column}_alert'] = (p_value < ALERT_THRESHOLD_P_VALUE) and (
-                    chunk.data[NML_METADATA_PERIOD_COLUMN_NAME] == 'analysis'
-                ).all()
+                chunk_drift[f'{column}_alert'] = p_value < ALERT_THRESHOLD_P_VALUE
                 chunk_drift[f'{column}_threshold'] = ALERT_THRESHOLD_P_VALUE
 
             chunk_drifts.append(chunk_drift)
 
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
-        res.attrs['nml_drift_calculator'] = __name__
 
-        if self.chunker is None:
-            raise CalculatorNotFittedException(
-                'chunker has not been set. '
-                'Please ensure you run ``calculator.fit()`` '
-                'before running ``calculator.calculate()``'
-            )
+        self.previous_analysis_data = data.copy()
 
-        return UnivariateDriftResult(analysis_data=chunks, drift_data=res, model_metadata=self.model_metadata)
-
-
-def _get_predictions_and_scores(model_metadata: ModelMetadata) -> Tuple[List[str], List[str]]:
-    prediction_column_names: List[str] = []
-    predicted_probabilities_column_names: List[str] = []
-
-    # add continuous predictions or predicted probabilities from metadata to the selected features
-    if isinstance(model_metadata, BinaryClassificationMetadata):
-        if model_metadata.predicted_probability_column_name is None:
-            raise MissingMetadataException(
-                "missing value for 'predicted_probability_column_name'. "
-                "Please update your model metadata accordingly."
-            )
-        prediction_column_names = []
-        predicted_probabilities_column_names = [
-            cast(BinaryClassificationMetadata, model_metadata).predicted_probability_column_name
-        ]
-
-    elif isinstance(model_metadata, MulticlassClassificationMetadata):
-        if model_metadata.predicted_probabilities_column_names is None:
-            raise MissingMetadataException(
-                "missing value for 'predicted_probability_column_name'. "
-                "Please update your model metadata accordingly."
-            )
-        md = cast(MulticlassClassificationMetadata, model_metadata)
-        prediction_column_names = []
-        predicted_probabilities_column_names = list(md.predicted_probabilities_column_names.values())
-
-    elif isinstance(model_metadata, RegressionMetadata):
-        if model_metadata.prediction_column_name is None:
-            raise MissingMetadataException(
-                "missing value for 'prediction_column_name'. " "Please update your model metadata accordingly."
-            )
-        prediction_column_names = [model_metadata.prediction_column_name]
-        predicted_probabilities_column_names = []
-
-    return prediction_column_names, predicted_probabilities_column_names
+        return UnivariateDriftResult(results_data=res, calculator=self)

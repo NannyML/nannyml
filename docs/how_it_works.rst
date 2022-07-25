@@ -7,7 +7,6 @@ How It Works
 .. toctree::
     :maxdepth: 2
 
-    how_it_works/metadata_extraction
     how_it_works/data_reconstruction
     how_it_works/performance_estimation
     how_it_works/chunking_data

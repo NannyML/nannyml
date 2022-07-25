@@ -13,20 +13,19 @@ from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
+from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift import DriftCalculator
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
-from nannyml.metadata.base import NML_METADATA_COLUMNS, Feature
-from nannyml.preprocessing import preprocess
+from nannyml.exceptions import InvalidArgumentsException
 
 
-class DataReconstructionDriftCalculator(DriftCalculator):
+class DataReconstructionDriftCalculator(AbstractCalculator):
     """BaseDriftCalculator implementation using Reconstruction Error as a measure of drift."""
 
     def __init__(
         self,
-        model_metadata,
-        features: List[str] = None,
+        feature_column_names: List[str],
+        timestamp_column_name: str,
         n_components: Union[int, float, str] = 0.65,
         chunk_size: int = None,
         chunk_number: int = None,
@@ -39,41 +38,64 @@ class DataReconstructionDriftCalculator(DriftCalculator):
 
         Parameters
         ----------
-        model_metadata: ModelMetadata
-            Metadata for the model whose data is to be processed.
-        features: List[str], default=None
-            An optional list of feature names to use during drift calculation. None by default, in this case
-            all features are used during calculation.
-        n_components: Union[int, float, str]
+        feature_column_names: List[str]
+            A list containing the names of features in the provided data set. All of these features will be used by
+            the multivariate data reconstruction drift calculator to calculate an aggregate drift score.
+        timestamp_column_name: str
+            The name of the column containing the timestamp of the model prediction.
+        n_components: Union[int, float, str], default=0.65
             The n_components parameter as passed to the sklearn.decomposition.PCA constructor.
             See https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
-        imputer_categorical: SimpleImputer
+        imputer_categorical: SimpleImputer, default=None
             The SimpleImputer used to impute categorical features in the data. Defaults to using most_frequent value.
-        imputer_continuous: SimpleImputer
+        imputer_continuous: SimpleImputer, default=None
             The SimpleImputer used to impute continuous features in the data. Defaults to using mean value.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator that will chunk by week
-        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W')
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> feature_column_names = [col for col in reference_df.columns
+        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> calc = nml.DataReconstructionDriftCalculator(
+        >>>     feature_column_names=feature_column_names,
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>> print(results.data)  # access the numbers
+                             key  start_index  ...  upper_threshold alert
+        0       [0:4999]            0  ...         1.511762  True
+        1    [5000:9999]         5000  ...         1.511762  True
+        2  [10000:14999]        10000  ...         1.511762  True
+        3  [15000:19999]        15000  ...         1.511762  True
+        4  [20000:24999]        20000  ...         1.511762  True
+        5  [25000:29999]        25000  ...         1.511762  True
+        6  [30000:34999]        30000  ...         1.511762  True
+        7  [35000:39999]        35000  ...         1.511762  True
+        8  [40000:44999]        40000  ...         1.511762  True
+        9  [45000:49999]        45000  ...         1.511762  True
+        >>> fig = results.plot(kind='drift', plot_reference=True)
+        >>> fig.show()
         """
-        super(DataReconstructionDriftCalculator, self).__init__(
-            model_metadata, features, chunk_size, chunk_number, chunk_period, chunker
-        )
+        super(DataReconstructionDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        self.feature_column_names = feature_column_names
+        self.continuous_feature_column_names: List[str] = []
+        self.categorical_feature_column_names: List[str] = []
+
+        self.timestamp_column_name = timestamp_column_name
         self._n_components = n_components
 
         self._scaler = None
@@ -99,62 +121,43 @@ class DataReconstructionDriftCalculator(DriftCalculator):
             imputer_continuous = SimpleImputer(missing_values=np.nan, strategy='mean')
         self._imputer_continuous = imputer_continuous
 
-    def fit(self, reference_data: pd.DataFrame):
-        """Fits the drift calculator using a set of reference data.
+        self.previous_reference_results: Optional[pd.DataFrame] = None
 
-        Parameters
-        ----------
-        reference_data : pd.DataFrame
-            A reference data set containing predictions (labels and/or probabilities) and target values.
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
+        """Fits the drift calculator to a set of reference data."""
+        if reference_data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        Returns
-        -------
-        calculator: DriftCalculator
-            The fitted calculator.
+        _list_missing(self.feature_column_names, reference_data)
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-
-        """
-        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'features'])
-        reference_data = preprocess(reference_data, self.model_metadata, reference=True)
-
-        selected_categorical_column_names = _get_selected_feature_names(
-            self.selected_features, self.model_metadata.categorical_features
-        )
-        selected_continuous_column_names = _get_selected_feature_names(
-            self.selected_features, self.model_metadata.continuous_features
+        self.continuous_feature_column_names, self.categorical_feature_column_names = _split_features_by_type(
+            reference_data, self.feature_column_names
         )
 
         # TODO: We duplicate the reference data 3 times, here. Improve to something more memory efficient?
         imputed_reference_data = reference_data.copy(deep=True)
-        if len(selected_categorical_column_names) > 0:
-            imputed_reference_data[selected_categorical_column_names] = self._imputer_categorical.fit_transform(
-                imputed_reference_data[selected_categorical_column_names]
+        if len(self.categorical_feature_column_names) > 0:
+            imputed_reference_data[self.categorical_feature_column_names] = self._imputer_categorical.fit_transform(
+                imputed_reference_data[self.categorical_feature_column_names]
             )
-        if len(selected_continuous_column_names) > 0:
-            imputed_reference_data[selected_continuous_column_names] = self._imputer_continuous.fit_transform(
-                imputed_reference_data[selected_continuous_column_names]
+        if len(self.continuous_feature_column_names) > 0:
+            imputed_reference_data[self.continuous_feature_column_names] = self._imputer_continuous.fit_transform(
+                imputed_reference_data[self.continuous_feature_column_names]
             )
 
-        encoder = CountEncoder(cols=selected_categorical_column_names, normalize=True)
+        encoder = CountEncoder(cols=self.categorical_feature_column_names, normalize=True)
         encoded_reference_data = imputed_reference_data.copy(deep=True)
-        encoded_reference_data[self.selected_features] = encoder.fit_transform(
-            encoded_reference_data[self.selected_features]
+        encoded_reference_data[self.feature_column_names] = encoder.fit_transform(
+            encoded_reference_data[self.feature_column_names]
         )
 
         scaler = StandardScaler()
         scaled_reference_data = pd.DataFrame(
-            scaler.fit_transform(encoded_reference_data[self.selected_features]), columns=self.selected_features
+            scaler.fit_transform(encoded_reference_data[self.feature_column_names]), columns=self.feature_column_names
         )
 
         pca = PCA(n_components=self._n_components, random_state=16)
-        pca.fit(scaled_reference_data[self.selected_features])
+        pca.fit(scaled_reference_data[self.feature_column_names])
 
         self._encoder = encoder
         self._scaler = scaler
@@ -163,50 +166,26 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         # Calculate thresholds
         self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
 
+        self.previous_reference_results = self._calculate(data=reference_data).data
+
         return self
 
-    def calculate(
-        self,
-        data: pd.DataFrame,
-    ) -> DataReconstructionDriftCalculatorResult:
-        """Calculates the data reconstruction drift for a given data set.
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> DataReconstructionDriftCalculatorResult:
+        """Calculates the data reconstruction drift for a given data set."""
+        if data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        Parameters
-        ----------
-        data : pd.DataFrame
-            The dataset to calculate the reconstruction drift for.
+        _list_missing(self.feature_column_names, data)
 
-        Returns
-        -------
-        reconstruction_drift: DataReconstructionDriftCalculatorResult
-            A
-            :class:`result<nannyml.drift.model_inputs.multivariate.data_reconstruction.results.DataReconstructionDriftCalculatorResult>`
-            object where each row represents a :class:`~nannyml.chunk.Chunk`,
-            containing :class:`~nannyml.chunk.Chunk` properties and the reconstruction_drift calculated
-            for that :class:`~nannyml.chunk.Chunk`.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator and fit it
-        >>> drift_calc = nml.DataReconstructionDriftCalculator(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> drift = drift_calc.calculate(data)
-        """
-        self.model_metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'features'])
-        data = preprocess(data, self.model_metadata)
-
-        selected_categorical_column_names = _get_selected_feature_names(
-            self.selected_features, self.model_metadata.categorical_features
-        )
-        selected_continuous_column_names = _get_selected_feature_names(
-            self.selected_features, self.model_metadata.continuous_features
+        self.continuous_feature_column_names, self.categorical_feature_column_names = _split_features_by_type(
+            data, self.feature_column_names
         )
 
-        features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
         chunks = self.chunker.split(
-            data, columns=features_and_metadata, minimum_chunk_size=_minimum_chunk_size(self.selected_features)
+            data,
+            columns=self.feature_column_names,
+            minimum_chunk_size=_minimum_chunk_size(self.feature_column_names),
+            timestamp_column_name=self.timestamp_column_name,
         )
 
         res = pd.DataFrame.from_records(
@@ -217,11 +196,10 @@ class DataReconstructionDriftCalculator(DriftCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis' if chunk.is_transition else chunk.period,
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
-                        selected_features=self.selected_features,
-                        selected_categorical_features=selected_categorical_column_names,
-                        selected_continuous_features=selected_continuous_column_names,
+                        feature_column_names=self.feature_column_names,
+                        categorical_feature_column_names=self.categorical_feature_column_names,
+                        continuous_feature_column_names=self.continuous_feature_column_names,
                         data=chunk.data,
                         encoder=self._encoder,
                         scaler=self._scaler,
@@ -238,25 +216,16 @@ class DataReconstructionDriftCalculator(DriftCalculator):
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
-        return DataReconstructionDriftCalculatorResult(
-            analysis_data=chunks, drift_data=res, model_metadata=self.model_metadata
-        )
+        return DataReconstructionDriftCalculatorResult(results_data=res, calculator=self)
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
-        reference_chunks = self.chunker.split(reference_data)  # type: ignore
-        selected_categorical_column_names = _get_selected_feature_names(
-            self.selected_features, self.model_metadata.categorical_features
-        )
-        selected_continuous_column_names = _get_selected_feature_names(
-            self.selected_features, self.model_metadata.continuous_features
-        )
-
+        reference_chunks = self.chunker.split(reference_data, self.timestamp_column_name)  # type: ignore
         reference_reconstruction_error = pd.Series(
             [
                 _calculate_reconstruction_error_for_data(
-                    selected_features=self.selected_features,
-                    selected_categorical_features=selected_categorical_column_names,
-                    selected_continuous_features=selected_continuous_column_names,
+                    feature_column_names=self.feature_column_names,
+                    categorical_feature_column_names=self.categorical_feature_column_names,
+                    continuous_feature_column_names=self.continuous_feature_column_names,
                     data=chunk.data,
                     encoder=self._encoder,
                     scaler=self._scaler,
@@ -275,9 +244,9 @@ class DataReconstructionDriftCalculator(DriftCalculator):
 
 
 def _calculate_reconstruction_error_for_data(
-    selected_features: List[str],
-    selected_categorical_features: List[str],
-    selected_continuous_features: List[str],
+    feature_column_names: List[str],
+    categorical_feature_column_names: List[str],
+    continuous_feature_column_names: List[str],
     data: pd.DataFrame,
     encoder: CountEncoder,
     scaler: StandardScaler,
@@ -289,11 +258,11 @@ def _calculate_reconstruction_error_for_data(
 
     Parameters
     ----------
-    selected_features : List[str]
+    feature_column_names : List[str]
         Subset of features to be included in calculation.
-    selected_categorical_features : List[str]
+    categorical_feature_column_names : List[str]
         Subset of categorical features to be included in calculation.
-    selected_continuous_features : List[str]
+    continuous_feature_column_names : List[str]
         Subset of continuous features to be included in calculation.
     data : pd.DataFrame
         The dataset to calculate reconstruction error on
@@ -319,22 +288,22 @@ def _calculate_reconstruction_error_for_data(
     data = data.reset_index(drop=True)
 
     # Impute missing values
-    if len(selected_categorical_features) > 0:
-        data[selected_categorical_features] = imputer_categorical.transform(data[selected_categorical_features])
-    if len(selected_continuous_features) > 0:
-        data[selected_continuous_features] = imputer_continuous.transform(data[selected_continuous_features])
+    if len(categorical_feature_column_names) > 0:
+        data[categorical_feature_column_names] = imputer_categorical.transform(data[categorical_feature_column_names])
+    if len(continuous_feature_column_names) > 0:
+        data[continuous_feature_column_names] = imputer_continuous.transform(data[continuous_feature_column_names])
 
-    data[selected_features] = encoder.transform(data[selected_features])
+    data[feature_column_names] = encoder.transform(data[feature_column_names])
 
     # scale all features
-    data[selected_features] = scaler.transform(data[selected_features])
+    data[feature_column_names] = scaler.transform(data[feature_column_names])
 
     # perform dimensionality reduction
-    reduced_data = pca.transform(data[selected_features])
+    reduced_data = pca.transform(data[feature_column_names])
 
     # perform reconstruction
     reconstructed = pca.inverse_transform(reduced_data)
-    reconstructed_feature_column_names = [f'rf_{col}' for col in selected_features]
+    reconstructed_feature_column_names = [f'rf_{col}' for col in feature_column_names]
     reconstructed_data = pd.DataFrame(reconstructed, columns=reconstructed_feature_column_names)
 
     # combine preprocessed rows with reconstructed rows
@@ -342,17 +311,11 @@ def _calculate_reconstruction_error_for_data(
 
     # calculate reconstruction error using euclidian norm (row-wise between preprocessed and reconstructed value)
     data = data.assign(
-        rc_error=lambda x: _calculate_distance(data, selected_features, reconstructed_feature_column_names)
+        rc_error=lambda x: _calculate_distance(data, feature_column_names, reconstructed_feature_column_names)
     )
 
     res = data['rc_error'].mean()
     return res
-
-
-def _get_selected_feature_names(selected_features: List[str], features: List[Feature]) -> List[str]:
-    feature_column_names = [f.column_name for f in features]
-    # Calculate intersection
-    return list(set(selected_features) & set(feature_column_names))
 
 
 def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], features_reconstructed: List[str]):
@@ -371,7 +334,6 @@ def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_th
     alert = drift_result.apply(
         lambda row: True
         if (row['reconstruction_error'] > upper_threshold or row['reconstruction_error'] < lower_threshold)
-        and row['period'] == 'analysis'
         else False,
         axis=1,
     )

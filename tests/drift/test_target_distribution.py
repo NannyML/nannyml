@@ -1,13 +1,12 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from nannyml.drift.target.target_distribution import TargetDistributionCalculator
-from nannyml.exceptions import MissingMetadataException
-from nannyml.metadata.extraction import extract_metadata
 
 
 @pytest.fixture
@@ -90,6 +89,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data.loc[data.week >= 16, ['f1']] = data.loc[data.week >= 16, ['f1']] + 0.6
     data.loc[data.week >= 16, ['f2']] = np.sqrt(data.loc[data.week >= 16, ['f2']])
     data.drop(columns=['week'], inplace=True)
+    data['f3'] = data['f3'].astype("category")
 
     return data
 
@@ -106,40 +106,21 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     return data
 
 
-@pytest.fixture
-def sample_drift_metadata(sample_drift_data):  # noqa: D103
-    return extract_metadata(sample_drift_data, model_name='model', model_type='classification_binary')
-
-
-def test_target_distribution_calculator_with_params_should_not_fail(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
+def test_target_distribution_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = TargetDistributionCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
+    calc = TargetDistributionCalculator(y_true='actual', timestamp_column_name='timestamp', chunk_period='W').fit(
+        ref_data
+    )
     try:
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
 
 
-def test_target_distribution_calculator_with_default_params_should_not_fail(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
+def test_target_distribution_calculator_with_default_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = TargetDistributionCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
+    calc = TargetDistributionCalculator(y_true='actual', timestamp_column_name='timestamp').fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
-
-
-def test_target_distribution_calculator_raises_missing_metadata_exception_when_missing_predictions(  # noqa: D103
-    sample_drift_data, sample_drift_metadata
-):
-    sample_drift_metadata.target_column_name = None
-    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-
-    calc = TargetDistributionCalculator(model_metadata=sample_drift_metadata)
-
-    with pytest.raises(MissingMetadataException, match='target_column_name'):
-        calc.fit(ref_data)

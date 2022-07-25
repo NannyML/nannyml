@@ -5,7 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## [0.5.0] - 2022-07-07
+
+### Changed
+- Replaced the whole Metadata system by a more intuitive approach.
+
+### Fixed
+- Fix docs [(#87)](https://github.com/NannyML/nannyml/issues/79) and [(#89)](https://github.com/NannyML/nannyml/issues/89), thanks [@NeoKish](https://github.com/NeoKish)
+- Fix confidence bounds for binary settings [(#86)](https://github.com/NannyML/nannyml/issues/86), thanks [@rfrenoy](https://github.com/rfrenoy)
+- Fix README [(#87)](https://github.com/NannyML/nannyml/issues/79), thanks [@NeoKish](https://github.com/NeoKish)
+- Fix index misalignment on calibration [(#79)](https://github.com/NannyML/nannyml/issues/79)
+- Fix Poetry dev-dependencies issues [(#78)](https://github.com/NannyML/nannyml/issues/78), thanks [@rfrenoy](https://github.com/rfrenoy)
+- Fix incorrect documentation links [(#76)](https://github.com/NannyML/nannyml/issues/76), thanks [@SoyGema](https://github.com/SoyGema)
 
 ## [0.4.1] - 2022-05-19
 

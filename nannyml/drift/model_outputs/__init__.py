@@ -4,4 +4,4 @@
 
 """Drift detection implementations for model outputs."""
 
-from .univariate import UnivariateDriftResult, UnivariateStatisticalDriftCalculator
+from .univariate import StatisticalOutputDriftCalculator, UnivariateDriftResult

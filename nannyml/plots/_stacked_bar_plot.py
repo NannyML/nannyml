@@ -176,25 +176,26 @@ def _create_stacked_bar_plot(
     # Shade chunk types
     for i, chunk_type in enumerate(chunk_types):
         subset = stacked_bar_table.loc[stacked_bar_table[chunk_type_column_name] == chunk_type]
-        fig.add_shape(
-            y0=0,
-            y1=1.05,
-            x0=subset[start_date_column_name].min(),
-            x1=subset[end_date_column_name].max(),
-            line_color=colors_transparant[i],
-            layer='above',
-            line_width=2,
-            line=dict(dash='dash'),
-        ),
-        fig.add_annotation(
-            x=subset[start_date_column_name].mean(),
-            y=1.025,
-            text=chunk_type_labels[i],
-            font=dict(color=colors[i]),
-            align="center",
-            textangle=0,
-            showarrow=False,
-        )
+        if subset.shape[0] > 0:
+            fig.add_shape(
+                y0=0,
+                y1=1.05,
+                x0=subset[start_date_column_name].min(),
+                x1=subset[end_date_column_name].max(),
+                line_color=colors_transparant[i],
+                layer='above',
+                line_width=2,
+                line=dict(dash='dash'),
+            ),
+            fig.add_annotation(
+                x=subset[start_date_column_name].mean(),
+                y=1.025,
+                text=chunk_type_labels[i],
+                font=dict(color=colors[i]),
+                align="center",
+                textangle=0,
+                showarrow=False,
+            )
 
     # ____Add elements to legend___#
     x = [np.nan] * len(data)

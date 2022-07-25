@@ -27,7 +27,6 @@ Welcome to NannyML's documentation!
    tutorials
    how_it_works
    examples
-   troubleshooting
    datasets
    glossary
    API reference <nannyml/modules>

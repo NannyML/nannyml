@@ -23,7 +23,7 @@ Glossary
     Chi Squared test
         The Chi Squared test, or chi2 test as is sometimes called, is a non parametric statistical test regarding
         discrete distributions. It is be used to examine whether there is statistically significant difference
-        between expected and observed frequencies for one or more categories of a `contingency table`_.
+        between expected and observed frequencies for one or more categories of a contingency table.
         In NannyML we use the Chi Squared test to answer whether the two samples of a categorical variable
         come from a different distribution.
 
@@ -58,13 +58,7 @@ Glossary
         The second subset of the data is the ``analysis`` period. It contains the observations you want NannyML to analyse.
         In the absence of targets performance in the analysis period can be estimated.
 
-        NannyML needs the period information to understand which data it can use as a reference to compare other periods by.
-        This is contained in the :term:`Partition Column`.
-
-        .. warning::
-            We currently only support the following partition column values: ``reference`` and ``analysis``.
-
-            Please map your own values to them accordingly.
+        You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
 
     Estimated Performance
         The performance the monitored model is expected to have as a result of the :term:`Performance Estimation` process.
@@ -102,7 +96,7 @@ Glossary
 
     Imputation
         The process of substituting missing values with actual values on a dataset.
-    
+
     Kolmogorov-Smirnov test
         The Kolmogorov-Smirnov test, or KS test as is more commonly called, is a non parametric statistical test regarding
         the equality of continuous one dimensional probability distributions. It can be used to compare a sample with a
@@ -121,11 +115,6 @@ Glossary
     Model inputs
         Every :term:`Feature` used by the model.
 
-    Model Metadata
-        Additional information regarding the model inputs such as the type of a particular
-        feature (continuous, categorical, nominal, ordinal). Information regarding when a
-        prediction was made as well as which data partition it is assigned to are also considered
-        metadata.
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.

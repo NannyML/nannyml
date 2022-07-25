@@ -60,9 +60,9 @@ def _create_kde_table(
     feature_table,
     feature_column_name,
     chunk_column_name,
-    kde_cut,
-    kde_clip,
-    post_kde_clip: tuple,
+    kde_cut=3,
+    kde_clip=(-np.inf, np.inf),
+    post_kde_clip=None,
 ):
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
     data = (
@@ -122,7 +122,7 @@ def _create_joy_table(
     if chunk_types is None:
         chunk_types = ['reference', 'analysis']
 
-    joy_table = pd.merge(drift_table, kde_table, on=chunk_column_name)
+    joy_table = pd.merge(drift_table, kde_table)
 
     joy_table['hue'] = 0
     if chunk_types and chunk_type_column_name and chunk_column_name in drift_table.columns:

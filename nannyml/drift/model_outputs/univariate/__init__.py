@@ -2,4 +2,4 @@
 #
 #  License: Apache Software License 2.0
 
-from .statistical import UnivariateDriftResult, UnivariateStatisticalDriftCalculator
+from .statistical import StatisticalOutputDriftCalculator, UnivariateDriftResult

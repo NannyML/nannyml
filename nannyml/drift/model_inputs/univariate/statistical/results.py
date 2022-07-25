@@ -2,146 +2,205 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module containing univariate statistical drift calculation results and associated plotting implementations."""
-
-from typing import Dict, List, Tuple
+"""Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+from typing import List, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml.base import AbstractCalculatorResult
 from nannyml.chunk import Chunk
-from nannyml.drift.base import DriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata.base import Feature, FeatureType, ModelMetadata
-from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
 
 
-class UnivariateDriftResult(DriftResult):
-    """Contains the univariate statistical drift calculation results and provides additional plotting functionality."""
+class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
+    """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
-    calculator_name: str = "univariate_statistical_drift"
+    def __init__(self, results_data: pd.DataFrame, calculator):
+        super().__init__(results_data)
 
-    # TODO: this is messing up functionality in scratch files (sets runtime class to DataFrame). Check this!
-    def __repr__(self):
-        """Represent the DriftResults object as the data it contains."""
-        return self.data.__repr__()
+        from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
+
+        if not isinstance(calculator, UnivariateStatisticalDriftCalculator):
+            raise RuntimeError(
+                f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
+            )
+        self.calculator = calculator
+
+    @property
+    def calculator_name(self) -> str:
+        return "univariate_statistical_feature_drift"
 
     def plot(
         self,
         kind: str = 'feature',
         metric: str = 'statistic',
-        feature_label: str = None,
         feature_column_name: str = None,
+        plot_reference: bool = False,
         *args,
         **kwargs,
     ) -> go.Figure:
-        """Renders a line plot for a chosen metric of statistical drift calculation results.
+        """Renders plots for metrics returned by the univariate statistical drift calculator.
 
-        Given either a feature label (check ``model_metadata.features``) or the actual feature column name
-        and a metric (one of either ``statistic`` or ``p_value``) this function will render a line plot displaying
-        the metric value for the selected feature per chunk.
-        Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple periods.
+        For any feature you can render the statistic value or p-values as a step plot, or create a distribution plot.
+        Select a plot using the ``kind`` parameter:
 
-        The different plot kinds that are available:
-
-        - ``feature_drift``: plots drift per :class:`~nannyml.chunk.Chunk` for a single feature of a chunked data set.
-        - ``feature_distribution``: plots feature distribution per :class:`~nannyml.chunk.Chunk`.
-          Joyplot for continuous features, stacked bar charts for categorical features.
+        - ``feature_drift``
+                plots drift per :class:`~nannyml.chunk.Chunk` for a single feature of a chunked data set.
+        - ``feature_distribution``
+                plots feature distribution per :class:`~nannyml.chunk.Chunk`.
+                Joyplot for continuous features, stacked bar charts for categorical features.
 
         Parameters
         ----------
         kind: str, default=`feature_drift`
-            The kind of plot you want to have. Value must be one of ``feature_drift``, ``feature_distribution``.
+            The kind of plot you want to have. Allowed values are `feature_drift`` and ``feature_distribution``.
         metric : str, default=``statistic``
-            The metric to plot. Value must be one of ``statistic`` or ``p_value``
-        feature_label : str
-            Feature label identifying a feature according to the preset model metadata. The function will raise an
-            exception when no feature of that label was found in the metadata.
-            Either ``feature_label`` or ``feature_column_name`` should be specified.
+            The metric to plot. Allowed values are ``statistic`` and ``p_value``.
+            Not applicable when plotting distributions.
         feature_column_name : str
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
-
+        plot_reference: bool, default=False
+            Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
         Returns
         -------
-        fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
-            using ``fig.show()``.
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
 
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> drift_calc = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='W')
-        >>> drift_calc.fit(ref_df)
-        >>> drifts = drift_calc.calculate(ana_df)
-        >>> # loop over all features and plot the feature drift and feature distribution for each
-        >>> for f in metadata.features:
-        >>>     drifts.plot(kind='feature_drift', feature_label=f.label).show()
-        >>>     drifts.plot(kind='feature_distribution', feature_label=f.label).show()
+        >>>
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> feature_column_names = [col for col in reference_df.columns
+        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> calc = nml.UnivariateStatisticalDriftCalculator(
+        >>>     feature_column_names=feature_column_names,
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
+        >>> print(results.data)  # check the numbers
+                     key  start_index  ...  identifier_alert identifier_threshold
+        0       [0:4999]            0  ...              True                 0.05
+        1    [5000:9999]         5000  ...              True                 0.05
+        2  [10000:14999]        10000  ...              True                 0.05
+        3  [15000:19999]        15000  ...              True                 0.05
+        4  [20000:24999]        20000  ...              True                 0.05
+        5  [25000:29999]        25000  ...              True                 0.05
+        6  [30000:34999]        30000  ...              True                 0.05
+        7  [35000:39999]        35000  ...              True                 0.05
+        8  [40000:44999]        40000  ...              True                 0.05
+        9  [45000:49999]        45000  ...              True                 0.05
+        >>> for feature in cal.feature_column_names:
+        >>>     fig = results.plot(kind='feature_drift', metric='statistic', plot_reference=True,
+        >>>                        feature_column_name=feature)
+        >>>     fig.show()
 
         """
         if kind == 'feature_drift':
-            feature = _get_feature(self.metadata, feature_label, feature_column_name)
-            return _plot_feature_drift(self.data, feature, metric, args, kwargs)
+            if feature_column_name is None:
+                raise InvalidArgumentsException(
+                    "must specify a feature to plot " "using the 'feature_column_name' parameter"
+                )
+            return _feature_drift(self.data, self.calculator, feature_column_name, metric, plot_reference)
         elif kind == 'feature_distribution':
-            feature = _get_feature(self.metadata, feature_label, feature_column_name)
-            return _plot_feature_distribution(
-                data=self._analysis_data,
+            if feature_column_name is None:
+                raise InvalidArgumentsException(
+                    "must specify a feature to plot " "using the 'feature_column_name' parameter"
+                )
+            return self._plot_feature_distribution(
+                analysis_data=self.calculator.previous_analysis_data,
+                plot_reference=plot_reference,
                 drift_data=self.data,
-                feature=feature,
+                feature_column_name=feature_column_name,
             )
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. " f"Please provide on of: ['feature_drift', 'feature_distribution']."
             )
 
-    @property
-    def plots(self) -> Dict[str, go.Figure]:
-        plots: Dict[str, go.Figure] = {}
-        for feature in self.metadata.features:
-            plots[f'{feature.label}_drift_statistic'] = _plot_feature_drift(self.data, feature, 'statistic')
-            plots[f'{feature.label}_drift_p_value'] = _plot_feature_drift(self.data, feature, 'p_value')
-            plots[f'{feature.label}_distribution'] = _plot_feature_distribution(
-                data=self._analysis_data,
-                drift_data=self.data,
-                feature=feature,
+    def _plot_feature_distribution(
+        self,
+        analysis_data: pd.DataFrame,
+        drift_data: pd.DataFrame,
+        feature_column_name: str,
+        plot_reference: bool,
+    ) -> go.Figure:
+        """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
+        if feature_column_name in self.calculator.continuous_column_names:
+            return _plot_continuous_feature_distribution(
+                analysis_data, drift_data, feature_column_name, self.calculator, plot_reference
             )
-        return plots
+        if feature_column_name in self.calculator.categorical_column_names:
+            return _plot_categorical_feature_distribution(
+                analysis_data, drift_data, feature_column_name, self.calculator, plot_reference
+            )
 
 
-def _get_feature(model_metadata: ModelMetadata, feature_label: str = None, feature_column_name: str = None) -> Feature:
-    if feature_label is None and feature_column_name is None:
-        raise InvalidArgumentsException("one of 'feature_label' or 'feature_column_name' should be provided.")
+def _feature_drift(
+    data: pd.DataFrame,
+    calculator,
+    feature: str,
+    metric: str = 'statistic',
+    plot_reference: bool = False,
+) -> go.Figure:
+    """Renders a line plot for a chosen metric of univariate statistical feature drift calculation results."""
 
-    feature = (
-        model_metadata.feature(feature=feature_label)
-        if feature_label
-        else model_metadata.feature(column=feature_column_name)
+    (
+        metric_column_name,
+        metric_label,
+        threshold_column_name,
+        drift_column_name,
+        title,
+    ) = _get_drift_column_names_for_feature(
+        feature, metric, calculator.continuous_column_names, calculator.categorical_column_names
     )
 
-    if feature is None:
-        raise InvalidArgumentsException(f'could not find a feature {feature_label or feature_column_name}')
+    data['period'] = 'analysis'
 
-    return feature
+    if plot_reference:
+        reference_results = calculator.previous_reference_results
+        reference_results['period'] = 'reference'
+        data = pd.concat([reference_results, data], ignore_index=True)
+
+    fig = _step_plot(
+        table=data,
+        metric_column_name=metric_column_name,
+        chunk_column_name='key',
+        drift_column_name=drift_column_name,
+        lower_threshold_column_name=threshold_column_name,
+        hover_labels=['Chunk', metric_label, 'Target data'],
+        title=title,
+        y_axis_title=metric_label,
+        v_line_separating_analysis_period=plot_reference,
+        statistically_significant_column_name=drift_column_name,
+    )
+    return fig
 
 
-def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: FeatureType, metric: str) -> Tuple:
+def _get_drift_column_names_for_feature(
+    feature_column_name: str,
+    metric: str,
+    continuous_feature_column_names: List[str],
+    categorical_feature_column_names: List[str],
+) -> Tuple:
     metric_column_name, metric_label, threshold_column_name = None, None, None
     if metric == 'statistic':
-        if feature_type == FeatureType.CATEGORICAL:
+        if feature_column_name in categorical_feature_column_names:
             metric_column_name = f'{feature_column_name}_chi2'
             metric_label = 'Chi-square statistic'
-        elif feature_type == FeatureType.CONTINUOUS:
+        elif feature_column_name in continuous_feature_column_names:
             metric_column_name = f'{feature_column_name}_dstat'
             metric_label = 'KS statistic'
         threshold_column_name = None
@@ -156,52 +215,45 @@ def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: 
     return metric_column_name, metric_label, threshold_column_name, drift_column_name, title
 
 
-def _plot_feature_drift(data: pd.DataFrame, feature: Feature, metric: str = 'statistic', *args, **kwargs) -> go.Figure:
-    """Renders a line plot for a chosen metric of statistical statistical drift calculation results."""
-    (
-        metric_column_name,
-        metric_label,
-        threshold_column_name,
-        drift_column_name,
-        title,
-    ) = _get_drift_column_names_for_feature(feature.column_name, feature.feature_type, metric)
-
-    plot_period_separator = len(data.value_counts()) > 1
-
-    fig = _step_plot(
-        table=data,
-        metric_column_name=metric_column_name,
-        chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-        drift_column_name=drift_column_name,
-        lower_threshold_column_name=threshold_column_name,
-        hover_labels=['Chunk', metric_label, 'Target data'],
-        title=title,
-        y_axis_title=metric_label,
-        v_line_separating_analysis_period=plot_period_separator,
-        statistically_significant_column_name=drift_column_name,
-    )
-    return fig
-
-
-def _plot_feature_distribution(data: List[Chunk], drift_data: pd.DataFrame, feature: Feature) -> go.Figure:
+def _plot_continuous_feature_distribution(
+    data: pd.DataFrame, drift_data: pd.DataFrame, feature_column_name: str, calculator, plot_reference: bool
+) -> go.Figure:
     """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-    if feature.feature_type is FeatureType.CONTINUOUS:
-        return _plot_continuous_feature_distribution(data, drift_data, feature)
-    elif feature.feature_type is FeatureType.CATEGORICAL:
-        return _plot_categorical_feature_distribution(data, drift_data, feature)
+    from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
 
+    if not isinstance(calculator, UnivariateStatisticalDriftCalculator):
+        raise InvalidArgumentsException(
+            f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
+        )
 
-def _plot_continuous_feature_distribution(data: List[Chunk], drift_data: pd.DataFrame, feature: Feature) -> go.Figure:
-    """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-    feature_column_name = feature.column_name
     x_axis_title = f'{feature_column_name}'
     drift_column_name = f'{feature_column_name}_alert'
-    title = f'Distribution over time for {feature.label}'
+    title = f'Distribution over time for {feature_column_name}'
+
+    drift_data['period'] = 'analysis'
+    data['period'] = 'analysis'
+
+    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
+
+    if plot_reference:
+        reference_drift = calculator.previous_reference_results
+        if reference_drift is None:
+            raise RuntimeError(
+                f"could not plot continuous distribution for feature '{feature_column_name}': "
+                f"calculator is missing reference results\n{calculator}"
+            )
+        reference_drift['period'] = 'reference'
+        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
+
+        reference_feature_table = _create_feature_table(
+            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
+        )
+        feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     fig = _joy_plot(
-        feature_table=_create_feature_table(data=data),
+        feature_table=feature_table,
         drift_table=drift_data,
-        chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+        chunk_column_name='key',
         drift_column_name=drift_column_name,
         feature_column_name=feature_column_name,
         x_axis_title=x_axis_title,
@@ -211,17 +263,45 @@ def _plot_continuous_feature_distribution(data: List[Chunk], drift_data: pd.Data
     return fig
 
 
-def _plot_categorical_feature_distribution(data: List[Chunk], drift_data: pd.DataFrame, feature: Feature) -> go.Figure:
+def _plot_categorical_feature_distribution(
+    data: pd.DataFrame, drift_data: pd.DataFrame, feature_column_name: str, calculator, plot_reference: bool
+) -> go.Figure:
     """Plots the data distribution and associated drift for each chunk of a given categorical feature."""
-    feature_column_name = feature.column_name
+    from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
+
+    if not isinstance(calculator, UnivariateStatisticalDriftCalculator):
+        raise InvalidArgumentsException(
+            f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
+        )
+
     yaxis_title = f'{feature_column_name}'
     drift_column_name = f'{feature_column_name}_alert'
-    title = f'Distribution over time for {feature.label}'
+    title = f'Distribution over time for {feature_column_name}'
+
+    drift_data['period'] = 'analysis'
+    data['period'] = 'analysis'
+
+    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
+
+    if plot_reference:
+        reference_drift = calculator.previous_reference_results
+        if reference_drift is None:
+            raise RuntimeError(
+                f"could not plot categorical distribution for feature '{feature_column_name}': "
+                f"calculator is missing reference results\n{calculator}"
+            )
+        reference_drift['period'] = 'reference'
+        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
+
+        reference_feature_table = _create_feature_table(
+            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
+        )
+        feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     fig = _stacked_bar_plot(
-        feature_table=_create_feature_table(data=data),
+        feature_table=feature_table,
         drift_table=drift_data,
-        chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+        chunk_column_name='key',
         drift_column_name=drift_column_name,
         feature_column_name=feature_column_name,
         yaxis_title=yaxis_title,
@@ -230,7 +310,5 @@ def _plot_categorical_feature_distribution(data: List[Chunk], drift_data: pd.Dat
     return fig
 
 
-def _create_feature_table(
-    data: List[Chunk],
-) -> pd.DataFrame:
-    return pd.concat([chunk.data.assign(key=chunk.key) for chunk in data])
+def _create_feature_table(chunks: List[Chunk]) -> pd.DataFrame:
+    return pd.concat([chunk.data.assign(key=chunk.key) for chunk in chunks])

@@ -8,38 +8,41 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
-from nannyml import MulticlassClassificationMetadata
+from nannyml._typing import ModelOutputsType, UseCase, derive_use_case
+from nannyml.base import AbstractEstimator
 from nannyml.calibration import Calibrator, CalibratorFactory
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata import BinaryClassificationMetadata, ModelMetadata
-from nannyml.performance_estimation.base import PerformanceEstimator
 from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
     CBPEPerformanceEstimatorResult,
 )
 
 
-class CBPE(PerformanceEstimator):
+class CBPE(AbstractEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
 
-    def __new__(cls, model_metadata: ModelMetadata, *args, **kwargs):
+    def __new__(cls, y_pred_proba: ModelOutputsType, *args, **kwargs):
         """Creates a new CBPE subclass instance based on the type of the provided ``model_metadata``."""
         from ._cbpe_binary_classification import _BinaryClassificationCBPE
         from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
 
-        if isinstance(model_metadata, BinaryClassificationMetadata):
+        use_case = derive_use_case(y_pred_proba)
+
+        if use_case is UseCase.CLASSIFICATION_BINARY:
             return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
-        elif isinstance(model_metadata, MulticlassClassificationMetadata):
+        elif use_case is UseCase.CLASSIFICATION_MULTICLASS:
             return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
         else:
             raise NotImplementedError
 
     def __init__(
         self,
-        model_metadata: ModelMetadata,
         metrics: List[str],
-        features: List[str] = None,
+        y_pred: str,
+        y_pred_proba: ModelOutputsType,
+        y_true: str,
+        timestamp_column_name: str,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -51,13 +54,8 @@ class CBPE(PerformanceEstimator):
 
         Parameters
         ----------
-        model_metadata: ModelMetadata
-            Metadata telling the DriftCalculator what columns are required for drift calculation.
         metrics: List[str]
             A list of metrics to calculate.
-        features: List[str], default=None
-            An optional list of feature column names. When set only these columns will be included in the
-            drift calculation. If not set all feature columns will be used.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -79,13 +77,42 @@ class CBPE(PerformanceEstimator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df)
-        >>> # create a new estimator, chunking by week
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W')
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> estimator = nml.CBPE(
+        >>>     y_true='work_home_actual',
+        >>>     y_pred='y_pred',
+        >>>     y_pred_proba='y_pred_proba',
+        >>>     timestamp_column_name='timestamp',
+        >>>     metrics=['f1', 'roc_auc']
+        >>> )
+        >>>
+        >>> estimator.fit(reference_df)
+        >>>
+        >>> results = estimator.estimate(analysis_df)
+        >>> print(results.data)
+                     key  start_index  ...  lower_threshold_roc_auc alert_roc_auc
+        0       [0:4999]            0  ...                  0.97866         False
+        1    [5000:9999]         5000  ...                  0.97866         False
+        2  [10000:14999]        10000  ...                  0.97866         False
+        3  [15000:19999]        15000  ...                  0.97866         False
+        4  [20000:24999]        20000  ...                  0.97866         False
+        5  [25000:29999]        25000  ...                  0.97866          True
+        6  [30000:34999]        30000  ...                  0.97866          True
+        7  [35000:39999]        35000  ...                  0.97866          True
+        8  [40000:44999]        40000  ...                  0.97866          True
+        9  [45000:49999]        45000  ...                  0.97866          True
+        >>> for metric in estimator.metrics:
+        >>>     results.plot(metric=metric, plot_reference=True).show()
 
         """
-        super().__init__(model_metadata, features, chunk_size, chunk_number, chunk_period, chunker)
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+
+        self.y_true = y_true
+        self.y_pred = y_pred
+        self.y_pred_proba = y_pred_proba
+        self.timestamp_column_name = timestamp_column_name
 
         if metrics is None or len(metrics) == 0:
             raise InvalidArgumentsException(
@@ -111,7 +138,7 @@ class CBPE(PerformanceEstimator):
         self.minimum_chunk_size: int = None  # type: ignore
 
     @abstractmethod
-    def fit(self, reference_data: pd.DataFrame) -> PerformanceEstimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Fits the drift calculator using a set of reference data.
 
         Parameters
@@ -136,7 +163,7 @@ class CBPE(PerformanceEstimator):
         pass
 
     @abstractmethod
-    def estimate(self, data: pd.DataFrame) -> CBPEPerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
         """Calculates the data reconstruction drift for a given data set.
 
         Parameters

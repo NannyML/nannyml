@@ -2,45 +2,45 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module for target distribution monitoring."""
+"""Calculates drift for model targets and target distributions using statistical tests."""
+
 from __future__ import annotations
 
 import warnings
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency
 
-from nannyml.chunk import Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.base import AbstractCalculator
+from nannyml.chunk import Chunker
 from nannyml.drift.target.target_distribution.result import TargetDistributionResult
-from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata.base import (
-    NML_METADATA_COLUMNS,
-    NML_METADATA_PERIOD_COLUMN_NAME,
-    NML_METADATA_TARGET_COLUMN_NAME,
-    ModelMetadata,
-)
-from nannyml.preprocessing import preprocess
+from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
+
+_ALERT_THRESHOLD_P_VALUE = 0.05
 
 
-class TargetDistributionCalculator:
-    """Calculates target distribution for a given dataset."""
+class TargetDistributionCalculator(AbstractCalculator):
+    """Calculates drift for model targets and target distributions using statistical tests."""
 
     def __init__(
         self,
-        model_metadata: ModelMetadata,
+        y_true: str,
+        timestamp_column_name: str,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
     ):
-        """Constructs a new TargetDistributionCalculator.
+        """creates a new TargetDistributionCalculator.
 
         Parameters
         ----------
-        model_metadata: ModelMetadata
-            Metadata for the model whose data is to be processed.
+        y_true: str
+            The name of the column containing your model target values.
+        timestamp_column_name: str
+            The name of the column containing the timestamp of the model prediction.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -56,101 +56,87 @@ class TargetDistributionCalculator:
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # Create a calculator that will chunk by week
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.TargetDistributionCalculator(
+        >>>     y_true='work_home_actual',
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>> print(results.data)  # check the numbers
+                     key  start_index  end_index  ... thresholds  alert significant
+        0       [0:4999]            0       4999  ...       0.05   True        True
+        1    [5000:9999]         5000       9999  ...       0.05  False       False
+        2  [10000:14999]        10000      14999  ...       0.05  False       False
+        3  [15000:19999]        15000      19999  ...       0.05  False       False
+        4  [20000:24999]        20000      24999  ...       0.05  False       False
+        5  [25000:29999]        25000      29999  ...       0.05  False       False
+        6  [30000:34999]        30000      34999  ...       0.05  False       False
+        7  [35000:39999]        35000      39999  ...       0.05  False       False
+        8  [40000:44999]        40000      44999  ...       0.05  False       False
+        9  [45000:49999]        45000      49999  ...       0.05  False       False
+        >>>
+        >>> results.plot(distribution='metric', plot_reference=True).show()
+        >>> results.plot(distribution='statistical', plot_reference=True).show()
         """
-        self.metadata = model_metadata
-        if chunker is None:
-            # Note:
-            # minimum chunk size is only needed if a chunker with a user specified minimum chunk size is not provided
-            if chunk_size:
-                self.chunker = SizeBasedChunker(chunk_size=chunk_size)  # type: ignore
-            elif chunk_number:
-                self.chunker = CountBasedChunker(chunk_count=chunk_number)  # type: ignore
-            elif chunk_period:
-                self.chunker = PeriodBasedChunker(offset=chunk_period)  # type: ignore
-            else:
-                self.chunker = DefaultChunker()  # type: ignore
-        else:
-            self.chunker = chunker  # type: ignore
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
 
-        self._reference_targets: pd.Series = None  # type: ignore
+        self.y_true = y_true
+        self.timestamp_column_name = timestamp_column_name
+
+        self.previous_reference_results: Optional[pd.DataFrame] = None
+        self.previous_reference_data: Optional[pd.DataFrame] = None
+
+        # self._reference_targets: pd.Series = None  # type: ignore
 
         # TODO: determine better min_chunk_size for target distribution
         self._minimum_chunk_size = 300
 
-    def fit(self, reference_data: pd.DataFrame) -> TargetDistributionCalculator:
-        """Fits the calculator to reference data.
-
-        During fitting the reference target data is validated and stored for later use.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
-        >>> # fit the calculator on reference data
-        >>> target_distribution_calc.fit(ref_df)
-        """
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
+        """Fits the calculator to reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        self.metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'target_column_name'])
+        reference_data = reference_data.copy()
 
-        if self.metadata.target_column_name not in reference_data.columns:
+        if self.y_true not in reference_data.columns:
             raise InvalidArgumentsException(
-                f"data does not contain target data column '{self.metadata.target_column_name}'."
+                f"target data column '{self.y_true}' is not in data columns: {reference_data.columns}."
             )
 
-        self._reference_targets = preprocess(data=reference_data, metadata=self.metadata, reference=True)[
-            NML_METADATA_TARGET_COLUMN_NAME
-        ]
+        self.previous_reference_data = reference_data
+        self.previous_reference_results = self._calculate(reference_data).data
 
         return self
 
-    def calculate(self, data: pd.DataFrame):
-        """Calculates the target distribution of a binary classifier.
-
-        Requires fitting the calculator on reference data first.
-
-        Parameters
-        ----------
-        data: pd.DataFrame
-            Data for the model, i.e. model inputs, predictions and targets.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
-        >>> target_distribution_calc.fit(ref_df)
-        >>> # calculate target distribution
-        >>> target_distribution = target_distribution_calc.calculate(ana_df)
-        """
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs):
+        """Calculates the target distribution of a binary classifier."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        self.metadata.check_has_fields(['period_column_name', 'timestamp_column_name', 'target_column_name'])
+        data = data.copy()
 
-        if self.metadata.target_column_name not in data.columns:
+        if self.y_true not in data.columns:
             raise InvalidArgumentsException(
-                f"data does not contain target data column '{self.metadata.target_column_name}'."
+                f"target data column '{self.y_true}' not found in data columns: {data.columns}."
             )
 
-        # Preprocess data
-        data = preprocess(data=data, metadata=self.metadata)
-
-        data['NML_TARGET_INCOMPLETE'] = data[NML_METADATA_TARGET_COLUMN_NAME].isna().astype(np.int16)
+        data['NML_TARGET_INCOMPLETE'] = data[self.y_true].isna().astype(np.int16)
 
         # Generate chunks
-        features_and_metadata = NML_METADATA_COLUMNS + ['NML_TARGET_INCOMPLETE']
-        chunks = self.chunker.split(data, columns=features_and_metadata, minimum_chunk_size=self._minimum_chunk_size)
+        # features_and_metadata = NML_METADATA_COLUMNS + ['NML_TARGET_INCOMPLETE']
+        chunks = self.chunker.split(
+            data,
+            columns=[self.y_true, 'NML_TARGET_INCOMPLETE'],
+            minimum_chunk_size=self._minimum_chunk_size,
+            timestamp_column_name=self.timestamp_column_name,
+        )
 
         # Construct result frame
+        if self.previous_reference_data is None:
+            raise CalculatorNotFittedException("no reference data known. Did you fit the calculator first?")
         res = pd.DataFrame.from_records(
             [
                 {
@@ -163,38 +149,32 @@ class TargetDistributionCalculator:
                     'targets_missing_rate': (
                         chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()
                     ),
-                    **_calculate_target_drift_for_chunk(self._reference_targets, chunk.data),
+                    **_calculate_target_drift_for_chunk(
+                        self.previous_reference_data[self.y_true], chunk.data[self.y_true]
+                    ),
                 }
                 for chunk in chunks
             ]
         )
 
-        return TargetDistributionResult(target_distribution=res, model_metadata=self.metadata)
+        return TargetDistributionResult(results_data=res, calculator=self)
 
 
-def _calculate_target_drift_for_chunk(reference_targets: pd.Series, data: pd.DataFrame) -> Dict:
-    targets = data[NML_METADATA_TARGET_COLUMN_NAME]
+def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.DataFrame) -> Dict:
     statistic, p_value, _, _ = chi2_contingency(
         pd.concat([reference_targets.value_counts(), targets.value_counts()], axis=1).fillna(0)
     )
 
-    _ALERT_THRESHOLD_P_VALUE = 0.05
-
-    is_analysis = 'analysis' in set(data[NML_METADATA_PERIOD_COLUMN_NAME].unique())
-
-    is_binary_targets = data[NML_METADATA_TARGET_COLUMN_NAME].nunique() > 2
-    if is_binary_targets:
+    is_non_binary_targets = targets.nunique() > 2
+    if is_non_binary_targets:
         warnings.warn(
-            f"the target column contains {data[NML_METADATA_TARGET_COLUMN_NAME].nunique()} unique values. "
+            f"the target column contains {targets.nunique()} unique values. "
             "NannyML cannot provide a value for 'metric_target_drift' "
             "when there are more than 2 unique values. "
             "All 'metric_target_drift' values will be set to np.NAN"
         )
 
-    is_string_targets = (
-        data[NML_METADATA_TARGET_COLUMN_NAME].dtype == 'object'
-        or data[NML_METADATA_TARGET_COLUMN_NAME].dtype == 'string'
-    )
+    is_string_targets = targets.dtype in ['object', 'string']
     if is_string_targets:
         warnings.warn(
             "the target column contains non-numerical values. NannyML cannot provide a value for "
@@ -203,10 +183,10 @@ def _calculate_target_drift_for_chunk(reference_targets: pd.Series, data: pd.Dat
         )
 
     return {
-        'metric_target_drift': targets.mean() if not (is_binary_targets or is_string_targets) else np.NAN,
+        'metric_target_drift': targets.mean() if not (is_non_binary_targets or is_string_targets) else np.NAN,
         'statistical_target_drift': statistic,
         'p_value': p_value,
         'thresholds': _ALERT_THRESHOLD_P_VALUE,
-        'alert': (p_value < _ALERT_THRESHOLD_P_VALUE) and is_analysis,
+        'alert': p_value < _ALERT_THRESHOLD_P_VALUE,
         'significant': p_value < _ALERT_THRESHOLD_P_VALUE,
     }

@@ -32,7 +32,7 @@ __email__ = 'niels@nannyml.com'
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.4.1'
+__version__ = '0.5.0'
 
 import logging
 
@@ -41,30 +41,22 @@ from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBase
 from .datasets import (
     load_modified_california_housing_dataset,
     load_synthetic_binary_classification_dataset,
+    load_synthetic_car_loan_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
 from .drift import (
     AlertCountRanking,
     DataReconstructionDriftCalculator,
     DataReconstructionDriftCalculatorResult,
-    DriftCalculator,
     Ranker,
     Ranking,
+    StatisticalOutputDriftCalculator,
     TargetDistributionCalculator,
     UnivariateStatisticalDriftCalculator,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from .metadata import (
-    BinaryClassificationMetadata,
-    Feature,
-    FeatureType,
-    ModelMetadata,
-    ModelType,
-    MulticlassClassificationMetadata,
-    RegressionMetadata,
-    extract_metadata,
-)
 from .performance_calculation import PerformanceCalculator
-from .performance_estimation import CBPE, PerformanceEstimator
+from .performance_estimation import CBPE
+from .plots import feature_drift
 
 logger = logging.getLogger(__name__)

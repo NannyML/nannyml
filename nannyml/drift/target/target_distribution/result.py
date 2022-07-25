@@ -3,100 +3,139 @@
 #  License: Apache Software License 2.0
 
 """The classes representing the results of a target distribution calculation."""
-from typing import Dict
 
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.metadata.base import ModelMetadata
-from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
 
-class TargetDistributionResult:
+class TargetDistributionResult(AbstractCalculatorResult):
     """Contains target distribution data and utilities to plot it."""
 
-    calculator_name: str = 'target_distribution'
-
-    def __init__(self, target_distribution: pd.DataFrame, model_metadata: ModelMetadata):
+    def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         """Creates a new instance of the TargetDistributionResults."""
-        self.data = target_distribution
-        self.metadata = model_metadata
+        super().__init__(results_data)
 
-    def plot(self, kind: str = 'distribution', distribution: str = 'metric', *args, **kwargs) -> go.Figure:
-        """Renders a line plot of the target distribution.
+        from .calculator import TargetDistributionCalculator
 
-        Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple periods.
+        if not isinstance(calculator, TargetDistributionCalculator):
+            raise RuntimeError(
+                f"{calculator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
+            )
+        self.calculator = calculator
+
+    @property
+    def calculator_name(self) -> str:
+        return 'target_distribution'
+
+    def plot(
+        self, kind: str = 'distribution', distribution: str = 'metric', plot_reference: bool = False, *args, **kwargs
+    ) -> go.Figure:
+        """Renders plots for metrics returned by the target distribution calculator.
+
+        You can render a step plot of the mean target distribution or the statistical tests per chunk.
+
+        Select a plot using the ``kind`` parameter:
+
+        - ``distribution``
+                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
 
         Parameters
         ----------
-        kind: str
-            The kind of plot to show. Restricted to the value 'distribution'.
+        kind: str, default='distribution'
+            The kind of plot to show. Allowed values are ``distribution``.
         distribution: str, default='metric'
-            The kind of distribution to plot. Restricted to the values 'metric' or 'statistical'
+            The kind of distribution to plot. Allowed values are ``metric`` and ``statistical``.
+        plot_reference: bool, default=False
+            Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
         Returns
         -------
-        fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested drift plot. Can be saved to disk or shown rendered on screen
-            using ``fig.show()``.
+        fig: :class:`plotly.graph_objs._figure.Figure`
+            A :class:`~plotly.graph_objs._figure.Figure` object containing the requested drift plot.
+
+            Can be saved to disk using the :meth:`~plotly.graph_objs._figure.Figure.write_image` method
+            or shown rendered on screen using the :meth:`~plotly.graph_objs._figure.Figure.show` method.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> target_distribution_calc = nml.TargetDistributionCalculator(model_metadata=metadata, chunk_period='W')
-        >>> target_distribution_calc.fit(ref_df)
-        >>> target_distribution = target_distribution_calc.calculate(ana_df)
-        >>> # plot the distribution of the mean
-        >>> target_distribution.plot(kind='metric').show()
-        >>> # plot the Chi square statistic
-        >>> target_distribution.plot(kind='statistical').show()
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> calc = nml.TargetDistributionCalculator(
+        >>>     y_true='work_home_actual',
+        >>>     timestamp_column_name='timestamp'
+        >>> )
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>> print(results.data)  # check the numbers
+                     key  start_index  end_index  ... thresholds  alert significant
+        0       [0:4999]            0       4999  ...       0.05   True        True
+        1    [5000:9999]         5000       9999  ...       0.05  False       False
+        2  [10000:14999]        10000      14999  ...       0.05  False       False
+        3  [15000:19999]        15000      19999  ...       0.05  False       False
+        4  [20000:24999]        20000      24999  ...       0.05  False       False
+        5  [25000:29999]        25000      29999  ...       0.05  False       False
+        6  [30000:34999]        30000      34999  ...       0.05  False       False
+        7  [35000:39999]        35000      39999  ...       0.05  False       False
+        8  [40000:44999]        40000      44999  ...       0.05  False       False
+        9  [45000:49999]        45000      49999  ...       0.05  False       False
+        >>>
+        >>> results.plot(distribution='metric', plot_reference=True).show()
+        >>> results.plot(distribution='statistical', plot_reference=True).show()
         """
         if kind == 'distribution':
-            return self._plot_distribution(distribution)
+            return _plot_distribution(self.data, self.calculator, distribution, plot_reference)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['distribution'].")
 
-    @property
-    def plots(self) -> Dict[str, go.Figure]:
-        return {
-            f'{self.metadata.target_column_name}_distribution_metric': self._plot_distribution('metric'),
-            f'{self.metadata.target_column_name}_distribution_statistical': self._plot_distribution('statistical'),
-        }
+    # @property
+    # def plots(self) -> Dict[str, go.Figure]:
+    #     return {
+    #         f'{self.metadata.target_column_name}_distribution_metric': self._plot_distribution('metric'),
+    #         f'{self.metadata.target_column_name}_distribution_statistical': self._plot_distribution('statistical'),
+    #     }
 
-    def _plot_distribution(self, distribution: str) -> go.Figure:
-        plot_period_separator = len(self.data.value_counts()) > 1
 
-        if distribution == 'metric':
-            fig = _step_plot(
-                table=self.data,
-                metric_column_name='metric_target_drift',
-                chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-                drift_column_name='alert',
-                hover_labels=['Chunk', 'Rate', 'Target data'],
-                title=f'Target distribution over time for {self.metadata.target_column_name}',
-                y_axis_title='Rate of positive occurrences',
-                v_line_separating_analysis_period=plot_period_separator,
-                partial_target_column_name='targets_missing_rate',
-                statistically_significant_column_name='significant',
-            )
-            return fig
-        elif distribution == 'statistical':
-            fig = _step_plot(
-                table=self.data,
-                metric_column_name='statistical_target_drift',
-                chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-                drift_column_name='alert',
-                hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
-                title=f'Chi-square statistic over time for {self.metadata.target_column_name} ',
-                y_axis_title='Chi-square statistic',
-                v_line_separating_analysis_period=plot_period_separator,
-                partial_target_column_name='targets_missing_rate',
-                statistically_significant_column_name='significant',
-            )
-            return fig
+def _plot_distribution(data: pd.DataFrame, calculator, distribution: str, plot_reference: bool) -> go.Figure:
+    plot_period_separator = plot_reference
+
+    data['period'] = 'analysis'
+
+    if plot_reference:
+        reference_results = calculator.previous_reference_results
+        reference_results['period'] = 'reference'
+        data = pd.concat([reference_results, data.copy()], ignore_index=True)
+
+    if distribution == 'metric':
+        fig = _step_plot(
+            table=data,
+            metric_column_name='metric_target_drift',
+            chunk_column_name='key',
+            drift_column_name='alert',
+            hover_labels=['Chunk', 'Rate', 'Target data'],
+            title=f'Target distribution over time for {calculator.y_true}',
+            y_axis_title='Rate of positive occurrences',
+            v_line_separating_analysis_period=plot_period_separator,
+            partial_target_column_name='targets_missing_rate',
+            statistically_significant_column_name='significant',
+        )
+        return fig
+    elif distribution == 'statistical':
+        fig = _step_plot(
+            table=data,
+            metric_column_name='statistical_target_drift',
+            chunk_column_name='key',
+            drift_column_name='alert',
+            hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
+            title=f'Chi-square statistic over time for {calculator.y_true} ',
+            y_axis_title='Chi-square statistic',
+            v_line_separating_analysis_period=plot_period_separator,
+            partial_target_column_name='targets_missing_rate',
+            statistically_significant_column_name='significant',
+        )
+        return fig

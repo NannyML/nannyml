@@ -2,7 +2,7 @@
 Binary Classification: California Housing Dataset
 =================================================
 
-This example outlines a typical workflow for estimating performance of a model without access to ground truth, 
+This example outlines a typical workflow for estimating performance of a model without access to ground truth,
 detecting performance issues and identifying potential root causes for these issues. In this examples, we are
 using NannyML on the modified California Housing Prices dataset.
 
@@ -32,14 +32,6 @@ Let's load the dataset from NannyML's included datasets.
 |  2 |   8.72   |         44 |    6.16318 |     1.04603 |          668 |    2.79498 |      34.2  |     -118.18 | 2020-10-01 02:00:00 | reference   |            1 |           1    |        1 |            2 |
 +----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
 
-Next we extract metadata.
-
-.. code:: python
-
-    >>> # extract metadata, add target column name
-    >>> metadata = nml.extract_metadata(reference, exclude_columns=['identifier'], model_type='classification_binary')
-    >>> metadata.target_column_name = 'clf_target'
-    >>> metadata.timestamp_column_name = 'timestamp'
 
 Performance Estimation
 ======================
@@ -49,9 +41,16 @@ We first want to estimate performance for the analysis period, using the referen
 .. code:: python
 
     >>> # fit performance estimator and estimate for combined reference and analysis
-    >>> cbpe = nml.CBPE(model_metadata=metadata, chunk_period='M', metrics=['roc_auc'])
-    >>> cbpe.fit(reference_data=reference)
-    >>> est_perf = cbpe.estimate(pd.concat([reference, analysis]))
+    >>> cbpe = nml.CBPE(
+    >>>    y_pred_proba='y_pred_proba',
+    >>>    y_pred='y_pred',
+    >>>    y_true='clf_target',
+    >>>    timestamp_column_name='timestamp',
+    >>>    metrics=['roc_auc'],
+    >>>    chunk_period='M'
+    >>> )
+    >>> cbpe.fit(reference)
+    >>> est_perf = cbpe.estimate(analysis)
 
 .. parsed-literal::
 
@@ -63,30 +62,22 @@ We get a warning that some chunks are too small. Let's quickly check what's goin
 
     >>> est_perf.data['end_index'] - est_perf.data['start_index']
 
-    0     743
-    1     719
+    0     719
+    1     743
     2     743
-    3     743
-    4     671
-    5     743
-    6     719
+    3     719
+    4     743
+    5     719
+    6     743
     7     743
-    8     719
+    8     671
     9     743
-    10    743
-    11    719
-    12    743
-    13    719
-    14    743
-    15    743
-    16    671
-    17    743
-    18    719
-    19    215
+    10    719
+    11    215
     dtype: int64
 
 
-The last chunk is smaller than the others due to the selected chunking method. Let's remove it to make sure 
+The last chunk is smaller than the others due to the selected chunking method. Let's remove it to make sure
 everything we visualise is reliable.
 
 .. code:: python
@@ -94,19 +85,20 @@ everything we visualise is reliable.
     >>> est_perf.data = est_perf.data[:-1].copy()
     >>> est_perf.data.tail(2)
 
-+----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
-|    | key     |   start_index |   end_index | start_date          | end_date                      | partition   |   confidence_roc_auc |   realized_roc_auc |   estimated_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |
-+====+=========+===============+=============+=====================+===============================+=============+======================+====================+=====================+===========================+===========================+=================+
-| 17 | 2022-03 |         12384 |       13127 | 2022-03-01 00:00:00 | 2022-03-31 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.829077 |                  0.708336 |                         1 | False           |
-+----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
-| 18 | 2022-04 |         13128 |       13847 | 2022-04-01 00:00:00 | 2022-04-30 23:59:59.999999999 | analysis    |             0.051046 |                nan |            0.910661 |                  0.708336 |                         1 | False           |
-+----+---------+---------------+-------------+---------------------+-------------------------------+-------------+----------------------+--------------------+---------------------+---------------------------+---------------------------+-----------------+
+
++----+---------+---------------+-------------+---------------------+-------------------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+----------+------------------+
+|    | key     |   start_index |   end_index | start_date          | end_date                      |   realized_roc_auc |   estimated_roc_auc |   upper_confidence_roc_auc |   lower_confidence_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   period |   actual_roc_auc |
++====+=========+===============+=============+=====================+===============================+====================+=====================+============================+============================+===========================+===========================+=================+==========+==================+
+| 17 | 2022-03 |          6552 |        7295 | 2022-03-01 00:00:00 | 2022-03-31 23:59:59.999999999 |                nan |            0.829077 |                   0.880123 |                   0.778031 |                  0.708336 |                         1 | False           |      nan |         0.704867 |
++----+---------+---------------+-------------+---------------------+-------------------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+----------+------------------+
+| 18 | 2022-04 |          7296 |        8015 | 2022-04-01 00:00:00 | 2022-04-30 23:59:59.999999999 |                nan |            0.910661 |                   0.961707 |                   0.859615 |                  0.708336 |                         1 | False           |      nan |         0.975394 |
++----+---------+---------------+-------------+---------------------+-------------------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+----------+------------------+
 
 Now we can plot the estimated performance confidently.
 
 .. code:: python
 
-    >>> fig = est_perf.plot(kind='performance', metric='roc_auc')
+    >>> fig = est_perf.plot(kind='performance', metric='roc_auc', plot_reference=True)
     >>> fig.show()
 
 .. image:: ../_static/example_california_performance.svg
@@ -117,7 +109,7 @@ to the month of September.
 Comparison with the actual performance
 ======================================
 
-Because we have the ground truth for our dataset, we can use it to calculate ROC AUC on the relevant chunks, 
+Because we have the ground truth for our dataset, we can use it to calculate ROC AUC on the relevant chunks,
 and compare it to the estimated values.
 
 .. code:: python
@@ -129,16 +121,18 @@ and compare it to the estimated values.
     >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
     >>> df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
     >>> # calculate actual ROC AUC
-    >>> target_col = metadata.target_column_name
+    >>> target_col = 'clf_target'
     >>> pred_score_col = 'y_pred_proba'
     >>> actual_performance = []
+    >>> est_perf.data = pd.concat([est_perf.estimator.previous_reference_results, est_perf.data], ignore_index=True)
     >>> for idx in est_perf.data.index:
-    >>>     start_date, end_date = est_perf.data.loc[idx, 'start_date'], est_perf.data.loc[idx, 'end_date']
-    >>>     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
-    >>>     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    >>>     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
-    >>> # plot
-    >>> first_analysis = est_perf.data[est_perf.data['partition']=='analysis']['key'].values[0]
+    ...     start_date, end_date = est_perf.data.loc[idx, 'start_date'], est_perf.data.loc[idx, 'end_date']
+    ...     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
+    ...     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
+    ...     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
+    >>> 
+    >>> 
+    >>> first_analysis = 8
     >>> plt.plot(est_perf.data['key'], est_perf.data['estimated_roc_auc'], label='estimated AUC')
     >>> plt.plot(est_perf.data['key'], est_perf.data['actual_roc_auc'], label='actual ROC AUC')
     >>> plt.xticks(rotation=90)
@@ -162,34 +156,41 @@ univariate drift detection, and see what we discover.
 
 .. code:: python
 
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(model_metadata=metadata, chunk_period='M').fit(reference_data=reference)
+    >>> feature_column_names = [
+    ...    col for col in reference.columns if col not in [
+    ...        'timestamp', 'y_pred_proba', 'period', 'y_pred', 'clf_target', 'identifier', 'partition'
+    ...    ]
+    >>> ]
+    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
+    ...     feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_period='M'
+    >>> ).fit(reference_data=reference)
     >>> univariate_results = univariate_calculator.calculate(data=analysis)
-    >>> nml.Ranker.by('alert_count').rank(univariate_results, metadata)
+    >>> nml.Ranker.by('alert_count').rank(univariate_results)
 
 
-+----+--------------+--------------------+--------+
-|    | feature      |   number_of_alerts |   rank |
-+====+==============+====================+========+
-|  0 | Latitude     |                 12 |      1 |
-+----+--------------+--------------------+--------+
-|  1 | AveOccup     |                 12 |      2 |
-+----+--------------+--------------------+--------+
-|  2 | Longitude    |                 12 |      3 |
-+----+--------------+--------------------+--------+
-|  3 | HouseAge     |                 12 |      4 |
-+----+--------------+--------------------+--------+
-|  4 | MedInc       |                 11 |      5 |
-+----+--------------+--------------------+--------+
-|  5 | AveRooms     |                 11 |      6 |
-+----+--------------+--------------------+--------+
-|  6 | AveBedrms    |                  8 |      7 |
-+----+--------------+--------------------+--------+
-|  7 | Population   |                  8 |      8 |
-+----+--------------+--------------------+--------+
++----+------------+--------------------+--------+
+|    | feature    |   number_of_alerts |   rank |
++====+============+====================+========+
+|  0 | HouseAge   |                 12 |      1 |
++----+------------+--------------------+--------+
+|  1 | AveOccup   |                 12 |      2 |
++----+------------+--------------------+--------+
+|  2 | Latitude   |                 12 |      3 |
++----+------------+--------------------+--------+
+|  3 | Longitude  |                 12 |      4 |
++----+------------+--------------------+--------+
+|  4 | MedInc     |                 11 |      5 |
++----+------------+--------------------+--------+
+|  5 | AveRooms   |                 11 |      6 |
++----+------------+--------------------+--------+
+|  6 | AveBedrms  |                  8 |      7 |
++----+------------+--------------------+--------+
+|  7 | Population |                  8 |      8 |
++----+------------+--------------------+--------+
 
 
-It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period, 
-we can see that the top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift 
+It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period,
+we can see that the top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift
 by examining the KS distance statistics.
 
 .. code:: python
@@ -222,10 +223,10 @@ distributions for the analysis period.
 .. code:: python
 
     >>> for label in ['Longitude', 'Latitude']:
-    >>>     fig = univariate_results.plot(
-    >>>         kind='feature_distribution',
-    >>>         feature_label=label)
-    >>>     fig.show()
+    ...     fig = univariate_results.plot(
+    ...         kind='feature_distribution',
+    ...         feature_column_name=label)
+    ...     fig.show()
 
 
 .. image:: ../_static/example_california_performance_distribution_Longitude.svg
@@ -238,19 +239,19 @@ nearby locations. Let's see it on a scatter plot:
 
 .. code:: python
 
-    >>> analysis_res = est_perf.data[est_perf.data['partition']=='analysis']
+    >>> analysis_res = est_perf.data.tail(11)
     >>> plt.figure(figsize=(8,6))
     >>> for idx in analysis_res.index[:10]:
-    >>>     start_date, end_date = analysis_res.loc[idx, 'start_date'], analysis_res.loc[idx, 'end_date']
-    >>>     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
-    >>>     plt.scatter(sub['Latitude'], sub['Longitude'], s=5, label="Chunk {}".format(str(idx)))
+    ...     start_date, end_date = analysis_res.loc[idx, 'start_date'], analysis_res.loc[idx, 'end_date']
+    ...     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
+    ...     plt.scatter(sub['Latitude'], sub['Longitude'], s=5, label="Chunk {}".format(str(idx)))
     >>> plt.legend()
     >>> plt.xlabel('Latitude')
     >>> plt.ylabel('Longitude')
 
 .. image:: ../_static/example_california_latitude_longitude_scatter.svg
 
-In this example, NannyML estimated the performance (ROC AUC) of a model without accessing the target data. We can see 
-from our comparison with the targets that the estimate is quite accurate. Next, the potential root causes of the drop in 
-performance were indicated by detecting data drift. This was achieved using univariate methods that identified the features 
+In this example, NannyML estimated the performance (ROC AUC) of a model without accessing the target data. We can see
+from our comparison with the targets that the estimate is quite accurate. Next, the potential root causes of the drop in
+performance were indicated by detecting data drift. This was achieved using univariate methods that identified the features
 which drifted the most.
