@@ -13,6 +13,7 @@ from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
+from nannyml.analytics import UsageEvent, track
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
@@ -123,6 +124,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
+    @track(UsageEvent.MULTIVAR_RECONST_DRIFT_CALC_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
@@ -170,6 +172,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         return self
 
+    @track(UsageEvent.MULTIVAR_RECONST_DRIFT_CALC_RUN)
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> DataReconstructionDriftCalculatorResult:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:

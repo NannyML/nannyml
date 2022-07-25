@@ -18,6 +18,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml._typing import ModelOutputsType
+from nannyml.analytics import UsageEvent, track
 from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -27,6 +28,8 @@ from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
     CBPEPerformanceEstimatorResult,
 )
+
+_tracking_metadata: Dict[str, Any] = {}
 
 
 class _BinaryClassificationCBPE(CBPE):
@@ -71,6 +74,9 @@ class _BinaryClassificationCBPE(CBPE):
 
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
+        _tracking_metadata.update({'metrics': metrics})
+
+    @track(UsageEvent.CBPE_ESTIMATOR_FIT, _tracking_metadata)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
@@ -108,6 +114,7 @@ class _BinaryClassificationCBPE(CBPE):
 
         return self
 
+    @track(UsageEvent.CBPE_ESTIMATOR_RUN, _tracking_metadata)
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:

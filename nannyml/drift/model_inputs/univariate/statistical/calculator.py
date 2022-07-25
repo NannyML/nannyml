@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
+from nannyml.analytics import UsageEvent, track
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateStatisticalDriftCalculatorResult
@@ -95,6 +96,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
+    @track(UsageEvent.UNIVAR_STAT_DRIFT_CALC_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateStatisticalDriftCalculator:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
@@ -107,6 +109,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
 
         return self
 
+    @track(UsageEvent.UNIVAR_STAT_DRIFT_CALC_RUN)
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> UnivariateStatisticalDriftCalculatorResult:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:

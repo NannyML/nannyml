@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency
 
+from nannyml.analytics import UsageEvent, track
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
 from nannyml.drift.target.target_distribution.result import TargetDistributionResult
@@ -94,6 +95,7 @@ class TargetDistributionCalculator(AbstractCalculator):
         # TODO: determine better min_chunk_size for target distribution
         self._minimum_chunk_size = 300
 
+    @track(UsageEvent.TARGET_DISTRIBUTION_DRIFT_CALC_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
         """Fits the calculator to reference data."""
         if reference_data.empty:
@@ -111,6 +113,7 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         return self
 
+    @track(UsageEvent.TARGET_DISTRIBUTION_DRIFT_CALC_RUN)
     def _calculate(self, data: pd.DataFrame, *args, **kwargs):
         """Calculates the target distribution of a binary classifier."""
         if data.empty:

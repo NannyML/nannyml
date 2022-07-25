@@ -6,12 +6,13 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
 from nannyml._typing import ModelOutputsType, derive_use_case
+from nannyml.analytics import UsageEvent, track
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
@@ -19,6 +20,8 @@ from nannyml.performance_calculation.metrics import Metric, MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
+
+_tracking_metadata: Dict[str, Any] = {}
 
 
 class PerformanceCalculator(AbstractCalculator):
@@ -107,6 +110,9 @@ class PerformanceCalculator(AbstractCalculator):
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
+        _tracking_metadata.update({'metrics': metrics})
+
+    @track(UsageEvent.TARGET_DISTRIBUTION_DRIFT_CALC_FIT, _tracking_metadata)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
         if reference_data.empty:
@@ -131,6 +137,7 @@ class PerformanceCalculator(AbstractCalculator):
 
         return self
 
+    @track(UsageEvent.TARGET_DISTRIBUTION_DRIFT_CALC_RUN, _tracking_metadata)
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculatorResult:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:
