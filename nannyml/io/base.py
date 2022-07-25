@@ -29,12 +29,12 @@ class Writer(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def write(self, results) -> Any:
-        if results is None:
+    def write(self, result: Result) -> Any:
+        if result is None:
             raise InvalidArgumentsException("Trying to write 'None'")
 
         try:
-            self._write(results)
+            self._write(result)
         except Exception as exc:
             raise WriterException(f"Failed writing data. \n{str(exc)}")
 
