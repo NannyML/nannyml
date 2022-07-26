@@ -10,10 +10,7 @@ import pytest
 from sklearn.impute import SimpleImputer
 
 from nannyml.chunk import PeriodBasedChunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import (
-    DataReconstructionDriftCalculator,
-    _minimum_chunk_size,
-)
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import DataReconstructionDriftCalculator
 
 
 @pytest.fixture
@@ -193,9 +190,7 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
     ).fit(ref_data)
     drift = calc.calculate(data=sample_drift_data)
 
-    expected = len(
-        PeriodBasedChunker(offset='W').split(sample_drift_data, minimum_chunk_size=1, timestamp_column_name='timestamp')
-    )
+    expected = len(PeriodBasedChunker(offset='W').split(sample_drift_data, timestamp_column_name='timestamp'))
     sut = len(drift.data)
     assert sut == expected
 
@@ -295,15 +290,6 @@ def test_data_reconstruction_drift_calculator_with_only_categorical_should_not_f
         calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
-
-
-def test_data_reconstruction_drift_calculator_minimum_chunk_size_yields_correct_result(sample_drift_data):  # noqa: D103
-    features = ['f1', 'f2', 'f3', 'f4']
-    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    _ = DataReconstructionDriftCalculator(feature_column_names=['f3', 'f4'], timestamp_column_name='timestamp').fit(
-        ref_data
-    )
-    assert _minimum_chunk_size(features) == 63
 
 
 def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_object_raises_typeerror(  # noqa: D103

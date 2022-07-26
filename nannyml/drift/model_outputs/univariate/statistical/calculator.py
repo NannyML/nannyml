@@ -138,9 +138,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
         continuous_columns, categorical_columns = _split_features_by_type(data, columns)
 
-        chunks = self.chunker.split(
-            data, columns=columns, minimum_chunk_size=500, timestamp_column_name=self.timestamp_column_name
-        )
+        chunks = self.chunker.split(data, columns=columns, timestamp_column_name=self.timestamp_column_name)
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.

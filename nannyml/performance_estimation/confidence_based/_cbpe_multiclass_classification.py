@@ -93,9 +93,7 @@ class _MulticlassClassificationCBPE(CBPE):
 
         _list_missing([self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
 
-        reference_chunks = self.chunker.split(
-            reference_data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name
-        )
+        reference_chunks = self.chunker.split(reference_data, timestamp_column_name=self.timestamp_column_name)
 
         self._alert_thresholds = _calculate_alert_thresholds(
             reference_chunks,
@@ -108,8 +106,6 @@ class _MulticlassClassificationCBPE(CBPE):
         self._confidence_deviations = _calculate_confidence_deviations(
             reference_chunks, self.y_pred, self.y_pred_proba, metrics=self.metrics
         )
-
-        self.minimum_chunk_size = 300
 
         self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator)
 
@@ -124,7 +120,7 @@ class _MulticlassClassificationCBPE(CBPE):
 
         data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
 
-        chunks = self.chunker.split(data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
 
         res = pd.DataFrame.from_records(
             [

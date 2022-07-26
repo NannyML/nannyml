@@ -91,9 +91,6 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         # self._reference_targets: pd.Series = None  # type: ignore
 
-        # TODO: determine better min_chunk_size for target distribution
-        self._minimum_chunk_size = 300
-
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
         """Fits the calculator to reference data."""
         if reference_data.empty:
@@ -130,7 +127,6 @@ class TargetDistributionCalculator(AbstractCalculator):
         chunks = self.chunker.split(
             data,
             columns=[self.y_true, 'NML_TARGET_INCOMPLETE'],
-            minimum_chunk_size=self._minimum_chunk_size,
             timestamp_column_name=self.timestamp_column_name,
         )
 

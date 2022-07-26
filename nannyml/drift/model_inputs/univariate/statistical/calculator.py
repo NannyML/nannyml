@@ -118,13 +118,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
             data, self.feature_column_names
         )
 
-        # features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-        chunks = self.chunker.split(
-            data,
-            self.timestamp_column_name,
-            # columns=self.feature_column_names + [NML_METADATA_PERIOD_COLUMN_NAME],
-            minimum_chunk_size=500,
-        )
+        chunks = self.chunker.split(data, self.timestamp_column_name)
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.

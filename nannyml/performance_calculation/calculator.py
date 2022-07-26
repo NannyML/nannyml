@@ -124,8 +124,6 @@ class PerformanceCalculator(AbstractCalculator):
         for metric in self.metrics:
             metric.fit(reference_data=reference_data, chunker=self.chunker)
 
-        self._minimum_chunk_size = np.max([metric.minimum_chunk_size() for metric in self.metrics])
-
         self.previous_reference_data = reference_data
         self.previous_reference_results = self._calculate(reference_data).data
 
@@ -153,7 +151,6 @@ class PerformanceCalculator(AbstractCalculator):
             )
         chunks = self.chunker.split(
             data,
-            minimum_chunk_size=self._minimum_chunk_size,
             timestamp_column_name=self.timestamp_column_name,
         )
 

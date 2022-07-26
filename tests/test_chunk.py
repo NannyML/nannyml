@@ -150,16 +150,6 @@ def test_chunker_should_log_warning_when_less_than_6_chunks(sample_chunk_data, c
         _ = c.split(sample_chunk_data, timestamp_column_name='timestamp')
 
 
-def test_chunker_should_log_warning_when_some_chunks_are_underpopulated(sample_chunk_data, caplog):  # noqa: D103
-    class SimpleChunker(Chunker):
-        def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
-            return [Chunk(key='row0', data=data.iloc[[0]])]
-
-    c = SimpleChunker()
-    with pytest.warns(UserWarning, match="The resulting list of chunks contains 1 underpopulated chunks."):
-        _ = c.split(sample_chunk_data, minimum_chunk_size=100000, timestamp_column_name='timestamp')
-
-
 def test_chunker_should_set_index_boundaries(sample_chunk_data):  # noqa: D103
     class SimpleChunker(Chunker):
         def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:

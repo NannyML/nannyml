@@ -182,10 +182,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         )
 
         chunks = self.chunker.split(
-            data,
-            columns=self.feature_column_names,
-            minimum_chunk_size=_minimum_chunk_size(self.feature_column_names),
-            timestamp_column_name=self.timestamp_column_name,
+            data, columns=self.feature_column_names, timestamp_column_name=self.timestamp_column_name
         )
 
         res = pd.DataFrame.from_records(
@@ -339,10 +336,3 @@ def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_th
     )
 
     return alert
-
-
-def _minimum_chunk_size(
-    features: List[str] = None,
-) -> int:
-
-    return int(20 * np.power(len(features), 5 / 6))  # type: ignore

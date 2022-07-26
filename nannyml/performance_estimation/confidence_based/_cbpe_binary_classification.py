@@ -15,7 +15,6 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
-from sklearn.preprocessing import PolynomialFeatures
 
 from nannyml._typing import ModelOutputsType
 from nannyml.calibration import Calibrator, needs_calibration
@@ -78,17 +77,13 @@ class _BinaryClassificationCBPE(CBPE):
 
         _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
 
-        reference_chunks = self.chunker.split(
-            reference_data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name
-        )
+        reference_chunks = self.chunker.split(reference_data, timestamp_column_name=self.timestamp_column_name)
 
         self._alert_thresholds = self._calculate_alert_thresholds(reference_chunks, metrics=self.metrics)
 
         self._confidence_deviations = _calculate_confidence_deviations(
             reference_chunks, self.y_pred, self.y_pred_proba, metrics=self.metrics
         )
-
-        self.minimum_chunk_size = _minimum_chunk_size(reference_data, self.y_pred, self.y_true)
 
         # Fit calibrator if calibration is needed
         aligned_reference_data = reference_data.reset_index(drop=True)  # fix mismatch between data and shuffle split
@@ -118,7 +113,7 @@ class _BinaryClassificationCBPE(CBPE):
         if self.needs_calibration:
             data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])
 
-        chunks = self.chunker.split(data, minimum_chunk_size=300, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
 
         res = pd.DataFrame.from_records(
             [
@@ -323,55 +318,3 @@ def _calculate_realized_performance(chunk: Chunk, y_true_col: str, y_pred_col: s
         raise InvalidArgumentsException(
             f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
         )
-
-
-def _minimum_chunk_size(
-    data: pd.DataFrame,
-    prediction_column_name: str,
-    target_column_name: str,
-    lower_threshold: int = 300,
-) -> int:
-    def get_prediction(X):
-        # model data
-        h_coefs = [
-            0.00000000e00,
-            -3.46098897e04,
-            2.65871679e04,
-            3.46098897e04,
-            2.29602791e04,
-            -4.96886646e04,
-            -1.12777343e-10,
-            -2.29602791e04,
-            3.13775672e-10,
-            2.48718826e04,
-        ]
-        h_intercept = 1421.9522967076875
-        transformation = PolynomialFeatures(3)
-        #
-
-        inputs = np.asarray(X)
-        transformed_inputs = transformation.fit_transform(inputs)
-        prediction = np.dot(transformed_inputs, h_coefs)[0] + h_intercept
-
-        return prediction
-
-    class_balance = np.mean(data[target_column_name])
-
-    # Clean up NaN values
-    y_true = data[target_column_name]
-    y_pred = data[prediction_column_name]
-
-    y_true = y_true[~y_pred.isna()]
-    y_pred.dropna(inplace=True)
-
-    y_pred = y_pred[~y_true.isna()]
-    y_true.dropna(inplace=True)
-
-    auc = roc_auc_score(y_true=y_true, y_score=y_pred)
-
-    chunk_size = get_prediction([[class_balance, auc]])
-    chunk_size = np.maximum(lower_threshold, chunk_size)
-    chunk_size = np.round(chunk_size, -2)
-    minimum_chunk_size = int(chunk_size)
-
-    return minimum_chunk_size
