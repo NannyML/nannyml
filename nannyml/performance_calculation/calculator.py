@@ -149,10 +149,7 @@ class PerformanceCalculator(AbstractCalculator):
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(
-            data,
-            timestamp_column_name=self.timestamp_column_name,
-        )
+        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
 
         # Construct result frame
         res = pd.DataFrame.from_records(

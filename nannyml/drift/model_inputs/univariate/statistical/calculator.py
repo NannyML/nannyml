@@ -102,6 +102,9 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
 
         _list_missing(self.feature_column_names, reference_data)
 
+        # Reference stability
+        self._reference_stability = 0  # TODO: Jakub
+
         self.previous_reference_data = reference_data.copy()
         self.previous_reference_results = self._calculate(self.previous_reference_data).data
 
@@ -130,6 +133,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
+                'stability': self._reference_stability / len(chunk),  # TODO: Jakub
             }
 
             for column in self.categorical_column_names:

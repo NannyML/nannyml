@@ -185,8 +185,8 @@ class BinaryClassificationAUROC(Metric):
         return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
-        # self._min_chunk_size = _minimum_chunk_size_roc_auc(reference_data)
         _list_missing([self.calculator.y_true, self.calculator.y_pred_proba], list(reference_data.columns))
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
@@ -215,8 +215,8 @@ class BinaryClassificationF1(Metric):
         return "f1"
 
     def _fit(self, reference_data: pd.DataFrame):
-        # self._min_chunk_size = _minimum_chunk_size_f1(reference_data)
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
@@ -245,8 +245,8 @@ class BinaryClassificationPrecision(Metric):
         return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
-        # self._min_chunk_size = _minimum_chunk_size_precision(reference_data)
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
@@ -274,8 +274,8 @@ class BinaryClassificationRecall(Metric):
         return "recall"
 
     def _fit(self, reference_data: pd.DataFrame):
-        # self._min_chunk_size = _minimum_chunk_size_recall(reference_data)
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
@@ -303,8 +303,8 @@ class BinaryClassificationSpecificity(Metric):
         return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
-        # self._min_chunk_size = _minimum_chunk_size_specificity(reference_data)
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
@@ -338,8 +338,8 @@ class BinaryClassificationAccuracy(Metric):
         return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
-        # self._min_chunk_size = _minimum_chunk_size_accuracy(reference_data)
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
@@ -361,6 +361,20 @@ class BinaryClassificationAccuracy(Metric):
             return (tp + tn) / (tp + tn + fp + fn)
 
 
+def _common_data_cleaning(y_true, y_pred):
+    y_true, y_pred = (
+        pd.Series(y_true).reset_index(drop=True),
+        pd.Series(y_pred).reset_index(drop=True),
+    )
+    y_true = y_true[~y_pred.isna()]
+    y_pred.dropna(inplace=True)
+
+    y_pred = y_pred[~y_true.isna()]
+    y_true.dropna(inplace=True)
+
+    return y_true, y_pred
+
+
 @MetricFactory.register(metric='roc_auc', use_case=UseCase.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
@@ -375,6 +389,7 @@ class MulticlassClassificationAUROC(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -419,6 +434,7 @@ class MulticlassClassificationF1(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -459,6 +475,7 @@ class MulticlassClassificationPrecision(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -499,6 +516,7 @@ class MulticlassClassificationRecall(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -539,6 +557,7 @@ class MulticlassClassificationSpecificity(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         if not isinstance(self.calculator.y_pred_proba, Dict):
@@ -583,6 +602,7 @@ class MulticlassClassificationAccuracy(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        self._reference_stability = 0  # TODO: Jakub
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
@@ -599,17 +619,3 @@ class MulticlassClassificationAccuracy(Metric):
             return np.nan
         else:
             return accuracy_score(y_true, y_pred)
-
-
-def _common_data_cleaning(y_true, y_pred):
-    y_true, y_pred = (
-        pd.Series(y_true).reset_index(drop=True),
-        pd.Series(y_pred).reset_index(drop=True),
-    )
-    y_true = y_true[~y_pred.isna()]
-    y_pred.dropna(inplace=True)
-
-    y_pred = y_pred[~y_true.isna()]
-    y_true.dropna(inplace=True)
-
-    return y_true, y_pred

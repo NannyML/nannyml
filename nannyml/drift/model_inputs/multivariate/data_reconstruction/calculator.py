@@ -166,6 +166,9 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         # Calculate thresholds
         self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
 
+        # Reference stability
+        self._reference_stability = 0  # TODO: Jakub
+
         self.previous_reference_results = self._calculate(data=reference_data).data
 
         return self
@@ -193,6 +196,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
+                    'stability': self._reference_stability / len(chunk),  # TODO: Jakub
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
                         feature_column_names=self.feature_column_names,
                         categorical_feature_column_names=self.categorical_feature_column_names,
