@@ -63,6 +63,7 @@ class Metric(abc.ABC):
         self.calculator = calculator
         self.lower_threshold = lower_threshold
         self.upper_threshold = upper_threshold
+        self.reference_stability = 0.0
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
         """Fits a Metric on reference data.

@@ -99,6 +99,9 @@ class _BinaryClassificationCBPE(CBPE):
                 aligned_reference_data[self.y_true],
             )
 
+        # Reference stability
+        self._reference_stability = 0  # TODO: Jakub
+
         self.previous_reference_results = self._estimate(reference_data).data
 
         return self
