@@ -79,7 +79,7 @@ class _BinaryClassificationCBPE(CBPE):
 
         reference_chunks = self.chunker.split(reference_data, timestamp_column_name=self.timestamp_column_name)
 
-        self._alert_thresholds = self._calculate_alert_thresholds(reference_chunks, metrics=self.metrics)
+        # self._alert_thresholds = self._calculate_alert_thresholds(reference_chunks, metrics=self.metrics)
 
         self._confidence_deviations = _calculate_confidence_deviations(
             reference_chunks, self.y_pred, self.y_pred_proba, metrics=self.metrics
