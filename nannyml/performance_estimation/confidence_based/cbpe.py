@@ -13,6 +13,7 @@ from nannyml.base import AbstractEstimator
 from nannyml.calibration import Calibrator, CalibratorFactory
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based.metrics import Metric, MetricFactory
 from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
     CBPEPerformanceEstimatorResult,
@@ -120,12 +121,9 @@ class CBPE(AbstractEstimator):
                 f"Supported values are {SUPPORTED_METRIC_VALUES}."
             )
 
-        for metric in metrics:
-            if metric not in SUPPORTED_METRIC_VALUES:
-                raise InvalidArgumentsException(
-                    f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
-                )
-        self.metrics = metrics
+        self.metrics = [
+            MetricFactory.create(metric, derive_use_case(y_pred_proba), {'estimator': self}) for metric in metrics
+        ]
 
         self._confidence_deviations: Dict[str, float] = {}
         self._alert_thresholds: Dict[str, Tuple[float, float]] = {}

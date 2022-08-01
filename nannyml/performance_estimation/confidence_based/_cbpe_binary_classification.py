@@ -22,6 +22,7 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics import _list_missing
 from nannyml.performance_estimation.confidence_based import CBPE
+from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
     CBPEPerformanceEstimatorResult,
@@ -77,13 +78,8 @@ class _BinaryClassificationCBPE(CBPE):
 
         _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
 
-        reference_chunks = self.chunker.split(reference_data, timestamp_column_name=self.timestamp_column_name)
-
-        # self._alert_thresholds = self._calculate_alert_thresholds(reference_chunks, metrics=self.metrics)
-
-        self._confidence_deviations = _calculate_confidence_deviations(
-            reference_chunks, self.y_pred, self.y_pred_proba, metrics=self.metrics
-        )
+        for metric in self.metrics:
+            metric.fit(reference_data)
 
         # Fit calibrator if calibration is needed
         aligned_reference_data = reference_data.reset_index(drop=True)  # fix mismatch between data and shuffle split
@@ -98,9 +94,6 @@ class _BinaryClassificationCBPE(CBPE):
                 aligned_reference_data[self.y_pred_proba],
                 aligned_reference_data[self.y_true],
             )
-
-        # Reference stability
-        self._reference_stability = 0  # TODO: Jakub
 
         self.previous_reference_results = self._estimate(reference_data).data
 
