@@ -29,6 +29,7 @@ clean:
 	rm -rf *.egg-info
 	rm -rf .tox dist site
 	rm -rf coverage.xml .coverage
+	find . -type d -name __pycache__ -exec rm -r {} \+
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -rf docs/nannyml
