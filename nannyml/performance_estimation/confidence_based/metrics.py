@@ -84,11 +84,10 @@ class Metric(abc.ABC):
         Parameters
         ----------
         data: pd.DataFrame
-            The data to calculate performance metrics on. Requires presence of either the predicted labels or
-            prediction scores/probabilities (depending on the metric to be calculated), as well as the target data.
+            The data to estimate performance metrics for. Requires presence of either the predicted labels or
+            prediction scores/probabilities (depending on the metric to be calculated).
         """
-        reference_chunks = self.estimator.chunker.split(data, self.estimator.timestamp_column_name)
-        return self._estimate(reference_chunks)
+        return self._estimate(data)
 
     @abc.abstractmethod
     def _estimate(self, data: pd.DataFrame):
@@ -104,7 +103,7 @@ class Metric(abc.ABC):
     def _alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
     ) -> Tuple[float, float]:
-        realized_chunk_performance = [self._realized_performance(chunk) for chunk in reference_chunks]
+        realized_chunk_performance = [self.realized_performance(chunk.data) for chunk in reference_chunks]
         deviation = np.std(realized_chunk_performance) * std_num
         mean_realised_performance = np.mean(realized_chunk_performance)
         lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
@@ -113,7 +112,7 @@ class Metric(abc.ABC):
         return lower_threshold, upper_threshold
 
     @abc.abstractmethod
-    def _realized_performance(self, chunk: Chunk) -> float:
+    def realized_performance(self, data: pd.DataFrame) -> float:
         raise NotImplementedError
 
     def __eq__(self, other):
@@ -219,8 +218,8 @@ class BinaryClassificationAUROC(Metric):
         metric = auc(fpr, tpr)
         return metric
 
-    def _realized_performance(self, chunk: Chunk) -> float:
-        y_pred_proba, _, y_true = self._common_cleaning(chunk.data)
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        y_pred_proba, _, y_true = self._common_cleaning(data)
         return roc_auc_score(y_true, y_pred_proba)
 
     def _reference_stability(self, reference_chunks: List[Chunk]) -> float:

@@ -131,24 +131,26 @@ class _BinaryClassificationCBPE(CBPE):
     def __estimate(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
-            estimated_metric = _estimate_metric(
-                data=chunk.data, y_pred=self.y_pred, y_pred_proba=self.y_pred_proba, metric=metric
+            # estimated_metric = _estimate_metric(
+            #     data=chunk.data, y_pred=self.y_pred, y_pred_proba=self.y_pred_proba, metric=metric
+            # )
+            estimated_metric = metric.estimate(chunk.data)
+            # estimates[f'realized_{metric}'] = _calculate_realized_performance(
+            #     chunk, self.y_true, self.y_pred, self.y_pred_proba, metric
+            # )
+            estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
+            estimates[f'estimated_{metric.column_name}'] = estimated_metric
+            estimates[f'upper_confidence_{metric.column_name}'] = min(
+                self.confidence_upper_bound, estimated_metric + metric.confidence_deviation
             )
-            estimates[f'realized_{metric}'] = _calculate_realized_performance(
-                chunk, self.y_true, self.y_pred, self.y_pred_proba, metric
+            estimates[f'lower_confidence_{metric.column_name}'] = max(
+                self.confidence_lower_bound, estimated_metric - metric.confidence_deviation
             )
-            estimates[f'estimated_{metric}'] = estimated_metric
-            estimates[f'upper_confidence_{metric}'] = min(
-                self.confidence_upper_bound, estimated_metric + self._confidence_deviations[metric]
-            )
-            estimates[f'lower_confidence_{metric}'] = max(
-                self.confidence_lower_bound, estimated_metric - self._confidence_deviations[metric]
-            )
-            estimates[f'upper_threshold_{metric}'] = self._alert_thresholds[metric][0]
-            estimates[f'lower_threshold_{metric}'] = self._alert_thresholds[metric][1]
+            estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
+            estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
             estimates[f'alert_{metric}'] = (
-                estimated_metric > self._alert_thresholds[metric][1]
-                or estimated_metric < self._alert_thresholds[metric][0]
+                estimated_metric > metric.upper_threshold
+                or estimated_metric < metric.lower_threshold
             )
         return estimates
 
@@ -174,39 +176,39 @@ class _BinaryClassificationCBPE(CBPE):
             alert_thresholds[metric] = (lower_threshold, upper_threshold)
         return alert_thresholds
 
-
-def _estimate_metric(data: pd.DataFrame, y_pred: str, y_pred_proba: str, metric: str) -> float:
-    if metric == 'roc_auc':
-        return _estimate_roc_auc(data[y_pred_proba])
-    elif metric == 'f1':
-        return _estimate_f1(
-            y_pred=data[y_pred],
-            y_pred_proba=data[y_pred_proba],
-        )
-    elif metric == 'precision':
-        return _estimate_precision(
-            y_pred=data[y_pred],
-            y_pred_proba=data[y_pred_proba],
-        )
-    elif metric == 'recall':
-        return _estimate_recall(
-            y_pred=data[y_pred],
-            y_pred_proba=data[y_pred_proba],
-        )
-    elif metric == 'specificity':
-        return _estimate_specificity(
-            y_pred=data[y_pred],
-            y_pred_proba=data[y_pred_proba],
-        )
-    elif metric == 'accuracy':
-        return _estimate_accuracy(
-            y_pred=data[y_pred],
-            y_pred_proba=data[y_pred_proba],
-        )
-    else:
-        raise InvalidArgumentsException(
-            f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
-        )
+#
+# def _estimate_metric(data: pd.DataFrame, y_pred: str, y_pred_proba: str, metric: str) -> float:
+#     if metric == 'roc_auc':
+#         return _estimate_roc_auc(data[y_pred_proba])
+#     elif metric == 'f1':
+#         return _estimate_f1(
+#             y_pred=data[y_pred],
+#             y_pred_proba=data[y_pred_proba],
+#         )
+#     elif metric == 'precision':
+#         return _estimate_precision(
+#             y_pred=data[y_pred],
+#             y_pred_proba=data[y_pred_proba],
+#         )
+#     elif metric == 'recall':
+#         return _estimate_recall(
+#             y_pred=data[y_pred],
+#             y_pred_proba=data[y_pred_proba],
+#         )
+#     elif metric == 'specificity':
+#         return _estimate_specificity(
+#             y_pred=data[y_pred],
+#             y_pred_proba=data[y_pred_proba],
+#         )
+#     elif metric == 'accuracy':
+#         return _estimate_accuracy(
+#             y_pred=data[y_pred],
+#             y_pred_proba=data[y_pred_proba],
+#         )
+#     else:
+#         raise InvalidArgumentsException(
+#             f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
+#         )
 
 
 def _estimate_roc_auc(y_pred_proba: pd.Series) -> float:
