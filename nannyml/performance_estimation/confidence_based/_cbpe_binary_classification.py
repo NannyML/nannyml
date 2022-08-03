@@ -119,7 +119,7 @@ class _BinaryClassificationCBPE(CBPE):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    **self.__estimate(chunk),
+                    **self._estimate_chunk(chunk),
                 }
                 for chunk in chunks
             ]
@@ -128,16 +128,10 @@ class _BinaryClassificationCBPE(CBPE):
         res = res.reset_index(drop=True)
         return CBPEPerformanceEstimatorResult(results_data=res, estimator=self)
 
-    def __estimate(self, chunk: Chunk) -> Dict:
+    def _estimate_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
-            # estimated_metric = _estimate_metric(
-            #     data=chunk.data, y_pred=self.y_pred, y_pred_proba=self.y_pred_proba, metric=metric
-            # )
             estimated_metric = metric.estimate(chunk.data)
-            # estimates[f'realized_{metric}'] = _calculate_realized_performance(
-            #     chunk, self.y_true, self.y_pred, self.y_pred_proba, metric
-            # )
             estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
             estimates[f'estimated_{metric.column_name}'] = estimated_metric
             estimates[f'upper_confidence_{metric.column_name}'] = min(
@@ -148,171 +142,8 @@ class _BinaryClassificationCBPE(CBPE):
             )
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
-            estimates[f'alert_{metric}'] = (
+            estimates[f'alert_{metric.column_name}'] = (
                 estimated_metric > metric.upper_threshold
                 or estimated_metric < metric.lower_threshold
             )
         return estimates
-
-    def _calculate_alert_thresholds(
-        self,
-        reference_chunks: List[Chunk],
-        metrics: List[str],
-        std_num: int = 3,
-        lower_limit: int = 0,
-        upper_limit: int = 1,
-    ) -> Dict[str, Tuple[float, float]]:
-        alert_thresholds = {}
-        for metric in metrics:
-            realised_performance_chunks = [
-                _calculate_realized_performance(chunk, self.y_true, self.y_pred, self.y_pred_proba, metric)
-                for chunk in reference_chunks
-            ]
-            deviation = np.std(realised_performance_chunks) * std_num
-            mean_realised_performance = np.mean(realised_performance_chunks)
-            lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
-            upper_threshold = np.minimum(mean_realised_performance + deviation, upper_limit)
-
-            alert_thresholds[metric] = (lower_threshold, upper_threshold)
-        return alert_thresholds
-
-#
-# def _estimate_metric(data: pd.DataFrame, y_pred: str, y_pred_proba: str, metric: str) -> float:
-#     if metric == 'roc_auc':
-#         return _estimate_roc_auc(data[y_pred_proba])
-#     elif metric == 'f1':
-#         return _estimate_f1(
-#             y_pred=data[y_pred],
-#             y_pred_proba=data[y_pred_proba],
-#         )
-#     elif metric == 'precision':
-#         return _estimate_precision(
-#             y_pred=data[y_pred],
-#             y_pred_proba=data[y_pred_proba],
-#         )
-#     elif metric == 'recall':
-#         return _estimate_recall(
-#             y_pred=data[y_pred],
-#             y_pred_proba=data[y_pred_proba],
-#         )
-#     elif metric == 'specificity':
-#         return _estimate_specificity(
-#             y_pred=data[y_pred],
-#             y_pred_proba=data[y_pred_proba],
-#         )
-#     elif metric == 'accuracy':
-#         return _estimate_accuracy(
-#             y_pred=data[y_pred],
-#             y_pred_proba=data[y_pred_proba],
-#         )
-#     else:
-#         raise InvalidArgumentsException(
-#             f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
-#         )
-
-
-def _estimate_roc_auc(y_pred_proba: pd.Series) -> float:
-    thresholds = np.sort(y_pred_proba)
-    one_min_thresholds = 1 - thresholds
-
-    TP = np.cumsum(thresholds[::-1])[::-1]
-    FP = np.cumsum(one_min_thresholds[::-1])[::-1]
-
-    thresholds_with_zero = np.insert(thresholds, 0, 0, axis=0)[:-1]
-    one_min_thresholds_with_zero = np.insert(one_min_thresholds, 0, 0, axis=0)[:-1]
-
-    FN = np.cumsum(thresholds_with_zero)
-    TN = np.cumsum(one_min_thresholds_with_zero)
-
-    non_duplicated_thresholds = np.diff(np.insert(thresholds, 0, -1, axis=0)).astype(bool)
-    TP = TP[non_duplicated_thresholds]
-    FP = FP[non_duplicated_thresholds]
-    FN = FN[non_duplicated_thresholds]
-    TN = TN[non_duplicated_thresholds]
-
-    tpr = TP / (TP + FN)
-    fpr = FP / (FP + TN)
-    metric = auc(fpr, tpr)
-    return metric
-
-
-def _estimate_f1(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
-    fn = np.where(y_pred == 0, y_pred_proba, 0)
-    TP, FP, FN = np.sum(tp), np.sum(fp), np.sum(fn)
-    metric = TP / (TP + 0.5 * (FP + FN))
-    return metric
-
-
-def _estimate_precision(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
-    TP, FP = np.sum(tp), np.sum(fp)
-    metric = TP / (TP + FP)
-    return metric
-
-
-def _estimate_recall(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    fn = np.where(y_pred == 0, y_pred_proba, 0)
-    TP, FN = np.sum(tp), np.sum(fn)
-    metric = TP / (TP + FN)
-    return metric
-
-
-def _estimate_specificity(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
-    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
-    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
-    TN, FP = np.sum(tn), np.sum(fp)
-    metric = TN / (TN + FP)
-    return metric
-
-
-def _estimate_accuracy(y_pred: np.ndarray, y_pred_proba: np.ndarray) -> float:
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
-    TP, TN = np.sum(tp), np.sum(tn)
-    metric = (TP + TN) / len(y_pred)
-    return metric
-
-
-def _calculate_confidence_deviations(reference_chunks: List[Chunk], y_pred: str, y_pred_proba: str, metrics: List[str]):
-    return {
-        metric: np.std([_estimate_metric(chunk.data, y_pred, y_pred_proba, metric) for chunk in reference_chunks])
-        for metric in metrics
-    }
-
-
-def _calculate_realized_performance(chunk: Chunk, y_true_col: str, y_pred_col: str, y_pred_proba_col: str, metric: str):
-    if y_true_col not in chunk.data.columns or chunk.data[y_true_col].isna().all():
-        return np.NaN
-
-    y_true = chunk.data[y_true_col]
-    y_pred_proba = chunk.data[y_pred_proba_col]
-    y_pred = chunk.data[y_pred_col]
-
-    y_true = y_true[~y_pred_proba.isna()]
-    y_pred_proba.dropna(inplace=True)
-
-    y_pred_proba = y_pred_proba[~y_true.isna()]
-    y_pred = y_pred[~y_true.isna()]
-    y_true.dropna(inplace=True)
-
-    if metric == 'roc_auc':
-        return roc_auc_score(y_true, y_pred_proba)
-    elif metric == 'f1':
-        return f1_score(y_true=y_true, y_pred=y_pred)
-    elif metric == 'precision':
-        return precision_score(y_true=y_true, y_pred=y_pred)
-    elif metric == 'recall':
-        return recall_score(y_true=y_true, y_pred=y_pred)
-    elif metric == 'specificity':
-        conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
-        return conf_matrix[1, 1] / (conf_matrix[1, 0] + conf_matrix[1, 1])
-    elif metric == 'accuracy':
-        return accuracy_score(y_true=y_true, y_pred=y_pred)
-    else:
-        raise InvalidArgumentsException(
-            f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
-        )

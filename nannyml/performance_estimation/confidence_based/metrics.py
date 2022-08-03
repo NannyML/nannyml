@@ -4,7 +4,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import auc, roc_auc_score
+from sklearn.metrics import auc, roc_auc_score, f1_score, precision_score, recall_score, confusion_matrix, \
+    accuracy_score, multilabel_confusion_matrix
+from sklearn.preprocessing import label_binarize
 
 from nannyml._typing import UseCase
 from nannyml.base import AbstractEstimator
@@ -120,19 +122,21 @@ class Metric(abc.ABC):
         return self.display_name == other.display_name and self.column_name == other.column_name
 
     def _common_cleaning(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
-            return np.NaN
+        clean_targets = self.estimator.y_true in data.columns and not data[self.estimator.y_true].isna().all()
 
-        y_true = data[self.estimator.y_true]
         y_pred_proba = data[self.estimator.y_pred_proba]
         y_pred = data[self.estimator.y_pred]
 
-        y_true = y_true[~y_pred_proba.isna()]
         y_pred_proba.dropna(inplace=True)
 
-        y_pred_proba = y_pred_proba[~y_true.isna()]
-        y_pred = y_pred[~y_true.isna()]
-        y_true.dropna(inplace=True)
+        if clean_targets:
+            y_true = data[self.estimator.y_true]
+            y_true = y_true[~y_pred_proba.isna()]
+            y_pred_proba = y_pred_proba[~y_true.isna()]
+            y_pred = y_pred[~y_true.isna()]
+            y_true.dropna(inplace=True)
+        else:
+            y_true = None
 
         return y_pred_proba, y_pred, y_true
 
@@ -195,32 +199,415 @@ class BinaryClassificationAUROC(Metric):
     def _estimate(self, data: pd.DataFrame):
         y_pred_proba = data[self.estimator.y_pred_proba]
 
-        thresholds = np.sort(y_pred_proba)
-        one_min_thresholds = 1 - thresholds
-
-        TP = np.cumsum(thresholds[::-1])[::-1]
-        FP = np.cumsum(one_min_thresholds[::-1])[::-1]
-
-        thresholds_with_zero = np.insert(thresholds, 0, 0, axis=0)[:-1]
-        one_min_thresholds_with_zero = np.insert(one_min_thresholds, 0, 0, axis=0)[:-1]
-
-        FN = np.cumsum(thresholds_with_zero)
-        TN = np.cumsum(one_min_thresholds_with_zero)
-
-        non_duplicated_thresholds = np.diff(np.insert(thresholds, 0, -1, axis=0)).astype(bool)
-        TP = TP[non_duplicated_thresholds]
-        FP = FP[non_duplicated_thresholds]
-        FN = FN[non_duplicated_thresholds]
-        TN = TN[non_duplicated_thresholds]
-
-        tpr = TP / (TP + FN)
-        fpr = FP / (FP + TN)
-        metric = auc(fpr, tpr)
-        return metric
-
     def realized_performance(self, data: pd.DataFrame) -> float:
         y_pred_proba, _, y_true = self._common_cleaning(data)
+
+        if y_true is None:
+            return np.NaN
+
         return roc_auc_score(y_true, y_pred_proba)
 
     def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
         return 0  # TODO: Jakub
+
+
+def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
+    thresholds = np.sort(y_pred_proba)
+    one_min_thresholds = 1 - thresholds
+
+    TP = np.cumsum(thresholds[::-1])[::-1]
+    FP = np.cumsum(one_min_thresholds[::-1])[::-1]
+
+    thresholds_with_zero = np.insert(thresholds, 0, 0, axis=0)[:-1]
+    one_min_thresholds_with_zero = np.insert(one_min_thresholds, 0, 0, axis=0)[:-1]
+
+    FN = np.cumsum(thresholds_with_zero)
+    TN = np.cumsum(one_min_thresholds_with_zero)
+
+    non_duplicated_thresholds = np.diff(np.insert(thresholds, 0, -1, axis=0)).astype(bool)
+    TP = TP[non_duplicated_thresholds]
+    FP = FP[non_duplicated_thresholds]
+    FN = FN[non_duplicated_thresholds]
+    TN = TN[non_duplicated_thresholds]
+
+    tpr = TP / (TP + FN)
+    fpr = FP / (FP + TN)
+    metric = auc(fpr, tpr)
+    return metric
+
+
+@MetricFactory.register('f1', UseCase.CLASSIFICATION_BINARY)
+class BinaryClassificationF1(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='F1', column_name='f1', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_pred_proba = data[self.estimator.y_pred_proba]
+        y_pred = data[self.estimator.y_pred]
+
+        return estimate_f1(y_pred, y_pred_proba)
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data)
+
+        if y_true is None:
+            return np.NaN
+
+        return f1_score(y_true=y_true, y_pred=y_pred)
+
+
+def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
+    fn = np.where(y_pred == 0, y_pred_proba, 0)
+    TP, FP, FN = np.sum(tp), np.sum(fp), np.sum(fn)
+    metric = TP / (TP + 0.5 * (FP + FN))
+    return metric
+
+
+@MetricFactory.register('precision', UseCase.CLASSIFICATION_BINARY)
+class BinaryClassificationPrecision(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Precision', column_name='precision', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_pred_proba = data[self.estimator.y_pred_proba]
+        y_pred = data[self.estimator.y_pred]
+
+        estimate_precision(y_pred, y_pred_proba)
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data)
+
+        if y_true is None:
+            return np.NaN
+
+        return precision_score(y_true=y_true, y_pred=y_pred)
+
+
+def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
+    TP, FP = np.sum(tp), np.sum(fp)
+    metric = TP / (TP + FP)
+    return metric
+
+
+@MetricFactory.register('recall', UseCase.CLASSIFICATION_BINARY)
+class BinaryClassificationRecall(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Recall', column_name='recall', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_pred_proba = data[self.estimator.y_pred_proba]
+        y_pred = data[self.estimator.y_pred]
+
+        return estimate_recall(y_pred, y_pred_proba)
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data)
+
+        if y_true is None:
+            return np.NaN
+
+        return recall_score(y_true=y_true, y_pred=y_pred)
+
+
+def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    fn = np.where(y_pred == 0, y_pred_proba, 0)
+    TP, FN = np.sum(tp), np.sum(fn)
+    metric = TP / (TP + FN)
+    return metric
+
+
+@MetricFactory.register('specificity', UseCase.CLASSIFICATION_BINARY)
+class BinaryClassificationSpecificity(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Specificity', column_name='specificity', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_pred_proba = data[self.estimator.y_pred_proba]
+        y_pred = data[self.estimator.y_pred]
+
+        return estimate_specificity(y_pred, y_pred_proba)
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data)
+
+        if y_true is None:
+            return np.NaN
+
+        conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
+        return conf_matrix[1, 1] / (conf_matrix[1, 0] + conf_matrix[1, 1])
+
+
+def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
+    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
+    TN, FP = np.sum(tn), np.sum(fp)
+    metric = TN / (TN + FP)
+    return metric
+
+
+@MetricFactory.register('accuracy', UseCase.CLASSIFICATION_BINARY)
+class BinaryClassificationAccuracy(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Accuracy', column_name='accuracy', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_pred_proba = data[self.estimator.y_pred_proba]
+        y_pred = data[self.estimator.y_pred]
+
+        return estimate_accuracy(y_pred, y_pred_proba)
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data)
+
+        if y_true is None:
+            return np.NaN
+
+        return accuracy_score(y_true=y_true, y_pred=y_pred)
+
+
+def estimate_accuracy(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
+    TP, TN = np.sum(tp), np.sum(tn)
+    metric = (TP + TN) / len(y_pred)
+    return metric
+
+
+def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str]):
+    classes = sorted(y_pred_proba.keys())
+    y_preds = list(label_binarize(data[y_pred], classes=classes).T)
+
+    y_pred_probas = [data[y_pred_proba[clazz]] for clazz in classes]
+    return y_preds, y_pred_probas, classes
+
+
+def _get_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str]):
+    labels, class_probability_columns = [], []
+    for label in sorted(y_pred_proba.keys()):
+        labels.append(label)
+        class_probability_columns.append(y_pred_proba[label])
+    return data[y_pred], data[class_probability_columns], labels
+
+
+@MetricFactory.register('roc_auc', UseCase.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationAUROC(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='ROC AUC', column_name='roc_auc', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
+                                                                    self.estimator.y_pred_proba)
+        ovr_estimates = []
+        for y_pred_proba_class in y_pred_probas:
+            ovr_estimates.append(estimate_roc_auc(y_pred_proba_class))
+        multiclass_roc_auc = np.mean(ovr_estimates)
+        return multiclass_roc_auc
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+            return np.NaN
+
+        y_true = data[self.estimator.y_true]
+        _, y_pred_probas, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+
+        return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
+
+
+@MetricFactory.register('f1', UseCase.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationF1(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='F1', column_name='f1', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
+                                                                          self.estimator.y_pred_proba)
+        ovr_estimates = []
+        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
+            ovr_estimates.append(estimate_f1(y_pred, y_pred_proba))
+        multiclass_metric = np.mean(ovr_estimates)
+
+        return multiclass_metric
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+            return np.NaN
+
+        y_true = data[self.estimator.y_true]
+        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+
+        return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+
+
+@MetricFactory.register('precision', UseCase.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationPrecision(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Precision', column_name='precision', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
+                                                                          self.estimator.y_pred_proba)
+        ovr_estimates = []
+        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
+            ovr_estimates.append(estimate_precision(y_pred, y_pred_proba))
+        multiclass_metric = np.mean(ovr_estimates)
+
+        return multiclass_metric
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+            return np.NaN
+
+        y_true = data[self.estimator.y_true]
+        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+
+        return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+
+
+@MetricFactory.register('recall', UseCase.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationRecall(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Recall', column_name='recall', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
+                                                                          self.estimator.y_pred_proba)
+        ovr_estimates = []
+        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
+            ovr_estimates.append(estimate_recall(y_pred, y_pred_proba))
+        multiclass_metric = np.mean(ovr_estimates)
+
+        return multiclass_metric
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+            return np.NaN
+
+        y_true = data[self.estimator.y_true]
+        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+
+        return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+
+
+@MetricFactory.register('specificity', UseCase.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationRecall(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Specificity', column_name='specificity', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
+                                                                          self.estimator.y_pred_proba)
+        ovr_estimates = []
+        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
+            ovr_estimates.append(estimate_specificity(y_pred, y_pred_proba))
+        multiclass_metric = np.mean(ovr_estimates)
+
+        return multiclass_metric
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+            return np.NaN
+
+        y_true = data[self.estimator.y_true]
+        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+
+        mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        tn_sum = mcm[:, 0, 0]
+        fp_sum = mcm[:, 0, 1]
+        class_wise_specificity = tn_sum / (tn_sum + fp_sum)
+        return np.mean(class_wise_specificity)  # type: ignore
+
+
+@MetricFactory.register('accuracy', UseCase.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationAccuracy(Metric):
+    def __init__(self, estimator):
+        super().__init__(display_name='Accuracy', column_name='accuracy', estimator=estimator)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        pass
+
+    def _estimate(self, data: pd.DataFrame):
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
+                                                                          self.estimator.y_pred_proba)
+        ovr_estimates = []
+        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
+            ovr_estimates.append(estimate_accuracy(y_pred, y_pred_proba))
+        multiclass_metric = np.mean(ovr_estimates)
+
+        return multiclass_metric
+
+    def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
+        return 0.0  # TODO: Jakub
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+            return np.NaN
+
+        y_true = data[self.estimator.y_true]
+        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+
+        return accuracy_score(y_true, y_pred)
