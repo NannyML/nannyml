@@ -6,14 +6,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    accuracy_score,
-    f1_score,
-    multilabel_confusion_matrix,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
 from sklearn.preprocessing import label_binarize
 
 from nannyml._typing import ModelOutputsType, model_output_column_names
@@ -22,10 +14,7 @@ from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
-
-from nannyml.performance_estimation.confidence_based.results import (
-    CBPEPerformanceEstimatorResult,
-)
+from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
 
 
 class _MulticlassClassificationCBPE(CBPE):
@@ -128,167 +117,9 @@ class _MulticlassClassificationCBPE(CBPE):
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
             estimates[f'alert_{metric.column_name}'] = (
-                estimated_metric > metric.upper_threshold
-                or estimated_metric < metric.lower_threshold
+                estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
             )
         return estimates
-
-
-# def _get_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str]):
-#     classes = sorted(y_pred_proba.keys())
-#     y_preds = list(label_binarize(data[y_pred], classes=classes).T)
-#
-#     y_pred_probas = [data[y_pred_proba[clazz]] for clazz in classes]
-#     return y_preds, y_pred_probas
-
-
-# def _estimate_metric(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str], metric: str) -> float:
-#     if metric == 'roc_auc':
-#         return _estimate_roc_auc(data[[v for k, v in y_pred_proba.items()]])
-#     elif metric == 'f1':
-#         y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
-#         return _estimate_f1(y_preds, y_pred_probas)
-#     elif metric == 'precision':
-#         y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
-#         return _estimate_precision(y_preds, y_pred_probas)
-#     elif metric == 'recall':
-#         y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
-#         return _estimate_recall(y_preds, y_pred_probas)
-#     elif metric == 'specificity':
-#         y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
-#         return _estimate_specificity(y_preds, y_pred_probas)
-#     elif metric == 'accuracy':
-#         y_preds, y_pred_probas = _get_predictions(data, y_pred, y_pred_proba)
-#         return _estimate_accuracy(y_preds, y_pred_probas)
-#     else:
-#         raise InvalidArgumentsException(
-#             f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
-#         )
-
-
-# def _estimate_roc_auc(y_pred_probas: pd.DataFrame) -> float:
-#     ovr_roc_auc_estimates = []
-#     for y_pred_proba_class in [y_pred_probas[col] for col in y_pred_probas]:
-#         ovr_roc_auc_estimates.append(estimate_binary_roc_auc(y_pred_proba_class))
-#     multiclass_roc_auc = np.mean(ovr_roc_auc_estimates)
-#
-#     return multiclass_roc_auc
-
-
-# def _estimate_f1(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
-#     ovr_f1_estimates = []
-#     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-#         ovr_f1_estimates.append(estimate_binary_f1(y_pred, y_pred_proba))
-#     multiclass_metric = np.mean(ovr_f1_estimates)
-#
-#     return multiclass_metric
-
-
-# def _estimate_precision(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
-#     ovr_precision_estimates = []
-#     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-#         ovr_precision_estimates.append(estimate_binary_precision(y_pred, y_pred_proba))
-#     multiclass_metric = np.mean(ovr_precision_estimates)
-#
-#     return multiclass_metric
-
-
-# def _estimate_recall(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
-#     ovr_recall_estimates = []
-#     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-#         ovr_recall_estimates.append(estimate_binary_recall(y_pred, y_pred_proba))
-#
-#     multiclass_metric = np.mean(ovr_recall_estimates)
-#
-#     return multiclass_metric
-
-#
-# def _estimate_specificity(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
-#     ovr_specificity_estimates = []
-#     for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-#         ovr_specificity_estimates.append(estimate_binary_specificity(y_pred, y_pred_proba))
-#
-#     multiclass_metric = np.mean(ovr_specificity_estimates)
-#
-#     return multiclass_metric
-#
-#
-# def _estimate_accuracy(y_preds: List[np.ndarray], y_pred_probas: List[np.ndarray]) -> float:
-#     y_preds_array = np.asarray(y_preds).T
-#     y_pred_probas_array = np.asarray(y_pred_probas).T
-#     probability_of_predicted = np.max(y_preds_array * y_pred_probas_array, axis=1)
-#     metric = np.mean(probability_of_predicted)
-#     return metric
-
-
-# def _calculate_alert_thresholds(
-#     reference_chunks: List[Chunk],
-#     metrics: List[str],
-#     y_true: str,
-#     y_pred: str,
-#     y_pred_proba: Dict[str, str],
-#     std_num: int = 3,
-#     lower_limit: int = 0,
-#     upper_limit: int = 1,
-# ) -> Dict[str, Tuple[float, float]]:
-#
-#     alert_thresholds = {}
-#     for metric in metrics:
-#         realised_performance_chunks = [
-#             _calculate_realized_performance(chunk, y_true, y_pred, y_pred_proba, metric) for chunk in reference_chunks
-#         ]
-#         deviation = np.std(realised_performance_chunks) * std_num
-#         mean_realised_performance = np.mean(realised_performance_chunks)
-#         lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
-#         upper_threshold = np.minimum(mean_realised_performance + deviation, upper_limit)
-#
-#         alert_thresholds[metric] = (lower_threshold, upper_threshold)
-#     return alert_thresholds
-
-
-# def _calculate_realized_performance(chunk: Chunk, y_true: str, y_pred: str, y_pred_proba: Dict[str, str], metric: str):
-#     if y_true not in chunk.data.columns or chunk.data[y_true].isna().all():
-#         return np.NaN
-#
-#     # Make sure labels and class_probability_columns have the same ordering
-#     labels, class_probability_columns = [], []
-#     for label in sorted(y_pred_proba.keys()):
-#         labels.append(label)
-#         class_probability_columns.append(y_pred_proba[label])
-#
-#     y_true = chunk.data[y_true]
-#     y_pred_probas = chunk.data[class_probability_columns]
-#     y_pred = chunk.data[y_pred]
-#
-#     if metric == 'roc_auc':
-#         return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
-#     elif metric == 'f1':
-#         return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
-#     elif metric == 'precision':
-#         return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
-#     elif metric == 'recall':
-#         return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
-#     elif metric == 'specificity':
-#         mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
-#         tn_sum = mcm[:, 0, 0]
-#         fp_sum = mcm[:, 0, 1]
-#         class_wise_specificity = tn_sum / (tn_sum + fp_sum)
-#         return np.mean(class_wise_specificity)
-#     elif metric == 'accuracy':
-#         return accuracy_score(y_true=y_true, y_pred=y_pred)
-#     else:
-#         raise InvalidArgumentsException(
-#             f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
-#         )
-
-
-# def _calculate_confidence_deviations(
-#     reference_chunks: List[Chunk], y_pred: str, y_pred_proba: Dict[str, str], metrics: List[str]
-# ):
-#     return {
-#         metric: np.std([_estimate_metric(chunk.data, y_pred, y_pred_proba, metric) for chunk in reference_chunks])
-#         for metric in metrics
-#     }
 
 
 def _get_class_splits(

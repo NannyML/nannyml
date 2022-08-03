@@ -2,19 +2,9 @@
 #
 #  License: Apache Software License 2.0
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import numpy as np
 import pandas as pd
-from sklearn.metrics import (
-    accuracy_score,
-    auc,
-    confusion_matrix,
-    f1_score,
-    precision_score,
-    recall_score,
-    roc_auc_score,
-)
 
 from nannyml._typing import ModelOutputsType
 from nannyml.calibration import Calibrator, needs_calibration
@@ -22,11 +12,7 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics import _list_missing
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.confidence_based.metrics import Metric
-from nannyml.performance_estimation.confidence_based.results import (
-    SUPPORTED_METRIC_VALUES,
-    CBPEPerformanceEstimatorResult,
-)
+from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
 
 
 class _BinaryClassificationCBPE(CBPE):
@@ -143,7 +129,6 @@ class _BinaryClassificationCBPE(CBPE):
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
             estimates[f'alert_{metric.column_name}'] = (
-                estimated_metric > metric.upper_threshold
-                or estimated_metric < metric.lower_threshold
+                estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
             )
         return estimates

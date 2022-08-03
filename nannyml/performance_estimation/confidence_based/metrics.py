@@ -4,14 +4,22 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import auc, roc_auc_score, f1_score, precision_score, recall_score, confusion_matrix, \
-    accuracy_score, multilabel_confusion_matrix
+from sklearn.metrics import (
+    accuracy_score,
+    auc,
+    confusion_matrix,
+    f1_score,
+    multilabel_confusion_matrix,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.preprocessing import label_binarize
 
-from nannyml._typing import UseCase
+from nannyml._typing import ModelOutputsType, UseCase
 from nannyml.base import AbstractEstimator
 from nannyml.chunk import Chunk
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 
 
 class Metric(abc.ABC):
@@ -151,7 +159,10 @@ class MetricFactory:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key: str, use_case: UseCase, kwargs: Dict[str, Any] = {}) -> Metric:
+    def create(cls, key: str, use_case: UseCase, kwargs: Dict[str, Any] = None) -> Metric:
+        if kwargs is None:
+            kwargs = {}
+
         """Returns a Metric instance for a given key."""
         if not isinstance(key, str):
             raise InvalidArgumentsException(
@@ -198,6 +209,8 @@ class BinaryClassificationAUROC(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         y_pred_proba = data[self.estimator.y_pred_proba]
+
+        return estimate_roc_auc(y_pred_proba)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
         y_pred_proba, _, y_true = self._common_cleaning(data)
@@ -386,7 +399,11 @@ class BinaryClassificationAccuracy(Metric):
         y_pred_proba = data[self.estimator.y_pred_proba]
         y_pred = data[self.estimator.y_pred]
 
-        return estimate_accuracy(y_pred, y_pred_proba)
+        tp = np.where(y_pred == 1, y_pred_proba, 0)
+        tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
+        TP, TN = np.sum(tp), np.sum(tn)
+        metric = (TP + TN) / len(y_pred)
+        return metric
 
     def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
         return 0.0  # TODO: Jakub
@@ -400,15 +417,13 @@ class BinaryClassificationAccuracy(Metric):
         return accuracy_score(y_true=y_true, y_pred=y_pred)
 
 
-def estimate_accuracy(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
-    TP, TN = np.sum(tp), np.sum(tn)
-    metric = (TP + TN) / len(y_pred)
-    return metric
+def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
+    if not isinstance(y_pred_proba, dict):
+        raise CalculatorException(
+            "multiclass model outputs should be of type Dict[str, str].\n"
+            f"'{y_pred_proba}' is of type '{type(y_pred_proba)}'"
+        )
 
-
-def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str]):
     classes = sorted(y_pred_proba.keys())
     y_preds = list(label_binarize(data[y_pred], classes=classes).T)
 
@@ -416,7 +431,13 @@ def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pre
     return y_preds, y_pred_probas, classes
 
 
-def _get_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: Dict[str, str]):
+def _get_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
+    if not isinstance(y_pred_proba, dict):
+        raise CalculatorException(
+            "multiclass model outputs should be of type Dict[str, str].\n"
+            f"'{y_pred_proba}' is of type '{type(y_pred_proba)}'"
+        )
+
     labels, class_probability_columns = [], []
     for label in sorted(y_pred_proba.keys()):
         labels.append(label)
@@ -433,8 +454,9 @@ class MulticlassClassificationAUROC(Metric):
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
-                                                                    self.estimator.y_pred_proba)
+        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
         ovr_estimates = []
         for y_pred_proba_class in y_pred_probas:
             ovr_estimates.append(estimate_roc_auc(y_pred_proba_class))
@@ -463,8 +485,9 @@ class MulticlassClassificationF1(Metric):
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
-                                                                          self.estimator.y_pred_proba)
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_f1(y_pred, y_pred_proba))
@@ -494,8 +517,9 @@ class MulticlassClassificationPrecision(Metric):
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
-                                                                          self.estimator.y_pred_proba)
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_precision(y_pred, y_pred_proba))
@@ -525,8 +549,9 @@ class MulticlassClassificationRecall(Metric):
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
-                                                                          self.estimator.y_pred_proba)
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_recall(y_pred, y_pred_proba))
@@ -548,7 +573,7 @@ class MulticlassClassificationRecall(Metric):
 
 
 @MetricFactory.register('specificity', UseCase.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationRecall(Metric):
+class MulticlassClassificationSpecificity(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Specificity', column_name='specificity', estimator=estimator)
 
@@ -556,8 +581,9 @@ class MulticlassClassificationRecall(Metric):
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
-                                                                          self.estimator.y_pred_proba)
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_specificity(y_pred, y_pred_proba))
@@ -591,14 +617,13 @@ class MulticlassClassificationAccuracy(Metric):
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.estimator.y_pred,
-                                                                          self.estimator.y_pred_proba)
-        ovr_estimates = []
-        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-            ovr_estimates.append(estimate_accuracy(y_pred, y_pred_proba))
-        multiclass_metric = np.mean(ovr_estimates)
-
-        return multiclass_metric
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
+        y_preds_array = np.asarray(y_preds).T
+        y_pred_probas_array = np.asarray(y_pred_probas).T
+        probability_of_predicted = np.max(y_preds_array * y_pred_probas_array, axis=1)
+        return np.mean(probability_of_predicted)  # type: ignore
 
     def _reference_stability(self, reference_chunks: List[Chunk]) -> float:
         return 0.0  # TODO: Jakub

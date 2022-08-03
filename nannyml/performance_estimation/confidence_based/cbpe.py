@@ -13,7 +13,7 @@ from nannyml.base import AbstractEstimator
 from nannyml.calibration import Calibrator, CalibratorFactory
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.confidence_based.metrics import Metric, MetricFactory
+from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import (
     SUPPORTED_METRIC_VALUES,
     CBPEPerformanceEstimatorResult,
