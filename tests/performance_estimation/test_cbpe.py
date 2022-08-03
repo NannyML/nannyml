@@ -98,7 +98,7 @@ def test_cbpe_will_not_fail_on_work_from_home_sample(binary_classification_data)
 
 
 def test_cbpe_raises_invalid_arguments_exception_when_giving_invalid_metric_value():  # noqa: D103
-    with pytest.raises(InvalidArgumentsException, match="unknown 'metric' value: 'foo'."):
+    with pytest.raises(InvalidArgumentsException, match="unknown metric key 'foo' given."):
         _ = CBPE(
             timestamp_column_name='timestamp',
             y_true='work_home_actual',
@@ -106,37 +106,6 @@ def test_cbpe_raises_invalid_arguments_exception_when_giving_invalid_metric_valu
             y_pred_proba='y_pred_proba',
             metrics=['roc_auc', 'foo'],
         )
-
-
-def test_cbpe_fitting_raises_invalid_arguments_exception_when_giving_invalid_metric_value(
-    binary_classification_data,
-):  # noqa: D103
-    with pytest.raises(InvalidArgumentsException, match="unknown 'metric' value: 'foo'."):
-        estimator = CBPE(
-            timestamp_column_name='timestamp',
-            y_true='work_home_actual',
-            y_pred='y_pred',
-            y_pred_proba='y_pred_proba',
-            metrics=['roc_auc'],
-        )
-        estimator.metrics = ['foo']
-        estimator.fit(binary_classification_data[0])
-
-
-def test_cbpe_estimating_raises_invalid_arguments_exception_when_giving_invalid_metric_value(  # noqa: D103
-    binary_classification_data,
-):
-    with pytest.raises(InvalidArgumentsException, match="unknown 'metric' value: 'foo'."):
-        estimator = CBPE(
-            timestamp_column_name='timestamp',
-            y_true='work_home_actual',
-            y_pred='y_pred',
-            y_pred_proba='y_pred_proba',
-            metrics=['roc_auc'],
-        )
-        estimator.fit(binary_classification_data[0])
-        estimator.metrics = ['foo']
-        estimator.estimate(binary_classification_data[1])
 
 
 def test_cbpe_raises_invalid_arguments_exception_when_given_empty_metrics_list():  # noqa: D103
