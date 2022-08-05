@@ -7,8 +7,8 @@
 import pandas as pd
 from plotly import graph_objects as go
 
-from nannyml import InvalidArgumentsException
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 

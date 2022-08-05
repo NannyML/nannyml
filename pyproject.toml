@@ -41,6 +41,8 @@ seaborn = "^0.11.2"
 kaleido = "0.2.1"
 pyarrow = "^8.0.0"
 gcsfs = "^2022.5.0"
+pydantic = "^1.9.1"
+rich = "^12.5.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
@@ -65,8 +67,6 @@ sphinx-rtd-theme = "^1.0.0"
 sphinx-toggleprompt = "^0.2.0"
 sphinx-copybutton = "^0.5.0"
 typing-extensions = "^4.3.0"
-types-click = "^7.1.8"
-types-PyYAML = "^6.0.11"
 
 [tool.black]
 line-length = 120

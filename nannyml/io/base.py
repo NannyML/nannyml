@@ -6,10 +6,12 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import PurePath, PurePosixPath
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 from urllib.parse import urlsplit
 
-from nannyml._typing import Result
+import pandas as pd
+from plotly.graph_objs import Figure
+
 from nannyml.exceptions import InvalidArgumentsException, WriterException
 
 HTTP_PROTOCOLS = ['http', 'https']
@@ -29,19 +31,45 @@ class Writer(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def write(self, result: Result) -> Any:
-        if result is None:
+    def write(self, data: pd.DataFrame, plots: Dict[str, Figure] = None, **kwargs) -> Any:
+        if data is None:
             raise InvalidArgumentsException("Trying to write 'None'")
 
+        if plots is None:
+            plots = {}
+
+        if kwargs is None:
+            kwargs = {}
+
         try:
-            self._write(result)
+            self._write(data=data, plots=plots, **kwargs)
         except Exception as exc:
             raise WriterException(f"Failed writing data. \n{str(exc)}")
 
     @abstractmethod
-    def _write(self, result: Result):
+    def _write(self, data: pd.DataFrame, plots: Dict[str, Figure], **kwargs):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Writer and it must implement the _write method"
+        )
+
+
+class Reader(ABC):
+    """Base class for reading data"""
+
+    @property
+    def _logger(self) -> logging.Logger:
+        return logging.getLogger(__name__)
+
+    def read(self) -> pd.DataFrame:
+        try:
+            return self._read()
+        except Exception as exc:
+            raise WriterException(f"Failed writing data. \n{str(exc)}")
+
+    @abstractmethod
+    def _read(self) -> pd.DataFrame:
+        raise NotImplementedError(
+            f"'{self.__class__.__name__}' is a subclass of Reader and it must implement the _read method"
         )
 
 

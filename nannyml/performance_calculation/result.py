@@ -8,8 +8,8 @@ from typing import Union
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml import InvalidArgumentsException
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
