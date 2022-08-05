@@ -15,8 +15,7 @@ from nannyml.config import Config
 @click.option(
     '-c',
     '--configuration-path',
-    type=click.Path(exists=True),
-    default="nannyml.yaml",
+    type=click.Path(),
     help='Path to your NannyML configuration file',
 )
 def cli(ctx, configuration_path) -> None:

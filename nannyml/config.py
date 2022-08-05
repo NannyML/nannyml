@@ -70,6 +70,10 @@ def get_config_path(custom_config_path: str = None) -> Path:
     if mounted_path.exists():
         return mounted_path
 
+    cool_mounted_path = Path('/config/nann.yml')
+    if cool_mounted_path.exists():
+        return cool_mounted_path
+
     local_path = Path('nannyml.yaml')
     if local_path.exists():
         return local_path
