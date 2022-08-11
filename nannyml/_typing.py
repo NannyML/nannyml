@@ -31,6 +31,7 @@ class Result(Protocol):
 
 class Calculator(Protocol):
     """Calculator base class."""
+
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the calculator on reference data."""
 
@@ -40,6 +41,7 @@ class Calculator(Protocol):
 
 class Estimator(Protocol):
     """Estimator base class."""
+
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the estimator on reference data."""
 
@@ -65,6 +67,7 @@ def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
 
 class UseCase(str, Enum):
     """Use cases NannyML supports."""
+
     CLASSIFICATION_BINARY = 'classification_binary'
     CLASSIFICATION_MULTICLASS = 'classification_multiclass'
     REGRESSION = 'regression'
