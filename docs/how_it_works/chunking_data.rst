@@ -1,6 +1,6 @@
 .. _chunk-data:
 
-Chunking considerations
+Chunking Considerations
 =======================
 
 
@@ -9,8 +9,8 @@ For an introduction on :term:`chunks<Data Chunk>` please have a look at
 potential issues that may arise from using chunks. They are described below.
 
 
-Not enough chunks
-~~~~~~~~~~~~~~~~~
+Not Enough Chunks
+-----------------
 
 Sometimes the selected chunking method might not generate enough chunks in the reference period.
 NannyML calculates thresholds based on the variability of metrics measured in the ``reference`` chunks (see how thresholds
@@ -32,8 +32,8 @@ far from optimal, but is a reasonable minimum. If there are less than 6 chunks, 
 
 
 
-Not enough observations in chunk: calculations infeasible
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Not Enough Observations in Chunk: Infeasible Calculations 
+---------------------------------------------------------
 
 Sometimes selected chunking method may result in some chunks being relatively small. This may lead to a situation
 when it is infeasible to calculate some metric on such chunk. Imagine binary classification task with some chunks
@@ -44,8 +44,8 @@ that specific chunk.
 
 .. _sampling-error-introduction:
 
-Too few observations in chunk: calculations unreliable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Too Few Observations in Chunk: Unreliable Calculations 
+------------------------------------------------------
 
 Small sample size strongly affects the reliability of any ML or statistical analysis, including data drift detection
 and performance estimation. NannyML allows splitting data in chunks in different ways to let users choose chunks that
@@ -58,7 +58,7 @@ Sections below explain what sampling error is and how NannyML estimates it for i
 
 .. _sampling-error-performance-metrics:
 
-Sampling error: performance metrics
+Sampling Error: Performance Metrics
 +++++++++++++++++++++++++++++++++++
 
 When the chunk size is small what looks like a significant drop in performance of the monitored model may only be a sampling effect.
@@ -158,25 +158,27 @@ key is to express a specific metric on observation level in such a way that the 
 metrics equals to the value of the metric on the set level.
 
 
-Sampling error: multivariate drift detection with PCA
+Sampling Error: Multivariate Drift Detection with PCA
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Standard error for multivariate drift detection is calculated in the exact same way as for
-:ref:`performance metrics <sampling-error-performance-metrics>`. The output metric of multivariate drift detection
-with PCA is a mean of observation-level distances between original and reconstructed points in the feature space
-(check details in :ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`). Therefore SEM
-can be used without any intermediate steps - to get standard error we just divide standard deviation of
-observation-level distances (from reference set) by the square root of chunk size of interest.
+Standard error for :ref:`Multivariate Drift Detection<multivariate_drift_detection>` is calculated in the exact same way as for
+:ref:`Performance Metrics <sampling-error-performance-metrics>`. For each observation the multivariate drift detection
+with PCA  process calculates a :term:`reconstruction error<Reconstruction Error>` value. The mean of those values for all observations in a chunk
+is the reconstruction error per chunk. The process is described in detail in
+:ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.
+Therefore the standard error of the mean formula can be used without any intermediate steps - to get standard error we just divide standard deviation of
+reconstruction error for each observation on the reference dataset with the square root of chunk size of interest.
 
 
 
-Sampling error: univariate drift detection
+Sampling Error: Univariate Drift Detection
 ++++++++++++++++++++++++++++++++++++++++++
 
-Currently univariate drift detection for both continuous and categorical variables is based on two-sample statistical
-tests. Statistical tests return the value of test static together with the p-value. P-value takes into account sizes
-of compared samples and in a sense it contains information about the sampling error. To make sure you
-interpret it correctly have a look at the American Statistical Association statement on p-values [2]_.
+Currently :ref:`Univariate Drift Detection<univariate_drift_detection>` for both continuous and categorical variables is 
+based on two-sample statistical tests. These statistical tests return the value of test static together with the associated p-value. 
+The p-value takes into account sizes of compared samples and in a sense it contains information about the sampling error. Therefore
+additional information about sampling errors is not needed. To make sure you
+interpret p-values correctly have a look at the American Statistical Association statement on p-values [2]_.
 
 
 

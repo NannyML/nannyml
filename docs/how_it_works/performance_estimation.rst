@@ -251,7 +251,7 @@ CBPE is unbiased estimator of performance assuming:
     sample size. On top, when the sample size is small it is not just CBPE that won't work well,
     but the calculated metric (when targets are available) won't be reliable either. For example, if we evaluate a
     random model (true accuracy = 0.5) on a sample of 100 observations, for some samples we can get accuracy as high
-    as 0.65. Read more about it :ref:`here<sampling-error-introduction>`.
+    as 0.65. More information can be found :ref:`here<sampling-error-introduction>`.
 
 
 .. _cbpe_probability_calibration:
