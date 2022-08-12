@@ -19,14 +19,19 @@ class InputDataConfig(BaseModel):
     read_args: Optional[Dict[str, Any]]
 
 
+class TargetDataConfig(InputDataConfig):
+    join_column: Optional[str]
+
+
 class InputConfig(BaseModel):
     reference_data: InputDataConfig
     analysis_data: InputDataConfig
+    target_data: Optional[TargetDataConfig]
 
 
 class OutputConfig(BaseModel):
     path: str
-    format: str
+    format: str = 'parquet'
     credentials: Optional[Dict[str, Any]]
     write_args: Optional[Dict[str, Any]]
 
@@ -50,6 +55,9 @@ class Config(BaseModel):
     output: OutputConfig
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
+
+    ignore_errors: Optional[bool]
+    disable_usage_analytics: Optional[bool]
 
     @classmethod
     @lru_cache

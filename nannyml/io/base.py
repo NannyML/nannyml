@@ -25,7 +25,7 @@ class Writer(ABC):
         self,
         filepath: PurePosixPath,
     ):
-        self._filepath = filepath
+        self.filepath = filepath
 
     @property
     def _logger(self) -> logging.Logger:

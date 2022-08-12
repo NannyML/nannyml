@@ -8,10 +8,13 @@
 # from typing import List
 #
 import logging
+import sys
+from pathlib import Path
 from typing import Any, Dict
 
 import pandas as pd
 from rich.console import Console
+from rich.panel import Panel
 from rich.progress import Progress
 
 from nannyml.chunk import Chunker, DefaultChunker
@@ -33,40 +36,43 @@ def run(
     column_mapping: Dict[str, Any],
     chunker: Chunker = DefaultChunker(),
     writer: Writer = FileWriter(filepath='out', data_format='parquet'),
-    continue_on_error: bool = True,
+    ignore_errors: bool = True,
     run_in_console: bool = False,
 ):
     with Progress() as progress:
         task = progress.add_task('Calculating drift', total=1) if run_in_console else None
         _run_statistical_univariate_feature_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, console=progress.console
+            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
         progress.update(task, advance=1 / 6)
 
         _run_data_reconstruction_multivariate_feature_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, console=progress.console
+            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
         progress.update(task, advance=2 / 6)
 
         _run_statistical_model_output_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, console=progress.console
+            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
         progress.update(task, advance=3 / 6)
 
         _run_target_distribution_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, console=progress.console
+            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
         progress.update(task, advance=4 / 6)
 
         _run_realized_performance_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, console=progress.console
+            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
         progress.update(task, description='Calculating realized performance', advance=5 / 6)
 
         _run_cbpe_performance_estimation(
-            reference_data, analysis_data, column_mapping, chunker, writer, console=progress.console
+            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
         progress.update(task, description='Estimating performance', advance=6 / 6)
+
+        progress.console.line(2)
+        progress.console.print(Panel(f"View results in {Path(writer.filepath)}"))
 
 
 def _run_statistical_univariate_feature_drift_calculator(
@@ -75,6 +81,7 @@ def _run_statistical_univariate_feature_drift_calculator(
     column_mapping: Dict[str, Any],
     chunker: Chunker,
     writer: Writer,
+    ignore_errors: bool,
     console: Console = None,
 ):
     if console:
@@ -87,6 +94,8 @@ def _run_statistical_univariate_feature_drift_calculator(
             timestamp_column_name=column_mapping['timestamp'],
             chunker=chunker,
         ).fit(reference_data)
+
+        # raise RuntimeError("🔥 something's not right there... 🔥")
 
         if console:
             console.log('calculating on analysis data')
@@ -106,7 +115,10 @@ def _run_statistical_univariate_feature_drift_calculator(
             console.log(msg, style='red')
         else:
             _logger.error(msg)
-        return
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
 
     if console:
         console.log('writing results')
@@ -119,6 +131,7 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
     column_mapping: Dict[str, Any],
     chunker: Chunker,
     writer: Writer,
+    ignore_errors: bool,
     console: Console = None,
 ):
     if console:
@@ -145,7 +158,10 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
             console.log(msg, style='red')
         else:
             _logger.error(msg)
-        return
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
 
     if console:
         console.log('writing results')
@@ -158,6 +174,7 @@ def _run_statistical_model_output_drift_calculator(
     column_mapping: Dict[str, Any],
     chunker: Chunker,
     writer: Writer,
+    ignore_errors: bool,
     console: Console = None,
 ):
     if console:
@@ -207,7 +224,10 @@ def _run_statistical_model_output_drift_calculator(
             console.log(msg, style='red')
         else:
             _logger.error(msg)
-        return
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
 
     if console:
         console.log('writing results')
@@ -220,6 +240,7 @@ def _run_target_distribution_drift_calculator(
     column_mapping: Dict[str, Any],
     chunker: Chunker,
     writer: Writer,
+    ignore_errors: bool,
     console: Console = None,
 ):
     if console:
@@ -262,7 +283,10 @@ def _run_target_distribution_drift_calculator(
             console.log(msg, style='red')
         else:
             _logger.error(msg)
-        return
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
 
     if console:
         console.log('writing results')
@@ -275,6 +299,7 @@ def _run_realized_performance_calculator(
     column_mapping: Dict[str, Any],
     chunker: Chunker,
     writer: Writer,
+    ignore_errors: bool,
     console: Console = None,
 ):
     if console:
@@ -322,7 +347,10 @@ def _run_realized_performance_calculator(
             console.log(msg, style='red')
         else:
             _logger.error(msg)
-        return
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
 
     if console:
         console.log('writing results')
@@ -335,6 +363,7 @@ def _run_cbpe_performance_estimation(
     column_mapping: Dict[str, Any],
     chunker: Chunker,
     writer: Writer,
+    ignore_errors: bool,
     console: Console = None,
 ):
     metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
@@ -370,7 +399,10 @@ def _run_cbpe_performance_estimation(
             console.log(msg, style='red')
         else:
             _logger.error(msg)
-        return
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
 
     if console:
         console.log('writing results')
