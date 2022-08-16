@@ -32,12 +32,13 @@ __email__ = 'niels@nannyml.com'
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 
 import logging
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from .cli import cli, run
 from .datasets import (
     load_modified_california_housing_dataset,
     load_synthetic_binary_classification_dataset,
@@ -57,6 +58,3 @@ from .drift import (
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE
-from .plots import feature_drift
-
-logger = logging.getLogger(__name__)

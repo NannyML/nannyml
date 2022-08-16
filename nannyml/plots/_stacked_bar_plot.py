@@ -20,6 +20,16 @@ def _create_value_counts_table(
     max_number_of_categories,
 ):
     value_counts_table = feature_table[[chunk_column_name, feature_column_name]].copy()
+
+    # Deal with adding categories to categorical Series
+    # Requires turning category values into strings (so we can add 'Missing' and 'Other')
+    value_counts_table[feature_column_name] = value_counts_table[feature_column_name].astype("category")
+    cat_str = [str(value) for value in value_counts_table[feature_column_name].cat.categories.values]
+    value_counts_table[feature_column_name].cat.categories = cat_str
+    value_counts_table[feature_column_name] = value_counts_table[feature_column_name].cat.add_categories(
+        [missing_category_label, 'Other']
+    )
+
     value_counts_table[feature_column_name] = value_counts_table[feature_column_name].fillna(missing_category_label)
 
     if max_number_of_categories:

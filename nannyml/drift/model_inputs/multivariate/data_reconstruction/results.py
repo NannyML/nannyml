@@ -85,11 +85,7 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
         if kind == 'drift':
             return _plot_drift(self.data, self.calculator, plot_reference)
         else:
-            raise InvalidArgumentsException(
-                f"unknown plot kind '{kind}'. "
-                f"Please provide on of: ['feature_drift', 'feature_distribution', "
-                f"'prediction_drift', 'prediction_distribution']."
-            )
+            raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['drift'].")
 
     # @property
     # def plots(self) -> Dict[str, go.Figure]:

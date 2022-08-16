@@ -25,7 +25,7 @@ The example below adds an additional indicator for a particular period of intere
     >>> ).fit(reference)
     >>> estimated_performance = estimator.estimate(analysis)
     >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
-    >>> 
+    >>>
     >>> # indicate period of interest
     >>> import datetime as dt
     >>> figure.add_vrect(x0=dt.datetime(2019,1,1), x1=dt.datetime(2020, 1,1),

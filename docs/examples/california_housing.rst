@@ -130,8 +130,8 @@ and compare it to the estimated values.
     ...     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
     ...     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
     ...     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
-    >>> 
-    >>> 
+    >>>
+    >>>
     >>> first_analysis = 8
     >>> plt.plot(est_perf.data['key'], est_perf.data['estimated_roc_auc'], label='estimated AUC')
     >>> plt.plot(est_perf.data['key'], est_perf.data['actual_roc_auc'], label='actual ROC AUC')

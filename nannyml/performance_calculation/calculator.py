@@ -20,6 +20,8 @@ from nannyml.performance_calculation.result import PerformanceCalculatorResult
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
+SUPPORTED_METRICS = list(MetricFactory.registry.keys())
+
 
 class PerformanceCalculator(AbstractCalculator):
     """Calculates realized performance metrics when target data is available."""

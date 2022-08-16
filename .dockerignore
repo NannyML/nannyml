@@ -1,0 +1,7 @@
+dist/
+docs/
+media/
+test/
+
+.mypy_cache
+.pytest_cache
