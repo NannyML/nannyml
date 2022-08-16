@@ -32,7 +32,7 @@ far from optimal, but is a reasonable minimum. If there are less than 6 chunks, 
 
 
 
-Not Enough Observations in Chunk: Infeasible Calculations 
+Not Enough Observations in Chunk: Infeasible Calculations
 ---------------------------------------------------------
 
 Sometimes selected chunking method may result in some chunks being relatively small. This may lead to a situation
@@ -44,7 +44,7 @@ that specific chunk.
 
 .. _sampling-error-introduction:
 
-Too Few Observations in Chunk: Unreliable Calculations 
+Too Few Observations in Chunk: Unreliable Calculations
 ------------------------------------------------------
 
 Small sample size strongly affects the reliability of any ML or statistical analysis, including data drift detection
@@ -104,7 +104,7 @@ sample *n* observations from the reference set, calculate performance metric on
 that sample and store it. Then we would just calculate standard deviation of the stored distribution of metric values
 (exactly the way it is done in the example above). Given the number of experiments is large, this
 approach gives precise results but it comes at relatively high computation cost (especially with many chunks of
-different size). This is why NannyML estimates it instead. Selecting a chunk of data and calculating performance for
+different sizes). This is why NannyML estimates it instead. Selecting a chunk of data and calculating performance for
 it is similar to sampling a set from a population and calculating a statistic. When
 the statistic is a mean, the Standard Error of the Mean (SEM) formula [1]_ can be used to estimate the standard
 deviation of the sampled means:
@@ -116,7 +116,8 @@ Let's go through the process of estimating the standard error of accuracy score 
 from the example above using SEM.
 In order to take advantage of the SEM formula, accuracy for each observation separately needs to be calculated.
 Accuracy for a single observation is simply equal to 1 when the prediction is correct and equal to 0 otherwise.
-With observation-level accuracies in place, accuracy for the whole sample can be calculated as the mean of them.
+With observation-level accuracies (i.e. calculated separately for each observation) in place, accuracy for the whole
+sample can be calculated as the mean of them.
 
 .. code-block:: python
 
@@ -124,9 +125,10 @@ With observation-level accuracies in place, accuracy for the whole sample can be
     >>> np.mean(obs_level_accuracy), accuracy_score(y_true, y_pred)
     (0.5045, 0.5045)
 
-Now SEM formula can be used directly to estimate the standard error of accuracy as a
-function of the sample size (which corresponds to number of observations in chunk). The code below compares it with
-the standard deviation from the direct repeated sampling experiments above.
+Now SEM formula can be used directly to estimate the standard error of accuracy: :math:`\sigma` from the
+formula above is the standard deviation of the observation-level accuracies and :math:`n` is the chunk size.
+The code below implements it and compares it with the standard deviation from the direct repeated sampling
+experiments above.
 
 .. code-block:: python
 
@@ -140,13 +142,15 @@ This dispersion will be purely the effect of sampling because model quality and 
 Generally the SEM formula gives the exact value when:
 
     * The standard deviation of the population is known.
-    * The samples are statistically independent.
+    * The samples drawn from the population are statistically independent.
 
-Both of these requirements are in fact violated. When the data is split into chunks it is not sampled from population,
-it comes from a finite set. Therefore standard deviation of population is unknown. Also, chunks are not
-independent - observations in chunks are selected chronologically, not randomly. They are also drawn without replacement,
-meaning the same observation cannot be selected twice. Nevertheless, this approach provides an estimation with good enough
-precision for our use case while keeping the computation cost very low.
+Both of these requirements are in fact violated. The true standard deviation of the population is
+unknown and we can only use the standard deviation of the reference dataset as a proxy value.
+We then treat the chunks as samples of the reference dataset and use the SEM formula accordingly.
+In many cases chunks are not independent either e.g. when observations in chunks are selected chronologically, not
+randomly. They are also drawn without replacement, meaning the same instance (set of inputs and output) won't be
+selected twice. Nevertheless, this approach provides an estimation with good enough precision for our use case while
+keeping the computation cost very low.
 
 Another thing to keep in mind is that regardless of the method chosen to calculate it, the standard error is based
 on reference data. The only information it takes from the analysis chunk is its size (in case of SEM, it is the
@@ -174,8 +178,8 @@ reconstruction error for each observation on the reference dataset with the squa
 Sampling Error: Univariate Drift Detection
 ++++++++++++++++++++++++++++++++++++++++++
 
-Currently :ref:`Univariate Drift Detection<univariate_drift_detection>` for both continuous and categorical variables is 
-based on two-sample statistical tests. These statistical tests return the value of test static together with the associated p-value. 
+Currently :ref:`Univariate Drift Detection<univariate_drift_detection>` for both continuous and categorical variables is
+based on two-sample statistical tests. These statistical tests return the value of test static together with the associated p-value.
 The p-value takes into account sizes of compared samples and in a sense it contains information about the sampling error. Therefore
 additional information about sampling errors is not needed. To make sure you
 interpret p-values correctly have a look at the American Statistical Association statement on p-values [2]_.
