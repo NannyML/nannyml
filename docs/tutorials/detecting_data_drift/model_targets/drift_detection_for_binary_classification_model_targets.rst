@@ -32,26 +32,26 @@ Just The Code
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
     >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
     >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
     >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
-    >>> 
+    >>>
     >>> display(reference_df.head(3))
-    >>> 
+    >>>
     >>> calc = nml.TargetDistributionCalculator(
     ...     y_true='work_home_actual',
     ...     timestamp_column_name='timestamp'
     >>> )
-    >>> 
+    >>>
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
     >>> display(results.data.head(3))
-    >>> 
+    >>>
     >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
     >>> distribution_fig1.show()
-    >>> 
+    >>>
     >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
     >>> distribution_fig2.show()
 
@@ -72,12 +72,12 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
     >>> import pandas as pd
     >>> import nannyml as nml
     >>> from IPython.display import display
-    >>> 
+    >>>
     >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
     >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
     >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
     >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
-    >>> 
+    >>>
     >>> display(reference_df.head(3))
 
 

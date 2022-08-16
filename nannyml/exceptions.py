@@ -35,3 +35,7 @@ class NotFittedException(BaseException):
 
 class WriterException(BaseException):
     """An exception indicating something went wrong whilst trying to write out results."""
+
+
+class IOException(BaseException):
+    """An exception indicating something went wrong during IO."""

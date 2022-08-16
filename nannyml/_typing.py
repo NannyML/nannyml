@@ -25,9 +25,6 @@ class Result(Protocol):
     """all available plots"""
     plots: Dict[str, Figure]
 
-    """name of the calculator that created it"""
-    calculator_name: str
-
 
 class Calculator(Protocol):
     """Calculator base class."""

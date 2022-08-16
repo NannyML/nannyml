@@ -20,8 +20,12 @@ classifiers=[
 ]
 packages = [
     { include = "nannyml" },
-    { include = "tests", format = "sdist" },
+#    { include = "tests", format = "sdist" },
 ]
+
+[tool.poetry.scripts]
+nml = "nannyml.cli.cli:cli"
+nannyml = "nannyml.cli.cli:cli"
 
 [tool.poetry.dependencies]
 python = ">=3.7.1,<3.11>"
@@ -37,6 +41,12 @@ seaborn = "^0.11.2"
 kaleido = "0.2.1"
 pyarrow = "^8.0.0"
 gcsfs = "^2022.5.0"
+pydantic = "^1.9.1"
+rich = "^12.5.1"
+click = "^8.1.3"
+PyYAML = "^6.0"
+art = "^5.7"
+Jinja2 = "<3.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
