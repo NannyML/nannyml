@@ -59,7 +59,7 @@ class Config(BaseModel):
     ignore_errors: Optional[bool]
 
     @classmethod
-    @lru_cache
+    @lru_cache(maxsize=1)
     def load(cls, config_path: str = None):
         with open(get_config_path(config_path), "r") as config_file:
             config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
