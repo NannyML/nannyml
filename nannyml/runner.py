@@ -17,7 +17,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress
 
-from nannyml.chunk import Chunker, DefaultChunker
+from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
@@ -34,7 +34,7 @@ def run(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
-    chunker: Chunker = DefaultChunker(),
+    chunker: Chunker,
     writer: Writer = FileWriter(filepath='out', data_format='parquet'),
     ignore_errors: bool = True,
     run_in_console: bool = False,
