@@ -23,7 +23,7 @@ from nannyml.io.file_writer import FileWriter
     is_flag=True,
     flag_value=True,
     default=None,
-    help='Continues with the next calculation if the previous one errors out',
+    help='Continues the next calculation if the previous one errors out',
 )
 def run(ctx, ignore_errors: bool):
     config = ctx.obj['config']

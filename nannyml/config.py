@@ -57,7 +57,6 @@ class Config(BaseModel):
     chunker: Optional[ChunkerConfig]
 
     ignore_errors: Optional[bool]
-    disable_usage_analytics: Optional[bool]
 
     @classmethod
     @lru_cache

@@ -1,5 +1,5 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
+#
 #  License: Apache Software License 2.0
 
 import logging
@@ -48,7 +48,7 @@ class FileWriter(Writer):
         calculator_name = kwargs['calculator_name']
         write_path = get_filepath_str(self.filepath, self._protocol)
 
-        images_path = Path(write_path) / calculator_name / "images"
+        images_path = Path(write_path) / calculator_name / "plots"
         images_path.mkdir(parents=True, exist_ok=True)
         self._logger.debug(f"writing {len(plots)} images to {images_path}")
         for name, image in plots.items():

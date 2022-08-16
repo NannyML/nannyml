@@ -369,7 +369,7 @@ def _run_cbpe_performance_estimation(
     metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
     if console:
-        console.rule('[cyan]PerformanceCalculator[/]')
+        console.rule('[cyan]PerformanceEstimator[/]')
 
     try:
         if console:
@@ -382,7 +382,6 @@ def _run_cbpe_performance_estimation(
             chunker=chunker,
             metrics=metrics,
         ).fit(reference_data)
-
         if console:
             console.log('estimating on analysis data')
         results = estimator.estimate(analysis_data)
