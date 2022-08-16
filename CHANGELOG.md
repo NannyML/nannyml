@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.5.1] - 2022-08-16
+
+### Added
+
+- Added simple CLI implementation to support automation and MLOps toolchain use cases. Supports reading/writing to
+  cloud storage using S3, GCS, ADL, ABFS and AZ protocols. Containerized version available at
+  [dockerhub](https://hub.docker.com/repository/docker/nannyml/nannyml).
+
+### Changed
+
+- `make clean` now also clears `__pycache__`
+- Fixed some inconsistencies in docstrings (they still need some additional love though)
+
 ## [0.5.0] - 2022-07-07
 
 ### Changed
