@@ -2,4 +2,5 @@
 #
 #  License: Apache Software License 2.0
 
-from .run import *  # noqa
+from .cli import cli  # noqa
+from .run import run  # noqa

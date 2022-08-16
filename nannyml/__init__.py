@@ -38,7 +38,7 @@ import logging
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from .cli import cli
+from .cli import cli, run
 from .datasets import (
     load_modified_california_housing_dataset,
     load_synthetic_binary_classification_dataset,
@@ -58,6 +58,3 @@ from .drift import (
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE
-from .plots import feature_drift
-
-logger = logging.getLogger(__name__)
