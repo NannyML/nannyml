@@ -219,6 +219,25 @@ This snippet shows how to setup the column mapping for the :ref:`dataset-synthet
         upmarket_card: y_pred_proba_upmarket_card
       y_true: y_true
 
+Chunker section
+*****************
+
+The chunker section allows you to set the chunking behavior for all of the calculators and estimators that will be run.
+Check the :ref:`chunking` documentation for more information on the practice of chunking and the available ``Chunkers``.
+
+This section is optional and when it is absent NannyML will use a :class:`~nannyml.chunking.DefaultChunker` instead.
+
+.. code-block:: yaml
+
+    chunker:
+      chunk_size: 5000  # chunks of fixed size
+
+
+.. code-block:: yaml
+
+    chunker:
+      chunk_period: W  # chunks grouping observations by week
+
 Standalone parameters section
 *****************************
 
@@ -314,6 +333,14 @@ The results are written to another S3 bucket, also using a templated path.
             aws_access_key_id: 'DATA_ACCESS_KEY_ID'
             aws_secret_access_key: 'DATA_SECRET_ACCESS_KEY'
 
+      target_data:
+        path: s3://nml-data/{{year}}/{{month}}/{{day}}/mc_analysis.csv
+        join_column: identifier
+        credentials:
+          client_kwargs:
+            aws_access_key_id: 'DATA_ACCESS_KEY_ID'
+            aws_secret_access_key: 'DATA_SECRET_ACCESS_KEY'
+
     output:
       path: s3://nml-results/{{year}}/{{month}}/{{day}}
       format: parquet
@@ -321,6 +348,9 @@ The results are written to another S3 bucket, also using a templated path.
           client_kwargs:
             aws_access_key_id: 'RESULTS_ACCESS_KEY_ID'
             aws_secret_access_key: 'RESULTS_SECRET_ACCESS_KEY'
+
+    chunker:
+      chunk_size: 5000
 
     column_mapping:
       features:
