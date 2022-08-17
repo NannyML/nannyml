@@ -44,37 +44,37 @@ def run(
         _run_statistical_univariate_feature_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task:
+        if task is not None:
             progress.update(task, advance=1 / 6)
 
         _run_data_reconstruction_multivariate_feature_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task:
+        if task is not None:
             progress.update(task, advance=2 / 6)
 
         _run_statistical_model_output_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task:
+        if task is not None:
             progress.update(task, advance=3 / 6)
 
         _run_target_distribution_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task:
+        if task is not None:
             progress.update(task, advance=4 / 6)
 
         _run_realized_performance_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task:
+        if task is not None:
             progress.update(task, description='Calculating realized performance', advance=5 / 6)
 
         _run_cbpe_performance_estimation(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task:
+        if task is not None:
             progress.update(task, description='Estimating performance', advance=6 / 6)
 
         progress.console.line(2)

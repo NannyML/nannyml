@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 import click  # type: ignore
-from art import text2art
+from pyfiglet import Figlet
 from rich.console import Console
 
 from nannyml import __version__
@@ -19,7 +19,7 @@ from nannyml.config import Config, get_config_path
     type=click.Path(),
     help='Path to your NannyML configuration file',
 )
-def cli(ctx, configuration_path, disable_usage_analytics: bool) -> None:
+def cli(ctx, configuration_path) -> None:
     """CLI root command."""
 
     # setting up click.context
@@ -28,7 +28,7 @@ def cli(ctx, configuration_path, disable_usage_analytics: bool) -> None:
     # setting up Rich console
     console = Console()
     console.print(
-        f"[cyan]{text2art('NannyML', font='doom')}[/]",
+        f"[cyan]{Figlet(font='slant').renderText('NannyML')}[/]",
     )
 
     # loading configuration
