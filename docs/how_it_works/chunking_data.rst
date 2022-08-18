@@ -162,7 +162,7 @@ The same formula can be used to estimate the sample size for the required standa
 .. code-block:: python
 
     >>> required_std = 0.02
-    >>> sample_size = (np.std(correct_predictions)**2)/required_std**2
+    >>> sample_size = (np.std(obs_level_accuracy)**2)/required_std**2
     >>> sample_size
     624.99
 
