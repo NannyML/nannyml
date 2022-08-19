@@ -159,8 +159,10 @@ def _step_plot(
     ]
 
     if sampling_error_column_name is not None:
-        hover_template += '<br>Sampling error: <b>%{customdata[7]}</b> <extra></extra>'  # noqa: E501
+        hover_template += '<br>Sampling error: <b>%{customdata[7]}</b>'  # noqa: E501
         custom_data_columns += ['sampling_error']
+
+    hover_template += '<extra></extra>'
 
     layout = go.Layout(
         title=title,
