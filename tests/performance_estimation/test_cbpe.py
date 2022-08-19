@@ -279,8 +279,9 @@ def test_cbpe_results_plot_raises_invalid_arguments_exception_given_invalid_metr
         estimates.plot(kind="performance", metric="foo")
 
 
+@pytest.mark.parametrize('metric', ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'])
 def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_of_reference_data(  # noqa: D103
-    binary_classification_data,
+    binary_classification_data, metric
 ):
     reference = binary_classification_data[0].loc[40000:, :]
     estimator = CBPE(  # type: ignore
@@ -288,7 +289,7 @@ def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_o
         y_true='work_home_actual',
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
-        metrics=['roc_auc'],
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
     )
     try:
         estimator.fit(reference_data=reference)

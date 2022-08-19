@@ -174,7 +174,7 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
     assert 'start_date' in sut
     assert 'end_index' in sut
     assert 'end_date' in sut
-    assert 'stability' in sut
+    assert 'sampling_error' in sut
     assert 'upper_threshold' in sut
     assert 'lower_threshold' in sut
     assert 'alert' in sut

@@ -23,7 +23,7 @@ def _data_prep_step_plot(
     start_date_column_name: str,
     end_date_column_name: str,
     partial_target_column_name: str,
-    stability_column_name: str,
+    sampling_error_column_name: str,
     drift_column_name: str,
     hover_metric_format='{0:.4f}',
     hover_date_label_format='%b-%d-%Y',
@@ -35,8 +35,8 @@ def _data_prep_step_plot(
     data['metric_label'] = data[metric_column_name].apply(lambda x: hover_metric_format.format(x))
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
-    if stability_column_name is not None:
-        data['stability'] = data[stability_column_name]
+    if sampling_error_column_name is not None:
+        data['sampling_error'] = np.round(data[sampling_error_column_name], 4)
 
     data['hover_period'] = data['period'].apply(
         lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
@@ -88,7 +88,7 @@ def _step_plot(
     drift_legend_label='Data drift',
     chunk_legend_labels=None,
     partial_target_legend_label='Incomplete target data',
-    stability_column_name=None,
+    sampling_error_column_name=None,
     hover_marker_labels=None,
     hover_labels=None,
     hover_date_label_format='%b-%d-%Y',
@@ -124,7 +124,7 @@ def _step_plot(
         start_date_column_name,
         end_date_column_name,
         partial_target_column_name,
-        stability_column_name,
+        sampling_error_column_name,
         drift_column_name,
         hover_metric_format,
         hover_date_label_format,
@@ -145,7 +145,6 @@ def _step_plot(
         + 'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b> &nbsp; &nbsp; <br>'
         + hover_labels[1]
         + ': <b>%{customdata[3]}</b>  &nbsp; &nbsp; '
-        # + 'Data: <span style="color:#AD0000">⚠ <b>97% missing</b></span>  &nbsp; &nbsp; Stability: <b>0.6</b> &nbsp; &nbsp; <extra></extra>'  # noqa: E501
         + '%{customdata[6]}</b>  &nbsp; &nbsp;'
     )
 
@@ -159,9 +158,9 @@ def _step_plot(
         'incomplete_target_percentage',
     ]
 
-    if stability_column_name is not None:
-        hover_template += '<br>Stability: <b>%{customdata[7]}</b> <extra></extra>'  # noqa: E501
-        custom_data_columns += [stability_column_name]
+    if sampling_error_column_name is not None:
+        hover_template += '<br>Sampling error: <b>%{customdata[7]}</b> <extra></extra>'  # noqa: E501
+        custom_data_columns += ['sampling_error']
 
     layout = go.Layout(
         title=title,

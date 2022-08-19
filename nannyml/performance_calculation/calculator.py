@@ -31,8 +31,8 @@ class PerformanceCalculator(AbstractCalculator):
         timestamp_column_name: str,
         metrics: List[str],
         y_true: str,
-        y_pred_proba: Optional[ModelOutputsType],
-        y_pred: Optional[str],
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -180,7 +180,7 @@ class PerformanceCalculator(AbstractCalculator):
             metrics_results[metric.column_name] = chunk_metric
             metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
             metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
-            metrics_results[f'{metric.column_name}_stability'] = metric.reference_stability / len(chunk)
+            # metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
             metrics_results[f'{metric.column_name}_alert'] = (
                 metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
             )

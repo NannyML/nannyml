@@ -126,6 +126,7 @@ class _BinaryClassificationCBPE(CBPE):
             estimates[f'lower_confidence_{metric.column_name}'] = max(
                 self.confidence_lower_bound, estimated_metric - metric.confidence_deviation
             )
+            estimates[f'sampling_error_{metric.column_name}'] = metric.sampling_error(chunk.data)
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
             estimates[f'alert_{metric.column_name}'] = (

@@ -121,6 +121,9 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             imputer_continuous = SimpleImputer(missing_values=np.nan, strategy='mean')
         self._imputer_continuous = imputer_continuous
 
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
@@ -167,7 +170,19 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
 
         # Reference stability
-        self._reference_stability = 0  # TODO: Jakub
+        self._sampling_error_components = (
+            _calculate_reconstruction_error_for_data(
+                feature_column_names=self.feature_column_names,
+                categorical_feature_column_names=self.categorical_feature_column_names,
+                continuous_feature_column_names=self.continuous_feature_column_names,
+                data=reference_data,  # TODO: check with Nikos if this needs to be chunked or not?
+                encoder=self._encoder,
+                scaler=self._scaler,
+                pca=self._pca,
+                imputer_categorical=self._imputer_categorical,
+                imputer_continuous=self._imputer_continuous,
+            ).std(),
+        )
 
         self.previous_reference_results = self._calculate(data=reference_data).data
 
@@ -196,7 +211,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'stability': self._reference_stability / len(chunk),  # TODO: Jakub
+                    'sampling_error': sampling_error(self._sampling_error_components, chunk.data),
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
                         feature_column_names=self.feature_column_names,
                         categorical_feature_column_names=self.categorical_feature_column_names,
@@ -207,7 +222,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                         pca=self._pca,
                         imputer_categorical=self._imputer_categorical,
                         imputer_continuous=self._imputer_continuous,
-                    ),
+                    ).mean(),
                 }
                 for chunk in chunks
             ]
@@ -233,7 +248,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                     pca=self._pca,
                     imputer_categorical=self._imputer_categorical,
                     imputer_continuous=self._imputer_continuous,
-                )
+                ).mean()
                 for chunk in reference_chunks
             ]
         )
@@ -254,7 +269,7 @@ def _calculate_reconstruction_error_for_data(
     pca: PCA,
     imputer_categorical: SimpleImputer,
     imputer_continuous: SimpleImputer,
-) -> pd.DataFrame:
+) -> pd.Series:
     """Calculates reconstruction error for a single Chunk.
 
     Parameters
@@ -315,8 +330,7 @@ def _calculate_reconstruction_error_for_data(
         rc_error=lambda x: _calculate_distance(data, feature_column_names, reconstructed_feature_column_names)
     )
 
-    res = data['rc_error'].mean()
-    return res
+    return data['rc_error']
 
 
 def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], features_reconstructed: List[str]):
@@ -340,3 +354,7 @@ def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_th
     )
 
     return alert
+
+
+def sampling_error(components: Tuple, data: pd.DataFrame) -> float:
+    return components[0] / np.sqrt(len(data))
