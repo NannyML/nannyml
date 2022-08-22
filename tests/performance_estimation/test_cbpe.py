@@ -350,3 +350,133 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
     results = estimator.estimate(analysis)
     assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
     assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)
+
+
+@pytest.mark.parametrize(
+    'metric, sampling_error',
+    [
+        ('roc_auc', 0.001811),
+        ('f1', 0.007549),
+        ('precision', 0.003759),
+        ('recall', 0.006546),
+        ('specificity', 0.003413),
+        ('accuracy', 0.003746),
+    ],
+)
+def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
+    binary_classification_data, metric, sampling_error
+):
+    reference, analysis = binary_classification_data
+    estimator = CBPE(  # type: ignore
+        timestamp_column_name='timestamp',
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=[metric],
+    ).fit(reference)
+    results = estimator.estimate(analysis)
+
+    assert f'sampling_error_{metric}' in results.data.columns
+    assert all(
+        np.round(results.data[f'sampling_error_{metric}'], 4)
+        == pd.Series(np.round(sampling_error, 4), index=range(len(results.data)))
+    )
+
+
+@pytest.mark.parametrize(
+    'metric, sampling_error',
+    [
+        ('roc_auc', [0.001819, 0.001043, 0.001046, 0.001046, 0.040489]),
+        ('f1', [0.007585, 0.004348, 0.004360, 0.004362, 0.168798]),
+        ('precision', [0.003777, 0.002165, 0.002171, 0.002172, 0.084046]),
+        ('recall', [0.006578, 0.003770, 0.003781, 0.003783, 0.146378]),
+        ('specificity', [0.003430, 0.001966, 0.001971, 0.001972, 0.076324]),
+        ('accuracy', [0.003764, 0.002158, 0.002164, 0.002165, 0.083769]),
+    ],
+)
+def test_cbpe_for_binary_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
+    binary_classification_data, metric, sampling_error
+):
+    reference, analysis = binary_classification_data
+    estimator = CBPE(  # type: ignore
+        timestamp_column_name='timestamp',
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=[metric],
+        chunk_period='Y',
+    ).fit(reference)
+    results = estimator.estimate(analysis)
+    print(results.data[f'sampling_error_{metric}'])
+
+    assert f'sampling_error_{metric}' in results.data.columns
+    assert np.array_equal(np.round(results.data[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
+
+
+@pytest.mark.parametrize(
+    'metric, sampling_error',
+    [
+        ('roc_auc', 0.002143),
+        ('f1', 0.005652),
+        ('precision', 0.005566),
+        ('recall', 0.005565),
+        ('specificity', 0.003002),
+        ('accuracy', 0.005566),
+    ],
+)
+def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
+    multiclass_classification_data, metric, sampling_error
+):
+    reference, analysis = multiclass_classification_data
+    estimator = CBPE(  # type: ignore
+        timestamp_column_name='timestamp',
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+        },
+        metrics=[metric],
+    ).fit(reference)
+    results = estimator.estimate(analysis)
+
+    assert f'sampling_error_{metric}' in results.data.columns
+    assert all(
+        np.round(results.data[f'sampling_error_{metric}'], 4)
+        == pd.Series(np.round(sampling_error, 4), index=range(len(results.data)))
+    )
+
+
+@pytest.mark.parametrize(
+    'metric, sampling_error',
+    [
+        ('roc_auc', [0.001379, 0.001353, 0.001371, 0.001339, 0.008100]),
+        ('f1', [0.003637, 0.003569, 0.003615, 0.003531, 0.021364]),
+        ('precision', [0.003582, 0.003515, 0.003560, 0.003477, 0.021037]),
+        ('recall', [0.003581, 0.003514, 0.003559, 0.003476, 0.021033]),
+        ('specificity', [0.001932, 0.001896, 0.001920, 0.001875, 0.011348]),
+        ('accuracy', [0.003582, 0.003515, 0.003560, 0.003477, 0.021039]),
+    ],
+)
+def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
+    multiclass_classification_data, metric, sampling_error
+):
+    reference, analysis = multiclass_classification_data
+    estimator = CBPE(  # type: ignore
+        timestamp_column_name='timestamp',
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+        },
+        metrics=[metric],
+        chunk_period='M',
+    ).fit(reference)
+    results = estimator.estimate(analysis)
+    print(results.data[f'sampling_error_{metric}'])
+
+    assert f'sampling_error_{metric}' in results.data.columns
+    assert np.array_equal(np.round(results.data[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))

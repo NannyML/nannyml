@@ -3,6 +3,18 @@
 #
 #  License: Apache Software License 2.0
 
+"""Module containing functions to estimate sampling error for binary classification metrics.
+
+The implementation of the sampling error estimation is split into two functions.
+
+The first function is called during fitting and will calculate the sampling error components based the reference data.
+Most of the time these will be the standard deviation of the distribution of differences between
+``y_true`` and ``y_pred`` and the fraction of positive labels in ``y_true``.
+
+The second function will be called during calculation or estimation. It takes the predetermined error components and
+combines them with the size of the (analysis) data to give an estimate for the sampling error.
+"""
+
 from typing import Tuple
 
 import numpy as np
@@ -55,7 +67,20 @@ def auroc_sampling_error_components(y_true_reference: pd.Series, y_pred_proba_re
     return np.std(ser_multi), fraction
 
 
-def auroc_sampling_error(sampling_error_components: Tuple, data: pd.DataFrame):
+def auroc_sampling_error(sampling_error_components, data):
+    """
+    Calculate the AUROC sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
     reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
 
@@ -94,7 +119,20 @@ def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: 
     return np.std(obs_level_f1), fraction_of_relevant
 
 
-def f1_sampling_error(sampling_error_components: Tuple, data: pd.DataFrame):
+def f1_sampling_error(sampling_error_components, data):
+    """
+    Calculate the F1 sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
     reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
 
@@ -126,7 +164,20 @@ def precision_sampling_error_components(y_true_reference: pd.Series, y_pred_refe
     return np.std(obs_level_precision), fraction_of_pos_pred
 
 
-def precision_sampling_error(sampling_error_components: Tuple, data: pd.DataFrame):
+def precision_sampling_error(sampling_error_components, data):
+    """
+    Calculate the precision sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
     reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
 
@@ -157,8 +208,21 @@ def recall_sampling_error_components(y_true_reference: pd.Series, y_pred_referen
     return np.std(obs_level_recall), fraction_of_relevant
 
 
-def recall_sampling_error(components: Tuple, data: pd.DataFrame):
-    reference_std, reference_fraction = components
+def recall_sampling_error(sampling_error_components, data):
+    """
+    Calculate the recall sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
+    reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
 
 
@@ -188,8 +252,21 @@ def specificity_sampling_error_components(y_true_reference: pd.Series, y_pred_re
     return np.std(obs_level_specificity), fraction_of_relevant
 
 
-def specificity_sampling_error(components: Tuple, data: pd.DataFrame):
-    reference_std, reference_fraction = components
+def specificity_sampling_error(sampling_error_components, data):
+    """
+    Calculate the specificity sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
+    reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
 
 
@@ -206,7 +283,7 @@ def accuracy_sampling_error_components(y_true_reference: pd.Series, y_pred_refer
 
     Returns
     -------
-    (std, fraction): Tuple[np.ndarray, float]
+    (std,): Tuple[np.ndarray]
     """
     y_true_reference = np.asarray(y_true_reference).astype(int)
     y_pred_reference = np.asarray(y_pred_reference).astype(int)
@@ -216,6 +293,19 @@ def accuracy_sampling_error_components(y_true_reference: pd.Series, y_pred_refer
     return (np.std(correct_table),)
 
 
-def accuracy_sampling_error(components: Tuple, data: pd.DataFrame) -> float:
-    (reference_std,) = components
+def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the accuracy sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
+    (reference_std,) = sampling_error_components
     return reference_std / np.sqrt(len(data))

@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from sklearn.impute import SimpleImputer
 
-from nannyml.chunk import PeriodBasedChunker
+from nannyml.chunk import PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import DataReconstructionDriftCalculator
 
 
@@ -350,3 +350,35 @@ def test_data_reconstruction_drift_calculator_raises_type_error_when_missing_tim
             feature_column_names=['f1', 'f2', 'f3', 'f4'],
             chunk_period='W',
         )
+
+
+def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(sample_drift_data):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    chunker = SizeBasedChunker(chunk_size=2500, drop_incomplete=True)
+
+    calc = DataReconstructionDriftCalculator(
+        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
+    ).fit(ref_data)
+    results = calc.calculate(data=sample_drift_data)
+    print(results.data['sampling_error'])
+
+    assert 'sampling_error' in results.data.columns
+    assert np.array_equal(
+        np.round(results.data['sampling_error'], 4), np.round([0.01164 for _ in range(len(results.data))], 4)
+    )
+
+
+def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error(sample_drift_data):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    calc = DataReconstructionDriftCalculator(
+        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunk_period='M'
+    ).fit(ref_data)
+    results = calc.calculate(data=sample_drift_data)
+    print(results.data['sampling_error'])
+
+    assert 'sampling_error' in results.data.columns
+    assert np.array_equal(
+        np.round(results.data['sampling_error'], 4), np.round([0.009511, 0.009005, 0.008710, 0.008854, 0.009899], 4)
+    )
