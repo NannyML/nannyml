@@ -31,8 +31,8 @@ class PerformanceCalculator(AbstractCalculator):
         timestamp_column_name: str,
         metrics: List[str],
         y_true: str,
-        y_pred_proba: Optional[ModelOutputsType],
-        y_pred: Optional[str],
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -126,8 +126,6 @@ class PerformanceCalculator(AbstractCalculator):
         for metric in self.metrics:
             metric.fit(reference_data=reference_data, chunker=self.chunker)
 
-        self._minimum_chunk_size = np.max([metric.minimum_chunk_size() for metric in self.metrics])
-
         self.previous_reference_data = reference_data
         self.previous_reference_results = self._calculate(reference_data).data
 
@@ -153,11 +151,7 @@ class PerformanceCalculator(AbstractCalculator):
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(
-            data,
-            minimum_chunk_size=self._minimum_chunk_size,
-            timestamp_column_name=self.timestamp_column_name,
-        )
+        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
 
         # Construct result frame
         res = pd.DataFrame.from_records(
@@ -186,6 +180,7 @@ class PerformanceCalculator(AbstractCalculator):
             metrics_results[metric.column_name] = chunk_metric
             metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
             metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
+            # metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
             metrics_results[f'{metric.column_name}_alert'] = (
                 metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
             )

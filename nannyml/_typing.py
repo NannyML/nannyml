@@ -62,6 +62,15 @@ def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
         )
 
 
+def class_labels(model_outputs: ModelOutputsType) -> List[str]:
+    if isinstance(model_outputs, Dict):
+        return sorted(list(model_outputs.keys()))
+    else:
+        raise InvalidArgumentsException(
+            f"received object of type {type(model_outputs)}. Multiclass ModelOutputsType should be a 'Dict[str, str]'"
+        )
+
+
 class UseCase(str, Enum):
     """Use cases NannyML supports."""
 

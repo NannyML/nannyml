@@ -111,6 +111,9 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         # predicted labels should always be considered categorical
         reference_data[self.y_pred] = reference_data[self.y_pred].astype('category')
 
+        # Reference stability
+        self._reference_stability = 0  # TODO: Jakub
+
         self.previous_reference_results = self._calculate(reference_data).data
 
         return self
@@ -138,9 +141,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
         continuous_columns, categorical_columns = _split_features_by_type(data, columns)
 
-        chunks = self.chunker.split(
-            data, columns=columns, minimum_chunk_size=500, timestamp_column_name=self.timestamp_column_name
-        )
+        chunks = self.chunker.split(data, columns=columns, timestamp_column_name=self.timestamp_column_name)
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.
@@ -152,7 +153,8 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
-                'period': 'analysis' if chunk.is_transition else chunk.period,
+                'stability': self._reference_stability / len(chunk),  # TODO: Jakub
+                # 'period': 'analysis' if chunk.is_transition else chunk.period,
             }
 
             for column in categorical_columns:

@@ -113,6 +113,7 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         title='Data Reconstruction Drift',
         y_axis_title='Reconstruction Error',
         v_line_separating_analysis_period=plot_period_separator,
+        sampling_error_column_name='sampling_error',
     )
 
     return fig

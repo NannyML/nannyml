@@ -15,6 +15,4 @@ All monitoring metrics available by NannyML for monitoring will be showed.
 .. note::
     The performance monitoring process requires no missing values in the target data on the reference dataset. However,
     the analysis data can contain missing values. The entries with missing values will simply be ignored when
-    calculating the performance results. If there are so many missing values that the available data are below the
-    :ref:`minimum-chunk-size` then the performance results are omitted from the resulting visualizations because they are
-    too noisy, to be reliable.
+    calculating the performance results.
