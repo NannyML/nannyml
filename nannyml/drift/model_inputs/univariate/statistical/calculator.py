@@ -102,6 +102,9 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
 
         _list_missing(self.feature_column_names, reference_data)
 
+        # Reference stability
+        self._reference_stability = 0  # TODO: Jakub
+
         self.previous_reference_data = reference_data.copy()
         self.previous_reference_results = self._calculate(self.previous_reference_data).data
 
@@ -118,13 +121,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
             data, self.feature_column_names
         )
 
-        # features_and_metadata = NML_METADATA_COLUMNS + self.selected_features
-        chunks = self.chunker.split(
-            data,
-            self.timestamp_column_name,
-            # columns=self.feature_column_names + [NML_METADATA_PERIOD_COLUMN_NAME],
-            minimum_chunk_size=500,
-        )
+        chunks = self.chunker.split(data, self.timestamp_column_name)
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.
@@ -136,6 +133,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
+                'stability': self._reference_stability / len(chunk),  # TODO: Jakub
             }
 
             for column in self.categorical_column_names:

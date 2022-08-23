@@ -125,17 +125,3 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
     assert 'targets_missing_rate' in sut.data.columns
     assert sut.data.loc[0, 'targets_missing_rate'] == 0.1
     assert sut.data.loc[1, 'targets_missing_rate'] == 0.9
-
-
-def test_calculator_calculates_minimum_chunk_size_for_each_metric(data):  # noqa: D103
-    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
-    for metric in metrics:
-        calc = PerformanceCalculator(
-            timestamp_column_name='timestamp',
-            y_pred='y_pred',
-            y_pred_proba='y_pred_proba',
-            y_true='work_home_actual',
-            metrics=['roc_auc', 'f1'],
-        ).fit(reference_data=data[0])
-        assert calc._minimum_chunk_size > 0
-        assert calc._minimum_chunk_size <= len(data[0])

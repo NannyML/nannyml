@@ -88,11 +88,7 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_reference_data: Optional[pd.DataFrame] = None
-
         # self._reference_targets: pd.Series = None  # type: ignore
-
-        # TODO: determine better min_chunk_size for target distribution
-        self._minimum_chunk_size = 300
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
         """Fits the calculator to reference data."""
@@ -105,6 +101,9 @@ class TargetDistributionCalculator(AbstractCalculator):
             raise InvalidArgumentsException(
                 f"target data column '{self.y_true}' is not in data columns: {reference_data.columns}."
             )
+
+        # Reference stability
+        self._reference_stability = 0  # TODO: Jakub
 
         self.previous_reference_data = reference_data
         self.previous_reference_results = self._calculate(reference_data).data
@@ -130,7 +129,6 @@ class TargetDistributionCalculator(AbstractCalculator):
         chunks = self.chunker.split(
             data,
             columns=[self.y_true, 'NML_TARGET_INCOMPLETE'],
-            minimum_chunk_size=self._minimum_chunk_size,
             timestamp_column_name=self.timestamp_column_name,
         )
 
@@ -145,6 +143,7 @@ class TargetDistributionCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
+                    'stability': self._reference_stability / len(chunk),  # TODO: Jakub
                     'period': 'analysis' if chunk.is_transition else chunk.period,
                     'targets_missing_rate': (
                         chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()

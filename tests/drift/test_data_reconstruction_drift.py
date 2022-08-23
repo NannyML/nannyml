@@ -9,11 +9,8 @@ import pandas as pd
 import pytest
 from sklearn.impute import SimpleImputer
 
-from nannyml.chunk import PeriodBasedChunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import (
-    DataReconstructionDriftCalculator,
-    _minimum_chunk_size,
-)
+from nannyml.chunk import PeriodBasedChunker, SizeBasedChunker
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import DataReconstructionDriftCalculator
 
 
 @pytest.fixture
@@ -171,12 +168,13 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
     drift = calc.calculate(data=sample_drift_data)
 
     sut = drift.data.columns
-    assert len(sut) == 9
+    assert len(sut) == 10
     assert 'key' in sut
     assert 'start_index' in sut
     assert 'start_date' in sut
     assert 'end_index' in sut
     assert 'end_date' in sut
+    assert 'sampling_error' in sut
     assert 'upper_threshold' in sut
     assert 'lower_threshold' in sut
     assert 'alert' in sut
@@ -193,9 +191,7 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
     ).fit(ref_data)
     drift = calc.calculate(data=sample_drift_data)
 
-    expected = len(
-        PeriodBasedChunker(offset='W').split(sample_drift_data, minimum_chunk_size=1, timestamp_column_name='timestamp')
-    )
+    expected = len(PeriodBasedChunker(offset='W').split(sample_drift_data, timestamp_column_name='timestamp'))
     sut = len(drift.data)
     assert sut == expected
 
@@ -297,15 +293,6 @@ def test_data_reconstruction_drift_calculator_with_only_categorical_should_not_f
         pytest.fail()
 
 
-def test_data_reconstruction_drift_calculator_minimum_chunk_size_yields_correct_result(sample_drift_data):  # noqa: D103
-    features = ['f1', 'f2', 'f3', 'f4']
-    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    _ = DataReconstructionDriftCalculator(feature_column_names=['f3', 'f4'], timestamp_column_name='timestamp').fit(
-        ref_data
-    )
-    assert _minimum_chunk_size(features) == 63
-
-
 def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_object_raises_typeerror(  # noqa: D103
     sample_drift_data_with_nans,
 ):
@@ -363,3 +350,35 @@ def test_data_reconstruction_drift_calculator_raises_type_error_when_missing_tim
             feature_column_names=['f1', 'f2', 'f3', 'f4'],
             chunk_period='W',
         )
+
+
+def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(sample_drift_data):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    chunker = SizeBasedChunker(chunk_size=2500, drop_incomplete=True)
+
+    calc = DataReconstructionDriftCalculator(
+        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
+    ).fit(ref_data)
+    results = calc.calculate(data=sample_drift_data)
+    print(results.data['sampling_error'])
+
+    assert 'sampling_error' in results.data.columns
+    assert np.array_equal(
+        np.round(results.data['sampling_error'], 4), np.round([0.01164 for _ in range(len(results.data))], 4)
+    )
+
+
+def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error(sample_drift_data):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    calc = DataReconstructionDriftCalculator(
+        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunk_period='M'
+    ).fit(ref_data)
+    results = calc.calculate(data=sample_drift_data)
+    print(results.data['sampling_error'])
+
+    assert 'sampling_error' in results.data.columns
+    assert np.array_equal(
+        np.round(results.data['sampling_error'], 4), np.round([0.009511, 0.009005, 0.008710, 0.008854, 0.009899], 4)
+    )

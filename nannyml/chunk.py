@@ -106,7 +106,6 @@ class Chunker(abc.ABC):
         data: pd.DataFrame,
         timestamp_column_name: str,
         columns=None,
-        minimum_chunk_size: int = None,
     ) -> List[Chunk]:
         """Splits a given data frame into a list of chunks.
 
@@ -126,14 +125,8 @@ class Chunker(abc.ABC):
             The data to be split into chunks
         timestamp_column_name: str
             Name of the column containing the timestamp of an observation.
-        period_column_name: str
-            Name of the column containing the period of an observation, if any.
         columns: List[str], default=None
             A list of columns to be included in the resulting chunk data. Unlisted columns will be dropped.
-        minimum_chunk_size: int, default=None
-            The recommended minimum number of observations a :class:`~nannyml.chunk.Chunk` should hold.
-            When specified a warning will appear if the split results in underpopulated chunks.
-            When not specified there will be no checks for underpopulated chunks.
 
         Returns
         -------
@@ -149,7 +142,7 @@ class Chunker(abc.ABC):
         data = data.sort_values(by=[timestamp_column_name]).reset_index(drop=True)
 
         try:
-            chunks = self._split(data, timestamp_column_name, minimum_chunk_size)
+            chunks = self._split(data, timestamp_column_name)
         except Exception as exc:
             raise ChunkerException(f"could not split data into chunks: {exc}")
 
@@ -166,24 +159,11 @@ class Chunker(abc.ABC):
                 'Please consider splitting your data in a different way or continue at your own risk.'
             )
 
-        # check if all chunk sizes > minimal chunk size. If not, render a warning message.
-        if minimum_chunk_size:
-            underpopulated_chunks = [c for c in chunks if len(c) < minimum_chunk_size]
-
-            if len(underpopulated_chunks) > 0:
-                # TODO wording
-                warnings.warn(
-                    f'The resulting list of chunks contains {len(underpopulated_chunks)} underpopulated chunks. '
-                    'They contain too few records to be statistically robust and might negatively influence '
-                    'the quality of calculations. '
-                    'Please consider splitting your data in a different way or continue at your own risk.'
-                )
-
         return chunks
 
     # TODO wording
     @abc.abstractmethod
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str) -> List[Chunk]:
         """Splits the DataFrame into chunks.
 
         Abstract method, to be implemented within inheriting classes.
@@ -192,8 +172,6 @@ class Chunker(abc.ABC):
         ----------
         data: pandas.DataFrame
             The full dataset that should be split into Chunks
-        minimum_chunk_size: int, default=None
-            The recommended minimum number of observations a :class:`~nannyml.chunk.Chunk` should hold.
 
         Returns
         -------
@@ -278,7 +256,7 @@ class PeriodBasedChunker(Chunker):
 
         self.offset = offset
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str) -> List[Chunk]:
         chunks = []
         try:
             grouped_data = data.groupby(pd.to_datetime(data[timestamp_column_name]).dt.to_period(self.offset))
@@ -356,7 +334,7 @@ class SizeBasedChunker(Chunker):
         self.chunk_size = chunk_size
         self.drop_incomplete = drop_incomplete
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
             chunk_data = data.loc[index : index + chunk_size - 1, :]
             min_date = pd.to_datetime(chunk_data[timestamp_column_name].min())
@@ -433,16 +411,14 @@ class CountBasedChunker(Chunker):
 
         self.chunk_count = chunk_count
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
         data = data.copy().reset_index()
 
         chunk_size = data.shape[0] // self.chunk_count
-        chunks = SizeBasedChunker(chunk_size=chunk_size).split(
-            data=data, timestamp_column_name=timestamp_column_name, minimum_chunk_size=minimum_chunk_size
-        )
+        chunks = SizeBasedChunker(chunk_size=chunk_size).split(data=data, timestamp_column_name=timestamp_column_name)
         return chunks
 
 
@@ -463,7 +439,7 @@ class DefaultChunker(Chunker):
         """Creates a new DefaultChunker."""
         super(DefaultChunker, self).__init__()
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame, timestamp_column_name: str) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
@@ -473,6 +449,5 @@ class DefaultChunker(Chunker):
         chunks = SizeBasedChunker(chunk_size=chunk_size).split(
             data=data,
             timestamp_column_name=timestamp_column_name,
-            minimum_chunk_size=minimum_chunk_size,
         )
         return chunks
