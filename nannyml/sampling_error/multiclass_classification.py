@@ -323,9 +323,9 @@ def accuracy_sampling_error_components(y_true_reference: List[pd.Series], y_pred
     -------
     sampling_error_components: Tuple
     """
-    y_true_reference = np.asarray(y_true_reference).astype(int)
-    y_pred_reference = np.asarray(y_pred_reference).astype(int)
-    correct_table = (y_true_reference == y_pred_reference).all(axis=1).astype(int)  # type: ignore
+    y_true = np.asarray(y_true_reference).astype(int)
+    y_pred = np.asarray(y_pred_reference).astype(int)
+    correct_table = (y_true == y_pred).all(axis=1).astype(int)
 
     return (np.std(correct_table),)
 
