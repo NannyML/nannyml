@@ -15,7 +15,7 @@ from nannyml._typing import ModelOutputsType, derive_use_case
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
-from nannyml.performance_calculation.metrics import Metric, MetricFactory
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
@@ -105,9 +105,11 @@ class PerformanceCalculator(AbstractCalculator):
             for m in metrics
         ]
 
-        self._minimum_chunk_size = None
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
+
+    def __str__(self):
+        return f"PerformanceCalculator[metrics={str(self.metrics)}]"
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""

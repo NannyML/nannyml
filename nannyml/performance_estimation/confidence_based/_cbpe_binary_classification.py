@@ -7,10 +7,10 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from nannyml._typing import ModelOutputsType
+from nannyml.base import _list_missing
 from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation.metrics import _list_missing
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
 

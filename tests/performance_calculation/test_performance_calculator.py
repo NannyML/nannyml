@@ -12,7 +12,10 @@ import pytest
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation import PerformanceCalculator
-from nannyml.performance_calculation.metrics import BinaryClassificationAUROC, BinaryClassificationF1
+from nannyml.performance_calculation.metrics.binary_classification import (
+    BinaryClassificationAUROC,
+    BinaryClassificationF1,
+)
 
 
 @pytest.fixture

@@ -12,6 +12,7 @@ from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_car_loan_dataset,
     load_synthetic_multiclass_classification_dataset,
+    load_synthetic_regression_dataset,
 )
 
 
@@ -39,5 +40,12 @@ def test_runs_load_modified_california_housing_dataset():  # noqa: D103
 def test_runs_load_synthetic_car_loan_dataset():  # noqa: D103
     try:
         _ = load_synthetic_car_loan_dataset()
+    except Exception:
+        pytest.fail()
+
+
+def test_runs_load_synthetic_regression_dataset():  # noqa: D103
+    try:
+        _ = load_synthetic_regression_dataset()
     except Exception:
         pytest.fail()

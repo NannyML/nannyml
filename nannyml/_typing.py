@@ -46,7 +46,7 @@ class Estimator(Protocol):
         """Perform an estimation based on analysis data."""
 
 
-ModelOutputsType = Union[str, Dict[str, str]]
+ModelOutputsType = Union[str, Dict[str, str], None]
 
 
 def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
@@ -63,6 +63,9 @@ def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
 
 
 def class_labels(model_outputs: ModelOutputsType) -> List[str]:
+    if model_outputs is None:
+        return []
+
     if isinstance(model_outputs, Dict):
         return sorted(list(model_outputs.keys()))
     else:
@@ -81,6 +84,9 @@ class UseCase(str, Enum):
 
 def derive_use_case(y_pred_proba: ModelOutputsType) -> UseCase:
     """Derive NannyML use case from model outputs type."""
+    if y_pred_proba is None:
+        return UseCase.REGRESSION
+
     if isinstance(y_pred_proba, Dict):
         return UseCase.CLASSIFICATION_MULTICLASS
     elif isinstance(y_pred_proba, str):

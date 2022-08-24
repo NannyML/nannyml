@@ -8,13 +8,12 @@ from typing import Union
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml._typing import derive_use_case
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
-
-from .._typing import derive_use_case
-from .metrics import Metric, MetricFactory
 
 
 class PerformanceCalculatorResult(AbstractCalculatorResult):
