@@ -9,6 +9,20 @@ import pandas as pd
 
 
 def mae_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
+    """
+    Calculate sampling error components for Mean Absolute Error (MAE) using reference data.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+
+    Returns
+    -------
+    (std,): Tuple[np.ndarray]
+    """
     std = np.std(np.abs(y_true_reference - y_pred_reference))
     return (std,)
 
@@ -31,6 +45,20 @@ def mae_sampling_error(sampling_error_components, data) -> float:
 
 
 def mape_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
+    """
+    Calculate sampling error components for Mean Absolute Percentage Error (MAPE) using reference data.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+
+    Returns
+    -------
+    (std,): Tuple[np.ndarray]
+    """
     std = np.std(np.abs(y_true_reference - y_pred_reference) / y_true_reference)
     return (std,)
 
@@ -53,6 +81,20 @@ def mape_sampling_error(sampling_error_components, data) -> float:
 
 
 def mse_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
+    """
+    Calculate sampling error components for Mean Squared Error (MSE) using reference data.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+
+    Returns
+    -------
+    (std,): Tuple[np.ndarray]
+    """
     std = np.std((y_true_reference - y_pred_reference) ** 2)
     return (std,)
 
@@ -75,7 +117,20 @@ def mse_sampling_error(sampling_error_components, data) -> float:
 
 
 def msle_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
+    """
+    Calculate sampling error components for Mean Squared Logarithmic Error (MSLE) using reference data.
 
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+
+    Returns
+    -------
+    (std,): Tuple[np.ndarray]
+    """
     std = np.std((np.log(1 + y_true_reference) - np.log(1 + y_pred_reference)) ** 2)
     return (std,)
 
@@ -98,6 +153,20 @@ def msle_sampling_error(sampling_error_components, data) -> float:
 
 
 def rmse_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
+    """
+    Calculate sampling error components for Root Mean Squared Logarithmic Error (RMSLE) using reference data.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+
+    Returns
+    -------
+    (std,): Tuple[np.ndarray]
+    """
     squared_error = (y_true_reference - y_pred_reference) ** 2
     squared_error_std = np.std(squared_error)
     squared_error_mean = np.mean(squared_error)
@@ -123,6 +192,20 @@ def rmse_sampling_error(sampling_error_components, data) -> float:
 
 
 def rmsle_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
+    """
+    Calculate sampling error components for Mean Absolute Error (MAE) using reference data.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+
+    Returns
+    -------
+    (std,): Tuple[np.ndarray]
+    """
     squared_log_error = (np.log(1 + y_true_reference) - np.log(1 + y_pred_reference)) ** 2
     squared_log_error_std = np.std(squared_log_error)
     squared_log_error_mean = np.mean(squared_log_error)
