@@ -10,11 +10,7 @@ import pytest
 
 from nannyml import PerformanceCalculator
 from nannyml._typing import UseCase
-from nannyml.datasets import (
-    load_synthetic_binary_classification_dataset,
-    load_synthetic_multiclass_classification_dataset,
-)
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationAccuracy,
@@ -23,14 +19,6 @@ from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationPrecision,
     BinaryClassificationRecall,
     BinaryClassificationSpecificity,
-)
-from nannyml.performance_calculation.metrics.multiclass_classification import (
-    MulticlassClassificationAccuracy,
-    MulticlassClassificationAUROC,
-    MulticlassClassificationF1,
-    MulticlassClassificationPrecision,
-    MulticlassClassificationRecall,
-    MulticlassClassificationSpecificity,
 )
 
 
@@ -49,36 +37,30 @@ def performance_calculator() -> PerformanceCalculator:
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
         y_pred='y_pred',
-        y_true='y_true',
-        metrics=['roc_auc', 'f1'],
+        y_true='work_home_actual',
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
     )
 
 
 @pytest.fixture
-def multiclass_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, tgt_df = load_synthetic_multiclass_classification_dataset()
-
-    return ref_df, ana_df, tgt_df
+def realized_performance_metrics(performance_calculator, binary_data) -> pd.DataFrame:
+    performance_calculator.fit(binary_data[0])
+    results = performance_calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier'))
+    return results.data
 
 
 @pytest.mark.parametrize(
-    'key,metadata,metric',
+    'key,problem_type,metric',
     [
         ('roc_auc', UseCase.CLASSIFICATION_BINARY, BinaryClassificationAUROC),
-        ('roc_auc', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationAUROC),
         ('f1', UseCase.CLASSIFICATION_BINARY, BinaryClassificationF1),
-        ('f1', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationF1),
         ('precision', UseCase.CLASSIFICATION_BINARY, BinaryClassificationPrecision),
-        ('precision', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationPrecision),
         ('recall', UseCase.CLASSIFICATION_BINARY, BinaryClassificationRecall),
-        ('recall', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationRecall),
         ('specificity', UseCase.CLASSIFICATION_BINARY, BinaryClassificationSpecificity),
-        ('specificity', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationSpecificity),
         ('accuracy', UseCase.CLASSIFICATION_BINARY, BinaryClassificationAccuracy),
-        ('accuracy', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationAccuracy),
     ],
 )
-def test_metric_factory_returns_correct_metric_given_key_and_metadata(key, metadata, metric):  # noqa: D103
+def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, problem_type, metric):  # noqa: D103
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
@@ -86,17 +68,21 @@ def test_metric_factory_returns_correct_metric_given_key_and_metadata(key, metad
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
     )
-    sut = MetricFactory.create(key, metadata, {'calculator': calc})
+    sut = MetricFactory.create(key, problem_type, {'calculator': calc})
     assert sut == metric(calculator=calc)
 
 
-@pytest.mark.parametrize('use_case', [UseCase.CLASSIFICATION_BINARY, UseCase.CLASSIFICATION_MULTICLASS])
-def test_metric_factory_raises_invalid_args_exception_when_key_unknown(use_case):  # noqa: D103
-    with pytest.raises(InvalidArgumentsException):
-        _ = MetricFactory.create('foo', use_case)
-
-
-@pytest.mark.parametrize('use_case', [UseCase.CLASSIFICATION_BINARY, UseCase.CLASSIFICATION_MULTICLASS])
-def test_metric_factory_raises_invalid_args_exception_when_invalid_key_type_given(use_case):  # noqa: D103
-    with pytest.raises(InvalidArgumentsException):
-        _ = MetricFactory.create(123, use_case)
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        ('roc_auc', [0.97096, 0.97025, 0.97628, 0.96772, 0.96989, 0.96005, 0.95853, 0.95904, 0.96309, 0.95756]),
+        ('f1', [0.92186, 0.92124, 0.92678, 0.91684, 0.92356, 0.87424, 0.87672, 0.86806, 0.883, 0.86775]),
+        ('precision', [0.96729, 0.96607, 0.96858, 0.96819, 0.9661, 0.94932, 0.95777, 0.95012, 0.95718, 0.94271]),
+        ('recall', [0.88051, 0.88039, 0.88843, 0.87067, 0.8846, 0.81017, 0.80832, 0.79904, 0.8195, 0.80383]),
+        ('specificity', [0.9681, 0.9701, 0.97277, 0.9718, 0.96864, 0.95685, 0.96364, 0.95795, 0.96386, 0.94879]),
+        ('accuracy', [0.9228, 0.926, 0.9318, 0.9216, 0.9264, 0.8836, 0.8852, 0.8784, 0.8922, 0.8746]),
+    ],
+)
+def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
+    metric_values = realized_performance_metrics[metric]
+    assert (round(metric_values, 5) == expected).all()

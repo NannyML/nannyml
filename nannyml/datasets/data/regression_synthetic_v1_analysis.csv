@@ -1,4 +1,4 @@
-car_age,km_driven,price_new,accident_count,door_count,transmission,fuel,y_pred,time
+car_age,km_driven,price_new,accident_count,door_count,transmission,fuel,y_pred,timestamp
 16.0,60060.0,33817.0,2.0,5.0,1.0,2.0,3577.0,2017-02-16 16:00:00.000
 16.0,156689.0,41736.0,1.0,5.0,3.0,2.0,2057.0,2017-02-16 16:00:33.600
 19.0,171909.0,29287.0,4.0,3.0,2.0,2.0,345.0,2017-02-16 16:01:07.200
