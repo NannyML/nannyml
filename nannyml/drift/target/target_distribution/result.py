@@ -112,6 +112,7 @@ def _plot_distribution(data: pd.DataFrame, calculator, distribution: str, plot_r
         data = pd.concat([reference_results, data.copy()], ignore_index=True)
 
     if distribution == 'metric':
+        # TODO: change plot/y-axis titles depending on problem type
         fig = _step_plot(
             table=data,
             metric_column_name='metric_target_drift',

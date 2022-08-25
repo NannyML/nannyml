@@ -11,9 +11,9 @@ from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2_contingency
+from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml.base import AbstractCalculator
+from nannyml.base import AbstractCalculator, _column_is_categorical, _column_is_continuous
 from nannyml.chunk import Chunker
 from nannyml.drift.target.target_distribution.result import TargetDistributionResult
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
@@ -159,7 +159,18 @@ class TargetDistributionCalculator(AbstractCalculator):
         return TargetDistributionResult(results_data=res, calculator=self)
 
 
-def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.DataFrame) -> Dict:
+def _calculate_target_drift_for_chunk(reference_targets: pd.Series, analysis_targets: pd.Series) -> Dict:
+    if _column_is_categorical(reference_targets):
+        return _calculate_categorical_target_drift_for_chunk(reference_targets, analysis_targets)
+    elif _column_is_continuous(reference_targets):
+        return _calculate_continuous_target_drift_for_chunk(reference_targets, analysis_targets)
+    else:
+        raise InvalidArgumentsException(
+            f"reference targets of dtype '{reference_targets.dtype}' could not be " "set as continuous or categorical."
+        )
+
+
+def _calculate_categorical_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:
     statistic, p_value, _, _ = chi2_contingency(
         pd.concat([reference_targets.value_counts(), targets.value_counts()], axis=1).fillna(0)
     )
@@ -183,6 +194,18 @@ def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.
 
     return {
         'metric_target_drift': targets.mean() if not (is_non_binary_targets or is_string_targets) else np.NAN,
+        'statistical_target_drift': statistic,
+        'p_value': p_value,
+        'thresholds': _ALERT_THRESHOLD_P_VALUE,
+        'alert': p_value < _ALERT_THRESHOLD_P_VALUE,
+        'significant': p_value < _ALERT_THRESHOLD_P_VALUE,
+    }
+
+
+def _calculate_continuous_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:
+    statistic, p_value = ks_2samp(reference_targets, targets)
+    return {
+        'metric_target_drift': targets.mean(),
         'statistical_target_drift': statistic,
         'p_value': p_value,
         'thresholds': _ALERT_THRESHOLD_P_VALUE,
