@@ -1,10 +1,13 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 import pytest
 
+from nannyml.datasets import load_synthetic_regression_dataset
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 
 
@@ -105,6 +108,13 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     return data
 
 
+@pytest.fixture
+def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
+    ref_df, ana_df, tgt_df = load_synthetic_regression_dataset()
+
+    return ref_df, ana_df, tgt_df
+
+
 def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = StatisticalOutputDriftCalculator(
@@ -125,3 +135,20 @@ def test_output_drift_calculator_with_default_params_should_not_fail(sample_drif
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
+
+
+def test_output_drift_calculator_for_regression_problems(regression_data):  # noqa: D103
+    reference, analysis, _ = regression_data
+    calc = StatisticalOutputDriftCalculator(
+        y_pred='y_pred', y_pred_proba=None, timestamp_column_name='timestamp', chunk_size=5000
+    ).fit(reference)
+    results = calc.calculate(analysis)
+
+    assert (
+        round(results.data['y_pred_dstat'], 5)
+        == [0.01143, 0.01, 0.01015, 0.01555, 0.01357, 0.01217, 0.19832, 0.17972, 0.19528, 0.18757, 0.17757, 0.19248]
+    ).all()
+    assert (
+        round(results.data['y_pred_p_value'], 5)
+        == [0.578, 0.741, 0.725, 0.212, 0.36, 0.498, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    ).all()

@@ -11,7 +11,7 @@ import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml._typing import ModelOutputsType, model_output_column_names
-from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
+from nannyml.base import AbstractCalculator, _column_is_categorical, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
@@ -108,8 +108,10 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
         self.previous_reference_data = reference_data.copy()
 
-        # predicted labels should always be considered categorical
-        reference_data[self.y_pred] = reference_data[self.y_pred].astype('category')
+        # Force categorical columns to be set to 'category' pandas dtype
+        # TODO: we should try to get rid of this
+        if _column_is_categorical(reference_data[self.y_pred]):
+            reference_data[self.y_pred] = reference_data[self.y_pred].astype('category')
 
         # Reference stability
         self._reference_stability = 0  # TODO: Jakub
@@ -125,14 +127,18 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
         _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
 
-        # predicted labels should always be considered categorical
-        data[self.y_pred] = data[self.y_pred].astype('category')
+        # Force categorical columns to be set to 'category' pandas dtype
+        # TODO: we should try to get rid of this
+        if _column_is_categorical(data[self.y_pred]):
+            data[self.y_pred] = data[self.y_pred].astype('category')
 
         columns = [self.y_pred]
         if isinstance(self.y_pred_proba, Dict):
             columns += [v for _, v in self.y_pred_proba.items()]
         elif isinstance(self.y_pred_proba, str):
             columns += [self.y_pred_proba]
+        elif self.y_pred_proba is None:
+            pass
         else:
             raise InvalidArgumentsException(
                 "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "

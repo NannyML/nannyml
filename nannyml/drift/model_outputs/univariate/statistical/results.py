@@ -273,10 +273,6 @@ def _plot_prediction_distribution(
         The original model inputs and outputs
     drift_data : pd.DataFrame
         The results of the drift calculation
-    metadata: ModelMetadata
-        The metadata for the monitored model
-    class_label: str, default=None
-        The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
     Returns
     -------
@@ -346,9 +342,11 @@ def _plot_output_drift(
         output_column_name = calculator.y_pred_proba[class_label]
     elif isinstance(calculator.y_pred_proba, str):
         output_column_name = calculator.y_pred_proba
+    elif calculator.y_pred_proba is None:
+        output_column_name = calculator.y_pred
     else:
         raise InvalidArgumentsException(
-            "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
+            f"parameter 'y_pred_proba' is of type '{type(calculator.y_pred_proba)}' "
             "but should be of type 'Union[str, Dict[str, str].'"
         )
 

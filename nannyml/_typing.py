@@ -51,6 +51,8 @@ ModelOutputsType = Union[str, Dict[str, str], None]
 
 def model_output_column_names(model_outputs: ModelOutputsType) -> List[str]:
     """Get model output column nanmes from inputs."""
+    if model_outputs is None:
+        return []
     if isinstance(model_outputs, str):
         return [model_outputs]
     elif isinstance(model_outputs, Dict):

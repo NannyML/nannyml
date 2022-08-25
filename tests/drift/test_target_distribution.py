@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml import load_synthetic_regression_dataset
+from nannyml.datasets import load_synthetic_regression_dataset
 from nannyml.drift.target.target_distribution import TargetDistributionCalculator
 
 
