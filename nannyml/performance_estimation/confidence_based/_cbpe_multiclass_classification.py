@@ -106,14 +106,15 @@ class _MulticlassClassificationCBPE(CBPE):
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
             estimated_metric = metric.estimate(chunk.data)
+            sampling_error = metric.sampling_error(chunk.data)
             estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
             estimates[f'estimated_{metric.column_name}'] = estimated_metric
-            estimates[f'sampling_error_{metric.column_name}'] = metric.sampling_error(chunk.data)
+            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
             estimates[f'upper_confidence_{metric.column_name}'] = min(
-                self.confidence_upper_bound, estimated_metric + metric.confidence_deviation
+                self.confidence_upper_bound, estimated_metric + 3 * sampling_error
             )
             estimates[f'lower_confidence_{metric.column_name}'] = max(
-                self.confidence_lower_bound, estimated_metric - metric.confidence_deviation
+                self.confidence_lower_bound, estimated_metric - 3 * sampling_error
             )
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
