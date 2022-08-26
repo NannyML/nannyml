@@ -156,19 +156,18 @@ that was estimated:
    upper or lower threshold.
 
 
-
 These results can be also plotted. Our plot contains several key elements.
 
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
-  marker indicates the middle of this period.
+  markers indicate the middle of these chunks.
 
-* The solid, low-saturated purple line *behind* indicates the confidence band.
+* The low-saturated purple area around the reconstruction error indicates the :ref:`sampling error<estimation_of_standard_error>`.
 
-* The red horizontal dashed lines show upper and lower thresholds.
+* The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 
 * If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red,
   low-saturated background in the whole width of the relevant chunk. This is additionally
-  indicated by a red point marker in the middle of the chunk.
+  indicated by a red, diamond-shaped point marker in the middle of the chunk.
 
 Description of tabular results above explains how the
 confidence bands and thresholds are calculated. Additional information is shown in the hover (these are

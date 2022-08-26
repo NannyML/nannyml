@@ -12,9 +12,9 @@ have a look :ref:`here<sampling-error-introduction>`.
 Adapting Standard Error of the Mean Formula
 +++++++++++++++++++++++++++++++++++++++++++
 
-Let us recall the example with random binary classification model predicting random binary target (introduced
+Let us recall the example of a random binary classification model, predicting random binary targets (introduced
 :ref:`here<sampling-error-introduction>`). The histogram shows the sampling distribution of accuracy
-(which true value is 0.5) for samples containing 100 observations.
+(which has a true value of 0.5) for samples containing 100 observations.
 
 .. code-block:: python
 
@@ -43,7 +43,7 @@ Let us recall the example with random binary classification model predicting ran
     :width: 400pt
 
 Calculating standard error for the example above is simple. Since the sampling experiments are already done (10 000
-experiments) and the accuracy for each sample drawn is stored (in ``accuracy_scores``) it is just a matter of
+experiments) and the accuracy for each sample is stored (in ``accuracy_scores``) it is just a matter of
 calculating standard deviation:
 
 .. code-block:: python
@@ -51,20 +51,19 @@ calculating standard deviation:
     >>>  np.round(np.std(accuracy_scores), 3)
     0.05
 
-With large enough number of experiments, this approach gives precise results but it comes at relatively high computation cost.
+With a large enough number of experiments, this approach gives precise results but it comes with a relatively high computation cost.
 There are less precise but significantly faster ways. Selecting a sample (chunk) of data and calculating performance
-for it
-is similar to sampling from a population
-and calculating a statistic. When the statistic is a mean, the Standard Error of the Mean (SEM) formula [1]_ can be
+for it is similar to sampling from a population and calculating a statistic. 
+When the statistic is a mean, the Standard Error of the Mean (SEM) formula [1]_ can be
 used to estimate the standard deviation of the sampled means:
 
     .. math::
         {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
 
-In order to take advantage of the SEM formula in the analyzed example, accuracy of each observation needs to be
-calculated in a way that a mean of this observation-level accuracies equals to the accuracy of the whole sample. This
-sounds complicated but the following solution should clarify it. Accuracy of a single observation is simply equal to 1
-when the prediction is correct and equal to 0 otherwise. When mean of such observation-level accuracies is
+In order to take advantage of the SEM formula in the analyzed example, the accuracy of each observation needs to be
+calculated in such a way that a mean of this observation-level accuracies equals the accuracy of the whole sample. This
+sounds complicated, but the following solution should clarify it. Accuracy of a single observation is simply equal to 1
+when the prediction is correct and equal to 0 otherwise. When the mean of such observation-level accuracies is
 calculated, it is equal to the sample-level accuracy, see:
 
 .. code-block:: python
@@ -73,7 +72,7 @@ calculated, it is equal to the sample-level accuracy, see:
     >>> np.mean(obs_level_accuracy), accuracy_score(y_true, y_pred)
     (0.5045, 0.5045)
 
-Now SEM formula can be used directly to estimate the standard error of accuracy: :math:`\sigma` from the
+Now the SEM formula can be used directly to estimate the standard error of accuracy: :math:`\sigma` from the
 formula above is the standard deviation of the observation-level accuracies and :math:`n` is the sample size (chunk
 size). The code below calculates standard error with SEM and compares it with the standard error from the
 repeated experiments approach:
@@ -98,19 +97,17 @@ Performance Estimation
 Standard Error for performance estimation is calculated using SEM [1]_ in a way described in
 :ref:`Adapting Standard Error
 of the Mean Formula<introducing_sem>`. Since targets are available only in the reference dataset, the nominator of the
-SEM
-formula is calculated based on observation-level metrics from the reference dataset. The sample size in the denominator
-is the size of chunk for which standard error is estimated.
+SEM formula is calculated based on observation-level metrics from the reference dataset. 
+The sample size in the denominator is the size of the chunk for which standard error is estimated.
 
-Given that assumption of performance estimation methods
+Given that the assumptions of performance estimation methods
 are met, the estimated performance is the expected performance of the monitored model on the chunk. Standard error
 informs how much the actual performance might be different from the expected one due to sampling effects only. The
 actual value calculated and shown in the results is 3 standard errors. So the estimated performance +/- 3 standard
 errors create an interval which should contain the actual value of performance metric in about 99% of cases (given
-the assumptions of performance estimation algorithm are met). In the random model example described in
-:ref:`Adapting
-Standard Error of the Mean Formula<introducing_sem>` the expected performance returned by the performance estimation
-algorithm should be close to 0.5 while the band would be 0.35-0.65 (i.e. 0.5 +/- 0.15) for the chunk size of 100.
+the assumptions of the performance estimation algorithm are met). In the random model example
+:ref:`described above<introducing_sem>` the expected performance returned by the performance estimation
+algorithm should be close to 0.5, while the band would be 0.35-0.65 (i.e. 0.5 +/- 0.15) for the chunk size of 100.
 The value of +/- 3 standard errors are displayed as bands on the plots and shown in the hover for each chunk.
 
 
@@ -118,24 +115,19 @@ Performance Monitoring
 **********************
 
 Standard Error for realized performance monitoring is calculated using SEM [1]_ in a way described in
-:ref:`Adapting Standard Error
-of the Mean Formula<introducing_sem>`. Since targets are available only in the reference dataset, the nominator of the
-SEM
-formula is calculated based on observation-level metrics from the reference dataset. The sample size in the denominator
-is the size of a chunk for which standard error is estimated.
+:ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. Since targets are available only in the 
+reference dataset, the nominator of the SEM formula is calculated based on observation-level metrics from the reference 
+dataset. The sample size in the denominator is the size of a chunk for which standard error is estimated.
 
 Since realized performance is the actual performance of
-the monitored model in the chunk, the standard error has different interpretation than in estimated performance case.
+the monitored model in the chunk, the standard error has a different interpretation than in estimated performance case.
 It informs what the *true performance* of the monitored model might be for a given chunk. In the random model example
-described in
-:ref:`Adapting
-Standard Error of the Mean Formula<introducing_sem>` the true accuracy of the model is 0.5. However for some chunks
+:ref:`described above<introducing_sem>` the true accuracy of the model is 0.5. However for some chunks
 that contain 100 observations it can be 0.4, while for other 0.65 etc. NannyML performance calculation results for
 these chunks will come together with value of 3 standard errors, which in this case is 0.15. This tells us that the true performance of the model (0.5)
 will be different by no more than 0.15 from the calculated performance for about 99% of the cases. This helps to
-evaluate whether performance
-changes are significant or are just caused by sampling effects. The value of 3 standard errors is shown in
-the hover.
+evaluate whether performance changes are significant or are just caused by sampling effects. 
+The value of 3 standard errors is shown in the hover.
 
 
 
@@ -144,19 +136,18 @@ Multivariate Drift Detection with PCA
 
 Standard error for :ref:`Multivariate Drift Detection<multivariate_drift_detection>` is calculated using the approach
 introduced in :ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. For each observation the
-multivariate drift detection
-with PCA process calculates a :term:`reconstruction error<Reconstruction Error>` value. The mean of those values for all observations in a chunk
-is the reconstruction error per chunk. The process is described in detail in
-:ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.
+multivariate drift detection with PCA process calculates a :term:`reconstruction error<Reconstruction Error>` value. 
+The mean of those values for all observations in a chunk is the reconstruction error per chunk. 
+The process is described in detail in :ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.
 Therefore the standard error of the mean formula can be used without any intermediate steps - to get standard error we just divide standard deviation of
-reconstruction error for each observation on the reference dataset with the square root of chunk size of interest.
+reconstruction error for each observation on the reference dataset with the square root of the size of the chunk of interest.
 
 
 Univariate Drift Detection
 **************************
 
 Currently :ref:`Univariate Drift Detection<univariate_drift_detection>` for both continuous and categorical variables is
-based on two-sample statistical tests. These statistical tests return the value of test static together with the associated p-value.
+based on two-sample statistical tests. These statistical tests return the value of the test static together with the associated p-value.
 The p-value takes into account sizes of compared samples and in a sense it contains information about the sampling error. Therefore
 additional information about sampling errors is not needed. To make sure you
 interpret p-values correctly have a look at the American Statistical Association statement on p-values [2]_.
@@ -180,8 +171,8 @@ keeping the computation cost very low.
 
 Another thing to keep in mind is that regardless of the method chosen to calculate it, the standard error is based
 on reference data. The only information it takes from the analysis chunk is its size. Therefore, it provides
-accurate estimations for the analysis period as long as i.i.d holds. Or in other words - it
-assumes that *variability* of metric on analysis set will be the same as on reference set.
+accurate estimations for the analysis period as long as i.i.d (independent and identically distributed) holds. Or in other words - it
+assumes that the *variability* of a metric on analysis set will be the same as on reference set.
 
 
 **References**
