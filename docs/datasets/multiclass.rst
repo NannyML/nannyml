@@ -63,7 +63,7 @@ A class prediction is also available from the `y_pred` column. The `y_true` is t
 with the most appropriate product choice for a given customer.
 
 
-There are also three auxiliary columns that are helpful but not used by the monitored model:
+There are also two auxiliary columns that are helpful but not used by the monitored model:
 
 - `identifier`: A unique number referencing each new customer. This is very useful for joining the target
   results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`.
