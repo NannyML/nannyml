@@ -190,10 +190,13 @@ class AbstractEstimator(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    def __str__(self):
+        return self.__class__.__name__
+
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Trains the calculator using reference data."""
         try:
-            self._logger.debug(f"fitting {str(self)}")
+            self._logger.info(f"fitting {str(self)}")
             reference_data = reference_data.copy()
             return self._fit(reference_data, *args, **kwargs)
         except InvalidArgumentsException:
@@ -206,7 +209,7 @@ class AbstractEstimator(ABC):
     def estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
         """Performs a calculation on the provided data."""
         try:
-            self._logger.debug(f"calculating {str(self)}")
+            self._logger.info(f"estimating {str(self)}")
             data = data.copy()
             return self._estimate(data, *args, **kwargs)
         except InvalidArgumentsException:
