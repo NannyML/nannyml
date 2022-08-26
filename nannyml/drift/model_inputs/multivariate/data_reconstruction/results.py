@@ -114,6 +114,8 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         y_axis_title='Reconstruction Error',
         v_line_separating_analysis_period=plot_period_separator,
         sampling_error_column_name='sampling_error',
+        lower_confidence_column_name='lower_confidence_bound',
+        upper_confidence_column_name='upper_confidence_bound',
     )
 
     return fig

@@ -205,8 +205,6 @@ def _step_plot(
         upper_confidence_column_name,
         start_date_column_name,
         end_date_column_name,
-        estimated_column_name,
-        metric_column_name,
     )
 
     # Plot statistically significant band
@@ -576,14 +574,11 @@ def _plot_confidence_band(
     upper_confidence_column_name: str,
     start_date_column_name: str,
     end_date_column_name: str,
-    estimated_column_name: str,
-    metric_column_name: str,
 ):
     if (
         lower_confidence_column_name
         and upper_confidence_column_name
-        and estimated_column_name
-        and {lower_confidence_column_name, upper_confidence_column_name, estimated_column_name}.issubset(data.columns)
+        and {lower_confidence_column_name, upper_confidence_column_name}.issubset(data.columns)
     ):
         data_subset = data.loc[data[chunk_type_column_name] == chunk_types[1]]
         data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
