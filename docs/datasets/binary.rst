@@ -55,7 +55,7 @@ A binary prediction is also available from the `y_pred` column. The `work_home_a
 what actually happened.
 
 
-There are also three auxiliary columns that are helpful but not used by the monitored model:
+There are also two auxiliary columns that are helpful but not used by the monitored model:
 
 - `identifier`: A unique number referencing each employee. This is very useful for joining the target
   results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`.

@@ -123,12 +123,38 @@ def load_synthetic_car_loan_dataset():
 
     Examples
     --------
-    >>> from nannyml.datasets import load_synthetic_binary_classification_dataset
-    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
+    >>> from nannyml.datasets import load_synthetic_car_loan_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_dataset()
 
     """
     reference = load_csv_file_to_df('synthetic_car_loan_reference.csv')
     analysis = load_csv_file_to_df('synthetic_car_loan_analysis.csv')
     analysis_gt = load_csv_file_to_df('synthetic_car_loan_analysis_target.csv')
+
+    return reference, analysis, analysis_gt
+
+
+def load_synthetic_car_price_dataset():
+    """Loads the synthetic car loan binary classification dataset provided for testing the NannyML package.
+
+    Returns
+    -------
+    reference : pd.DataFrame
+        A DataFrame containing reference period of synthetic binary classification dataset
+    analysis : pd.DataFrame
+        A DataFrame containing analysis period of synthetic binary classification dataset
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis period of synthetic binary
+        classification dataset
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_synthetic_car_price_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
+
+    """
+    reference = load_csv_file_to_df('regression_synthetic_reference.csv')
+    analysis = load_csv_file_to_df('regression_synthetic_analysis.csv')
+    analysis_gt = load_csv_file_to_df('regression_synthetic_analysis_targets.csv')
 
     return reference, analysis, analysis_gt
