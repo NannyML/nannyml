@@ -3,7 +3,6 @@
 #  License: Apache Software License 2.0
 from typing import Tuple
 
-import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     mean_absolute_error,
@@ -13,8 +12,7 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import UseCase
-from nannyml.base import _list_missing
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.base import _list_missing, _raise_exception_for_negative_values
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
@@ -172,8 +170,8 @@ class MSLE(Metric):
 
         # TODO: include option to drop negative values as well?
 
-        _raise_exception_for_negative_values(self.calculator.y_true, y_true)
-        _raise_exception_for_negative_values(self.calculator.y_pred, y_pred)
+        _raise_exception_for_negative_values(y_true)
+        _raise_exception_for_negative_values(y_pred)
 
         return mean_squared_log_error(y_true, y_pred)
 
@@ -249,33 +247,10 @@ class RMSLE(Metric):
 
         # TODO: include option to drop negative values as well?
 
-        _raise_exception_for_negative_values(self.calculator.y_true, y_true)
-        _raise_exception_for_negative_values(self.calculator.y_pred, y_pred)
+        _raise_exception_for_negative_values(y_true)
+        _raise_exception_for_negative_values(y_pred)
 
         return mean_squared_log_error(y_true, y_pred, squared=False)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return rmsle_sampling_error(self._sampling_error_components, data)
-
-
-def _raise_exception_for_negative_values(column_name: str, column_values: pd.Series):
-    """Raises an InvalidArgumentsException if a given column contains negative values.
-
-    Parameters
-    ----------
-    column_name: str
-        Name of the column to display in the resulting InvalidArgumentsException
-    column_values: pd.Series
-        Column values to check for negative values.
-
-    Raises
-    ------
-    nannyml.exceptions.InvalidArgumentsException
-    """
-    if (column_values.values < 0).any():
-        negative_item_indices = np.where(column_values.values < 0)
-        raise InvalidArgumentsException(
-            f"target values '{column_name}' contain negative values.\n"
-            f"\tLog-based metrics are not supported for negative target values.\n"
-            f"\tCheck '{column_name}' at rows {str(negative_item_indices)}."
-        )

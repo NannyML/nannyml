@@ -9,6 +9,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
@@ -247,3 +248,24 @@ def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFra
     missing = [col for col in columns_to_find if col not in dataset_columns]
     if len(missing) > 0:
         raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")
+
+
+def _raise_exception_for_negative_values(column: pd.Series):
+    """Raises an InvalidArgumentsException if a given column contains negative values.
+
+    Parameters
+    ----------
+    column: pd.Series
+        Column to check for negative values.
+
+    Raises
+    ------
+    nannyml.exceptions.InvalidArgumentsException
+    """
+    if any(column.values < 0):
+        negative_item_indices = np.where(column.values < 0)
+        raise InvalidArgumentsException(
+            f"target values '{column.name}' contain negative values.\n"
+            f"\tLog-based metrics are not supported for negative target values.\n"
+            f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
+        )
