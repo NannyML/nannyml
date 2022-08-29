@@ -64,7 +64,7 @@ def run(ctx, ignore_errors: bool):
         if config.input.target_data.join_column:
             analysis = analysis.merge(targets, on=config.input.target_data.join_column)
         else:
-            analysis = analysis.merge(targets)
+            analysis = analysis.join(targets)
 
     writer = FileWriter(
         filepath=_render_path_template(config.output.path),

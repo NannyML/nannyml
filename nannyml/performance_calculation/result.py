@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the realized performance calculation and provides plotting functionality."""
-from typing import Union
+from typing import Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -44,7 +44,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         plot_reference: bool = False,
         *args,
         **kwargs,
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Render realized performance metrics.
 
             The following kinds of plots are available:

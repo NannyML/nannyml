@@ -27,6 +27,7 @@ from nannyml.io.base import Writer
 from nannyml.io.file_writer import FileWriter
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
+from nannyml.performance_estimation.direct_error_estimation import DEE, DEFAULT_METRICS
 
 _logger = logging.getLogger(__name__)
 
@@ -56,7 +57,14 @@ def run(
             progress.update(task, advance=2 / 6)
 
         _run_statistical_model_output_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
+            reference_data,
+            analysis_data,
+            column_mapping,
+            problem_type,
+            chunker,
+            writer,
+            ignore_errors,
+            console=progress.console,
         )
         if task is not None:
             progress.update(task, advance=3 / 6)
@@ -91,7 +99,20 @@ def run(
             console=progress.console,
         )
         if task is not None:
-            progress.update(task, description='Estimating performance', advance=6 / 6)
+            progress.update(task, description='Estimating performance', advance=5 / 6)
+
+        _run_dee_performance_estimation(
+            reference_data,
+            analysis_data,
+            column_mapping,
+            problem_type,
+            chunker,
+            writer,
+            ignore_errors,
+            console=progress.console,
+        )
+        if task is not None:
+            progress.update(task, description='Run complete', advance=7 / 7)
 
         progress.console.line(2)
         progress.console.print(Panel(f"View results in {Path(writer.filepath)}"))
@@ -194,13 +215,14 @@ def _run_statistical_model_output_drift_calculator(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
     console: Console = None,
 ):
     if console:
-        console.rule('[cyan]UnivariateStatisticalDriftCalculator[/]')
+        console.rule('[cyan]Model output drift calculator[/]')
     try:
         if console:
             console.log('fitting on reference data')
@@ -208,6 +230,7 @@ def _run_statistical_model_output_drift_calculator(
             y_pred=column_mapping['y_pred'],
             y_pred_proba=column_mapping['y_pred_proba'],
             timestamp_column_name=column_mapping['timestamp'],
+            problem_type=problem_type,
             chunker=chunker,
         ).fit(reference_data)
 
@@ -217,8 +240,8 @@ def _run_statistical_model_output_drift_calculator(
 
         if console:
             console.log('generating result plots')
-        is_multiclass = isinstance(column_mapping['y_pred_proba'], dict)
-        if is_multiclass:
+        plots = {}
+        if problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
             classes = list(column_mapping['y_pred_proba'].keys())
             plots = {
                 f'{kind}_{metric}_{clazz}': results.plot(kind, metric, class_label=clazz)
@@ -231,7 +254,7 @@ def _run_statistical_model_output_drift_calculator(
                 for metric in ['statistic', 'p_value']
                 for clazz in classes
             }
-        else:
+        elif problem_type == ProblemType.CLASSIFICATION_BINARY:
             plots = {
                 f'{kind}_{metric}': results.plot(kind, metric)
                 for kind in ['predicted_labels_drift', 'prediction_drift']
@@ -240,6 +263,12 @@ def _run_statistical_model_output_drift_calculator(
             plots.update(
                 {f'{kind}': results.plot(kind) for kind in ['predicted_labels_distribution', 'prediction_distribution']}
             )
+        elif problem_type == ProblemType.REGRESSION:
+            plots = {
+                'prediction_drift_statistic': results.plot('prediction_drift', 'statistic'),
+                'prediction_drift_metric': results.plot('prediction_drift', 'p_value'),
+                'prediction_distribution': results.plot('prediction_distribution'),
+            }
     except Exception as exc:
         msg = f"Failed to run model output drift calculator: {exc}"
         if console:
@@ -341,7 +370,11 @@ def _run_realized_performance_calculator(
             )
         return
 
-    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+    metrics = []
+    if problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
+        metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+    elif problem_type in [ProblemType.REGRESSION]:
+        metrics = DEFAULT_METRICS
 
     try:
         if console:
@@ -391,10 +424,19 @@ def _run_cbpe_performance_estimation(
     ignore_errors: bool,
     console: Console = None,
 ):
-    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
-
     if console:
-        console.rule('[cyan]PerformanceEstimator[/]')
+        console.rule('[cyan]Confidence Base Performance Estimator[/]')
+
+    if problem_type not in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
+        _logger.info(f"CBPE does not support '{problem_type.name}' problems. Skipping CBPE estimation.")
+        if console:
+            console.log(
+                f"CBPE does not support '{problem_type.name}' problems. Skipping CBPE estimation.",
+                style='yellow',
+            )
+        return
+
+    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
     try:
         if console:
@@ -420,6 +462,67 @@ def _run_cbpe_performance_estimation(
 
     except Exception as exc:
         msg = f"Failed to run CBPE performance estimator: {exc}"
+        if console:
+            console.log(msg, style='red')
+        else:
+            _logger.error(msg)
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
+
+    if console:
+        console.log('writing results')
+    writer.write(data=results.data, plots=plots, calculator_name='estimated_performance')
+
+
+def _run_dee_performance_estimation(
+    reference_data: pd.DataFrame,
+    analysis_data: pd.DataFrame,
+    column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
+    chunker: Chunker,
+    writer: Writer,
+    ignore_errors: bool,
+    console: Console = None,
+):
+    if console:
+        console.rule('[cyan]Direct Error Estimator[/]')
+
+    if problem_type not in [ProblemType.REGRESSION]:
+        _logger.info(f"DEE does not support '{problem_type.name}' problems. Skipping DEE estimation.")
+        if console:
+            console.log(
+                f"DEE does not support '{problem_type.name}' problems. Skipping DEE estimation.",
+                style='yellow',
+            )
+        return
+
+    try:
+        if console:
+            console.log('fitting on reference data')
+        estimator = DEE(  # type: ignore
+            feature_column_names=column_mapping['features'],
+            y_true=column_mapping['y_true'],
+            y_pred=column_mapping['y_pred'],
+            timestamp_column_name=column_mapping['timestamp'],
+            chunker=chunker,
+            metrics=DEFAULT_METRICS,
+        ).fit(reference_data)
+        if console:
+            console.log('estimating on analysis data')
+        results = estimator.estimate(analysis_data)
+
+        if console:
+            console.log('generating result plots')
+        plots = {
+            f'estimated_{metric}': results.plot(kind, metric=metric)
+            for kind in ['performance']
+            for metric in DEFAULT_METRICS
+        }
+
+    except Exception as exc:
+        msg = f"Failed to run DEE performance estimator: {exc}"
         if console:
             console.log(msg, style='red')
         else:

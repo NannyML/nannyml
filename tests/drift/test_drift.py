@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Tests for Drift package."""
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -124,7 +125,7 @@ class SimpleDriftResult(AbstractCalculatorResult):
     def calculator_name(self) -> str:
         return "dummy_calculator"
 
-    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Fake plot."""
         pass
 

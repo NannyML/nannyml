@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from nannyml._typing import ProblemType
 from nannyml.datasets import load_synthetic_regression_dataset
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 
@@ -118,7 +119,11 @@ def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noq
 def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = StatisticalOutputDriftCalculator(
-        y_pred='output', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp', chunk_period='W'
+        y_pred='output',
+        y_pred_proba='y_pred_proba',
+        timestamp_column_name='timestamp',
+        chunk_period='W',
+        problem_type=ProblemType.CLASSIFICATION_BINARY,
     ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
@@ -129,7 +134,11 @@ def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):
 def test_output_drift_calculator_with_default_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = StatisticalOutputDriftCalculator(
-        y_pred='output', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp', chunk_period='W'
+        y_pred='output',
+        y_pred_proba='y_pred_proba',
+        timestamp_column_name='timestamp',
+        chunk_period='W',
+        problem_type=ProblemType.CLASSIFICATION_BINARY,
     ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
@@ -140,7 +149,11 @@ def test_output_drift_calculator_with_default_params_should_not_fail(sample_drif
 def test_output_drift_calculator_for_regression_problems(regression_data):  # noqa: D103
     reference, analysis, _ = regression_data
     calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred', y_pred_proba=None, timestamp_column_name='timestamp', chunk_size=5000
+        y_pred='y_pred',
+        y_pred_proba=None,
+        timestamp_column_name='timestamp',
+        chunk_size=5000,
+        problem_type=ProblemType.CLASSIFICATION_BINARY,
     ).fit(reference)
     results = calc.calculate(analysis)
 

@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """The classes representing the results of a target distribution calculation."""
+from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -33,7 +34,7 @@ class TargetDistributionResult(AbstractCalculatorResult):
 
     def plot(
         self, kind: str = 'distribution', distribution: str = 'metric', plot_reference: bool = False, *args, **kwargs
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the target distribution calculator.
 
         You can render a step plot of the mean target distribution or the statistical tests per chunk.

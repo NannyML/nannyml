@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -52,7 +52,7 @@ class AbstractCalculatorResult(ABC):
     def calculator_name(self) -> str:
         raise NotImplementedError
 
-    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Plots calculation results."""
         raise NotImplementedError
 

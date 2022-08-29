@@ -4,13 +4,13 @@
 
 """Calculates drift for model predictions and model outputs using statistical tests."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml._typing import ModelOutputsType, model_output_column_names
+from nannyml._typing import ModelOutputsType, ProblemType, model_output_column_names
 from nannyml.base import AbstractCalculator, _column_is_categorical, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
@@ -27,6 +27,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         y_pred_proba: ModelOutputsType,
         y_pred: str,
         timestamp_column_name: str,
+        problem_type: Union[str, ProblemType],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -94,6 +95,10 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         self.y_pred_proba = y_pred_proba
         self.y_pred = y_pred
         self.timestamp_column_name = timestamp_column_name
+
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+        self.problem_type: ProblemType = problem_type  # type: ignore
 
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None

@@ -4,11 +4,12 @@
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
 
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult, _column_is_categorical, _column_is_continuous
 from nannyml.chunk import Chunk
 from nannyml.exceptions import InvalidArgumentsException
@@ -46,7 +47,7 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         plot_reference: bool = False,
         *args,
         **kwargs,
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the univariate statistical drift calculator.
 
         For both model predictions and outputs you can render the statistic value or p-values as a step plot,
@@ -327,7 +328,8 @@ def _plot_output_drift(
     """Renders a line plot of the drift metric for a given feature."""
 
     # deal with multiclass stuff
-    if isinstance(calculator.y_pred_proba, Dict):
+    # if isinstance(calculator.y_pred_proba, Dict):
+    if calculator.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
         if class_label is None:
             raise InvalidArgumentsException(
                 "a class label is required when plotting multiclass model"
@@ -340,9 +342,9 @@ def _plot_output_drift(
                 f"Please provide a value that is present in the model outputs."
             )
         output_column_name = calculator.y_pred_proba[class_label]
-    elif isinstance(calculator.y_pred_proba, str):
+    elif calculator.problem_type == ProblemType.CLASSIFICATION_BINARY:
         output_column_name = calculator.y_pred_proba
-    elif calculator.y_pred_proba is None:
+    elif calculator.problem_type == ProblemType.REGRESSION:
         output_column_name = calculator.y_pred
     else:
         raise InvalidArgumentsException(
@@ -409,7 +411,8 @@ def _plot_output_distribution(
     clip: Optional[Tuple[int, int]] = None
 
     # deal with multiclass stuff
-    if isinstance(calculator.y_pred_proba, Dict):
+    # if isinstance(calculator.y_pred_proba, Dict):
+    if calculator.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
         if class_label is None:
             raise InvalidArgumentsException(
                 "a class label is required when plotting multiclass model"
@@ -423,12 +426,15 @@ def _plot_output_distribution(
             )
         output_column_name = calculator.y_pred_proba[class_label]
         clip = (0, 1)
-    elif isinstance(calculator.y_pred_proba, str):
+    # elif isinstance(calculator.y_pred_proba, str):
+    elif calculator.problem_type == ProblemType.CLASSIFICATION_BINARY:
         output_column_name = calculator.y_pred_proba
         clip = (0, 1)
+    elif calculator.problem_type == ProblemType.REGRESSION:
+        output_column_name = calculator.y_pred
     else:
         raise InvalidArgumentsException(
-            "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
+            f"parameter 'y_pred_proba' is of type '{type(calculator.y_pred_proba)}' "
             "but should be of type 'Union[str, Dict[str, str].'"
         )
 

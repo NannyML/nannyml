@@ -52,6 +52,9 @@ class FileWriter(Writer):
         images_path.mkdir(parents=True, exist_ok=True)
         self._logger.debug(f"writing {len(plots)} images to {images_path}")
         for name, image in plots.items():
+            if image is None:
+                self._logger.debug(f"image for '{name}' is 'None'. Skipping writing to file.")
+                break
             _write_bytes_to_filesystem(image.to_image(format='png'), images_path / f'{name}.png', self._fs)
 
         data_path = Path(write_path) / calculator_name / "data"
