@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 
 from nannyml import PerformanceCalculator
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.datasets import load_synthetic_multiclass_classification_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.multiclass_classification import (
@@ -44,6 +44,7 @@ def performance_calculator() -> PerformanceCalculator:
         y_pred='y_pred',
         y_true='y_true',
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        problem_type='classification_multiclass',
     )
 
 
@@ -57,12 +58,12 @@ def realized_performance_metrics(performance_calculator, multiclass_data) -> pd.
 @pytest.mark.parametrize(
     'key,problem_type,metric',
     [
-        ('roc_auc', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationAUROC),
-        ('f1', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationF1),
-        ('precision', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationPrecision),
-        ('recall', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationRecall),
-        ('specificity', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationSpecificity),
-        ('accuracy', UseCase.CLASSIFICATION_MULTICLASS, MulticlassClassificationAccuracy),
+        ('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationAUROC),
+        ('f1', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationF1),
+        ('precision', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationPrecision),
+        ('recall', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationRecall),
+        ('specificity', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationSpecificity),
+        ('accuracy', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationAccuracy),
     ],
 )
 def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, problem_type, metric):  # noqa: D103
@@ -72,6 +73,7 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         y_pred='y_pred',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_multiclass',
     )
     sut = MetricFactory.create(key, problem_type, {'calculator': calc})
     assert sut == metric(calculator=calc)

@@ -76,25 +76,23 @@ def class_labels(model_outputs: ModelOutputsType) -> List[str]:
         )
 
 
-class UseCase(str, Enum):
+class ProblemType(str, Enum):
     """Use cases NannyML supports."""
 
     CLASSIFICATION_BINARY = 'classification_binary'
     CLASSIFICATION_MULTICLASS = 'classification_multiclass'
     REGRESSION = 'regression'
 
-
-def derive_use_case(y_pred_proba: ModelOutputsType) -> UseCase:
-    """Derive NannyML use case from model outputs type."""
-    if y_pred_proba is None:
-        return UseCase.REGRESSION
-
-    if isinstance(y_pred_proba, Dict):
-        return UseCase.CLASSIFICATION_MULTICLASS
-    elif isinstance(y_pred_proba, str):
-        return UseCase.CLASSIFICATION_BINARY
-    else:
-        raise InvalidArgumentsException(
-            "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
-            "but should be of type 'Union[str, Dict[str, str].'"
-        )
+    @staticmethod
+    def parse(problem_type: str):
+        if problem_type in 'classification_binary':
+            return ProblemType.CLASSIFICATION_BINARY
+        elif problem_type in 'classification_multiclass':
+            return ProblemType.CLASSIFICATION_MULTICLASS
+        elif problem_type in 'regression':
+            return ProblemType.REGRESSION
+        else:
+            raise InvalidArgumentsException(
+                f"unknown value for problem_type '{problem_type}'. Value should be one of "
+                f"{[pt.value for pt in ProblemType]}"
+            )

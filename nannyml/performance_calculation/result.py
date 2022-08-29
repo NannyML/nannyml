@@ -8,7 +8,6 @@ from typing import Union
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import derive_use_case
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
@@ -149,7 +148,7 @@ def _plot_performance_metric(
     results_data = results_data.copy()
 
     if isinstance(metric, str):
-        metric = MetricFactory.create(metric, derive_use_case(calculator.y_pred_proba), {'calculator': calculator})
+        metric = MetricFactory.create(metric, calculator.problem_type, {'calculator': calculator})
 
     plot_period_separator = plot_reference
 

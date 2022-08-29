@@ -3,7 +3,7 @@ from typing import Union
 import pandas as pd
 from plotly.graph_objects import Figure
 
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_error_estimation.metrics import Metric, MetricFactory
@@ -41,7 +41,7 @@ class Result(AbstractEstimatorResult):
                     "no value for 'metric' given. Please provide the name of a metric to display."
                 )
             if isinstance(metric, str):
-                metric = MetricFactory.create(metric, UseCase.REGRESSION, {'estimator': self.estimator})
+                metric = MetricFactory.create(metric, ProblemType.REGRESSION, {'estimator': self.estimator})
 
             return _plot_direct_error_estimation_performance(self.data, metric, self.estimator, plot_reference)
         else:

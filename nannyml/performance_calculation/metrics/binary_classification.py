@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.base import _list_missing
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
@@ -27,7 +27,7 @@ from nannyml.sampling_error.binary_classification import (
 )
 
 
-@MetricFactory.register(metric='roc_auc', use_case=UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
@@ -72,7 +72,7 @@ class BinaryClassificationAUROC(Metric):
         return auroc_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='f1', use_case=UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register(metric='f1', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationF1(Metric):
     """F1 score metric."""
 
@@ -113,7 +113,7 @@ class BinaryClassificationF1(Metric):
         return f1_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='precision', use_case=UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register(metric='precision', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
     """Precision metric."""
 
@@ -157,7 +157,7 @@ class BinaryClassificationPrecision(Metric):
         return precision_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='recall', use_case=UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register(metric='recall', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
@@ -201,7 +201,7 @@ class BinaryClassificationRecall(Metric):
         return recall_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='specificity', use_case=UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register(metric='specificity', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
     """Specificity metric."""
 
@@ -251,7 +251,7 @@ class BinaryClassificationSpecificity(Metric):
         return specificity_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='accuracy', use_case=UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register(metric='accuracy', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
     """Accuracy metric."""
 

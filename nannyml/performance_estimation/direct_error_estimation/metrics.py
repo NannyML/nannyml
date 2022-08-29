@@ -17,7 +17,7 @@ from sklearn.metrics import (
     mean_squared_log_error,
 )
 
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, _raise_exception_for_negative_values
 from nannyml.chunk import Chunk
 from nannyml.exceptions import InvalidArgumentsException
@@ -210,6 +210,7 @@ class Metric(abc.ABC):
 
             automl = AutoML()
             automl.fit(X_train, y_train, **hyperparameter_tuning_config)
+            self.estimator.hyperparameters = {**automl.model.estimator.get_params()}
             model = LGBMRegressor(**automl.model.estimator.get_params())
             model.fit(X_train, y_train)
         elif hyperparameters:
@@ -234,14 +235,14 @@ class Metric(abc.ABC):
 class MetricFactory:
     """A factory class that produces Metric instances based on a given magic string or a metric specification."""
 
-    registry: Dict[str, Dict[UseCase, Metric]] = {}
+    registry: Dict[str, Dict[ProblemType, Metric]] = {}
 
     @classmethod
     def _logger(cls) -> logging.Logger:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key: str, use_case: UseCase, kwargs: Dict[str, Any] = None) -> Metric:
+    def create(cls, key: str, problem_type: ProblemType, kwargs: Dict[str, Any] = None) -> Metric:
         if kwargs is None:
             kwargs = {}
 
@@ -257,30 +258,32 @@ class MetricFactory:
                 "Should be one of ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle']."
             )
 
-        if use_case not in cls.registry[key]:
+        if problem_type not in cls.registry[key]:
             raise RuntimeError(
-                f"metric '{key}' is currently not supported for use case {use_case}. "
+                f"metric '{key}' is currently not supported for use case {problem_type}. "
                 "Please specify another metric or use one of these supported model types for this metric: "
                 f"{[md for md in cls.registry[key]]}"
             )
-        metric_class = cls.registry[key][use_case]
+        metric_class = cls.registry[key][problem_type]
         return metric_class(**kwargs)  # type: ignore
 
     @classmethod
-    def register(cls, metric: str, use_case: UseCase) -> Callable:
+    def register(cls, metric: str, problem_type: ProblemType) -> Callable:
         def inner_wrapper(wrapped_class: Metric) -> Metric:
             if metric in cls.registry:
-                if use_case in cls.registry[metric]:
-                    cls._logger().warning(f"re-registering Metric for metric='{metric}' and use_case='{use_case}'")
-                cls.registry[metric][use_case] = wrapped_class
+                if problem_type in cls.registry[metric]:
+                    cls._logger().warning(
+                        f"re-registering Metric for metric='{metric}' " f"and problem_type='{problem_type}'"
+                    )
+                cls.registry[metric][problem_type] = wrapped_class
             else:
-                cls.registry[metric] = {use_case: wrapped_class}
+                cls.registry[metric] = {problem_type: wrapped_class}
             return wrapped_class
 
         return inner_wrapper
 
 
-@MetricFactory.register('mae', UseCase.REGRESSION)
+@MetricFactory.register('mae', ProblemType.REGRESSION)
 class MAE(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='MAE', column_name='mae', estimator=estimator)
@@ -322,7 +325,7 @@ class MAE(Metric):
         return mean_absolute_error(y_true, y_pred)
 
 
-@MetricFactory.register('mape', UseCase.REGRESSION)
+@MetricFactory.register('mape', ProblemType.REGRESSION)
 class MAPE(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='MAPE', column_name='mape', estimator=estimator)
@@ -365,7 +368,7 @@ class MAPE(Metric):
         return mean_absolute_percentage_error(y_true, y_pred)
 
 
-@MetricFactory.register('mse', UseCase.REGRESSION)
+@MetricFactory.register('mse', ProblemType.REGRESSION)
 class MSE(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='MSE', column_name='mse', estimator=estimator)
@@ -407,7 +410,7 @@ class MSE(Metric):
         return mean_squared_error(y_true, y_pred)
 
 
-@MetricFactory.register('msle', UseCase.REGRESSION)
+@MetricFactory.register('msle', ProblemType.REGRESSION)
 class MSLE(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='MSLE', column_name='msle', estimator=estimator)
@@ -455,7 +458,7 @@ class MSLE(Metric):
         return mean_squared_log_error(y_true, y_pred)
 
 
-@MetricFactory.register('rmse', UseCase.REGRESSION)
+@MetricFactory.register('rmse', ProblemType.REGRESSION)
 class RMSE(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='RMSE', column_name='rmse', estimator=estimator)
@@ -497,7 +500,7 @@ class RMSE(Metric):
         return mean_squared_error(y_true, y_pred, squared=False)
 
 
-@MetricFactory.register('rmsle', UseCase.REGRESSION)
+@MetricFactory.register('rmsle', ProblemType.REGRESSION)
 class RMSLE(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='RMSLE', column_name='rmsle', estimator=estimator)

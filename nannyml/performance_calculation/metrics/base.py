@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -158,14 +158,14 @@ class Metric(abc.ABC):
 class MetricFactory:
     """A factory class that produces Metric instances based on a given magic string or a metric specification."""
 
-    registry: Dict[str, Dict[UseCase, Metric]] = {}
+    registry: Dict[str, Dict[ProblemType, Metric]] = {}
 
     @classmethod
     def _logger(cls) -> Logger:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key: str, use_case: UseCase, kwargs: Dict[str, Any] = {}) -> Metric:
+    def create(cls, key: str, use_case: ProblemType, kwargs: Dict[str, Any] = {}) -> Metric:
         """Returns a Metric instance for a given key."""
         if not isinstance(key, str):
             raise InvalidArgumentsException(
@@ -189,7 +189,7 @@ class MetricFactory:
         return metric_class(**kwargs)  # type: ignore
 
     @classmethod
-    def register(cls, metric: str, use_case: UseCase) -> Callable:
+    def register(cls, metric: str, use_case: ProblemType) -> Callable:
         def inner_wrapper(wrapped_class: Metric) -> Metric:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:

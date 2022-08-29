@@ -21,7 +21,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
-from nannyml._typing import UseCase, class_labels, model_output_column_names
+from nannyml._typing import ProblemType, class_labels, model_output_column_names
 from nannyml.base import _list_missing
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
@@ -41,7 +41,7 @@ from nannyml.sampling_error.multiclass_classification import (
 )
 
 
-@MetricFactory.register(metric='roc_auc', use_case=UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
@@ -105,7 +105,7 @@ class MulticlassClassificationAUROC(Metric):
         return auroc_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='f1', use_case=UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register(metric='f1', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
     """F1 score metric."""
 
@@ -161,7 +161,7 @@ class MulticlassClassificationF1(Metric):
         return f1_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='precision', use_case=UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register(metric='precision', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(Metric):
     """Precision metric."""
 
@@ -221,7 +221,7 @@ class MulticlassClassificationPrecision(Metric):
         return precision_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='recall', use_case=UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register(metric='recall', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
@@ -281,7 +281,7 @@ class MulticlassClassificationRecall(Metric):
         return recall_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='specificity', use_case=UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register(metric='specificity', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
 
@@ -345,7 +345,7 @@ class MulticlassClassificationSpecificity(Metric):
         return specificity_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='accuracy', use_case=UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register(metric='accuracy', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(Metric):
     """Accuracy metric."""
 

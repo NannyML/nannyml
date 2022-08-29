@@ -11,7 +11,7 @@ from sklearn.metrics import (
     mean_squared_log_error,
 )
 
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.base import _list_missing, _raise_exception_for_negative_values
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
 from nannyml.sampling_error.regression import (
@@ -30,7 +30,7 @@ from nannyml.sampling_error.regression import (
 )
 
 
-@MetricFactory.register(metric='mae', use_case=UseCase.REGRESSION)
+@MetricFactory.register(metric='mae', use_case=ProblemType.REGRESSION)
 class MAE(Metric):
     """Mean Absolute Error metric."""
 
@@ -66,7 +66,7 @@ class MAE(Metric):
         return mae_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='mape', use_case=UseCase.REGRESSION)
+@MetricFactory.register(metric='mape', use_case=ProblemType.REGRESSION)
 class MAPE(Metric):
     """Mean Absolute Percentage Error metric."""
 
@@ -102,7 +102,7 @@ class MAPE(Metric):
         return mape_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='mse', use_case=UseCase.REGRESSION)
+@MetricFactory.register(metric='mse', use_case=ProblemType.REGRESSION)
 class MSE(Metric):
     """Mean Squared Error metric."""
 
@@ -138,7 +138,7 @@ class MSE(Metric):
         return mse_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='msle', use_case=UseCase.REGRESSION)
+@MetricFactory.register(metric='msle', use_case=ProblemType.REGRESSION)
 class MSLE(Metric):
     """Mean Squared Logarithmic Error metric."""
 
@@ -179,7 +179,7 @@ class MSLE(Metric):
         return msle_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='rmse', use_case=UseCase.REGRESSION)
+@MetricFactory.register(metric='rmse', use_case=ProblemType.REGRESSION)
 class RMSE(Metric):
     """Root Mean Squared Error metric."""
 
@@ -215,7 +215,7 @@ class RMSE(Metric):
         return rmse_sampling_error(self._sampling_error_components, data)
 
 
-@MetricFactory.register(metric='rmsle', use_case=UseCase.REGRESSION)
+@MetricFactory.register(metric='rmsle', use_case=ProblemType.REGRESSION)
 class RMSLE(Metric):
     """Root Mean Squared Logarithmic Error metric."""
 

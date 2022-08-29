@@ -1,4 +1,8 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  #
+#  License: Apache Software License 2.0
+
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
 
@@ -44,6 +48,7 @@ def estimates(binary_classification_data) -> CBPEPerformanceEstimatorResult:  # 
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
+        problem_type='classification_binary',
     )
     estimator.fit(reference)
     return estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
@@ -58,6 +63,7 @@ def test_cbpe_will_calibrate_scores_when_needed(binary_classification_data):  # 
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
+        problem_type='classification_binary',
     )
     sut.fit(ref_df)
 
@@ -75,6 +81,7 @@ def test_cbpe_will_not_calibrate_scores_when_not_needed(binary_classification_da
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
+        problem_type='classification_binary',
     )
     sut.fit(ref_df)
 
@@ -90,6 +97,7 @@ def test_cbpe_will_not_fail_on_work_from_home_sample(binary_classification_data)
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
             metrics=['roc_auc'],
+            problem_type='classification_binary',
         )
         estimator.fit(reference)
         _ = estimator.estimate(analysis)
@@ -105,6 +113,7 @@ def test_cbpe_raises_invalid_arguments_exception_when_giving_invalid_metric_valu
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
             metrics=['roc_auc', 'foo'],
+            problem_type='classification_binary',
         )
 
 
@@ -118,6 +127,7 @@ def test_cbpe_raises_invalid_arguments_exception_when_given_empty_metrics_list()
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
             metrics=[],
+            problem_type='classification_binary',
         )
 
 
@@ -131,6 +141,7 @@ def test_cbpe_raises_invalid_arguments_exception_when_given_none_metrics_list():
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
             metrics=None,
+            problem_type='classification_binary',
         )
 
 
@@ -144,6 +155,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predictions_are_required_bu
         y_pred='predictions',
         y_pred_proba='y_pred_proba',
         metrics=['f1'],
+        problem_type='classification_binary',
     )  # requires predictions!
     with pytest.raises(InvalidArgumentsException, match='predictions'):
         estimator.fit(reference)
@@ -156,6 +168,7 @@ def test_cbpe_defaults_to_isotonic_calibrator_when_none_given():  # noqa: D103
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
         metrics=['f1'],
+        problem_type='classification_binary',
     )
     assert isinstance(estimator.calibrator, IsotonicCalibrator)
 
@@ -175,6 +188,7 @@ def test_cbpe_uses_custom_calibrator_when_provided():  # noqa: D103
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
         calibrator=TestCalibrator(),
+        problem_type='classification_binary',
     )
     assert isinstance(estimator.calibrator, TestCalibrator)
 
@@ -192,6 +206,7 @@ def test_cbpe_uses_calibrator_to_calibrate_predicted_probabilities_when_needed( 
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
         calibrator=calibrator,
+        problem_type='classification_binary',
     ).fit(reference)
     assert typing.cast(CBPE, estimator).needs_calibration
 
@@ -214,6 +229,7 @@ def test_cbpe_doesnt_use_calibrator_to_calibrate_predicted_probabilities_when_no
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
         calibrator=calibrator,
+        problem_type='classification_binary',
     ).fit(reference)
 
     typing.cast(CBPE, estimator).needs_calibration = False  # Override this to disable calibration
@@ -234,6 +250,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predicted_probabilities_are
         y_pred='y_pred',
         y_pred_proba='probabilities',
         metrics=['roc_auc'],
+        problem_type='classification_binary',
     )
     with pytest.raises(InvalidArgumentsException, match='probabilities'):
         estimator.fit(reference)
@@ -249,6 +266,7 @@ def test_cbpe_runs_for_all_metrics(binary_classification_data, metric):  # noqa:
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
             metrics=['roc_auc'],
+            problem_type='classification_binary',
         ).fit(reference)
         _ = estimator.estimate(pd.concat([reference, analysis]))
     except Exception as e:
@@ -290,6 +308,7 @@ def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_o
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        problem_type='classification_binary',
     )
     try:
         estimator.fit(reference_data=reference)
@@ -322,6 +341,7 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
+        problem_type='classification_binary',
     ).fit(reference)
     results = estimator.estimate(pd.concat([reference, analysis]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
@@ -344,6 +364,7 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
             'upmarket_card': 'y_pred_proba_upmarket_card',
         },
         metrics=['roc_auc'],
+        problem_type='classification_multiclass',
     ).fit(reference)
     results = estimator.estimate(pd.concat([reference, analysis]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
@@ -373,6 +394,7 @@ def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
         metrics=[metric],
+        problem_type='classification_binary',
     ).fit(reference)
     results = estimator.estimate(analysis)
 
@@ -405,6 +427,7 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
         y_pred_proba='y_pred_proba',
         metrics=[metric],
         chunk_period='Y',
+        problem_type='classification_binary',
     ).fit(reference)
     results = estimator.estimate(analysis)
     print(results.data[f'sampling_error_{metric}'])
@@ -438,6 +461,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_const
             'upmarket_card': 'y_pred_proba_upmarket_card',
         },
         metrics=[metric],
+        problem_type='classification_multiclass',
     ).fit(reference)
     results = estimator.estimate(analysis)
 
@@ -474,6 +498,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
         },
         metrics=[metric],
         chunk_period='M',
+        problem_type='classification_multiclass',
     ).fit(reference)
     results = estimator.estimate(analysis)
     print(results.data[f'sampling_error_{metric}'])

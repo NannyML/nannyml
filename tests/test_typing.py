@@ -6,7 +6,7 @@ from typing import Tuple
 import pandas as pd
 import pytest
 
-from nannyml._typing import UseCase, class_labels, derive_use_case
+from nannyml._typing import ProblemType, class_labels
 from nannyml.datasets import load_synthetic_multiclass_classification_dataset, load_synthetic_regression_dataset
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -22,15 +22,20 @@ def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Dat
 
 
 @pytest.mark.parametrize(
-    'y_pred_proba, use_case',
+    'problem_type_str, problem_type',
     [
-        ('y_pred_proba', UseCase.CLASSIFICATION_BINARY),
-        ({'class1': 'class1_col', 'class2': 'class2_col'}, UseCase.CLASSIFICATION_MULTICLASS),
-        (None, UseCase.REGRESSION),
+        ('classification_binary', ProblemType.CLASSIFICATION_BINARY),
+        ('classification_multiclass', ProblemType.CLASSIFICATION_MULTICLASS),
+        ('regression', ProblemType.REGRESSION),
     ],
 )
-def test_derive_use_case(y_pred_proba, use_case):
-    assert derive_use_case(y_pred_proba) == use_case
+def test_problem_type_parsing(problem_type_str, problem_type):
+    assert ProblemType.parse(problem_type_str) == problem_type
+
+
+def test_problem_type_parsing_raises_invalid_args_exc_when_given_unknown_problem_type_str():
+    with pytest.raises(InvalidArgumentsException):
+        _ = ProblemType.parse('foo')
 
 
 @pytest.mark.parametrize(

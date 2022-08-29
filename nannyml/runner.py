@@ -17,6 +17,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress
 
+from nannyml._typing import ProblemType
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
@@ -34,6 +35,7 @@ def run(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer = FileWriter(filepath='out', data_format='parquet'),
     ignore_errors: bool = True,
@@ -66,13 +68,27 @@ def run(
             progress.update(task, advance=4 / 6)
 
         _run_realized_performance_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
+            reference_data,
+            analysis_data,
+            column_mapping,
+            problem_type,
+            chunker,
+            writer,
+            ignore_errors,
+            console=progress.console,
         )
         if task is not None:
             progress.update(task, description='Calculating realized performance', advance=5 / 6)
 
         _run_cbpe_performance_estimation(
-            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
+            reference_data,
+            analysis_data,
+            column_mapping,
+            problem_type,
+            chunker,
+            writer,
+            ignore_errors,
+            console=progress.console,
         )
         if task is not None:
             progress.update(task, description='Estimating performance', advance=6 / 6)
@@ -303,6 +319,7 @@ def _run_realized_performance_calculator(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
@@ -336,6 +353,7 @@ def _run_realized_performance_calculator(
             timestamp_column_name=column_mapping['timestamp'],
             chunker=chunker,
             metrics=metrics,
+            problem_type=problem_type,
         ).fit(reference_data)
 
         if console:
@@ -367,6 +385,7 @@ def _run_cbpe_performance_estimation(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
@@ -385,6 +404,7 @@ def _run_cbpe_performance_estimation(
             y_pred=column_mapping['y_pred'],
             y_pred_proba=column_mapping['y_pred_proba'],
             timestamp_column_name=column_mapping['timestamp'],
+            problem_type=problem_type,
             chunker=chunker,
             metrics=metrics,
         ).fit(reference_data)

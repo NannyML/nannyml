@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult, _list_missing
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -40,7 +40,7 @@ class DEE(AbstractEstimator):
         if metrics is None:
             metrics = DEFAULT_METRICS
         self.metrics: List[Metric] = [
-            MetricFactory.create(metric, UseCase.REGRESSION, kwargs={'estimator': self}) for metric in metrics
+            MetricFactory.create(metric, ProblemType.REGRESSION, kwargs={'estimator': self}) for metric in metrics
         ]
 
         if hyperparameter_tuning_config is None:

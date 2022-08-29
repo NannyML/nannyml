@@ -56,6 +56,7 @@ class Config(BaseModel):
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
 
+    problem_type: str
     ignore_errors: Optional[bool]
 
     @classmethod

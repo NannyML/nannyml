@@ -8,6 +8,7 @@ import jinja2  # type: ignore
 from rich.console import Console
 
 from nannyml import runner
+from nannyml._typing import ProblemType
 from nannyml.chunk import ChunkerFactory, DefaultChunker
 from nannyml.cli.cli import cli
 from nannyml.config import Config
@@ -82,10 +83,13 @@ def run(ctx, ignore_errors: bool):
         chunker = DefaultChunker()
         console.log("no chunker settings specified, using [cyan]default chunker[/]")
 
+    problem_type = ProblemType.parse(config.problem_type)
+
     runner.run(
         reference_data=reference,
         analysis_data=analysis,
         column_mapping=config.column_mapping.dict(),
+        problem_type=problem_type,
         chunker=chunker,
         writer=writer,
         run_in_console=True,

@@ -6,12 +6,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from nannyml._typing import ModelOutputsType, derive_use_case
+from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
@@ -33,6 +33,7 @@ class PerformanceCalculator(AbstractCalculator):
         y_true: str,
         y_pred_proba: ModelOutputsType,
         y_pred: str,
+        problem_type: Union[str, ProblemType],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -100,9 +101,13 @@ class PerformanceCalculator(AbstractCalculator):
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
         self.timestamp_column_name = timestamp_column_name
+
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+        self.problem_type = problem_type
+
         self.metrics: List[Metric] = [
-            MetricFactory.create(m, derive_use_case(self.y_pred_proba), {'calculator': self})  # type: ignore
-            for m in metrics
+            MetricFactory.create(m, problem_type, {'calculator': self}) for m in metrics  # type: ignore
         ]
 
         self.previous_reference_data: Optional[pd.DataFrame] = None

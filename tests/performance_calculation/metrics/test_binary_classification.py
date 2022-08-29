@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from nannyml import PerformanceCalculator
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.binary_classification import (
@@ -22,7 +22,7 @@ from nannyml.performance_calculation.metrics.binary_classification import (
 )
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def binary_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
     ref_df, ana_df, tgt_df = load_synthetic_binary_classification_dataset()
     ref_df['y_pred'] = ref_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
@@ -31,7 +31,7 @@ def binary_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D
     return ref_df, ana_df, tgt_df
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def performance_calculator() -> PerformanceCalculator:
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
@@ -39,10 +39,11 @@ def performance_calculator() -> PerformanceCalculator:
         y_pred='y_pred',
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        problem_type='classification_binary',
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def realized_performance_metrics(performance_calculator, binary_data) -> pd.DataFrame:
     performance_calculator.fit(binary_data[0])
     results = performance_calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier'))
@@ -52,12 +53,12 @@ def realized_performance_metrics(performance_calculator, binary_data) -> pd.Data
 @pytest.mark.parametrize(
     'key,problem_type,metric',
     [
-        ('roc_auc', UseCase.CLASSIFICATION_BINARY, BinaryClassificationAUROC),
-        ('f1', UseCase.CLASSIFICATION_BINARY, BinaryClassificationF1),
-        ('precision', UseCase.CLASSIFICATION_BINARY, BinaryClassificationPrecision),
-        ('recall', UseCase.CLASSIFICATION_BINARY, BinaryClassificationRecall),
-        ('specificity', UseCase.CLASSIFICATION_BINARY, BinaryClassificationSpecificity),
-        ('accuracy', UseCase.CLASSIFICATION_BINARY, BinaryClassificationAccuracy),
+        ('roc_auc', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationAUROC),
+        ('f1', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationF1),
+        ('precision', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationPrecision),
+        ('recall', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationRecall),
+        ('specificity', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationSpecificity),
+        ('accuracy', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationAccuracy),
     ],
 )
 def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, problem_type, metric):  # noqa: D103
@@ -67,6 +68,7 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         y_pred='y_pred',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     )
     sut = MetricFactory.create(key, problem_type, {'calculator': calc})
     assert sut == metric(calculator=calc)

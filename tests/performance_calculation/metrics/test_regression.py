@@ -9,20 +9,20 @@ import pandas as pd
 import pytest
 
 from nannyml import PerformanceCalculator
-from nannyml._typing import UseCase
+from nannyml._typing import ProblemType
 from nannyml.datasets import load_synthetic_regression_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.regression import MAE, MAPE, MSE, MSLE, RMSE, RMSLE
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
     ref_df, ana_df, tgt_df = load_synthetic_regression_dataset()
 
     return ref_df, ana_df, tgt_df
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def performance_calculator() -> PerformanceCalculator:
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
@@ -30,10 +30,11 @@ def performance_calculator() -> PerformanceCalculator:
         y_pred='y_pred',
         y_true='y_true',
         metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+        problem_type='regression',
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def realized_performance_metrics(performance_calculator, regression_data) -> pd.DataFrame:
     # Get rid of negative values for log based metrics
     reference = regression_data[0][~(regression_data[0]['y_pred'] < 0)]
@@ -47,12 +48,12 @@ def realized_performance_metrics(performance_calculator, regression_data) -> pd.
 @pytest.mark.parametrize(
     'key,problem_type,metric',
     [
-        ('mae', UseCase.REGRESSION, MAE),
-        ('mape', UseCase.REGRESSION, MAPE),
-        ('mse', UseCase.REGRESSION, MSE),
-        ('msle', UseCase.REGRESSION, MSLE),
-        ('rmse', UseCase.REGRESSION, RMSE),
-        ('rmsle', UseCase.REGRESSION, RMSLE),
+        ('mae', ProblemType.REGRESSION, MAE),
+        ('mape', ProblemType.REGRESSION, MAPE),
+        ('mse', ProblemType.REGRESSION, MSE),
+        ('msle', ProblemType.REGRESSION, MSLE),
+        ('rmse', ProblemType.REGRESSION, RMSE),
+        ('rmsle', ProblemType.REGRESSION, RMSLE),
     ],
 )
 def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, problem_type, metric):  # noqa: D103
@@ -62,6 +63,7 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         y_pred='y_pred',
         y_true='y_true',
         metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+        problem_type='regression',
     )
     sut = MetricFactory.create(key, problem_type, {'calculator': calc})
     assert sut == metric(calculator=calc)
