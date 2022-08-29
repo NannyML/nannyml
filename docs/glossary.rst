@@ -173,7 +173,15 @@ Glossary
     Standard Error
         The Standard Error of a statistic is the standard deviation of the probability distribution we are sampling it from.
         It can also be an estimate of that standard deviation. If the statistic is the sample mean, then it is called
-        Standard Error of the Mean and abbreviated as SEM. More information can be read at the `Wikipedia Standard Error page`_.
+        Standard Error of the Mean and abbreviated as SEM. 
+        
+        The exact value of standard error from an independent sample of :math:`n` observations taken from a statistical population with
+        standard deviation :math:`\sigma` is:
+
+        .. math::
+            {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
+        
+        More information can be read at the `Wikipedia Standard Error page`_.
 
     Target
         The actual outcome of the event the machine learning model is trying to predict. Also referred to as

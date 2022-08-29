@@ -96,7 +96,7 @@ Performance Estimation
 **********************
 
 
-Standard Error for performance estimation is calculated using SEM [1]_ in a way described in
+:term:`Standard Error` for performance estimation is calculated using SEM [1]_ in a way described in
 :ref:`Adapting Standard Error
 of the Mean Formula<introducing_sem>`. Since targets are available only in the reference dataset, the nominator of the
 SEM formula is calculated based on observation-level metrics from the reference dataset.
@@ -117,7 +117,7 @@ The value of +/- 3 standard errors are displayed as bands on the plots and shown
 Performance Monitoring
 **********************
 
-Standard Error for realized performance monitoring is calculated using SEM [1]_ in a way described in
+:term:`Standard Error` for realized performance monitoring is calculated using SEM [1]_ in a way described in
 :ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. Since targets are available only in the
 reference dataset, the nominator of the SEM formula is calculated based on observation-level metrics from the reference
 dataset. The sample size in the denominator is the size of a chunk for which standard error is estimated.
@@ -139,16 +139,19 @@ The value of 3 standard errors is shown in the hover and it is called *sampling 
 Multivariate Drift Detection with PCA
 *************************************
 
-Standard error for :ref:`Multivariate Drift Detection<multivariate_drift_detection>` is calculated using the approach
+:term:`Standard Error` for :ref:`Multivariate Drift Detection<multivariate_drift_detection>` is calculated using the approach
 introduced in :ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. For each observation the
 multivariate drift detection with PCA process calculates a :term:`reconstruction error<Reconstruction Error>` value.
 The mean of those values for all observations in a chunk is the reconstruction error per chunk.
 The process is described in detail in :ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.
-Therefore the standard error of the mean formula can be used without any intermediate steps - to get standard error we just divide standard deviation of
+Therefore the standard error of the mean formula can be used without any intermediate steps. We calculate the standard error
+of the mean of reconstruction error values within a chunk by dividing the standard deviation of
 reconstruction error for each observation on the reference dataset with the square root of the size of the chunk of interest.
 
-For the sampling error we use +/- 3 standard error in similar fashion with the Performance Metrics. We want around 99%
-of cases where sampling variablity affects our result to be within the sampling error range we provide.
+For the sampling error we use +/- 3 standard error in similar fashion with the performance metrics. We want around 99%
+of values we measure for each chunk to be within the sampling error range provided. The validity of sampling error range
+results are constrained by the :ref:`limitations of our approach<limitations_sem>` that should be taken in mind when 
+interpreting model monitoring results.
 
 
 Univariate Drift Detection
@@ -160,11 +163,12 @@ The p-value takes into account sizes of compared samples and in a sense it conta
 additional information about sampling errors is not needed. To make sure you
 interpret p-values correctly have a look at the American Statistical Association statement on p-values [2]_.
 
+.. _limitations_sem:
 
 Assumptions and Limitations
 +++++++++++++++++++++++++++
 
-Generally the SEM formula gives the exact value when:
+Generally the :term:`SEM formula<Standard Error>` gives the exact value when:
 
     * The standard deviation of the population is known.
     * The samples drawn from the population are statistically independent.
