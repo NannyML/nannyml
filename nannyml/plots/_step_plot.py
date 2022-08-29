@@ -36,7 +36,7 @@ def _data_prep_step_plot(
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
     if sampling_error_column_name is not None:
-        data['sampling_error'] = np.round(data[sampling_error_column_name], 4)
+        data['plt_sampling_error'] = np.round(3 * data[sampling_error_column_name], 4)
 
     data['hover_period'] = data['period'].apply(
         lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
@@ -159,8 +159,8 @@ def _step_plot(
     ]
 
     if sampling_error_column_name is not None:
-        hover_template += '<br>Sampling error: <b>%{customdata[7]}</b>'  # noqa: E501
-        custom_data_columns += ['sampling_error']
+        hover_template += '<br>Sampling error range: +/-<b>%{customdata[7]}</b>'  # noqa: E501
+        custom_data_columns += ['plt_sampling_error']
 
     hover_template += '<extra></extra>'
 
