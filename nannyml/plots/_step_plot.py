@@ -74,6 +74,7 @@ def _step_plot(
     estimated_column_name=None,
     lower_confidence_column_name=None,
     upper_confidence_column_name=None,
+    plot_confidence_for_reference=False,
     lower_threshold_column_name=None,
     upper_threshold_column_name=None,
     statistically_significant_column_name=None,
@@ -207,6 +208,7 @@ def _step_plot(
         upper_confidence_column_name,
         start_date_column_name,
         end_date_column_name,
+        plot_for_reference=plot_confidence_for_reference,
     )
 
     # Plot statistically significant band
@@ -576,36 +578,42 @@ def _plot_confidence_band(
     upper_confidence_column_name: str,
     start_date_column_name: str,
     end_date_column_name: str,
+    plot_for_reference: bool,
 ):
     if (
         lower_confidence_column_name
         and upper_confidence_column_name
         and {lower_confidence_column_name, upper_confidence_column_name}.issubset(data.columns)
     ):
-        data_subset = data.loc[data[chunk_type_column_name] == chunk_types[1]]
-        data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
-        fig.add_traces(
-            [
-                go.Scatter(
-                    mode='lines',
-                    x=data_subset[start_date_column_name],
-                    y=data_subset[upper_confidence_column_name],
-                    line=dict(shape='hv', color='rgba(0,0,0,0)'),
-                    hoverinfo='skip',
-                    showlegend=False,
-                ),
-                go.Scatter(
-                    mode='lines',
-                    x=data_subset[start_date_column_name],
-                    y=data_subset[lower_confidence_column_name],
-                    line=dict(shape='hv', color='rgba(0,0,0,0)'),
-                    fill='tonexty',
-                    fillcolor=colors_transparent[1],
-                    hoverinfo='skip',
-                    showlegend=False,
-                ),
-            ]
-        )
+
+        def _plot(data_subset, fill_color):
+            data_subset = _add_artificial_end_point(data, start_date_column_name, end_date_column_name)
+            fig.add_traces(
+                [
+                    go.Scatter(
+                        mode='lines',
+                        x=data_subset[start_date_column_name],
+                        y=data_subset[upper_confidence_column_name],
+                        line=dict(shape='hv', color='rgba(0,0,0,0)'),
+                        hoverinfo='skip',
+                        showlegend=False,
+                    ),
+                    go.Scatter(
+                        mode='lines',
+                        x=data_subset[start_date_column_name],
+                        y=data_subset[lower_confidence_column_name],
+                        line=dict(shape='hv', color='rgba(0,0,0,0)'),
+                        fill='tonexty',
+                        fillcolor=colors_transparent[1],
+                        hoverinfo='skip',
+                        showlegend=False,
+                    ),
+                ]
+            )
+
+        if plot_for_reference:
+            _plot(data.loc[data[chunk_type_column_name] == chunk_types[0]], colors_transparent[0])
+        _plot(data.loc[data[chunk_type_column_name] == chunk_types[1]], colors_transparent[1])
 
 
 def _plot_statistical_significance_band(

@@ -116,6 +116,7 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         sampling_error_column_name='sampling_error',
         lower_confidence_column_name='lower_confidence_bound',
         upper_confidence_column_name='upper_confidence_bound',
+        plot_confidence_for_reference=True,
     )
 
     return fig
