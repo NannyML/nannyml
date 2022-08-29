@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+
 from .colors import Colors
 
 
@@ -36,7 +38,7 @@ def _data_prep_step_plot(
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
     if sampling_error_column_name is not None:
-        data['plt_sampling_error'] = np.round(3 * data[sampling_error_column_name], 4)
+        data['plt_sampling_error'] = np.round(SAMPLING_ERROR_RANGE * data[sampling_error_column_name], 4)
 
     data['hover_period'] = data['period'].apply(
         lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'

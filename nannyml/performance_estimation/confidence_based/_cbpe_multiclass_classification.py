@@ -15,6 +15,7 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 
 class _MulticlassClassificationCBPE(CBPE):
@@ -111,10 +112,10 @@ class _MulticlassClassificationCBPE(CBPE):
             estimates[f'estimated_{metric.column_name}'] = estimated_metric
             estimates[f'sampling_error_{metric.column_name}'] = sampling_error
             estimates[f'upper_confidence_{metric.column_name}'] = min(
-                self.confidence_upper_bound, estimated_metric + 3 * sampling_error
+                self.confidence_upper_bound, estimated_metric + SAMPLING_ERROR_RANGE * sampling_error
             )
             estimates[f'lower_confidence_{metric.column_name}'] = max(
-                self.confidence_lower_bound, estimated_metric - 3 * sampling_error
+                self.confidence_lower_bound, estimated_metric - SAMPLING_ERROR_RANGE * sampling_error
             )
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
