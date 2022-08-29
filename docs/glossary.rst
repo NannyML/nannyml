@@ -169,6 +169,11 @@ Glossary
         The reconstructed dataset is created by transforming our model inputs to a :term:`Latent space` and
         then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be lossless there will always be a difference
         between the original and the reconstructed data. This difference is captured by the reconstruction error.
+    
+    Standard Error
+        The Standard Error of a statistic is the standard deviation of the probability distribution we are sampling it from.
+        It can also be an estimate of that standard deviation. If the statistic is the sample mean, then it is called
+        Standard Error of the Mean and abbreviated as SEM. More information can be read at the `Wikipedia Standard Error page`_.
 
     Target
         The actual outcome of the event the machine learning model is trying to predict. Also referred to as
@@ -200,3 +205,4 @@ Glossary
 .. _`scipy implementation of the Chi-square test of independence of variables in a contingency table`:
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2_contingency.html
 .. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_analysis
+.. _`Wikipedia Standard Error page`: https://en.wikipedia.org/wiki/Standard_error

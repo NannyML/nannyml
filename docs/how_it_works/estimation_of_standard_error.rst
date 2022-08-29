@@ -3,9 +3,9 @@
 Estimation of Standard Error
 ============================
 
-This page explains how NannyML estimates standard error for its different features. As a reminder - standard error is
-the standard deviation of the sampling distribution and it is a way to measure sampling error. To review these concepts
-have a look :ref:`here<sampling-error-introduction>`.
+This page explains how NannyML estimates :term:`standard error<Standard Error>` for its different features. As a reminder - the standard error
+of a statistic is the standard deviation of its sampling distribution. It is a way to measure sampling error. The effect of sampling error
+on model monitoring results is described :ref:`here<sampling-error-introduction>`.
 
 .. _introducing_sem:
 
@@ -54,13 +54,14 @@ calculating standard deviation:
 With a large enough number of experiments, this approach gives precise results but it comes with a relatively high computation cost.
 There are less precise but significantly faster ways. Selecting a sample (chunk) of data and calculating performance
 for it is similar to sampling from a population and calculating a statistic.
-When the statistic is a mean, the Standard Error of the Mean (SEM) formula [1]_ can be
+When the statistic is a mean, the :term:`Standard Error of the Mean (SEM)<Standard Error>` formula [1]_ can be
 used to estimate the standard deviation of the sampled means:
 
     .. math::
         {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
 
-In order to take advantage of the SEM formula in the analyzed example, the accuracy of each observation needs to be
+In order to take advantage of the :term:`SEM formula<Standard Error>` in the analyzed example,
+the accuracy of each observation needs to be
 calculated in such a way that a mean of this observation-level accuracies equals the accuracy of the whole sample. This
 sounds complicated, but the following solution should clarify it. Accuracy of a single observation is simply equal to 1
 when the prediction is correct and equal to 0 otherwise. When the mean of such observation-level accuracies is
@@ -72,9 +73,10 @@ calculated, it is equal to the sample-level accuracy, see:
     >>> np.mean(obs_level_accuracy), accuracy_score(y_true, y_pred)
     (0.5045, 0.5045)
 
-Now the SEM formula can be used directly to estimate the standard error of accuracy: :math:`\sigma` from the
-formula above is the standard deviation of the observation-level accuracies and :math:`n` is the sample size (chunk
-size). The code below calculates standard error with SEM and compares it with the standard error from the
+Now the :term:`SEM formula<Standard Error>` can be used directly to estimate the
+:term:`standard error<Standard Error>` of accuracy. :math:`\sigma`, from the
+formula above, is the standard deviation of the observation-level accuracies and :math:`n` is the sample size (chunk
+size). The code below calculates standard error with SEM and compares it with the standard error from a
 repeated experiments approach:
 
 .. code-block:: python
@@ -144,6 +146,9 @@ The mean of those values for all observations in a chunk is the reconstruction e
 The process is described in detail in :ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.
 Therefore the standard error of the mean formula can be used without any intermediate steps - to get standard error we just divide standard deviation of
 reconstruction error for each observation on the reference dataset with the square root of the size of the chunk of interest.
+
+For the sampling error we use +/- 3 standard error in similar fashion with the Performance Metrics. We want around 99%
+of cases where sampling variablity affects our result to be within the sampling error range we provide.
 
 
 Univariate Drift Detection
