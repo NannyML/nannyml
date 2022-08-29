@@ -161,7 +161,8 @@ These results can be also plotted. Our plot contains several key elements.
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* The low-saturated purple area around the reconstruction error indicates the :ref:`sampling error<estimation_of_standard_error>`.
+* The low-saturated purple area around the estimated performance indicates the :ref:`sampling
+error<estimation_of_standard_error>`.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 

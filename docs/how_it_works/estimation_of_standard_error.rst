@@ -53,7 +53,7 @@ calculating standard deviation:
 
 With a large enough number of experiments, this approach gives precise results but it comes with a relatively high computation cost.
 There are less precise but significantly faster ways. Selecting a sample (chunk) of data and calculating performance
-for it is similar to sampling from a population and calculating a statistic. 
+for it is similar to sampling from a population and calculating a statistic.
 When the statistic is a mean, the Standard Error of the Mean (SEM) formula [1]_ can be
 used to estimate the standard deviation of the sampled means:
 
@@ -97,37 +97,40 @@ Performance Estimation
 Standard Error for performance estimation is calculated using SEM [1]_ in a way described in
 :ref:`Adapting Standard Error
 of the Mean Formula<introducing_sem>`. Since targets are available only in the reference dataset, the nominator of the
-SEM formula is calculated based on observation-level metrics from the reference dataset. 
+SEM formula is calculated based on observation-level metrics from the reference dataset.
 The sample size in the denominator is the size of the chunk for which standard error is estimated.
 
 Given that the assumptions of performance estimation methods
-are met, the estimated performance is the expected performance of the monitored model on the chunk. Standard error
-informs how much the actual performance might be different from the expected one due to sampling effects only. The
-actual value calculated and shown in the results is 3 standard errors. So the estimated performance +/- 3 standard
+are met, the estimated performance is the expected performance of the monitored model on the chunk. Sampling error
+informs how much the actual (calculated) performance might be different from the expected one due to sampling effects
+only. The sampling error in the results is expressed as 3 standard errors. So the estimated performance +/- 3 standard
 errors create an interval which should contain the actual value of performance metric in about 99% of cases (given
 the assumptions of the performance estimation algorithm are met). In the random model example
 :ref:`described above<introducing_sem>` the expected performance returned by the performance estimation
 algorithm should be close to 0.5, while the band would be 0.35-0.65 (i.e. 0.5 +/- 0.15) for the chunk size of 100.
-The value of +/- 3 standard errors are displayed as bands on the plots and shown in the hover for each chunk.
+The value of +/- 3 standard errors are displayed as bands on the plots and shown in the hover for each chunk (called
+*sampling error range*).
 
 
 Performance Monitoring
 **********************
 
 Standard Error for realized performance monitoring is calculated using SEM [1]_ in a way described in
-:ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. Since targets are available only in the 
-reference dataset, the nominator of the SEM formula is calculated based on observation-level metrics from the reference 
+:ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. Since targets are available only in the
+reference dataset, the nominator of the SEM formula is calculated based on observation-level metrics from the reference
 dataset. The sample size in the denominator is the size of a chunk for which standard error is estimated.
 
 Since realized performance is the actual performance of
 the monitored model in the chunk, the standard error has a different interpretation than in estimated performance case.
 It informs what the *true performance* of the monitored model might be for a given chunk. In the random model example
 :ref:`described above<introducing_sem>` the true accuracy of the model is 0.5. However for some chunks
-that contain 100 observations it can be 0.4, while for other 0.65 etc. NannyML performance calculation results for
-these chunks will come together with value of 3 standard errors, which in this case is 0.15. This tells us that the true performance of the model (0.5)
-will be different by no more than 0.15 from the calculated performance for about 99% of the cases. This helps to
-evaluate whether performance changes are significant or are just caused by sampling effects. 
-The value of 3 standard errors is shown in the hover.
+that contain 100 observations the calculated accuracy can be 0.4, while for other 0.65 etc. This is due to sampling
+effects only. NannyML performance
+calculation results for these chunks will come together with value of 3 standard errors, which quantifies the
+sampling error. For the analyzed example this is equal to 0.15. This tells us that, for
+99% of the cases, the true model performance will be found in the +/- 0.15 range from the calculated one. This helps to
+evaluate whether performance changes are significant or are just caused by sampling effects.
+The value of 3 standard errors is shown in the hover and it is called *sampling error range*.
 
 
 
@@ -136,8 +139,8 @@ Multivariate Drift Detection with PCA
 
 Standard error for :ref:`Multivariate Drift Detection<multivariate_drift_detection>` is calculated using the approach
 introduced in :ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. For each observation the
-multivariate drift detection with PCA process calculates a :term:`reconstruction error<Reconstruction Error>` value. 
-The mean of those values for all observations in a chunk is the reconstruction error per chunk. 
+multivariate drift detection with PCA process calculates a :term:`reconstruction error<Reconstruction Error>` value.
+The mean of those values for all observations in a chunk is the reconstruction error per chunk.
 The process is described in detail in :ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.
 Therefore the standard error of the mean formula can be used without any intermediate steps - to get standard error we just divide standard deviation of
 reconstruction error for each observation on the reference dataset with the square root of the size of the chunk of interest.

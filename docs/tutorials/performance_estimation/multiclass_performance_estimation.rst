@@ -163,7 +163,8 @@ These results can be also plotted. Our plot contains several key elements.
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* The low-saturated purple area around the reconstruction error indicates the :ref:`sampling error<estimation_of_standard_error>`.
+* The low-saturated purple area around the estimated performance indicates the :ref:`sampling
+error<estimation_of_standard_error>`.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 
@@ -196,7 +197,7 @@ performance on reference period (where the target was available).
 * The purple dashed vertical line splits the reference and analysis periods.
 
 * On the left-hand side of the line, the actual model performance (not estimation!) is plotted with a solid light blue
-  line. This facilitates interpretation of the estimation, as it helps to set expectations on the variability of 
+  line. This facilitates interpretation of the estimation, as it helps to set expectations on the variability of
   the realised performance.
 
 .. code-block:: python
