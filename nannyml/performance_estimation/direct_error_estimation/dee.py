@@ -26,7 +26,7 @@ class DEE(AbstractEstimator):
         chunk_period: str = None,
         chunker: Chunker = None,
         metrics: List[str] = None,
-        tune_hyperparameters: bool = True,
+        tune_hyperparameters: bool = False,
         hyperparameter_tuning_config: Dict[str, Any] = None,
         hyperparameters: Dict[str, Any] = None,
     ):
