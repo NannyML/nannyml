@@ -243,6 +243,14 @@ Standalone parameters section
 
 This section contains some standalone parameters that mostly serve as an alternative to CLI arguments.
 
+The required `problem_type` variable allows you to pass along a :class:`~nannyml._typing.ProblemType` value.
+NannyML uses this information to better understand the provided model inputs and outputs.
+
+.. code-block:: yaml
+
+    problem_type: regression  # pass the problem type (one of 'classification_binary', 'classification_multiclass' or 'regression')
+
+
 .. code-block:: yaml
 
     ignore_errors: True  # continue execution of a calculator/estimator fails
@@ -307,6 +315,8 @@ for the :ref:`dataset-synthetic-binary`. All data is read and written to the loc
       y_pred_proba: y_pred_proba
       y_true: work_home_actual
 
+    problem_type: classification_binary
+
     ignore_errors: True
 
 
@@ -368,5 +378,7 @@ The results are written to another S3 bucket, also using a templated path.
         highstreet_card: y_pred_proba_highstreet_card
         upmarket_card: y_pred_proba_upmarket_card
       y_true: y_true
+
+    problem_type: classification_multiclass
 
     ignore_errors: False
