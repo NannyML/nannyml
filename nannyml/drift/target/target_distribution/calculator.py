@@ -143,7 +143,6 @@ class TargetDistributionCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'stability': self._reference_stability / len(chunk),  # TODO: Jakub
                     'period': 'analysis' if chunk.is_transition else chunk.period,
                     'targets_missing_rate': (
                         chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()
