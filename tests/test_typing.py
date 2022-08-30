@@ -7,13 +7,13 @@ import pandas as pd
 import pytest
 
 from nannyml._typing import ProblemType, class_labels
-from nannyml.datasets import load_synthetic_multiclass_classification_dataset, load_synthetic_regression_dataset
+from nannyml.datasets import load_synthetic_car_price_dataset, load_synthetic_multiclass_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture
 def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    return load_synthetic_regression_dataset()
+    return load_synthetic_car_price_dataset()
 
 
 @pytest.fixture

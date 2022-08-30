@@ -1,12 +1,15 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+from collections import defaultdict
 from typing import Any, Dict, List
 
 import pandas as pd
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder
 
 from nannyml._typing import ProblemType
-from nannyml.base import AbstractEstimator, AbstractEstimatorResult, _list_missing
+from nannyml.base import AbstractEstimator, AbstractEstimatorResult, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_error_estimation import DEFAULT_METRICS
@@ -59,6 +62,9 @@ class DEE(AbstractEstimator):
         self.tune_hyperparameters = tune_hyperparameters
         self.hyperparameters = hyperparameters
 
+        self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
+        self._categorical_encoders: defaultdict = defaultdict(LabelEncoder)
+
     def __str__(self):
         return (
             f"{self.__class__.__name__}[tune_hyperparameters={self.tune_hyperparameters}, "
@@ -72,6 +78,15 @@ class DEE(AbstractEstimator):
 
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
 
+        _, categorical_feature_columns = _split_features_by_type(reference_data, self.feature_column_names)
+        if len(categorical_feature_columns) > 0:
+            reference_data[categorical_feature_columns] = self._categorical_imputer.fit_transform(
+                reference_data[categorical_feature_columns]
+            )
+            reference_data[categorical_feature_columns] = reference_data[categorical_feature_columns].apply(
+                lambda x: self._categorical_encoders[x.name].fit_transform(x)
+            )
+
         for metric in self.metrics:
             metric.fit(reference_data)
 
@@ -84,6 +99,13 @@ class DEE(AbstractEstimator):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_pred], list(data.columns))
+
+        _, categorical_feature_columns = _split_features_by_type(data, self.feature_column_names)
+        if len(categorical_feature_columns) > 0:
+            data[categorical_feature_columns] = self._categorical_imputer.transform(data[categorical_feature_columns])
+            data[categorical_feature_columns] = data[categorical_feature_columns].apply(
+                lambda x: self._categorical_encoders[x.name].transform(x)
+            )
 
         chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
 

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.datasets import load_synthetic_regression_dataset
+from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.drift.target.target_distribution import TargetDistributionCalculator
 
 
@@ -98,7 +98,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
 
 @pytest.fixture
 def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, tgt_df = load_synthetic_regression_dataset()
+    ref_df, ana_df, tgt_df = load_synthetic_car_price_dataset()
 
     return ref_df, ana_df, tgt_df
 
@@ -147,7 +147,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
 
     assert (
         round(result.data['statistical_target_drift'], 5)
-        == [0.01732, 0.01154, 0.00581, 0.00752, 0.00724, 0.10360, 0.11310, 0.12109, 0.11011, 0.11587, 0.84757]
+        == [0.01425, 0.01657, 0.01007, 0.01192, 0.00867, 0.17168, 0.18012, 0.17907, 0.18323, 0.18738]
     ).all()
 
 
@@ -164,16 +164,15 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
     assert (
         round(result.data['metric_target_drift'], 5)
         == [
-            5097.46065,
-            4940.95911,
-            5009.03024,
-            5003.77457,
-            5043.71649,
-            4793.25155,
-            4770.9768,
-            4778.80687,
-            4765.44038,
-            4806.26237,
-            1880.0,
+            4862.94117,
+            4790.5815,
+            4793.34933,
+            4838.25617,
+            4799.1335,
+            4852.63667,
+            4875.45667,
+            4867.589,
+            4885.108,
+            4787.09417,
         ]
     ).all()

@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from nannyml._typing import ProblemType
-from nannyml.datasets import load_synthetic_regression_dataset
+from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 
 
@@ -111,7 +111,7 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 
 @pytest.fixture
 def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, tgt_df = load_synthetic_regression_dataset()
+    ref_df, ana_df, tgt_df = load_synthetic_car_price_dataset()
 
     return ref_df, ana_df, tgt_df
 
@@ -159,9 +159,9 @@ def test_output_drift_calculator_for_regression_problems(regression_data):  # no
 
     assert (
         round(results.data['y_pred_dstat'], 5)
-        == [0.01143, 0.01, 0.01015, 0.01555, 0.01357, 0.01217, 0.19832, 0.17972, 0.19528, 0.18757, 0.17757, 0.19248]
+        == [0.01135, 0.01213, 0.00545, 0.01125, 0.01443, 0.00937, 0.2017, 0.2076, 0.21713, 0.19368, 0.21497, 0.21142]
     ).all()
     assert (
         round(results.data['y_pred_p_value'], 5)
-        == [0.578, 0.741, 0.725, 0.212, 0.36, 0.498, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        == [0.588, 0.501, 0.999, 0.599, 0.289, 0.809, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     ).all()

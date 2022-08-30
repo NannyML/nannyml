@@ -57,7 +57,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         ----------
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
-        metric: Union[str, Metric], default=None
+        metric: Union[str, nannyml.performance_calculation.metrics.base.Metric], default=None
             The name of the metric to plot. Value should be one of:
             - 'roc_auc'
             - 'f1'
@@ -129,7 +129,7 @@ def _plot_performance_metric(
     ----------
     results_data : pd.DataFrame
         Results of the data CBPE performance estimation
-    metric: str, default=None
+    metric: Union[str, nannyml.performance_calculation.metrics.base.Metric]
             The name of the metric to plot. Value should be one of:
             - 'roc_auc'
             - 'f1'

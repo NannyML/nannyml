@@ -9,7 +9,7 @@ import pytest
 
 from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
-from nannyml.datasets import load_synthetic_regression_dataset
+from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_error_estimation import DEE, Result
 from nannyml.performance_estimation.direct_error_estimation.metrics import MetricFactory
@@ -25,7 +25,7 @@ class FakeEstimator(AbstractEstimator):
 
 @pytest.fixture(scope='module')
 def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    reference, analysis, _ = load_synthetic_regression_dataset()
+    reference, analysis, _ = load_synthetic_car_price_dataset()
 
     return reference, analysis
 

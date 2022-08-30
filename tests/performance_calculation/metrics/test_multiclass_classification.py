@@ -25,14 +25,14 @@ from nannyml.performance_calculation.metrics.multiclass_classification import (
 )
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def multiclass_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
     ref_df, ana_df, tgt_df = load_synthetic_multiclass_classification_dataset()
 
     return ref_df, ana_df, tgt_df
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def performance_calculator() -> PerformanceCalculator:
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
@@ -48,7 +48,7 @@ def performance_calculator() -> PerformanceCalculator:
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def realized_performance_metrics(performance_calculator, multiclass_data) -> pd.DataFrame:
     performance_calculator.fit(multiclass_data[0])
     results = performance_calculator.calculate(multiclass_data[1].merge(multiclass_data[2], on='identifier'))

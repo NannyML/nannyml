@@ -145,7 +145,7 @@ def load_synthetic_car_price_dataset():
         A DataFrame containing analysis period of synthetic car price dataset
     analysis_tgt : pd.DataFrame
         A DataFrame containing target values for the analysis period of synthetic car price dataset
-    
+
     Examples
     --------
     >>> from nannyml.datasets import load_synthetic_car_price_dataset

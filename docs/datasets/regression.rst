@@ -1,7 +1,7 @@
-.. _dataset-synthetic-binary:
+.. _dataset-synthetic-regression:
 
 =======================================
-Synthetic Binary Classification Dataset
+Synthetic Regression Dataset
 =======================================
 
 NannyML provides a synthetic dataset describing a regression problem,
@@ -26,29 +26,29 @@ A sample of the dataset can be seen below.
     >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_car_price_dataset()
     >>> display(reference.head())
 
-+----+-----------+-------------+-------------+-------------+---------+----------+----------------+----------+----------+-------------------------+
-|    |   Car_Age |   Km_drived |   Price_New |   Accidents |   Doors | Fuel     | Transmission   |   y_true |   y_pred | time                    |
-+====+===========+=============+=============+=============+=========+==========+================+==========+==========+=========================+
-|  0 |        15 |      144020 |       42810 |           4 |       3 | diesel   | automatic      |      569 |     1246 | 2017-01-24 08:00:00.000 |
-+----+-----------+-------------+-------------+-------------+---------+----------+----------------+----------+----------+-------------------------+
-|  1 |        12 |       57078 |       31835 |           3 |       3 | electric | automatic      |     4277 |     4924 | 2017-01-24 08:00:33.600 |
-+----+-----------+-------------+-------------+-------------+---------+----------+----------------+----------+----------+-------------------------+
-|  2 |         2 |       76288 |       31851 |           3 |       5 | diesel   | automatic      |     7011 |     5744 | 2017-01-24 08:01:07.200 |
-+----+-----------+-------------+-------------+-------------+---------+----------+----------------+----------+----------+-------------------------+
-|  3 |         7 |       97593 |       29288 |           2 |       3 | electric | manual         |     5576 |     6781 | 2017-01-24 08:01:40.800 |
-+----+-----------+-------------+-------------+-------------+---------+----------+----------------+----------+----------+-------------------------+
-|  4 |        13 |        9985 |       41350 |           1 |       5 | diesel   | automatic      |     6456 |     6822 | 2017-01-24 08:02:14.400 |
-+----+-----------+-------------+-------------+-------------+---------+----------+----------------+----------+----------+-------------------------+
++----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
+|    |   car_age |   km_driven |   price_new |   accident_count |   door_count | fuel     | transmission   |   y_true |   y_pred | timestamp               |
++====+===========+=============+=============+==================+==============+==========+================+==========+==========+=========================+
+|  0 |        15 |      144020 |       42810 |                4 |            3 | diesel   | automatic      |      569 |     1246 | 2017-01-24 08:00:00.000 |
++----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
+|  1 |        12 |       57078 |       31835 |                3 |            3 | electric | automatic      |     4277 |     4924 | 2017-01-24 08:00:33.600 |
++----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
+|  2 |         2 |       76288 |       31851 |                3 |            5 | diesel   | automatic      |     7011 |     5744 | 2017-01-24 08:01:07.200 |
++----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
+|  3 |         7 |       97593 |       29288 |                2 |            3 | electric | manual         |     5576 |     6781 | 2017-01-24 08:01:40.800 |
++----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
+|  4 |        13 |        9985 |       41350 |                1 |            5 | diesel   | automatic      |     6456 |     6822 | 2017-01-24 08:02:14.400 |
++----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
 
 The model uses 7 features:
 
-- `Car_Age`: A numerical feature. The age of the car in years.
-- `Km_drived`: A numerical feature. The number of kilometers a car has drived.
-- `Price_New`: A numerical feature. The price of the car in Euros when it was new.
-- `Accidents`: A numerical feature. The number of accidents the car has been involved in.
-- `Doors`: A numerical feature. The number of doors the car has. If it is a hatchback, the door count is increased by 1.
-- `Fuel`: A categorical feature describing whether the car uses gas, diesel or electricity as fuel.
-- `Transmission`: A categorical feature describing whether the car uses manual or automatic transmission.
+- `car_age`: A numerical feature. The age of the car in years.
+- `km_driven`: A numerical feature. The number of kilometers a car has drived.
+- `price_new`: A numerical feature. The price of the car in Euros when it was new.
+- `accident_count`: A numerical feature. The number of accidents the car has been involved in.
+- `door_count`: A numerical feature. The number of doors the car has. If it is a hatchback, the door count is increased by 1.
+- `fuel`: A categorical feature describing whether the car uses gas, diesel or electricity as fuel.
+- `transmission`: A categorical feature describing whether the car uses manual or automatic transmission.
 
 
 The model predicts the predicted price of the car at the `y_pred` column.
@@ -57,4 +57,4 @@ The `y_true` is the :term:`Target` column describing the actual value of the car
 
 There is also an auxiliary column that is helpful but not used by the monitored model:
 
-- `time`: A date column informing us of the date the prediction was made.
+- `timestamp`: A date column informing us of the date the prediction was made.

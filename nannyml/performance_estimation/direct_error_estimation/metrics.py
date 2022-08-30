@@ -210,7 +210,7 @@ class Metric(abc.ABC):
 
             automl = AutoML()
             automl.fit(X_train, y_train, **hyperparameter_tuning_config)
-            self.estimator.hyperparameters = {**automl.model.estimator.get_params()}
+            self.estimator.hyperparameters = {**automl.model.estimator.get_params()}  # type: ignore
             model = LGBMRegressor(**automl.model.estimator.get_params())
             model.fit(X_train, y_train)
         elif hyperparameters:
@@ -301,9 +301,9 @@ class MAE(Metric):
         self._dee_model = self._train_direct_error_estimation_model(
             X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,
-            hyperparameters=self.estimator.hyperparameters,
+            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.estimator.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -344,9 +344,9 @@ class MAPE(Metric):
         self._dee_model = self._train_direct_error_estimation_model(
             X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,
-            hyperparameters=self.estimator.hyperparameters,
+            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.estimator.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -386,9 +386,9 @@ class MSE(Metric):
         self._dee_model = self._train_direct_error_estimation_model(
             X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,
-            hyperparameters=self.estimator.hyperparameters,
+            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.estimator.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -431,9 +431,9 @@ class MSLE(Metric):
         self._dee_model = self._train_direct_error_estimation_model(
             X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,
-            hyperparameters=self.estimator.hyperparameters,
+            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.estimator.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -476,9 +476,9 @@ class RMSE(Metric):
         self._dee_model = self._train_direct_error_estimation_model(
             X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,
-            hyperparameters=self.estimator.hyperparameters,
+            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.estimator.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -521,9 +521,9 @@ class RMSLE(Metric):
         self._dee_model = self._train_direct_error_estimation_model(
             X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,
-            hyperparameters=self.estimator.hyperparameters,
+            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.estimator.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):

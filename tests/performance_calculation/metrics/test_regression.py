@@ -10,14 +10,14 @@ import pytest
 
 from nannyml import PerformanceCalculator
 from nannyml._typing import ProblemType
-from nannyml.datasets import load_synthetic_regression_dataset
+from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.regression import MAE, MAPE, MSE, MSLE, RMSE, RMSLE
 
 
 @pytest.fixture(scope='module')
 def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
-    ref_df, ana_df, tgt_df = load_synthetic_regression_dataset()
+    ref_df, ana_df, tgt_df = load_synthetic_car_price_dataset()
 
     return ref_df, ana_df, tgt_df
 
@@ -74,55 +74,41 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
     [
         (
             'mae',
-            [
-                913.56065,
-                906.18711,
-                897.32938,
-                917.75395,
-                908.1,
-                807.02749,
-                809.91271,
-                813.6012,
-                800.02577,
-                799.59124,
-                294.0,
-            ],
+            [853.39967, 853.13667, 846.304, 855.4945, 849.3295, 702.51767, 700.73583, 684.70167, 705.814, 698.34383],
         ),
-        ('mape', [0.23289, 0.23985, 0.23447, 0.23937, 0.23582, 0.25144, 0.25695, 0.25657, 0.25292, 0.25268, 0.15638]),
+        ('mape', [0.22871, 0.23082, 0.22904, 0.23362, 0.23389, 0.26286, 0.26346, 0.26095, 0.26537, 0.26576]),
         (
             'mse',
             [
-                1350900.19433,
-                1313639.44381,
-                1298236.53179,
-                1352916.15292,
-                1324969.00481,
-                1029658.31787,
-                1010832.30653,
-                1039277.80808,
-                992979.93333,
-                1001155.24725,
-                86436.0,
+                1143129.298,
+                1139867.667,
+                1128720.807,
+                1158285.6715,
+                1124285.66517,
+                829589.49233,
+                829693.3775,
+                792286.80933,
+                835916.964,
+                825935.67917,
             ],
         ),
-        ('msle', [0.09745, 0.09485, 0.08649, 0.08964, 0.08742, 0.25874, 0.27357, 0.29243, 0.28181, 0.27527, 0.02889]),
+        ('msle', [0.07049, 0.06999, 0.06969, 0.07193, 0.07249, 0.10495, 0.10481, 0.10435, 0.10471, 0.10588]),
         (
             'rmse',
             [
-                1162.28232,
-                1146.14111,
-                1139.40183,
-                1163.14924,
-                1151.07298,
-                1014.72081,
-                1005.40156,
-                1019.44976,
-                996.48378,
-                1000.57746,
-                294.0,
+                1069.17225,
+                1067.64585,
+                1062.41273,
+                1076.23681,
+                1060.32338,
+                910.81803,
+                910.87506,
+                890.10494,
+                914.28495,
+                908.81003,
             ],
         ),
-        ('rmsle', [0.31216, 0.30797, 0.2941, 0.2994, 0.29567, 0.50867, 0.52304, 0.54076, 0.53086, 0.52467, 0.16996]),
+        ('rmsle', [0.2655, 0.26456, 0.26399, 0.2682, 0.26924, 0.32396, 0.32375, 0.32303, 0.3236, 0.32539]),
     ],
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
