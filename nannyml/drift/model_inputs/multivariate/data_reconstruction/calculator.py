@@ -17,6 +17,7 @@ from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_t
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 
 class DataReconstructionDriftCalculator(AbstractCalculator):
@@ -227,8 +228,8 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                 for chunk in chunks
             ]
         )
-        res['upper_confidence_bound'] = res['reconstruction_error'] + 3 * res['sampling_error']
-        res['lower_confidence_bound'] = res['reconstruction_error'] - 3 * res['sampling_error']
+        res['upper_confidence_bound'] = res['reconstruction_error'] + SAMPLING_ERROR_RANGE * res['sampling_error']
+        res['lower_confidence_bound'] = res['reconstruction_error'] - SAMPLING_ERROR_RANGE * res['sampling_error']
         res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore

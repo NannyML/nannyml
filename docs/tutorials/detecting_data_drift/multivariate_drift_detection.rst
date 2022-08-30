@@ -168,7 +168,18 @@ method as a dataframe.
 |  9 | [45000:49999] |         45000 |       49999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 |                1.24258 |           1.09658 |           1.13801 | True    |
 +----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
 
-NannyML can also visualize the multivariate drift results in a plot.
+NannyML can also visualize the multivariate drift results in a plot. Our plot contains several key elements.
+
+* The purple step plot shows the reconstruction error in each chunk of the analysis period. Thick squared point
+  markers indicate the middle of these chunks.
+
+* The low-saturated purple area around the reconstruction error indicates the :ref:`sampling error<estimation_of_standard_error>`.
+
+* The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
+
+* If the reconstruction error crosses the upper or lower threshold an alert is raised which is indicated with a red,
+  low-saturated background across the whole width of the relevant chunk. This is additionally
+  indicated by a red, diamond-shaped point marker in the middle of the chunk.
 
 .. code-block:: python
 

@@ -174,6 +174,7 @@ def _plot_performance_metric(
         title=f'Realized performance: {metric.display_name}',
         y_axis_title='Realized performance',
         v_line_separating_analysis_period=plot_period_separator,
+        sampling_error_column_name=f'{metric.column_name}_sampling_error',
     )
 
     return fig

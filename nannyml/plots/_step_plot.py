@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+
 from .colors import Colors
 
 
@@ -36,7 +38,7 @@ def _data_prep_step_plot(
     data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
     data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
     if sampling_error_column_name is not None:
-        data['sampling_error'] = np.round(data[sampling_error_column_name], 4)
+        data['plt_sampling_error'] = np.round(SAMPLING_ERROR_RANGE * data[sampling_error_column_name], 4)
 
     data['hover_period'] = data['period'].apply(
         lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
@@ -72,6 +74,7 @@ def _step_plot(
     estimated_column_name=None,
     lower_confidence_column_name=None,
     upper_confidence_column_name=None,
+    plot_confidence_for_reference=False,
     lower_threshold_column_name=None,
     upper_threshold_column_name=None,
     statistically_significant_column_name=None,
@@ -159,8 +162,8 @@ def _step_plot(
     ]
 
     if sampling_error_column_name is not None:
-        hover_template += '<br>Sampling error: <b>%{customdata[7]}</b>'  # noqa: E501
-        custom_data_columns += ['sampling_error']
+        hover_template += '<br>Sampling error range: +/-<b>%{customdata[7]}</b>'  # noqa: E501
+        custom_data_columns += ['plt_sampling_error']
 
     hover_template += '<extra></extra>'
 
@@ -205,6 +208,7 @@ def _step_plot(
         upper_confidence_column_name,
         start_date_column_name,
         end_date_column_name,
+        plot_for_reference=plot_confidence_for_reference,
     )
 
     # Plot statistically significant band
@@ -574,36 +578,42 @@ def _plot_confidence_band(
     upper_confidence_column_name: str,
     start_date_column_name: str,
     end_date_column_name: str,
+    plot_for_reference: bool,
 ):
     if (
         lower_confidence_column_name
         and upper_confidence_column_name
         and {lower_confidence_column_name, upper_confidence_column_name}.issubset(data.columns)
     ):
-        data_subset = data.loc[data[chunk_type_column_name] == chunk_types[1]]
-        data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
-        fig.add_traces(
-            [
-                go.Scatter(
-                    mode='lines',
-                    x=data_subset[start_date_column_name],
-                    y=data_subset[upper_confidence_column_name],
-                    line=dict(shape='hv', color='rgba(0,0,0,0)'),
-                    hoverinfo='skip',
-                    showlegend=False,
-                ),
-                go.Scatter(
-                    mode='lines',
-                    x=data_subset[start_date_column_name],
-                    y=data_subset[lower_confidence_column_name],
-                    line=dict(shape='hv', color='rgba(0,0,0,0)'),
-                    fill='tonexty',
-                    fillcolor=colors_transparent[1],
-                    hoverinfo='skip',
-                    showlegend=False,
-                ),
-            ]
-        )
+
+        def _plot(data_subset, fill_color):
+            data_subset = _add_artificial_end_point(data, start_date_column_name, end_date_column_name)
+            fig.add_traces(
+                [
+                    go.Scatter(
+                        mode='lines',
+                        x=data_subset[start_date_column_name],
+                        y=data_subset[upper_confidence_column_name],
+                        line=dict(shape='hv', color='rgba(0,0,0,0)'),
+                        hoverinfo='skip',
+                        showlegend=False,
+                    ),
+                    go.Scatter(
+                        mode='lines',
+                        x=data_subset[start_date_column_name],
+                        y=data_subset[lower_confidence_column_name],
+                        line=dict(shape='hv', color='rgba(0,0,0,0)'),
+                        fill='tonexty',
+                        fillcolor=colors_transparent[1],
+                        hoverinfo='skip',
+                        showlegend=False,
+                    ),
+                ]
+            )
+
+        if plot_for_reference:
+            _plot(data.loc[data[chunk_type_column_name] == chunk_types[0]], colors_transparent[0])
+        _plot(data.loc[data[chunk_type_column_name] == chunk_types[1]], colors_transparent[1])
 
 
 def _plot_statistical_significance_band(
