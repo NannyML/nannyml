@@ -123,8 +123,8 @@ def load_synthetic_car_loan_dataset():
 
     Examples
     --------
-    >>> from nannyml.datasets import load_synthetic_binary_classification_dataset
-    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
+    >>> from nannyml.datasets import load_synthetic_car_loan_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_dataset()
 
     """
     reference = load_csv_file_to_df('synthetic_car_loan_reference.csv')
@@ -134,26 +134,27 @@ def load_synthetic_car_loan_dataset():
     return reference, analysis, analysis_gt
 
 
-def load_synthetic_regression_dataset():
-    """Loads the synthetic car price regression dataset provided for testing the NannyML package.
+def load_synthetic_car_price_dataset():
+    """Loads the synthetic car price dataset provided for testing the NannyML package on regression problems.
 
     Returns
     -------
     reference : pd.DataFrame
-        A DataFrame containing reference period of synthetic regression dataset
+        A DataFrame containing reference period of synthetic car price dataset
     analysis : pd.DataFrame
-        A DataFrame containing analysis period of synthetic regression dataset
+        A DataFrame containing analysis period of synthetic car price dataset
     analysis_tgt : pd.DataFrame
-        A DataFrame containing target values for the analysis period of synthetic regression dataset
-
+        A DataFrame containing target values for the analysis period of synthetic car price dataset
+    
     Examples
     --------
-    >>> from nannyml.datasets import load_synthetic_regression_dataset
-    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_regression_dataset()
+    >>> from nannyml.datasets import load_synthetic_car_price_dataset
+    >>> reference, analysis, analysis_tgt = load_synthetic_car_price_dataset()
 
     """
-    reference = load_csv_file_to_df('regression_synthetic_v1_reference.csv')
-    analysis = load_csv_file_to_df('regression_synthetic_v1_analysis.csv')
-    analysis_gt = load_csv_file_to_df('regression_synthetic_v1_analysis_targets.csv')
 
-    return reference, analysis, analysis_gt
+    reference = load_csv_file_to_df('regression_synthetic_reference.csv')
+    analysis = load_csv_file_to_df('regression_synthetic_analysis.csv')
+    analysis_tgt = load_csv_file_to_df('regression_synthetic_analysis_targets.csv')
+
+    return reference, analysis, analysis_tgt

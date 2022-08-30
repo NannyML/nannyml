@@ -9,5 +9,5 @@ from .datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_car_loan_dataset,
     load_synthetic_multiclass_classification_dataset,
-    load_synthetic_regression_dataset,
+    load_synthetic_car_price_dataset,
 )
