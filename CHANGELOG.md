@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2022-08-30
+
+### Changed
+
+- We've completely overhauled the way we determine the "stability" of our estimations. We've moved on from determining
+  a minimum `Chunk` size to estimating the *sampling error* for an operation on a `Chunk`.
+  - A **sampling error** value will be provided per metric per `Chunk` in the result data for
+    **reconstruction error multivariate drift calculator**, all **performance calculation metrics** and
+    all **performance estimation metrics**.
+  - Confidence bounds are now also based on this *sampling error* and will display a range around an estimation +/- 3
+    times the *sampling error* in **CBPE** and **reconstruction error multivariate drift calculator**.
+  Be sure to check out our [in-depth documentation](https://nannyml.readthedocs.io/en/main/how_it_works/estimation_of_standard_error.html#estimation-of-standard-error)
+  on how it works or dive right into the [implementation](nannyml/sampling_error).
+
+### Fixed
+
+- Fixed issue where an outdated version of Numpy caused Pandas to fail reading string columns in some scenarios
+  [(#93)](https://github.com/NannyML/nannyml/issues/93). Thank you, [@Bernhard](https://github.com/bernhardbarker) and
+  [@Gabriel](https://github.com/ga-tardochisalles) for the investigative work!
+
 ## [0.5.2] - 2022-08-17
 
 ### Changed
