@@ -473,7 +473,7 @@ def _run_cbpe_performance_estimation(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='estimated_performance')
+    writer.write(data=results.data, plots=plots, calculator_name='confidence_based_performance_estimator')
 
 
 def _run_dee_performance_estimation(
@@ -534,4 +534,4 @@ def _run_dee_performance_estimation(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='estimated_performance')
+    writer.write(data=results.data, plots=plots, calculator_name='direct_error_estimator')
