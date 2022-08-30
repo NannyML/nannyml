@@ -85,6 +85,11 @@ ENV \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100
 
+# LightGBM dependency
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+    libgomp1
+
 # Get build artifact wheel and install it respecting dependency versions
 WORKDIR $APP_PATH
 COPY --from=build $APP_PATH/dist/*.whl ./
