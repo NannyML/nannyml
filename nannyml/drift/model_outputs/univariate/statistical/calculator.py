@@ -164,8 +164,6 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
-                'stability': self._reference_stability / len(chunk),  # TODO: Jakub
-                # 'period': 'analysis' if chunk.is_transition else chunk.period,
             }
 
             for column in categorical_columns:
