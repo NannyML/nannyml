@@ -58,6 +58,8 @@ whether an employee will work from home. You can :ref:`read more about this synt
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
+We start by loading the dataset we 'll be using:
+
 .. code-block:: python
 
     >>> import pandas as pd
@@ -145,8 +147,8 @@ that was estimated:
  - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also
    be calculated and included within the results.
  - ``estimated_<metric>`` - the estimate of a metric for a specific chunk,
- - ``upper_confidence_<metric>`` and ``lower_confidence_<metric>`` - these equal to estimated value +/-
-   3 times the estimated sampling error.
+ - ``upper_confidence_<metric>`` and ``lower_confidence_<metric>`` - these correspond to the sampling error and are equal to +/-
+   3 times the calculated standard error.
  - ``upper_threshold_<metric>`` and ``lower_threshold_<metric>`` - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
    the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
