@@ -38,6 +38,16 @@ Glossary
     Concept Drift
         A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
 
+    Confidence Band
+        When we estimate a statistic from a sample our estimation has to take into account the variance of that statistic
+        from it's sampled distribution. We do that by calculating :term:`Sampling Error`. When we visualize our results
+        we show a Confidence Band above and below our estimation. This confidence band comprises of the values that have distance
+        less than the sampling error from our estimatiuon. This helps us know when changes in the value of a statistic are
+        statistically significant instead of happening due to the natural variance of the statistic.
+
+        Note that the confidence band is also described as sampling error range at the hover information that appears on
+        the interactive plots.
+
     Data Drift
         A change in joint distribution of :term:`Model Inputs` (P(X)).
 

@@ -95,7 +95,8 @@ It means that when we take a sample of 100 points the accuracy we will calculate
 68,2% chance of being in the range [0.45, 0.55]. If we extend the range to [0.4, 0.6] then there is a 95% chance of the accuracy
 we calculate from the sample being in that range. And if we extend the range to [0.35, 0.65] then there is a 99.7% chance that
 the measured accuracy will fall within the specified range. Within NannyML we define :term:`Sampling Error` to be +/- 3
-:term:`standard errors<Standard Error>`, and this is the *sampling error range* we display as Confidence Range in our plots.
+:term:`standard errors<Standard Error>`, and this is the :term:`Confidence Band` that appears as a shaded purple area
+in our plots.
 
 
 Sampling Error Estimation and Interpretation for NannyML features
