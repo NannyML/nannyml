@@ -1,16 +1,18 @@
 .. _estimation_of_standard_error:
 
-Estimation of Standard Error
-============================
+Calculating Sampling Error
+==========================
 
-This page explains how NannyML estimates :term:`standard error<Standard Error>` for its different features. As a reminder - the standard error
-of a statistic is the standard deviation of its sampling distribution. It is a way to measure sampling error. The effect of sampling error
+This page explains how NannyML calculates :term:`Sampling Error`. The effect of sampling error
 on model monitoring results is described :ref:`here<sampling-error-introduction>`.
+In order to quantify sampling error we rely on :term:`Standard Error`.
+The standard error of a statistic is the standard deviation of its sampling distribution. Hence below we will be discussing
+how we estimate standard error and then we will show how we define sampling error from it.
 
 .. _introducing_sem:
 
-Adapting Standard Error of the Mean Formula
-+++++++++++++++++++++++++++++++++++++++++++
+Defining Sampling Error from Standard Error of the Mean Formula
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Let us recall the example of a random binary classification model, predicting random binary targets (introduced
 :ref:`here<sampling-error-introduction>`). The histogram shows the sampling distribution of accuracy
@@ -63,9 +65,9 @@ used to estimate the standard deviation of the sampled means:
 In order to take advantage of the :term:`SEM formula<Standard Error>` in the analyzed example,
 the accuracy of each observation needs to be
 calculated in such a way that a mean of this observation-level accuracies equals the accuracy of the whole sample. This
-sounds complicated, but the following solution should clarify it. Accuracy of a single observation is simply equal to 1
+sounds complicated, but the following solution makes it simple. Accuracy of a single observation is simply equal to 1
 when the prediction is correct and equal to 0 otherwise. When the mean of such observation-level accuracies is
-calculated, it is equal to the sample-level accuracy, see:
+calculated, it is equal to the sample-level accuracy, as demonstrated below:
 
 .. code-block:: python
 
@@ -74,7 +76,7 @@ calculated, it is equal to the sample-level accuracy, see:
     (0.5045, 0.5045)
 
 Now the :term:`SEM formula<Standard Error>` can be used directly to estimate the
-:term:`standard error<Standard Error>` of accuracy. :math:`\sigma`, from the
+:term:`standard error<Standard Error>` of accuracy for a sample of size n. :math:`\sigma`, from the
 formula above, is the standard deviation of the observation-level accuracies and :math:`n` is the sample size (chunk
 size). The code below calculates standard error with SEM and compares it with the standard error from a
 repeated experiments approach:
@@ -86,19 +88,26 @@ repeated experiments approach:
     (0.05, 0.05)
 
 So for the analyzed case, the sample size of 100 observations will result in a standard error of accuracy equal to 0.05.
-This dispersion will be purely the effect of sampling because model quality and data distribution remain unchanged.
+This dispersion in measured values will be purely the effect of sampling because model quality and data distribution remain unchanged.
+
+What does this mean when we calculate a statistic from a sample?
+It means that when we take a sample of 100 points the accuracy we will calculate has a
+68,2% chance of being in the range [0.45, 0.55]. If we extend the range to [0.4, 0.6] then there is a 95% chance of the accuracy
+we calculate from the sample being in that range. And if we extend the range to [0.35, 0.65] then there is a 99.7% chance that
+the measured accuracy will fall within the specified range. Within NannyML we define :term:`Sampling Error` to be +/- 3
+:term:`standard errors<Standard Error>`, and this is the *sampling error range* we display as Confidence Range in our plots.
 
 
-Standard Error Estimation and Interpretation for NannyML features
+Sampling Error Estimation and Interpretation for NannyML features
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Performance Estimation
 **********************
 
 
-:term:`Standard Error` for performance estimation is calculated using SEM [1]_ in a way described in
-:ref:`Adapting Standard Error
-of the Mean Formula<introducing_sem>`. Since targets are available only in the reference dataset, the nominator of the
+As discussed we first calculate :term:`Standard Error` for performance estimation using SEM [1]_ in the way described in
+:ref:`previous section<introducing_sem>`. Since targets are available only in the reference dataset,
+the nominator of the
 SEM formula is calculated based on observation-level metrics from the reference dataset.
 The sample size in the denominator is the size of the chunk for which standard error is estimated.
 
@@ -106,12 +115,8 @@ Given that the assumptions of performance estimation methods
 are met, the estimated performance is the expected performance of the monitored model on the chunk. Sampling error
 informs how much the actual (calculated) performance might be different from the expected one due to sampling effects
 only. The sampling error in the results is expressed as 3 standard errors. So the estimated performance +/- 3 standard
-errors create an interval which should contain the actual value of performance metric in about 99% of cases (given
-the assumptions of the performance estimation algorithm are met). In the random model example
-:ref:`described above<introducing_sem>` the expected performance returned by the performance estimation
-algorithm should be close to 0.5, while the band would be 0.35-0.65 (i.e. 0.5 +/- 0.15) for the chunk size of 100.
-The value of +/- 3 standard errors are displayed as bands on the plots and shown in the hover for each chunk (called
-*sampling error range*).
+errors creates an interval which should contain the actual value of performance metric in about 99% of cases (given
+the assumptions of the performance estimation algorithm are met).
 
 
 Performance Monitoring
@@ -132,7 +137,6 @@ calculation results for these chunks will come together with value of 3 standard
 sampling error. For the analyzed example this is equal to 0.15. This tells us that, for
 99% of the cases, the true model performance will be found in the +/- 0.15 range from the calculated one. This helps to
 evaluate whether performance changes are significant or are just caused by sampling effects.
-The value of 3 standard errors is shown in the hover and it is called *sampling error range*.
 
 
 
@@ -183,8 +187,8 @@ keeping the computation cost very low.
 
 Another thing to keep in mind is that regardless of the method chosen to calculate it, the standard error is based
 on reference data. The only information it takes from the analysis chunk is its size. Therefore, it provides
-accurate estimations for the analysis period as long as i.i.d (independent and identically distributed) holds. Or in other words - it
-assumes that the *variability* of a metric on analysis set will be the same as on reference set.
+accurate estimations for the analysis period as long as the i.i.d (independent and identically distributed) assumption holds.
+Or in other words - it assumes that the *variability* of a metric on analysis set will be the same as on reference set.
 
 
 **References**

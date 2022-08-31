@@ -167,21 +167,28 @@ Glossary
     Reconstruction Error
         The average euclidean distance between the original and the reconstructed data points in a dataset.
         The reconstructed dataset is created by transforming our model inputs to a :term:`Latent space` and
-        then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be lossless there will always be a difference
-        between the original and the reconstructed data. This difference is captured by the reconstruction error.
-    
+        then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be
+        lossless there will always be a difference between the original and the reconstructed data. This difference
+        is captured by the reconstruction error.
+
+    Sampling Error
+        Sampling errors are statistical errors that arise when a sample does not accurately represent the whole population.
+        They are the difference between the real values of the population, which we don't always know, and the values
+        derived by using samples from the population. In order to quantify the sampling error we use the :term:`Standard Error`.
+
     Standard Error
         The Standard Error of a statistic is the standard deviation of the probability distribution we are sampling it from.
         It can also be an estimate of that standard deviation. If the statistic is the sample mean, then it is called
-        Standard Error of the Mean and abbreviated as SEM. 
-        
+        Standard Error of the Mean and abbreviated as SEM.
+
         The exact value of standard error from an independent sample of :math:`n` observations taken from a statistical population with
         standard deviation :math:`\sigma` is:
 
         .. math::
             {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
-        
-        More information can be read at the `Wikipedia Standard Error page`_.
+
+        Knowing the standard error of a statistic we can calculate an appropriate range of values where the true value of the
+        statistic lies with a given probability. More information can be read at the `Wikipedia Standard Error page`_.
 
     Target
         The actual outcome of the event the machine learning model is trying to predict. Also referred to as
