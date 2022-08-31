@@ -147,8 +147,8 @@ that was estimated:
  - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also
    be calculated and included within the results.
  - ``estimated_<metric>`` - the estimate of a metric for a specific chunk,
- - ``upper_confidence_<metric>`` and ``lower_confidence_<metric>`` - these equal to estimated value +/-
-   3 times the estimated sampling error.
+ - ``upper_confidence_<metric>`` and ``lower_confidence_<metric>`` - these correspond to the sampling error and are equal to +/-
+   3 times the calculated standard error.
  - ``upper_threshold_<metric>`` and ``lower_threshold_<metric>`` - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
    the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
