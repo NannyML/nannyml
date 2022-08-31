@@ -3,12 +3,14 @@
 #  License: Apache Software License 2.0
 
 """Module containing CBPE estimation results and plotting implementations."""
+from typing import Union
 
 import pandas as pd
 from plotly import graph_objects as go
 
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based.metrics import Metric, MetricFactory
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
@@ -34,7 +36,12 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
         return 'confidence_based_performance_estimation'
 
     def plot(
-        self, kind: str = 'performance', metric: str = None, plot_reference: bool = False, *args, **kwargs
+        self,
+        kind: str = 'performance',
+        metric: Union[str, Metric] = None,
+        plot_reference: bool = False,
+        *args,
+        **kwargs,
     ) -> go.Figure:
         """Render plots based on CBPE estimation results.
 
@@ -50,7 +57,7 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
         ----------
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
-        metric: str, default=None
+        metric: Union[str, nannyml.performance_estimation.confidence_based.metrics.Metric]
             The metric to plot when rendering a plot of kind 'performance'.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
@@ -100,10 +107,8 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
                 raise InvalidArgumentsException(
                     "no value for 'metric' given. Please provide the name of a metric to display."
                 )
-            if metric not in SUPPORTED_METRIC_VALUES:
-                raise InvalidArgumentsException(
-                    f"unknown 'metric' value: '{metric}'. " f"Supported values are {SUPPORTED_METRIC_VALUES}."
-                )
+            if isinstance(metric, str):
+                metric = MetricFactory.create(metric, self.estimator.problem_type)
             return _plot_cbpe_performance_estimation(self.data, self.estimator, metric, plot_reference)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
@@ -117,7 +122,7 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
 
 
 def _plot_cbpe_performance_estimation(
-    estimation_results: pd.DataFrame, estimator, metric: str, plot_reference: bool
+    estimation_results: pd.DataFrame, estimator, metric: Metric, plot_reference: bool
 ) -> go.Figure:
     """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
@@ -156,10 +161,13 @@ def _plot_cbpe_performance_estimation(
 
     # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
     estimation_results['plottable'] = estimation_results.apply(
-        lambda r: r[f'estimated_{metric}'] if r['period'] == 'analysis' else r[f'realized_{metric}'], axis=1
+        lambda r: r[f'estimated_{metric.column_name}']
+        if r['period'] == 'analysis'
+        else r[f'realized_{metric.column_name}'],
+        axis=1,
     )
     estimation_results['alert'] = estimation_results.apply(
-        lambda r: r[f'alert_{metric}'] if r['period'] == 'analysis' else False, axis=1
+        lambda r: r[f'alert_{metric.column_name}'] if r['period'] == 'analysis' else False, axis=1
     )
 
     # Plot estimated performance
@@ -167,21 +175,24 @@ def _plot_cbpe_performance_estimation(
         table=estimation_results,
         metric_column_name='plottable',
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-        chunk_legend_labels=[f'Reference period (realized {metric})', f'Analysis period (estimated {metric})'],
+        chunk_legend_labels=[
+            f'Reference period (realized {metric.display_name})',
+            f'Analysis period (estimated {metric.display_name})',
+        ],
         drift_column_name='alert',
         drift_legend_label='Degraded performance',
-        hover_labels=['Chunk', f'{metric}', 'Target data'],
+        hover_labels=['Chunk', f'{metric.display_name}', 'Target data'],
         hover_marker_labels=['Reference', 'No change', 'Change'],
-        lower_threshold_column_name=f'lower_threshold_{metric}',
-        upper_threshold_column_name=f'upper_threshold_{metric}',
+        lower_threshold_column_name=f'lower_threshold_{metric.column_name}',
+        upper_threshold_column_name=f'upper_threshold_{metric.column_name}',
         threshold_legend_label='Performance threshold',
-        title=f'CBPE - Estimated {metric}',
-        y_axis_title=f'{metric}',
+        title=f'CBPE - Estimated {metric.display_name}',
+        y_axis_title=f'{metric.display_name}',
         v_line_separating_analysis_period=plot_period_separator,
         estimated_column_name='estimated',
-        lower_confidence_column_name=f'lower_confidence_{metric}',
-        upper_confidence_column_name=f'upper_confidence_{metric}',
-        sampling_error_column_name=f'sampling_error_{metric}',
+        lower_confidence_column_name=f'lower_confidence_{metric.column_name}',
+        upper_confidence_column_name=f'upper_confidence_{metric.column_name}',
+        sampling_error_column_name=f'sampling_error_{metric.column_name}',
     )
 
     return fig
