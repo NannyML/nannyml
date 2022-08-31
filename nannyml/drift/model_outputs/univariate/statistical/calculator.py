@@ -101,7 +101,9 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         self.problem_type: ProblemType = problem_type  # type: ignore
 
         if self.problem_type is not ProblemType.REGRESSION and self.y_pred_proba is None:
-            raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' can not be 'None' for " f"problem type {self.problem_type.value}"
+            )
 
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
