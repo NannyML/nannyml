@@ -35,7 +35,8 @@ Just The Code
     ...         'upmarket_card': 'y_pred_proba_upmarket_card',
     ...         'highstreet_card': 'y_pred_proba_highstreet_card'
     ...     },
-    ...     timestamp_column_name='timestamp')
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_multiclass')
     >>>
     >>> calc.fit(reference_df)
     >>>
@@ -112,11 +113,10 @@ calculates the drift results on the data provided. An example using it can be se
     ...         'upmarket_card': 'y_pred_proba_upmarket_card',
     ...         'highstreet_card': 'y_pred_proba_highstreet_card'
     ...     },
-    ...     timestamp_column_name='timestamp')
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_multiclass')
     >>>
     >>> calc.fit(reference_df)
-    >>>
-    >>> results = calc.calculate(analysis_df)
 
 We can then display the results in a table, or as plots.
 

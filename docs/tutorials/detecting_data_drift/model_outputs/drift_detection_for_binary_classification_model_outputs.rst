@@ -28,7 +28,8 @@ Just The Code
     >>>
     >>> display(reference_df.head())
     >>>
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba',
+    ...                                             timestamp_column_name='timestamp', problem_type='classification_binary')
     >>>
     >>> calc.fit(reference_df)
     >>>
@@ -96,7 +97,8 @@ calculates the drift results on the data provided. An example using it can be se
 
 .. code-block:: python
 
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba',
+    ...                                             timestamp_column_name='timestamp', problem_type='classification_binary')
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
 
