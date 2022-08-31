@@ -225,6 +225,12 @@ def _plot_prediction_drift(
     metric: str = 'statistic',
 ) -> go.Figure:
     """Renders a line plot of the drift metric for a given feature."""
+    if calculator.problem_type == ProblemType.REGRESSION:
+        raise InvalidArgumentsException(
+            "plot of kind 'predicted_labels_drift' don't support "
+            "regression problems. Please use the 'prediction_drift' plot."
+        )
+
     (
         metric_column_name,
         metric_label,
@@ -280,6 +286,12 @@ def _plot_prediction_distribution(
     fig: plotly.graph_objects.Figure
         A visualization of the data distribution and drift using joy-plots.
     """
+    if calculator.problem_type == ProblemType.REGRESSION:
+        raise InvalidArgumentsException(
+            "plot of kind 'predicted_labels_distribution' don't support "
+            "regression problems. Please use the 'prediction_distribution' plot."
+        )
+
     y_pred = calculator.y_pred
     axis_title = f'{y_pred}'
     drift_column_name = f'{y_pred}_alert'
@@ -411,7 +423,6 @@ def _plot_output_distribution(
     clip: Optional[Tuple[int, int]] = None
 
     # deal with multiclass stuff
-    # if isinstance(calculator.y_pred_proba, Dict):
     if calculator.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
         if class_label is None:
             raise InvalidArgumentsException(

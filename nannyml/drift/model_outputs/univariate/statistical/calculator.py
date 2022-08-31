@@ -24,10 +24,10 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
         y_pred: str,
         timestamp_column_name: str,
         problem_type: Union[str, ProblemType],
+        y_pred_proba: ModelOutputsType = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -100,6 +100,9 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
             problem_type = ProblemType.parse(problem_type)
         self.problem_type: ProblemType = problem_type  # type: ignore
 
+        if self.problem_type is not ProblemType.REGRESSION and self.y_pred_proba is None:
+            raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
+
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
@@ -109,7 +112,10 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
+        if self.y_pred_proba:
+            _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
+        else:
+            _list_missing([self.y_pred], reference_data)
 
         self.previous_reference_data = reference_data.copy()
 
@@ -130,7 +136,10 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
+        if self.y_pred_proba:
+            _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
+        else:
+            _list_missing([self.y_pred], data)
 
         # Force categorical columns to be set to 'category' pandas dtype
         # TODO: we should try to get rid of this
