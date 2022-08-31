@@ -30,6 +30,7 @@ Just The Code
     ...     y_pred='y_pred',
     ...     y_true='work_home_actual',
     ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
     ...     metrics=['roc_auc', 'f1'],
     ...     chunk_size=5000
     >>> )
@@ -106,6 +107,7 @@ For more information about :term:`chunking<Data Chunk>` you can check the :ref:`
     ...     y_pred='y_pred',
     ...     y_true='work_home_actual',
     ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
     ...     metrics=['roc_auc', 'f1'],
     ...     chunk_size=5000)
 

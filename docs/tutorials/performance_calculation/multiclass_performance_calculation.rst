@@ -30,7 +30,8 @@ Just The Code
     ...     y_pred='y_pred',
     ...     y_true='y_true',
     ...     timestamp_column_name='timestamp',
-    ...     metrics=['f1', 'roc_auc'],
+    ...     problem_type='classification_multiclass',
+    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
     ...     chunk_size=6000)
 
     >>> calc.fit(reference_df)
@@ -107,7 +108,8 @@ For more information on metrics, check the :mod:`~nannyml.performance_calculatio
     ...     y_pred='y_pred',
     ...     y_true='y_true',
     ...     timestamp_column_name='timestamp',
-    ...     metrics=['f1', 'roc_auc'],
+    ...     problem_type='classification_multiclass',
+    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
     ...     chunk_size=6000)
 
     >>> calc.fit(reference_df)
