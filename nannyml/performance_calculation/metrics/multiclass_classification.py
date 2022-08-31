@@ -65,7 +65,7 @@ class MulticlassClassificationAUROC(Metric):
         _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
 
         # sampling error
-        classes = class_labels(self.calculator.y_pred_proba)
+        classes = class_labels(self.calculator.y_pred_proba)  # type: ignore
         binarized_y_true = list(label_binarize(reference_data[self.calculator.y_true], classes=classes).T)
         y_pred_proba = [reference_data[self.calculator.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore
 
