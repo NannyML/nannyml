@@ -150,7 +150,7 @@ reconstruction error for each observation on the reference dataset with the squa
 
 For the sampling error we use +/- 3 standard error in similar fashion with the performance metrics. We want around 99%
 of values we measure for each chunk to be within the sampling error range provided. The validity of sampling error range
-results are constrained by the :ref:`limitations of our approach<limitations_sem>` that should be taken in mind when 
+results are constrained by the :ref:`limitations of our approach<limitations_sem>` that should be taken in mind when
 interpreting model monitoring results.
 
 

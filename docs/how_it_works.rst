@@ -11,4 +11,3 @@ How It Works
     how_it_works/data_reconstruction
     how_it_works/chunking_data
     how_it_works/estimation_of_standard_error
-
