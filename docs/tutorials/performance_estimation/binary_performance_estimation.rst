@@ -174,7 +174,7 @@ These results can be also plotted. Our plot contains several key elements.
   indicated by a red, diamond-shaped point marker in the middle of the chunk.
 
 Description of tabular results above explains how the
-:term:`Confidence Bands` and thresholds are calculated. Additional information is shown in the hover (these are
+:term:`confidence bands<Confidence Band>` and thresholds are calculated. Additional information is shown in the hover (these are
 interactive plots, though only static views are included here).
 
 .. code-block:: python
