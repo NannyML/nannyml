@@ -352,7 +352,7 @@ def _plot_score_drift(
     """Renders a line plot of the drift metric for a given feature."""
     if calculator.problem_type == ProblemType.REGRESSION:
         raise InvalidArgumentsException(
-            "plot of kind 'predicted_labels_distribution' don't support "
+            "plot of kind 'score_drift' don't support "
             "regression problems. Please use the 'prediction_distribution' plot."
         )
 
@@ -437,7 +437,7 @@ def _plot_score_distribution(
     """
     if calculator.problem_type == ProblemType.REGRESSION:
         raise InvalidArgumentsException(
-            "plot of kind 'predicted_labels_distribution' don't support "
+            "plot of kind 'score_distribution' don't support "
             "regression problems. Please use the 'prediction_distribution' plot."
         )
 

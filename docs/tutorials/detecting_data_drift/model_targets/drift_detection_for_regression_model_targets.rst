@@ -51,11 +51,11 @@ Just The Code
     >>> results = calc.calculate(analysis_df)
     >>> display(results.data.head(3))
 
-    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
-    >>> distribution_fig1.show()
+    >>> target_drift_fig = results.plot(kind='target_drift', plot_reference=True)
+    >>> target_drift_fig.show()
 
-    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
-    >>> distribution_fig2.show()
+    >>> target_distribution_fig = results.plot(kind='target_distribution', plot_reference=True)
+    >>> target_distribution_fig.show()
 
 
 Walkthrough
@@ -132,20 +132,20 @@ The results can be also easily plotted by using the
 
 .. code-block:: python
 
-    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
-    >>> distribution_fig1.show()
+    >>> target_drift_fig = results.plot(kind='target_drift', plot_reference=True)
+    >>> target_drift_fig.show()
 
 Note that a dashed line, instead of a solid line, will be used for chunks that have missing target values.
 
-.. image:: /_static/tutorials/detecting_data_drift/model_targets/regression/target_distribution_metric.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_targets/regression/target-drift.svg
 
 
 .. code-block:: python
 
-    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
-    >>> distribution_fig2.show()
+    >>> target_distribution_fig = results.plot(kind='target_distribution', plot_reference=True)
+    >>> target_distribution_fig.show()
 
-.. image:: /_static/tutorials/detecting_data_drift/model_targets/regression/target_distribution_statistical.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_targets/regression/target-distribution.svg
 
 
 What Next

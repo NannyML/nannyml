@@ -47,7 +47,7 @@ Glossary
 
         Note that the confidence band is also described as sampling error range at the hover information that appears on
         the interactive plots.
-    
+
     Covariate Shift
         A synonym for :term:`Data Drift`.
 

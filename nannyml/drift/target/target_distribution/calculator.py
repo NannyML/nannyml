@@ -90,10 +90,11 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         if isinstance(problem_type, str):
             problem_type = ProblemType.parse(problem_type)
-        self.problem_type = problem_type
+        self.problem_type: ProblemType = problem_type  # type: ignore
 
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_reference_data: Optional[pd.DataFrame] = None
+        self.previous_analysis_data: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
         """Fits the calculator to reference data."""
@@ -159,6 +160,8 @@ class TargetDistributionCalculator(AbstractCalculator):
                 for chunk in chunks
             ]
         )
+
+        self.previous_analysis_data = data.copy()
 
         return TargetDistributionResult(results_data=res, calculator=self)
 
