@@ -312,10 +312,10 @@ There is also functionality for visualizing data drift for model outputs. We can
     >>> calc.fit(reference)
     >>> results = calc.calculate(analysis)
 
-    >>> figure = results.plot(kind='prediction_drift', plot_reference=True)
+    >>> figure = results.plot(kind='score_drift', plot_reference=True)
     >>> figure.show()
 
-.. image:: ./_static/drift-guide-predictions.svg
+.. image:: ./_static/drift-guide-score-drift.svg
 
 More complex data drift cases can get detected by Data Reconstruction with PCA. For more information
 see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
