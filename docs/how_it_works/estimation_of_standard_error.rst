@@ -11,12 +11,12 @@ how we estimate standard error and then we will show how we define sampling erro
 
 .. _introducing_sem:
 
-Defining Sampling Error from Standard Error of the Mean Formula
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Defining Sampling Error from Standard Error of the Mean
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Let us recall the example of a random binary classification model, predicting random binary targets (introduced
-:ref:`here<sampling-error-introduction>`). The histogram shows the sampling distribution of accuracy
-(which has a true value of 0.5) for samples containing 100 observations.
+Let us recall the example of a :ref:`random binary classification model, predicting random binary targets<sampling-error-introduction>`.
+The histogram below shows the sampling distribution of accuracy,
+which has a true value of 0.5, for samples containing 100 observations.
 
 .. code-block:: python
 
@@ -44,8 +44,8 @@ Let us recall the example of a random binary classification model, predicting ra
 .. image:: ../_static/deep_dive_data_chunks_stability_of_accuracy.svg
     :width: 400pt
 
-Calculating standard error for the example above is simple. Since the sampling experiments are already done (10 000
-experiments) and the accuracy for each sample is stored (in ``accuracy_scores``) it is just a matter of
+Calculating standard error for the example above is simple. Since the (10 000) sampling experiments are already done
+and the accuracy for each sample is stored, in ``accuracy_scores``, it is just a matter of
 calculating standard deviation:
 
 .. code-block:: python
@@ -153,10 +153,12 @@ Therefore the standard error of the mean formula can be used without any interme
 of the mean of reconstruction error values within a chunk by dividing the standard deviation of
 reconstruction error for each observation on the reference dataset with the square root of the size of the chunk of interest.
 
-For the sampling error we use +/- 3 standard error in similar fashion with the performance metrics. We want around 99%
-of values we measure for each chunk to be within the sampling error range provided. The validity of sampling error range
-results are constrained by the :ref:`limitations of our approach<limitations_sem>` that should be taken in mind when 
-interpreting model monitoring results.
+Just like in Performance Monitoring, in multivariate drift detection with PCA, the reconstruction error we measure for each chunk
+is affected by sampling error and is not the actual reconstruction error of the monitored population.
+Again the requirement is that with around 99% certainly we want the true reconstruction error value of the monitored population to be
+with in the range of values defined by sampling error. Hence we use +/- 3 standard errors to define our sampling error range.
+The validity of sampling error range results are constrained by the :ref:`limitations of our approach<limitations_sem>`
+that should be taken in mind when interpreting model monitoring results.
 
 
 Univariate Drift Detection
