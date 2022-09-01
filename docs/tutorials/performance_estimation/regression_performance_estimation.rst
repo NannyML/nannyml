@@ -6,7 +6,7 @@ Estimating Performance for Regression
 
 This tutorial explains how to use NannyML to estimate the performance of regression
 models in the absence of target data. To find out how DEE estimates performance,
-read the Direct Error Estimation explanation of How it works.
+read the :ref:`explanation of how Direct Error Estimation works<how-it-works-dee>`.
 
 .. TODO: Add reference link.
 
@@ -22,8 +22,9 @@ Just The Code
     >>> import nannyml as nml
     >>> from IPython.display import display
 
-    >>> reference, analysis, analysis_target = nml.load_synthetic_car_price_dataset()
-    >>> display(reference.head(3))
+    >>> reference_df = nml.load_synthetic_car_price_dataset()[0]
+    >>> analysis_df = nml.load_synthetic_car_price_dataset()[1]
+    >>> display(reference_df.head(3))
 
     >>> estimator = nml.DEE(
     ...     feature_column_names=['car_age', 'km_driven', 'price_new', 'accident_count', 'door_count', 'fuel', 'transmission'],
@@ -33,9 +34,9 @@ Just The Code
     ...     metrics=['rmse', 'rmsle'],
     ...     chunk_size=6000,
     >>> )
-    >>> estimator.fit(reference)
+    >>> estimator.fit(reference_df)
 
-    >>> results = estimator.estimate(analysis)
+    >>> results = estimator.estimate(analysis_df)
     >>> display(results.data.head(3))
 
     >>> for metric in estimator.metrics:

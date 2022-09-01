@@ -340,7 +340,7 @@ For both - learning and evaluation purposes this error is modified and it become
 squared error for regression tasks). The value of the error function for each prediction of the :term:`child model` becomes the
 target for the :term:`nanny model`.
 
-Isn’t this exactly what gradient boosting algorithms for regression do? How can this even work? Wouldn’t it
+Isn't this exactly what gradient boosting algorithms for regression do? How can this even work? Wouldn't it
 work only if the :term:`nanny model` is smarter (more flexible) than the :term:`child model`?
 Yes, it is similar to what
 gradient boosting does with one crucial difference. Each weak model of gradient boosting algorithm tries to find patterns

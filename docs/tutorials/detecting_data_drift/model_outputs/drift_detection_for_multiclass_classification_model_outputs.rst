@@ -7,9 +7,9 @@ Drift Detection for Multiclass Classification  Model Outputs
 Why Perform Drift Detection for Model Outputs
 ---------------------------------------------
 
-The distribution of model outputs tells us how likely it is that our population
-will do what the model predicts. If the model's
-population changes, then our populations' actions will be different.
+The distribution of the model outputs tells us the model's evaluation of how likely
+the predicted outcome is to happen across the model's population.
+If the model's population changes, then our populations' actions will be different.
 The difference in actions is very important to know as soon as possible because
 they directly affect the business results from operating a machine learning model.
 
@@ -62,10 +62,10 @@ Walkthrough
 ------------------------------------------------
 
 NannyML detects data drift for :term:`Model Outputs` using the
-:ref:`Univariate Drift Detection methodology<univariate_drift_detection>`.
+:ref:`Univariate Drift Detection methodology<univariate_drift_detection_walkthrough>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
-You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 

@@ -48,9 +48,10 @@ Just The Code
     ranked_features = ranker.rank(results, only_drifting = False)
     display(ranked_features)
 
+.. _univariate_drift_detection_walkthrough:
 
 Walkthrough
------------------------------------------
+-----------
 
 NannyML's Univariate approach for data drift looks at each variable individually and conducts statistical tests comparing the :ref:`chunks<chunking>` created from the analysis :ref:`data period<data-drift-periods>` with the reference period. You can read more about the data required in our section on :ref:`data periods<data-drift-periods>`
 

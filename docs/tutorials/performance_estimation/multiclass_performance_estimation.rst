@@ -56,7 +56,8 @@ Walkthrough
 
 
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts
-which type of credit card product new customers should be assigned to. You can :ref:`learn more about this dataset<dataset-synthetic-multiclass>`.
+which type of credit card product new customers should be assigned to. You can learn more about this dataset
+:ref:`here<dataset-synthetic-multiclass>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
