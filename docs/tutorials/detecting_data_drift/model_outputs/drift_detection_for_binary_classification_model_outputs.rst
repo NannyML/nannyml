@@ -170,7 +170,7 @@ NannyML can also visualise how the distributions of the model predictions evolve
 
 
 Insights
------------------------
+--------
 
 Looking at the results we can see that we have a false alert on the first chunk of the analysis data. This is similar
 to the ``tenure`` variable in the :ref:`univariate drift results<univariate_drift_detection_tenure>`, where there is also
