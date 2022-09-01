@@ -150,10 +150,9 @@ def test_output_drift_calculator_for_regression_problems(regression_data):  # no
     reference, analysis, _ = regression_data
     calc = StatisticalOutputDriftCalculator(
         y_pred='y_pred',
-        y_pred_proba=None,
         timestamp_column_name='timestamp',
         chunk_size=5000,
-        problem_type=ProblemType.CLASSIFICATION_BINARY,
+        problem_type=ProblemType.REGRESSION,
     ).fit(reference)
     results = calc.calculate(analysis)
 

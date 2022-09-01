@@ -8,6 +8,7 @@ from typing import Optional
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._step_plot import _step_plot
@@ -128,16 +129,29 @@ def _plot_distribution(data: pd.DataFrame, calculator, distribution: str, plot_r
         )
         return fig
     elif distribution == 'statistical':
-        fig = _step_plot(
-            table=data,
-            metric_column_name='statistical_target_drift',
-            chunk_column_name='key',
-            drift_column_name='alert',
-            hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
-            title=f'Chi-square statistic over time for {calculator.y_true} ',
-            y_axis_title='Chi-square statistic',
-            v_line_separating_analysis_period=plot_period_separator,
-            partial_target_column_name='targets_missing_rate',
-            statistically_significant_column_name='significant',
-        )
-        return fig
+        if calculator.problem_type == ProblemType.REGRESSION:
+            return _step_plot(
+                table=data,
+                metric_column_name='statistical_target_drift',
+                chunk_column_name='key',
+                drift_column_name='alert',
+                hover_labels=['Chunk', 'KS statistic', 'Target data'],
+                title=f'KS statistic over time for {calculator.y_true} ',
+                y_axis_title='KS statistic',
+                v_line_separating_analysis_period=plot_period_separator,
+                partial_target_column_name='targets_missing_rate',
+                statistically_significant_column_name='significant',
+            )
+        else:
+            return _step_plot(
+                table=data,
+                metric_column_name='statistical_target_drift',
+                chunk_column_name='key',
+                drift_column_name='alert',
+                hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
+                title=f'Chi-square statistic over time for {calculator.y_true} ',
+                y_axis_title='Chi-square statistic',
+                v_line_separating_analysis_period=plot_period_separator,
+                partial_target_column_name='targets_missing_rate',
+                statistically_significant_column_name='significant',
+            )

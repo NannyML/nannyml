@@ -42,7 +42,8 @@ Just The Code
     >>>
     >>> calc = nml.TargetDistributionCalculator(
     ...     y_true='work_home_actual',
-    ...     timestamp_column_name='timestamp'
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
     >>> )
     >>>
     >>> calc.fit(reference_df)

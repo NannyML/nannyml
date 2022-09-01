@@ -42,7 +42,8 @@ Just The Code
     >>>
     >>> calc = nml.TargetDistributionCalculator(
     ...     y_true='y_true',
-    ...     timestamp_column_name='timestamp'
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_multiclass',
     >>> )
     >>>
     >>> calc.fit(reference_df)

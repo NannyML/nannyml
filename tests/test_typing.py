@@ -40,7 +40,7 @@ def test_problem_type_parsing_raises_invalid_args_exc_when_given_unknown_problem
 
 @pytest.mark.parametrize(
     'y_pred_proba, expected_labels',
-    [({'C': 'col_c', 'A': 'col_a', 'B': 'col_b'}, ['A', 'B', 'C']), ({}, []), (None, [])],
+    [({'C': 'col_c', 'A': 'col_a', 'B': 'col_b'}, ['A', 'B', 'C']), ({}, [])],
 )
 def test_class_labels(y_pred_proba, expected_labels):
     labels = class_labels(y_pred_proba)

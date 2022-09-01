@@ -7,13 +7,14 @@
 from __future__ import annotations
 
 import warnings
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml.base import AbstractCalculator, _column_is_categorical, _column_is_continuous
+from nannyml._typing import ProblemType
+from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
 from nannyml.drift.target.target_distribution.result import TargetDistributionResult
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
@@ -28,6 +29,7 @@ class TargetDistributionCalculator(AbstractCalculator):
         self,
         y_true: str,
         timestamp_column_name: str,
+        problem_type: Union[str, ProblemType],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -86,9 +88,12 @@ class TargetDistributionCalculator(AbstractCalculator):
         self.y_true = y_true
         self.timestamp_column_name = timestamp_column_name
 
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+        self.problem_type = problem_type
+
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_reference_data: Optional[pd.DataFrame] = None
-        # self._reference_targets: pd.Series = None  # type: ignore
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
         """Fits the calculator to reference data."""
@@ -147,7 +152,7 @@ class TargetDistributionCalculator(AbstractCalculator):
                     'targets_missing_rate': (
                         chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()
                     ),
-                    **_calculate_target_drift_for_chunk(
+                    **self._calculate_target_drift_for_chunk(
                         self.previous_reference_data[self.y_true], chunk.data[self.y_true]
                     ),
                 }
@@ -157,16 +162,15 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         return TargetDistributionResult(results_data=res, calculator=self)
 
-
-def _calculate_target_drift_for_chunk(reference_targets: pd.Series, analysis_targets: pd.Series) -> Dict:
-    if _column_is_categorical(reference_targets):
-        return _calculate_categorical_target_drift_for_chunk(reference_targets, analysis_targets)
-    elif _column_is_continuous(reference_targets):
-        return _calculate_continuous_target_drift_for_chunk(reference_targets, analysis_targets)
-    else:
-        raise InvalidArgumentsException(
-            f"reference targets of dtype '{reference_targets.dtype}' could not be " "set as continuous or categorical."
-        )
+    def _calculate_target_drift_for_chunk(self, reference_targets: pd.Series, analysis_targets: pd.Series) -> Dict:
+        if self.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
+            return _calculate_categorical_target_drift_for_chunk(reference_targets, analysis_targets)
+        elif self.problem_type in [ProblemType.REGRESSION]:
+            return _calculate_continuous_target_drift_for_chunk(reference_targets, analysis_targets)
+        else:
+            raise InvalidArgumentsException(
+                f"target drift calculation is not support for '{ProblemType.value}' problems"
+            )
 
 
 def _calculate_categorical_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:

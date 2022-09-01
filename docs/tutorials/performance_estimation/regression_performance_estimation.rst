@@ -144,7 +144,7 @@ These results can be also plotted. Our plot contains several key elements.
   markers indicate the middle of these chunks.
 
 * The low-saturated purple area around the estimated performance indicates the :ref:`sampling
-error<estimation_of_standard_error>`.
+  error<estimation_of_standard_error>`.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 

@@ -31,9 +31,9 @@ class PerformanceCalculator(AbstractCalculator):
         timestamp_column_name: str,
         metrics: List[str],
         y_true: str,
-        y_pred_proba: ModelOutputsType,
         y_pred: str,
         problem_type: Union[str, ProblemType],
+        y_pred_proba: ModelOutputsType = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -99,12 +99,17 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.y_true = y_true
         self.y_pred = y_pred
+
         self.y_pred_proba = y_pred_proba
+
         self.timestamp_column_name = timestamp_column_name
 
         if isinstance(problem_type, str):
             problem_type = ProblemType.parse(problem_type)
         self.problem_type = problem_type
+
+        if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
+            raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
 
         self.metrics: List[Metric] = [
             MetricFactory.create(m, problem_type, {'calculator': self}) for m in metrics  # type: ignore

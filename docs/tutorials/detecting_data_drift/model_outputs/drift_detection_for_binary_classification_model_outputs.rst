@@ -28,7 +28,8 @@ Just The Code
     >>>
     >>> display(reference_df.head())
     >>>
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba',
+    ...                                             timestamp_column_name='timestamp', problem_type='classification_binary')
     >>>
     >>> calc.fit(reference_df)
     >>>
@@ -36,11 +37,11 @@ Just The Code
     >>>
     >>> display(results.data)
     >>>
-    >>> predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    >>> predicted_labels_drift_fig.show()
+    >>> score_drift_fig = results.plot(kind='score_drift', plot_reference=True)
+    >>> score_drift_fig.show()
     >>>
-    >>> predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
-    >>> predicted_labels_distribution_fig.show()
+    >>> score_distribution_fig = results.plot(kind='score_distribution', plot_reference=True)
+    >>> score_distribution_fig.show()
     >>>
     >>> prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
     >>> prediction_drift_fig.show()
@@ -96,7 +97,8 @@ calculates the drift results on the data provided. An example using it can be se
 
 .. code-block:: python
 
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba',
+    ...                                             timestamp_column_name='timestamp', problem_type='classification_binary')
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
 
@@ -130,41 +132,42 @@ We can then display the results in a table, or as plots.
 |  9 | [45000:49999] |         45000 |       49999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 |          |    27.99      |            0     | True           |               0.05 |              0.13752 |                  0     | True                 |                     0.05 |
 +----+---------------+---------------+-------------+---------------------+---------------------+----------+---------------+------------------+----------------+--------------------+----------------------+------------------------+----------------------+--------------------------+
 
-NannyML can show the statistical properties of the drift in model outputs as a plot.
+NannyML can show the statistical properties of the drift in model scores as a plot.
 
 .. code-block:: python
 
-    >>> predictions_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
-    >>> predictions_drift_fig.show()
+    >>> score_drift_fig = results.plot(kind='score_drift', plot_reference=True)
+    >>> score_drift_fig.show()
 
-.. image:: /_static/drift-guide-predictions.svg
+.. image:: /_static/drift-guide-score-drift.svg
+
+NannyML can also visualise how the distributions of the model scores evolved over time.
+
+.. code-block:: python
+
+    >>> score_distribution_fig = results.plot(kind='score_distribution', plot_reference=True)
+    >>> score_distribution_fig.show()
+
+
+.. image:: /_static/drift-guide-score-distribution.svg
+
+NannyML can show the statistical properties of the drift in the model predictions as a plot.
+
+.. code-block:: python
+
+    >>> predicted_labels_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    >>> predicted_labels_drift_fig.show()
+
+.. image:: /_static/drift-guide-prediction-drift.svg
 
 NannyML can also visualise how the distributions of the model predictions evolved over time.
 
 .. code-block:: python
 
-    >>> predictions_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
-    >>> predictions_distribution_fig.show()
-
-.. image:: /_static/drift-guide-predictions-joyplot.svg
-
-NannyML can show the statistical properties of the drift in the predicted labels as a plot.
-
-.. code-block:: python
-
-    >>> predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    >>> predicted_labels_drift_fig.show()
-
-.. image:: /_static/drift-guide-predicted-labels.svg
-
-NannyML can also visualise how the distributions of the predicted labels evolved over time.
-
-.. code-block:: python
-
-    >>> predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    >>> predicted_labels_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
     >>> predicted_labels_distribution_fig.show()
 
-.. image:: /_static/drift-guide-predicted-labels-barchart.svg
+.. image:: /_static/drift-guide-prediction-distribution.svg
 
 
 Insights

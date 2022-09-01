@@ -26,7 +26,6 @@ def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noq
 def performance_calculator() -> PerformanceCalculator:
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
-        y_pred_proba=None,
         y_pred='y_pred',
         y_true='y_true',
         metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],

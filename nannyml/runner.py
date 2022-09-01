@@ -70,7 +70,14 @@ def run(
             progress.update(task, advance=3 / 6)
 
         _run_target_distribution_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
+            reference_data,
+            analysis_data,
+            column_mapping,
+            problem_type,
+            chunker,
+            writer,
+            ignore_errors,
+            console=progress.console,
         )
         if task is not None:
             progress.update(task, advance=4 / 6)
@@ -289,6 +296,7 @@ def _run_target_distribution_drift_calculator(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
@@ -314,7 +322,10 @@ def _run_target_distribution_drift_calculator(
         if console:
             console.log('fitting on reference data')
         calc = TargetDistributionCalculator(
-            y_true=column_mapping['y_true'], timestamp_column_name=column_mapping['timestamp'], chunker=chunker
+            y_true=column_mapping['y_true'],
+            timestamp_column_name=column_mapping['timestamp'],
+            chunker=chunker,
+            problem_type=problem_type,
         ).fit(reference_data)
 
         if console:

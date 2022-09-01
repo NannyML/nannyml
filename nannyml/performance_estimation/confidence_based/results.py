@@ -108,7 +108,7 @@ class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
                     "no value for 'metric' given. Please provide the name of a metric to display."
                 )
             if isinstance(metric, str):
-                metric = MetricFactory.create(metric, self.estimator.problem_type)
+                metric = MetricFactory.create(metric, self.estimator.problem_type, kwargs={'estimator': self.estimator})
             return _plot_cbpe_performance_estimation(self.data, self.estimator, metric, plot_reference)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")

@@ -29,7 +29,7 @@ Welcome to NannyML's documentation!
    examples
    datasets
    glossary
-   CLI nml <cli>
+   cli
    API reference <nannyml/modules>
    contributing
 
