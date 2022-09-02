@@ -56,16 +56,16 @@ class PerformanceCalculator(AbstractCalculator):
             The name of the column containing the timestamp of the model prediction.
         metrics: List[str]
             A list of metrics to calculate.
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
 
         Examples

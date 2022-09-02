@@ -117,7 +117,7 @@ class TargetDistributionResult(AbstractCalculatorResult):
         if self.calculator.problem_type == ProblemType.REGRESSION:
             return _step_plot(
                 table=data,
-                metric_column_name='metric_target_drift',
+                metric_column_name='statistical_target_drift',
                 chunk_column_name='key',
                 drift_column_name='alert',
                 hover_labels=['Chunk', 'KS statistic', 'Target data'],

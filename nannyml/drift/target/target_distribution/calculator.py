@@ -43,16 +43,16 @@ class TargetDistributionCalculator(AbstractCalculator):
             The name of the column containing your model target values.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
 
         Examples
@@ -80,8 +80,8 @@ class TargetDistributionCalculator(AbstractCalculator):
         8  [40000:44999]        40000      44999  ...       0.05  False       False
         9  [45000:49999]        45000      49999  ...       0.05  False       False
         >>>
-        >>> results.plot(distribution='metric', plot_reference=True).show()
-        >>> results.plot(distribution='statistical', plot_reference=True).show()
+        >>> results.plot(kind='target_drift', plot_reference=True).show()
+        >>> results.plot(kind='target_distribution', plot_reference=True).show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker)
 

@@ -46,16 +46,16 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
             The name of the column containing your model predictions.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
 
         Examples
@@ -85,8 +85,8 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         8  [40000:44999]        40000  ...                True                   0.05
         9  [45000:49999]        45000  ...                True                   0.05
         >>>
-        >>> results.plot(kind='predicted_labels_drift', metric='p_value', plot_reference=True).show()
-        >>> results.plot(kind='predicted_labels_distribution', plot_reference=True).show()
+        >>> results.plot(kind='score_drift', metric='p_value', plot_reference=True).show()
+        >>> results.plot(kind='score_distribution', plot_reference=True).show()
         >>> results.plot(kind='prediction_drift', plot_reference=True).show()
         >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
         """

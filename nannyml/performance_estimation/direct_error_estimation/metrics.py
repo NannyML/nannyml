@@ -201,7 +201,13 @@ class Metric(abc.ABC):
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Optional[Dict[str, Any]],
     ) -> LGBMRegressor:
-        if tune_hyperparameters:
+        if hyperparameters:
+            self._logger.debug("'hyperparameters' set: using custom hyperparameters")
+            self._logger.debug(f"'hyperparameters': {hyperparameters}")
+
+            model = LGBMRegressor(**hyperparameters)
+            model.fit(X_train, y_train)
+        elif tune_hyperparameters:
             self._logger.debug(
                 f"'tune_hyperparameters' set to '{tune_hyperparameters}': " f"performing hyperparameter tuning"
             )
@@ -212,15 +218,6 @@ class Metric(abc.ABC):
             automl.fit(X_train, y_train, **hyperparameter_tuning_config)
             self.estimator.hyperparameters = {**automl.model.estimator.get_params()}  # type: ignore
             model = LGBMRegressor(**automl.model.estimator.get_params())
-            model.fit(X_train, y_train)
-        elif hyperparameters:
-            self._logger.debug(
-                f"'tune_hyperparameters' set to '{tune_hyperparameters}': skipping hyperparameter tuning"
-            )
-            self._logger.debug("'hyperparameters' set: using custom hyperparameters")
-            self._logger.debug(f"'hyperparameters': {hyperparameters}")
-
-            model = LGBMRegressor(**hyperparameters)
             model.fit(X_train, y_train)
         else:
             self._logger.debug(

@@ -117,8 +117,8 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         8  [40000:44999]        40000  ...                True                   0.05
         9  [45000:49999]        45000  ...                True                   0.05
         >>>
-        >>> results.plot(kind='predicted_labels_drift', metric='p_value', plot_reference=True).show()
-        >>> results.plot(kind='predicted_labels_distribution', plot_reference=True).show()
+        >>> results.plot(kind='score_drift', plot_reference=True).show()
+        >>> results.plot(kind='score_distribution', plot_reference=True).show()
         >>> results.plot(kind='prediction_drift', plot_reference=True).show()
         >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
 
