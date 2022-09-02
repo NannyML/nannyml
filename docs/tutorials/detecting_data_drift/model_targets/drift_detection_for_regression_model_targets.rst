@@ -162,4 +162,4 @@ What Next
 
 The :ref:`performance-calculation` functionality of NannyML can can add context to the target drift results
 showing whether there are associated performance changes. Moreover the :ref:`Univariate Drift Detection<univariate_drift_detection>`
-as well as the :ref:`Multivariate Drift Detection<_multivariate_drift_detection>` can add further context if needed.
+as well as the :ref:`Multivariate Drift Detection<multivariate_drift_detection>` can add further context if needed.

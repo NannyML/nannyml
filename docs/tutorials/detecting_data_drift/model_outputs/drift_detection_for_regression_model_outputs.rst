@@ -57,7 +57,7 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 
 Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference
 and analysis dataframes. This synthetic data is for a regression model predicting used car prices. You can find more
-details about it :term:`here<dataset-synthetic-regression>`.
+details about it :ref:`here<dataset-synthetic-regression>`.
 
 .. code-block:: python
 
