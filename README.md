@@ -1,23 +1,28 @@
 <p align="center">
-    <img src="media/thumbnail-4.png">
+    <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/thumbnail-4.png">
 </p>
 <p align="center">
     <a href="https://pypi.org/project/nannyml/">
-        <img src="https://img.shields.io/pypi/v/nannyml.svg">
+        <img src="https://img.shields.io/pypi/v/nannyml.svg" />
+    </a>
+    <a href="https://anaconda.org/conda-forge/nannyml">
+        <img src="https://anaconda.org/conda-forge/nannyml/badges/version.svg" />
     </a>
     <a href="https://pypi.org/project/nannyml/">
-        <img src="https://img.shields.io/pypi/pyversions/nannyml.svg">
+        <img src="https://img.shields.io/pypi/pyversions/nannyml.svg" />
     </a>
     <a href="https://github.com/nannyml/nannyml/actions/workflows/dev.yml">
-        <img src="https://github.com/NannyML/nannyml/actions/workflows/dev.yml/badge.svg">
+        <img src="https://github.com/NannyML/nannyml/actions/workflows/dev.yml/badge.svg" />
     </a>
     <a href='https://nannyml.readthedocs.io/en/main/?badge=main'>
         <img src='https://readthedocs.org/projects/nannyml/badge/?version=main' alt='Documentation Status' />
     </a>
-    <img alt="PyPI - License" src="https://img.shields.io/pypi/l/nannyml?color=green">
-    <br>
-    <br>
-    <a href="https://www.producthunt.com/posts/nannyml?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-nannyml" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=346412&theme=light&period=daily" alt="NannyML - OSS&#0032;Python&#0032;library&#0032;for&#0032;detecting&#0032;silent&#0032;ML&#0032;model&#0032;failure | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+    <img alt="PyPI - License" src="https://img.shields.io/pypi/l/nannyml?color=green" />
+    <br />
+    <br />
+    <a href="https://www.producthunt.com/posts/nannyml?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-nannyml" target="_blank">
+        <img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=346412&theme=light&period=daily" alt="NannyML - OSS&#0032;Python&#0032;library&#0032;for&#0032;detecting&#0032;silent&#0032;ML&#0032;model&#0032;failure | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
+    </a>
 
 </p>
 
@@ -32,7 +37,7 @@
 </p>
 
 <p align="center">
-  <img src="media/cbpe_v3.gif" alt="animated">
+  <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/cbpe_v3.gif" alt="animated">
 </p>
 
 
@@ -41,7 +46,7 @@ NannyML is an open-source python library that allows you to **estimate post-depl
 
 The core contributors of NannyML have researched and developed a novel algorithm for estimating model performance: [confidence-based performance estimation (CBPE)](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html). The nansters also invented a new approach to detect [multivariate data drift](https://nannyml.readthedocs.io/en/stable/how_it_works/data_reconstruction.html) using PCA-based data reconstruction.
 
-If you like what we are working on, be sure to become a Nanster yourself, join our [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ) <img src="media/slack.png" width='25'> and support us with a GitHub <img src="media/github.png" width='25'> star ⭐.
+If you like what we are working on, be sure to become a Nanster yourself, join our [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ) <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> and support us with a GitHub <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/github.png" height='15'> star ⭐.
 
 # ☔ Why use NannyML?
 NannyML closes the loop with performance monitoring and post deployment data science, empowering data scientist to quickly understand and **automatically detect silent model failure**. By using NannyML, data scientists can finally maintain complete visibility and trust in their deployed machine learning models.
@@ -54,18 +59,18 @@ Allowing you to have the following benefits:
 * **Painless** setup in any environment
 
 # 🧠 GO DEEP
-| NannyML Resources                                       | Description                                                                            |
-|---------------------------------------------------------|----------------------------------------------------------------------------------------|
-| ☎️ **[NannyML 101]**                                    | New to NannyML? Start here!                                                            |
-| 🔮 **[Performance estimation]**                         | How the magic works.                                                                   |
-| 🌍 **[Real world example]**                             | Take a look at a real-world example of NannyML.                                        |
-| 🔑 **[Key concepts]**                                   | Glossary of key concepts we use.                                                       |
-| 🔬 **[Technical reference]**                            | Monitor the performance of your ML models.                                             |
-| 🔎 **[Blog]**                                           | Thoughts on post-deployment data science from the NannyML team.                        |
-| 📬 **[Newsletter]**                                     | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.5.3]**                                  | New features, bug fixes.                                                               |
-| 🧑‍💻 **[Contribute]**                                  | How to contribute to the NannyML project and codebase.                                 |
-| <img src="media/slack.png" width='25'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
+| NannyML Resources                                                                                               | Description                                                                            |
+|-----------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| ☎️ **[NannyML 101]**                                                                                            | New to NannyML? Start here!                                                            |
+| 🔮 **[Performance estimation]**                                                                                 | How the magic works.                                                                   |
+| 🌍 **[Real world example]**                                                                                     | Take a look at a real-world example of NannyML.                                        |
+| 🔑 **[Key concepts]**                                                                                           | Glossary of key concepts we use.                                                       |
+| 🔬 **[Technical reference]**                                                                                    | Monitor the performance of your ML models.                                             |
+| 🔎 **[Blog]**                                                                                                   | Thoughts on post-deployment data science from the NannyML team.                        |
+| 📬 **[Newsletter]**                                                                                             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
+| 💎 **[New in v0.5.3]**                                                                                          | New features, bug fixes.                                                               |
+| 🧑‍💻 **[Contribute]**                                                                                          | How to contribute to the NannyML project and codebase.                                 |
+| <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
 [NannyML 101]: https://nannyml.readthedocs.io/en/stable/
 [Performance Estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
@@ -92,19 +97,19 @@ NannyML can also **track the realised performance** of your machine learning mod
 
 To detect **multivariate feature drift** NannyML uses [PCA-based data reconstruction](https://nannyml.readthedocs.io/en/main/how_it_works/data_reconstruction.html). Changes in the resulting reconstruction error are monitored over time and data drift alerts are logged when the reconstruction error in a certain period exceeds a threshold. This threshold is calculated based on the reconstruction error observed in the reference period.
 
-<p><img src="docs/_static/drift-guide-multivariate.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-multivariate.svg"></p>
 
 NannyML utilises statistical tests to detect **univariate feature drift**. The Kolmogorov–Smirnov test is used for continuous features and the 2-sample chi-squared test for categorical features. The results of these tests are tracked over time, properly corrected to counteract multiplicity and overlayed on the temporal feature distributions. (It is also possible to visualise the test-statistics over time, to get a notion of the drift magnitude.)
 
-<p><img src="docs/_static/drift-guide-joyplot-distance_from_office.svg"><img src="docs/_static/drift-guide-stacked-salary_range.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-joyplot-distance_from_office.svg"><img src="docs/_static/drift-guide-stacked-salary_range.svg"></p>
 
 NannyML uses the same statistical tests to detected **model output drift**.
 
-<p><img src="docs/_static/drift-guide-predictions-joyplot.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-predictions-joyplot.svg"></p>
 
 **Target distribution drift** is monitored by calculating the mean occurrence of positive events in combination with the 2-sample chi-squared test. Bear in mind that this operation requires the presence of actuals.
 
-<p><img src="docs/_static/target_distribution_metric.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/target_distribution_metric.svg"></p>
 
 ### 3. Intelligent alerting
 
@@ -119,6 +124,18 @@ From PyPI:
 
 ```bash
 pip install nannyml
+```
+
+From Conda:
+
+```bash
+ conda install -c conda-forge nannyml
+ ```
+
+Running via [Docker](https://hub.docker.com/r/nannyml/nannyml):
+
+```bash
+docker -v /local/config/dir/:/config/ run nannyml/nannyml nml run
 ```
 
 **Here be dragons!** Use the latest development version of NannyML at your own risk:

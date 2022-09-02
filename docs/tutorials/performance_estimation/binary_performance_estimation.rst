@@ -54,7 +54,7 @@ Walkthrough
 --------------
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
-whether an employee will work from home. You can :ref:`read more about this synthetic dataset<dataset-synthetic-binary>`.
+whether an employee will work from home. You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.

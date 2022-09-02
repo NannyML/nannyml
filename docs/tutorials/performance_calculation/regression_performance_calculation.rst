@@ -34,7 +34,7 @@ Just The Code
 
     >>> display(results.data.head(3))
 
-    >>> for metric in calc.metrics:
+    >>> for metric in ["rmse", "rmsle"]:
     ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
     ...     figure.show()
 
@@ -48,7 +48,7 @@ For simplicity the guide is based on a synthetic dataset where the monitored mod
 You can :ref:`learn more about this dataset<dataset-synthetic-regression>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
-You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
 not used during :ref:`performance estimation.<performance-estimation>`.
@@ -139,34 +139,35 @@ calculated metric. When taking ``roc_auc`` as an example:
    Crossing them will raise an alert that there is a significant
    metric change. The thresholds are calculated based on the realized performance of chunks in the ``reference`` period.
    The thresholds are 3 standard deviations away from the mean performance calculated on ``reference`` chunks.
+   They are calculated during ``fit`` phase.
  - ``<metric>_alert`` - A flag indicating potentially significant performance change. ``True`` if realized performance
-   crosses
-   upper or lower threshold.
+   crosses upper or lower threshold.
 
 The results can be plotted for visual inspection:
 
 .. code-block:: python
 
-    >>> for metric in calc.metrics:
+    >>> for metric in ["rmse", "rmsle"]:
     ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
     ...     figure.show()
 
 
-.. image:: /_static/tutorial-perf-guide-regression-mse.svg
+.. image:: /_static/tutorial-perf-guide-regression-rmse.svg
 
-.. image:: /_static/tutorial-perf-guide-regression-msle.svg
+.. image:: /_static/tutorial-perf-guide-regression-rmsle.svg
 
 
 Insights
-=======================
+========
 
-After reviewing the performance calculation results, we should be able to clearly see how the model is performing against
-the targets, according to whatever metrics we wish to track.
+From looking at the RMSE and RMSLE performance results we can observe an interesting effect. We know that RMSE penalizes
+mispredictions symmetrically while RMSLE penalizes underprediction more than overprediction. Hence while our model has become a little
+bit more accurate according to RMSE, the increase in RMSLE tells us that our model is now underpredicting more than it was before!
 
 
 
 What Next
-=======================
+=========
 
 If we decide further investigation is needed, the :ref:`Data Drift<data-drift>` functionality can help us to see
 what feature changes may be contributing to any performance changes.

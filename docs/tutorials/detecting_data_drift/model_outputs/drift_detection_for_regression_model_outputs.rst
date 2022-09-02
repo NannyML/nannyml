@@ -7,15 +7,15 @@ Drift Detection for Regression Model Outputs
 Why Perform Drift Detection for Model Outputs
 ---------------------------------------------
 
-The distribution of model outputs tells us how likely it is that our population
-will do what the model predicts. If the model's
-population changes, then our populations' actions will be different.
+The distribution of the model outputs tells us the model's evaluation of the expected
+outcome across the model's population.
+If the model's population changes, then the outcome will be different.
 The difference in actions is very important to know as soon as possible because
 they directly affect the business results from operating a machine learning model.
 
 
 Just The Code
-------------------------------------
+-------------
 
 .. code-block:: python
 
@@ -28,8 +28,11 @@ Just The Code
 
     >>> display(reference_df.head())
 
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', timestamp_column_name='timestamp',
-    ...                                             problem_type='regression')
+    >>> calc = nml.StatisticalOutputDriftCalculator(
+    ...     y_pred='y_pred',
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='regression'
+    >>> )
 
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
@@ -41,16 +44,20 @@ Just The Code
     >>> prediction_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
     >>> prediction_distribution_fig.show()
 
+
 Walkthrough
-------------------------------------------------
+-----------
 
 NannyML detects data drift for :term:`Model Outputs` using the
-:ref:`Univariate Drift Detection methodology<univariate_drift_detection>`.
+:ref:`Univariate Drift Detection methodology<univariate_drift_detection_walkthrough>`.
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
-You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+In order to monitor a model, NannyML needs to learn about it from a reference dataset.
+Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
-Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
+Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference
+and analysis dataframes. This synthetic data is for a regression model predicting used car prices. You can find more
+details about it :ref:`here<dataset-synthetic-regression>`.
 
 .. code-block:: python
 
@@ -79,18 +86,21 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator`
 class implements the functionality needed for drift detection in model outputs. First, the class is instantiated with appropriate parameters.
-To check the model outputs for data drift, we only need to pass in the column header of the outputs as `y_pred`.
+To check the model outputs for data drift, we need to pass the name of the predictions column, the name of the timestamp column and the
+type of the machine learning problem our model is addressing. In our case the problem type is regression.
 
 Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator.fit` method
 is called on the reference data, so that the data baseline can be established.
-
 Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator.calculate` method
 calculates the drift results on the data provided. An example using it can be seen below.
 
 .. code-block:: python
 
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', timestamp_column_name='timestamp',
-    ...                                             problem_type='regression')
+    >>> calc = nml.StatisticalOutputDriftCalculator(
+    ...     y_pred='y_pred',
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='regression'
+    >>> )
 
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)

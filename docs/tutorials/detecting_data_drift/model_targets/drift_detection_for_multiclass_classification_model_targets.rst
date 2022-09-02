@@ -50,10 +50,10 @@ Just The Code
     >>> results = calc.calculate(analysis_df)
     >>> display(results.data.head(3))
     >>>
-    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    >>> distribution_fig1 = results.plot(kind='target_drift', plot_reference=True)
     >>> distribution_fig1.show()
     >>>
-    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
+    >>> distribution_fig2 = results.plot(kind='target_distribution', plot_reference=True)
     >>> distribution_fig2.show()
 
 
@@ -133,7 +133,15 @@ The results can be also easily plotted by using the
 
 .. code-block:: python
 
-    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    >>> distribution_fig2 = results.plot(kind='target_drift', plot_reference=True)
+    >>> distribution_fig2.show()
+
+.. image:: /_static/tutorials/detecting_data_drift/model_targets/multiclass/target-distribution-statistical.svg
+
+
+.. code-block:: python
+
+    >>> distribution_fig1 = results.plot(kind='target_distribution', plot_reference=True)
     >>> distribution_fig1.show()
 
 
@@ -145,15 +153,6 @@ The results can be also easily plotted by using the
 
         UserWarning: the target column contains 3 unique values. NannyML cannot provide a value for 'metric_target_drift' when there are more than 2 unique values. All 'metric_target_drift' values will be set to np.NAN
         UserWarning: the target column contains non-numerical values. NannyML cannot provide a value for 'metric_target_drift'.All 'metric_target_drift' values will be set to np.NAN
-
-
-
-.. code-block:: python
-
-    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
-    >>> distribution_fig2.show()
-
-.. image:: /_static/tutorials/detecting_data_drift/model_targets/multiclass/target-distribution-statistical.svg
 
 
 What Next
