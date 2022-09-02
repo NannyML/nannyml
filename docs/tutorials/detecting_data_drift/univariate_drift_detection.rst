@@ -36,7 +36,7 @@ Just The Code
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
     >>> display(results.data.iloc[:, :9])
-    >>> display(calc.previous_reference_results.iloc[:, :9])
+    >>> display(results.calculator.previous_reference_results.iloc[:, :9])
 
     >>> for feature in calc.feature_column_names:
     ...     drift_fig = results.plot(
@@ -124,7 +124,8 @@ to be called on the reference data, which provides the baseline that the analysi
 :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate` method will
 calculate the drift results on the data provided to it.
 
-We then display a small subset of our results by specifying columns in the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate.results` method.
+We then display a small subset of our results by specifying columns in the
+:meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.calculate.results` method.
 
 NannyML returns a dataframe with 3 columns for each feature. The first column contains the corresponding test
 statistic. The second column contains the corresponding p-value and the third column says whether there

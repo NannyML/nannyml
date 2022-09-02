@@ -25,7 +25,6 @@ Just The Code
 
     >>> reference_df = nml.load_synthetic_car_price_dataset()[0]
     >>> analysis_df = nml.load_synthetic_car_price_dataset()[1]
-
     >>> display(reference_df.head())
 
     >>> calc = nml.StatisticalOutputDriftCalculator(
@@ -37,6 +36,7 @@ Just The Code
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
     >>> display(results.data)
+    >>> display(results.calculator.previous_reference_results)
 
     >>> prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
     >>> prediction_drift_fig.show()
@@ -67,7 +67,6 @@ details about it :ref:`here<dataset-synthetic-regression>`.
 
     >>> reference_df = nml.load_synthetic_car_price_dataset()[0]
     >>> analysis_df = nml.load_synthetic_car_price_dataset()[1]
-
     >>> display(reference_df.head())
 
 +----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
@@ -105,7 +104,7 @@ calculates the drift results on the data provided. An example using it can be se
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
 
-We can then display the results in a table, or as plots.
+We can then display the results in a table.
 
 .. code-block:: python
 
@@ -135,6 +134,38 @@ We can then display the results in a table, or as plots.
 |  9 | [54000:59999] |         54000 |       59999 | 2017-03-09 16:00:00 | 2017-03-11 23:59:26.400000 |     0.215883   |            0     | True           |               0.05 |
 +----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+
 
+The drift results from the reference data are accessible though the ``previous_reference_results`` property of the drift calculator who is also accessible from the results object.
+
+.. code-block:: python
+
+    >>> display(results.calculator.previous_reference_results)
+
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|    | key           |   start_index |   end_index | start_date          | end_date                   |   y_pred_dstat |   y_pred_p_value | y_pred_alert   |   y_pred_threshold | period    |
++====+===============+===============+=============+=====================+============================+================+==================+================+====================+===========+
+|  0 | [0:5999]      |             0 |        5999 | 2017-01-24 08:00:00 | 2017-01-26 15:59:26.400000 |     0.0167667  |            0.092 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  1 | [6000:11999]  |          6000 |       11999 | 2017-01-26 16:00:00 | 2017-01-28 23:59:26.400000 |     0.0118833  |            0.421 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  2 | [12000:17999] |         12000 |       17999 | 2017-01-29 00:00:00 | 2017-01-31 07:59:26.400000 |     0.0106667  |            0.56  | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  3 | [18000:23999] |         18000 |       23999 | 2017-01-31 08:00:00 | 2017-02-02 15:59:26.400000 |     0.00961667 |            0.69  | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  4 | [24000:29999] |         24000 |       29999 | 2017-02-02 16:00:00 | 2017-02-04 23:59:26.400000 |     0.00998333 |            0.645 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  5 | [30000:35999] |         30000 |       35999 | 2017-02-05 00:00:00 | 2017-02-07 07:59:26.400000 |     0.0086     |            0.811 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  6 | [36000:41999] |         36000 |       41999 | 2017-02-07 08:00:00 | 2017-02-09 15:59:26.400000 |     0.01265    |            0.344 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  7 | [42000:47999] |         42000 |       47999 | 2017-02-09 16:00:00 | 2017-02-11 23:59:26.400000 |     0.0146833  |            0.188 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  8 | [48000:53999] |         48000 |       53999 | 2017-02-12 00:00:00 | 2017-02-14 07:59:26.400000 |     0.0074     |            0.924 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+|  9 | [54000:59999] |         54000 |       59999 | 2017-02-14 08:00:00 | 2017-02-16 15:59:26.400000 |     0.0145333  |            0.198 | False          |               0.05 | reference |
++----+---------------+---------------+-------------+---------------------+----------------------------+----------------+------------------+----------------+--------------------+-----------+
+
+
+
 NannyML can show the statistical properties of the drift in model outputs as a plot.
 
 .. code-block:: python
@@ -155,8 +186,15 @@ NannyML can also visualise how the distributions of the model predictions evolve
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/regression/drift_guide_prediction_distribution.svg
 
 
-What Next
------------------------
+Insights
+--------
 
-If required, the :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
-observed changes to Model Outputs.
+We can see that in the middle of the analysis period the model output distribution has changed significantly and
+there is a good possiblity that the performance of our model has been impacted.
+
+What Next
+---------
+
+If required, the :ref:`performance estimation<regression-performance-estimation>` functionality of NannyML can help
+provide estimates of the impact of the observed changes to Model Outputs without having to wait for Model Targets to
+become available.
