@@ -270,7 +270,6 @@ The detailed assumptions are:
     that true underlying relationship is also linear, Logistic Regression model will estimate probability correctly even for unseen
     age ranges.
 
-
 **There is no concept drift**.
     While dealing well with data drift, CBPE will not work under concept drift i.e. when
     P(Y|X) changes. Except
@@ -333,7 +332,7 @@ The Intuition
 
 Long story short - the idea behind DEE is to train extra ML model that will directly estimate the value of the error function
 of the monitored model. For clarity we call this model a :term:`nanny model` and sometimes we refer to the monitored
-model as a :term:`child` model.
+model as a :term:`child model`.
 Each
 prediction of the :term:`child model` has an error associated with it (the difference between the actual target and the prediction).
 For both - learning and evaluation purposes this error is modified and it becomes an error function or loss (e.g. absolute or
@@ -341,7 +340,7 @@ squared error for regression tasks). The value of the error function for each pr
 target for the :term:`nanny model`.
 
 Isn’t this exactly what gradient boosting algorithms for regression do? How can this even work? Wouldn’t it
-work only if the :term:`nanny model` is smarter (more flexible) than the :term:`child model`?
+work only if the :term:`nanny model` is smarter (more flexible) than the :term:`child model`? Good questions.
 Yes, it is similar to what
 gradient boosting does with one crucial difference. Each weak model of gradient boosting algorithm tries to find patterns
 in residuals i.e. in the actual errors. The errors have signs or directions - they can be positive (when the target is
@@ -349,7 +348,7 @@ larger than prediction) or negative (otherwise). If there is a pattern that maps
 used to train another weak learner and improve the overall output of an ensemble of models. DEE tries to predict error
 functions which are directionless (like already mentioned absolute or squared error). This is a significantly
 easier problem to solve. For this reason, the :term:`nanny model` algorithm does not have to be better than the child
-algorithm, it can even be the same algorithm. Have a look at the simple example at
+algorithm, it can even be the same algorithm. Have a look at the simple example with code shown
 :ref:`implementation details<dee_implementation_details>` to see linear regression algorithm used by :term:`nanny model` that
 estimates performance of another linear regression model.
 
@@ -363,14 +362,14 @@ Currently NannyML supports DEE for performance estimation of regression models. 
 denote with :math:`f` the monitored model and :math:`h` the :term:`nanny model`. Let's assume we are interested in estimating
 mean absolute error (MAE) of :math:`f` for some analysis data for which targets are not available.
 :math:`f` was trained on train data and used on reference data providing :math:`f(X_{reference})`
-predictions. Targets for reference set :math:`y_{reference}` are available. The algorithm runs as follows:
+predictions. Targets for reference set :math:`y_{reference}` are available. The algorithm for runs as follows:
 
     1. For each observation of reference data calculate absolute error of :math:`f`, i.e.
        :math:`AE_{reference} = |y_{reference} - f(X_{reference})|`.
     2. Train a :term:`nanny model` on reference data. As features use the monitored model features
        :math:`X_{reference}` and
        monitored model predictions :math:`f(X_{reference})`. The target is absolute error :math:`AE_{reference}`
-       calculated in previous step. So :math:`AE = h(X,f(X)`.
+       calculated in previous step. So :math:`\hat{AE} = h(X,f(X)`.
     3. Estimate performance of :term:`child model` on analysis data: estimate absolute error for each observation
        :math:`\hat{AE}_{reference}` with :math:`h` and calculate mean of :math:`\hat{AE}_{reference}` to get MAE.
 
@@ -380,9 +379,9 @@ would calculate squared error while in step 3 we would calculate root of mean of
 The code below shows simple implementation of DEE approach based on an example 1d dataset with regression target with
 heteroscedastic normal noise (i.e. the variation of the noise is not constant, in this case
 it is dependent on the value of the input
-feature - see the target generating function in the code). In the example, linear regression :term:`nanny model`
-estimates performance of linear regression :term:`child model`. Let's create synthetic data
-first:
+feature - see the target generating function in the code). The example here is to show that estimating directionless
+error function value is easier than estimating the error itself. In this example, linear regression :term:`nanny model`
+estimates performance of linear regression :term:`child model`. Let's create synthetic data first:
 
 .. code-block:: python
 
@@ -404,7 +403,7 @@ first:
 .. image:: ../_static/how-it-works-DEE-data.svg
     :width: 400pt
 
-Let’s just fit the :term:`child model` using LinearRegression algorithm and see what the predictions are:
+Let’s just fit the :term:`child model` using linear regression and see what the predictions are:
 
 
 .. code-block:: python
@@ -425,15 +424,16 @@ Let’s just fit the :term:`child model` using LinearRegression algorithm and se
 .. image:: ../_static/how-it-works-DEE-regression.svg
     :width: 400pt
 
-The relationship between x1 and the target was linear (see the generating function) with coefficient equal to 2 and as
-expected linear regression did well on finding that coefficient. We can clearly see that for values of x1 close to 0
-the :term:`child model` is much more accurate compared to when x1 is close to 1. The :term:`child
+The relationship between ``x1`` and the target was linear (see the generating function) with coefficient equal to 2
+and as
+expected linear regression did well on finding that coefficient. We can clearly see that for values of ``x1`` close to 0
+the :term:`child model` is much more accurate compared to when ``x1`` is close to 1. The :term:`child
 model` itself however does not provide this
 information together with its prediction. Unlike classification models, regression models do not provide the confidence
 score. All we get is a point prediction.
 Fortunately we can train another model that will predict e.g. absolute error. The algorithm does not have to be smarter
 than the child algorithm - we will use linear regression again. This is possible as the distribution of absolute errors is
-not zero-centered. See the histograms of errors and absolute errors:
+not zero-centered and it is dependent on input feature ``x1``. See the histograms of errors and absolute errors:
 
 
 .. code-block:: python
@@ -487,8 +487,9 @@ prediction intervals:
     :width: 400pt
 
 Or finally, it can be used to estimate performance the :term:`child model`. When the :term:`nanny model` target was
-absolute error, we can estimate mean absolute error. Let’s estimate it for two sets: randomly selected observations for which x1<0.5 (better performance region)
-and correspondingly - a set for which x1>0.5 (worse performance region).
+absolute error, we can estimate mean absolute error. Let’s estimate it for two sets: randomly selected observations
+for which ``x1`` < 0.5 (better performance region)
+and correspondingly - a set for which ``x1`` > 0.5 (worse performance region).
 
 .. code-block:: python
 
@@ -522,16 +523,16 @@ and correspondingly - a set for which x1>0.5 (worse performance region).
 The example above is just to build an intuition and showcase that :term:`nanny model` can work well using the same algorithm
 as the monitored model. The important details of the current NannyML implementations are listed below:
 
-    * The :term:`nanny model` trained is LGBM [5]_ model.
+    * The :term:`nanny model` uses LGBM [5]_ algorithm.
 
     * The :term:`nanny model` is trained on the reference dataset. It can be used to estimate performance of unseen
       (analysis) data as long as :ref:`assumptions<dee_assumptions>` are met.
 
     * The :term:`child model` prediction is used as an input feature for the :term:`nanny model`.
-      Depending on the :term:`child model` used, as
-      this is an important piece of information. Without this, the :term:`nanny model` tries to estimate error function value
-      without knowing the target and :term:`child model's` prediction. This is a harder problem compared to the
-      situation when :term:`child model's` prediction is known. This was proven in experiments on real and
+      Depending on the :term:`child model` used,
+      this is an important piece of information. Without this, :term:`nanny model` tries to estimate error function value
+      without knowing the target and :term:`child model`'s prediction. This is a harder problem compared to the
+      situation when :term:`child model`'s prediction is known. This was proven in experiments on real and
       synthetic datasets.
 
     * The user can define hyperparameters of the nanny LGBM model or request hyperparameter tuning. Hyperparameter
@@ -569,11 +570,6 @@ Just like CBPE, it will handle covariate shifts well.  The detailed assumptions 
     forecasting model will most likely fail during extremely warm days during winter that did not happen
     before (i.e. were not included in the model training data).
 
-**The sample of data used for estimation is large enough.**
-    When the sample size is small, the actual performance calculated on the sample is not reliable as it is a subject of
-    random sampling effects (sampling error). Read more about it :ref:`here <estimation_of_standard_error>`.
-
-
 **The noise is heteroskedastic around the monitored model target and it is dependent on the monitored model input features.**
     DEE also works when the noise is homoskedastic (noise distribution around the target is constant) but
     then the true performance of the monitored model is constant (depending on the metric used, it will be constant
@@ -586,40 +582,49 @@ Just like CBPE, it will handle covariate shifts well.  The detailed assumptions 
     therefore for the similar conditions (date, time, weather etc.) the target value might be different.
     On the other hand during winter these model are precise as the demand is mostly driven by the outdoor temperature.
 
+**The sample of data used for estimation is large enough.**
+    When the sample size is small, the actual performance calculated on the sample is not reliable as it is a subject of
+    random sampling effects (sampling error). Read more about it :ref:`here <estimation_of_standard_error>`.
+
+
 
 -------------------------------------------------------------
 Other Approaches to Estimate Performance of Regression Models
 -------------------------------------------------------------
 
-Unlike classification models, most regression models do not inherently provide information about confidence of the
+When it comes to estimating performance of classification models we believe that CBPE is the best one can do. It can
+still be improved (by better probability calibration etc.) which is on our radar, but in general the theory behind
+the approach is solid. We wanted to use the same for estimation of performance of regression models but it cannot be
+used directly. Unlike classification models, most regression models do not inherently provide information
+about confidence of the
 prediction. They just return a point prediction. If probability distribution was given together with point prediction,
 the expected error for regression models could be calculated with CBPE approach. We would then have a point prediction
-y_pred and a probability distribution P(y|X). We could subtract one from another and have a probability distribution
+:math:`\hat{y}` and a probability distribution :math:`P(y|X)`. We could subtract one from another and have a
+probability distribution
 of an error. We could then modify it (e.g. by calculating absolute or squared error) and calculate the expected value.
 Averaging over all observations in a chunk we could then estimate metrics like MAE, MSE etc.
 Assuming that only a handful of users will have regression models that return point predictions together with
 probability distributions in production, we have tried to train :term:`nanny models` that will use the same features
 and predict the same target but with associated probability distribution/prediction intervals. Here are the
-approaches we have evaluated.
+approaches we have evaluated. If you think we have missed something - let us know!
 
 
 Bayesian approaches
 ===================
 
 
-When probability distributions are mentioned Bayesian approaches are the first thing that come to one's mind.
+When probabilistic predictions are mentioned Bayesian approaches are the first thing that come to one's mind.
 We have explored various approaches but none of them proved to be good enough. The main issues arise from the
 fact that in Bayesian approaches one needs to set prior for the noise distribution
-(i.e. for P(y|X) and explicitly define the relationship of noise and model inputs.
-These could be set to something simple: for example that the P(y|X)
-is normal with standard deviation being a linear combination of inputs.
+(i.e. for :math:`P(y|X)`) and explicitly define the relationship of noise and model inputs.
+These could be set to something simple: for example that the :math:`P(y|X)`
+is normal with standard deviation being a linear combination of input features.
 Based on our experience and dataset we have seen and tested - this is not true for most of the cases.
-Other approaches would be more flexible - for example assumption that P(y|X) is a mixture of Gaussians and that
+Other approaches would be more flexible - for example assumption that :math:`P(y|X)` is a mixture of Gaussians and that
 the relationship between parameters of the mixture and input features are more complex than linear (e.g. higher
 order polynomials with interactions). This on the other hand was hard to implement correctly, had issues with
 convergence and even if it worked it would take a lot of data and time to provide reliable results. For these
-reasons we have suspended our research with Bayesian approaches. If you think we have missed something - let us
-know by creating an issue on github or join our community and share your knowledge!
+reasons we have suspended our research with Bayesian approaches.
 
 
 Conformalized Quantile Regression
@@ -630,19 +635,19 @@ Quantile regression is an approach that allows to get prediction intervals inste
 algorithm can provide quantile predictions as long as the so-called pinball loss can be used for training.
 In order to make sure quantiles are accurate, we have calibrated them using Conformal Prediction [7]_.
 We have tried several approaches taking advantage of conformalized quantile regression models. For example,
-we have trained two :term:`nanny models` to predict two quantiles, say 0.16 and 0.84. We would then assume that P(y|X)
+we have trained two :term:`nanny models` to predict two quantiles, say 0.16 and 0.84. We would then assume that :math:`P(y|X)`
 is normally distributed so by subtracting one from another we would get a value of 2 standard deviations. Having
-P(y|X) and point prediction, the expected error could be calculated. The problem with this solution was again
-that it was not general enough - as it needed to assume the form of P(y|X). Another approach would involve
-training multiple quantile regression models (for example 10 or 20) and recreating P(y|X) based on their predictions.
+:math:`P(y|X)` and point prediction, the expected error could be calculated. The problem with this solution was again
+that it was not general enough - as it needed to assume the form of :math:`P(y|X)`. Another approach would involve
+training multiple quantile regression models (for example 10 or 20) and recreating :math:`P(y|X)` based on their predictions.
 This overcomes the issue of the first approach, but suffers from other problems. One of them being the fact that the
 more extreme the quantiles are (e.g. 0.01) the less reliable are the models trained to predict them.
 
 Conclusions from Bayesian and Conformalized Quantile Regression approaches
 ==========================================================================
 
-After exploring the approaches described above for a couple of weeks, we have realized that we are adding extra
-to the task. Take one of the CQR approaches: we fit two quantile models, then we
+After exploring the approaches described above, we have realized that we are adding extra steps
+to the task. Take one of the CQR approaches: we fit two conformalized quantile regression models, then we
 estimate the distribution of uncertainty assuming its form, then we calculate the expected error based on that. What if we
 just drop the unnecessary steps that base on assumptions (not on data) and directly estimate what we need? This
 is :ref:`what we eventually did<how-it-works-dee>`.

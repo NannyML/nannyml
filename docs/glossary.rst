@@ -35,6 +35,10 @@ Glossary
         You can find more information on the `wikipedia Chi-squared test page`_. At NannyML we use the `scipy implementation of the
         Chi-square test of independence of variables in a contingency table`_.
 
+    Child model
+        Another name for the monitored model. It is used when describing solutions for which NannyML trains its own
+        model called :term:`nanny model`.
+
     Concept Drift
         A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
 
@@ -47,7 +51,7 @@ Glossary
 
         Note that the confidence band is also described as sampling error range at the hover information that appears on
         the interactive plots.
-    
+
     Covariate Shift
         A synonym for :term:`Data Drift`.
 
@@ -140,6 +144,9 @@ Glossary
         Drift Detection steps that involve all model features in order to
         create appropriate drift measures.
 
+    Nanny model
+        An extra model created as a part of NannyML monitoring solution. The name is used to distinguish from the
+        monitored model which is sometimes referred to as :term:`child model`.
 
     Partition Column
         A column that tells us what :term:`Data Period` the data is in. A partition column is necessary for NannyML
