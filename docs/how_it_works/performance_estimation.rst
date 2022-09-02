@@ -362,7 +362,7 @@ Currently NannyML supports DEE for performance estimation of regression models. 
 denote with :math:`f` the monitored model and :math:`h` the :term:`nanny model`. Let's assume we are interested in estimating
 mean absolute error (MAE) of :math:`f` for some analysis data for which targets are not available.
 :math:`f` was trained on train data and used on reference data providing :math:`f(X_{reference})`
-predictions. Targets for reference set :math:`y_{reference}` are available. The algorithm for runs as follows:
+predictions. Targets for reference set :math:`y_{reference}` are available. The algorithm runs as follows:
 
     1. For each observation of reference data calculate absolute error of :math:`f`, i.e.
        :math:`AE_{reference} = |y_{reference} - f(X_{reference})|`.
@@ -596,15 +596,13 @@ When it comes to estimating performance of classification models we believe that
 still be improved (by better probability calibration etc.) which is on our radar, but in general the theory behind
 the approach is solid. We wanted to use the same for estimation of performance of regression models but it cannot be
 used directly. Unlike classification models, most regression models do not inherently provide information
-about confidence of the
-prediction. They just return a point prediction. If probability distribution was given together with point prediction,
+about confidence of the prediction. They just return a point prediction. If probability distribution was given together with point prediction,
 the expected error for regression models could be calculated with CBPE approach. We would then have a point prediction
 :math:`\hat{y}` and a probability distribution :math:`P(y|X)`. We could subtract one from another and have a
-probability distribution
-of an error. We could then modify it (e.g. by calculating absolute or squared error) and calculate the expected value.
+probability distribution of an error. We could then modify it (e.g. by calculating absolute or squared error) and calculate the expected value.
 Averaging over all observations in a chunk we could then estimate metrics like MAE, MSE etc.
 Assuming that only a handful of users will have regression models that return point predictions together with
-probability distributions in production, we have tried to train :term:`nanny models` that will use the same features
+probability distributions in production, we have tried to train nanny models that will use the same features
 and predict the same target but with associated probability distribution/prediction intervals. Here are the
 approaches we have evaluated. If you think we have missed something - let us know!
 
@@ -635,7 +633,8 @@ Quantile regression is an approach that allows to get prediction intervals inste
 algorithm can provide quantile predictions as long as the so-called pinball loss can be used for training.
 In order to make sure quantiles are accurate, we have calibrated them using Conformal Prediction [7]_.
 We have tried several approaches taking advantage of conformalized quantile regression models. For example,
-we have trained two :term:`nanny models` to predict two quantiles, say 0.16 and 0.84. We would then assume that :math:`P(y|X)`
+we have trained two nanny models to predict two quantiles, say 0.16 and 0.84. We would then assume that
+:math:`P(y|X)`
 is normally distributed so by subtracting one from another we would get a value of 2 standard deviations. Having
 :math:`P(y|X)` and point prediction, the expected error could be calculated. The problem with this solution was again
 that it was not general enough - as it needed to assume the form of :math:`P(y|X)`. Another approach would involve
@@ -650,7 +649,7 @@ After exploring the approaches described above, we have realized that we are add
 to the task. Take one of the CQR approaches: we fit two conformalized quantile regression models, then we
 estimate the distribution of uncertainty assuming its form, then we calculate the expected error based on that. What if we
 just drop the unnecessary steps that base on assumptions (not on data) and directly estimate what we need? This
-is :ref:`what we eventually did<how-it-works-dee>`.
+is what we eventually did with :ref:`DEE<how-it-works-dee>`.
 
 
 
