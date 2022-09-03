@@ -1,11 +1,11 @@
 .. _regression-performance-calculation:
 
-================================================================
+==============================================
 Monitoring Realized Performance for Regression
-================================================================
+==============================================
 
 Just The Code
-==============
+=============
 
 .. code-block:: python
 
@@ -26,12 +26,11 @@ Just The Code
     ...     timestamp_column_name='timestamp',
     ...     problem_type='regression',
     ...     metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
-    ...     chunk_size=6000)
-
+    ...     chunk_size=6000
+    >>> )
     >>> calc.fit(reference_df)
 
     >>> results = calc.calculate(analysis_df)
-
     >>> display(results.data)
     >>> display(results.calculator.previous_reference_results)
 
@@ -42,7 +41,7 @@ Just The Code
 
 
 Walkthrough
-=============
+===========
 
 
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts the selling price of a used car.
