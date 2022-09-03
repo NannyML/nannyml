@@ -18,15 +18,16 @@ from nannyml.performance_estimation.direct_error_estimation.result import Result
 
 
 class DEE(AbstractEstimator):
-    """The Direct Error Estimator (DEE) estimates the difference between prediction and target when targets are unknown.
+    """The Direct Error Estimator (DEE) estimates the error between the prediction and the target
+    before the targets become known. The error is defined from the regression performance metric
+    specified. For all metrics used the error function is positive.
 
-    It uses an additional internal
+    It uses an internal
     `LGBMRegressor <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_
-    model per metric to try to predict the value of the error function
-    (the function returning the error for a given prediction) of a monitored model.
+    model per metric to predict the value of the error function
+    (the function returning the error for a given prediction) of the monitored model.
 
-    The error - the difference between the target value and prediction - on the reference data becomes
-    a target for those internal models.
+    The error results on the reference data become a target for those internal models.
 
     It is possible to specify a set of hyperparameters to instantiate these internal nanny models with using the
     `hyperparameters` parameter. You can also opt to run hyperparameter tuning using FLAML to determine hyperparameters
@@ -45,9 +46,9 @@ class DEE(AbstractEstimator):
         chunk_period: str = None,
         chunker: Chunker = None,
         metrics: List[str] = None,
-        hyperparameter_tuning_config: Dict[str, Any] = None,
         hyperparameters: Dict[str, Any] = None,
         tune_hyperparameters: bool = False,
+        hyperparameter_tuning_config: Dict[str, Any] = None,
     ):
         """
         Creates a new Direct Error Estimator.
@@ -95,7 +96,7 @@ class DEE(AbstractEstimator):
                     "metric": "mse",
                     "estimator_list": ['lgbm'],
                     "eval_method": "cv",
-                    "hpo_method": "cfo",.
+                    "hpo_method": "cfo",
                     "n_splits": 5,
                     "task": 'regression',
                     "seed": 1,
@@ -103,7 +104,7 @@ class DEE(AbstractEstimator):
                 }
 
             For an overview of possible parameters for the tuning process check out the
-            `FLAML documentation <https://microsoft.github.io/FLAML/docs/Examples/AutoML-for-LightGBM>`_.
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
 
         Returns
         -------
