@@ -37,5 +37,9 @@ class WriterException(BaseException):
     """An exception indicating something went wrong whilst trying to write out results."""
 
 
+class ReaderException(BaseException):
+    """An exception indicating something went wrong whilst trying to read out data."""
+
+
 class IOException(BaseException):
     """An exception indicating something went wrong during IO."""

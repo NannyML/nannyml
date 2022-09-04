@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 import pandas as pd
 from plotly.graph_objs import Figure
 
-from nannyml.exceptions import InvalidArgumentsException, WriterException
+from nannyml.exceptions import InvalidArgumentsException, ReaderException, WriterException
 
 HTTP_PROTOCOLS = ['http', 'https']
 CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss']
@@ -64,7 +64,7 @@ class Reader(ABC):
         try:
             return self._read()
         except Exception as exc:
-            raise WriterException(f"Failed writing data. \n{str(exc)}")
+            raise ReaderException(f"Failed reading data. \n{str(exc)}")
 
     @abstractmethod
     def _read(self) -> pd.DataFrame:
