@@ -353,7 +353,7 @@ algorithm, it can even be the same algorithm. Have a look at the simple example 
 estimates performance of another linear regression model.
 
 
-.. _dee_implementation_details:
+.. _dle_implementation_details:
 
 Implementation details
 ======================
