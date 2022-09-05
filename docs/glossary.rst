@@ -137,7 +137,7 @@ Glossary
     Loss
         Loss is a real number that quantifies the negative aspects associated with an event. It is defined by
         a :term:`Loss Function` that, for the purposes of Model Monitoring, comes from a specified performance metric.
-        NannyML uses loss for :ref:`Performance Estimation for Regression<how-it-works-dee>`
+        NannyML uses loss for :ref:`Performance Estimation for Regression<how-it-works-dle>`
         with the constraint that the :term:`Loss Function` is positive.
 
     Loss Function

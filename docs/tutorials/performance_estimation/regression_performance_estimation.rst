@@ -6,7 +6,7 @@ Estimating Performance for Regression
 
 This tutorial explains how to use NannyML to estimate the performance of regression
 models in the absence of target data. To find out how DEE estimates performance,
-read the :ref:`explanation of how Direct Error Estimation works<how-it-works-dee>`.
+read the :ref:`explanation of how Direct Error Estimation works<how-it-works-dle>`.
 
 .. _performance-estimation-regression-just-the-code:
 

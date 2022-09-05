@@ -321,10 +321,10 @@ Fitting a calibrator on model training data would introduce bias [1]_.
 
 
 
-.. _how-it-works-dee:
+.. _how-it-works-dle:
 
 -----------------------------
-Direct Error Estimation (DEE)
+Direct Loss Estimation (DLE)
 -----------------------------
 
 The Intuition
@@ -339,7 +339,7 @@ For both - learning and evaluation purposes this error is modified and it become
 squared error for regression tasks). The value of the error function for each prediction of the :term:`child model` becomes the
 target for the :term:`nanny model`.
 
-Isn’t this exactly what gradient boosting algorithms for regression do? How can this even work? Wouldn’t it
+Isn't this exactly what gradient boosting algorithms for regression do? How can this even work? Wouldn't it
 work only if the :term:`nanny model` is smarter (more flexible) than the :term:`child model`? Good questions.
 Yes, it is similar to what
 gradient boosting does with one crucial difference. Each weak model of gradient boosting algorithm tries to find patterns
@@ -400,7 +400,7 @@ estimates performance of linear regression :term:`child model`. Let's create syn
     >>> plt.title('Heteroscedastic regression target')
 
 
-.. image:: ../_static/how-it-works-DEE-data.svg
+.. image:: ../_static/how-it-works-dle-data.svg
     :width: 400pt
 
 Let’s just fit the :term:`child model` using linear regression and see what the predictions are:
@@ -419,9 +419,9 @@ Let’s just fit the :term:`child model` using linear regression and see what th
     >>> plt.title('Linear Regression prediction, x1 coeff:{}'.format(x1_coef))
     >>> plt.scatter(x1, child_pred, s=1, color='red', label='Linear Regression')
     >>> plt.legend()
-    >>> plt.savefig("../_static/how-it-works-DEE-regression.svg", format="svg")
+    >>> plt.savefig("../_static/how-it-works-dle-regression.svg", format="svg")
 
-.. image:: ../_static/how-it-works-DEE-regression.svg
+.. image:: ../_static/how-it-works-dle-regression.svg
     :width: 400pt
 
 The relationship between ``x1`` and the target was linear (see the generating function) with coefficient equal to 2
@@ -444,7 +444,7 @@ not zero-centered and it is dependent on input feature ``x1``. See the histogram
     >>> plt.title("Errors, mean = {}".format(np.round(mean_errors, 3)))
 
 
-.. image:: ../_static/how-it-works-DEE-regression-errors-hist.svg
+.. image:: ../_static/how-it-works-dle-regression-errors-hist.svg
     :width: 400pt
 
 
@@ -456,7 +456,7 @@ not zero-centered and it is dependent on input feature ``x1``. See the histogram
     >>> plt.title("Absolute Errors, mean = {}".format(np.round(mean_errors, 3)))
 
 
-.. image:: ../_static/how-it-works-DEE-regression-abs-errors-hist.svg
+.. image:: ../_static/how-it-works-dle-regression-abs-errors-hist.svg
     :width: 400pt
 
 So the absolute errors become the target for :term:`nanny model`. After we fit it, we can for example use it to create naive
@@ -483,7 +483,7 @@ prediction intervals:
     >>> plt.legend();
 
 
-.. image:: ../_static/how-it-works-DEE-regression-PI.svg
+.. image:: ../_static/how-it-works-dle-regression-PI.svg
     :width: 400pt
 
 Or finally, it can be used to estimate performance the :term:`child model`. When the :term:`nanny model` target was
@@ -649,7 +649,7 @@ After exploring the approaches described above, we have realized that we are add
 to the task. Take one of the CQR approaches: we fit two conformalized quantile regression models, then we
 estimate the distribution of uncertainty assuming its form, then we calculate the expected error based on that. What if we
 just drop the unnecessary steps that base on assumptions (not on data) and directly estimate what we need? This
-is what we eventually did with :ref:`DEE<how-it-works-dee>`.
+is what we eventually did with :ref:`DEE<how-it-works-dle>`.
 
 
 
