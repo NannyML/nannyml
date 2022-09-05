@@ -34,15 +34,16 @@ class NbImport(SphinxDirective):
             nb = json.load(nb_file)
             for cell_index in self.options['cells']:
                 if 'hide_source' not in self.options:
-                    source_lines = nb['cells'][cell_index]['source']
+                    source_lines = nb['cells'][cell_index - 1]['source']
                     source_lines = [line.replace('\n', '') for line in source_lines]
                     if 'hide_prompts' not in self.options:
                         cell_content += [_add_prompts(line) for line in source_lines]
                     else:
                         cell_content += source_lines
                 if 'show_output' in self.options:
-                    output = nb['cells'][self.options['cell']]['outputs'][0]['text']
+                    output = nb['cells'][cell_index - 1]['outputs'][0]['text']
                     cell_content += [line.replace('\n', '') for line in output]
+                cell_content.append('')
 
         node = CodeBlock(
             content=cell_content,

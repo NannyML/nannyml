@@ -28,7 +28,7 @@ class NbTable(SphinxDirective):
     def run(self) -> List[Node]:
         with open(self.options['path']) as nb_file:
             nb = json.load(nb_file)
-            output = nb['cells'][self.options['cell']]['outputs'][0]['text']
+            output = nb['cells'][self.options['cell'] - 1]['outputs'][0]['text']
             output_lines = output
 
         content = f".. table::\n\n{''.join(['    ' + line for line in output_lines])}\n\n"
