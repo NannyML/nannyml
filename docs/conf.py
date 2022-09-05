@@ -22,6 +22,7 @@ import sys
 # sys.path.insert(0, os.path.abspath('../nannyml'))
 # sys.path.append(os.path.join(os.path.dirname(__name__), '..'))
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.append("./_ext")
 
 import nannyml  # noqa: E402
 
@@ -40,6 +41,8 @@ extensions = [
     'sphinx_toggleprompt',
     'sphinx_copybutton',
     'sphinx_toolbox.collapse',
+    'nbimport',
+    'nbtable',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -33,8 +33,8 @@ clean:
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -rf docs/nannyml
-	#sphinx-apidoc -o docs/nannyml nannyml tests nannyml/datasets/data
 	$(MAKE) -C docs clean
+	python docs/run_notebooks.py "docs/example_notebooks/Niels*.ipynb"
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
 
