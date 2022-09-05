@@ -8,8 +8,8 @@ This page describes the algorithms that NannyML uses to estimate performance met
 in the absence of ground truth. Currently there are two approaches. One is called Confidence-based
 Performance Estimation (CBPE) and leverages the confidence of the predictions. It is used to estimate
 performance of classification models as they return predictions with associated confidence score.
-The other approach is called Direct Error Estimation (DEE).
-The idea behind DEE is to train a :term:`nanny model` that directly
+The other approach is called Direct Loss Estimation (DLE).
+The idea behind DLE is to train a :term:`nanny model` that directly
 estimates value of the error function of the monitored model for each observation (sometimes referred to as a
 :term:`child model`. This approach is used to estimate performance of regression models as the values of regression
 error functions can be calculated for single
@@ -330,7 +330,7 @@ Direct Loss Estimation (DLE)
 The Intuition
 =============
 
-Long story short - the idea behind DEE is to train extra ML model that will directly estimate the value of the error function
+Long story short - the idea behind DLE is to train extra ML model that will directly estimate the value of the error function
 of the monitored model. For clarity we call this model a :term:`nanny model` and sometimes we refer to the monitored
 model as a :term:`child model`.
 Each
@@ -345,7 +345,7 @@ Yes, it is similar to what
 gradient boosting does with one crucial difference. Each weak model of gradient boosting algorithm tries to find patterns
 in residuals i.e. in the actual errors. The errors have signs or directions - they can be positive (when the target is
 larger than prediction) or negative (otherwise). If there is a pattern that maps model features to residuals it can be
-used to train another weak learner and improve the overall output of an ensemble of models. DEE tries to predict error
+used to train another weak learner and improve the overall output of an ensemble of models. DLE tries to predict error
 functions which are directionless (like already mentioned absolute or squared error). This is a significantly
 easier problem to solve. For this reason, the :term:`nanny model` algorithm does not have to be better than the child
 algorithm, it can even be the same algorithm. Have a look at the simple example with code shown
@@ -358,7 +358,7 @@ estimates performance of another linear regression model.
 Implementation details
 ======================
 
-Currently NannyML supports DEE for performance estimation of regression models. The algorithm is rather simple. Let's
+Currently NannyML supports DLE for performance estimation of regression models. The algorithm is rather simple. Let's
 denote with :math:`f` the monitored model and :math:`h` the :term:`nanny model`. Let's assume we are interested in estimating
 mean absolute error (MAE) of :math:`f` for some analysis data for which targets are not available.
 :math:`f` was trained on train data and used on reference data providing :math:`f(X_{reference})`
@@ -376,7 +376,7 @@ predictions. Targets for reference set :math:`y_{reference}` are available. The 
 For other metrics step 1 and 3 are slightly modified. For example, for root mean squared error (RMSE) in step 1 we
 would calculate squared error while in step 3 we would calculate root of mean of all predictions.
 
-The code below shows simple implementation of DEE approach based on an example 1d dataset with regression target with
+The code below shows simple implementation of DLE approach based on an example 1d dataset with regression target with
 heteroscedastic normal noise (i.e. the variation of the noise is not constant, in this case
 it is dependent on the value of the input
 feature - see the target generating function in the code). The example here is to show that estimating directionless
@@ -403,7 +403,7 @@ estimates performance of linear regression :term:`child model`. Let's create syn
 .. image:: ../_static/how-it-works-dle-data.svg
     :width: 400pt
 
-Let’s just fit the :term:`child model` using linear regression and see what the predictions are:
+Let's just fit the :term:`child model` using linear regression and see what the predictions are:
 
 
 .. code-block:: python
@@ -479,7 +479,7 @@ prediction intervals:
     >>> plt.ylabel('y')
     >>> plt.xlabel('x1')
     >>> plt.title('Linear Regression fit.')
-    >>> plt.title("DEE used for naive prediction intervals.");
+    >>> plt.title("DLE used for naive prediction intervals.");
     >>> plt.legend();
 
 
@@ -550,14 +550,14 @@ as the monitored model. The important details of the current NannyML implementat
 Assumptions and limitations
 ===========================
 
-In general, DEE works well if there are regions in the feature space where the model performs better or worse and there
+In general, DLE works well if there are regions in the feature space where the model performs better or worse and there
 are enough observations from these regions in the reference dataset so that the :term:`nanny model` can learn this pattern.
 Just like CBPE, it will handle covariate shifts well.  The detailed assumptions are:
 
 
 **There is no concept drift**.
-    While dealing well with data drift, DEE will not work under concept drift.
-    This shouldn’t happen too often in very good models (i.e. models that have most of the information needed to
+    While dealing well with data drift, DLE will not work under concept drift.
+    This shouldn't happen too often in very good models (i.e. models that have most of the information needed to
     model specific target) or models that deal with physical phenomena, like for example energy demand forecasting
     models, because concept drift would mean change of the physics laws.
 
@@ -571,7 +571,7 @@ Just like CBPE, it will handle covariate shifts well.  The detailed assumptions 
     before (i.e. were not included in the model training data).
 
 **The noise is heteroskedastic around the monitored model target and it is dependent on the monitored model input features.**
-    DEE also works when the noise is homoskedastic (noise distribution around the target is constant) but
+    DLE also works when the noise is homoskedastic (noise distribution around the target is constant) but
     then the true performance of the monitored model is constant (depending on the metric used, it will be constant
     for MAE and MSE, it will change when measured e.g. with MAPE).
     Variation of true performance on the samples of data will be then an effect of :ref:`sampling error <estimation_of_standard_error>`
@@ -649,7 +649,7 @@ After exploring the approaches described above, we have realized that we are add
 to the task. Take one of the CQR approaches: we fit two conformalized quantile regression models, then we
 estimate the distribution of uncertainty assuming its form, then we calculate the expected error based on that. What if we
 just drop the unnecessary steps that base on assumptions (not on data) and directly estimate what we need? This
-is what we eventually did with :ref:`DEE<how-it-works-dle>`.
+is what we eventually did with :ref:`DLE<how-it-works-dle>`.
 
 
 
@@ -661,5 +661,4 @@ is what we eventually did with :ref:`DEE<how-it-works-dle>`.
 .. [4] Naeini, Mahdi Pakdaman, Gregory Cooper, and Milos Hauskrecht: "Obtaining well calibrated probabilities using bayesian binning." Twenty-Ninth AAAI Conference on Artificial Intelligence, 2015.
 .. [5] https://lightgbm.readthedocs.io/en/v3.3.2/
 .. [6] https://microsoft.github.io/FLAML/
-.. [7] Anastasios N. Angelopoulos, Stephen Bates: "A Gentle Introduction to Conformal Prediction and
-       Distribution-Free Uncertainty Quantification"
+.. [7] Anastasios N. Angelopoulos, Stephen Bates: "A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification"
