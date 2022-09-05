@@ -2,13 +2,13 @@
 #
 #  License: Apache Software License 2.0
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import label_binarize
 
-from nannyml._typing import ModelOutputsType, model_output_column_names
+from nannyml._typing import ModelOutputsType, ProblemType, model_output_column_names
 from nannyml.base import _list_missing
 from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
@@ -26,6 +26,7 @@ class _MulticlassClassificationCBPE(CBPE):
         y_pred_proba: ModelOutputsType,
         y_true: str,
         timestamp_column_name: str,
+        problem_type: Union[str, ProblemType],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -39,6 +40,7 @@ class _MulticlassClassificationCBPE(CBPE):
             y_pred_proba=y_pred_proba,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
+            problem_type=problem_type,
             metrics=metrics,
             chunk_size=chunk_size,
             chunk_number=chunk_number,

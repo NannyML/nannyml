@@ -42,17 +42,18 @@ Just The Code
     >>>
     >>> calc = nml.TargetDistributionCalculator(
     ...     y_true='work_home_actual',
-    ...     timestamp_column_name='timestamp'
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
     >>> )
     >>>
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
     >>> display(results.data.head(3))
     >>>
-    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    >>> distribution_fig1 = results.plot(kind='target_drift', plot_reference=True)
     >>> distribution_fig1.show()
     >>>
-    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
+    >>> distribution_fig2 = results.plot(kind='target_distribution', plot_reference=True)
     >>> distribution_fig2.show()
 
 
@@ -132,7 +133,7 @@ The results can be also easily plotted by using the
 
 .. code-block:: python
 
-    >>> distribution_fig1 = results.plot(kind='distribution', distribution='metric', plot_reference=True)
+    >>> distribution_fig1 = results.plot(kind='target_drift', plot_reference=True)
     >>> distribution_fig1.show()
 
 Note that a dashed line, instead of a solid line, will be used for chunks that have missing target values.
@@ -142,7 +143,7 @@ Note that a dashed line, instead of a solid line, will be used for chunks that h
 
 .. code-block:: python
 
-    >>> distribution_fig2 = results.plot(kind='distribution', distribution='statistical', plot_reference=True)
+    >>> distribution_fig2 = results.plot(kind='target_distribution', plot_reference=True)
     >>> distribution_fig2.show()
 
 .. image:: /_static/target_distribution_statistical.svg

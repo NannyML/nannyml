@@ -6,16 +6,16 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from nannyml._typing import ModelOutputsType, derive_use_case
+from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
-from nannyml.performance_calculation.metrics import Metric, MetricFactory
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import PerformanceCalculatorResult
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
@@ -31,8 +31,9 @@ class PerformanceCalculator(AbstractCalculator):
         timestamp_column_name: str,
         metrics: List[str],
         y_true: str,
-        y_pred_proba: ModelOutputsType,
         y_pred: str,
+        problem_type: Union[str, ProblemType],
+        y_pred_proba: ModelOutputsType = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -55,16 +56,16 @@ class PerformanceCalculator(AbstractCalculator):
             The name of the column containing the timestamp of the model prediction.
         metrics: List[str]
             A list of metrics to calculate.
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
 
         Examples
@@ -98,16 +99,27 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.y_true = y_true
         self.y_pred = y_pred
+
         self.y_pred_proba = y_pred_proba
+
         self.timestamp_column_name = timestamp_column_name
+
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+        self.problem_type = problem_type
+
+        if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
+            raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
+
         self.metrics: List[Metric] = [
-            MetricFactory.create(m, derive_use_case(self.y_pred_proba), {'calculator': self})  # type: ignore
-            for m in metrics
+            MetricFactory.create(m, problem_type, {'calculator': self}) for m in metrics  # type: ignore
         ]
 
-        self._minimum_chunk_size = None
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
+
+    def __str__(self):
+        return f"PerformanceCalculator[metrics={str(self.metrics)}]"
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""

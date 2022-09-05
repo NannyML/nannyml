@@ -1,10 +1,14 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 import pytest
 
+from nannyml._typing import ProblemType
+from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 
 
@@ -105,10 +109,21 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     return data
 
 
+@pytest.fixture
+def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
+    ref_df, ana_df, tgt_df = load_synthetic_car_price_dataset()
+
+    return ref_df, ana_df, tgt_df
+
+
 def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = StatisticalOutputDriftCalculator(
-        y_pred='output', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp', chunk_period='W'
+        y_pred='output',
+        y_pred_proba='y_pred_proba',
+        timestamp_column_name='timestamp',
+        chunk_period='W',
+        problem_type=ProblemType.CLASSIFICATION_BINARY,
     ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
@@ -119,9 +134,33 @@ def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):
 def test_output_drift_calculator_with_default_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = StatisticalOutputDriftCalculator(
-        y_pred='output', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp', chunk_period='W'
+        y_pred='output',
+        y_pred_proba='y_pred_proba',
+        timestamp_column_name='timestamp',
+        chunk_period='W',
+        problem_type=ProblemType.CLASSIFICATION_BINARY,
     ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
+
+
+def test_output_drift_calculator_for_regression_problems(regression_data):  # noqa: D103
+    reference, analysis, _ = regression_data
+    calc = StatisticalOutputDriftCalculator(
+        y_pred='y_pred',
+        timestamp_column_name='timestamp',
+        chunk_size=5000,
+        problem_type=ProblemType.REGRESSION,
+    ).fit(reference)
+    results = calc.calculate(analysis)
+
+    assert (
+        round(results.data['y_pred_dstat'], 5)
+        == [0.01135, 0.01213, 0.00545, 0.01125, 0.01443, 0.00937, 0.2017, 0.2076, 0.21713, 0.19368, 0.21497, 0.21142]
+    ).all()
+    assert (
+        round(results.data['y_pred_p_value'], 5)
+        == [0.588, 0.501, 0.999, 0.599, 0.289, 0.809, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    ).all()

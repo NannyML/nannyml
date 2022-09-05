@@ -40,7 +40,7 @@ class ColumnMapping(BaseModel):
     features: List[str]
     timestamp: str
     y_pred: str
-    y_pred_proba: Union[str, Dict[str, str]]
+    y_pred_proba: Union[str, Dict[str, str], None]
     y_true: str
 
 
@@ -56,6 +56,7 @@ class Config(BaseModel):
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
 
+    problem_type: str
     ignore_errors: Optional[bool]
 
     @classmethod

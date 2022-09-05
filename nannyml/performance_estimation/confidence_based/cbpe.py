@@ -4,11 +4,11 @@
 
 """Implementation of the CBPE estimator."""
 from abc import abstractmethod
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import pandas as pd
 
-from nannyml._typing import ModelOutputsType, UseCase, derive_use_case
+from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractEstimator
 from nannyml.calibration import Calibrator, CalibratorFactory
 from nannyml.chunk import Chunker
@@ -23,16 +23,17 @@ from nannyml.performance_estimation.confidence_based.results import (
 class CBPE(AbstractEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
 
-    def __new__(cls, y_pred_proba: ModelOutputsType, *args, **kwargs):
+    def __new__(cls, y_pred_proba: ModelOutputsType, problem_type: Union[str, ProblemType], *args, **kwargs):
         """Creates a new CBPE subclass instance based on the type of the provided ``model_metadata``."""
         from ._cbpe_binary_classification import _BinaryClassificationCBPE
         from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
 
-        use_case = derive_use_case(y_pred_proba)
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
 
-        if use_case is UseCase.CLASSIFICATION_BINARY:
+        if problem_type is ProblemType.CLASSIFICATION_BINARY:
             return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
-        elif use_case is UseCase.CLASSIFICATION_MULTICLASS:
+        elif problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
             return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
         else:
             raise NotImplementedError
@@ -44,6 +45,7 @@ class CBPE(AbstractEstimator):
         y_pred_proba: ModelOutputsType,
         y_true: str,
         timestamp_column_name: str,
+        problem_type: Union[str, ProblemType],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -74,6 +76,9 @@ class CBPE(AbstractEstimator):
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
+        problem_type: Union[str, ProblemType]
+            Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
+            'classification_multiclass'.
 
         Examples
         --------
@@ -86,7 +91,8 @@ class CBPE(AbstractEstimator):
         >>>     y_pred='y_pred',
         >>>     y_pred_proba='y_pred_proba',
         >>>     timestamp_column_name='timestamp',
-        >>>     metrics=['f1', 'roc_auc']
+        >>>     metrics=['f1', 'roc_auc'],
+        >>>     problem_type='classification_binary',
         >>> )
         >>>
         >>> estimator.fit(reference_df)
@@ -121,8 +127,13 @@ class CBPE(AbstractEstimator):
                 f"Supported values are {SUPPORTED_METRIC_VALUES}."
             )
 
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+
+        self.problem_type: ProblemType = problem_type  # type: ignore
+
         self.metrics = [
-            MetricFactory.create(metric, derive_use_case(y_pred_proba), {'estimator': self}) for metric in metrics
+            MetricFactory.create(metric, problem_type, {'estimator': self}) for metric in metrics  # type: ignore
         ]
 
         self._confidence_deviations: Dict[str, float] = {}

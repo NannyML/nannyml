@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
@@ -51,7 +52,7 @@ class AbstractCalculatorResult(ABC):
     def calculator_name(self) -> str:
         raise NotImplementedError
 
-    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Plots calculation results."""
         raise NotImplementedError
 
@@ -189,10 +190,13 @@ class AbstractEstimator(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    def __str__(self):
+        return self.__class__.__name__
+
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Trains the calculator using reference data."""
         try:
-            self._logger.debug(f"fitting {str(self)}")
+            self._logger.info(f"fitting {str(self)}")
             reference_data = reference_data.copy()
             return self._fit(reference_data, *args, **kwargs)
         except InvalidArgumentsException:
@@ -205,7 +209,7 @@ class AbstractEstimator(ABC):
     def estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
         """Performs a calculation on the provided data."""
         try:
-            self._logger.debug(f"calculating {str(self)}")
+            self._logger.info(f"estimating {str(self)}")
             data = data.copy()
             return self._estimate(data, *args, **kwargs)
         except InvalidArgumentsException:
@@ -247,3 +251,24 @@ def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFra
     missing = [col for col in columns_to_find if col not in dataset_columns]
     if len(missing) > 0:
         raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")
+
+
+def _raise_exception_for_negative_values(column: pd.Series):
+    """Raises an InvalidArgumentsException if a given column contains negative values.
+
+    Parameters
+    ----------
+    column: pd.Series
+        Column to check for negative values.
+
+    Raises
+    ------
+    nannyml.exceptions.InvalidArgumentsException
+    """
+    if any(column.values < 0):
+        negative_item_indices = np.where(column.values < 0)
+        raise InvalidArgumentsException(
+            f"target values '{column.name}' contain negative values.\n"
+            f"\tLog-based metrics are not supported for negative target values.\n"
+            f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
+        )

@@ -2,15 +2,15 @@
 #
 #  License: Apache Software License 2.0
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-from nannyml._typing import ModelOutputsType
+from nannyml._typing import ModelOutputsType, ProblemType
+from nannyml.base import _list_missing
 from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation.metrics import _list_missing
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
@@ -24,6 +24,7 @@ class _BinaryClassificationCBPE(CBPE):
         y_pred_proba: ModelOutputsType,
         y_true: str,
         timestamp_column_name: str,
+        problem_type: Union[str, ProblemType],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -37,6 +38,7 @@ class _BinaryClassificationCBPE(CBPE):
             y_pred_proba=y_pred_proba,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
+            problem_type=problem_type,
             metrics=metrics,
             chunk_size=chunk_size,
             chunk_number=chunk_number,

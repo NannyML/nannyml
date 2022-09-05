@@ -7,12 +7,11 @@ Drift Detection for Binary Classification Model Outputs
 Why Perform Drift Detection for Model Outputs
 ---------------------------------------------
 
-The distribution of model outputs tells us how likely it is that our population
-will do what the model predicts. If the model's
-population changes, then our populations' actions will be different.
+The distribution of the model outputs tells us the model's evaluation of how likely
+the predicted outcome is to happen across the model's population.
+If the model's population changes, then its actions will be different.
 The difference in actions is very important to know as soon as possible because
 they directly affect the business results from operating a machine learning model.
-
 
 Just The Code
 ------------------------------------
@@ -28,7 +27,8 @@ Just The Code
     >>>
     >>> display(reference_df.head())
     >>>
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba',
+    ...                                             timestamp_column_name='timestamp', problem_type='classification_binary')
     >>>
     >>> calc.fit(reference_df)
     >>>
@@ -36,11 +36,11 @@ Just The Code
     >>>
     >>> display(results.data)
     >>>
-    >>> predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    >>> predicted_labels_drift_fig.show()
+    >>> score_drift_fig = results.plot(kind='score_drift', plot_reference=True)
+    >>> score_drift_fig.show()
     >>>
-    >>> predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
-    >>> predicted_labels_distribution_fig.show()
+    >>> score_distribution_fig = results.plot(kind='score_distribution', plot_reference=True)
+    >>> score_distribution_fig.show()
     >>>
     >>> prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
     >>> prediction_drift_fig.show()
@@ -52,10 +52,10 @@ Walkthrough
 ------------------------------------------------
 
 NannyML detects data drift for :term:`Model Outputs` using the
-:ref:`Univariate Drift Detection methodology<univariate_drift_detection>`.
+:ref:`Univariate Drift Detection methodology<univariate_drift_detection_walkthrough>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
-You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
@@ -96,7 +96,8 @@ calculates the drift results on the data provided. An example using it can be se
 
 .. code-block:: python
 
-    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba', timestamp_column_name='timestamp')
+    >>> calc = nml.StatisticalOutputDriftCalculator(y_pred='y_pred', y_pred_proba='y_pred_proba',
+    ...                                             timestamp_column_name='timestamp', problem_type='classification_binary')
     >>> calc.fit(reference_df)
     >>> results = calc.calculate(analysis_df)
 
@@ -130,45 +131,46 @@ We can then display the results in a table, or as plots.
 |  9 | [45000:49999] |         45000 |       49999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 |          |    27.99      |            0     | True           |               0.05 |              0.13752 |                  0     | True                 |                     0.05 |
 +----+---------------+---------------+-------------+---------------------+---------------------+----------+---------------+------------------+----------------+--------------------+----------------------+------------------------+----------------------+--------------------------+
 
-NannyML can show the statistical properties of the drift in model outputs as a plot.
+NannyML can show the statistical properties of the drift in model scores as a plot.
 
 .. code-block:: python
 
-    >>> predictions_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
-    >>> predictions_drift_fig.show()
+    >>> score_drift_fig = results.plot(kind='score_drift', plot_reference=True)
+    >>> score_drift_fig.show()
 
-.. image:: /_static/drift-guide-predictions.svg
+.. image:: /_static/drift-guide-score-drift.svg
+
+NannyML can also visualise how the distributions of the model scores evolved over time.
+
+.. code-block:: python
+
+    >>> score_distribution_fig = results.plot(kind='score_distribution', plot_reference=True)
+    >>> score_distribution_fig.show()
+
+
+.. image:: /_static/drift-guide-score-distribution.svg
+
+NannyML can show the statistical properties of the drift in the model predictions as a plot.
+
+.. code-block:: python
+
+    >>> predicted_labels_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+    >>> predicted_labels_drift_fig.show()
+
+.. image:: /_static/drift-guide-prediction-drift.svg
 
 NannyML can also visualise how the distributions of the model predictions evolved over time.
 
 .. code-block:: python
 
-    >>> predictions_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
-    >>> predictions_distribution_fig.show()
-
-.. image:: /_static/drift-guide-predictions-joyplot.svg
-
-NannyML can show the statistical properties of the drift in the predicted labels as a plot.
-
-.. code-block:: python
-
-    >>> predicted_labels_drift_fig = results.plot(kind='predicted_labels_drift', plot_reference=True)
-    >>> predicted_labels_drift_fig.show()
-
-.. image:: /_static/drift-guide-predicted-labels.svg
-
-NannyML can also visualise how the distributions of the predicted labels evolved over time.
-
-.. code-block:: python
-
-    >>> predicted_labels_distribution_fig = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    >>> predicted_labels_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
     >>> predicted_labels_distribution_fig.show()
 
-.. image:: /_static/drift-guide-predicted-labels-barchart.svg
+.. image:: /_static/drift-guide-prediction-distribution.svg
 
 
 Insights
------------------------
+--------
 
 Looking at the results we can see that we have a false alert on the first chunk of the analysis data. This is similar
 to the ``tenure`` variable in the :ref:`univariate drift results<univariate_drift_detection_tenure>`, where there is also

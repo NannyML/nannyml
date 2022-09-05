@@ -18,7 +18,7 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
-from nannyml._typing import ModelOutputsType, UseCase, class_labels
+from nannyml._typing import ModelOutputsType, ProblemType, class_labels
 from nannyml.base import AbstractEstimator
 from nannyml.chunk import Chunk
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
@@ -174,14 +174,14 @@ class Metric(abc.ABC):
 class MetricFactory:
     """A factory class that produces Metric instances based on a given magic string or a metric specification."""
 
-    registry: Dict[str, Dict[UseCase, Metric]] = {}
+    registry: Dict[str, Dict[ProblemType, Metric]] = {}
 
     @classmethod
     def _logger(cls) -> logging.Logger:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key: str, use_case: UseCase, kwargs: Dict[str, Any] = None) -> Metric:
+    def create(cls, key: str, use_case: ProblemType, kwargs: Dict[str, Any] = None) -> Metric:
         if kwargs is None:
             kwargs = {}
 
@@ -208,7 +208,7 @@ class MetricFactory:
         return metric_class(**kwargs)  # type: ignore
 
     @classmethod
-    def register(cls, metric: str, use_case: UseCase) -> Callable:
+    def register(cls, metric: str, use_case: ProblemType) -> Callable:
         def inner_wrapper(wrapped_class: Metric) -> Metric:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:
@@ -221,7 +221,7 @@ class MetricFactory:
         return inner_wrapper
 
 
-@MetricFactory.register('roc_auc', UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='ROC AUC', column_name='roc_auc', estimator=estimator)
@@ -277,7 +277,7 @@ def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
     return metric
 
 
-@MetricFactory.register('f1', UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register('f1', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationF1(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='F1', column_name='f1', estimator=estimator)
@@ -318,7 +318,7 @@ def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
     return metric
 
 
-@MetricFactory.register('precision', UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register('precision', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Precision', column_name='precision', estimator=estimator)
@@ -359,7 +359,7 @@ def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> floa
     return metric
 
 
-@MetricFactory.register('recall', UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register('recall', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Recall', column_name='recall', estimator=estimator)
@@ -399,7 +399,7 @@ def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
     return metric
 
 
-@MetricFactory.register('specificity', UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register('specificity', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Specificity', column_name='specificity', estimator=estimator)
@@ -440,7 +440,7 @@ def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> fl
     return metric
 
 
-@MetricFactory.register('accuracy', UseCase.CLASSIFICATION_BINARY)
+@MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Accuracy', column_name='accuracy', estimator=estimator)
@@ -504,7 +504,7 @@ def _get_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: M
     return data[y_pred], data[class_probability_columns], labels
 
 
-@MetricFactory.register('roc_auc', UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='ROC AUC', column_name='roc_auc', estimator=estimator)
@@ -544,7 +544,7 @@ class MulticlassClassificationAUROC(Metric):
         return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
 
 
-@MetricFactory.register('f1', UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='F1', column_name='f1', estimator=estimator)
@@ -585,7 +585,7 @@ class MulticlassClassificationF1(Metric):
         return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
-@MetricFactory.register('precision', UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Precision', column_name='precision', estimator=estimator)
@@ -626,7 +626,7 @@ class MulticlassClassificationPrecision(Metric):
         return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
-@MetricFactory.register('recall', UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Recall', column_name='recall', estimator=estimator)
@@ -667,7 +667,7 @@ class MulticlassClassificationRecall(Metric):
         return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
-@MetricFactory.register('specificity', UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Specificity', column_name='specificity', estimator=estimator)
@@ -712,7 +712,7 @@ class MulticlassClassificationSpecificity(Metric):
         return np.mean(class_wise_specificity)  # type: ignore
 
 
-@MetricFactory.register('accuracy', UseCase.CLASSIFICATION_MULTICLASS)
+@MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(Metric):
     def __init__(self, estimator):
         super().__init__(display_name='Accuracy', column_name='accuracy', estimator=estimator)

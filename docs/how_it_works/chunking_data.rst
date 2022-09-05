@@ -89,4 +89,3 @@ When there are many chunks, it is easy to spot the noisy nature of fluctuations.
 is difficult to tell whether the observed changes are significant or not. To make this easier NannyML quantifies the
 sampling error by estimating standard error (i.e. standard deviation of the sampling distribution). To find out
 exactly how it's done see :ref:`Estimation of Standard Error<estimation_of_standard_error>`.
-

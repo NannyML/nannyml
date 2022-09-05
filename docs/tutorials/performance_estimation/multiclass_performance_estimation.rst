@@ -30,6 +30,7 @@ Just The Code
     ...     y_pred='y_pred',
     ...     y_true='y_true',
     ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_multiclass',
     ...     metrics=['roc_auc', 'f1'],
     ...     chunk_size=6000,
     >>> )
@@ -55,7 +56,8 @@ Walkthrough
 
 
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts
-which type of credit card product new customers should be assigned to. You can :ref:`learn more about this dataset<dataset-synthetic-multiclass>`.
+which type of credit card product new customers should be assigned to. You can learn more about this dataset
+:ref:`here<dataset-synthetic-multiclass>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
@@ -109,6 +111,7 @@ For more information about :term:`chunking<Data Chunk>` you can check the :ref:`
     ...     y_pred='y_pred',
     ...     y_true='y_true',
     ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_multiclass',
     ...     metrics=['roc_auc', 'f1'],
     ...     chunk_size=6000,
     >>> )
@@ -172,7 +175,7 @@ These results can be also plotted. Our plot contains several key elements.
   indicated by a red, diamond-shaped point marker in the middle of the chunk.
 
 Description of tabular results above explains how the
-:term:`Confidence Bands` and thresholds are calculated. Additional information is shown in the hover (these are
+:term:`confidence bands<Confidence Band>` and thresholds are calculated. Additional information is shown in the hover (these are
 interactive plots, though only static views are included here).
 
 

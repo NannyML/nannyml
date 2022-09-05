@@ -12,7 +12,10 @@ import pytest
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation import PerformanceCalculator
-from nannyml.performance_calculation.metrics import BinaryClassificationAUROC, BinaryClassificationF1
+from nannyml.performance_calculation.metrics.binary_classification import (
+    BinaryClassificationAUROC,
+    BinaryClassificationF1,
+)
 
 
 @pytest.fixture
@@ -32,13 +35,19 @@ def performance_calculator() -> PerformanceCalculator:
         y_pred='y_pred',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     )
 
 
 def test_calculator_init_with_empty_metrics_should_not_fail():  # noqa: D103, F821
     try:
         _ = PerformanceCalculator(
-            timestamp_column_name='timestamp', y_pred='y_pred', y_pred_proba='y_pred_proba', y_true='y_true', metrics=[]
+            timestamp_column_name='timestamp',
+            y_pred='y_pred',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=[],
+            problem_type='classification_binary',
         )
     except Exception as exc:
         pytest.fail(f'unexpected exception: {exc}')
@@ -51,6 +60,7 @@ def test_calculator_init_should_set_metrics(performance_calculator):  # noqa: D1
         y_pred_proba='y_pred_proba',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     )
     sut = calc.metrics
     assert len(sut) == 2
@@ -65,6 +75,7 @@ def test_calculator_fit_should_raise_invalid_args_exception_when_no_target_data_
         y_pred_proba='y_pred_proba',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     )
     with pytest.raises(InvalidArgumentsException):
         _ = calc.fit(reference_data=data[0])
@@ -77,6 +88,7 @@ def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target
         y_pred_proba='y_pred_proba',
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     ).fit(reference_data=data[0])
     with pytest.raises(InvalidArgumentsException):
         _ = calc.calculate(data[1])
@@ -89,6 +101,7 @@ def test_calculator_calculate_should_include_chunk_information_columns(data):  #
         y_pred_proba='y_pred_proba',
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     ).fit(reference_data=data[0])
 
     ref_with_tgt = data[1].merge(data[2], on='identifier')
@@ -119,6 +132,7 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
         y_pred_proba='y_pred_proba',
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     ).fit(reference_data=ref_data)
     sut = calc.calculate(data)
 

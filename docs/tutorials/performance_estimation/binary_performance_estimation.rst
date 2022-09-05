@@ -30,6 +30,7 @@ Just The Code
     ...     y_pred='y_pred',
     ...     y_true='work_home_actual',
     ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
     ...     metrics=['roc_auc', 'f1'],
     ...     chunk_size=5000
     >>> )
@@ -53,10 +54,12 @@ Walkthrough
 --------------
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
-whether an employee will work from home. You can :ref:`read more about this synthetic dataset<dataset-synthetic-binary>`.
+whether an employee will work from home. You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
+
+We start by loading the dataset we 'll be using:
 
 .. code-block:: python
 
@@ -104,6 +107,7 @@ For more information about :term:`chunking<Data Chunk>` you can check the :ref:`
     ...     y_pred='y_pred',
     ...     y_true='work_home_actual',
     ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
     ...     metrics=['roc_auc', 'f1'],
     ...     chunk_size=5000)
 
@@ -170,7 +174,7 @@ These results can be also plotted. Our plot contains several key elements.
   indicated by a red, diamond-shaped point marker in the middle of the chunk.
 
 Description of tabular results above explains how the
-:term:`Confidence Bands` and thresholds are calculated. Additional information is shown in the hover (these are
+:term:`confidence bands<Confidence Band>` and thresholds are calculated. Additional information is shown in the hover (these are
 interactive plots, though only static views are included here).
 
 .. code-block:: python

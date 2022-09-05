@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -42,7 +42,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         plot_reference: bool = False,
         *args,
         **kwargs,
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the univariate statistical drift calculator.
 
         For any feature you can render the statistic value or p-values as a step plot, or create a distribution plot.

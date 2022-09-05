@@ -7,12 +7,13 @@
 from __future__ import annotations
 
 import warnings
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2_contingency
+from scipy.stats import chi2_contingency, ks_2samp
 
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
 from nannyml.drift.target.target_distribution.result import TargetDistributionResult
@@ -28,6 +29,7 @@ class TargetDistributionCalculator(AbstractCalculator):
         self,
         y_true: str,
         timestamp_column_name: str,
+        problem_type: Union[str, ProblemType],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -41,16 +43,16 @@ class TargetDistributionCalculator(AbstractCalculator):
             The name of the column containing your model target values.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
 
         Examples
@@ -78,17 +80,21 @@ class TargetDistributionCalculator(AbstractCalculator):
         8  [40000:44999]        40000      44999  ...       0.05  False       False
         9  [45000:49999]        45000      49999  ...       0.05  False       False
         >>>
-        >>> results.plot(distribution='metric', plot_reference=True).show()
-        >>> results.plot(distribution='statistical', plot_reference=True).show()
+        >>> results.plot(kind='target_drift', plot_reference=True).show()
+        >>> results.plot(kind='target_distribution', plot_reference=True).show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker)
 
         self.y_true = y_true
         self.timestamp_column_name = timestamp_column_name
 
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+        self.problem_type: ProblemType = problem_type  # type: ignore
+
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_reference_data: Optional[pd.DataFrame] = None
-        # self._reference_targets: pd.Series = None  # type: ignore
+        self.previous_analysis_data: Optional[pd.DataFrame] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
         """Fits the calculator to reference data."""
@@ -147,7 +153,7 @@ class TargetDistributionCalculator(AbstractCalculator):
                     'targets_missing_rate': (
                         chunk.data['NML_TARGET_INCOMPLETE'].sum() / chunk.data['NML_TARGET_INCOMPLETE'].count()
                     ),
-                    **_calculate_target_drift_for_chunk(
+                    **self._calculate_target_drift_for_chunk(
                         self.previous_reference_data[self.y_true], chunk.data[self.y_true]
                     ),
                 }
@@ -155,10 +161,22 @@ class TargetDistributionCalculator(AbstractCalculator):
             ]
         )
 
+        self.previous_analysis_data = data.copy()
+
         return TargetDistributionResult(results_data=res, calculator=self)
 
+    def _calculate_target_drift_for_chunk(self, reference_targets: pd.Series, analysis_targets: pd.Series) -> Dict:
+        if self.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
+            return _calculate_categorical_target_drift_for_chunk(reference_targets, analysis_targets)
+        elif self.problem_type in [ProblemType.REGRESSION]:
+            return _calculate_continuous_target_drift_for_chunk(reference_targets, analysis_targets)
+        else:
+            raise InvalidArgumentsException(
+                f"target drift calculation is not support for '{ProblemType.value}' problems"
+            )
 
-def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.DataFrame) -> Dict:
+
+def _calculate_categorical_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:
     statistic, p_value, _, _ = chi2_contingency(
         pd.concat([reference_targets.value_counts(), targets.value_counts()], axis=1).fillna(0)
     )
@@ -182,6 +200,18 @@ def _calculate_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.
 
     return {
         'metric_target_drift': targets.mean() if not (is_non_binary_targets or is_string_targets) else np.NAN,
+        'statistical_target_drift': statistic,
+        'p_value': p_value,
+        'thresholds': _ALERT_THRESHOLD_P_VALUE,
+        'alert': p_value < _ALERT_THRESHOLD_P_VALUE,
+        'significant': p_value < _ALERT_THRESHOLD_P_VALUE,
+    }
+
+
+def _calculate_continuous_target_drift_for_chunk(reference_targets: pd.Series, targets: pd.Series) -> Dict:
+    statistic, p_value = ks_2samp(reference_targets, targets)
+    return {
+        'metric_target_drift': targets.mean(),
         'statistical_target_drift': statistic,
         'p_value': p_value,
         'thresholds': _ALERT_THRESHOLD_P_VALUE,

@@ -25,7 +25,8 @@ Just The Code
     ...     y_pred='y_pred',
     ...     y_true='work_home_actual',
     ...     timestamp_column_name='timestamp',
-    ...     metrics=nml.performance_estimation.confidence_based.results.SUPPORTED_METRIC_VALUES,
+    ...     problem_type='classification_binary',
+    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
     ...     chunk_size=5000)
 
     >>> calc.fit(reference_df)
@@ -92,12 +93,13 @@ For more information on metrics, check the :mod:`~nannyml.performance_calculatio
 .. code-block:: python
 
     >>> calc = nml.PerformanceCalculator(
-    >>>     y_pred_proba='y_pred_proba',
-    >>>     y_pred='y_pred',
-    >>>     y_true='work_home_actual',
-    >>>     timestamp_column_name='timestamp',
-    >>>     metrics=nml.performance_estimation.confidence_based.results.SUPPORTED_METRIC_VALUES,
-    >>>     chunk_size=5000)
+    ...     y_pred_proba='y_pred_proba',
+    ...     y_pred='y_pred',
+    ...     y_true='work_home_actual',
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
+    ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+    ...     chunk_size=5000)
 
     >>> calc.fit(reference_df)
 

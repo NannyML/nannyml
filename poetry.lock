@@ -58,6 +58,24 @@ test = ["coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "pytest (>=7.0)", "pytes
 trio = ["trio (>=0.16)"]
 
 [[package]]
+name = "apeye"
+version = "1.2.0"
+description = "Handy tools for working with URLs and APIs."
+category = "dev"
+optional = false
+python-versions = ">=3.6.1"
+
+[package.dependencies]
+domdf-python-tools = ">=2.6.0"
+idna = ">=2.5"
+platformdirs = ">=2.3.0"
+requests = ">=2.24.0"
+
+[package.extras]
+limiter = ["lockfile (>=0.12.2)", "cachecontrol[filecache] (>=0.12.6)"]
+all = ["lockfile (>=0.12.2)", "cachecontrol[filecache] (>=0.12.6)"]
+
+[[package]]
 name = "appnope"
 version = "0.1.3"
 description = "Disable App Nap on macOS >= 10.9"
@@ -139,6 +157,17 @@ tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)"
 tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "mypy (>=0.900,!=0.940)", "pytest-mypy-plugins", "cloudpickle"]
 
 [[package]]
+name = "autodocsumm"
+version = "0.2.9"
+description = "Extended sphinx autodoc including automatic autosummaries"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+Sphinx = ">=2.2,<6.0"
+
+[[package]]
 name = "babel"
 version = "2.10.3"
 description = "Internationalization utilities"
@@ -218,6 +247,23 @@ description = "Version-bump your software with a single command!"
 category = "dev"
 optional = false
 python-versions = ">=3.5"
+
+[[package]]
+name = "cachecontrol"
+version = "0.12.11"
+description = "httplib2 caching for requests"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+lockfile = {version = ">=0.9", optional = true, markers = "extra == \"filecache\""}
+msgpack = ">=0.5.2"
+requests = "*"
+
+[package.extras]
+filecache = ["lockfile (>=0.9)"]
+redis = ["redis (>=2.10.5)"]
 
 [[package]]
 name = "cachetools"
@@ -343,6 +389,21 @@ ssh = ["bcrypt (>=3.1.5)"]
 test = ["pytest (>=6.2.0)", "pytest-benchmark", "pytest-cov", "pytest-subtests", "pytest-xdist", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,!=3.79.2)"]
 
 [[package]]
+name = "cssutils"
+version = "2.6.0"
+description = "A CSS Cascading Style Sheets library for Python"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+importlib-metadata = {version = "*", markers = "python_version < \"3.8\""}
+
+[package.extras]
+docs = ["sphinx", "jaraco.packaging (>=9)", "rst.linker (>=1.9)", "jaraco.tidelift (>=1.4)"]
+testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "flake8 (<5)", "pytest-cov", "pytest-enabler (>=1.3)", "cssselect", "jaraco.test (>=5.1)", "pytest-black (>=0.3.7)", "pytest-mypy (>=0.9.1)", "lxml", "importlib-resources"]
+
+[[package]]
 name = "cycler"
 version = "0.11.0"
 description = "Composable style cycles"
@@ -375,6 +436,18 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "dict2css"
+version = "0.3.0"
+description = "A μ-library for constructing cascading style sheets from Python dictionaries."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+cssutils = ">=2.2.0"
+domdf-python-tools = ">=2.2.0"
+
+[[package]]
 name = "distlib"
 version = "0.3.5"
 description = "Distribution utilities"
@@ -389,6 +462,23 @@ description = "Docutils -- Python Documentation Utilities"
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "domdf-python-tools"
+version = "3.3.0"
+description = "Helpful functions for Python 🐍 🛠️"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+importlib-metadata = {version = ">=3.6.0", markers = "python_version < \"3.9\""}
+natsort = ">=7.0.1"
+typing-extensions = ">=3.7.4.1"
+
+[package.extras]
+all = ["pytz (>=2019.1)"]
+dates = ["pytz (>=2019.1)"]
 
 [[package]]
 name = "entrypoints"
@@ -458,6 +548,36 @@ python-versions = ">=3.6.1"
 [package.dependencies]
 flake8 = ">=3.8"
 importlib-metadata = {version = ">=0.9", markers = "python_version < \"3.8\""}
+
+[[package]]
+name = "flaml"
+version = "1.0.11"
+description = "A fast library for automated machine learning and tuning"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+lightgbm = ">=2.3.1"
+NumPy = ">=1.17.0rc1"
+pandas = ">=1.1.4"
+scikit-learn = ">=0.24"
+scipy = ">=1.4.1"
+xgboost = ">=0.90"
+
+[package.extras]
+azureml = ["azureml-mlflow"]
+benchmark = ["catboost (>=0.26)", "psutil (==5.8.0)", "xgboost (==1.3.3)"]
+blendsearch = ["optuna (==2.8.0)"]
+catboost = ["catboost (>=0.26)"]
+forecast = ["holidays (<0.14)", "prophet (>=1.0.1)", "statsmodels (>=0.12.2)", "hcrystalball (==0.1.10)", "pytorch-forecasting (>=0.9.0)"]
+nlp = ["transformers[torch] (==4.18)", "datasets", "nltk", "rouge-score", "seqeval"]
+nni = ["nni"]
+notebook = ["openml (==0.10.2)", "jupyter", "matplotlib", "rgf-python", "catboost (>=0.26)"]
+ray = ["ray[tune] (>=1.13,<2.0)"]
+test = ["flake8 (>=3.8.4)", "pytest (>=6.1.1)", "coverage (>=5.3)", "pre-commit", "catboost (>=0.26)", "rgf-python", "optuna (==2.8.0)", "openml", "statsmodels (>=0.12.2)", "psutil (==5.8.0)", "dataclasses", "transformers[torch] (==4.18)", "datasets", "nltk", "rouge-score", "hcrystalball (==0.1.10)", "seqeval", "pytorch-forecasting (>=0.9.0)"]
+ts_forecast = ["holidays (<0.14)", "prophet (>=1.0.1)", "statsmodels (>=0.12.2)", "hcrystalball (==0.1.10)"]
+vw = ["vowpalwabbit (>=8.10.0,<9.0.0)"]
 
 [[package]]
 name = "fonttools"
@@ -665,6 +785,24 @@ protobuf = ">=3.15.0,<5.0.0dev"
 
 [package.extras]
 grpc = ["grpcio (>=1.0.0,<2.0.0dev)"]
+
+[[package]]
+name = "html5lib"
+version = "1.1"
+description = "HTML parser based on the WHATWG HTML specification"
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[package.dependencies]
+six = ">=1.9"
+webencodings = "*"
+
+[package.extras]
+lxml = ["lxml"]
+genshi = ["genshi"]
+chardet = ["chardet (>=2.2)"]
+all = ["lxml", "chardet (>=2.2)", "genshi"]
 
 [[package]]
 name = "identify"
@@ -1047,6 +1185,30 @@ python-versions = ">=3.7"
 typing-extensions = {version = "*", markers = "python_version < \"3.8\""}
 
 [[package]]
+name = "lightgbm"
+version = "3.3.2"
+description = "LightGBM Python Package"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+numpy = "*"
+scikit-learn = "!=0.22.0"
+scipy = "*"
+
+[package.extras]
+dask = ["dask[array] (>=2.0.0)", "dask[dataframe] (>=2.0.0)", "dask[distributed] (>=2.0.0)", "pandas"]
+
+[[package]]
+name = "lockfile"
+version = "0.12.2"
+description = "Platform-independent file locking module"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "lxml"
 version = "4.9.1"
 description = "Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API."
@@ -1115,6 +1277,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "msgpack"
+version = "1.0.4"
+description = "MessagePack serializer"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "multidict"
 version = "6.0.2"
 description = "multidict implementation"
@@ -1147,6 +1317,18 @@ description = "Experimental type system extensions for programs checked with the
 category = "dev"
 optional = false
 python-versions = "*"
+
+[[package]]
+name = "natsort"
+version = "8.1.0"
+description = "Simple yet flexible natural sorting in Python."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+fast = ["fastnumbers (>=2.0.0)"]
+icu = ["PyICU (>=1.0.0)"]
 
 [[package]]
 name = "nbclassic"
@@ -1904,6 +2086,29 @@ python-versions = ">=3.6,<4"
 pyasn1 = ">=0.1.3"
 
 [[package]]
+name = "ruamel.yaml"
+version = "0.17.21"
+description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
+category = "dev"
+optional = false
+python-versions = ">=3"
+
+[package.dependencies]
+"ruamel.yaml.clib" = {version = ">=0.2.6", markers = "platform_python_implementation == \"CPython\" and python_version < \"3.11\""}
+
+[package.extras]
+docs = ["ryd"]
+jinja2 = ["ruamel.yaml.jinja2 (>=0.2)"]
+
+[[package]]
+name = "ruamel.yaml.clib"
+version = "0.2.6"
+description = "C version of reader, parser and emitter for ruamel.yaml derived from libyaml"
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[[package]]
 name = "scikit-learn"
 version = "1.0.2"
 description = "A set of python modules for machine learning and data mining"
@@ -2054,6 +2259,21 @@ lint = ["flake8 (>=3.5.0)", "isort", "mypy (>=0.931)", "docutils-stubs", "types-
 test = ["pytest", "pytest-cov", "html5lib", "cython", "typed-ast"]
 
 [[package]]
+name = "sphinx-autodoc-typehints"
+version = "1.19.1"
+description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+Sphinx = ">=4.5"
+
+[package.extras]
+testing = ["covdefaults (>=2.2)", "coverage (>=6.3)", "diff-cover (>=6.4)", "nptyping (>=2.1.2)", "pytest (>=7.1)", "pytest-cov (>=3)", "sphobjinv (>=2)", "typing-extensions (>=4.1)"]
+type_comments = ["typed-ast (>=1.5.2)"]
+
+[[package]]
 name = "sphinx-copybutton"
 version = "0.5.0"
 description = "Add a copy button to each of your code cells."
@@ -2067,6 +2287,30 @@ sphinx = ">=1.8"
 [package.extras]
 code_style = ["pre-commit (==2.12.1)"]
 rtd = ["sphinx", "ipython", "myst-nb", "sphinx-book-theme"]
+
+[[package]]
+name = "sphinx-jinja2-compat"
+version = "0.1.2"
+description = "Patches Jinja2 v3 to restore compatibility with earlier Sphinx versions."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+jinja2 = ">=2.10"
+markupsafe = ">=1"
+
+[[package]]
+name = "sphinx-prompt"
+version = "1.5.0"
+description = "Sphinx directive to add unselectable prompt"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+pygments = "*"
+Sphinx = "*"
 
 [[package]]
 name = "sphinx-rtd-theme"
@@ -2084,6 +2328,24 @@ sphinx = ">=1.6"
 dev = ["transifex-client", "sphinxcontrib-httpdomain", "bump2version"]
 
 [[package]]
+name = "sphinx-tabs"
+version = "3.4.0"
+description = "Tabbed views for Sphinx"
+category = "dev"
+optional = false
+python-versions = "~=3.7"
+
+[package.dependencies]
+docutils = ">=0.17.0,<0.18.0"
+jinja2 = "<3.1.0"
+pygments = "*"
+sphinx = ">=2,<6"
+
+[package.extras]
+code_style = ["pre-commit (==2.13.0)"]
+testing = ["coverage", "pytest (>=7.1,<8)", "pytest-cov", "pytest-regressions", "pygments", "sphinx-testing", "bs4", "rinohtype"]
+
+[[package]]
 name = "sphinx-toggleprompt"
 version = "0.2.0"
 description = "Add a python prompt toggle to each code cell."
@@ -2094,6 +2356,38 @@ python-versions = "*"
 [package.dependencies]
 jinja2 = "<3.1"
 sphinx = ">=1.8"
+
+[[package]]
+name = "sphinx-toolbox"
+version = "3.2.0"
+description = "Box of handy tools for Sphinx 🧰 📔"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+apeye = ">=0.4.0"
+autodocsumm = ">=0.2.0"
+beautifulsoup4 = ">=4.9.1"
+cachecontrol = {version = ">=0.12.6", extras = ["filecache"]}
+dict2css = ">=0.2.3"
+docutils = ">=0.16,<0.19"
+domdf-python-tools = ">=2.9.0"
+html5lib = ">=1.1"
+lockfile = ">=0.12.2"
+"ruamel.yaml" = ">=0.16.12"
+sphinx = ">=3.2.0"
+sphinx-autodoc-typehints = ">=1.11.1"
+sphinx-jinja2-compat = ">=0.1.0"
+sphinx-prompt = ">=1.1.0"
+sphinx-tabs = ">=1.2.1,<3.5.0"
+tabulate = ">=0.8.7"
+typing-extensions = ">=3.7.4.3,<3.10.0.1 || >3.10.0.1"
+typing-inspect = {version = ">=0.6.0", markers = "python_version < \"3.8\""}
+
+[package.extras]
+testing = ["coincidence (>=0.4.3)", "pygments (>=2.7.4)"]
+all = ["coincidence (>=0.4.3)", "pygments (>=2.7.4)"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -2185,6 +2479,17 @@ scipy = ">=1.3"
 build = ["cython (>=0.29.26)"]
 develop = ["cython (>=0.29.26)"]
 docs = ["sphinx", "nbconvert", "jupyter-client", "ipykernel", "matplotlib", "nbformat", "numpydoc", "pandas-datareader"]
+
+[[package]]
+name = "tabulate"
+version = "0.8.10"
+description = "Pretty-print tabular data"
+category = "dev"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[package.extras]
+widechars = ["wcwidth"]
 
 [[package]]
 name = "tenacity"
@@ -2348,6 +2653,18 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "typing-inspect"
+version = "0.8.0"
+description = "Runtime inspection utilities for typing module."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mypy-extensions = ">=0.3.0"
+typing-extensions = ">=3.7.4"
+
+[[package]]
 name = "urllib3"
 version = "1.26.12"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -2408,6 +2725,25 @@ optional = ["wsaccel", "python-socks"]
 docs = ["sphinx-rtd-theme (>=0.5)", "Sphinx (>=3.4)"]
 
 [[package]]
+name = "xgboost"
+version = "1.6.2"
+description = "XGBoost Python Package"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+
+[package.extras]
+dask = ["dask", "pandas", "distributed"]
+datatable = ["datatable"]
+pandas = ["pandas"]
+plotting = ["graphviz", "matplotlib"]
+scikit-learn = ["scikit-learn"]
+
+[[package]]
 name = "yarl"
 version = "1.8.1"
 description = "Yet another URL library"
@@ -2435,7 +2771,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7.1,<3.11>"
-content-hash = "8e2533a8a0d8182769dfc3a88e8c6ba45ff69fe9d5511f3c93031f970c8e1175"
+content-hash = "f930b15db1ceb56c60737ec713d8025ae9093f447895303a0a4822d89460c29e"
 
 [metadata.files]
 aiohttp = [
@@ -2524,6 +2860,7 @@ anyio = [
     {file = "anyio-3.6.1-py3-none-any.whl", hash = "sha256:cb29b9c70620506a9a8f87a309591713446953302d7d995344d0d7c6c0c9a7be"},
     {file = "anyio-3.6.1.tar.gz", hash = "sha256:413adf95f93886e442aea925f3ee43baa5a765a64a0f52c6081894f9992fdd0b"},
 ]
+apeye = []
 appnope = [
     {file = "appnope-0.1.3-py2.py3-none-any.whl", hash = "sha256:265a455292d0bd8a72453494fa24df5a11eb18373a60c7c0430889f22548605e"},
     {file = "appnope-0.1.3.tar.gz", hash = "sha256:02bd91c4de869fbb1e1c50aafc4098827a7a54ab2f39d9dcba6c9547ed920e24"},
@@ -2565,6 +2902,7 @@ asynctest = [
 ]
 atomicwrites = []
 attrs = []
+autodocsumm = []
 babel = []
 backcall = [
     {file = "backcall-0.2.0-py2.py3-none-any.whl", hash = "sha256:fbbce6a29f263178a1f7915c1940bde0ec2b2a967566fe1c65c1dfb7422bd255"},
@@ -2580,6 +2918,7 @@ bump2version = [
     {file = "bump2version-1.0.1-py2.py3-none-any.whl", hash = "sha256:37f927ea17cde7ae2d7baf832f8e80ce3777624554a653006c9144f8017fe410"},
     {file = "bump2version-1.0.1.tar.gz", hash = "sha256:762cb2bfad61f4ec8e2bdf452c7c267416f8c70dd9ecb1653fd0bbb01fa936e6"},
 ]
+cachecontrol = []
 cachetools = [
     {file = "cachetools-5.2.0-py3-none-any.whl", hash = "sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db"},
     {file = "cachetools-5.2.0.tar.gz", hash = "sha256:6a94c6402995a99c3970cc7e4884bb60b4a8639938157eeed436098bf9831757"},
@@ -2600,6 +2939,7 @@ colorama = []
 commonmark = []
 coverage = []
 cryptography = []
+cssutils = []
 cycler = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
@@ -2613,11 +2953,13 @@ defusedxml = [
     {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
     {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
 ]
+dict2css = []
 distlib = []
 docutils = [
     {file = "docutils-0.17.1-py2.py3-none-any.whl", hash = "sha256:cf316c8370a737a022b72b56874f6602acf974a37a9fba42ec2876387549fc61"},
     {file = "docutils-0.17.1.tar.gz", hash = "sha256:686577d2e4c32380bb50cbb22f575ed742d58168cee37e99117a854bcd88f125"},
 ]
+domdf-python-tools = []
 entrypoints = [
     {file = "entrypoints-0.4-py3-none-any.whl", hash = "sha256:f174b5ff827504fd3cd97cc3f8649f3693f51538c7e4bdf3ef002c8429d42f9f"},
     {file = "entrypoints-0.4.tar.gz", hash = "sha256:b706eddaa9218a19ebcd67b56818f05bb27589b1ca9e8d797b74affad4ccacd4"},
@@ -2636,6 +2978,7 @@ flake8-typing-imports = [
     {file = "flake8_typing_imports-1.12.0-py2.py3-none-any.whl", hash = "sha256:4a072a5f5975caedfbd364fb54755983cae812e2b2f0125f3a71237868971a25"},
     {file = "flake8_typing_imports-1.12.0.tar.gz", hash = "sha256:d9482d7a3dd3d777915c7f8907a166b405aaf8314ecceb1be2b642e9375d87ed"},
 ]
+flaml = []
 fonttools = []
 frozenlist = []
 fsspec = []
@@ -2701,6 +3044,7 @@ google-resumable-media = [
     {file = "google_resumable_media-2.3.3-py2.py3-none-any.whl", hash = "sha256:5b52774ea7a829a8cdaa8bd2d4c3d4bc660c91b30857ab2668d0eb830f4ea8c5"},
 ]
 googleapis-common-protos = []
+html5lib = []
 identify = []
 idna = [
     {file = "idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
@@ -2763,6 +3107,8 @@ kaleido = [
 ]
 keyring = []
 kiwisolver = []
+lightgbm = []
+lockfile = []
 lxml = []
 markupsafe = [
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b1f75c4e7c2ac2ccdaec2b9022845dbb81880ca318bb7a0a01fbf7813e3812"},
@@ -2813,6 +3159,7 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 mistune = []
+msgpack = []
 multidict = [
     {file = "multidict-6.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0b9e95a740109c6047602f4db4da9949e6c5945cefbad34a1299775ddc9a62e2"},
     {file = "multidict-6.0.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:ac0e27844758d7177989ce406acc6a83c16ed4524ebc363c1f748cba184d89d3"},
@@ -2903,6 +3250,7 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3-py2.py3-none-any.whl", hash = "sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d"},
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
+natsort = []
 nbclassic = []
 nbclient = []
 nbconvert = []
@@ -3271,6 +3619,8 @@ rfc3986 = [
 ]
 rich = []
 rsa = []
+"ruamel.yaml" = []
+"ruamel.yaml.clib" = []
 scikit-learn = [
     {file = "scikit-learn-1.0.2.tar.gz", hash = "sha256:b5870959a5484b614f26d31ca4c17524b1b0317522199dc985c3b4256e030767"},
     {file = "scikit_learn-1.0.2-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:da3c84694ff693b5b3194d8752ccf935a665b8b5edc33a283122f4273ca3e687"},
@@ -3369,18 +3719,23 @@ sphinx = [
     {file = "Sphinx-4.5.0-py3-none-any.whl", hash = "sha256:ebf612653238bcc8f4359627a9b7ce44ede6fdd75d9d30f68255c7383d3a6226"},
     {file = "Sphinx-4.5.0.tar.gz", hash = "sha256:7bf8ca9637a4ee15af412d1a1d9689fec70523a68ca9bb9127c2f3eeb344e2e6"},
 ]
+sphinx-autodoc-typehints = []
 sphinx-copybutton = [
     {file = "sphinx-copybutton-0.5.0.tar.gz", hash = "sha256:a0c059daadd03c27ba750da534a92a63e7a36a7736dcf684f26ee346199787f6"},
     {file = "sphinx_copybutton-0.5.0-py3-none-any.whl", hash = "sha256:9684dec7434bd73f0eea58dda93f9bb879d24bff2d8b187b1f2ec08dfe7b5f48"},
 ]
+sphinx-jinja2-compat = []
+sphinx-prompt = []
 sphinx-rtd-theme = [
     {file = "sphinx_rtd_theme-1.0.0-py2.py3-none-any.whl", hash = "sha256:4d35a56f4508cfee4c4fb604373ede6feae2a306731d533f409ef5c3496fdbd8"},
     {file = "sphinx_rtd_theme-1.0.0.tar.gz", hash = "sha256:eec6d497e4c2195fa0e8b2016b337532b8a699a68bcb22a512870e16925c6a5c"},
 ]
+sphinx-tabs = []
 sphinx-toggleprompt = [
     {file = "sphinx-toggleprompt-0.2.0.tar.gz", hash = "sha256:ec2fa8ffd72cf681d1ef4b19bf1fce513d6c9b3a902165c1d04b44f79d9f4095"},
     {file = "sphinx_toggleprompt-0.2.0-py3-none-any.whl", hash = "sha256:27f417e92b6ae6db047f7ff6e4ccf0ca066c4de31b0477e1e333ff217dae3f5c"},
 ]
+sphinx-toolbox = []
 sphinxcontrib-applehelp = [
     {file = "sphinxcontrib-applehelp-1.0.2.tar.gz", hash = "sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58"},
     {file = "sphinxcontrib_applehelp-1.0.2-py2.py3-none-any.whl", hash = "sha256:806111e5e962be97c29ec4c1e7fe277bfd19e9652fb1a4392105b43e01af885a"},
@@ -3430,6 +3785,7 @@ statsmodels = [
     {file = "statsmodels-0.13.2-cp39-cp39-win_amd64.whl", hash = "sha256:39daab5a8a9332c8ea83d6464d065080c9ba65f236daf6a64aa18f64ef776fad"},
     {file = "statsmodels-0.13.2.tar.gz", hash = "sha256:77dc292c9939c036a476f1770f9d08976b05437daa229928da73231147cde7d4"},
 ]
+tabulate = []
 tenacity = [
     {file = "tenacity-8.0.1-py3-none-any.whl", hash = "sha256:f78f4ea81b0fabc06728c11dc2a8c01277bfc5181b321a4770471902e3eb844a"},
     {file = "tenacity-8.0.1.tar.gz", hash = "sha256:43242a20e3e73291a28bcbcacfd6e000b02d3857a9a9fff56b297a27afdc932f"},
@@ -3501,6 +3857,7 @@ typing-extensions = [
     {file = "typing_extensions-4.3.0-py3-none-any.whl", hash = "sha256:25642c956049920a5aa49edcdd6ab1e06d7e5d467fc00e0506c44ac86fbfca02"},
     {file = "typing_extensions-4.3.0.tar.gz", hash = "sha256:e6d2677a32f47fc7eb2795db1dd15c1f34eff616bcaf2cfb5e997f854fa1c4a6"},
 ]
+typing-inspect = []
 urllib3 = []
 virtualenv = []
 wcwidth = [
@@ -3512,5 +3869,6 @@ webencodings = [
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
 ]
 websocket-client = []
+xgboost = []
 yarl = []
 zipp = []

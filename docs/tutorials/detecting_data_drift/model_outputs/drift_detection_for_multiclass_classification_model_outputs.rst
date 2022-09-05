@@ -7,9 +7,9 @@ Drift Detection for Multiclass Classification  Model Outputs
 Why Perform Drift Detection for Model Outputs
 ---------------------------------------------
 
-The distribution of model outputs tells us how likely it is that our population
-will do what the model predicts. If the model's
-population changes, then our populations' actions will be different.
+The distribution of the model outputs tells us the model's evaluation of how likely
+the predicted outcome is to happen across the model's population.
+If the model's population changes, then our populations' actions will be different.
 The difference in actions is very important to know as soon as possible because
 they directly affect the business results from operating a machine learning model.
 
@@ -35,7 +35,8 @@ Just The Code
     ...         'upmarket_card': 'y_pred_proba_upmarket_card',
     ...         'highstreet_card': 'y_pred_proba_highstreet_card'
     ...     },
-    ...     timestamp_column_name='timestamp')
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_multiclass')
     >>>
     >>> calc.fit(reference_df)
     >>>
@@ -43,28 +44,28 @@ Just The Code
     >>>
     >>> display(results.data)
     >>>
-    >>> figure = results.plot(kind='predicted_labels_drift', plot_reference=True)
+    >>> figure = results.plot(kind='prediction_drift', plot_reference=True)
     >>> figure.show()
     >>>
-    >>> figure = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+    >>> figure = results.plot(kind='prediction_distribution', plot_reference=True)
     >>> figure.show()
     >>>
     >>> for label in calc.y_pred_proba.keys():
-    ...     figure = results.plot(kind='prediction_drift', class_label=label, plot_reference=True)
+    ...     figure = results.plot(kind='score_drift', class_label=label, plot_reference=True)
     ...     figure.show()
     >>>
     >>> for label in calc.y_pred_proba.keys():
-    ...     figure = results.plot(kind='prediction_distribution', class_label=label, plot_reference=True)
+    ...     figure = results.plot(kind='score_distribution', class_label=label, plot_reference=True)
     ...     figure.show()
 
 Walkthrough
 ------------------------------------------------
 
 NannyML detects data drift for :term:`Model Outputs` using the
-:ref:`Univariate Drift Detection methodology<univariate_drift_detection>`.
+:ref:`Univariate Drift Detection methodology<univariate_drift_detection_walkthrough>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
-You can read more about this in our section on :ref:`data periods<data-drift-periods>`
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
@@ -112,11 +113,10 @@ calculates the drift results on the data provided. An example using it can be se
     ...         'upmarket_card': 'y_pred_proba_upmarket_card',
     ...         'highstreet_card': 'y_pred_proba_highstreet_card'
     ...     },
-    ...     timestamp_column_name='timestamp')
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_multiclass')
     >>>
     >>> calc.fit(reference_df)
-    >>>
-    >>> results = calc.calculate(analysis_df)
 
 We can then display the results in a table, or as plots.
 
@@ -148,51 +148,51 @@ We can then display the results in a table, or as plots.
 |  9 | [54000:59999] |         54000 |       59999 | 2020-12-20 18:31:09 | 2021-01-01 22:57:55 |          |    164.407    |            0     | True           |               0.05 |                        0.1673     |                               0     | True                              |                                  0.05 |                         0.14755    |                                0     | True                               |                                   0.05 |                            0.20505   |                                  0     | True                                 |                                     0.05 |
 +----+---------------+---------------+-------------+---------------------+---------------------+----------+---------------+------------------+----------------+--------------------+-----------------------------------+-------------------------------------+-----------------------------------+---------------------------------------+------------------------------------+--------------------------------------+------------------------------------+----------------------------------------+--------------------------------------+----------------------------------------+--------------------------------------+------------------------------------------+
 
-NannyML can show the statistical properties of the drift in model outputs as a plot.
+NannyML can show the statistical properties of the drift in model scores as a plot.
 
 .. code-block:: python
 
     >>> for label in calc.y_pred_proba.keys():
-    ...     figure = results.plot(kind='prediction_drift', class_label=label, plot_reference=True)
+    ...     figure = results.plot(kind='score_drift', class_label=label, plot_reference=True)
     ...     figure.show()
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-drift-prepaid_card.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-drift-prepaid_card.svg
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-drift-upmarket_card.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-drift-upmarket_card.svg
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-drift-highstreet_card.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-drift-highstreet_card.svg
 
-NannyML can also visualise how the distributions of the model predictions evolved over time.
+NannyML can also visualise how the distributions of the model scores evolved over time.
 
 .. code-block:: python
 
     >>> for label in calc.y_pred_proba.keys():
-    ...     figure = results.plot(kind='prediction_distribution', class_label=label, plot_reference=True)
+    ...     figure = results.plot(kind='score_distribution', class_label=label, plot_reference=True)
     ...     figure.show()
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-distribution-prepaid_card.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-distribution-prepaid_card.svg
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-distribution-upmarket_card.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-distribution-upmarket_card.svg
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-distribution-highstreet_card.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-distribution-highstreet_card.svg
 
 NannyML can show the statistical properties of the drift in the predicted labels as a plot.
 
 .. code-block:: python
 
-     >>> figure = results.plot(kind='predicted_labels_drift', plot_reference=True)
+     >>> figure = results.plot(kind='prediction_drift', plot_reference=True)
      >>> figure.show()
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-predicted-labels-drift.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-drift.svg
 
 NannyML can also visualise how the distributions of the predicted labels evolved over time.
 
 .. code-block:: python
 
-     >>> figure = results.plot(kind='predicted_labels_distribution', plot_reference=True)
+     >>> figure = results.plot(kind='prediction_distribution', plot_reference=True)
      >>> figure.show()
 
-.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-predicted-labels-distribution.svg
+.. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-distribution.svg
 
 
 

@@ -19,17 +19,18 @@ Just The Code
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>>
+
     >>> # Load synthetic data
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
+    >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
     >>> display(reference.head())
-    >>>
+
     >>> # Define feature columns
     >>> feature_column_names = [
     ...     col for col in reference.columns if col not in [
     ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
     ...     ]]
-    >>>
+
     >>> calc = nml.DataReconstructionDriftCalculator(
     ...     feature_column_names=feature_column_names,
     ...     timestamp_column_name='timestamp',
@@ -38,7 +39,8 @@ Just The Code
     >>> calc.fit(reference)
     >>> results = calc.calculate(analysis)
     >>> display(results.data)
-    >>>
+    >>> display(results.calculator.previous_reference_results)
+
     >>> figure = results.plot(plot_reference=True)
     >>> figure.show()
 
@@ -65,9 +67,10 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
     >>> import nannyml as nml
     >>> import pandas as pd
     >>> from IPython.display import display
-    >>>
+
     >>> # Load synthetic data
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+    >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
+    >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
     >>> display(reference.head())
 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
@@ -85,7 +88,9 @@ Let's start by loading some synthetic data provided by the NannyML package, and 
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
 
 The :class:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
-module implements this functionality.  We need to instantiate it with appropriate parameters - the column headers of the features that we want to run drift detection on, and the timestamp column header. The features can be passed in as a simple list of strings, but here we have created this list by excluding the columns in the dataframe that are not features, and passed that into the argument.
+module implements this functionality.  We need to instantiate it with appropriate parameters - the column names of the features that we want to run drift detection on,
+and the timestamp column name. The features can be passed in as a simple list of strings. Alternatively we can create a list by excluding the columns in the dataframe that are not features,
+and pass them into the argument.
 
 Next the :meth:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.fit` method needs
 to be called on the reference data where results will be based off. Then the
@@ -99,7 +104,7 @@ calculate the multivariate drift results on the data provided to it.
     ...     col for col in reference.columns if col not in [
     ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
     ...     ]]
-    >>>
+
     >>> calc = nml.DataReconstructionDriftCalculator(
     ...     feature_column_names=feature_column_names,
     ...     timestamp_column_name='timestamp',
@@ -121,9 +126,9 @@ An example where custom imputation strategies are used can be seen below.
     ...     col for col in reference.columns if col not in [
     ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
     ...     ]]
-    >>>
+
     >>> from sklearn.impute import SimpleImputer
-    >>>
+
     >>> calc = nml.DataReconstructionDriftCalculator(
     ...     feature_column_names=feature_column_names,
     ...     timestamp_column_name='timestamp',
@@ -168,6 +173,40 @@ method as a dataframe.
 |  9 | [45000:49999] |         45000 |       49999 | 2020-09-01 02:46:13 | 2021-01-01 04:29:32 |                1.24258 |           1.09658 |           1.13801 | True    |
 +----+---------------+---------------+-------------+---------------------+---------------------+------------------------+-------------------+-------------------+---------+
 
+The drift results from the reference data are accessible from the properties of the results object:
+
+
+.. code-block:: python
+
+    >>> display(results.calculator.previous_reference_results)
+
+
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|    | key           |   start_index |   end_index | start_date          | end_date            |   sampling_error |   reconstruction_error |   upper_confidence_bound |   lower_confidence_bound |   lower_threshold |   upper_threshold | alert   | period    |
++====+===============+===============+=============+=====================+=====================+==================+========================+==========================+==========================+===================+===================+=========+===========+
+|  0 | [0:4999]      |             0 |        4999 | 2014-05-09 22:27:20 | 2014-09-09 08:18:27 |        0.0069621 |                1.12096 |                  1.14185 |                  1.10007 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  1 | [5000:9999]   |          5000 |        9999 | 2014-09-09 09:13:35 | 2015-01-09 00:02:51 |        0.0069621 |                1.11807 |                  1.13896 |                  1.09718 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  2 | [10000:14999] |         10000 |       14999 | 2015-01-09 00:04:43 | 2015-05-09 15:54:26 |        0.0069621 |                1.11724 |                  1.13812 |                  1.09635 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  3 | [15000:19999] |         15000 |       19999 | 2015-05-09 16:02:08 | 2015-09-07 07:14:37 |        0.0069621 |                1.12551 |                  1.1464  |                  1.10463 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  4 | [20000:24999] |         20000 |       24999 | 2015-09-07 07:27:47 | 2016-01-08 16:02:05 |        0.0069621 |                1.10945 |                  1.13033 |                  1.08856 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  5 | [25000:29999] |         25000 |       29999 | 2016-01-08 17:22:00 | 2016-05-09 11:09:39 |        0.0069621 |                1.12276 |                  1.14365 |                  1.10187 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  6 | [30000:34999] |         30000 |       34999 | 2016-05-09 11:19:36 | 2016-09-04 03:30:35 |        0.0069621 |                1.10714 |                  1.12802 |                  1.08625 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  7 | [35000:39999] |         35000 |       39999 | 2016-09-04 04:09:35 | 2017-01-03 18:48:21 |        0.0069621 |                1.12713 |                  1.14802 |                  1.10625 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  8 | [40000:44999] |         40000 |       44999 | 2017-01-03 19:00:51 | 2017-05-03 02:34:24 |        0.0069621 |                1.11424 |                  1.13512 |                  1.09335 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+|  9 | [45000:49999] |         45000 |       49999 | 2017-05-03 02:49:38 | 2017-08-31 03:10:29 |        0.0069621 |                1.11045 |                  1.13134 |                  1.08956 |           1.09658 |           1.13801 | False   | reference |
++----+---------------+---------------+-------------+---------------------+---------------------+------------------+------------------------+--------------------------+--------------------------+-------------------+-------------------+---------+-----------+
+
+
+
 NannyML can also visualize the multivariate drift results in a plot. Our plot contains several key elements.
 
 * The purple step plot shows the reconstruction error in each chunk of the analysis period. Thick squared point
@@ -195,12 +234,12 @@ is happening in our input data.
 
 
 Insights
------------------------
+--------
 
 Using this method of detecting drift we can identify changes that we may not have seen using solely univariate methods.
 
 What Next
------------------------
+---------
 
 After reviewing the results we may want to look at the :ref:`drift results of individual features<univariate_drift_detection>`
 to see what changed in the model's feature's individually.

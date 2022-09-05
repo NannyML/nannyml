@@ -39,6 +39,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx_toggleprompt',
     'sphinx_copybutton',
+    'sphinx_toolbox.collapse',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

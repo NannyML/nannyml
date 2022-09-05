@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
+from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -30,7 +31,7 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
     def calculator_name(self) -> str:
         return "multivariate_data_reconstruction_feature_drift"
 
-    def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> go.Figure:
+    def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
         The different plot kinds that are available:

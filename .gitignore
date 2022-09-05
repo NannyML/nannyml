@@ -125,3 +125,7 @@ docs/index.html
 docs/examples/*.svg
 
 *.code-workspace
+
+nannyml.yaml
+nann.yml
+config/*

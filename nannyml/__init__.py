@@ -43,6 +43,7 @@ from .datasets import (
     load_modified_california_housing_dataset,
     load_synthetic_binary_classification_dataset,
     load_synthetic_car_loan_dataset,
+    load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
 from .drift import (
@@ -57,4 +58,4 @@ from .drift import (
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .performance_calculation import PerformanceCalculator
-from .performance_estimation import CBPE
+from .performance_estimation import CBPE, DEE

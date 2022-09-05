@@ -3,18 +3,16 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the realized performance calculation and provides plotting functionality."""
-from typing import Union
+from typing import Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
-
-from .._typing import derive_use_case
-from .metrics import Metric, MetricFactory
 
 
 class PerformanceCalculatorResult(AbstractCalculatorResult):
@@ -46,7 +44,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         plot_reference: bool = False,
         *args,
         **kwargs,
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Render realized performance metrics.
 
             The following kinds of plots are available:
@@ -59,7 +57,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         ----------
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
-        metric: Union[str, Metric], default=None
+        metric: Union[str, nannyml.performance_calculation.metrics.base.Metric], default=None
             The name of the metric to plot. Value should be one of:
             - 'roc_auc'
             - 'f1'
@@ -131,7 +129,7 @@ def _plot_performance_metric(
     ----------
     results_data : pd.DataFrame
         Results of the data CBPE performance estimation
-    metric: str, default=None
+    metric: Union[str, nannyml.performance_calculation.metrics.base.Metric]
             The name of the metric to plot. Value should be one of:
             - 'roc_auc'
             - 'f1'
@@ -150,7 +148,7 @@ def _plot_performance_metric(
     results_data = results_data.copy()
 
     if isinstance(metric, str):
-        metric = MetricFactory.create(metric, derive_use_case(calculator.y_pred_proba), {'calculator': calculator})
+        metric = MetricFactory.create(metric, calculator.problem_type, {'calculator': calculator})
 
     plot_period_separator = plot_reference
 
