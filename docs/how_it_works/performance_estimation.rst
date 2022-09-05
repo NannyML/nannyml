@@ -349,7 +349,7 @@ used to train another weak learner and improve the overall output of an ensemble
 functions which are directionless (like already mentioned absolute or squared error). This is a significantly
 easier problem to solve. For this reason, the :term:`nanny model` algorithm does not have to be better than the child
 algorithm, it can even be the same algorithm. Have a look at the simple example with code shown
-:ref:`implementation details<dee_implementation_details>` to see linear regression algorithm used by :term:`nanny model` that
+:ref:`implementation details<dle_implementation_details>` to see linear regression algorithm used by :term:`nanny model` that
 estimates performance of another linear regression model.
 
 
