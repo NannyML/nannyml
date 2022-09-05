@@ -14,6 +14,7 @@ Just The Code
 Walkthrough
 ===========
 
+
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts the selling price of a used car.
 You can :ref:`learn more about this dataset<dataset-synthetic-regression>`.
 
@@ -23,6 +24,7 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
 not used during :ref:`performance estimation<performance-estimation>`.
 But as it is required to calculate performance, the first thing to do in this case is to join the analysis target values with the analysis data.
+
 
 .. nbimport::
     :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
@@ -97,9 +99,17 @@ The results can be plotted for visual inspection:
     :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 8
 
-.. image:: /_static/tutorial-perf-guide-regression-rmse.svg
+.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MAE.svg
 
-.. image:: /_static/tutorial-perf-guide-regression-rmsle.svg
+.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MAPE.svg
+
+.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MSE.svg
+
+.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MSLE.svg
+
+.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-RMSE.svg
+
+.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-RMSLE.svg
 
 
 Insights
