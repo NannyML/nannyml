@@ -18,9 +18,10 @@ from nannyml.performance_estimation.direct_error_estimation.result import Result
 
 
 class DEE(AbstractEstimator):
-    """The Direct Error Estimator (DEE) estimates the error between the prediction and the target
-    before the targets become known. The error is defined from the regression performance metric
-    specified. For all metrics used the error function is positive.
+    """The Direct :term:`Loss` Estimator (DLE) estimates the :term:`loss<Loss>` resulting
+    from the difference between the prediction and the target before the targets become known.
+    The :term:`loss<Loss>` is defined from the regression performance metric
+    specified. For all metrics used the :term:`loss<Loss>` function is positive.
 
     It uses an internal
     `LGBMRegressor <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_

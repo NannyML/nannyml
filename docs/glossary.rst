@@ -76,6 +76,11 @@ Glossary
         In the absence of targets performance in the analysis period can be estimated.
 
         You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
+    
+    Error
+        The error of a statistic on a sample is defined as the difference between the value of the observation and the true value.
+        The sample size can sometimes be 1 but is usually bigger. When the error consists only of the effects
+        of sampling we call it :term:`sampling error<Sampling Error>`.
 
     Estimated Performance
         The performance the monitored model is expected to have as a result of the :term:`Performance Estimation` process.
@@ -129,16 +134,24 @@ Glossary
         You can find more information on the `wikipedia KS test page`_. At NannyML we use the `scipy implementation of the
         two sample KS test`_.
 
+    Loss
+        Loss is a real number that quantifies the negative aspects associated with an event. It is defined by
+        a :term:`Loss Function` that, for the purposes of Model Monitoring, comes from a specified performance metric.
+        NannyML uses loss for :ref:`Performance Estimation for Regression<how-it-works-dee>`
+        with the constraint that the :term:`Loss Function` is positive.
+
+    Loss Function
+        A `loss function`_ is a function that maps the :term:`residuals<Residual>` to a real number that
+        represents a :term:`loss<Loss>` associated with the event.
+
     Model inputs
         Every :term:`Feature` used by the model.
-
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.
 
     Model predictions
         A synonym for :term:`Model outputs`.
-
 
     Multivariate Drift Detection
         Drift Detection steps that involve all model features in order to
@@ -192,6 +205,12 @@ Glossary
         lossless there will always be a difference between the original and the reconstructed data. This difference
         is captured by the reconstruction error.
 
+    Residual
+        The residual of a statistic on a sample is defined as the difference between the value of the observation and the expected value.
+        The sample size can sometimes be 1 but is usually bigger.
+        For example the mean squared error regression metric could also be called mean squared residual because it uses the difference
+        between expected value (`y_pred`) and the observed results (`y_true`).
+
     Sampling Error
         Sampling errors are statistical errors that arise when a sample does not accurately represent the whole population.
         They are the difference between the real values of the population, which we don't always know, and the values
@@ -242,3 +261,4 @@ Glossary
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2_contingency.html
 .. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_analysis
 .. _`Wikipedia Standard Error page`: https://en.wikipedia.org/wiki/Standard_error
+.. _`loss function`: https://en.wikipedia.org/wiki/Loss_function`
