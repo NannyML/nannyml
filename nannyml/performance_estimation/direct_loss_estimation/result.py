@@ -6,7 +6,7 @@ from plotly.graph_objects import Figure
 from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.direct_error_estimation.metrics import Metric, MetricFactory
+from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric, MetricFactory
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
@@ -15,9 +15,9 @@ class Result(AbstractEstimatorResult):
     def __init__(self, results_data: pd.DataFrame, estimator: AbstractEstimator):
         super().__init__(results_data)
 
-        from .dee import DEE
+        from .dle import DLE
 
-        if not isinstance(estimator, DEE):
+        if not isinstance(estimator, DLE):
             raise RuntimeError(
                 f"{estimator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
             )

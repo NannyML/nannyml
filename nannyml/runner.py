@@ -27,7 +27,7 @@ from nannyml.io.base import Writer
 from nannyml.io.file_writer import FileWriter
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.direct_error_estimation import DEE, DEFAULT_METRICS
+from nannyml.performance_estimation.direct_loss_estimation import DEFAULT_METRICS, DLE
 
 _logger = logging.getLogger(__name__)
 
@@ -512,7 +512,7 @@ def _run_dee_performance_estimation(
     try:
         if console:
             console.log('fitting on reference data')
-        estimator = DEE(  # type: ignore
+        estimator = DLE(  # type: ignore
             feature_column_names=column_mapping['features'],
             y_true=column_mapping['y_true'],
             y_pred=column_mapping['y_pred'],

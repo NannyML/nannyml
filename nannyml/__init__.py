@@ -58,4 +58,4 @@ from .drift import (
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .performance_calculation import PerformanceCalculator
-from .performance_estimation import CBPE, DEE
+from .performance_estimation import CBPE, DLE

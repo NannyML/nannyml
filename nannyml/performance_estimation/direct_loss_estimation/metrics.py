@@ -61,10 +61,10 @@ class Metric(abc.ABC):
         self.display_name = display_name
         self.column_name = column_name
 
-        from .dee import DEE
+        from .dle import DLE
 
-        if not isinstance(estimator, DEE):
-            raise RuntimeError(f"{estimator.__class__.__name__} is not an instance of type " f"DEE")
+        if not isinstance(estimator, DLE):
+            raise RuntimeError(f"{estimator.__class__.__name__} is not an instance of type " f"DLE")
 
         self.estimator = estimator
 

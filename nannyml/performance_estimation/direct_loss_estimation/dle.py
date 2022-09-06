@@ -12,12 +12,12 @@ from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.direct_error_estimation import DEFAULT_METRICS
-from nannyml.performance_estimation.direct_error_estimation.metrics import Metric, MetricFactory
-from nannyml.performance_estimation.direct_error_estimation.result import Result
+from nannyml.performance_estimation.direct_loss_estimation import DEFAULT_METRICS
+from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric, MetricFactory
+from nannyml.performance_estimation.direct_loss_estimation.result import Result
 
 
-class DEE(AbstractEstimator):
+class DLE(AbstractEstimator):
     """The Direct :term:`Loss` Estimator (DLE) estimates the :term:`loss<Loss>` resulting
     from the difference between the prediction and the target before the targets become known.
     The :term:`loss<Loss>` is defined from the regression performance metric
@@ -52,7 +52,7 @@ class DEE(AbstractEstimator):
         hyperparameter_tuning_config: Dict[str, Any] = None,
     ):
         """
-        Creates a new Direct Error Estimator.
+        Creates a new Direct Loss Estimator.
 
         Parameters
         ----------
@@ -109,8 +109,8 @@ class DEE(AbstractEstimator):
 
         Returns
         -------
-        estimator: DEE
-            A new DEE instance to be fitted on reference data.
+        estimator: DLE
+            A new DLE instance to be fitted on reference data.
 
         Examples
         --------
@@ -118,7 +118,7 @@ class DEE(AbstractEstimator):
 
         >>> import nannyml as nml
         >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
-        >>> estimator = nml.DEE(
+        >>> estimator = nml.DLE(
         ...     feature_column_names=['car_age', 'km_driven', 'price_new', 'accident_count',
         ...                           'door_count', 'fuel', 'transmission'],
         ...     y_pred='y_pred',
@@ -134,7 +134,7 @@ class DEE(AbstractEstimator):
 
         >>> import nannyml as nml
         >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
-        >>> estimator = nml.DEE(
+        >>> estimator = nml.DLE(
         ...     feature_column_names=['car_age', 'km_driven', 'price_new', 'accident_count',
         ...                           'door_count', 'fuel', 'transmission'],
         ...     y_pred='y_pred',

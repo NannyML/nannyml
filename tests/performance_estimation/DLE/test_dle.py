@@ -11,8 +11,8 @@ from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.direct_error_estimation import DEE, Result
-from nannyml.performance_estimation.direct_error_estimation.metrics import MetricFactory
+from nannyml.performance_estimation.direct_loss_estimation import DLE, Result
+from nannyml.performance_estimation.direct_loss_estimation.metrics import MetricFactory
 
 
 class FakeEstimator(AbstractEstimator):
@@ -36,8 +36,8 @@ def regression_feature_columns(regression_data) -> List[str]:
 
 
 @pytest.fixture(scope='module')
-def direct_error_estimator(regression_feature_columns) -> DEE:
-    return DEE(
+def direct_error_estimator(regression_feature_columns) -> DLE:
+    return DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
         y_true='y_true',
@@ -60,7 +60,7 @@ def estimates(regression_data, direct_error_estimator):
 
 
 @pytest.fixture(scope='module')
-def hypertuned_estimates(regression_data, direct_error_estimator: DEE):
+def hypertuned_estimates(regression_data, direct_error_estimator: DLE):
     direct_error_estimator.tune_hyperparameters = True
     direct_error_estimator.hyperparameter_tuning_config = {
         "time_budget": 3,  # total running time in seconds
@@ -85,7 +85,7 @@ def hypertuned_estimates(regression_data, direct_error_estimator: DEE):
 
 
 @pytest.fixture(scope='module')
-def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DEE):
+def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DLE):
     direct_error_estimator.hyperparameters = {
         'boosting_type': 'gbdt',
         'class_weight': None,
@@ -122,7 +122,7 @@ def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DEE
 
 
 def test_direct_error_estimator_does_not_tune_hyperparameters_by_default(regression_feature_columns):
-    sut = DEE(
+    sut = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
         y_true='y_true',
@@ -134,7 +134,7 @@ def test_direct_error_estimator_does_not_tune_hyperparameters_by_default(regress
 
 
 def test_direct_error_estimator_has_default_hyperparameter_tuning_config(regression_feature_columns):
-    sut = DEE(
+    sut = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
         y_true='y_true',
@@ -146,7 +146,7 @@ def test_direct_error_estimator_has_default_hyperparameter_tuning_config(regress
 
 
 def test_direct_error_estimator_sets_custom_hyperparameter_tuning_config_when_given(regression_feature_columns):
-    sut = DEE(
+    sut = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
         y_true='y_true',

@@ -6,7 +6,7 @@ import pytest
 
 from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
-from nannyml.performance_estimation.direct_error_estimation.metrics import MetricFactory
+from nannyml.performance_estimation.direct_loss_estimation.metrics import MetricFactory
 
 
 class FakeEstimator(AbstractEstimator):
@@ -18,6 +18,6 @@ class FakeEstimator(AbstractEstimator):
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
-def test_metric_creation_with_non_dee_estimator_raises_runtime_exc(metric):
-    with pytest.raises(RuntimeError, match='not an instance of type DEE'):
+def test_metric_creation_with_non_dle_estimator_raises_runtime_exc(metric):
+    with pytest.raises(RuntimeError, match='not an instance of type DLE'):
         MetricFactory.create(key=metric, problem_type=ProblemType.REGRESSION, kwargs={'estimator': FakeEstimator()})
