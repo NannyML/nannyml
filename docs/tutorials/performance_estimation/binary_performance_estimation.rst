@@ -14,40 +14,9 @@ Performance Estimation<performance-estimation-deep-dive>`.
 Just The Code
 ----------------
 
-.. code-block:: python
-
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-
-    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-
-    >>> display(reference_df.head(3))
-
-    >>> estimator = nml.CBPE(
-    ...     y_pred_proba='y_pred_proba',
-    ...     y_pred='y_pred',
-    ...     y_true='work_home_actual',
-    ...     timestamp_column_name='timestamp',
-    ...     problem_type='classification_binary',
-    ...     metrics=['roc_auc', 'f1'],
-    ...     chunk_size=5000
-    >>> )
-
-    >>> estimator.fit(reference_df)
-    >>>
-    >>> results = estimator.estimate(analysis_df)
-
-    >>> display(results.data.head(3))
-    >>>
-    >>> for metric in estimator.metrics:
-    >>>     fig1 = results.plot(kind='performance', metric=metric)
-    >>>     fig1.show()
-
-    >>> for metric in estimator.metrics:
-    >>>     fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
-    >>>     fig2.show()
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cells: 1 3 4 6 8
 
 
 Walkthrough
@@ -61,27 +30,13 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 
 We start by loading the dataset we 'll be using:
 
-.. code-block:: python
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cells: 1
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-
-    >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-    >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-
-    >>> display(reference_df.head(3))
-
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
-+====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
-|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |        0 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-
+.. nbtable::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cell: 2
 
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
@@ -100,18 +55,10 @@ The following metrics are currently supported:
 
 For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cells: 3
 
-    >>> estimator = nml.CBPE(
-    ...     y_pred_proba='y_pred_proba',
-    ...     y_pred='y_pred',
-    ...     y_true='work_home_actual',
-    ...     timestamp_column_name='timestamp',
-    ...     problem_type='classification_binary',
-    ...     metrics=['roc_auc', 'f1'],
-    ...     chunk_size=5000)
-
-    >>> estimator.fit(reference_df)
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
@@ -124,22 +71,13 @@ the ``analysis_df`` data.
 NannyML can then output a dataframe that contains all the results. Let's have a look at the results for analysis period
 only.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cells: 4
 
-
-  >>> results = estimator.estimate(analysis_df)
-  >>> display(results.data.head(3))
-
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
-|    | key           |   start_index |   end_index | start_date          | end_date            |   realized_roc_auc |   estimated_roc_auc |   upper_confidence_roc_auc |   lower_confidence_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   realized_f1 |   estimated_f1 |   upper_confidence_f1 |   lower_confidence_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
-+====+===============+===============+=============+=====================+=====================+====================+=====================+============================+============================+===========================+===========================+=================+===============+================+=======================+=======================+======================+======================+============+
-|  0 | [0:4999]      |             0 |        4999 | 2017-08-31 04:20:00 | 2018-01-02 00:45:44 |                nan |            0.968631 |                   0.968988 |                   0.968273 |                  0.963317 |                   0.97866 | False           |           nan |       0.948555 |              0.949506 |              0.947604 |             0.935047 |             0.961094 | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
-|  1 | [5000:9999]   |          5000 |        9999 | 2018-01-02 01:13:11 | 2018-05-01 13:10:10 |                nan |            0.969044 |                   0.969401 |                   0.968686 |                  0.963317 |                   0.97866 | False           |           nan |       0.946578 |              0.947529 |              0.945627 |             0.935047 |             0.961094 | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
-|  2 | [10000:14999] |         10000 |       14999 | 2018-05-01 14:25:25 | 2018-09-01 15:40:40 |                nan |            0.969444 |                   0.969801 |                   0.969086 |                  0.963317 |                   0.97866 | False           |           nan |       0.948807 |              0.949758 |              0.947856 |             0.935047 |             0.961094 | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
-
+.. nbtable::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cell: 5
 
 .. _performance-estimation-thresholds:
 
@@ -177,11 +115,9 @@ Description of tabular results above explains how the
 :term:`confidence bands<Confidence Band>` and thresholds are calculated. Additional information is shown in the hover (these are
 interactive plots, though only static views are included here).
 
-.. code-block:: python
-
-    >>> for metric in estimator.metrics:
-    ...     fig1 = results.plot(kind='performance', metric=metric)
-    ...     fig1.show()
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cells: 6
 
 
 .. image:: ../../_static/tutorial-perf-est-guide-analysis-roc_auc.svg
@@ -200,11 +136,9 @@ performance on the reference period (where the target was available).
   line. This facilitates comparison of the estimation against the reference period, and sets expectations on the
   variability of the performance.
 
-.. code-block:: python
-
-    >>> for metric in estimator.metrics:
-    ...     fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
-    ...     fig2.show()
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :cells: 8
 
 
 .. image:: ../../_static/tutorial-perf-est-guide-with-ref-roc_auc.svg

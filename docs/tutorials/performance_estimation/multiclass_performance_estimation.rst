@@ -11,48 +11,13 @@ Performance Estimation<performance-estimation-deep-dive>`.
 Just The Code
 -------------
 
-.. code-block:: python
-
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-
-    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
-    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-
-    >>> display(reference_df.head(3))
-
-    >>> estimator = nml.CBPE(
-    ...     y_pred_proba={
-    ...       'prepaid_card': 'y_pred_proba_prepaid_card',
-    ...       'highstreet_card': 'y_pred_proba_highstreet_card',
-    ...       'upmarket_card': 'y_pred_proba_upmarket_card'},
-    ...     y_pred='y_pred',
-    ...     y_true='y_true',
-    ...     timestamp_column_name='timestamp',
-    ...     problem_type='classification_multiclass',
-    ...     metrics=['roc_auc', 'f1'],
-    ...     chunk_size=6000,
-    >>> )
-
-    >>> estimator.fit(reference_df)
-
-    >>> results = estimator.estimate(analysis_df)
-
-    >>> display(results.data.head(3))
-
-    >>> for metric in estimator.metrics:
-    ...     fig1 = results.plot(kind='performance', metric=metric)
-    ...     fig1.show()
-
-    >>> for metric in estimator.metrics:
-    ...     fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
-    ...     fig2.show()
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cells: 1 3 4 6 8
 
 
 Walkthrough
 ------------------------
-
 
 
 For simplicity the guide is based on a synthetic dataset where the monitored model predicts
@@ -62,27 +27,13 @@ which type of credit card product new customers should be assigned to. You can l
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cells: 1
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-
-    >>> reference_df = nml.load_synthetic_multiclass_classification_dataset()[0]
-    >>> analysis_df = nml.load_synthetic_multiclass_classification_dataset()[1]
-
-    >>> display(reference_df.head(3))
-
-
-+----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
-|    | acq_channel   |   app_behavioral_score |   requested_credit_limit | app_channel   |   credit_bureau_score |   stated_income | is_customer   | partition   |   identifier | timestamp           |   y_pred_proba_prepaid_card |   y_pred_proba_highstreet_card |   y_pred_proba_upmarket_card | y_pred       | y_true        |
-+====+===============+========================+==========================+===============+=======================+=================+===============+=============+==============+=====================+=============================+================================+==============================+==============+===============+
-|  0 | Partner3      |               1.80823  |                      350 | web           |                   309 |           15000 | True          | reference   |        60000 | 2020-05-02 02:01:30 |                        0.97 |                           0.03 |                         0    | prepaid_card | prepaid_card  |
-+----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
-|  1 | Partner2      |               4.38257  |                      500 | mobile        |                   418 |           23000 | True          | reference   |        60001 | 2020-05-02 02:03:33 |                        0.87 |                           0.13 |                         0    | prepaid_card | prepaid_card  |
-+----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
-|  2 | Partner2      |              -0.787575 |                      400 | web           |                   507 |           24000 | False         | reference   |        60002 | 2020-05-02 02:04:49 |                        0.47 |                           0.35 |                         0.18 | prepaid_card | upmarket_card |
-+----+---------------+------------------------+--------------------------+---------------+-----------------------+-----------------+---------------+-------------+--------------+---------------------+-----------------------------+--------------------------------+------------------------------+--------------+---------------+
+.. nbtable::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cell: 2
 
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
@@ -101,21 +52,9 @@ The following metrics are currently supported:
 
 For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
-.. code-block:: python
-
-    >>> estimator = nml.CBPE(
-    ...     y_pred_proba={
-    ...         'prepaid_card': 'y_pred_proba_prepaid_card',
-    ...         'highstreet_card': 'y_pred_proba_highstreet_card',
-    ...         'upmarket_card': 'y_pred_proba_upmarket_card'},
-    ...     y_pred='y_pred',
-    ...     y_true='y_true',
-    ...     timestamp_column_name='timestamp',
-    ...     problem_type='classification_multiclass',
-    ...     metrics=['roc_auc', 'f1'],
-    ...     chunk_size=6000,
-    >>> )
-    >>> estimator.fit(reference_df)
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cells: 3
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
@@ -128,21 +67,13 @@ the ``analysis_df`` data.
 NannyML can then output a dataframe that contains all the results. Let's have a look at the results for analysis period
 only.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cells: 4
 
-  >>> results = estimator.estimate(analysis_df)
-  >>> display(results.data.head(3))
-
-
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
-|    | key           |   start_index |   end_index | start_date          | end_date            |   realized_roc_auc |   estimated_roc_auc |   upper_confidence_roc_auc |   lower_confidence_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   realized_f1 |   estimated_f1 |   upper_confidence_f1 |   lower_confidence_f1 |   upper_threshold_f1 |   lower_threshold_f1 | alert_f1   |
-+====+===============+===============+=============+=====================+=====================+====================+=====================+============================+============================+===========================+===========================+=================+===============+================+=======================+=======================+======================+======================+============+
-|  0 | [0:5999]      |             0 |        5999 | 2020-09-01 03:10:01 | 2020-09-13 16:15:10 |                nan |            0.907037 |                   0.907864 |                   0.90621  |                  0.900902 |                  0.913516 | False           |           nan |       0.753301 |              0.755053 |              0.75155  |             0.741254 |             0.764944 | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
-|  1 | [6000:11999]  |          6000 |       11999 | 2020-09-13 16:15:32 | 2020-09-25 19:48:42 |                nan |            0.909948 |                   0.910776 |                   0.909121 |                  0.900902 |                  0.913516 | False           |           nan |       0.756422 |              0.758173 |              0.75467  |             0.741254 |             0.764944 | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
-|  2 | [12000:17999] |         12000 |       17999 | 2020-09-25 19:50:04 | 2020-10-08 02:53:47 |                nan |            0.909958 |                   0.910786 |                   0.909131 |                  0.900902 |                  0.913516 | False           |           nan |       0.758166 |              0.759917 |              0.756414 |             0.741254 |             0.764944 | False      |
-+----+---------------+---------------+-------------+---------------------+---------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+---------------+----------------+-----------------------+-----------------------+----------------------+----------------------+------------+
+.. nbtable::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cell: 5
 
 Apart from chunk-related data, the results data have the following columns for each metric
 that was estimated:
@@ -179,11 +110,9 @@ Description of tabular results above explains how the
 interactive plots, though only static views are included here).
 
 
-.. code-block:: python
-
-    >>> for metric in estimator.metrics:
-    ...     fig1 = results.plot(kind='performance', metric=metric)
-    ...     fig1.show()
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cells: 6
 
 
 .. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-roc_auc.svg
@@ -202,12 +131,9 @@ performance on reference period (where the target was available).
   line. This facilitates interpretation of the estimation, as it helps to set expectations on the variability of
   the realised performance.
 
-.. code-block:: python
-
-    >>> for metric in estimator.metrics:
-    ...     fig2 = results.plot(kind='performance', plot_reference=True, metric=metric)
-    ...     fig2.show()
-
+.. nbimport::
+    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :cells: 8
 
 .. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-roc_auc.svg
 
