@@ -585,9 +585,9 @@ Just like CBPE, it will handle covariate shifts well. The detailed assumptions a
     only. Heat demand forecasting model is again good example here.
     It is known that such models perform worse in some periods, for example in intermediate periods
     (that would be spring and autumn in Europe).
-    The demand in such periods is governed by many factors that are hard to account for in the demand predicting model.
-    Therefore for the similar conditions (date, time, weather etc.) the target value will be affected differently
-    by variables not included in the model and hence appearing as noise that behaves differently compared to other date periods. 
+    The demand in such periods is governed by many factors that are hard to account for in the demand predicting model,
+    therefore for the similar conditions (date, time, weather etc.) the target value will be affected differently
+    by variables not included in the model and hence appearing as noise.
     On the other hand during winter these models are precise as the demand is mostly driven by the outdoor temperature.
 
 **The sample of data used for estimation is large enough.**
