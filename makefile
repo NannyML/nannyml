@@ -31,12 +31,23 @@ clean:
 	rm -rf coverage.xml .coverage
 	find . -type d -name __pycache__ -exec rm -r {} \+
 
-docs: ## generate Sphinx HTML documentation, including API docs
+
+clean-docs:
 	rm -rf docs/nannyml
 	$(MAKE) -C docs clean
+
+test-notebooks:
 	python docs/run_notebooks.py "docs/example_notebooks/*.ipynb"
+
+build-docs:
 	$(MAKE) -C docs html
+
+serve-docs:
 	$(BROWSER) docs/_build/html/index.html
+
+docs: clean-docs test-notebooks build-docs serve-docs
+
+
 
 
 # For some reason make docs doesn't work!
