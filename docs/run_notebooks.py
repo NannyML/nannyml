@@ -55,12 +55,12 @@ def _clear_image_outputs(nb: NotebookNode) -> NotebookNode:
 
     images_found = 0
 
-    for cell_idx, cell in enumerate(nb['cells']):
+    for cell in nb['cells']:
         if 'outputs' in cell:
-            for output_idx, output in enumerate(cell['outputs']):
+            for output in cell['outputs']:
                 if is_image_output(output):
                     images_found += 1
-                    del nb['cells'][cell_idx]['outputs'][output_idx]
+                    cell['outputs'] = []
 
     sys.stdout.write(f' -- removed {images_found} image outputs')
     return nb
