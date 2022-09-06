@@ -56,7 +56,7 @@ Glossary
         A score that is returned by classification model together with class prediction. It expresses the confidence
         of the prediction i.e. the closer the score is to its minimum or maximum the more confident the classifier is
         with its prediction. If the score is in the range between 0 and 1 it is called *probability estimate*. It can also be
-        the actual *probability*. Regardless of the algorithm type, all classification model calculate some form of
+        the actual *probability*. Regardless of the algorithm type, all classification models calculate some form of
         confidence scores. These scores are then thresholded to return the predicted class. Confidence scores can be
         turned into calibrated probabilities and uset to estimate performance of classification models in the absence
         of ground truth (see how :ref:`here<how-it-works-cbpe>`).
