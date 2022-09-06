@@ -69,7 +69,7 @@ server.serve_forever()
 endef
 export BROWSER_PYSCRIPT
 
-servedocs: ## generate Sphinx HTML documentation, including API docs
+showdocs: ## generate Sphinx HTML documentation, including API docs
 	rm -rf docs/nannyml
 	#sphinx-apidoc -o docs/nannyml nannyml tests nannyml/datasets/data
 	$(MAKE) -C docs clean
