@@ -241,7 +241,21 @@ def _column_is_categorical(column: pd.Series) -> bool:
 
 
 def _column_is_continuous(column: pd.Series) -> bool:
-    return column.dtype in ['float64', 'int64']
+    return column.dtype in [
+        'int_',
+        'int8',
+        'int16',
+        'int32',
+        'int64',
+        'uint8',
+        'uint16',
+        'uint32',
+        'uint64',
+        'float_',
+        'float16',
+        'float32',
+        'float64',
+    ]
 
 
 def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFrame]):
