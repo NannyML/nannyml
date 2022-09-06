@@ -16,6 +16,7 @@ from pathlib import Path
 import nbconvert
 import nbformat
 from nbclient.exceptions import CellExecutionError
+from nbformat import NotebookNode
 
 ep = nbconvert.preprocessors.ExecutePreprocessor(
     extra_arguments=["--log-level=40"],
@@ -25,7 +26,7 @@ ep = nbconvert.preprocessors.ExecutePreprocessor(
 
 cp = nbconvert.preprocessors.ClearOutputPreprocessor()
 
-out_dir = pathlib.Path('docs/_build/notebooks')
+out_dir = pathlib.Path('docs/example_notebooks')
 out_dir.mkdir(parents=True, exist_ok=True)
 
 
@@ -36,6 +37,7 @@ def run_notebook(nb_path):
     try:
         cp.preprocess(nb, {'metadata': {'path': os.path.dirname(nb_path)}})
         ep.preprocess(nb, {'metadata': {'path': os.path.dirname(nb_path)}})
+        _clear_image_outputs(nb)
     except CellExecutionError:
         print(f'Error executing the notebook "{nb_path}".\n\n')
         raise
@@ -43,6 +45,25 @@ def run_notebook(nb_path):
         nb_out_path = out_dir / Path(nb_path).name
         with open(nb_out_path, mode='w', encoding='utf-8') as f:
             nbformat.write(nb, f)
+
+
+def _clear_image_outputs(nb: NotebookNode) -> NotebookNode:
+    def is_image_output(cell_output: NotebookNode) -> bool:
+        if 'data' in cell_output and 'application/vnd.plotly.v1+json' in cell_output['data']:
+            return True
+        return False
+
+    images_found = 0
+
+    for cell_idx, cell in enumerate(nb['cells']):
+        if 'outputs' in cell:
+            for output_idx, output in enumerate(cell['outputs']):
+                if is_image_output(output):
+                    images_found += 1
+                    del nb['cells'][cell_idx]['outputs'][output_idx]
+
+    sys.stdout.write(f' -- removed {images_found} image outputs')
+    return nb
 
 
 if __name__ == '__main__':

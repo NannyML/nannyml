@@ -8,7 +8,7 @@ Just The Code
 ==============
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -25,11 +25,11 @@ The ``analysis_targets`` dataframe contains the target results of the analysis p
 not used during :ref:`performance estimation.<performance-estimation>`. But it is required to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.  The analysis target values are joined on the analysis frame by the ``identifier`` column.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cell: 2
 
 Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using a list of metrics to calculate (or just one metric), the data columns required for these metrics, and an optional :ref:`chunking<chunking>` specification.
@@ -48,7 +48,7 @@ For more information on metrics, check the :mod:`~nannyml.performance_calculatio
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 3
 
 The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
@@ -60,21 +60,21 @@ realized performance metrics on all data which has target values available with 
 NannyML can output a dataframe that contains all the results of the analysis data.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cell: 5
 
 There results from the reference data are also available.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cell: 7
 
 Apart from chunking and chunk and period-related columns, the results data have a set of columns for each
@@ -96,7 +96,7 @@ The results can be plotted for visual inspection.
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 8
 
 .. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-accuracy.svg

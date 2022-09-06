@@ -8,7 +8,7 @@ Just The Code
 =============
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 1 3 4 6 8
 
 Walkthrough
@@ -27,11 +27,11 @@ But as it is required to calculate performance, the first thing to do in this ca
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cell: 2
 
 Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using a list of metrics to calculate (or just one metric),
@@ -50,7 +50,7 @@ The following metrics are currently supported:
 For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 3
 
 The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
@@ -62,21 +62,21 @@ realized performance metrics on all data which has target values available with 
 NannyML can output a dataframe that contains all the results of the analysis data.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cell: 5
 
 There results from the reference data are also available.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cell: 7
 
 Apart from chunking and chunk and period-related columns, the results data have a set of columns for each
@@ -96,7 +96,7 @@ calculated metric. When taking ``mae`` as an example:
 The results can be plotted for visual inspection:
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Realized Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 8
 
 .. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MAE.svg

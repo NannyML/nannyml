@@ -12,7 +12,7 @@ Just The Code
 -------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -28,11 +28,11 @@ In order to monitor a model, NannyML needs to learn about it from a reference da
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cell: 2
 
 Next we create the Confidence-based Performance Estimation
@@ -53,7 +53,7 @@ The following metrics are currently supported:
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 3
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
@@ -68,11 +68,11 @@ NannyML can then output a dataframe that contains all the results. Let's have a 
 only.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cell: 5
 
 Apart from chunk-related data, the results data have the following columns for each metric
@@ -111,7 +111,7 @@ interactive plots, though only static views are included here).
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 6
 
 
@@ -132,7 +132,7 @@ performance on reference period (where the target was available).
   the realised performance.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 8
 
 .. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-roc_auc.svg

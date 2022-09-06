@@ -15,7 +15,7 @@ Just The Code
 ----------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -31,11 +31,11 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 We start by loading the dataset we'll be using:
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cell: 2
 
 Next we create the Confidence-based Performance Estimation
@@ -57,7 +57,7 @@ The following metrics are currently supported:
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 3
 
 
@@ -73,11 +73,11 @@ NannyML can then output a dataframe that contains all the results. Let's have a 
 only.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cell: 5
 
 .. _performance-estimation-thresholds:
@@ -117,7 +117,7 @@ Description of tabular results above explains how the
 interactive plots, though only static views are included here).
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 6
 
 
@@ -138,7 +138,7 @@ performance on the reference period (where the target was available).
   variability of the performance.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 8
 
 

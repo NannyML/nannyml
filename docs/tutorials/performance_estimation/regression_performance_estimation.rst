@@ -14,7 +14,7 @@ Just The Code
 -------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -31,11 +31,11 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 We start by loading the dataset we 'll be using:
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cell: 2
 
 The next step is to instantiate the Direct Error Estimation
@@ -65,7 +65,7 @@ More information can be found on the API documentation for the :class:`~nannyml.
 During this tutorial the NannyML default settings are used regarding hyperparameter tuning.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 3
 
 The new :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` is fitted using the
@@ -77,21 +77,21 @@ estimated performance metrics on all data which has target values available with
 NannyML can output a dataframe that contains all the results of the analysis data.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cell: 5
 
 There results from the reference data are also available.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cell: 7
 
 .. _performance-estimation-regression-thresholds:
@@ -131,7 +131,7 @@ Additional information is shown in the hover (these are interactive plots, thoug
 The plots can be created with the following code:
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Estimating Performance - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 8
 
 .. image:: ../../_static/tutorial-perf-est-regression-RMSE.svg

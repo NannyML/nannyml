@@ -18,7 +18,7 @@ Just The Code
 ------------------------------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 1 3 4 6 8 10 12
 
 
@@ -34,11 +34,11 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cell: 2
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator`
@@ -52,23 +52,23 @@ Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.St
 calculates the drift results on the data provided. An example using it can be seen below.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 3
 
 We can then display the results in a table, or as plots.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cell: 5
 
 NannyML can show the statistical properties of the drift in model scores as a plot.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 6
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-drift-prepaid_card.svg
@@ -80,7 +80,7 @@ NannyML can show the statistical properties of the drift in model scores as a pl
 NannyML can also visualise how the distributions of the model scores evolved over time.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 8
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-score-distribution-prepaid_card.svg
@@ -92,7 +92,7 @@ NannyML can also visualise how the distributions of the model scores evolved ove
 NannyML can show the statistical properties of the drift in the predicted labels as a plot.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 10
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-drift.svg
@@ -100,7 +100,7 @@ NannyML can show the statistical properties of the drift in the predicted labels
 NannyML can also visualise how the distributions of the predicted labels evolved over time.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Multiclass Classification.ipynb
     :cells: 12
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/multiclass/drift-guide-prediction-distribution.svg

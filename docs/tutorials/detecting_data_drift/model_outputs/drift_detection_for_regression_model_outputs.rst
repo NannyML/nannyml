@@ -18,7 +18,7 @@ Just The Code
 -------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cells: 1 3 4 6 8 10
 
 
@@ -37,11 +37,11 @@ and analysis dataframes. This synthetic data is for a regression model predictin
 details about it :ref:`here<dataset-synthetic-regression>`.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cell: 2
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.StatisticalOutputDriftCalculator`
@@ -55,33 +55,33 @@ Then the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.St
 calculates the drift results on the data provided. An example using it can be seen below.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cells: 3
 
 We can then display the results in a table.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cell: 5
 
 The drift results from the reference data are accessible though the ``previous_reference_results`` property of the drift calculator who is also accessible from the results object.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cell: 7
 
 NannyML can show the statistical properties of the drift in model outputs as a plot.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cells: 8
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/regression/drift_guide_prediction_drift.svg
@@ -90,7 +90,7 @@ NannyML can show the statistical properties of the drift in model outputs as a p
 NannyML can also visualise how the distributions of the model predictions evolved over time.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cells: 10
 
 .. image:: /_static/tutorials/detecting_data_drift/model_outputs/regression/drift_guide_prediction_distribution.svg

@@ -28,7 +28,7 @@ Just The Code
 ------------------------------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -45,11 +45,11 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cell: 2
 
 Now that the data is in place we'll create a new
@@ -57,7 +57,7 @@ Now that the data is in place we'll create a new
 instantiating it with the appropriate parameters. We only need the target (``y_true``) and timestamp.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cells: 3
 
 Afterwards, the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
@@ -70,25 +70,25 @@ called to calculate the target drift results on the data provided. We use the pr
 We can display the results of this calculation in a dataframe.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cell: 5
 
 The results can be also easily plotted by using the
 :meth:`~nannyml.drift.target.target_distribution.result.TargetDistributionResult.plot` method.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cells: 6
 
 .. image:: /_static/tutorials/detecting_data_drift/model_targets/multiclass/target-distribution-statistical.svg
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Multiclass Classification.ipynb
     :cells: 8
 
 

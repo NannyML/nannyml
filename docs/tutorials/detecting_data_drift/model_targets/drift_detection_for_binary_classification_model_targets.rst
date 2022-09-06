@@ -28,7 +28,7 @@ Just The Code
 ------------------------------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -44,11 +44,11 @@ The ``analysis_targets`` dataframe contains the target results of the analysis p
 not used during :ref:`performance estimation.<performance-estimation>`. But it is required to detect drift for the targets, so the first thing we need to in this case is set up the right data in the right dataframes.  The analysis target values are joined on the analysis frame by the ``identifier`` column.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cell: 2
 
 Now that the data is in place we'll create a new
@@ -56,7 +56,7 @@ Now that the data is in place we'll create a new
 instantiating it with the appropriate parameters. We only need the target (``y_true``) and timestamp.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cells: 3
 
 
@@ -70,18 +70,18 @@ called to calculate the target drift results on the data provided. We use the pr
 We can display the results of this calculation in a dataframe.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cell: 5
 
 The results can be also easily plotted by using the
 :meth:`~nannyml.drift.target.target_distribution.result.TargetDistributionResult.plot` method.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cells: 6
 
 
@@ -90,7 +90,7 @@ Note that a dashed line, instead of a solid line, will be used for chunks that h
 .. image:: /_static/target_distribution_metric.svg
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Binary Classification.ipynb
     :cells: 8
 
 .. image:: /_static/target_distribution_statistical.svg

@@ -26,7 +26,7 @@ Just The Code
 -------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cells: 1 3 4 6 8 10
 
 
@@ -43,11 +43,11 @@ not used during :ref:`performance estimation<performance-estimation>`. But it is
 The analysis target values are expected to be ordered correctly, just like in sklearn.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cell: 2
 
 Now that the data is in place we'll create a new
@@ -56,7 +56,7 @@ instantiating it with the appropriate parameters. We need the name for the targe
 We also need to specify the machine learning problem we are working on.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cells: 3
 
 Afterwards, the :meth:`~nannyml.drift.target.target_distribution.calculator.TargetDistributionCalculator.fit`
@@ -69,21 +69,21 @@ called to calculate the target drift results on the data provided. We use the pr
 We can display the results of this calculation in a dataframe.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cell: 5
 
 We can also display the results from the reference dataframe.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cell: 7
 
 The results can be also easily plotted by using the
@@ -91,7 +91,7 @@ The results can be also easily plotted by using the
 We first plot the KS Statistic drift results for each chunk.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cells: 8
 
 Note that a dashed line, instead of a solid line, will be used for chunks that have missing target values.
@@ -102,7 +102,7 @@ And then we create the joyplot to visualize the target distribution values for e
 
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Targets - Regression.ipynb
     :cells: 10
 
 .. image:: /_static/tutorials/detecting_data_drift/model_targets/regression/target-distribution.svg

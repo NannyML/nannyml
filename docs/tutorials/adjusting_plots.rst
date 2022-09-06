@@ -11,7 +11,7 @@ time period in the figure, you can do this by updating the plot.
 The example below adds an additional indicator for a particular period of interest using this method.
 
 .. nbimport::
-    :path: ./_build/notebooks/Adjusting plots.ipynb
+    :path: ./example_notebooks/Adjusting plots.ipynb
     :cells: 1
 
 .. image:: /_static/adjusting_plots_time_periods_indication.svg

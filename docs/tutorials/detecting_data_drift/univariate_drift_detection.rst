@@ -15,7 +15,7 @@ Just The Code
 -------------
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 1 3 4 6 8 10 12 14
 
 .. _univariate_drift_detection_walkthrough:
@@ -36,18 +36,18 @@ If the p-value is less than 0.05 NannyML considers the result unlikely to be due
 We begin by loading some synthetic data provided in the NannyML package. This is data for a binary classification model, but other model types operate in the same way.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cell: 2
 
 The :class:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator`
 class implements the functionality needed for Univariate Drift Detection. We need to instantiate it with appropriate parameters - the column headers of the features that we want to run drift detection on, and the timestamp column header. The features can be passed in as a simple list of strings, but here we have created this list by excluding the columns in the dataframe that are not features, and passed that into the argument.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 3
 
 Next, the :meth:`~nannyml.drift.model_inputs.univariate.statistical.calculator.UnivariateStatisticalDriftCalculator.fit` method needs
@@ -63,27 +63,27 @@ statistic. The second column contains the corresponding p-value and the third co
 is a drift alert for that feature and chunk.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cell: 5
 
 The drift results from the reference data are accessible though the ``previous_reference_results`` property of the drift calculator:
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cell: 7
 
 NannyML can also visualize those results on plots.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 8
 
 .. image:: /_static/drift-guide-distance_from_office.svg
@@ -108,7 +108,7 @@ We can create joyplots for the model's continuous variables with
 the code below:
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 10
 
 .. image:: /_static/drift-guide-joyplot-distance_from_office.svg
@@ -129,7 +129,7 @@ the plots easier to view. We can stacked bar charts for the model's categorical 
 the code below:
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 12
 
 .. image:: /_static/drift-guide-stacked-salary_range.svg
@@ -143,11 +143,11 @@ for data drift. NannyML allows viewing the ranking of all the model inputs, or j
 NannyML provides a dataframe with the resulting ranking of features.
 
 .. nbimport::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cells: 14
 
 .. nbtable::
-    :path: ./_build/notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cell: 15
 
 Insights
