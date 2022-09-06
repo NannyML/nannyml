@@ -78,3 +78,7 @@ showdocs: ## generate Sphinx HTML documentation, including API docs
 	python -c "$$BROWSER_PYSCRIPT"
 
 # Use Ctrl+C to stop serving docs.
+
+# custom serve
+cserve-docs:
+	python -c "$$BROWSER_PYSCRIPT"
