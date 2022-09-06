@@ -6,16 +6,18 @@ Estimation of Performance of the Monitored Model
 
 This page describes the algorithms that NannyML uses to estimate performance metrics of the monitored models
 in the absence of ground truth. Currently there are two approaches. One is called Confidence-based
-Performance Estimation (CBPE) and leverages the confidence of the predictions. It is used to estimate
-performance of classification models as they return predictions with associated confidence score.
+Performance Estimation (CBPE) and leverages the :term:`confidence score` of the predictions. It is used to estimate
+performance of classification models as they return predictions with associated :term:`confidence score`.
 The other approach is called Direct Loss Estimation (DLE).
 The idea behind DLE is to train a :term:`nanny model` that directly
-estimates value of the error function of the monitored model for each observation (sometimes referred to as a
-:term:`child model`. This approach is used to estimate performance of regression models as the values of regression
-error functions can be calculated for single
-observation (unlike classification metrics - one cannot calculate F1 for single prediction).
+estimates value of the :term:`loss` of the monitored model for each observation (sometimes referred to as a
+:term:`child model`). This approach is used to estimate performance of regression models as the value of :term:`loss`
+function can be calculated for single observation and turned into performance metrics (unlike classification
+metrics - one cannot calculate F1 for single prediction).
 Even if you are interested only in one of the algorithms, it
 is recommended to read the whole page in order to get full understanding of the concepts.
+
+.. _how-it-works-cbpe:
 
 ----------------------------------------------
 Confidance-based Performance Estimation (CBPE)
@@ -330,14 +332,16 @@ Direct Loss Estimation (DLE)
 The Intuition
 =============
 
-Long story short - the idea behind DLE is to train extra ML model that will directly estimate the value of the error function
-of the monitored model. For clarity we call this model a :term:`nanny model` and sometimes we refer to the monitored
+Long story short - the idea behind DLE is to train extra ML model that will directly estimate the value of the
+:term:`loss`
+of the monitored model that can be later turn into performance metric. For clarity we call this model a :term:`nanny
+model` and sometimes we refer to the monitored
 model as a :term:`child model`.
 Each
 prediction of the :term:`child model` has an error associated with it (the difference between the actual target and the prediction).
-For both - learning and evaluation purposes this error is modified and it becomes an error function or loss (e.g. absolute or
-squared error for regression tasks). The value of the error function for each prediction of the :term:`child model` becomes the
-target for the :term:`nanny model`.
+For both - learning and evaluation purposes this error is modified and it becomes :term:`loss` (e.g. absolute or
+squared error for regression tasks). The value of the :term:`loss` for each prediction of the :term:`child model`
+becomes the target for the :term:`nanny model`.
 
 Isn't this exactly what gradient boosting algorithms for regression do? How can this even work? Wouldn't it
 work only if the :term:`nanny model` is smarter (more flexible) than the :term:`child model`? Good questions.
@@ -345,12 +349,12 @@ Yes, it is similar to what
 gradient boosting does with one crucial difference. Each weak model of gradient boosting algorithm tries to find patterns
 in residuals i.e. in the actual errors. The errors have signs or directions - they can be positive (when the target is
 larger than prediction) or negative (otherwise). If there is a pattern that maps model features to residuals it can be
-used to train another weak learner and improve the overall output of an ensemble of models. DLE tries to predict error
-functions which are directionless (like already mentioned absolute or squared error). This is a significantly
+used to train another weak learner and improve the overall performance of an ensemble of models. DLE tries to predict
+:term:`loss` which is directionless (like already mentioned absolute or squared error). This is a significantly
 easier problem to solve. For this reason, the :term:`nanny model` algorithm does not have to be better than the child
 algorithm, it can even be the same algorithm. Have a look at the simple example with code shown
 :ref:`implementation details<dle_implementation_details>` to see linear regression algorithm used by :term:`nanny model` that
-estimates performance of another linear regression model.
+estimates performance of another linear regression :term:`child model`.
 
 
 .. _dle_implementation_details:
@@ -364,8 +368,8 @@ mean absolute error (MAE) of :math:`f` for some analysis data for which targets 
 :math:`f` was trained on train data and used on reference data providing :math:`f(X_{reference})`
 predictions. Targets for reference set :math:`y_{reference}` are available. The algorithm runs as follows:
 
-    1. For each observation of reference data calculate absolute error of :math:`f`, i.e.
-       :math:`AE_{reference} = |y_{reference} - f(X_{reference})|`.
+    1. For each observation of reference data calculate :term:`loss` which in case of MAE is  absolute error of
+       :math:`f`, i.e. :math:`AE_{reference} = |y_{reference} - f(X_{reference})|`.
     2. Train a :term:`nanny model` on reference data. As features use the monitored model features
        :math:`X_{reference}` and
        monitored model predictions :math:`f(X_{reference})`. The target is absolute error :math:`AE_{reference}`
@@ -380,7 +384,7 @@ The code below shows simple implementation of DLE approach based on an example 1
 heteroscedastic normal noise (i.e. the variation of the noise is not constant, in this case
 it is dependent on the value of the input
 feature - see the target generating function in the code). The example here is to show that estimating directionless
-error function value is easier than estimating the error itself. In this example, linear regression :term:`nanny model`
+:term:`loss` value is easier than estimating the actual error. In this example, linear regression :term:`nanny model`
 estimates performance of linear regression :term:`child model`. Let's create synthetic data first:
 
 .. code-block:: python
@@ -429,11 +433,11 @@ and as
 expected linear regression did well on finding that coefficient. We can clearly see that for values of ``x1`` close to 0
 the :term:`child model` is much more accurate compared to when ``x1`` is close to 1. The :term:`child
 model` itself however does not provide this
-information together with its prediction. Unlike classification models, regression models do not provide the confidence
-score. All we get is a point prediction.
+information together with its prediction. Unlike classification models, regression models do not provide the :term:`confidence score`.
+All we get is a point prediction.
 Fortunately we can train another model that will predict e.g. absolute error. The algorithm does not have to be smarter
-than the child algorithm - we will use linear regression again. This is possible as the distribution of absolute errors is
-not zero-centered and it is dependent on input feature ``x1``. See the histograms of errors and absolute errors:
+than the child algorithm - we will use linear regression again. This is possible because the distribution of absolute
+errors is not zero-centered and it is dependent on input feature ``x1``. See the histograms of errors and absolute errors:
 
 
 .. code-block:: python
@@ -486,7 +490,7 @@ prediction intervals:
 .. image:: ../_static/how-it-works-dle-regression-PI.svg
     :width: 400pt
 
-Or finally, it can be used to estimate performance the :term:`child model`. When the :term:`nanny model` target was
+Or finally, it can be used to estimate performance of the :term:`child model`. When the :term:`nanny model` target was
 absolute error, we can estimate mean absolute error. Let’s estimate it for two sets: randomly selected observations
 for which ``x1`` < 0.5 (better performance region)
 and correspondingly - a set for which ``x1`` > 0.5 (worse performance region).
@@ -530,7 +534,7 @@ as the monitored model. The important details of the current NannyML implementat
 
     * The :term:`child model` prediction is used as an input feature for the :term:`nanny model`.
       Depending on the :term:`child model` used,
-      this is an important piece of information. Without this, :term:`nanny model` tries to estimate error function value
+      this is an important piece of information. Without this, :term:`nanny model` tries to estimate :term:`loss` value
       without knowing the target and :term:`child model`'s prediction. This is a harder problem compared to the
       situation when :term:`child model`'s prediction is known. This was proven in experiments on real and
       synthetic datasets.
@@ -539,8 +543,8 @@ as the monitored model. The important details of the current NannyML implementat
       tuning is done with flaml [6]_. The user can specify configuration of hyperparameter tuning. See details in the
       :ref:`turorial<regression-performance-estimation>`.
 
-    * One of the most important hyperparameters is the loss function, by default LGBM uses squared error (L2) metric.
-      Absolute error (L1) is worth consideration when the user expects more stable error estimation (i.e. less
+    * One of the most important hyperparameters is the loss function. By default LGBM uses squared error (L2) metric.
+      Absolute error (L1) is worth consideration when the user expects more stable loss estimation (i.e. less
       sensitive to large :term:`child model` errors). This is relevant for both - :term:`nanny model` hyperparameters and
       hyperparameter tuning configuration.
 
@@ -552,35 +556,36 @@ Assumptions and limitations
 
 In general, DLE works well if there are regions in the feature space where the model performs better or worse and there
 are enough observations from these regions in the reference dataset so that the :term:`nanny model` can learn this pattern.
-Just like CBPE, it will handle covariate shifts well.  The detailed assumptions are:
+Just like CBPE, it will handle covariate shifts well. The detailed assumptions are:
 
 
 **There is no concept drift**.
-    While dealing well with data drift, DLE will not work under concept drift.
-    This shouldn't happen too often in very good models (i.e. models that have most of the information needed to
-    model specific target) or models that deal with physical phenomena, like for example energy demand forecasting
-    models, because concept drift would mean change of the physics laws.
+    While dealing well with covariate shift, DLE will not work under concept drift.
+    This shouldn't happen when the :term:`child model` is a *good* model (i.e. a model that have most of the information
+    needed to predict the target) or when it deals with physical phenomena, like for example energy demand
+    forecasting models, because concept drift would mean change of the physics laws.
 
 
 **There is no covariate shift to previously unseen regions in the input space.**
     The monitored model will most likely not work if the drift happens to subregions in the inputs space that were not
     seen before. In such case the monitored model is not able to learn how to predict the target but the same applies
     to the :term:`nanny model` - it cannot tell how big of an error the monitored model will make.
-    There might be no error at all, if it happens to extrapolate well. Using the same example - heat demand
-    forecasting model will most likely fail during extremely warm days during winter that did not happen
+    There might be no error at all, if the monitored model happens to extrapolate well. Using the same example - heat
+    demand forecasting model will most likely fail during extremely warm days during winter that did not happen
     before (i.e. were not included in the model training data).
 
 **The noise is heteroskedastic around the monitored model target and it is dependent on the monitored model input features.**
+    This is equivalent to *there are regions where the monitored model performs better or worse*.
     DLE also works when the noise is homoskedastic (noise distribution around the target is constant) but
     then the true performance of the monitored model is constant (depending on the metric used, it will be constant
     for MAE and MSE, it will change when measured e.g. with MAPE).
     Variation of true performance on the samples of data will be then an effect of :ref:`sampling error <estimation_of_standard_error>`
-    only . Heat demand forecasting model is again good example here.
+    only. Heat demand forecasting model is again good example here.
     It is known that such models perform worse in some periods, for example in intermediate periods
     (that would be spring and autumn in Europe).
     The demand in such periods is governed by many factors that are hard to account for in the demand predicting model,
     therefore for the similar conditions (date, time, weather etc.) the target value might be different.
-    On the other hand during winter these model are precise as the demand is mostly driven by the outdoor temperature.
+    On the other hand during winter these models are precise as the demand is mostly driven by the outdoor temperature.
 
 **The sample of data used for estimation is large enough.**
     When the sample size is small, the actual performance calculated on the sample is not reliable as it is a subject of
@@ -592,14 +597,16 @@ Just like CBPE, it will handle covariate shifts well.  The detailed assumptions 
 Other Approaches to Estimate Performance of Regression Models
 -------------------------------------------------------------
 
-When it comes to estimating performance of classification models we believe that CBPE is the best one can do. It can
+When it comes to estimating performance of classification models we believe that CBPE is the best NannyML can currently offer. It can
 still be improved (by better probability calibration etc.) which is on our radar, but in general the theory behind
 the approach is solid. We wanted to use the same for estimation of performance of regression models but it cannot be
 used directly. Unlike classification models, most regression models do not inherently provide information
-about confidence of the prediction. They just return a point prediction. If probability distribution was given together with point prediction,
+about confidence of the prediction (:term:`confidence score`). They just return a point prediction. If probability distribution was given
+together with point prediction,
 the expected error for regression models could be calculated with CBPE approach. We would then have a point prediction
 :math:`\hat{y}` and a probability distribution :math:`P(y|X)`. We could subtract one from another and have a
-probability distribution of an error. We could then modify it (e.g. by calculating absolute or squared error) and calculate the expected value.
+probability distribution of the error. We could then modify it (e.g. by calculating absolute or squared error) and
+calculate the expected value.
 Averaging over all observations in a chunk we could then estimate metrics like MAE, MSE etc.
 Assuming that only a handful of users will have regression models that return point predictions together with
 probability distributions in production, we have tried to train nanny models that will use the same features
@@ -611,13 +618,13 @@ Bayesian approaches
 ===================
 
 
-When probabilistic predictions are mentioned Bayesian approaches are the first thing that come to one's mind.
-We have explored various approaches but none of them proved to be good enough. The main issues arise from the
-fact that in Bayesian approaches one needs to set prior for the noise distribution
+When probabilistic predictions are mentioned Bayesian approaches are the first thing that comes to one's mind.
+We have explored various approaches but none of them worked well enough. The main issues arise from the
+fact that in Bayesian approaches one needs to set a prior for the noise distribution
 (i.e. for :math:`P(y|X)`) and explicitly define the relationship of noise and model inputs.
 These could be set to something simple: for example that the :math:`P(y|X)`
 is normal with standard deviation being a linear combination of input features.
-Based on our experience and dataset we have seen and tested - this is not true for most of the cases.
+Based on our experience and datasets we have seen and tested - this is not true for most of the cases.
 Other approaches would be more flexible - for example assumption that :math:`P(y|X)` is a mixture of Gaussians and that
 the relationship between parameters of the mixture and input features are more complex than linear (e.g. higher
 order polynomials with interactions). This on the other hand was hard to implement correctly, had issues with
@@ -630,7 +637,7 @@ Conformalized Quantile Regression
 
 
 Quantile regression is an approach that allows to get prediction intervals instead of point prediction. Any regression
-algorithm can provide quantile predictions as long as the so-called pinball loss can be used for training.
+algorithm can provide quantile predictions as long as the so-called *pinball loss* can be used for training.
 In order to make sure quantiles are accurate, we have calibrated them using Conformal Prediction [7]_.
 We have tried several approaches taking advantage of conformalized quantile regression models. For example,
 we have trained two nanny models to predict two quantiles, say 0.16 and 0.84. We would then assume that

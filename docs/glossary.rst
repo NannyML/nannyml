@@ -52,6 +52,15 @@ Glossary
         Note that the confidence band is also described as sampling error range at the hover information that appears on
         the interactive plots.
 
+    Confidence Score
+        A score that is returned by classification model together with class prediction. It expresses the confidence
+        of the prediction i.e. the closer the score is to its minimum or maximum the more confident the classifier is
+        with its prediction. If the score is in the range between 0 and 1 it is called *probability estimate*. It can also be
+        the actual *probability*. Regardless of the algorithm type, all classification model calculate some form of
+        confidence scores. These scores are then thresholded to return the predicted class. Confidence scores can be
+        turned into calibrated probabilities and uset to estimate performance of classification models in the absence
+        of ground truth (see how :ref:`here<how-it-works-cbpe>`).
+
     Covariate Shift
         A synonym for :term:`Data Drift`.
 
@@ -76,7 +85,7 @@ Glossary
         In the absence of targets performance in the analysis period can be estimated.
 
         You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
-    
+
     Error
         The error of a statistic on a sample is defined as the difference between the value of the observation and the true value.
         The sample size can sometimes be 1 but is usually bigger. When the error consists only of the effects
