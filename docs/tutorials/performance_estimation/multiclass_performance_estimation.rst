@@ -38,7 +38,8 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
 estimator with a list of metrics, and an optional
-:ref:`chunking<chunking>` specification.
+:ref:`chunking<chunking>` specification. For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
+
 
 The list of metrics specifies which performance metrics of the monitored model will be estimated.
 The following metrics are currently supported:
@@ -50,7 +51,6 @@ The following metrics are currently supported:
 - ``specificity`` - macro-averaged
 - ``accuracy``
 
-For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
 .. nbimport::
     :path: ./_build/notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
@@ -60,7 +60,7 @@ The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
 :meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` method on the ``reference`` data.
 
-The fitted ``cbpe`` can be used to estimate performance on other data, for which performance cannot be calculated.
+The fitted ``estimator`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where target is missing. In our example this is
 the ``analysis_df`` data.
 

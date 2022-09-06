@@ -57,6 +57,9 @@ class Metric(abc.ABC):
         self.lower_threshold: Optional[float] = None
         self.confidence_deviation: Optional[float] = None
 
+    def __str__(self):
+        return self.column_name
+
     def fit(self, reference_data: pd.DataFrame):
         """Fits a Metric on reference data.
 

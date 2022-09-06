@@ -491,7 +491,7 @@ prediction intervals:
     :width: 400pt
 
 Or finally, it can be used to estimate performance of the :term:`child model`. When the :term:`nanny model` target was
-absolute error, we can estimate mean absolute error. Let’s estimate it for two sets: randomly selected observations
+absolute error, we can estimate mean absolute error. Let's estimate it for two sets: randomly selected observations
 for which ``x1`` < 0.5 (better performance region)
 and correspondingly - a set for which ``x1`` > 0.5 (worse performance region).
 
@@ -561,15 +561,17 @@ Just like CBPE, it will handle covariate shifts well. The detailed assumptions a
 
 **There is no concept drift**.
     While dealing well with covariate shift, DLE will not work under concept drift.
-    This shouldn't happen when the :term:`child model` is a *good* model (i.e. a model that have most of the information
-    needed to predict the target) or when it deals with physical phenomena, like for example energy demand
-    forecasting models, because concept drift would mean change of the physics laws.
+    This shouldn't happen when the :term:`child model` is has access to all the variables affecting the outcome and
+    the problem is stationary. An example of a stationary model would be forecasting energy demand for heating
+    purposes. Since the phyiscal laws underpinning the problem are the same, energy demand based on outside temperature
+    should stay the same. However if energy prices became too high and people decide to heat their houses less
+    because they couldn't pay, then our model would experience concept drift.
 
 
 **There is no covariate shift to previously unseen regions in the input space.**
     The monitored model will most likely not work if the drift happens to subregions in the inputs space that were not
-    seen before. In such case the monitored model is not able to learn how to predict the target but the same applies
-    to the :term:`nanny model` - it cannot tell how big of an error the monitored model will make.
+    seen before. In such case the monitored model has not not able to learn how to predict the target. The same applies
+    to the :term:`nanny model` - it cannot predict how big of an error the monitored model will make.
     There might be no error at all, if the monitored model happens to extrapolate well. Using the same example - heat
     demand forecasting model will most likely fail during extremely warm days during winter that did not happen
     before (i.e. were not included in the model training data).
@@ -584,7 +586,8 @@ Just like CBPE, it will handle covariate shifts well. The detailed assumptions a
     It is known that such models perform worse in some periods, for example in intermediate periods
     (that would be spring and autumn in Europe).
     The demand in such periods is governed by many factors that are hard to account for in the demand predicting model,
-    therefore for the similar conditions (date, time, weather etc.) the target value might be different.
+    therefore for the similar conditions (date, time, weather etc.) the target variable takes different values
+    as it is affected by these unobserved variables.
     On the other hand during winter these models are precise as the demand is mostly driven by the outdoor temperature.
 
 **The sample of data used for estimation is large enough.**
