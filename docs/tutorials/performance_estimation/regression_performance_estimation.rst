@@ -71,7 +71,7 @@ During this tutorial the NannyML default settings are used regarding hyperparame
 The new :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` is fitted using the
 :meth:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE.fit` method on the ``reference`` data.
 
-The fitted :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` can then be used to calculate
+The fitted ``estimator`` can then be used to calculate
 estimated performance metrics on all data which has target values available with the
 :meth:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE.estimate` method.
 NannyML can output a dataframe that contains all the results of the analysis data.
