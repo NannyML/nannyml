@@ -99,7 +99,7 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
     data['period'] = 'analysis'
 
     if plot_reference:
-        reference_results = calculator.previous_reference_results
+        reference_results = calculator.previous_reference_results.copy()
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
