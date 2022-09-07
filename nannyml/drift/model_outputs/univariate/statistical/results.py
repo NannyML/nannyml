@@ -241,7 +241,7 @@ def _plot_prediction_drift(
 
     data['period'] = 'analysis'
     if plot_reference:
-        reference_results = calculator.previous_reference_results
+        reference_results = calculator.previous_reference_results.copy()
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
@@ -296,7 +296,7 @@ def _plot_prediction_distribution(
     feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
-        reference_drift = calculator.previous_reference_results
+        reference_drift = calculator.previous_reference_results.copy()
         if reference_drift is None:
             raise RuntimeError(
                 f"could not plot distribution for '{prediction_column_name}': "
@@ -395,7 +395,7 @@ def _plot_score_drift(
 
     data['period'] = 'analysis'
     if plot_reference:
-        reference_results = calculator.previous_reference_results
+        reference_results = calculator.previous_reference_results.copy()
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
@@ -478,7 +478,7 @@ def _plot_score_distribution(
     feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
-        reference_drift = calculator.previous_reference_results
+        reference_drift = calculator.previous_reference_results.copy()
         if reference_drift is None:
             raise RuntimeError(
                 f"could not plot categorical distribution for feature '{output_column_name}': "
