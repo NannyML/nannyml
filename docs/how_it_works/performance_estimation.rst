@@ -20,7 +20,7 @@ is recommended to read the whole page in order to get full understanding of the 
 .. _how-it-works-cbpe:
 
 ----------------------------------------------
-Confidance-based Performance Estimation (CBPE)
+Confidence-based Performance Estimation (CBPE)
 ----------------------------------------------
 
 The Intuition
@@ -543,7 +543,7 @@ as the monitored model. The important details of the current NannyML implementat
 
     * The user can define hyperparameters of the nanny LGBM model or request hyperparameter tuning. Hyperparameter
       tuning is done with flaml [6]_. The user can specify configuration of hyperparameter tuning. See details in the
-      :ref:`turorial<regression-performance-estimation>`.
+      :ref:`tutorial<regression-performance-estimation>`.
 
     * One of the most important hyperparameters is the loss function. By default LGBM uses squared error (L2) metric.
       Absolute error (L1) is worth consideration when the user expects more stable loss estimation (i.e. less
@@ -572,19 +572,19 @@ Just like CBPE, it will handle covariate shifts well. The detailed assumptions a
 
 **There is no covariate shift to previously unseen regions in the input space.**
     The monitored model will most likely not work if the drift happens to subregions in the inputs space that were not
-    seen before. In such case the monitored model has not not able to learn how to predict the target. The same applies
+    seen before. In such case the monitored model has not been able to learn how to predict the target. The same applies
     to the :term:`nanny model` - it cannot predict how big of an error the monitored model will make.
     There might be no error at all, if the monitored model happens to extrapolate well. Using the same example - heat
     demand forecasting model will most likely fail during extremely warm days during winter that did not happen
     before (i.e. were not included in the model training data).
 
-**The noise is heteroskedastic around the monitored model target and it is dependent on the monitored model input features.**
+**The noise is heteroscedastic around the monitored model target and it is dependent on the monitored model input features.**
     This is equivalent to *there are regions where the monitored model performs better or worse*.
-    DLE also works when the noise is homoskedastic (noise distribution around the target is constant) but
+    DLE also works when the noise is homoscedastic (noise distribution around the target is constant) but
     then the true performance of the monitored model is constant (depending on the metric used, it will be constant
     for MAE and MSE, it will change when measured e.g. with MAPE).
     Variation of true performance on the samples of data will be then an effect of :ref:`sampling error <estimation_of_standard_error>`
-    only. Heat demand forecasting model is again good example here.
+    only. Heat demand forecasting model is again a good example here.
     It is known that such models perform worse in some periods, for example in intermediate periods
     (that would be spring and autumn in Europe).
     The demand in such periods is governed by many factors that are hard to account for in the demand predicting model,
