@@ -154,7 +154,7 @@ def _plot_performance_metric(
 
     results_data['period'] = 'analysis'
     if plot_reference:
-        reference_results = calculator.previous_reference_results
+        reference_results = calculator.previous_reference_results.copy()
         reference_results['period'] = 'reference'
         results_data = pd.concat([reference_results, results_data], ignore_index=True)
 

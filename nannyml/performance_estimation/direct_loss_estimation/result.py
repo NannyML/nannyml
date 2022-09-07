@@ -59,7 +59,7 @@ def _plot_direct_error_estimation_performance(
     estimation_results['estimated'] = True
 
     if plot_reference:
-        reference_results = estimator.previous_reference_results
+        reference_results = estimator.previous_reference_results.copy()
         reference_results['period'] = 'reference'
         reference_results['estimated'] = False
         estimation_results = pd.concat([reference_results, estimation_results], ignore_index=True)

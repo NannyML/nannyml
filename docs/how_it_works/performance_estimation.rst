@@ -527,7 +527,9 @@ and correspondingly - a set for which ``x1`` > 0.5 (worse performance region).
 The example above is just to build an intuition and showcase that :term:`nanny model` can work well using the same algorithm
 as the monitored model. The important details of the current NannyML implementations are listed below:
 
-    * The :term:`nanny model` uses LGBM [5]_ algorithm.
+    * The :term:`nanny model` uses LGBM [5]_ algorithm. It is a well-developed, robust and lightning fast algorithm
+      that has provided the best models for tabular data in many Kaggle competitions. Even with default
+      hyperparameters, it often gives results that are difficult to beat with other models.
 
     * The :term:`nanny model` is trained on the reference dataset. It can be used to estimate performance of unseen
       (analysis) data as long as :ref:`assumptions<dee_assumptions>` are met.

@@ -102,7 +102,7 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
         7  [35000:39999]        35000  ...              True                 0.05
         8  [40000:44999]        40000  ...              True                 0.05
         9  [45000:49999]        45000  ...              True                 0.05
-        >>> for feature in cal.feature_column_names:
+        >>> for feature in calc.feature_column_names:
         >>>     fig = results.plot(kind='feature_drift', metric='statistic', plot_reference=True,
         >>>                        feature_column_name=feature)
         >>>     fig.show()
@@ -170,7 +170,7 @@ def _feature_drift(
     data['period'] = 'analysis'
 
     if plot_reference:
-        reference_results = calculator.previous_reference_results
+        reference_results = calculator.previous_reference_results.copy()
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
@@ -236,12 +236,12 @@ def _plot_continuous_feature_distribution(
     feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
-        reference_drift = calculator.previous_reference_results
-        if reference_drift is None:
+        if calculator.previous_reference_results is None:
             raise RuntimeError(
                 f"could not plot continuous distribution for feature '{feature_column_name}': "
                 f"calculator is missing reference results\n{calculator}"
             )
+        reference_drift = calculator.previous_reference_results.copy()
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
@@ -284,12 +284,12 @@ def _plot_categorical_feature_distribution(
     feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
 
     if plot_reference:
-        reference_drift = calculator.previous_reference_results
-        if reference_drift is None:
+        if calculator.previous_reference_results is None:
             raise RuntimeError(
                 f"could not plot categorical distribution for feature '{feature_column_name}': "
                 f"calculator is missing reference results\n{calculator}"
             )
+        reference_drift = calculator.previous_reference_results.copy()
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
