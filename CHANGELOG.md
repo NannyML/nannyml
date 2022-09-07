@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2022-09-07
+
+### Added
+
+- Added support for regression problems across all calculators and estimators.
+  In some cases a required `problem_type` parameter is required during calculator/estimator initialization, this
+  is a breaking change. Read more about using regression in our
+  [tutorials](https://nannyml.readthedocs.io/en/main/tutorials.html) and about our new performance estimation
+  for regression using the [Direct Loss Estimation (DLE)](https://nannyml.readthedocs.io/en/main/how_it_works/performance_estimation.html#direct-loss-estimation-dle) algorithm.
+
+### Changed
+
+- Improved `tox` running speed by skipping some unnecessary package installations.
+  Thanks [@baskervilski](https://github.com/baskervilski)!
+
+### Fixed
+
+- Fixed an issue where some Pandas column datatypes were not recognized as continuous by NannyML, causing them to be
+  dropped in calculations. Thanks for reporting [@Dbhasin1](https://github.com/Dbhasin1)!
+- Fixed an issue where some helper columns for visualization crept into the stored reference results. Good catch
+  [@Dbhasin1](https://github.com/Dbhasin1)!
+- Fixed an issue where a `Reader` instance would raise a `WriteException`. Thanks for those eagle eyes
+  [@baskervilski](https://github.com/baskervilski)!
+
 ## [0.5.3] - 2022-08-30
 
 ### Changed
@@ -21,8 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed issue where an outdated version of Numpy caused Pandas to fail reading string columns in some scenarios
-  [(#93)](https://github.com/NannyML/nannyml/issues/93). Thank you, [@Bernhard](https://github.com/bernhardbarker) and
-  [@Gabriel](https://github.com/ga-tardochisalles) for the investigative work!
+  [(#93)](https://github.com/NannyML/nannyml/issues/93). Thank you, [@bernhardbarker](https://github.com/bernhardbarker) and
+  [@ga-tardochisalles](https://github.com/ga-tardochisalles) for the investigative work!
 
 ## [0.5.2] - 2022-08-17
 

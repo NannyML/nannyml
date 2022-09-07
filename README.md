@@ -68,7 +68,7 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                                                                                    | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                                                                                   | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                                                                             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.5.3]**                                                                                          | New features, bug fixes.                                                               |
+| 💎 **[New in v0.6.0]**                                                                                          | New features, bug fixes.                                                               |
 | 🧑‍💻 **[Contribute]**                                                                                          | How to contribute to the NannyML project and codebase.                                 |
 | <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
@@ -76,7 +76,7 @@ Allowing you to have the following benefits:
 [Performance Estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
 [Key Concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
 [Technical Reference]:https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
-[New in v0.5.3]: https://github.com/NannyML/nannyml/releases/latest/
+[New in v0.6.0]: https://github.com/NannyML/nannyml/releases/latest/
 [Real World Example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
@@ -149,7 +149,6 @@ python -m pip install git+https://github.com/NannyML/nannyml
 *The following snippet is based on our [latest release](https://github.com/NannyML/nannyml/releases/latest)*.
 
 ```python
-import pandas as pd
 import nannyml as nml
 from IPython.display import display
 
@@ -164,12 +163,13 @@ chunk_size = 5000
 # Estimate model performance
 # initialize, specify required data columns, fit estimator and estimate
 estimator = nml.CBPE(
-   y_pred_proba='y_pred_proba',
-   y_pred='y_pred',
-   y_true='work_home_actual',
-   timestamp_column_name='timestamp',
-   metrics=['roc_auc'],
-   chunk_size=chunk_size,
+    y_pred_proba='y_pred_proba',
+    y_pred='y_pred',
+    y_true='work_home_actual',
+    timestamp_column_name='timestamp',
+    metrics=['roc_auc'],
+    chunk_size=chunk_size,
+    problem_type='classification_binary'
 )
 estimator = estimator.fit(reference)
 estimated_performance = estimator.estimate(analysis)
@@ -210,7 +210,8 @@ display(ranked_features)
 calc = nml.StatisticalOutputDriftCalculator(
     y_pred='y_pred',
     y_pred_proba='y_pred_proba',
-    timestamp_column_name='timestamp'
+    timestamp_column_name='timestamp',
+    problem_type='classification_binary',
 )
 calc.fit(reference)
 results = calc.calculate(analysis)
