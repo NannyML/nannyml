@@ -28,12 +28,12 @@ class PerformanceCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        timestamp_column_name: str,
         metrics: List[str],
         y_true: str,
         y_pred: str,
         problem_type: Union[str, ProblemType],
         y_pred_proba: ModelOutputsType = None,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -52,7 +52,7 @@ class PerformanceCalculator(AbstractCalculator):
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
         y_pred: str
             The name of the column containing your model predictions.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         metrics: List[str]
             A list of metrics to calculate.
@@ -101,8 +101,6 @@ class PerformanceCalculator(AbstractCalculator):
         self.y_pred = y_pred
 
         self.y_pred_proba = y_pred_proba
-
-        self.timestamp_column_name = timestamp_column_name
 
         if isinstance(problem_type, str):
             problem_type = ProblemType.parse(problem_type)
@@ -163,7 +161,7 @@ class PerformanceCalculator(AbstractCalculator):
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         # Construct result frame
         res = pd.DataFrame.from_records(

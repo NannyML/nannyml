@@ -26,7 +26,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         feature_column_names: List[str],
-        timestamp_column_name: str,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -39,7 +39,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         feature_column_names: List[str]
             A list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
@@ -121,7 +121,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
             data, self.feature_column_names
         )
 
-        chunks = self.chunker.split(data, self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.

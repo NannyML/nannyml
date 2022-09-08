@@ -41,7 +41,7 @@ class DLE(AbstractEstimator):
         feature_column_names: List[str],
         y_pred: str,
         y_true: str,
-        timestamp_column_name: str,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -159,12 +159,11 @@ class DLE(AbstractEstimator):
         >>> results = estimator.estimate(analysis_df)
 
         """
-        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
         self.feature_column_names = feature_column_names
         self.y_pred = y_pred
         self.y_true = y_true
-        self.timestamp_column_name = timestamp_column_name
 
         if metrics is None:
             metrics = DEFAULT_METRICS
@@ -233,7 +232,7 @@ class DLE(AbstractEstimator):
                 lambda x: self._categorical_encoders[x.name].transform(x)
             )
 
-        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         res = pd.DataFrame.from_records(
             [

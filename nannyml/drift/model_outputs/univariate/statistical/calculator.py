@@ -25,9 +25,9 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         y_pred: str,
-        timestamp_column_name: str,
         problem_type: Union[str, ProblemType],
         y_pred_proba: ModelOutputsType = None,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -44,7 +44,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
         y_pred: str
             The name of the column containing your model predictions.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
@@ -90,11 +90,12 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         >>> results.plot(kind='prediction_drift', plot_reference=True).show()
         >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
         """
-        super(StatisticalOutputDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super(StatisticalOutputDriftCalculator, self).__init__(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
 
         self.y_pred_proba = y_pred_proba
         self.y_pred = y_pred
-        self.timestamp_column_name = timestamp_column_name
 
         if isinstance(problem_type, str):
             problem_type = ProblemType.parse(problem_type)
@@ -163,7 +164,7 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
         continuous_columns, categorical_columns = _split_features_by_type(data, columns)
 
-        chunks = self.chunker.split(data, columns=columns, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data, columns=columns)
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.

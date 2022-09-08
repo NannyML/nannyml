@@ -98,7 +98,7 @@ class _BinaryClassificationCBPE(CBPE):
         if self.needs_calibration:
             data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])
 
-        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         res = pd.DataFrame.from_records(
             [
@@ -137,5 +137,5 @@ class _BinaryClassificationCBPE(CBPE):
                 estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
             )
             estimates['period'] = 'analysis'
-            estimates['estimated'] = True 
+            estimates['estimated'] = True
         return estimates

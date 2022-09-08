@@ -168,8 +168,8 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(sa
 @pytest.mark.parametrize(
     'chunker',
     [
-        (PeriodBasedChunker(offset='W')),
-        (PeriodBasedChunker(offset='M')),
+        (PeriodBasedChunker(offset='W', timestamp_column_name='timestamp')),
+        (PeriodBasedChunker(offset='M', timestamp_column_name='timestamp')),
         (SizeBasedChunker(chunk_size=1000)),
         CountBasedChunker(chunk_count=25),
     ],
@@ -184,7 +184,7 @@ def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_an
     ).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data).data
 
-    chunks = chunker.split(sample_drift_data, timestamp_column_name='timestamp')
+    chunks = chunker.split(sample_drift_data)
     assert len(chunks) == sut.shape[0]
     chunk_keys = [c.key for c in chunks]
     assert 'key' in sut.columns
