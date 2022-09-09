@@ -106,7 +106,7 @@ NannyML utilises statistical tests to detect **univariate feature drift**. The K
 
 NannyML uses the same statistical tests to detected **model output drift**.
 
-<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-predictions-joyplot.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/quick-start-score-drift.svg"></p>
 
 **Target distribution drift** is monitored by calculating the mean occurrence of positive events in combination with the 2-sample chi-squared test. Bear in mind that this operation requires the presence of actuals.
 
