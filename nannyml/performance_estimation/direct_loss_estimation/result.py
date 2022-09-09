@@ -91,7 +91,7 @@ def _plot_direct_error_estimation_performance(
         lower_threshold_column_name=f'lower_threshold_{metric.column_name}',
         upper_threshold_column_name=f'upper_threshold_{metric.column_name}',
         threshold_legend_label='Performance threshold',
-        title=f'DEE - Estimated {metric.display_name}',
+        title=f'DLE - Estimated {metric.display_name}',
         y_axis_title=f'{metric.display_name}',
         v_line_separating_analysis_period=plot_period_separator,
         estimated_column_name='estimated',
