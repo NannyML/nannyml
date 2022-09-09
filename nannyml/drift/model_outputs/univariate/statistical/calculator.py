@@ -4,14 +4,14 @@
 
 """Calculates drift for model predictions and model outputs using statistical tests."""
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml._typing import ModelOutputsType, ProblemType, model_output_column_names
-from nannyml.base import AbstractCalculator, _column_is_categorical, _list_missing, _split_features_by_type
+from nannyml.base import AbstractCalculator, _column_is_categorical, _list_missing
 from nannyml.chunk import Chunker
 from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
@@ -143,27 +143,22 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         else:
             _list_missing([self.y_pred], data)
 
-        # Force categorical columns to be set to 'category' pandas dtype
-        # TODO: we should try to get rid of this
-        if _column_is_categorical(data[self.y_pred]):
-            data[self.y_pred] = data[self.y_pred].astype('category')
+        continuous_columns: List[str] = []
+        categorical_columns: List[str] = []
+        if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
+            if isinstance(self.y_pred_proba, str):
+                continuous_columns += [self.y_pred_proba]
+            categorical_columns += [self.y_pred]
+        elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
+            if self.y_pred_proba is not None:
+                continuous_columns += model_output_column_names(self.y_pred_proba)
+            categorical_columns += [self.y_pred]
+        elif self.problem_type == ProblemType.REGRESSION:
+            continuous_columns += [self.y_pred]
 
-        columns = [self.y_pred]
-        if isinstance(self.y_pred_proba, Dict):
-            columns += [v for _, v in self.y_pred_proba.items()]
-        elif isinstance(self.y_pred_proba, str):
-            columns += [self.y_pred_proba]
-        elif self.y_pred_proba is None:
-            pass
-        else:
-            raise InvalidArgumentsException(
-                "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
-                "but should be of type 'Union[str, Dict[str, str].'"
-            )
-
-        continuous_columns, categorical_columns = _split_features_by_type(data, columns)
-
-        chunks = self.chunker.split(data, columns=columns, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(
+            data, columns=continuous_columns + categorical_columns, timestamp_column_name=self.timestamp_column_name
+        )
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.

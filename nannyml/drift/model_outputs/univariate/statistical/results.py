@@ -233,7 +233,7 @@ def _plot_prediction_drift(
         title,
     ) = _get_drift_column_names_for_feature(
         y_pred,
-        'continuous' if _column_is_continuous(calculator.previous_analysis_data[y_pred]) else 'categorical',
+        'continuous' if calculator.problem_type == ProblemType.REGRESSION else 'categorical',
         metric,
     )
 
@@ -310,7 +310,7 @@ def _plot_prediction_distribution(
         )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-    if _column_is_categorical(data[prediction_column_name]):
+    if calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
         fig = _stacked_bar_plot(
             feature_table=feature_table,
             drift_table=drift_data,
@@ -320,7 +320,7 @@ def _plot_prediction_distribution(
             yaxis_title=axis_title,
             title=title,
         )
-    elif _column_is_continuous(data[prediction_column_name]):
+    elif calculator.problem_type == ProblemType.REGRESSION:
         fig = _joy_plot(
             feature_table=feature_table,
             drift_table=drift_data,
