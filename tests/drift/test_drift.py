@@ -240,6 +240,88 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
     assert not np.isnan(results.data.loc[0, 'f3_p_value'])
 
 
+@pytest.mark.parametrize(
+    'calculator_opts, expected',
+    [
+        (
+            {'chunk_size': 5000},
+            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.2435952380952381, 0.21061507936507934],
+        ),
+        (
+            {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
+            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.2435952380952381, 0.21061507936507934],
+        ),
+        (
+            {'chunk_number': 5},
+            [0.008829365079365048, 0.007886904761904734, 0.015178571428571375, 0.06502976190476184, 0.2535218253968254],
+        ),
+        (
+            {'chunk_number': 5, 'timestamp_column_name': 'timestamp'},
+            [0.008829365079365048, 0.007886904761904734, 0.015178571428571375, 0.06502976190476184, 0.2535218253968254],
+        ),
+        (
+            {'chunk_period': 'M', 'timestamp_column_name': 'timestamp'},
+            [
+                0.007646520146520119,
+                0.008035714285714257,
+                0.009456605222734282,
+                0.09057539682539684,
+                0.25612599206349207,
+            ],
+        ),
+        (
+            {},
+            [
+                0.011011904761904723,
+                0.01736111111111116,
+                0.015773809523809523,
+                0.011011904761904723,
+                0.016865079365079305,
+                0.01468253968253963,
+                0.018650793650793696,
+                0.11398809523809528,
+                0.25496031746031744,
+                0.2530753968253968,
+            ],
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            [
+                0.011011904761904723,
+                0.01736111111111116,
+                0.015773809523809523,
+                0.011011904761904723,
+                0.016865079365079305,
+                0.01468253968253963,
+                0.018650793650793696,
+                0.11398809523809528,
+                0.25496031746031744,
+                0.2530753968253968,
+            ],
+        ),
+    ],
+    ids=[
+        'size_based_without_timestamp',
+        'size_based_with_timestamp',
+        'count_based_without_timestamp',
+        'count_based_with_timestamp',
+        'period_based_with_timestamp',
+        'default_without_timestamp',
+        'default_with_timestamp',
+    ],
+)
+def test_univariate_statistical_drift_calculator_works_with_chunker(
+    sample_drift_data, calculator_opts, expected  # noqa: D103
+):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    calc = UnivariateStatisticalDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(
+        ref_data
+    )
+    sut = calc.calculate(data=sample_drift_data).data
+
+    assert all(sut['f1_dstat'] == expected)
+
+
 def test_statistical_drift_calculator_raises_type_error_when_features_missing():  # noqa: D103
 
     with pytest.raises(TypeError, match='feature_column_names'):

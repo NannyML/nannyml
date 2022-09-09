@@ -82,13 +82,13 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         >>> fig = results.plot(kind='feature_drift', plot_reference=True, feature_column_name='distance_from_office')
         >>> fig.show()
         """
-        super(UnivariateStatisticalDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super(UnivariateStatisticalDriftCalculator, self).__init__(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
 
         self.feature_column_names = feature_column_names
         self.continuous_column_names: List[str] = []
         self.categorical_column_names: List[str] = []
-
-        self.timestamp_column_name = timestamp_column_name
 
         # required for distribution plots
         self.previous_reference_data: Optional[pd.DataFrame] = None
