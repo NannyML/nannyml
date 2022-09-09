@@ -151,8 +151,8 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. "
-                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'predicted_labels_drift',"
-                "'predicted_labels_distribution']."
+                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'score_drift',"
+                "'score_distribution']."
             )
 
     # @property
@@ -425,8 +425,10 @@ def _plot_score_distribution(
         The original model inputs and outputs
     drift_data : pd.DataFrame
         The results of the drift calculation
-    metadata: ModelMetadata
-        The metadata for the monitored model
+    calculator:
+        The calculator that produced these results
+    plot_reference: bool
+        Flag instructing to either include reference data on the plot or not
     class_label: str, default=None
         The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
