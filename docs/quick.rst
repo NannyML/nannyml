@@ -177,7 +177,7 @@ data drift detection algorithms have identified data drift.
 
 Putting everything together, we see that 4 features exhibit data drift from late 2019 onwards. They are
 ``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
-This drift is responsible for the potential negative impact in performance that we observed in this time period.
+This drift is responsible for the potential negative impact in performance that we have observed in this time period.
 
 -----------------------
 What next
@@ -186,4 +186,4 @@ What next
 This could be further investigated by analyzing changes of distributions of the input variables. Check
 :ref:`tutorials<tutorials>` on :ref:`data drift<data-drift>` to find out how to plot distributions with NannyML.
 
-You can now try using NannyML on your own data. Our :ref:`tutorials` are a good placs to find out what to do for this.
+You can now try using NannyML on your own data. Our :ref:`tutorials` are a good place to find out what to do for this.
