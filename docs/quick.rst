@@ -47,83 +47,9 @@ on other datasets or ML problems look through our :ref:`examples<examples>`.
 Just the code
 -------------
 
-.. code-block:: python
-
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-
-    >>> # Load synthetic data
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> display(reference.head())
-    >>> display(analysis.head())
-
-    >>> # Choose a chunker or set a chunk size
-    >>> chunk_size = 5000
-
-    >>> # initialize, specify required data columns, fit estimator and estimate
-    >>> estimator = nml.CBPE(
-    >>>    y_pred_proba='y_pred_proba',
-    >>>    y_pred='y_pred',
-    >>>    y_true='work_home_actual',
-    >>>    timestamp_column_name='timestamp',
-    >>>    metrics=['roc_auc'],
-    >>>    chunk_size=chunk_size,
-    >>> )
-    >>> estimator = estimator.fit(reference)
-    >>> estimated_performance = estimator.estimate(analysis)
-
-    >>> # Show results
-    >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
-    >>> figure.show()
-
-    >>> # Define feature columns
-    >>> feature_column_names = [
-    >>>     col for col in reference.columns if col not in [
-    ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
-    ...     ]]
-
-    >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
-    ...     feature_column_names=feature_column_names,
-    ...     timestamp_column_name='timestamp',
-    ...     chunk_size=chunk_size
-    ... )
-    >>> univariate_calculator = univariate_calculator.fit(reference)
-    >>> univariate_results = univariate_calculator.calculate(analysis)
-    >>> # Plot drift results for all model inputs
-    >>> for feature in univariate_calculator.feature_column_names:
-    ...     figure = univariate_results.plot(
-    ...         kind='feature_drift',
-    ...         metric='statistic',
-    ...         feature_column_name=feature,
-    ...         plot_reference=True
-    ...     )
-    ...     figure.show()
-
-    >>> # Rank features based on number of alerts
-    >>> ranker = nml.Ranker.by('alert_count')
-    >>> ranked_features = ranker.rank(univariate_results, only_drifting = False)
-    >>> display(ranked_features)
-
-    >>> calc = nml.StatisticalOutputDriftCalculator(
-    ...     y_pred='y_pred',
-    ...     y_pred_proba='y_pred_proba',
-    ...     timestamp_column_name='timestamp'
-    >>> )
-    >>> calc.fit(reference)
-    >>> results = calc.calculate(analysis)
-
-    >>> figure = results.plot(kind='prediction_drift', plot_reference=True)
-    >>> figure.show()
-
-    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size).fit(reference_data=reference)
-    >>> # let's see Reconstruction error statistics for all available data
-    >>> rcerror_results = rcerror_calculator.calculate(analysis)
-    >>> figure = rcerror_results.plot(kind='drift', plot_reference=True)
-    >>> figure.show()
-
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 1 4 5 7 9 11 13
 
 .. _walk_through_the_quickstart:
 
@@ -150,52 +76,25 @@ the analysis period doesn't need to contain the :term:`Target` data.
 
 Let's load and preview the data:
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 1
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
+.. nbtable::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cell: 2
 
-    >>> # Load synthetic data
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> display(reference.head())
-    >>> display(analysis.head())
 
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier |   work_home_actual | timestamp           |   y_pred_proba | partition   |   y_pred |
-+====+========================+================+=======================+==============================+====================+===========+==========+==============+====================+=====================+================+=============+==========+
-|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 | reference   |        0 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |            2 |                  1 | 2014-05-09 23:48:25 |           1    | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  3 |               2.53041  | 20K - 20K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
-|  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 | reference   |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+--------------------+---------------------+----------------+-------------+----------+
+.. nbtable::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cell: 3
 
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |   identifier | timestamp           |   y_pred_proba | partition   |   y_pred |
-+====+========================+================+=======================+==============================+====================+===========+==========+==============+=====================+================+=============+==========+
-|  0 |               0.527691 | 0 - 20K €      |               1.8     |                      8.96072 | False              | Tuesday   | 4.22463  |        50000 | 2017-08-31 04:20:00 |           0.99 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|  1 |               8.48513  | 20K - 20K €    |               2.22207 |                      8.76879 | False              | Friday    | 4.9631   |        50001 | 2017-08-31 05:16:16 |           0.98 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|  2 |               2.07388  | 40K - 60K €    |               2.31008 |                      8.64998 | True               | Friday    | 4.58895  |        50002 | 2017-08-31 05:56:44 |           0.98 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|  3 |               0.118456 | 20K - 20K €    |               2.17144 |                      8.85542 | False              | Tuesday   | 4.71101  |        50003 | 2017-08-31 06:10:17 |           0.97 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
-|  4 |               4.7867   | 0 - 20K €      |               2.36854 |                      8.39497 | False              | Monday    | 0.906738 |        50004 | 2017-08-31 06:29:38 |           0.92 | analysis    |        1 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+--------------+---------------------+----------------+-------------+----------+
 
 We need to make a choice about the way we will split our data into :term:`Data Chunks<Data Chunk>`.
 
-.. code-block:: python
-
-    >>> # Choose a chunker or set a chunk size
-    >>> chunk_size = 5000
-
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 4
 
 Estimating Performance without Targets
 ======================================
@@ -206,25 +105,11 @@ without access to its :term:`Target`. For more details on how to use performance
 while for more details on how the algorithm behind it works see
 :ref:`Confidence-based Performance Estimation (CBPE)<performance-estimation-deep-dive>`.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 5
 
-    >>> # initialize, specify required data columns, fit estimator and estimate
-    >>> estimator = nml.CBPE(
-    >>>    y_pred_proba='y_pred_proba',
-    >>>    y_pred='y_pred',
-    >>>    y_true='work_home_actual',
-    >>>    timestamp_column_name='timestamp',
-    >>>    metrics=['roc_auc'],
-    >>>    chunk_size=chunk_size,
-    >>> )
-    >>> estimator = estimator.fit(reference)
-    >>> estimated_performance = estimator.estimate(analysis)
-
-    >>> # Show results
-    >>> figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
-    >>> figure.show()
-
-.. image:: ./_static/quick_start_perf_est.svg
+.. image:: ./_static/quick-start-perf-est.svg
 
 The results indicate that the model's performance is likely to be negatively impacted from the second half of 2019
 onwards.
@@ -235,102 +120,52 @@ Detecting Data Drift
 NannyML allows for further investigation into potential performance issues with its data drift detection
 functionality. See :ref:`data-drift` for more details.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 7
 
-    >>> # Define feature columns
-    >>> feature_column_names = [
-    >>>     col for col in reference.columns if col not in [
-    ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
-    ...     ]]
-    >>> # Let's initialize the object that will perform the Univariate Drift calculations
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
-    ...     feature_column_names=feature_column_names,
-    ...     timestamp_column_name='timestamp',
-    ...     chunk_size=chunk_size
-    ... )
-    >>> univariate_calculator = univariate_calculator.fit(reference)
-    >>> univariate_results = univariate_calculator.calculate(analysis)
-    >>> # Plot drift results for all model inputs
-    >>> for feature in univariate_calculator.feature_column_names:
-    ...     figure = univariate_results.plot(
-    ...         kind='feature_drift',
-    ...         metric='statistic',
-    ...         feature_column_name=feature,
-    ...         plot_reference=True
-    ...     )
-    ...     figure.show()
+.. image:: ./_static/quick-start-drift-distance_from_office.svg
 
-.. image:: ./_static/drift-guide-distance_from_office.svg
+.. image:: ./_static/quick-start-drift-gas_price_per_litre.svg
 
-.. image:: ./_static/drift-guide-gas_price_per_litre.svg
+.. image:: ./_static/quick-start-drift-tenure.svg
 
-.. image:: ./_static/drift-guide-tenure.svg
+.. image:: ./_static/quick-start-drift-wfh_prev_workday.svg
 
-.. image:: ./_static/drift-guide-wfh_prev_workday.svg
+.. image:: ./_static/quick-start-drift-workday.svg
 
-.. image:: ./_static/drift-guide-workday.svg
+.. image:: ./_static/quick-start-drift-public_transportation_cost.svg
 
-.. image:: ./_static/drift-guide-public_transportation_cost.svg
-
-.. image:: ./_static/drift-guide-salary_range.svg
+.. image:: ./_static/quick-start-drift-salary_range.svg
 
 When there are a lot of drifted features, NannyML can also rank them by the number of alerts they have raised:
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 9
 
-    >>> ranker = nml.Ranker.by('alert_count')
-    >>> ranked_features = ranker.rank(univariate_results, only_drifting = False)
-    >>> display(ranked_features)
+.. nbtable::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cell: 10
 
-+----+----------------------------+--------------------+--------+
-|    | feature                    |   number_of_alerts |   rank |
-+====+============================+====================+========+
-|  0 | wfh_prev_workday           |                  5 |      1 |
-+----+----------------------------+--------------------+--------+
-|  1 | salary_range               |                  5 |      2 |
-+----+----------------------------+--------------------+--------+
-|  2 | distance_from_office       |                  5 |      3 |
-+----+----------------------------+--------------------+--------+
-|  3 | public_transportation_cost |                  5 |      4 |
-+----+----------------------------+--------------------+--------+
-|  4 | tenure                     |                  2 |      5 |
-+----+----------------------------+--------------------+--------+
-|  5 | workday                    |                  0 |      6 |
-+----+----------------------------+--------------------+--------+
-|  6 | gas_price_per_litre        |                  0 |      7 |
-+----+----------------------------+--------------------+--------+
 
 There is also functionality for visualizing data drift for model outputs. We can see how it works below:
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 11
 
-    >>> calc = nml.StatisticalOutputDriftCalculator(
-    ...     y_pred='y_pred',
-    ...     y_pred_proba='y_pred_proba',
-    ...     timestamp_column_name='timestamp'
-    >>> )
-    >>> calc.fit(reference)
-    >>> results = calc.calculate(analysis)
-
-    >>> figure = results.plot(kind='score_drift', plot_reference=True)
-    >>> figure.show()
-
-.. image:: ./_static/drift-guide-score-drift.svg
+.. image:: ./_static/quick-start-score-drift.svg
 
 More complex data drift cases can get detected by Data Reconstruction with PCA. For more information
 see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 13
 
-    >>> # Let's initialize the object that will perform Data Reconstruction with PCA
-    >>> rcerror_calculator = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size).fit(reference_data=reference)
-    >>> # let's see Reconstruction error statistics for all available data
-    >>> rcerror_results = rcerror_calculator.calculate(analysis)
-    >>> figure = rcerror_results.plot(kind='drift', plot_reference=True)
-    >>> figure.show()
-
-.. image:: ./_static/drift-guide-multivariate.svg
+.. image:: ./_static/quick-start-drift-multivariate.svg
 
 -----------------------
 Insights
@@ -342,7 +177,7 @@ data drift detection algorithms have identified data drift.
 
 Putting everything together, we see that 4 features exhibit data drift from late 2019 onwards. They are
 ``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
-This drift is responsible for the potential negative impact in performance that we observed in this time period.
+This drift is responsible for the potential negative impact in performance that we have observed in this time period.
 
 -----------------------
 What next
@@ -351,4 +186,4 @@ What next
 This could be further investigated by analyzing changes of distributions of the input variables. Check
 :ref:`tutorials<tutorials>` on :ref:`data drift<data-drift>` to find out how to plot distributions with NannyML.
 
-You can now try using NannyML on your own data. Our :ref:`tutorials` are a good placs to find out what to do for this.
+You can now try using NannyML on your own data. Our :ref:`tutorials` are a good place to find out what to do for this.

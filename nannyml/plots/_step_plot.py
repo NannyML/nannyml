@@ -587,7 +587,7 @@ def _plot_confidence_band(
     ):
 
         def _plot(data_subset, fill_color):
-            data_subset = _add_artificial_end_point(data, start_date_column_name, end_date_column_name)
+            data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
             fig.add_traces(
                 [
                     go.Scatter(
@@ -604,7 +604,7 @@ def _plot_confidence_band(
                         y=data_subset[lower_confidence_column_name],
                         line=dict(shape='hv', color='rgba(0,0,0,0)'),
                         fill='tonexty',
-                        fillcolor=colors_transparent[1],
+                        fillcolor=fill_color,
                         hoverinfo='skip',
                         showlegend=False,
                     ),

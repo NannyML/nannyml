@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2022-09-09
+
+### Changed
+
+- Use the `problem_type` parameter to determine the correct graph to output when plotting model output drift
+
+### Fixed
+
+- Showing the wrong plot title for DLE estimation result plots, thanks [@NeoKish](https://github.com/NeoKish)
+- Fixed incorrect plot kinds in some error feedback for the model output drift calculator
+- Fixed missing `problem_type` argument in the Quickstart guide
+- Fix incorrect visualization of confidence bands on reference data in DEE and CBPE result plots
+
 ## [0.6.0] - 2022-09-07
 
 ### Added

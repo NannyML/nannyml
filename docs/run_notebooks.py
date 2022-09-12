@@ -37,7 +37,7 @@ def run_notebook(nb_path):
     try:
         cp.preprocess(nb, {'metadata': {'path': os.path.dirname(nb_path)}})
         ep.preprocess(nb, {'metadata': {'path': os.path.dirname(nb_path)}})
-        _clear_image_outputs(nb)
+        postprocess(nb)
     except CellExecutionError:
         print(f'Error executing the notebook "{nb_path}".\n\n')
         raise
@@ -47,10 +47,33 @@ def run_notebook(nb_path):
             nbformat.write(nb, f)
 
 
-def _clear_image_outputs(nb: NotebookNode) -> NotebookNode:
+def postprocess(nb: NotebookNode) -> NotebookNode:
+    res = _clean_outputs(nb)
+    res = _clear_execution_metadata(res)
+    return res
+
+
+def _clear_execution_metadata(nb: NotebookNode) -> NotebookNode:
+    for cell in nb['cells']:
+        if 'execution_count' in cell:
+            del cell['execution_count']
+        if 'metadata' in cell:
+            if 'execution' in cell['metadata']:
+                del cell['metadata']['execution']
+            if 'pycharm' in cell['metadata']:
+                del cell['metadata']['pycharm']
+    return nb
+
+
+def _clean_outputs(nb: NotebookNode) -> NotebookNode:
     def is_image_output(cell_output: NotebookNode) -> bool:
         if 'data' in cell_output and 'application/vnd.plotly.v1+json' in cell_output['data']:
             return True
+        return False
+
+    def is_nannyml_object_output(cell_output: NotebookNode) -> bool:
+        if 'data' in cell_output and 'text/plain' in cell_output['data']:
+            return str(cell_output['data']['text/plain']).startswith('<nannyml.')
         return False
 
     images_found = 0
@@ -60,6 +83,8 @@ def _clear_image_outputs(nb: NotebookNode) -> NotebookNode:
             for output in cell['outputs']:
                 if is_image_output(output):
                     images_found += 1
+                    cell['outputs'] = []
+                if is_nannyml_object_output(output):
                     cell['outputs'] = []
 
     sys.stdout.write(f' -- removed {images_found} image outputs')

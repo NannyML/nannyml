@@ -151,8 +151,8 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. "
-                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'predicted_labels_drift',"
-                "'predicted_labels_distribution']."
+                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'score_drift',"
+                "'score_distribution']."
             )
 
     # @property
@@ -233,7 +233,7 @@ def _plot_prediction_drift(
         title,
     ) = _get_drift_column_names_for_feature(
         y_pred,
-        'continuous' if _column_is_continuous(calculator.previous_analysis_data[y_pred]) else 'categorical',
+        'continuous' if calculator.problem_type == ProblemType.REGRESSION else 'categorical',
         metric,
     )
 
@@ -310,7 +310,7 @@ def _plot_prediction_distribution(
         )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-    if _column_is_categorical(data[prediction_column_name]):
+    if calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
         fig = _stacked_bar_plot(
             feature_table=feature_table,
             drift_table=drift_data,
@@ -320,7 +320,7 @@ def _plot_prediction_distribution(
             yaxis_title=axis_title,
             title=title,
         )
-    elif _column_is_continuous(data[prediction_column_name]):
+    elif calculator.problem_type == ProblemType.REGRESSION:
         fig = _joy_plot(
             feature_table=feature_table,
             drift_table=drift_data,
@@ -425,8 +425,10 @@ def _plot_score_distribution(
         The original model inputs and outputs
     drift_data : pd.DataFrame
         The results of the drift calculation
-    metadata: ModelMetadata
-        The metadata for the monitored model
+    calculator:
+        The calculator that produced these results
+    plot_reference: bool
+        Flag instructing to either include reference data on the plot or not
     class_label: str, default=None
         The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
