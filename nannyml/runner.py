@@ -253,8 +253,8 @@ def _run_statistical_model_output_drift_calculator(
             plots = {
                 f'{kind}_{metric}_{clazz}': results.plot(kind, metric, class_label=clazz)
                 for kind in [
-                    'predicted_labels_drift',
-                    'predicted_labels_distribution',
+                    'score_drift',
+                    'score_distribution',
                     'prediction_drift',
                     'prediction_distribution',
                 ]
@@ -334,11 +334,7 @@ def _run_target_distribution_drift_calculator(
 
         if console:
             console.log('generating result plots')
-        plots = {
-            f'{kind}_{distribution}': results.plot(kind, distribution)
-            for kind in ['distribution']
-            for distribution in ['statistical', 'metric']
-        }
+        plots = {f'{kind}': results.plot(kind) for kind in ['target_drift', 'target_distribution']}
     except Exception as exc:
         msg = f"Failed to run target distribution calculator: {exc}"
         if console:
