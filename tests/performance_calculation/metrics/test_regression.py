@@ -44,6 +44,23 @@ def realized_performance_metrics(performance_calculator, regression_data) -> pd.
     return results.data
 
 
+@pytest.fixture(scope='module')
+def no_timestamp_metrics(regression_data) -> pd.DataFrame:
+    # Get rid of negative values for log based metrics
+    reference = regression_data[0][~(regression_data[0]['y_pred'] < 0)]
+    analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
+
+    performance_calculator = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_true='y_true',
+        metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+        problem_type='regression',
+    ).fit(reference)
+    results = performance_calculator.calculate(analysis.join(regression_data[2]))
+    return results.data
+
+
 @pytest.mark.parametrize(
     'key,problem_type,metric',
     [
@@ -112,4 +129,51 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
     metric_values = realized_performance_metrics[metric]
+    assert (round(metric_values, 5) == expected).all()
+
+
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        (
+            'mae',
+            [853.39967, 853.13667, 846.304, 855.4945, 849.3295, 702.51767, 700.73583, 684.70167, 705.814, 698.34383],
+        ),
+        ('mape', [0.22871, 0.23082, 0.22904, 0.23362, 0.23389, 0.26286, 0.26346, 0.26095, 0.26537, 0.26576]),
+        (
+            'mse',
+            [
+                1143129.298,
+                1139867.667,
+                1128720.807,
+                1158285.6715,
+                1124285.66517,
+                829589.49233,
+                829693.3775,
+                792286.80933,
+                835916.964,
+                825935.67917,
+            ],
+        ),
+        ('msle', [0.07049, 0.06999, 0.06969, 0.07193, 0.07249, 0.10495, 0.10481, 0.10435, 0.10471, 0.10588]),
+        (
+            'rmse',
+            [
+                1069.17225,
+                1067.64585,
+                1062.41273,
+                1076.23681,
+                1060.32338,
+                910.81803,
+                910.87506,
+                890.10494,
+                914.28495,
+                908.81003,
+            ],
+        ),
+        ('rmsle', [0.2655, 0.26456, 0.26399, 0.2682, 0.26924, 0.32396, 0.32375, 0.32303, 0.3236, 0.32539]),
+    ],
+)
+def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_metrics, metric, expected):
+    metric_values = no_timestamp_metrics[metric]
     assert (round(metric_values, 5) == expected).all()
