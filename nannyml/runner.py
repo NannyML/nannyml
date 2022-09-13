@@ -274,9 +274,6 @@ def _run_statistical_model_output_drift_calculator(
                     'prediction_distribution',
                 ]
             }
-            plots.update(
-                {f'{kind}': results.plot(kind) for kind in ['predicted_labels_distribution', 'prediction_distribution']}
-            )
         elif problem_type == ProblemType.REGRESSION:
             plots = {
                 'prediction_drift_statistic': results.plot('prediction_drift', 'statistic'),
