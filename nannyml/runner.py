@@ -247,25 +247,32 @@ def _run_statistical_model_output_drift_calculator(
 
         if console:
             console.log('generating result plots')
-        plots = {}
+        plots: Dict[str, Any] = {}
         if problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
             classes = list(column_mapping['y_pred_proba'].keys())
             plots = {
-                f'{kind}_{metric}_{clazz}': results.plot(kind, metric, class_label=clazz)
+                f'{kind}_{clazz}': results.plot(kind, class_label=clazz)
+                for kind in [
+                    'score_drift',
+                    'score_distribution',
+                ]
+                for clazz in classes
+            }
+            plots.update(
+                {
+                    'prediction_drift': results.plot(kind='prediction_drift'),
+                    'prediction_distribution': results.plot(kind='prediction_distribution'),
+                }
+            )
+        elif problem_type == ProblemType.CLASSIFICATION_BINARY:
+            plots = {
+                f'{kind}': results.plot(kind)
                 for kind in [
                     'score_drift',
                     'score_distribution',
                     'prediction_drift',
                     'prediction_distribution',
                 ]
-                for metric in ['statistic', 'p_value']
-                for clazz in classes
-            }
-        elif problem_type == ProblemType.CLASSIFICATION_BINARY:
-            plots = {
-                f'{kind}_{metric}': results.plot(kind, metric)
-                for kind in ['predicted_labels_drift', 'prediction_drift']
-                for metric in ['statistic', 'p_value']
             }
             plots.update(
                 {f'{kind}': results.plot(kind) for kind in ['predicted_labels_distribution', 'prediction_distribution']}
