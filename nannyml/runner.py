@@ -494,13 +494,13 @@ def _run_dee_performance_estimation(
     console: Console = None,
 ):
     if console:
-        console.rule('[cyan]Direct Error Estimator[/]')
+        console.rule('[cyan]Direct Loss Estimator[/]')
 
     if problem_type not in [ProblemType.REGRESSION]:
-        _logger.info(f"DEE does not support '{problem_type.name}' problems. Skipping DEE estimation.")
+        _logger.info(f"DLE does not support '{problem_type.name}' problems. Skipping DLE estimation.")
         if console:
             console.log(
-                f"DEE does not support '{problem_type.name}' problems. Skipping DEE estimation.",
+                f"DLE does not support '{problem_type.name}' problems. Skipping DLE estimation.",
                 style='yellow',
             )
         return
@@ -529,7 +529,7 @@ def _run_dee_performance_estimation(
         }
 
     except Exception as exc:
-        msg = f"Failed to run DEE performance estimator: {exc}"
+        msg = f"Failed to run DLE performance estimator: {exc}"
         if console:
             console.log(msg, style='red')
         else:
