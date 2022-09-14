@@ -451,3 +451,30 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
     assert np.array_equal(
         np.round(results.data['sampling_error'], 4), np.round([0.009511, 0.009005, 0.008710, 0.008854, 0.009899], 4)
     )
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift', 'plot_reference': False}),
+        ({}, {'kind': 'drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift', 'plot_reference': True}),
+        ({}, {'kind': 'drift', 'plot_reference': True}),
+    ],
+    ids=[
+        'drift_with_timestamp_without_reference',
+        'drift_without_timestamp_without_reference',
+        'drift_with_timestamp_with_reference',
+        'drift_without_timestamp_with_reference',
+    ],
+)
+def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calc_args).fit(ref_data)
+    sut = calc.calculate(data=sample_drift_data)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

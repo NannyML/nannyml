@@ -187,9 +187,7 @@ class TargetDistributionResult(AbstractCalculatorResult):
             feature_table = pd.concat(
                 [
                     chunk.data.assign(key=chunk.key)
-                    for chunk in self.calculator.chunker.split(
-                        self.calculator.previous_analysis_data, self.calculator.timestamp_column_name
-                    )
+                    for chunk in self.calculator.chunker.split(self.calculator.previous_analysis_data)
                 ]
             )
 
@@ -206,9 +204,7 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 reference_feature_table = pd.concat(
                     [
                         chunk.data.assign(key=chunk.key)
-                        for chunk in self.calculator.chunker.split(
-                            self.calculator.previous_reference_data, self.calculator.timestamp_column_name
-                        )
+                        for chunk in self.calculator.chunker.split(self.calculator.previous_reference_data)
                     ]
                 )
                 feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)

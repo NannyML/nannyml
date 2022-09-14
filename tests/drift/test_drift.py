@@ -363,3 +363,82 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
 
     assert len([col for col in list(sut.data.columns) if col.startswith('f2')]) == 0
     assert len([col for col in list(sut.data.columns) if col.startswith('f4')]) == 0
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f1'},
+        ),
+        ({}, {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f1'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f1'},
+        ),
+        ({}, {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f1'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f3'},
+        ),
+        ({}, {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f3'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f3'},
+        ),
+        ({}, {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f3'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f1'},
+        ),
+        ({}, {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f1'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f1'},
+        ),
+        ({}, {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f1'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f3'},
+        ),
+        ({}, {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f3'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f3'},
+        ),
+        ({}, {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f3'}),
+    ],
+    ids=[
+        'continuous_feature_drift_with_timestamp_without_reference',
+        'continuous_feature_drift_without_timestamp_without_reference',
+        'continuous_feature_drift_with_timestamp_with_reference',
+        'continuous_feature_drift_without_timestamp_with_reference',
+        'categorical_feature_drift_with_timestamp_without_reference',
+        'categorical_feature_drift_without_timestamp_without_reference',
+        'categorical_feature_drift_with_timestamp_with_reference',
+        'categorical_feature_drift_without_timestamp_with_reference',
+        'continuous_feature_distribution_with_timestamp_without_reference',
+        'continuous_feature_distribution_without_timestamp_without_reference',
+        'continuous_feature_distribution_with_timestamp_with_reference',
+        'continuous_feature_distribution_without_timestamp_with_reference',
+        'categorical_feature_distribution_with_timestamp_without_reference',
+        'categorical_feature_distribution_without_timestamp_without_reference',
+        'categorical_feature_distribution_with_timestamp_with_reference',
+        'categorical_feature_distribution_without_timestamp_with_reference',
+    ],
+)
+def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    calc = UnivariateStatisticalDriftCalculator(
+        feature_column_names=['f1', 'f3'],
+        **calc_args,
+    ).fit(ref_data)
+    sut = calc.calculate(data=ana_data)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

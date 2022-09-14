@@ -769,3 +769,111 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
     results = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
 
     pd.testing.assert_frame_equal(expected, results.data[['key', 'statistical_target_drift']])
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': False}),
+        ({}, {'kind': 'target_drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': True}),
+        ({}, {'kind': 'target_drift', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': False}),
+        ({}, {'kind': 'target_distribution', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': True}),
+        ({}, {'kind': 'target_distribution', 'plot_reference': True}),
+    ],
+    ids=[
+        'target_drift_with_timestamp_without_reference',
+        'target_drift_without_timestamp_without_reference',
+        'target_drift_with_timestamp_with_reference',
+        'target_drift_without_timestamp_with_reference',
+        'target_distribution_with_timestamp_without_reference',
+        'target_distribution_without_timestamp_without_reference',
+        'target_distribution_with_timestamp_with_reference',
+        'target_distribution_without_timestamp_with_reference',
+    ],
+)
+def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
+    calc = TargetDistributionCalculator(
+        y_true='y_true', problem_type=ProblemType.CLASSIFICATION_MULTICLASS, **calc_args
+    ).fit(reference)
+    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': False}),
+        ({}, {'kind': 'target_drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': True}),
+        ({}, {'kind': 'target_drift', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': False}),
+        ({}, {'kind': 'target_distribution', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': True}),
+        ({}, {'kind': 'target_distribution', 'plot_reference': True}),
+    ],
+    ids=[
+        'target_drift_with_timestamp_without_reference',
+        'target_drift_without_timestamp_without_reference',
+        'target_drift_with_timestamp_with_reference',
+        'target_drift_without_timestamp_with_reference',
+        'target_distribution_with_timestamp_without_reference',
+        'target_distribution_without_timestamp_without_reference',
+        'target_distribution_with_timestamp_with_reference',
+        'target_distribution_without_timestamp_with_reference',
+    ],
+)
+def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
+    calc = TargetDistributionCalculator(
+        y_true='work_home_actual', problem_type=ProblemType.CLASSIFICATION_BINARY, **calc_args
+    ).fit(reference)
+    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': False}),
+        ({}, {'kind': 'target_drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': True}),
+        ({}, {'kind': 'target_drift', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': False}),
+        ({}, {'kind': 'target_distribution', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': True}),
+        ({}, {'kind': 'target_distribution', 'plot_reference': True}),
+    ],
+    ids=[
+        'target_drift_with_timestamp_without_reference',
+        'target_drift_without_timestamp_without_reference',
+        'target_drift_with_timestamp_with_reference',
+        'target_drift_without_timestamp_with_reference',
+        'target_distribution_with_timestamp_without_reference',
+        'target_distribution_without_timestamp_without_reference',
+        'target_distribution_with_timestamp_with_reference',
+        'target_distribution_without_timestamp_with_reference',
+    ],
+)
+def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
+    calc = TargetDistributionCalculator(y_true='y_true', problem_type=ProblemType.REGRESSION, **calc_args).fit(
+        reference
+    )
+    sut = calc.calculate(analysis.join(analysis_targets))
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

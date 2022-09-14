@@ -843,3 +843,162 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
             ]
         ],
     )
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'score_drift', 'plot_reference': False, 'class_label': 'upmarket_card'},
+        ),
+        ({}, {'kind': 'score_drift', 'plot_reference': False, 'class_label': 'upmarket_card'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'score_drift', 'plot_reference': True, 'class_label': 'upmarket_card'},
+        ),
+        ({}, {'kind': 'score_drift', 'plot_reference': True, 'class_label': 'upmarket_card'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'score_distribution', 'plot_reference': False, 'class_label': 'upmarket_card'},
+        ),
+        ({}, {'kind': 'score_distribution', 'plot_reference': False, 'class_label': 'upmarket_card'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'score_distribution', 'plot_reference': True, 'class_label': 'upmarket_card'},
+        ),
+        ({}, {'kind': 'score_distribution', 'plot_reference': True, 'class_label': 'upmarket_card'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': False}),
+        ({}, {'kind': 'prediction_drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': True}),
+        ({}, {'kind': 'prediction_drift', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': False}),
+        ({}, {'kind': 'prediction_distribution', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+        ({}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+    ],
+    ids=[
+        'score_drift_with_timestamp_without_reference',
+        'score_drift_without_timestamp_without_reference',
+        'score_drift_with_timestamp_with_reference',
+        'score_drift_without_timestamp_with_reference',
+        'score_distribution_with_timestamp_without_reference',
+        'score_distribution_without_timestamp_without_reference',
+        'score_distribution_with_timestamp_with_reference',
+        'score_distribution_without_timestamp_with_reference',
+        'prediction_drift_with_timestamp_without_reference',
+        'prediction_drift_without_timestamp_without_reference',
+        'prediction_drift_with_timestamp_with_reference',
+        'prediction_drift_without_timestamp_with_reference',
+        'prediction_distribution_with_timestamp_without_reference',
+        'prediction_distribution_without_timestamp_without_reference',
+        'prediction_distribution_with_timestamp_with_reference',
+        'prediction_distribution_without_timestamp_with_reference',
+    ],
+)
+def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
+    calc = StatisticalOutputDriftCalculator(
+        y_pred='y_pred',
+        y_pred_proba={
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+        },
+        problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
+        **calc_args,
+    ).fit(reference)
+    sut = calc.calculate(analysis)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_drift', 'plot_reference': False}),
+        ({}, {'kind': 'score_drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_drift', 'plot_reference': True}),
+        ({}, {'kind': 'score_drift', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_distribution', 'plot_reference': False}),
+        ({}, {'kind': 'score_distribution', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_distribution', 'plot_reference': True}),
+        ({}, {'kind': 'score_distribution', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': False}),
+        ({}, {'kind': 'prediction_drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': True}),
+        ({}, {'kind': 'prediction_drift', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': False}),
+        ({}, {'kind': 'prediction_distribution', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+        ({}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+    ],
+    ids=[
+        'score_drift_with_timestamp_without_reference',
+        'score_drift_without_timestamp_without_reference',
+        'score_drift_with_timestamp_with_reference',
+        'score_drift_without_timestamp_with_reference',
+        'score_distribution_with_timestamp_without_reference',
+        'score_distribution_without_timestamp_without_reference',
+        'score_distribution_with_timestamp_with_reference',
+        'score_distribution_without_timestamp_with_reference',
+        'prediction_drift_with_timestamp_without_reference',
+        'prediction_drift_without_timestamp_without_reference',
+        'prediction_drift_with_timestamp_with_reference',
+        'prediction_drift_without_timestamp_with_reference',
+        'prediction_distribution_with_timestamp_without_reference',
+        'prediction_distribution_without_timestamp_without_reference',
+        'prediction_distribution_with_timestamp_with_reference',
+        'prediction_distribution_without_timestamp_with_reference',
+    ],
+)
+def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, _ = load_synthetic_binary_classification_dataset()
+    calc = StatisticalOutputDriftCalculator(
+        y_pred='y_pred', y_pred_proba='y_pred_proba', problem_type=ProblemType.CLASSIFICATION_BINARY, **calc_args
+    ).fit(reference)
+    sut = calc.calculate(analysis)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': False}),
+        ({}, {'kind': 'prediction_drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': True}),
+        ({}, {'kind': 'prediction_drift', 'plot_reference': True}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': False}),
+        ({}, {'kind': 'prediction_distribution', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+        ({}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+    ],
+    ids=[
+        'prediction_drift_with_timestamp_without_reference',
+        'prediction_drift_without_timestamp_without_reference',
+        'prediction_drift_with_timestamp_with_reference',
+        'prediction_drift_without_timestamp_with_reference',
+        'prediction_distribution_with_timestamp_without_reference',
+        'prediction_distribution_without_timestamp_without_reference',
+        'prediction_distribution_with_timestamp_with_reference',
+        'prediction_distribution_without_timestamp_with_reference',
+    ],
+)
+def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, _ = load_synthetic_car_price_dataset()
+    calc = StatisticalOutputDriftCalculator(y_pred='y_pred', problem_type=ProblemType.REGRESSION, **calc_args).fit(
+        reference
+    )
+    sut = calc.calculate(analysis)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
