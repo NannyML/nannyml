@@ -67,6 +67,7 @@ def _create_stacked_bar_table(
     value_counts_table,
     start_date_column_name,
     end_date_column_name,
+    chunk_index_column_name,
     chunk_type_column_name,
     chunk_column_name,
     drift_column_name,
@@ -82,15 +83,26 @@ def _create_stacked_bar_table(
     if drift_column_name and drift_column_name in stacked_bar_table.columns:
         stacked_bar_table.loc[stacked_bar_table[drift_column_name], 'hue'] = -1
 
-    stacked_bar_table = stacked_bar_table.sort_values(end_date_column_name, ascending=True).reset_index(drop=True)
-    stacked_bar_table['next_end_date'] = stacked_bar_table[end_date_column_name].shift(-1)
+    if start_date_column_name and end_date_column_name:
+        stacked_bar_table = stacked_bar_table.sort_values(end_date_column_name, ascending=True).reset_index(drop=True)
+        stacked_bar_table['next_end_date'] = stacked_bar_table[end_date_column_name].shift(-1)
 
-    stacked_bar_table['start_date_label_hover'] = stacked_bar_table[start_date_column_name].dt.strftime(
-        date_label_hover_format
+        stacked_bar_table['start_date_label_hover'] = stacked_bar_table[start_date_column_name].dt.strftime(
+            date_label_hover_format
+        )
+        stacked_bar_table['end_date_label_hover'] = stacked_bar_table[end_date_column_name].dt.strftime(
+            date_label_hover_format
+        )
+
+    offset = (
+        stacked_bar_table.loc[stacked_bar_table['period'] == 'reference', 'chunk_index'].max() + 1
+        if len(stacked_bar_table.loc[stacked_bar_table['period'] == 'reference']) > 0
+        else 0
     )
-    stacked_bar_table['end_date_label_hover'] = stacked_bar_table[end_date_column_name].dt.strftime(
-        date_label_hover_format
-    )
+    stacked_bar_table['chunk_index_unified'] = [
+        idx + offset if period == 'analysis' else idx
+        for idx, period in zip(stacked_bar_table['chunk_index'], stacked_bar_table['period'])
+    ]
 
     return stacked_bar_table
 
@@ -100,6 +112,7 @@ def _create_stacked_bar_plot(
     feature_column_name,
     start_date_column_name,
     end_date_column_name,
+    chunk_index_column_name,
     chunk_type_column_name,
     chunk_column_name,
     chunk_types,
@@ -129,10 +142,25 @@ def _create_stacked_bar_plot(
         for color in colors
     ]
 
-    hover_template = (
-        chunk_hover_label
-        + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}; (%{customdata[3]}, %{customdata[4]})'
-    )
+    is_time_based_x_axis = start_date_column_name and end_date_column_name
+    if is_time_based_x_axis:
+        hover_template = (
+            chunk_hover_label
+            + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}; (%{customdata[3]}, %{customdata[4]})'
+        )
+        custom_data = [
+            chunk_column_name,
+            'start_date_label_hover',
+            'end_date_label_hover',
+            'value_counts_normalised',
+            'value_counts',
+        ]
+    else:
+        hover_template = (
+            chunk_hover_label
+            + ' %{customdata[0]}: chunk index <b>%{customdata[1]}</b>, (%{customdata[2]}, %{customdata[3]})'
+        )
+        custom_data = [chunk_column_name, chunk_index_column_name, 'value_counts_normalised', 'value_counts']
 
     layout = go.Layout(
         title=title,
@@ -156,20 +184,17 @@ def _create_stacked_bar_plot(
             stacked_bar_table[feature_column_name] == category,
         ]
 
-        hover_data = data[
-            [
-                chunk_column_name,
-                'start_date_label_hover',
-                'end_date_label_hover',
-                'value_counts_normalised',
-                'value_counts',
-            ]
-        ].values
+        hover_data = data[custom_data].values
+
+        if is_time_based_x_axis:
+            x = data[start_date_column_name]
+        else:
+            x = data['chunk_index_unified']
 
         fig.add_trace(
             go.Bar(
                 name=category,
-                x=data[start_date_column_name],
+                x=x,
                 y=data['value_counts_normalised'],
                 orientation='v',
                 marker_line_color=data['hue'].apply(lambda hue: colors[hue] if hue == -1 else 'rgba(255,255,255,1)'),
@@ -187,18 +212,22 @@ def _create_stacked_bar_plot(
     for i, chunk_type in enumerate(chunk_types):
         subset = stacked_bar_table.loc[stacked_bar_table[chunk_type_column_name] == chunk_type]
         if subset.shape[0] > 0:
+            x0 = subset[start_date_column_name].min() if is_time_based_x_axis else subset['chunk_index_unified'].min()
+            x1 = subset[end_date_column_name].max() if is_time_based_x_axis else subset['chunk_index_unified'].max() + 1
             fig.add_shape(
                 y0=0,
                 y1=1.05,
-                x0=subset[start_date_column_name].min(),
-                x1=subset[end_date_column_name].max(),
+                x0=x0,
+                x1=x1,
                 line_color=colors_transparant[i],
                 layer='above',
                 line_width=2,
                 line=dict(dash='dash'),
             ),
             fig.add_annotation(
-                x=subset[start_date_column_name].mean(),
+                x=subset[start_date_column_name].mean()
+                if is_time_based_x_axis
+                else subset['chunk_index_unified'].mean(),
                 y=1.025,
                 text=chunk_type_labels[i],
                 font=dict(color=colors[i]),
@@ -209,7 +238,7 @@ def _create_stacked_bar_plot(
 
     # ____Add elements to legend___#
     x = [np.nan] * len(data)
-    y = data[start_date_column_name]
+    y = data[start_date_column_name] if is_time_based_x_axis else [np.nan] * len(data)
 
     # Add chunk types
     for i, hue_label in enumerate(chunk_types):
@@ -264,8 +293,9 @@ def _stacked_bar_plot(
     feature_table,
     drift_table,
     feature_column_name,
-    start_date_column_name='start_date',
-    end_date_column_name='end_date',
+    start_date_column_name=None,
+    end_date_column_name=None,
+    chunk_index_column_name='chunk_index',
     chunk_type_column_name='period',
     chunk_column_name='chunk',
     drift_column_name='drift',
@@ -319,6 +349,7 @@ def _stacked_bar_plot(
         value_counts_table,
         start_date_column_name,
         end_date_column_name,
+        chunk_index_column_name,
         chunk_type_column_name,
         chunk_column_name,
         drift_column_name,
@@ -331,6 +362,7 @@ def _stacked_bar_plot(
         feature_column_name,
         start_date_column_name,
         end_date_column_name,
+        chunk_index_column_name,
         chunk_type_column_name,
         chunk_column_name,
         chunk_types,

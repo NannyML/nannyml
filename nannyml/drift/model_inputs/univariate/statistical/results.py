@@ -237,7 +237,7 @@ def _plot_continuous_feature_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
+    feature_table = _create_feature_table(calculator.chunker.split(data))
 
     if plot_reference:
         if calculator.previous_reference_results is None:
@@ -249,9 +249,7 @@ def _plot_continuous_feature_distribution(
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
-        reference_feature_table = _create_feature_table(
-            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
-        )
+        reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
@@ -289,7 +287,7 @@ def _plot_categorical_feature_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
+    feature_table = _create_feature_table(calculator.chunker.split(data))
 
     if plot_reference:
         if calculator.previous_reference_results is None:
@@ -301,10 +299,10 @@ def _plot_categorical_feature_distribution(
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
-        reference_feature_table = _create_feature_table(
-            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
-        )
+        reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
+
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     fig = _stacked_bar_plot(
         feature_table=feature_table,
@@ -314,6 +312,8 @@ def _plot_categorical_feature_distribution(
         feature_column_name=feature_column_name,
         yaxis_title=yaxis_title,
         title=title,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 
