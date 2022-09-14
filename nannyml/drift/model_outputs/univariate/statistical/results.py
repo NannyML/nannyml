@@ -292,12 +292,11 @@ def _plot_prediction_distribution(
     prediction_column_name = calculator.y_pred
     axis_title = f'{prediction_column_name}'
     drift_column_name = f'{prediction_column_name}_alert'
-    title = f'Distribution over time for {prediction_column_name}'
 
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
+    feature_table = _create_feature_table(calculator.chunker.split(data))
 
     if plot_reference:
         reference_drift = calculator.previous_reference_results.copy()
@@ -314,6 +313,8 @@ def _plot_prediction_distribution(
         )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     if calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
         fig = _stacked_bar_plot(
             feature_table=feature_table,
@@ -322,7 +323,7 @@ def _plot_prediction_distribution(
             drift_column_name=drift_column_name,
             feature_column_name=prediction_column_name,
             yaxis_title=axis_title,
-            title=title,
+            title=f'Distribution over time for {prediction_column_name}',
         )
     elif calculator.problem_type == ProblemType.REGRESSION:
         fig = _joy_plot(
@@ -333,8 +334,12 @@ def _plot_prediction_distribution(
             feature_column_name=prediction_column_name,
             x_axis_title=axis_title,
             post_kde_clip=clip,
-            title=title,
+            title=f'Distribution over time for {prediction_column_name}'
+            if is_time_based_x_axis
+            else f'Distribution over chunks for {prediction_column_name}',
             style='vertical',
+            start_date_column_name='start_date' if is_time_based_x_axis else None,
+            end_date_column_name='end_date' if is_time_based_x_axis else None,
         )
     else:
         raise RuntimeError(
@@ -502,6 +507,8 @@ def _plot_score_distribution(
         )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     if _column_is_categorical(data[output_column_name]):
         fig = _stacked_bar_plot(
             feature_table=feature_table,
@@ -523,6 +530,8 @@ def _plot_score_distribution(
             post_kde_clip=clip,
             title=title,
             style='vertical',
+            start_date_column_name='start_date' if is_time_based_x_axis else None,
+            end_date_column_name='end_date' if is_time_based_x_axis else None,
         )
     else:
         raise RuntimeError(

@@ -213,6 +213,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 )
                 feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
+            is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+
             return _joy_plot(
                 feature_table=feature_table,
                 drift_table=results_data,
@@ -221,8 +223,12 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 feature_column_name=self.calculator.y_true,
                 x_axis_title=f'{self.calculator.y_true}',
                 post_kde_clip=None,
-                title=f'Distribution over time for {self.calculator.y_true}',
+                title=f'Distribution over time for {self.calculator.y_true}'
+                if is_time_based_x_axis
+                else f'Distribution over chunks for {self.calculator.y_true}',
                 style='vertical',
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         else:
             raise RuntimeError(

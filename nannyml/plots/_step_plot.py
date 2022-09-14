@@ -142,7 +142,8 @@ def _step_plot(
 
     is_time_based_x_axis = start_date_column_name and end_date_column_name
 
-    x_axis_title = 'Time' if is_time_based_x_axis else 'Chunk'
+    if not x_axis_title:
+        x_axis_title = 'Time' if is_time_based_x_axis else 'Chunk'
 
     data = _data_prep_step_plot(
         table,

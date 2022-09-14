@@ -254,6 +254,8 @@ def _plot_continuous_feature_distribution(
         )
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     fig = _joy_plot(
         feature_table=feature_table,
         drift_table=drift_data,
@@ -263,6 +265,8 @@ def _plot_continuous_feature_distribution(
         x_axis_title=x_axis_title,
         title=title,
         style='vertical',
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 
