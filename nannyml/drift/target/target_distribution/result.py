@@ -114,6 +114,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
             reference_results['period'] = 'reference'
             data = pd.concat([reference_results, data], ignore_index=True)
 
+        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+
         if self.calculator.problem_type == ProblemType.REGRESSION:
             return _step_plot(
                 table=data,
@@ -124,6 +126,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 title=f'KS statistic over time for {self.calculator.y_true}',
                 y_axis_title='KS statistic',
                 v_line_separating_analysis_period=plot_period_separator,
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         elif self.calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
             return _step_plot(
@@ -137,6 +141,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         else:
             raise RuntimeError(
@@ -160,6 +166,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
             reference_results['period'] = 'reference'
             results_data = pd.concat([reference_results, results_data.copy()], ignore_index=True)
 
+        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+
         if self.calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
             return _step_plot(
                 table=results_data,
@@ -172,6 +180,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         if self.calculator.problem_type == ProblemType.REGRESSION:
             feature_table = pd.concat(

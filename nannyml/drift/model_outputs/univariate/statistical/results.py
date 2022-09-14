@@ -245,6 +245,8 @@ def _plot_prediction_drift(
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     fig = _step_plot(
         table=data,
         metric_column_name=metric_column_name,
@@ -256,6 +258,8 @@ def _plot_prediction_drift(
         y_axis_title=metric_label,
         v_line_separating_analysis_period=plot_period_separator,
         statistically_significant_column_name=drift_column_name,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 
@@ -399,6 +403,8 @@ def _plot_score_drift(
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     fig = _step_plot(
         table=data,
         metric_column_name=metric_column_name,
@@ -410,6 +416,8 @@ def _plot_score_drift(
         y_axis_title=metric_label,
         v_line_separating_analysis_period=plot_period_separator,
         statistically_significant_column_name=drift_column_name,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 

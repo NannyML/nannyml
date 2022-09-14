@@ -22,21 +22,35 @@ from .colors import Colors
 def _data_prep_step_plot(
     data: pd.DataFrame,
     metric_column_name: str,
-    start_date_column_name: str,
-    end_date_column_name: str,
     partial_target_column_name: str,
     sampling_error_column_name: str,
     drift_column_name: str,
+    start_date_column_name: str = None,
+    end_date_column_name: str = None,
     hover_metric_format='{0:.4f}',
     hover_date_label_format='%b-%d-%Y',
 ):
     data = data.copy()
-    data['mid_point_date'] = (
-        data[start_date_column_name] + (data[end_date_column_name] - data[start_date_column_name]) / 2
+
+    if start_date_column_name and end_date_column_name:
+        # we have a time based X-axis
+        data['mid_point_date'] = (
+            data[start_date_column_name] + (data[end_date_column_name] - data[start_date_column_name]) / 2
+        )
+        data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
+        data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
+
+    offset = (
+        data.loc[data['period'] == 'reference', 'chunk_index'].max() + 1
+        if len(data.loc[data['period'] == 'reference']) > 0
+        else 0
     )
+    data['chunk_index_unified'] = [
+        idx + offset if period == 'analysis' else idx for idx, period in zip(data['chunk_index'], data['period'])
+    ]
+
     data['metric_label'] = data[metric_column_name].apply(lambda x: hover_metric_format.format(x))
-    data['start_date_label'] = data[start_date_column_name].dt.strftime(hover_date_label_format)
-    data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
+
     if sampling_error_column_name is not None:
         data['plt_sampling_error'] = np.round(SAMPLING_ERROR_RANGE * data[sampling_error_column_name], 4)
 
@@ -59,11 +73,15 @@ def _data_prep_step_plot(
     return data
 
 
-def _add_artificial_end_point(data: pd.DataFrame, start_date_column_name: str, end_date_column_name: str):
+def _add_artificial_end_point(
+    data: pd.DataFrame, start_date_column_name: str, end_date_column_name: str, chunk_index_column_name: str
+):
     data_point_hack = data.tail(1).copy()
-    data_point_hack[start_date_column_name] = data_point_hack[end_date_column_name]
-    data_point_hack[end_date_column_name] = pd.NaT
-    data_point_hack['mid_point_date'] = pd.NaT
+    if start_date_column_name and end_date_column_name:
+        data_point_hack[start_date_column_name] = data_point_hack[end_date_column_name]
+        data_point_hack[end_date_column_name] = pd.NaT
+        data_point_hack['mid_point_date'] = pd.NaT
+    data_point_hack[chunk_index_column_name] = data_point_hack[chunk_index_column_name] + 1
     data_point_hack.index = data_point_hack.index + 1
     return pd.concat([data, data_point_hack], axis=0)
 
@@ -81,8 +99,9 @@ def _step_plot(
     drift_column_name=None,
     partial_target_column_name=None,
     chunk_column_name='chunk',
-    start_date_column_name='start_date',
-    end_date_column_name='end_date',
+    start_date_column_name=None,
+    end_date_column_name=None,
+    chunk_index_column_name='chunk_index',
     chunk_type_column_name='period',
     chunk_types=None,
     confidence_legend_label='Confidence band',
@@ -100,7 +119,7 @@ def _step_plot(
     v_line_separating_analysis_period=True,
     figure=None,
     title='Metric over time',
-    x_axis_title='Time',
+    x_axis_title=None,
     y_axis_title='Metric',
     y_axis_lim=None,
     alpha=0.2,
@@ -121,14 +140,18 @@ def _step_plot(
     if colors is None:
         colors = [Colors.BLUE_SKY_CRAYOLA, Colors.INDIGO_PERSIAN, Colors.GRAY_DARK, Colors.RED_IMPERIAL]
 
+    is_time_based_x_axis = start_date_column_name and end_date_column_name
+
+    x_axis_title = 'Time' if is_time_based_x_axis else 'Chunk'
+
     data = _data_prep_step_plot(
         table,
         metric_column_name,
-        start_date_column_name,
-        end_date_column_name,
         partial_target_column_name,
         sampling_error_column_name,
         drift_column_name,
+        start_date_column_name,
+        end_date_column_name,
         hover_metric_format,
         hover_date_label_format,
     )
@@ -137,34 +160,48 @@ def _step_plot(
         'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha)) for color in colors
     ]
 
-    # This has been updated to show the general shape, but the period label and other details are hard-coded.
-    # I think this needs to be put together more conditionally when building each figure, but I couldn't figure out how
-    # The border can also be changed, but I think that also means this needs restructuring?
-    # https://plotly.com/python/hover-text-and-formatting/#customizing-hover-label-appearance
-    hover_template = (
-        '%{customdata[4]} &nbsp; &nbsp; <span style="color:#AD0000">%{customdata[5]}</span><br>'  # noqa: E501
-        + hover_labels[0]
-        + ': <b>%{customdata[0]}</b> &nbsp; &nbsp; '
-        + 'From <b>%{customdata[1]}</b> to <b>%{customdata[2]}</b> &nbsp; &nbsp; <br>'
-        + hover_labels[1]
-        + ': <b>%{customdata[3]}</b>  &nbsp; &nbsp; '
-        + '%{customdata[6]}</b>  &nbsp; &nbsp;'
-    )
-
     custom_data_columns = [
         chunk_column_name,
-        'start_date_label',
-        'end_date_label',
         'metric_label',
         'hover_period',
         'hover_alert',
         'incomplete_target_percentage',
     ]
 
-    if sampling_error_column_name is not None:
-        hover_template += '<br>Sampling error range: +/-<b>%{customdata[7]}</b>'  # noqa: E501
-        custom_data_columns += ['plt_sampling_error']
+    # This has been updated to show the general shape, but the period label and other details are hard-coded.
+    # I think this needs to be put together more conditionally when building each figure, but I couldn't figure out how
+    # The border can also be changed, but I think that also means this needs restructuring?
+    # https://plotly.com/python/hover-text-and-formatting/#customizing-hover-label-appearance
+    hover_template = (
+        f'%{{customdata[{custom_data_columns.index("hover_period")}]}} &nbsp; &nbsp; '  # noqa: E501
+        + f'<span style="color:#AD0000">%{{customdata[{custom_data_columns.index("hover_alert")}]}}</span><br>'
+        + hover_labels[0]
+        + f': <b>%{{customdata[{custom_data_columns.index(chunk_column_name)}]}}</b> &nbsp; &nbsp; '
+    )
+    if is_time_based_x_axis:
+        custom_data_columns += ['start_date_label', 'end_date_label']
+        hover_template += (
+            f'From <b>%{{customdata[{custom_data_columns.index("start_date_label")}]}}</b> to '
+            f'<b>%{{customdata[{custom_data_columns.index("end_date_label")}]}}</b> &nbsp; &nbsp; <br>'
+        )
+    else:
+        custom_data_columns += [chunk_index_column_name]
+        hover_template += (
+            f'Chunk index: <b>%{{customdata[{custom_data_columns.index(chunk_index_column_name)}]}}</b><br />'
+        )
 
+    hover_template += (
+        hover_labels[1]
+        + f': <b>%{{customdata[{custom_data_columns.index("metric_label")}]}}</b>  &nbsp; &nbsp; '
+        + f'%{{customdata[{custom_data_columns.index("incomplete_target_percentage")}]}}</b>  &nbsp; &nbsp;'
+    )
+
+    if sampling_error_column_name is not None:
+        custom_data_columns += ['plt_sampling_error']
+        hover_template += (
+            '<br>Sampling error range: +/-<b>'
+            + f'%{{customdata[{custom_data_columns.index("plt_sampling_error")}]}}</b>'  # noqa: E501
+        )
     hover_template += '<extra></extra>'
 
     layout = go.Layout(
@@ -194,7 +231,15 @@ def _step_plot(
 
     # Plot line separating reference and analysis period
     _plot_reference_analysis_separator(
-        fig, data, colors, v_line_separating_analysis_period, chunk_type_column_name, chunk_types
+        fig,
+        data,
+        colors,
+        v_line_separating_analysis_period,
+        chunk_type_column_name,
+        chunk_types,
+        start_date_column_name,
+        end_date_column_name,
+        'chunk_index_unified',
     )
 
     # Plot confidence band, if the metric estimated
@@ -209,6 +254,7 @@ def _step_plot(
         start_date_column_name,
         end_date_column_name,
         plot_for_reference=plot_confidence_for_reference,
+        chunk_index_column_name='chunk_index_unified',
     )
 
     # Plot statistically significant band
@@ -220,6 +266,7 @@ def _step_plot(
         metric_column_name,
         start_date_column_name,
         end_date_column_name,
+        chunk_index_column_name='chunk_index_unified',
     )
 
     # Plot metric for reference and analysis period
@@ -235,6 +282,7 @@ def _step_plot(
         start_date_column_name,
         end_date_column_name,
         partial_target_column_name,
+        'chunk_index_unified',
     )
 
     # Plot metric if partial target in analysis period
@@ -249,6 +297,7 @@ def _step_plot(
         end_date_column_name,
         partial_target_column_name,
         partial_target_legend_label,
+        'chunk_index_unified',
     )
 
     # Plot reference and analysis markers that did not drift
@@ -264,7 +313,9 @@ def _step_plot(
         chunk_column_name,
         chunk_type_column_name,
         chunk_types,
+        start_date_column_name,
         end_date_column_name,
+        'chunk_index_unified',
     )
 
     # Plot data drifted markers and areas
@@ -281,11 +332,16 @@ def _step_plot(
         chunk_column_name,
         start_date_column_name,
         end_date_column_name,
+        'chunk_index_unified',
     )
 
     # ____Add elements to legend, order matters___#
 
-    x = [data['mid_point_date'].head(1).values, data['mid_point_date'].tail(1).values]
+    if is_time_based_x_axis:
+        x = [data['mid_point_date'].head(1).values, data['mid_point_date'].tail(1).values]
+    else:
+        x = data[chunk_index_column_name]
+
     y = [np.nan, np.nan]
 
     # Add confidence band
@@ -390,6 +446,7 @@ def _plot_metric(
     start_date_column_name,
     end_date_column_name,
     partial_target_column_name,
+    chunk_index_column_name,
 ):
     if partial_target_column_name and partial_target_column_name in data.columns:
         subset = data.loc[data[partial_target_column_name] == 0]
@@ -398,7 +455,16 @@ def _plot_metric(
 
     for i, chunk_type in enumerate(chunk_types):
         data_subset = subset.loc[subset[chunk_type_column_name] == chunk_type]
-        data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
+
+        data_subset = _add_artificial_end_point(
+            data_subset, start_date_column_name, end_date_column_name, chunk_index_column_name
+        )
+
+        if start_date_column_name and end_date_column_name:
+            x = data_subset[start_date_column_name]
+        else:
+            x = data_subset[chunk_index_column_name]
+
         dash = None
         if estimated_column_name and estimated_column_name in data.columns:
             if not data_subset.empty and data_subset[estimated_column_name].head(1).values[0]:
@@ -407,7 +473,7 @@ def _plot_metric(
             go.Scatter(
                 name=chunk_legend_labels[i],
                 mode='lines',
-                x=data_subset[start_date_column_name],
+                x=x,
                 y=data_subset[metric_column_name],
                 line=dict(shape='hv', color=colors[i], width=2, dash=dash),
                 hoverinfo='skip',
@@ -427,15 +493,22 @@ def _plot_metric_partial_target(
     end_date_column_name,
     partial_target_column_name,
     partial_target_legend_label,
+    chunk_index_column_name,
 ):
     if partial_target_column_name and partial_target_column_name in data.columns:
         data_subset = data.loc[(data[chunk_type_column_name] == chunk_types[1])]
-        data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
+        if start_date_column_name and end_date_column_name:
+            data_subset = _add_artificial_end_point(
+                data_subset, start_date_column_name, end_date_column_name, chunk_index_column_name
+            )
+            x = data_subset[start_date_column_name]
+        else:
+            x = data_subset[chunk_index_column_name]
         fig.add_trace(
             go.Scatter(
                 name=partial_target_legend_label,
                 mode='lines',
-                x=data_subset[start_date_column_name],
+                x=x,
                 y=data_subset[metric_column_name],
                 line=dict(shape='hv', color=colors[1], width=2, dash='dot'),
                 hoverinfo='skip',
@@ -456,7 +529,9 @@ def _plot_non_drifted_markers(
     chunk_column_name,
     chunk_type_column_name,
     chunk_types,
+    start_date_column_name,
     end_date_column_name,
+    chunk_index_column_name,
 ):
     for i, chunk_type in enumerate(chunk_types):
         if drift_column_name and drift_column_name in data.columns:
@@ -464,11 +539,16 @@ def _plot_non_drifted_markers(
         else:
             data_subset = data.loc[(data[chunk_type_column_name] == chunk_type)]
 
+        if start_date_column_name and end_date_column_name:
+            x = data_subset['mid_point_date']
+        else:
+            x = data_subset[chunk_index_column_name] + 0.5
+
         fig.add_trace(
             go.Scatter(
                 name=hover_marker_labels[i],
                 mode='markers',
-                x=data_subset['mid_point_date'],
+                x=x,
                 y=data_subset[metric_column_name],
                 marker=dict(color=colors[i], size=6, symbol='square'),
                 customdata=data_subset[custom_data_columns].values,
@@ -491,12 +571,20 @@ def _plot_drifted_markers_and_areas(
     chunk_column_name,
     start_date_column_name,
     end_date_column_name,
+    chunk_index_column_name,
 ):
     if drift_column_name and drift_column_name in data.columns:
         for i, row in data.loc[data[drift_column_name], :].iterrows():
+            if start_date_column_name and end_date_column_name:
+                x0 = row[start_date_column_name]
+                x1 = row[end_date_column_name]
+            else:
+                x0 = row[chunk_index_column_name]
+                x1 = x0 + 1
+
             fig.add_vrect(
-                x0=row[start_date_column_name],
-                x1=row[end_date_column_name],
+                x0=x0,
+                x1=x1,
                 fillcolor=colors[-1],
                 opacity=alpha,
                 layer='below',
@@ -504,11 +592,16 @@ def _plot_drifted_markers_and_areas(
             )
 
         data_subset = data.loc[data[drift_column_name]]
+        if start_date_column_name and end_date_column_name:
+            x = data_subset['mid_point_date']
+        else:
+            x = data_subset[chunk_index_column_name] + 0.5
+
         fig.add_trace(
             go.Scatter(
                 name=hover_marker_labels[2],
                 mode='markers',
-                x=data_subset['mid_point_date'],
+                x=x,
                 y=data_subset[metric_column_name],
                 marker=dict(color=colors[-1], size=6, symbol='diamond'),
                 customdata=data_subset[custom_data_columns].values,
@@ -556,13 +649,22 @@ def _plot_reference_analysis_separator(
     v_line_separating_analysis_period: bool,
     chunk_type_column_name: str,
     chunk_types: List[str],
+    start_date_column_name: str,
+    end_date_column_name: str,
+    chunk_index_column_name: str,
 ):
     if v_line_separating_analysis_period:
         data_subset = data.loc[
             data[chunk_type_column_name] == chunk_types[1],
         ].head(1)
+
+        if start_date_column_name and end_date_column_name:
+            x = pd.to_datetime(data_subset[start_date_column_name].values[0])
+        else:
+            x = data_subset[chunk_index_column_name].values[0]
+
         fig.add_vline(
-            x=pd.to_datetime(data_subset['start_date'].values[0]),
+            x=x,
             line=dict(color=colors[1], width=1, dash='dash'),
             layer='below',
         )
@@ -579,6 +681,7 @@ def _plot_confidence_band(
     start_date_column_name: str,
     end_date_column_name: str,
     plot_for_reference: bool,
+    chunk_index_column_name: str,
 ):
     if (
         lower_confidence_column_name
@@ -587,12 +690,19 @@ def _plot_confidence_band(
     ):
 
         def _plot(data_subset, fill_color):
-            data_subset = _add_artificial_end_point(data_subset, start_date_column_name, end_date_column_name)
+            data_subset = _add_artificial_end_point(
+                data_subset, start_date_column_name, end_date_column_name, chunk_index_column_name
+            )
+            if start_date_column_name and end_date_column_name:
+                x = data_subset[start_date_column_name]
+            else:
+                x = data_subset[chunk_index_column_name]
+
             fig.add_traces(
                 [
                     go.Scatter(
                         mode='lines',
-                        x=data_subset[start_date_column_name],
+                        x=x,
                         y=data_subset[upper_confidence_column_name],
                         line=dict(shape='hv', color='rgba(0,0,0,0)'),
                         hoverinfo='skip',
@@ -600,7 +710,7 @@ def _plot_confidence_band(
                     ),
                     go.Scatter(
                         mode='lines',
-                        x=data_subset[start_date_column_name],
+                        x=x,
                         y=data_subset[lower_confidence_column_name],
                         line=dict(shape='hv', color='rgba(0,0,0,0)'),
                         fill='tonexty',
@@ -624,14 +734,19 @@ def _plot_statistical_significance_band(
     metric_column_name,
     start_date_column_name,
     end_date_column_name,
+    chunk_index_column_name,
 ):
     if statistically_significant_column_name is not None and statistically_significant_column_name in data.columns:
         data_subset = data.loc[data[statistically_significant_column_name]]
         for i, row in data_subset.iterrows():
+            if start_date_column_name and end_date_column_name:
+                x = [row[start_date_column_name], row[end_date_column_name]]
+            else:
+                x = [row[chunk_index_column_name], row[chunk_index_column_name] + 1]
             fig.add_trace(
                 go.Scatter(
                     mode='lines',
-                    x=[row[start_date_column_name], row[end_date_column_name]],
+                    x=x,
                     y=[row[metric_column_name], row[metric_column_name]],
                     line=dict(color=colors_transparent[1], width=9),
                     hoverinfo='skip',
