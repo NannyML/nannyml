@@ -43,14 +43,13 @@ class AbstractCalculatorResult(ABC):
         """
         self.data = results_data.copy(deep=True)
 
+    def __getattr__(self, attribute):
+        """Redirect function calls directly to the inner DataFrame."""
+        return getattr(self.data, attribute)
+
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
-
-    @property
-    @abstractmethod
-    def calculator_name(self) -> str:
-        raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Plots calculation results."""
@@ -148,10 +147,9 @@ class AbstractEstimatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    @property
-    @abstractmethod
-    def estimator_name(self) -> str:
-        raise NotImplementedError
+    def __getattr__(self, attribute):
+        """Redirect function calls directly to the inner DataFrame."""
+        return getattr(self.data, attribute)
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Plot drift results."""

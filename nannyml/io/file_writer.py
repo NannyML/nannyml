@@ -48,7 +48,7 @@ class FileWriter(Writer):
 
     def _write(self, data: pd.DataFrame, plots=Dict[str, Figure], **kwargs):
         calculator_name = kwargs['calculator_name']
-        write_path = get_filepath_str(self.filepath, self._protocol)
+        write_path = get_filepath_str(PurePosixPath(self.filepath), self._protocol)
 
         images_path = Path(write_path) / calculator_name / "plots"
         images_path.mkdir(parents=True, exist_ok=True)
