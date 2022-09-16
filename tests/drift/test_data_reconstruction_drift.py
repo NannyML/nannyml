@@ -347,7 +347,7 @@ def test_data_reconstruction_drift_calculator_works_with_chunker(
     )
     sut = calc.calculate(data=sample_drift_data).data
 
-    assert all(sut['reconstruction_error'] == expected)
+    assert all(round(sut['reconstruction_error'], 5) == [round(n, 5) for n in expected])
 
 
 def test_data_reconstruction_drift_calculator_with_only_numeric_should_not_fail(sample_drift_data):  # noqa: D103
