@@ -25,8 +25,8 @@ class _MulticlassClassificationCBPE(CBPE):
         y_pred: str,
         y_pred_proba: ModelOutputsType,
         y_true: str,
-        timestamp_column_name: str,
         problem_type: Union[str, ProblemType],
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -86,12 +86,13 @@ class _MulticlassClassificationCBPE(CBPE):
 
         data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
 
-        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         res = pd.DataFrame.from_records(
             [
                 {
                     'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
                     'start_index': chunk.start_index,
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
@@ -125,7 +126,7 @@ class _MulticlassClassificationCBPE(CBPE):
                 estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
             )
             estimates['period'] = 'analysis'
-            estimates['estimated'] = True 
+            estimates['estimated'] = True
         return estimates
 
 

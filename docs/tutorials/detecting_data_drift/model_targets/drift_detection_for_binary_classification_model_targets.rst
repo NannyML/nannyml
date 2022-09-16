@@ -23,6 +23,12 @@ of the available target values for each chunk, for both binary and multiclass cl
 .. note::
     The Target Drift detection process can handle missing target values across all :term:`data periods<Data Period>`.
 
+.. note::
+    The following example uses :term:`timestamps<Timestamp>`.
+    These are optional but have an impact on the way data is chunked and results are plotted.
+    You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
+
+
 
 Just The Code
 ------------------------------------

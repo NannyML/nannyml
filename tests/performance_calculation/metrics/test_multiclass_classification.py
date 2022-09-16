@@ -49,7 +49,24 @@ def performance_calculator() -> PerformanceCalculator:
 
 
 @pytest.fixture(scope='module')
-def realized_performance_metrics(performance_calculator, multiclass_data) -> pd.DataFrame:
+def realized_performance_metrics(multiclass_data) -> pd.DataFrame:
+    performance_calculator = PerformanceCalculator(
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        problem_type='classification_multiclass',
+    ).fit(multiclass_data[0])
+    results = performance_calculator.calculate(multiclass_data[1].merge(multiclass_data[2], on='identifier'))
+    return results.data
+
+
+@pytest.fixture(scope='module')
+def no_timestamp_metrics(performance_calculator, multiclass_data) -> pd.DataFrame:
     performance_calculator.fit(multiclass_data[0])
     results = performance_calculator.calculate(multiclass_data[1].merge(multiclass_data[2], on='identifier'))
     return results.data
@@ -92,4 +109,20 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
     metric_values = realized_performance_metrics[metric]
+    assert (round(metric_values, 5) == expected).all()
+
+
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        ('roc_auc', [0.90759, 0.91053, 0.90941, 0.91158, 0.90753, 0.74859, 0.75114, 0.7564, 0.75856, 0.75394]),
+        ('f1', [0.7511, 0.76305, 0.75849, 0.75894, 0.75796, 0.55711, 0.55915, 0.56506, 0.5639, 0.56164]),
+        ('precision', [0.75127, 0.76313, 0.7585, 0.75897, 0.75795, 0.5597, 0.56291, 0.56907, 0.56667, 0.56513]),
+        ('recall', [0.75103, 0.76315, 0.75848, 0.75899, 0.75798, 0.55783, 0.56017, 0.56594, 0.56472, 0.56277]),
+        ('specificity', [0.87555, 0.88151, 0.87937, 0.87963, 0.87899, 0.77991, 0.78068, 0.78422, 0.78342, 0.78243]),
+        ('accuracy', [0.75117, 0.763, 0.75867, 0.75917, 0.758, 0.56083, 0.56233, 0.56983, 0.56783, 0.566]),
+    ],
+)
+def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_metrics, metric, expected):
+    metric_values = no_timestamp_metrics[metric]
     assert (round(metric_values, 5) == expected).all()

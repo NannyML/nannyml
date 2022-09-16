@@ -103,6 +103,8 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     fig = _step_plot(
         table=data,
         metric_column_name='reconstruction_error',
@@ -118,6 +120,8 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         lower_confidence_column_name='lower_confidence_bound',
         upper_confidence_column_name='upper_confidence_bound',
         plot_confidence_for_reference=True,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
 
     return fig

@@ -66,6 +66,7 @@ class AbstractCalculator(ABC):
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
+        timestamp_column_name: Optional[str] = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
 
@@ -83,7 +84,11 @@ class AbstractCalculator(ABC):
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         """
-        self.chunker = ChunkerFactory.get_chunker(chunk_size, chunk_number, chunk_period, chunker)
+        self.chunker = ChunkerFactory.get_chunker(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
+
+        self.timestamp_column_name = timestamp_column_name
 
     @property
     def _logger(self) -> logging.Logger:
@@ -167,6 +172,7 @@ class AbstractEstimator(ABC):
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
+        timestamp_column_name: str = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
 
@@ -184,7 +190,10 @@ class AbstractEstimator(ABC):
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         """
-        self.chunker = ChunkerFactory.get_chunker(chunk_size, chunk_number, chunk_period, chunker)
+        self.chunker = ChunkerFactory.get_chunker(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
+        self.timestamp_column_name = timestamp_column_name
 
     @property
     def _logger(self) -> logging.Logger:

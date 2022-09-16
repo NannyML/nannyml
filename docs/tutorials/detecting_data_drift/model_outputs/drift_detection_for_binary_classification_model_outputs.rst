@@ -13,6 +13,12 @@ If the model's population changes, then its actions will be different.
 The difference in actions is very important to know as soon as possible because
 they directly affect the business results from operating a machine learning model.
 
+.. note::
+    The following example uses :term:`timestamps<Timestamp>`.
+    These are optional but have an impact on the way data is chunked and results are plotted.
+    You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
+
+
 Just The Code
 ------------------------------------
 

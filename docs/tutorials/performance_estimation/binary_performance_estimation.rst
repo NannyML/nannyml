@@ -8,6 +8,12 @@ This tutorial explains how to use NannyML to estimate the performance of binary 
 models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
 
+.. note::
+    The following example uses :term:`timestamps<Timestamp>`.
+    These are optional but have an impact on the way data is chunked and results are plotted.
+    You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
+
+
 
 .. _performance-estimation-binary-just-the-code:
 
