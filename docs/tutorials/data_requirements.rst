@@ -109,6 +109,8 @@ Below we see the columns our dataset contains and explain their purpose.
 +----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
 
 
+.. _data_requirements_columns_timestamp:
+
 Timestamp
 ^^^^^^^^^
 
@@ -124,7 +126,24 @@ In the sample data this is the ``timestamp`` column.
         - *ISO 8601*, e.g. ``2021-10-13T08:47:23Z``
         - *Unix-epoch* in units of seconds, e.g. ``1513393355``
 
-Currently required for all features of NannyML, though we are looking to drop this requirement in a future release.
+
+.. warning::
+    This column is optional. When a timestamp column is not provided, plots will no longer make use of a time based x-axis
+    but will use the index of the chunks instead. The following plots illustrate this:
+
+    .. figure:: /_static/drift-guide-salary_range.svg
+
+        Plot using a time based X-axis
+
+
+    .. figure:: /_static/quick-start-drift-salary_range.svg
+
+        Plot using an index based X-axis
+
+
+    Some :class:`~nannyml.chunk.Chunker` classes might require the presence of a timestamp, such as the
+    :class:`~nannyml.chunk.PeriodBasedChunker`.
+
 
 Target
 ^^^^^^
@@ -183,7 +202,7 @@ You can see those requirements in the table below:
 +--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 | Data         | Performance Estimation              | Realized Performance                | Univariate Feature Drift          | Multivariate Feature Drift        | Target Drift                      | Output Drift                      |
 +==============+=====================================+=====================================+===================================+===================================+===================================+===================================+
-| timestamp    | Required (reference and analysis)   | Required (reference and analysis)   | Required (reference and analysis) | Required (reference and analysis) | Required (reference and analysis) | Required (reference and analysis) |
+| timestamp    |                                     |                                     |                                   |                                   |                                   |                                   |
 +--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 | features     |                                     |                                     | Required (reference and analysis) | Required (reference and analysis) |                                   |                                   |
 +--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+

@@ -16,6 +16,7 @@ import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
 
+from nannyml._typing import ProblemType
 from nannyml.calibration import Calibrator, IsotonicCalibrator
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
@@ -500,3 +501,72 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
 
     assert f'sampling_error_{metric}' in results.data.columns
     assert np.array_equal(np.round(results.data[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
+
+
+@pytest.mark.parametrize(
+    'estimator_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+    ],
+    ids=[
+        'performance_with_timestamp_without_reference',
+        'performance_without_timestamp_without_reference',
+        'performance_with_timestamp_with_reference',
+        'performance_without_timestamp_with_reference',
+    ],
+)
+def test_multiclass_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
+    est = CBPE(
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba={
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+        },
+        problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
+        metrics=['roc_auc', 'f1'],
+    ).fit(reference)
+    sut = est.estimate(analysis)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'estimator_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+    ],
+    ids=[
+        'performance_with_timestamp_without_reference',
+        'performance_without_timestamp_without_reference',
+        'performance_with_timestamp_with_reference',
+        'performance_without_timestamp_with_reference',
+    ],
+)
+def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
+    est = CBPE(
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        problem_type=ProblemType.CLASSIFICATION_BINARY,
+        metrics=['roc_auc', 'f1'],
+        **estimator_args,
+    ).fit(reference)
+    sut = est.estimate(analysis)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

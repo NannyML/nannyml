@@ -21,6 +21,12 @@ but also show the target distribution results per chunk with joyploys.
 .. note::
     The Target Drift detection process can handle missing target values across all :term:`data periods<Data Period>`.
 
+.. note::
+    The following example uses :term:`timestamps<Timestamp>`.
+    These are optional but have an impact on the way data is chunked and results are plotted.
+    You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
+
+
 
 Just The Code
 -------------

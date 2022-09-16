@@ -255,3 +255,35 @@ def test_result_plot_contains_reference_data_when_plot_reference_set_to_true(est
     sut = estimates.plot(metric=metric, plot_reference=True)
     assert len(sut.to_dict()['data'][2]['x']) > 0
     assert len(sut.to_dict()['data'][2]['y']) > 0
+
+
+@pytest.mark.parametrize(
+    'estimator_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'mae'}),
+        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'mae'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'mae'}),
+        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'mae'}),
+    ],
+    ids=[
+        'performance_with_timestamp_without_reference',
+        'performance_without_timestamp_without_reference',
+        'performance_with_timestamp_with_reference',
+        'performance_without_timestamp_with_reference',
+    ],
+)
+def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
+    est = DLE(
+        feature_column_names=[col for col in reference.columns if col not in ['y_true', 'y_pred', 'timestamp']],
+        y_true='y_true',
+        y_pred='y_pred',
+        metrics=['mae', 'mape'],
+        **estimator_args,
+    ).fit(reference)
+    sut = est.estimate(analysis)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

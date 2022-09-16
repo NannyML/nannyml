@@ -141,7 +141,7 @@ def _run_statistical_univariate_feature_drift_calculator(
             console.log('fitting on reference data')
         calc = UnivariateStatisticalDriftCalculator(
             feature_column_names=column_mapping['features'],
-            timestamp_column_name=column_mapping['timestamp'],
+            timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
         ).fit(reference_data)
 
@@ -191,7 +191,7 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
             console.log('fitting on reference data')
         calc = DataReconstructionDriftCalculator(
             feature_column_names=column_mapping['features'],
-            timestamp_column_name=column_mapping['timestamp'],
+            timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
         ).fit(reference_data)
 
@@ -235,8 +235,8 @@ def _run_statistical_model_output_drift_calculator(
             console.log('fitting on reference data')
         calc = StatisticalOutputDriftCalculator(
             y_pred=column_mapping['y_pred'],
-            y_pred_proba=column_mapping['y_pred_proba'],
-            timestamp_column_name=column_mapping['timestamp'],
+            y_pred_proba=column_mapping.get('y_pred_proba', None),
+            timestamp_column_name=column_mapping.get('timestamp', None),
             problem_type=problem_type,
             chunker=chunker,
         ).fit(reference_data)
@@ -276,8 +276,8 @@ def _run_statistical_model_output_drift_calculator(
             }
         elif problem_type == ProblemType.REGRESSION:
             plots = {
-                'prediction_drift_statistic': results.plot('prediction_drift', 'statistic'),
-                'prediction_drift_metric': results.plot('prediction_drift', 'p_value'),
+                'prediction_drift_ks_stat': results.plot('prediction_drift', 'statistic'),
+                'prediction_drift_p_value': results.plot('prediction_drift', 'p_value'),
                 'prediction_distribution': results.plot('prediction_distribution'),
             }
     except Exception as exc:
@@ -327,7 +327,7 @@ def _run_target_distribution_drift_calculator(
             console.log('fitting on reference data')
         calc = TargetDistributionCalculator(
             y_true=column_mapping['y_true'],
-            timestamp_column_name=column_mapping['timestamp'],
+            timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
             problem_type=problem_type,
         ).fit(reference_data)
@@ -393,8 +393,8 @@ def _run_realized_performance_calculator(
         calc = PerformanceCalculator(
             y_true=column_mapping['y_true'],
             y_pred=column_mapping['y_pred'],
-            y_pred_proba=column_mapping['y_pred_proba'],
-            timestamp_column_name=column_mapping['timestamp'],
+            y_pred_proba=column_mapping.get('y_pred_proba', None),
+            timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
             metrics=metrics,
             problem_type=problem_type,
@@ -456,7 +456,7 @@ def _run_cbpe_performance_estimation(
             y_true=column_mapping['y_true'],
             y_pred=column_mapping['y_pred'],
             y_pred_proba=column_mapping['y_pred_proba'],
-            timestamp_column_name=column_mapping['timestamp'],
+            timestamp_column_name=column_mapping.get('timestamp', None),
             problem_type=problem_type,
             chunker=chunker,
             metrics=metrics,
@@ -516,7 +516,7 @@ def _run_dee_performance_estimation(
             feature_column_names=column_mapping['features'],
             y_true=column_mapping['y_true'],
             y_pred=column_mapping['y_pred'],
-            timestamp_column_name=column_mapping['timestamp'],
+            timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
             metrics=DEFAULT_METRICS,
         ).fit(reference_data)

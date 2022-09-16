@@ -168,8 +168,9 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
     drift = calc.calculate(data=sample_drift_data)
 
     sut = drift.data.columns
-    assert len(sut) == 12
+    assert len(sut) == 13
     assert 'key' in sut
+    assert 'chunk_index' in sut
     assert 'start_index' in sut
     assert 'start_date' in sut
     assert 'end_index' in sut
@@ -193,7 +194,7 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
     ).fit(ref_data)
     drift = calc.calculate(data=sample_drift_data)
 
-    expected = len(PeriodBasedChunker(offset='W').split(sample_drift_data, timestamp_column_name='timestamp'))
+    expected = len(PeriodBasedChunker(offset='W', timestamp_column_name='timestamp').split(sample_drift_data))
     sut = len(drift.data)
     assert sut == expected
 
@@ -273,6 +274,82 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data)
     pd.testing.assert_frame_equal(expected_drift, drift.data[['key', 'reconstruction_error']])
 
 
+@pytest.mark.parametrize(
+    'calculator_opts, expected',
+    [
+        (
+            {'chunk_size': 5000},
+            [0.7998744001719177, 0.8020996183121666, 0.8043000024523013, 0.735524850766471, 0.7608678766056979],
+        ),
+        (
+            {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
+            [0.7998744001719177, 0.8020996183121666, 0.8043000024523013, 0.735524850766471, 0.7608678766056979],
+        ),
+        (
+            {'chunk_number': 5},
+            [0.7975183099468669, 0.8101736730245841, 0.7942220878040264, 0.7855043522106143, 0.7388546967488279],
+        ),
+        (
+            {'chunk_number': 5, 'timestamp_column_name': 'timestamp'},
+            [0.7975183099468669, 0.8101736730245841, 0.7942220878040264, 0.7855043522106143, 0.7388546967488279],
+        ),
+        (
+            {'chunk_period': 'M', 'timestamp_column_name': 'timestamp'},
+            [0.7925562396242019, 0.81495562506899, 0.7914354678003803, 0.7766351972000973, 0.7442465240638783],
+        ),
+        (
+            {},
+            [
+                0.7899751792798048,
+                0.805061440613929,
+                0.828509894279626,
+                0.7918374517695422,
+                0.7904321700296298,
+                0.798012005578423,
+                0.8123277037588652,
+                0.7586810006623634,
+                0.721358457793149,
+                0.7563509357045066,
+            ],
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            [
+                0.7899751792798048,
+                0.805061440613929,
+                0.828509894279626,
+                0.7918374517695422,
+                0.7904321700296298,
+                0.798012005578423,
+                0.8123277037588652,
+                0.7586810006623634,
+                0.721358457793149,
+                0.7563509357045066,
+            ],
+        ),
+    ],
+    ids=[
+        'size_based_without_timestamp',
+        'size_based_with_timestamp',
+        'count_based_without_timestamp',
+        'count_based_with_timestamp',
+        'period_based_with_timestamp',
+        'default_without_timestamp',
+        'default_with_timestamp',
+    ],
+)
+def test_data_reconstruction_drift_calculator_works_with_chunker(
+    sample_drift_data, calculator_opts, expected  # noqa: D103
+):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(
+        ref_data
+    )
+    sut = calc.calculate(data=sample_drift_data).data
+
+    assert all(round(sut['reconstruction_error'], 5) == [round(n, 5) for n in expected])
+
+
 def test_data_reconstruction_drift_calculator_with_only_numeric_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f2'], timestamp_column_name='timestamp').fit(
@@ -344,16 +421,6 @@ def test_data_reconstruction_drift_calculator_raises_type_error_when_missing_fea
         )
 
 
-def test_data_reconstruction_drift_calculator_raises_type_error_when_missing_timestamp_column_name(  # noqa: D103
-    sample_drift_data,
-):
-    with pytest.raises(TypeError):
-        DataReconstructionDriftCalculator(
-            feature_column_names=['f1', 'f2', 'f3', 'f4'],
-            chunk_period='W',
-        )
-
-
 def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
@@ -384,3 +451,30 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
     assert np.array_equal(
         np.round(results.data['sampling_error'], 4), np.round([0.009511, 0.009005, 0.008710, 0.008854, 0.009899], 4)
     )
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift', 'plot_reference': False}),
+        ({}, {'kind': 'drift', 'plot_reference': False}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift', 'plot_reference': True}),
+        ({}, {'kind': 'drift', 'plot_reference': True}),
+    ],
+    ids=[
+        'drift_with_timestamp_without_reference',
+        'drift_without_timestamp_without_reference',
+        'drift_with_timestamp_with_reference',
+        'drift_without_timestamp_with_reference',
+    ],
+)
+def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calc_args).fit(ref_data)
+    sut = calc.calculate(data=sample_drift_data)
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

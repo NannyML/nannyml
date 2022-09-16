@@ -44,7 +44,7 @@ class SimpleEstimator(AbstractEstimator):  # noqa: D101
         return self
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> SimpleEstimatorResult:  # noqa: D102
-        chunks = self.chunker.split(data, timestamp_column_name='timestamp')
+        chunks = self.chunker.split(data)
         return SimpleEstimatorResult(
             results_data=pd.DataFrame(columns=data.columns).assign(key=[chunk.key for chunk in chunks]),
             calculator=self,

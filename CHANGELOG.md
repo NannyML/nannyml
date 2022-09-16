@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2022-09-16
+
+### Changed
+
+- Made the `timestamp_column_name` required by all calculators and estimators optional. The main consequences of this
+  are plots have a chunk-index based x-axis now when no timestamp column name was given. You can also not chunk by
+  period when the timestamp column name is not specified.
+
+### Fixed
+
+- Added missing `s3fs` dependency
+- Fixed outdated plotting kind constants in the runner (used by CLI)
+- Fixed some missing images and incorrect version numbers in the README, thanks [@NeoKish](https://github.com/NeoKish)!
+
+### Added
+
+- Added a lot of additional tests, mainly concerning plotting and the [`Runner`](nannyml/runner.py) class
+
 ## [0.6.1] - 2022-09-09
 
 ### Changed

@@ -158,6 +158,8 @@ def _plot_performance_metric(
         reference_results['period'] = 'reference'
         results_data = pd.concat([reference_results, results_data], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     # Plot metric performance
     fig = _step_plot(
         table=results_data,
@@ -175,6 +177,8 @@ def _plot_performance_metric(
         y_axis_title='Realized performance',
         v_line_separating_analysis_period=plot_period_separator,
         sampling_error_column_name=f'{metric.column_name}_sampling_error',
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
 
     return fig

@@ -114,6 +114,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
             reference_results['period'] = 'reference'
             data = pd.concat([reference_results, data], ignore_index=True)
 
+        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+
         if self.calculator.problem_type == ProblemType.REGRESSION:
             return _step_plot(
                 table=data,
@@ -124,6 +126,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 title=f'KS statistic over time for {self.calculator.y_true}',
                 y_axis_title='KS statistic',
                 v_line_separating_analysis_period=plot_period_separator,
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         elif self.calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
             return _step_plot(
@@ -137,6 +141,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         else:
             raise RuntimeError(
@@ -160,6 +166,8 @@ class TargetDistributionResult(AbstractCalculatorResult):
             reference_results['period'] = 'reference'
             results_data = pd.concat([reference_results, results_data.copy()], ignore_index=True)
 
+        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+
         if self.calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
             return _step_plot(
                 table=results_data,
@@ -172,14 +180,14 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         if self.calculator.problem_type == ProblemType.REGRESSION:
             feature_table = pd.concat(
                 [
                     chunk.data.assign(key=chunk.key)
-                    for chunk in self.calculator.chunker.split(
-                        self.calculator.previous_analysis_data, self.calculator.timestamp_column_name
-                    )
+                    for chunk in self.calculator.chunker.split(self.calculator.previous_analysis_data)
                 ]
             )
 
@@ -196,12 +204,12 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 reference_feature_table = pd.concat(
                     [
                         chunk.data.assign(key=chunk.key)
-                        for chunk in self.calculator.chunker.split(
-                            self.calculator.previous_reference_data, self.calculator.timestamp_column_name
-                        )
+                        for chunk in self.calculator.chunker.split(self.calculator.previous_reference_data)
                     ]
                 )
                 feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
+
+            is_time_based_x_axis = self.calculator.timestamp_column_name is not None
 
             return _joy_plot(
                 feature_table=feature_table,
@@ -211,8 +219,12 @@ class TargetDistributionResult(AbstractCalculatorResult):
                 feature_column_name=self.calculator.y_true,
                 x_axis_title=f'{self.calculator.y_true}',
                 post_kde_clip=None,
-                title=f'Distribution over time for {self.calculator.y_true}',
+                title=f'Distribution over time for {self.calculator.y_true}'
+                if is_time_based_x_axis
+                else f'Distribution over chunks for {self.calculator.y_true}',
                 style='vertical',
+                start_date_column_name='start_date' if is_time_based_x_axis else None,
+                end_date_column_name='end_date' if is_time_based_x_axis else None,
             )
         else:
             raise RuntimeError(

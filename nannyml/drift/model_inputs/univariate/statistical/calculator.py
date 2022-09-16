@@ -26,7 +26,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         feature_column_names: List[str],
-        timestamp_column_name: str,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -39,7 +39,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         feature_column_names: List[str]
             A list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
@@ -82,13 +82,13 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         >>> fig = results.plot(kind='feature_drift', plot_reference=True, feature_column_name='distance_from_office')
         >>> fig.show()
         """
-        super(UnivariateStatisticalDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super(UnivariateStatisticalDriftCalculator, self).__init__(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
 
         self.feature_column_names = feature_column_names
         self.continuous_column_names: List[str] = []
         self.categorical_column_names: List[str] = []
-
-        self.timestamp_column_name = timestamp_column_name
 
         # required for distribution plots
         self.previous_reference_data: Optional[pd.DataFrame] = None
@@ -121,7 +121,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
             data, self.feature_column_names
         )
 
-        chunks = self.chunker.split(data, self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.
@@ -129,6 +129,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         for chunk in chunks:
             chunk_drift: Dict[str, Any] = {
                 'key': chunk.key,
+                'chunk_index': chunk.chunk_index,
                 'start_index': chunk.start_index,
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,

@@ -8,6 +8,12 @@ This tutorial explains how to use NannyML to estimate the performance of regress
 models in the absence of target data. To find out how DLE estimates performance,
 read the :ref:`explanation of how Direct Loss Estimation works<how-it-works-dle>`.
 
+.. note::
+    The following example uses :term:`timestamps<Timestamp>`.
+    These are optional but have an impact on the way data is chunked and results are plotted.
+    You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
+
+
 .. _performance-estimation-regression-just-the-code:
 
 Just The Code
