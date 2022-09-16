@@ -247,7 +247,7 @@ def _run_statistical_model_output_drift_calculator(
 
         if console:
             console.log('generating result plots')
-        plots = {}
+        plots: Dict[str, Any] = {}
         if problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
             classes = list(column_mapping['y_pred_proba'].keys())
             plots = {
@@ -266,11 +266,14 @@ def _run_statistical_model_output_drift_calculator(
             )
         elif problem_type == ProblemType.CLASSIFICATION_BINARY:
             plots = {
-                f'{kind}_{metric}': results.plot(kind, metric)
-                for kind in ['score_drift', 'prediction_drift']
-                for metric in ['statistic', 'p_value']
+                f'{kind}': results.plot(kind)
+                for kind in [
+                    'score_drift',
+                    'score_distribution',
+                    'prediction_drift',
+                    'prediction_distribution',
+                ]
             }
-            plots.update({f'{kind}': results.plot(kind) for kind in ['score_distribution', 'prediction_distribution']})
         elif problem_type == ProblemType.REGRESSION:
             plots = {
                 'prediction_drift_ks_stat': results.plot('prediction_drift', 'statistic'),
@@ -495,13 +498,13 @@ def _run_dee_performance_estimation(
     console: Console = None,
 ):
     if console:
-        console.rule('[cyan]Direct Error Estimator[/]')
+        console.rule('[cyan]Direct Loss Estimator[/]')
 
     if problem_type not in [ProblemType.REGRESSION]:
-        _logger.info(f"DEE does not support '{problem_type.name}' problems. Skipping DEE estimation.")
+        _logger.info(f"DLE does not support '{problem_type.name}' problems. Skipping DLE estimation.")
         if console:
             console.log(
-                f"DEE does not support '{problem_type.name}' problems. Skipping DEE estimation.",
+                f"DLE does not support '{problem_type.name}' problems. Skipping DLE estimation.",
                 style='yellow',
             )
         return
@@ -530,7 +533,7 @@ def _run_dee_performance_estimation(
         }
 
     except Exception as exc:
-        msg = f"Failed to run DEE performance estimator: {exc}"
+        msg = f"Failed to run DLE performance estimator: {exc}"
         if console:
             console.log(msg, style='red')
         else:
