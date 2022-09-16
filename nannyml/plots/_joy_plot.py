@@ -284,7 +284,7 @@ def _create_joy_plot(
                 else:
                     hover_content = (
                         row[chunk_column_name],
-                        row[chunk_index_column_name],
+                        row['chunk_index_unified'],
                         np.round(kde_quartile[0], 3),
                     )
                     hover_template = (

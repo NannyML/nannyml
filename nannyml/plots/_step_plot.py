@@ -186,9 +186,9 @@ def _step_plot(
             f'<b>%{{customdata[{custom_data_columns.index("end_date_label")}]}}</b> &nbsp; &nbsp; <br>'
         )
     else:
-        custom_data_columns += [chunk_index_column_name]
+        custom_data_columns += ['chunk_index_unified']
         hover_template += (
-            f'Chunk index: <b>%{{customdata[{custom_data_columns.index(chunk_index_column_name)}]}}</b><br />'
+            f'Chunk index: <b>%{{customdata[{custom_data_columns.index("chunk_index_unified")}]}}</b><br />'
         )
 
     hover_template += (

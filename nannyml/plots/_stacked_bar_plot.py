@@ -160,7 +160,7 @@ def _create_stacked_bar_plot(
             chunk_hover_label
             + ' %{customdata[0]}: chunk index <b>%{customdata[1]}</b>, (%{customdata[2]}, %{customdata[3]})'
         )
-        custom_data = [chunk_column_name, chunk_index_column_name, 'value_counts_normalised', 'value_counts']
+        custom_data = [chunk_column_name, 'chunk_index_unified', 'value_counts_normalised', 'value_counts']
 
     layout = go.Layout(
         title=title,
