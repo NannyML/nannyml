@@ -28,6 +28,10 @@ class FileWriter(Writer):
         credentials: Dict[str, Any] = None,
         fs_args: Dict[str, Any] = None,
     ):
+        super().__init__()
+
+        self.filepath = filepath
+
         _fs_args = deepcopy(fs_args) or {}
         _credentials = deepcopy(credentials) or {}
         self._data_format = data_format
@@ -39,8 +43,6 @@ class FileWriter(Writer):
         self._protocol = protocol
         self._storage_options = {**_credentials, **_fs_args}
         self._fs = fsspec.filesystem(self._protocol, **self._storage_options)
-
-        super().__init__(filepath=PurePosixPath(path))
 
         self._write_args = write_args or {}  # type: Dict[str, Any]
 

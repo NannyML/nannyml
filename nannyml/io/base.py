@@ -21,12 +21,6 @@ CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss']
 class Writer(ABC):
     """Base class for writing out results"""
 
-    def __init__(
-        self,
-        filepath: PurePosixPath,
-    ):
-        self.filepath = filepath
-
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
