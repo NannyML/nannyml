@@ -149,10 +149,6 @@ class Chunker(abc.ABC):
             chunk.start_index, chunk.end_index = _get_boundary_indices(chunk)
             chunk.chunk_index = chunk_index
 
-            if self.timestamp_column_name:
-                chunk.start_datetime = pd.to_datetime(chunk.data[self.timestamp_column_name].min())
-                chunk.end_datetime = pd.to_datetime(chunk.data[self.timestamp_column_name].max())
-
             if columns is not None:
                 chunk.data = chunk.data[columns]
 
@@ -345,7 +341,11 @@ class SizeBasedChunker(Chunker):
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
             chunk_data = data.loc[index : index + chunk_size - 1, :]
-            return Chunk(key=f'[{index}:{index + chunk_size - 1}]', data=chunk_data)
+            chunk = Chunk(key=f'[{index}:{index + chunk_size - 1}]', data=chunk_data)
+            if self.timestamp_column_name:
+                chunk.start_datetime = pd.to_datetime(chunk.data[self.timestamp_column_name].min())
+                chunk.end_datetime = pd.to_datetime(chunk.data[self.timestamp_column_name].max())
+            return chunk
 
         data = data.copy().reset_index(drop=True)
         chunks = [
