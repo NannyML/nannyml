@@ -47,7 +47,8 @@ We first want to estimate performance for the analysis period, using the referen
     >>>    y_true='clf_target',
     >>>    timestamp_column_name='timestamp',
     >>>    metrics=['roc_auc'],
-    >>>    chunk_period='M'
+    >>>    chunk_period='M',
+    >>>    problem_type='classification_binary',
     >>> )
     >>> cbpe.fit(reference)
     >>> est_perf = cbpe.estimate(analysis)
