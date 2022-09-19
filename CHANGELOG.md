@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- CBPE now uses uncalibrated `y_pred_proba` values to calculate realized performance. Fixed for both binary and
+  multiclass use cases [(#98)](https://github.com/NannyML/nannyml/issues/98)
+- Fix an issue where reference data was rendered incorrectly on joy plots
+- Updated the 'California Housing' example docs, thanks for the help [@NeoKish](https://github.com/NeoKish)
+
 ## [0.6.2] - 2022-09-16
 
 ### Changed
