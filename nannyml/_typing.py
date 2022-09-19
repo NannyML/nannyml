@@ -12,7 +12,6 @@ else:
     Protocol = object
 
 import pandas as pd
-from plotly.graph_objs import Figure
 
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -21,9 +20,6 @@ class Result(Protocol):
     """The data that was calculated or estimated."""
 
     data: pd.DataFrame
-
-    """all available plots"""
-    plots: Dict[str, Figure]
 
 
 class Calculator(Protocol):

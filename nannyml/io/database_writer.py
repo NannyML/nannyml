@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-import pandas as pd
-from plotly.graph_objs import Figure
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 
+from nannyml._typing import Result
 from nannyml.exceptions import WriterException
 from nannyml.io.base import Writer
 
@@ -41,15 +40,15 @@ class DatabaseWriter(Writer):
         except Exception as exc:
             raise WriterException(f"could not create DatabaseWriter: {exc}")
 
-    def _write(self, data: pd.DataFrame, plots: Dict[str, Figure], **kwargs):
+    def _write(self, result: Result, **kwargs):
 
-        print(data)
+        print(result.data)
 
         run = Run()
         metrics = [
             Metric(name=f'estimated_{metric}', value=row[f'estimated_{metric}'], run=run)
             for metric in ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle']
-            for _, row in data.iterrows()
+            for _, row in result.data.iterrows()
         ]
 
         with Session(self._engine) as session:

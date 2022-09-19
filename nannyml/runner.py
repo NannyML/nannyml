@@ -173,7 +173,7 @@ def _run_statistical_univariate_feature_drift_calculator(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='statistical_univariate_feature_drift')
+    writer.write(result=results, plots=plots, calculator_name='statistical_univariate_feature_drift')
 
 
 def _run_data_reconstruction_multivariate_feature_drift_calculator(
@@ -216,7 +216,7 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='data_reconstruction_multivariate_feature_drift')
+    writer.write(result=results, plots=plots, calculator_name='data_reconstruction_multivariate_feature_drift')
 
 
 def _run_statistical_model_output_drift_calculator(
@@ -294,7 +294,7 @@ def _run_statistical_model_output_drift_calculator(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='statistical_model_output_drift')
+    writer.write(result=results, plots=plots, calculator_name='statistical_model_output_drift')
 
 
 def _run_target_distribution_drift_calculator(
@@ -353,7 +353,7 @@ def _run_target_distribution_drift_calculator(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='target_distribution')
+    writer.write(result=results, plots=plots, calculator_name='target_distribution')
 
 
 def _run_realized_performance_calculator(
@@ -423,7 +423,7 @@ def _run_realized_performance_calculator(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='realized_performance')
+    writer.write(result=results, plots=plots, calculator_name='realized_performance')
 
 
 def _run_cbpe_performance_estimation(
@@ -485,7 +485,7 @@ def _run_cbpe_performance_estimation(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='confidence_based_performance_estimator')
+    writer.write(result=results, plots=plots, calculator_name='confidence_based_performance_estimator')
 
 
 def _run_dee_performance_estimation(
@@ -546,4 +546,4 @@ def _run_dee_performance_estimation(
 
     if console:
         console.log('writing results')
-    writer.write(data=results.data, plots=plots, calculator_name='direct_error_estimator')
+    writer.write(result=results, plots=plots, calculator_name='direct_error_estimator')
