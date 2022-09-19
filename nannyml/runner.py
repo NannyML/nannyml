@@ -24,7 +24,7 @@ from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisti
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 from nannyml.drift.target.target_distribution import TargetDistributionCalculator
 from nannyml.io.base import Writer
-from nannyml.io.file_writer import FileWriter
+from nannyml.io.raw_files_writer import RawFilesWriter
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.direct_loss_estimation import DEFAULT_METRICS, DLE
@@ -38,7 +38,7 @@ def run(
     column_mapping: Dict[str, Any],
     problem_type: ProblemType,
     chunker: Chunker,
-    writer: Writer = FileWriter(filepath='out', data_format='parquet'),
+    writer: Writer = RawFilesWriter(filepath='out', data_format='parquet'),
     ignore_errors: bool = True,
     run_in_console: bool = False,
 ):
@@ -122,7 +122,7 @@ def run(
             progress.update(task, description='Run complete', advance=7 / 7)
 
         progress.console.line(2)
-        if isinstance(writer, FileWriter):
+        if isinstance(writer, RawFilesWriter):
             progress.console.print(Panel(f"View results in {Path(writer.filepath)}"))
 
 

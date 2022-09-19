@@ -12,7 +12,7 @@ from nannyml.datasets import (
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
-from nannyml.io.file_writer import FileWriter
+from nannyml.io.raw_files_writer import RawFilesWriter
 from nannyml.runner import run
 
 
@@ -44,7 +44,7 @@ def test_runner_executes_for_binary_classification_without_exceptions(timestamp_
                 },
                 problem_type=ProblemType.CLASSIFICATION_BINARY,
                 chunker=DefaultChunker(timestamp_column_name=timestamp_column_name),
-                writer=FileWriter(filepath=tmpdir, data_format='parquet'),
+                writer=RawFilesWriter(filepath=tmpdir, data_format='parquet'),
                 run_in_console=False,
                 ignore_errors=False,
             )
@@ -84,7 +84,7 @@ def test_runner_executes_for_multiclass_classification_without_exceptions(timest
                 },
                 problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
                 chunker=DefaultChunker(timestamp_column_name=timestamp_column_name),
-                writer=FileWriter(filepath=tmpdir, data_format='parquet'),
+                writer=RawFilesWriter(filepath=tmpdir, data_format='parquet'),
                 run_in_console=False,
                 ignore_errors=False,
             )
@@ -119,7 +119,7 @@ def test_runner_executes_for_regression_without_exceptions(timestamp_column_name
                 },
                 problem_type=ProblemType.REGRESSION,
                 chunker=DefaultChunker(timestamp_column_name=timestamp_column_name),
-                writer=FileWriter(filepath=tmpdir, data_format='parquet'),
+                writer=RawFilesWriter(filepath=tmpdir, data_format='parquet'),
                 run_in_console=False,
                 ignore_errors=False,
             )

@@ -5,8 +5,7 @@ from io import BytesIO
 from pathlib import Path, PurePosixPath
 from typing import Dict
 
-from _typing import Result
-
+from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io.base import get_filepath_str
 from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
