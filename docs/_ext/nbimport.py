@@ -41,7 +41,11 @@ class NbImport(SphinxDirective):
                     else:
                         cell_content += source_lines
                 if 'show_output' in self.options:
-                    output = nb['cells'][cell_index - 1]['outputs'][0]['text']
+                    outputs = nb['cells'][cell_index - 1]['outputs'][0]
+                    if 'text' in outputs:
+                        output = outputs['text']
+                    elif 'data' in outputs:
+                        output = outputs['data']['text/plain']
                     cell_content += [line.replace('\n', '') for line in output]
                 cell_content.append('')
 
