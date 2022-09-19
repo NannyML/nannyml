@@ -426,7 +426,6 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
         problem_type='classification_binary',
     ).fit(reference)
     results = estimator.estimate(analysis)
-    print(results.data[f'sampling_error_{metric}'])
 
     assert f'sampling_error_{metric}' in results.data.columns
     assert np.array_equal(np.round(results.data[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
