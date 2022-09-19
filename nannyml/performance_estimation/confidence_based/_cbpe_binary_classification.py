@@ -136,6 +136,4 @@ class _BinaryClassificationCBPE(CBPE):
             estimates[f'alert_{metric.column_name}'] = (
                 estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
             )
-            estimates['period'] = 'analysis'
-            estimates['estimated'] = True
         return estimates
