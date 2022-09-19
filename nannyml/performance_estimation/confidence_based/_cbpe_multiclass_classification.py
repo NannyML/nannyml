@@ -125,7 +125,7 @@ class _MulticlassClassificationCBPE(CBPE):
                 estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
             )
             estimates['period'] = 'analysis'
-            estimates['estimated'] = True 
+            estimates['estimated'] = True
         return estimates
 
 

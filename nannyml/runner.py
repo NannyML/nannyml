@@ -122,7 +122,8 @@ def run(
             progress.update(task, description='Run complete', advance=7 / 7)
 
         progress.console.line(2)
-        progress.console.print(Panel(f"View results in {Path(writer.filepath)}"))
+        if isinstance(writer, FileWriter):
+            progress.console.print(Panel(f"View results in {Path(writer.filepath)}"))
 
 
 def _run_statistical_univariate_feature_drift_calculator(

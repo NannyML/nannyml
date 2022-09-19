@@ -9,13 +9,13 @@ from nannyml.exceptions import WriterException
 from nannyml.io.base import Writer
 
 
-class Model(SQLModel, table=True):
+class Model(SQLModel, table=True):  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
     # runs: List["Run"] = Relationship(back_populates="model")
 
 
-class Run(SQLModel, table=True):
+class Run(SQLModel, table=True):  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
     # model_id: int = Field(default=None, foreign_key="model.id")
     # model: Model = Relationship(back_populates="runs")
@@ -23,7 +23,7 @@ class Run(SQLModel, table=True):
     execution_timestamp: datetime = Field(default=datetime.now())
 
 
-class Metric(SQLModel, table=True):
+class Metric(SQLModel, table=True):  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
     run_id: int = Field(default=None, foreign_key="run.id")
     run: Run = Relationship(back_populates="metrics")

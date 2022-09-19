@@ -5,7 +5,7 @@
 import logging
 import re
 from abc import ABC, abstractmethod
-from pathlib import PurePath, PurePosixPath
+from pathlib import PurePath
 from typing import Any, Dict, Tuple
 from urllib.parse import urlsplit
 
