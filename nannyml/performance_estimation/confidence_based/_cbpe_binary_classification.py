@@ -67,6 +67,11 @@ class _BinaryClassificationCBPE(CBPE):
 
         _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
 
+        # We need uncalibrated data to calculate the realized performance on.
+        # We need realized performance in threshold calculations.
+        # https://github.com/NannyML/nannyml/issues/98
+        reference_data[f'uncalibrated_{self.y_pred_proba}'] = reference_data[self.y_pred_proba]
+
         for metric in self.metrics:
             metric.fit(reference_data)
 
@@ -94,6 +99,10 @@ class _BinaryClassificationCBPE(CBPE):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
+
+        # We need uncalibrated data to calculate the realized performance on.
+        # https://github.com/NannyML/nannyml/issues/98
+        data[f'uncalibrated_{self.y_pred_proba}'] = data[self.y_pred_proba]
 
         if self.needs_calibration:
             data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])

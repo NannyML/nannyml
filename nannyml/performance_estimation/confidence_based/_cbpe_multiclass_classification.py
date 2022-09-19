@@ -70,6 +70,12 @@ class _MulticlassClassificationCBPE(CBPE):
 
         _list_missing([self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
 
+        # We need uncalibrated data to calculate the realized performance on.
+        # We need realized performance in threshold calculations.
+        # https://github.com/NannyML/nannyml/issues/98
+        for class_proba in model_output_column_names(self.y_pred_proba):
+            reference_data[f'uncalibrated_{class_proba}'] = reference_data[class_proba]
+
         for metric in self.metrics:
             metric.fit(reference_data)
 
@@ -83,6 +89,11 @@ class _MulticlassClassificationCBPE(CBPE):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
+
+        # We need uncalibrated data to calculate the realized performance on.
+        # https://github.com/NannyML/nannyml/issues/98
+        for class_proba in model_output_column_names(self.y_pred_proba):
+            data[f'uncalibrated_{class_proba}'] = data[class_proba]
 
         data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
 
