@@ -14,44 +14,22 @@ Load and prepare data
 
 Let's load the dataset from NannyML's included datasets.
 
-.. code:: python
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 1
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> # load data
-    >>> reference, analysis, analysis_targets = nml.datasets.load_modified_california_housing_dataset()
-    >>> reference.head(3)
-
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
-|    |   MedInc |   HouseAge |   AveRooms |   AveBedrms |   Population |   AveOccup |   Latitude |   Longitude | timestamp           | partition   |   clf_target |   y_pred_proba |   y_pred |   identifier |
-+====+==========+============+============+=============+==============+============+============+=============+=====================+=============+==============+================+==========+==============+
-|  0 |   9.8413 |         32 |    7.17004 |     1.01484 |         4353 |    2.93725 |      34.22 |     -118.19 | 2020-10-01 00:00:00 | reference   |            1 |           0.99 |        1 |            0 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
-|  1 |   8.3695 |         37 |    7.45875 |     1.06271 |          941 |    3.10561 |      34.22 |     -118.21 | 2020-10-01 01:00:00 | reference   |            1 |           1    |        1 |            1 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
-|  2 |   8.72   |         44 |    6.16318 |     1.04603 |          668 |    2.79498 |      34.2  |     -118.18 | 2020-10-01 02:00:00 | reference   |            1 |           1    |        1 |            2 |
-+----+----------+------------+------------+-------------+--------------+------------+------------+-------------+---------------------+-------------+--------------+----------------+----------+--------------+
-
+.. nbtable::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cell: 2
 
 Performance Estimation
 ======================
 
 We first want to estimate performance for the analysis period, using the reference period as our performance baseline.
 
-.. code:: python
-
-    >>> # fit performance estimator and estimate for combined reference and analysis
-    >>> cbpe = nml.CBPE(
-    >>>    y_pred_proba='y_pred_proba',
-    >>>    y_pred='y_pred',
-    >>>    y_true='clf_target',
-    >>>    timestamp_column_name='timestamp',
-    >>>    metrics=['roc_auc'],
-    >>>    chunk_period='M',
-    >>>    problem_type='classification_binary',
-    >>> )
-    >>> cbpe.fit(reference)
-    >>> est_perf = cbpe.estimate(analysis)
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 3
 
 .. parsed-literal::
 
@@ -59,48 +37,28 @@ We first want to estimate performance for the analysis period, using the referen
 
 We get a warning that some chunks are too small. Let's quickly check what's going on here.
 
-.. code:: python
-
-    >>> est_perf.data['end_index'] - est_perf.data['start_index']
-
-    0     719
-    1     743
-    2     743
-    3     719
-    4     743
-    5     719
-    6     743
-    7     743
-    8     671
-    9     743
-    10    719
-    11    215
-    dtype: int64
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 4
+    :show_output:
 
 
 The last chunk is smaller than the others due to the selected chunking method. Let's remove it to make sure
 everything we visualise is reliable.
 
-.. code:: python
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 5
 
-    >>> est_perf.data = est_perf.data[:-1].copy()
-    >>> est_perf.data.tail(2)
-
-
-+----+---------+---------------+-------------+---------------------+-------------------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+----------+------------------+
-|    | key     |   start_index |   end_index | start_date          | end_date                      |   realized_roc_auc |   estimated_roc_auc |   upper_confidence_roc_auc |   lower_confidence_roc_auc |   upper_threshold_roc_auc |   lower_threshold_roc_auc | alert_roc_auc   |   period |   actual_roc_auc |
-+====+=========+===============+=============+=====================+===============================+====================+=====================+============================+============================+===========================+===========================+=================+==========+==================+
-| 17 | 2022-03 |          6552 |        7295 | 2022-03-01 00:00:00 | 2022-03-31 23:59:59.999999999 |                nan |            0.829077 |                   0.880123 |                   0.778031 |                  0.708336 |                         1 | False           |      nan |         0.704867 |
-+----+---------+---------------+-------------+---------------------+-------------------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+----------+------------------+
-| 18 | 2022-04 |          7296 |        8015 | 2022-04-01 00:00:00 | 2022-04-30 23:59:59.999999999 |                nan |            0.910661 |                   0.961707 |                   0.859615 |                  0.708336 |                         1 | False           |      nan |         0.975394 |
-+----+---------+---------------+-------------+---------------------+-------------------------------+--------------------+---------------------+----------------------------+----------------------------+---------------------------+---------------------------+-----------------+----------+------------------+
+.. nbtable::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cell: 6
 
 Now we can plot the estimated performance confidently.
 
-.. code:: python
-
-    >>> fig = est_perf.plot(kind='performance', metric='roc_auc', plot_reference=True)
-    >>> fig.show()
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 7
 
 .. image:: ../_static/example_california_performance.svg
 
@@ -113,34 +71,9 @@ Comparison with the actual performance
 Because we have the ground truth for our dataset, we can use it to calculate ROC AUC on the relevant chunks,
 and compare it to the estimated values.
 
-.. code:: python
-
-    >>> from sklearn.metrics import roc_auc_score
-    >>> import matplotlib.pyplot as plt
-    >>> # add ground truth to analysis
-    >>> analysis_full = pd.merge(analysis,analysis_targets, on = 'identifier')
-    >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
-    >>> df_all['timestamp'] = pd.to_datetime(df_all['timestamp'])
-    >>> # calculate actual ROC AUC
-    >>> target_col = 'clf_target'
-    >>> pred_score_col = 'y_pred_proba'
-    >>> actual_performance = []
-    >>> est_perf.data = pd.concat([est_perf.estimator.previous_reference_results, est_perf.data], ignore_index=True)
-    >>> for idx in est_perf.data.index:
-    ...     start_date, end_date = est_perf.data.loc[idx, 'start_date'], est_perf.data.loc[idx, 'end_date']
-    ...     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
-    ...     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    ...     est_perf.data.loc[idx, 'actual_roc_auc'] = actual_perf
-    >>>
-    >>>
-    >>> first_analysis = 8
-    >>> plt.plot(est_perf.data['key'], est_perf.data['estimated_roc_auc'], label='estimated AUC')
-    >>> plt.plot(est_perf.data['key'], est_perf.data['actual_roc_auc'], label='actual ROC AUC')
-    >>> plt.xticks(rotation=90)
-    >>> plt.axvline(x=first_analysis, label='First analysis chunk', linestyle=':', color='grey')
-    >>> plt.ylabel('ROC AUC')
-    >>> plt.legend()
-    >>> plt.show()
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 9
 
 .. image:: ../_static/example_california_performance_estimation_tmp.svg
 
@@ -155,79 +88,34 @@ Drift detection
 The next step is to find out what might be responsible for this drop in ROC AUC. Let's try using
 univariate drift detection, and see what we discover.
 
-.. code:: python
-
-    >>> feature_column_names = [
-    ...    col for col in reference.columns if col not in [
-    ...        'timestamp', 'y_pred_proba', 'period', 'y_pred', 'clf_target', 'identifier', 'partition'
-    ...    ]
-    >>> ]
-    >>> univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
-    ...     feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_period='M'
-    >>> ).fit(reference_data=reference)
-    >>> univariate_results = univariate_calculator.calculate(data=analysis)
-    >>> nml.Ranker.by('alert_count').rank(univariate_results)
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 11
 
 
-+----+------------+--------------------+--------+
-|    | feature    |   number_of_alerts |   rank |
-+====+============+====================+========+
-|  0 | HouseAge   |                 12 |      1 |
-+----+------------+--------------------+--------+
-|  1 | AveOccup   |                 12 |      2 |
-+----+------------+--------------------+--------+
-|  2 | Latitude   |                 12 |      3 |
-+----+------------+--------------------+--------+
-|  3 | Longitude  |                 12 |      4 |
-+----+------------+--------------------+--------+
-|  4 | MedInc     |                 11 |      5 |
-+----+------------+--------------------+--------+
-|  5 | AveRooms   |                 11 |      6 |
-+----+------------+--------------------+--------+
-|  6 | AveBedrms  |                  8 |      7 |
-+----+------------+--------------------+--------+
-|  7 | Population |                  8 |      8 |
-+----+------------+--------------------+--------+
+.. nbtable::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cell: 12
 
 
 It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period,
 we can see that the top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift
 by examining the KS distance statistics.
 
-.. code:: python
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 13
 
-    >>> # get columns with d statistics only
-    >>> d_stat_cols = [x for x in univariate_results.data if 'dstat' in x]
-    >>> univariate_results.data[d_stat_cols].mean().sort_values(ascending=False)
-
-+------------------+-----------+
-| Longitude_dstat  | 0.836534  |
-+------------------+-----------+
-| Latitude_dstat   | 0.799592  |
-+------------------+-----------+
-| HouseAge_dstat   | 0.173479  |
-+------------------+-----------+
-| MedInc_dstat     | 0.158278  |
-+------------------+-----------+
-| AveOccup_dstat   | 0.133803  |
-+------------------+-----------+
-| AveRooms_dstat   | 0.110907  |
-+------------------+-----------+
-| AveBedrms_dstat  | 0.0786656 |
-+------------------+-----------+
-| Population_dstat | 0.0713122 |
-+------------------+-----------+
+.. nbtable::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cell: 14
 
 The mean value of D-statistic for Longitude and Latitude on the analysis chunks is the largest. Let's plot their
 distributions for the analysis period.
 
-.. code:: python
-
-    >>> for label in ['Longitude', 'Latitude']:
-    ...     fig = univariate_results.plot(
-    ...         kind='feature_distribution',
-    ...         feature_column_name=label)
-    ...     fig.show()
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 15
 
 
 .. image:: ../_static/example_california_performance_distribution_Longitude.svg
@@ -238,17 +126,9 @@ Indeed, we can see the distributions of these variables are completely different
 chunk. This was expected, as the original dataset has observations from
 nearby locations. Let's see it on a scatter plot:
 
-.. code:: python
-
-    >>> analysis_res = est_perf.data.tail(11)
-    >>> plt.figure(figsize=(8,6))
-    >>> for idx in analysis_res.index[:10]:
-    ...     start_date, end_date = analysis_res.loc[idx, 'start_date'], analysis_res.loc[idx, 'end_date']
-    ...     sub = df_all[df_all['timestamp'].between(start_date, end_date)]
-    ...     plt.scatter(sub['Latitude'], sub['Longitude'], s=5, label="Chunk {}".format(str(idx)))
-    >>> plt.legend()
-    >>> plt.xlabel('Latitude')
-    >>> plt.ylabel('Longitude')
+.. nbimport::
+    :path: ./example_notebooks/Examples California Housing.ipynb
+    :cells: 17
 
 .. image:: ../_static/example_california_latitude_longitude_scatter.svg
 
