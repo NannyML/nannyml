@@ -16,6 +16,7 @@ from nannyml.io.file_writer import FileWriter
 from nannyml.runner import run
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
 def test_runner_executes_for_binary_classification_without_exceptions(timestamp_column_name):
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
@@ -51,6 +52,7 @@ def test_runner_executes_for_binary_classification_without_exceptions(timestamp_
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
 def test_runner_executes_for_multiclass_classification_without_exceptions(timestamp_column_name):
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
@@ -90,6 +92,7 @@ def test_runner_executes_for_multiclass_classification_without_exceptions(timest
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
 def test_runner_executes_for_regression_without_exceptions(timestamp_column_name):
     reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
