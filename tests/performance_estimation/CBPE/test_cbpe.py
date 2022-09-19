@@ -24,7 +24,7 @@ from nannyml.datasets import (
 )
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation import CBPE
-from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
+from nannyml.performance_estimation.confidence_based.results import Result
 
 
 @pytest.fixture
@@ -41,7 +41,7 @@ def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # no
 
 
 @pytest.fixture
-def estimates(binary_classification_data) -> CBPEPerformanceEstimatorResult:  # noqa: D103
+def estimates(binary_classification_data) -> Result:  # noqa: D103
     reference, analysis = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',

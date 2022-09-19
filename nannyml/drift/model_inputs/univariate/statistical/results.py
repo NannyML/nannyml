@@ -16,7 +16,7 @@ from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
 
 
-class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator):
@@ -29,10 +29,6 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
             )
         self.calculator = calculator
-
-    @property
-    def calculator_name(self) -> str:
-        return "univariate_statistical_feature_drift"
 
     def plot(
         self,
@@ -250,6 +246,7 @@ def _plot_continuous_feature_distribution(
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
         reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
@@ -300,6 +297,7 @@ def _plot_categorical_feature_distribution(
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
         reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None

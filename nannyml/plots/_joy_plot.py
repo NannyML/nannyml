@@ -65,8 +65,12 @@ def _create_kde_table(
     post_kde_clip=None,
 ):
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
+    group_by_cols = [chunk_column_name]
+    if 'period' in feature_table.columns:
+        group_by_cols += ['period']
     data = (
-        feature_table.groupby(chunk_column_name)[feature_column_name]
+        #  group by period too, 'key' column can be there for both reference and analysis
+        feature_table.groupby(group_by_cols)[feature_column_name]
         .apply(get_kde_partial_application)
         .to_frame('kde')
         .reset_index()

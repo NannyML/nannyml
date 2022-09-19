@@ -47,11 +47,6 @@ class AbstractCalculatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    @property
-    @abstractmethod
-    def calculator_name(self) -> str:
-        raise NotImplementedError
-
     def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Plots calculation results."""
         raise NotImplementedError
@@ -152,11 +147,6 @@ class AbstractEstimatorResult(ABC):
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
-
-    @property
-    @abstractmethod
-    def estimator_name(self) -> str:
-        raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Plot drift results."""

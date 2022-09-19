@@ -16,7 +16,7 @@ from scipy.stats import chi2_contingency, ks_2samp
 from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
-from nannyml.drift.target.target_distribution.result import TargetDistributionResult
+from nannyml.drift.target.target_distribution.result import Result
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 
 _ALERT_THRESHOLD_P_VALUE = 0.05
@@ -162,7 +162,7 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         self.previous_analysis_data = data.copy()
 
-        return TargetDistributionResult(results_data=res, calculator=self)
+        return Result(results_data=res, calculator=self)
 
     def _calculate_target_drift_for_chunk(self, reference_targets: pd.Series, analysis_targets: pd.Series) -> Dict:
         if self.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:

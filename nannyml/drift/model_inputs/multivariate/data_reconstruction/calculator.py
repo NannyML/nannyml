@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
@@ -190,7 +190,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> DataReconstructionDriftCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -234,7 +234,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
-        return DataReconstructionDriftCalculatorResult(results_data=res, calculator=self)
+        return Result(results_data=res, calculator=self)
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
         reference_chunks = self.chunker.split(reference_data)  # type: ignore

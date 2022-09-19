@@ -14,10 +14,7 @@ from nannyml.calibration import Calibrator, CalibratorFactory
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
-from nannyml.performance_estimation.confidence_based.results import (
-    SUPPORTED_METRIC_VALUES,
-    CBPEPerformanceEstimatorResult,
-)
+from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
 
 
 class CBPE(AbstractEstimator):
@@ -182,7 +179,7 @@ class CBPE(AbstractEstimator):
         pass
 
     @abstractmethod
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set.
 
         Parameters
@@ -193,7 +190,7 @@ class CBPE(AbstractEstimator):
         Returns
         -------
         estimates: PerformanceEstimatorResult
-            A :class:`result<nannyml.performance_estimation.confidence_based.results.CBPEPerformanceEstimatorResult>`
+            A :class:`result<nannyml.performance_estimation.confidence_based.results.Result>`
             object where each row represents a :class:`~nannyml.chunk.Chunk`,
             containing :class:`~nannyml.chunk.Chunk` properties and the estimated metrics
             for that :class:`~nannyml.chunk.Chunk`.

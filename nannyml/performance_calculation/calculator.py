@@ -16,7 +16,7 @@ from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
-from nannyml.performance_calculation.result import PerformanceCalculatorResult
+from nannyml.performance_calculation.result import Result
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
@@ -141,7 +141,7 @@ class PerformanceCalculator(AbstractCalculator):
 
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -182,7 +182,7 @@ class PerformanceCalculator(AbstractCalculator):
             ]
         )
 
-        return PerformanceCalculatorResult(results_data=res, calculator=self)
+        return Result(results_data=res, calculator=self)
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         metrics_results = {}

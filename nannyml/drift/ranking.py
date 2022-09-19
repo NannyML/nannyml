@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict
 
 import pandas as pd
 
-from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculatorResult
+from nannyml.drift.model_inputs.univariate.statistical import Result
 from nannyml.exceptions import InvalidArgumentsException
 
 
@@ -19,14 +19,14 @@ class Ranking(abc.ABC):
 
     def rank(
         self,
-        drift_calculation_result: UnivariateStatisticalDriftCalculatorResult,
+        drift_calculation_result: Result,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Ranks the features within a drift calculation according to impact on model performance.
 
         Parameters
         ----------
-        drift_calculation_result : UnivariateStatisticalDriftCalculatorResult
+        drift_calculation_result : Result
             The drift calculation results.
         only_drifting : bool
             Omits non-drifting features from the ranking if True.
@@ -125,7 +125,7 @@ class AlertCountRanking(Ranking):
 
     def rank(
         self,
-        drift_calculation_result: UnivariateStatisticalDriftCalculatorResult,
+        drift_calculation_result: Result,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Compares the number of alerts for each feature and ranks them accordingly.

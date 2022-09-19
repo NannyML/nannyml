@@ -7,17 +7,14 @@
 import pandas as pd
 import pytest
 
-from nannyml.drift.model_inputs.univariate.statistical import (
-    UnivariateStatisticalDriftCalculator,
-    UnivariateStatisticalDriftCalculatorResult,
-)
+from nannyml.drift.model_inputs.univariate.statistical import Result, UnivariateStatisticalDriftCalculator
 from nannyml.drift.ranking import AlertCountRanking
 from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture
-def sample_drift_result() -> UnivariateStatisticalDriftCalculatorResult:  # noqa: D103
-    return UnivariateStatisticalDriftCalculatorResult(
+def sample_drift_result() -> Result:  # noqa: D103
+    return Result(
         results_data=pd.DataFrame(
             {
                 'f1_alert': [0, 0, 0, 0, 1, 1],
@@ -40,7 +37,7 @@ def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_resul
     ranking = AlertCountRanking()
     with pytest.raises(InvalidArgumentsException, match='drift results contain no data to use for ranking'):
         ranking.rank(
-            UnivariateStatisticalDriftCalculatorResult(
+            Result(
                 results_data=pd.DataFrame(columns=['f1', 'f1_alert']),
                 calculator=UnivariateStatisticalDriftCalculator(
                     timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']
@@ -76,7 +73,7 @@ def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_opt
 def test_alert_count_ranking_should_raise_invalid_arguments_exception_when_given_wrong_drift_results():  # noqa: D103
     with pytest.raises(InvalidArgumentsException, match="drift results contain no data to use for ranking"):
         _ = AlertCountRanking().rank(
-            UnivariateStatisticalDriftCalculatorResult(
+            Result(
                 results_data=pd.DataFrame(columns=['f1', 'f1_alert']),
                 calculator=UnivariateStatisticalDriftCalculator(
                     timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']

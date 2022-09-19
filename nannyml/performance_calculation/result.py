@@ -15,7 +15,7 @@ from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
 
-class PerformanceCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     def __init__(
@@ -23,7 +23,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         results_data: pd.DataFrame,
         calculator: AbstractCalculator,
     ):
-        """Creates a new PerformanceCalculatorResult instance."""
+        """Creates a new Result instance."""
         super().__init__(results_data)
 
         from .calculator import PerformanceCalculator

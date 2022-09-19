@@ -13,7 +13,7 @@ from scipy.stats import chi2_contingency, ks_2samp
 from nannyml._typing import ModelOutputsType, ProblemType, model_output_column_names
 from nannyml.base import AbstractCalculator, _column_is_categorical, _list_missing
 from nannyml.chunk import Chunker
-from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
+from nannyml.drift.model_outputs.univariate.statistical.results import Result
 from nannyml.exceptions import InvalidArgumentsException
 
 ALERT_THRESHOLD_P_VALUE = 0.05
@@ -134,10 +134,12 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> UnivariateDriftResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        self.previous_analysis_data = data.copy()
 
         if self.y_pred_proba:
             _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
@@ -198,6 +200,4 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
 
-        self.previous_analysis_data = data.copy()
-
-        return UnivariateDriftResult(results_data=res, calculator=self)
+        return Result(results_data=res, calculator=self)

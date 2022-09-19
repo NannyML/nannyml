@@ -13,7 +13,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._step_plot import _step_plot
 
 
-class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
@@ -26,10 +26,6 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
             )
         self.calculator = calculator
-
-    @property
-    def calculator_name(self) -> str:
-        return "multivariate_data_reconstruction_feature_drift"
 
     def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.

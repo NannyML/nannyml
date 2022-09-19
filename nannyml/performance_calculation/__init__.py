@@ -4,5 +4,5 @@
 
 """Module containing the performance calculation implementation."""
 
-from .calculator import PerformanceCalculator, PerformanceCalculatorResult
+from .calculator import PerformanceCalculator, Result
 from .metrics import Metric, MetricFactory

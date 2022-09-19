@@ -14,7 +14,7 @@ from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
+from nannyml.performance_estimation.confidence_based.results import Result
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 
@@ -78,7 +78,7 @@ class _MulticlassClassificationCBPE(CBPE):
         self.previous_reference_results = self._estimate(reference_data).data
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -104,7 +104,7 @@ class _MulticlassClassificationCBPE(CBPE):
         )
 
         res = res.reset_index(drop=True)
-        return CBPEPerformanceEstimatorResult(results_data=res, estimator=self)
+        return Result(results_data=res, estimator=self)
 
     def _estimate_for_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}

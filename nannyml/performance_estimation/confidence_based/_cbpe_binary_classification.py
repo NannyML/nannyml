@@ -12,7 +12,7 @@ from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
+from nannyml.performance_estimation.confidence_based.results import Result
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 
@@ -88,7 +88,7 @@ class _BinaryClassificationCBPE(CBPE):
 
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -116,7 +116,7 @@ class _BinaryClassificationCBPE(CBPE):
         )
 
         res = res.reset_index(drop=True)
-        return CBPEPerformanceEstimatorResult(results_data=res, estimator=self)
+        return Result(results_data=res, estimator=self)
 
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}

@@ -17,7 +17,7 @@ from nannyml.plots._step_plot import _step_plot
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
 
-class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
+class Result(AbstractEstimatorResult):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, estimator: AbstractEstimator):
