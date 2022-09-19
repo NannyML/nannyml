@@ -42,6 +42,12 @@ concepts and functionalities. If you want to know what is implemented under the 
 visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
 on other datasets or ML problems look through our :ref:`examples<examples>`.
 
+.. note::
+    The following example does not use any :term:`timestamps<Timestamp>`.
+    These are optional but have an impact on the way data is chunked and results are plotted.
+    You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
+
+
 
 -------------
 Just the code

@@ -17,7 +17,7 @@ from nannyml.plots._step_plot import _step_plot
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
 
-class CBPEPerformanceEstimatorResult(AbstractEstimatorResult):
+class Result(AbstractEstimatorResult):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, estimator: AbstractEstimator):
@@ -170,6 +170,8 @@ def _plot_cbpe_performance_estimation(
         lambda r: r[f'alert_{metric.column_name}'] if r['period'] == 'analysis' else False, axis=1
     )
 
+    is_time_based_x_axis = estimator.timestamp_column_name is not None
+
     # Plot estimated performance
     fig = _step_plot(
         table=estimation_results,
@@ -193,6 +195,8 @@ def _plot_cbpe_performance_estimation(
         lower_confidence_column_name=f'lower_confidence_{metric.column_name}',
         upper_confidence_column_name=f'upper_confidence_{metric.column_name}',
         sampling_error_column_name=f'sampling_error_{metric.column_name}',
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
 
     return fig

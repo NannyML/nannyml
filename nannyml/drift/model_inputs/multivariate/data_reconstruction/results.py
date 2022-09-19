@@ -13,7 +13,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._step_plot import _step_plot
 
 
-class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
@@ -26,10 +26,6 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
             )
         self.calculator = calculator
-
-    @property
-    def calculator_name(self) -> str:
-        return "multivariate_data_reconstruction_feature_drift"
 
     def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
@@ -103,6 +99,8 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     fig = _step_plot(
         table=data,
         metric_column_name='reconstruction_error',
@@ -118,6 +116,8 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         lower_confidence_column_name='lower_confidence_bound',
         upper_confidence_column_name='upper_confidence_bound',
         plot_confidence_for_reference=True,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
 
     return fig

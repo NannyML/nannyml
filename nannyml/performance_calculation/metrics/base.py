@@ -74,7 +74,6 @@ class Metric(abc.ABC):
         # Calculate alert thresholds
         reference_chunks = chunker.split(
             reference_data,
-            timestamp_column_name=self.calculator.timestamp_column_name,
         )
         self.lower_threshold, self.upper_threshold = self._calculate_alert_thresholds(
             reference_chunks=reference_chunks,

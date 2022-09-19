@@ -16,7 +16,7 @@ from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
-from nannyml.performance_calculation.result import PerformanceCalculatorResult
+from nannyml.performance_calculation.result import Result
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
@@ -28,12 +28,12 @@ class PerformanceCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        timestamp_column_name: str,
         metrics: List[str],
         y_true: str,
         y_pred: str,
         problem_type: Union[str, ProblemType],
         y_pred_proba: ModelOutputsType = None,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -52,7 +52,7 @@ class PerformanceCalculator(AbstractCalculator):
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
         y_pred: str
             The name of the column containing your model predictions.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         metrics: List[str]
             A list of metrics to calculate.
@@ -102,8 +102,6 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.y_pred_proba = y_pred_proba
 
-        self.timestamp_column_name = timestamp_column_name
-
         if isinstance(problem_type, str):
             problem_type = ProblemType.parse(problem_type)
         self.problem_type = problem_type
@@ -143,7 +141,7 @@ class PerformanceCalculator(AbstractCalculator):
 
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -163,13 +161,14 @@ class PerformanceCalculator(AbstractCalculator):
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         # Construct result frame
         res = pd.DataFrame.from_records(
             [
                 {
                     'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
                     'start_index': chunk.start_index,
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
@@ -183,7 +182,7 @@ class PerformanceCalculator(AbstractCalculator):
             ]
         )
 
-        return PerformanceCalculatorResult(results_data=res, calculator=self)
+        return Result(results_data=res, calculator=self)
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         metrics_results = {}

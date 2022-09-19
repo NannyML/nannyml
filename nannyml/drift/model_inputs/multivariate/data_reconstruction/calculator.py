@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
@@ -26,7 +26,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         feature_column_names: List[str],
-        timestamp_column_name: str,
+        timestamp_column_name: str = None,
         n_components: Union[int, float, str] = 0.65,
         chunk_size: int = None,
         chunk_number: int = None,
@@ -42,7 +42,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         feature_column_names: List[str]
             A list containing the names of features in the provided data set. All of these features will be used by
             the multivariate data reconstruction drift calculator to calculate an aggregate drift score.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         n_components: Union[int, float, str], default=0.65
             The n_components parameter as passed to the sklearn.decomposition.PCA constructor.
@@ -91,12 +91,13 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         >>> fig = results.plot(kind='drift', plot_reference=True)
         >>> fig.show()
         """
-        super(DataReconstructionDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super(DataReconstructionDriftCalculator, self).__init__(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
         self.feature_column_names = feature_column_names
         self.continuous_feature_column_names: List[str] = []
         self.categorical_feature_column_names: List[str] = []
 
-        self.timestamp_column_name = timestamp_column_name
         self._n_components = n_components
 
         self._scaler = None
@@ -189,7 +190,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> DataReconstructionDriftCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -200,14 +201,13 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             data, self.feature_column_names
         )
 
-        chunks = self.chunker.split(
-            data, columns=self.feature_column_names, timestamp_column_name=self.timestamp_column_name
-        )
+        chunks = self.chunker.split(data, columns=self.feature_column_names)
 
         res = pd.DataFrame.from_records(
             [
                 {
                     'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
                     'start_index': chunk.start_index,
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
@@ -234,10 +234,10 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
-        return DataReconstructionDriftCalculatorResult(results_data=res, calculator=self)
+        return Result(results_data=res, calculator=self)
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
-        reference_chunks = self.chunker.split(reference_data, self.timestamp_column_name)  # type: ignore
+        reference_chunks = self.chunker.split(reference_data)  # type: ignore
         reference_reconstruction_error = pd.Series(
             [
                 _calculate_reconstruction_error_for_data(

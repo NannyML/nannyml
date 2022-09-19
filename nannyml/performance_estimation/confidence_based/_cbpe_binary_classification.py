@@ -12,7 +12,7 @@ from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.confidence_based.results import CBPEPerformanceEstimatorResult
+from nannyml.performance_estimation.confidence_based.results import Result
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 
@@ -23,8 +23,8 @@ class _BinaryClassificationCBPE(CBPE):
         y_pred: str,
         y_pred_proba: ModelOutputsType,
         y_true: str,
-        timestamp_column_name: str,
         problem_type: Union[str, ProblemType],
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -67,6 +67,11 @@ class _BinaryClassificationCBPE(CBPE):
 
         _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
 
+        # We need uncalibrated data to calculate the realized performance on.
+        # We need realized performance in threshold calculations.
+        # https://github.com/NannyML/nannyml/issues/98
+        reference_data[f'uncalibrated_{self.y_pred_proba}'] = reference_data[self.y_pred_proba]
+
         for metric in self.metrics:
             metric.fit(reference_data)
 
@@ -88,22 +93,27 @@ class _BinaryClassificationCBPE(CBPE):
 
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
 
+        # We need uncalibrated data to calculate the realized performance on.
+        # https://github.com/NannyML/nannyml/issues/98
+        data[f'uncalibrated_{self.y_pred_proba}'] = data[self.y_pred_proba]
+
         if self.needs_calibration:
             data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])
 
-        chunks = self.chunker.split(data, timestamp_column_name=self.timestamp_column_name)
+        chunks = self.chunker.split(data)
 
         res = pd.DataFrame.from_records(
             [
                 {
                     'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
                     'start_index': chunk.start_index,
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
@@ -115,7 +125,7 @@ class _BinaryClassificationCBPE(CBPE):
         )
 
         res = res.reset_index(drop=True)
-        return CBPEPerformanceEstimatorResult(results_data=res, estimator=self)
+        return Result(results_data=res, estimator=self)
 
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}

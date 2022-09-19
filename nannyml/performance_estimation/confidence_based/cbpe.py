@@ -14,10 +14,7 @@ from nannyml.calibration import Calibrator, CalibratorFactory
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
-from nannyml.performance_estimation.confidence_based.results import (
-    SUPPORTED_METRIC_VALUES,
-    CBPEPerformanceEstimatorResult,
-)
+from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
 
 
 class CBPE(AbstractEstimator):
@@ -44,8 +41,8 @@ class CBPE(AbstractEstimator):
         y_pred: str,
         y_pred_proba: ModelOutputsType,
         y_true: str,
-        timestamp_column_name: str,
         problem_type: Union[str, ProblemType],
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -57,6 +54,17 @@ class CBPE(AbstractEstimator):
 
         Parameters
         ----------
+        y_true: str
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred_proba: ModelOutputsType
+            Name(s) of the column(s) containing your model output.
+            Pass a single string when there is only a single model output column, e.g. in binary classification cases.
+            Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
+            The dictionary maps a class/label string to the column name containing model outputs for that class/label.
+        y_pred: str
+            The name of the column containing your model predictions.
+        timestamp_column_name: str, default=None
+            The name of the column containing the timestamp of the model prediction.
         metrics: List[str]
             A list of metrics to calculate.
         chunk_size: int, default=None
@@ -114,12 +122,11 @@ class CBPE(AbstractEstimator):
         >>>     results.plot(metric=metric, plot_reference=True).show()
 
         """
-        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
         self.y_true = y_true
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
-        self.timestamp_column_name = timestamp_column_name
 
         if metrics is None or len(metrics) == 0:
             raise InvalidArgumentsException(
@@ -172,7 +179,7 @@ class CBPE(AbstractEstimator):
         pass
 
     @abstractmethod
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> CBPEPerformanceEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set.
 
         Parameters
@@ -183,7 +190,7 @@ class CBPE(AbstractEstimator):
         Returns
         -------
         estimates: PerformanceEstimatorResult
-            A :class:`result<nannyml.performance_estimation.confidence_based.results.CBPEPerformanceEstimatorResult>`
+            A :class:`result<nannyml.performance_estimation.confidence_based.results.Result>`
             object where each row represents a :class:`~nannyml.chunk.Chunk`,
             containing :class:`~nannyml.chunk.Chunk` properties and the estimated metrics
             for that :class:`~nannyml.chunk.Chunk`.

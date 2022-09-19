@@ -16,7 +16,7 @@ from scipy.stats import chi2_contingency, ks_2samp
 from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
-from nannyml.drift.target.target_distribution.result import TargetDistributionResult
+from nannyml.drift.target.target_distribution.result import Result
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 
 _ALERT_THRESHOLD_P_VALUE = 0.05
@@ -28,8 +28,8 @@ class TargetDistributionCalculator(AbstractCalculator):
     def __init__(
         self,
         y_true: str,
-        timestamp_column_name: str,
         problem_type: Union[str, ProblemType],
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -41,7 +41,7 @@ class TargetDistributionCalculator(AbstractCalculator):
         ----------
         y_true: str
             The name of the column containing your model target values.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
@@ -83,10 +83,9 @@ class TargetDistributionCalculator(AbstractCalculator):
         >>> results.plot(kind='target_drift', plot_reference=True).show()
         >>> results.plot(kind='target_distribution', plot_reference=True).show()
         """
-        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
         self.y_true = y_true
-        self.timestamp_column_name = timestamp_column_name
 
         if isinstance(problem_type, str):
             problem_type = ProblemType.parse(problem_type)
@@ -135,7 +134,6 @@ class TargetDistributionCalculator(AbstractCalculator):
         chunks = self.chunker.split(
             data,
             columns=[self.y_true, 'NML_TARGET_INCOMPLETE'],
-            timestamp_column_name=self.timestamp_column_name,
         )
 
         # Construct result frame
@@ -145,6 +143,7 @@ class TargetDistributionCalculator(AbstractCalculator):
             [
                 {
                     'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
                     'start_index': chunk.start_index,
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
@@ -163,7 +162,7 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         self.previous_analysis_data = data.copy()
 
-        return TargetDistributionResult(results_data=res, calculator=self)
+        return Result(results_data=res, calculator=self)
 
     def _calculate_target_drift_for_chunk(self, reference_targets: pd.Series, analysis_targets: pd.Series) -> Dict:
         if self.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:

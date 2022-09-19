@@ -57,6 +57,8 @@ class Metric(abc.ABC):
         self.lower_threshold: Optional[float] = None
         self.confidence_deviation: Optional[float] = None
 
+        self.uncalibrated_y_pred_proba = f'uncalibrated_{self.estimator.y_pred_proba}'
+
     def __str__(self):
         return self.column_name
 
@@ -72,7 +74,6 @@ class Metric(abc.ABC):
         # Calculate alert thresholds
         reference_chunks = self.estimator.chunker.split(
             reference_data,
-            timestamp_column_name=self.estimator.timestamp_column_name,
         )
         self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
 
@@ -154,10 +155,20 @@ class Metric(abc.ABC):
         """Establishes equality by comparing all properties."""
         return self.display_name == other.display_name and self.column_name == other.column_name
 
-    def _common_cleaning(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    def _common_cleaning(
+        self, data: pd.DataFrame, y_pred_proba_column_name: str = None
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        if y_pred_proba_column_name is None:
+            if not isinstance(self.estimator.y_pred_proba, str):
+                raise InvalidArgumentsException(
+                    f"'y_pred_proba' is of type '{type(self.estimator.y_pred_proba)}'. "
+                    f"Binary use cases require 'y_pred_proba' to be a string."
+                )
+            y_pred_proba_column_name = self.estimator.y_pred_proba
+
         clean_targets = self.estimator.y_true in data.columns and not data[self.estimator.y_true].isna().all()
 
-        y_pred_proba = data[self.estimator.y_pred_proba]
+        y_pred_proba = data[y_pred_proba_column_name]
         y_pred = data[self.estimator.y_pred]
 
         y_pred_proba.dropna(inplace=True)
@@ -244,7 +255,7 @@ class BinaryClassificationAUROC(Metric):
         return estimate_roc_auc(y_pred_proba)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        y_pred_proba, _, y_true = self._common_cleaning(data)
+        y_pred_proba, _, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
             return np.NaN
@@ -304,7 +315,7 @@ class BinaryClassificationF1(Metric):
         return bse.f1_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data)
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
             return np.NaN
@@ -346,7 +357,7 @@ class BinaryClassificationPrecision(Metric):
         return bse.precision_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data)
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
             return np.NaN
@@ -386,7 +397,7 @@ class BinaryClassificationRecall(Metric):
         return bse.recall_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data)
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
             return np.NaN
@@ -426,7 +437,7 @@ class BinaryClassificationSpecificity(Metric):
         return bse.specificity_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data)
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
             return np.NaN
@@ -471,7 +482,7 @@ class BinaryClassificationAccuracy(Metric):
         return bse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data)
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
             return np.NaN
@@ -493,7 +504,7 @@ def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pre
     return y_preds, y_pred_probas, classes
 
 
-def _get_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
+def _get_multiclass_uncalibrated_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
     if not isinstance(y_pred_proba, dict):
         raise CalculatorException(
             "multiclass model outputs should be of type Dict[str, str].\n"
@@ -503,7 +514,7 @@ def _get_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: M
     labels, class_probability_columns = [], []
     for label in sorted(y_pred_proba.keys()):
         labels.append(label)
-        class_probability_columns.append(y_pred_proba[label])
+        class_probability_columns.append(f'uncalibrated_{y_pred_proba[label]}')
     return data[y_pred], data[class_probability_columns], labels
 
 
@@ -542,7 +553,9 @@ class MulticlassClassificationAUROC(Metric):
             return np.NaN
 
         y_true = data[self.estimator.y_true]
-        _, y_pred_probas, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+        _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
 
         return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
 
@@ -583,7 +596,9 @@ class MulticlassClassificationF1(Metric):
             return np.NaN
 
         y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
 
         return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
@@ -624,7 +639,9 @@ class MulticlassClassificationPrecision(Metric):
             return np.NaN
 
         y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
 
         return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
@@ -665,7 +682,9 @@ class MulticlassClassificationRecall(Metric):
             return np.NaN
 
         y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
 
         return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
@@ -706,7 +725,9 @@ class MulticlassClassificationSpecificity(Metric):
             return np.NaN
 
         y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
 
         mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
         tn_sum = mcm[:, 0, 0]
@@ -749,6 +770,8 @@ class MulticlassClassificationAccuracy(Metric):
             return np.NaN
 
         y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_predictions(data, self.estimator.y_pred, self.estimator.y_pred_proba)
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
+            data, self.estimator.y_pred, self.estimator.y_pred_proba
+        )
 
         return accuracy_score(y_true, y_pred)

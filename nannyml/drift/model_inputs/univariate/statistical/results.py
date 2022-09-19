@@ -16,7 +16,7 @@ from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
 
 
-class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator):
@@ -29,10 +29,6 @@ class UnivariateStatisticalDriftCalculatorResult(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
             )
         self.calculator = calculator
-
-    @property
-    def calculator_name(self) -> str:
-        return "univariate_statistical_feature_drift"
 
     def plot(
         self,
@@ -174,6 +170,8 @@ def _feature_drift(
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
     fig = _step_plot(
         table=data,
         metric_column_name=metric_column_name,
@@ -185,6 +183,8 @@ def _feature_drift(
         y_axis_title=metric_label,
         v_line_separating_analysis_period=plot_reference,
         statistically_significant_column_name=drift_column_name,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 
@@ -233,7 +233,7 @@ def _plot_continuous_feature_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
+    feature_table = _create_feature_table(calculator.chunker.split(data))
 
     if plot_reference:
         if calculator.previous_reference_results is None:
@@ -245,10 +245,11 @@ def _plot_continuous_feature_distribution(
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
-        reference_feature_table = _create_feature_table(
-            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
-        )
+        reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
+
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     fig = _joy_plot(
         feature_table=feature_table,
@@ -259,6 +260,8 @@ def _plot_continuous_feature_distribution(
         x_axis_title=x_axis_title,
         title=title,
         style='vertical',
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 
@@ -281,7 +284,7 @@ def _plot_categorical_feature_distribution(
     drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
+    feature_table = _create_feature_table(calculator.chunker.split(data))
 
     if plot_reference:
         if calculator.previous_reference_results is None:
@@ -293,10 +296,11 @@ def _plot_categorical_feature_distribution(
         reference_drift['period'] = 'reference'
         drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
 
-        reference_feature_table = _create_feature_table(
-            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
-        )
+        reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
+
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     fig = _stacked_bar_plot(
         feature_table=feature_table,
@@ -306,6 +310,8 @@ def _plot_categorical_feature_distribution(
         feature_column_name=feature_column_name,
         yaxis_title=yaxis_title,
         title=title,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 

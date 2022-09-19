@@ -75,11 +75,15 @@ def _plot_direct_error_estimation_performance(
         lambda r: r[f'alert_{metric.column_name}'] if r['period'] == 'analysis' else False, axis=1
     )
 
+    is_time_based_x_axis = estimator.timestamp_column_name is not None
+
     # Plot estimated performance
     fig = _step_plot(
         table=estimation_results,
         metric_column_name='plottable',
         chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
         chunk_legend_labels=[
             f'Reference period (realized {metric.display_name})',
             f'Analysis period (estimated {metric.display_name})',
