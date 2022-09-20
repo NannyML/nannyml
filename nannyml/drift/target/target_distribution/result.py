@@ -128,12 +128,12 @@ class Result(AbstractCalculatorResult):
         elif self.calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
             return _step_plot(
                 table=data,
-                metric_column_name='metric_target_drift',
+                metric_column_name='statistical_target_drift',
                 chunk_column_name='key',
                 drift_column_name='alert',
-                hover_labels=['Chunk', 'Rate', 'Target data'],
-                title=f'Target distribution over time for {self.calculator.y_true}',
-                y_axis_title='Rate of positive occurrences',
+                hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
+                title=f'Chi-square statistic over time for {self.calculator.y_true} ',
+                y_axis_title='Chi-square statistic',
                 v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
@@ -166,13 +166,13 @@ class Result(AbstractCalculatorResult):
 
         if self.calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
             return _step_plot(
-                table=results_data,
-                metric_column_name='statistical_target_drift',
+                table=self.data,
+                metric_column_name='metric_target_drift',
                 chunk_column_name='key',
                 drift_column_name='alert',
-                hover_labels=['Chunk', 'Chi-square statistic', 'Target data'],
-                title=f'Chi-square statistic over time for {self.calculator.y_true} ',
-                y_axis_title='Chi-square statistic',
+                hover_labels=['Chunk', 'Rate', 'Target data'],
+                title=f'Target distribution over time for {self.calculator.y_true}',
+                y_axis_title='Rate of positive occurrences',
                 v_line_separating_analysis_period=plot_period_separator,
                 partial_target_column_name='targets_missing_rate',
                 statistically_significant_column_name='significant',
