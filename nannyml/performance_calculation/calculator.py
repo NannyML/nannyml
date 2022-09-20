@@ -95,7 +95,7 @@ class PerformanceCalculator(AbstractCalculator):
         >>> for metric in calc.metrics:
         >>>     results.plot(metric=metric, plot_reference=True).show()
         """
-        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
         self.y_true = y_true
         self.y_pred = y_pred
