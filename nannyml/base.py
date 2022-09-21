@@ -33,7 +33,7 @@ class AbstractCalculatorResult(ABC):
     :class:`~nannyml.base.AbstractCalculatorResult` implementation.
     """
 
-    def __init__(self, results_data: pd.DataFrame):
+    def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
         """Creates a new :class:`~nannyml.base.AbstractCalculatorResult` instance.
 
         Parameters
@@ -51,8 +51,43 @@ class AbstractCalculatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    @abstractmethod
     def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Plots calculation results."""
+        raise NotImplementedError
+
+    def dataa(
+        self,
+        period: str = 'analysis',
+        metrics: List[str] = None,
+        include_chunk_columns: bool = True,
+        *args,
+        **kwargs
+    ) -> pd.DataFrame:
+        """Returns result metric data."""
+        try:
+            return self._data(period, metrics, *args, **kwargs)
+        except Exception as exc:
+            raise CalculatorException(f"could not read result data: {exc}")
+
+    @abstractmethod
+    def _data(self, period: str, metrics: List[str], *args, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError
+
+    def to_metric_list(
+        self,
+        period: str = 'analysis',
+        metrics: List[str] = None,
+        *args,
+        **kwargs
+    ) -> List[Metric]:
+        try:
+            return self._to_metric_list(period, metrics, *args, **kwargs)
+        except Exception as exc:
+            raise CalculatorException(f"could not read result data: {exc}")
+
+    @abstractmethod
+    def _to_metric_list(self, period: str, metrics: List[str], *args, **kwargs) -> List[Metric]:
         raise NotImplementedError
 
 

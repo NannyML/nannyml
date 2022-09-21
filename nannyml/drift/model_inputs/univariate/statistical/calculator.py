@@ -95,6 +95,8 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
+        self.result: Result = None
+
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateStatisticalDriftCalculator:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
@@ -106,7 +108,8 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         self._reference_stability = 0  # TODO: Jakub
 
         self.previous_reference_data = reference_data.copy()
-        self.previous_reference_results = self._calculate(self.previous_reference_data).data
+        self.result = self._calculate(self.previous_reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
@@ -162,9 +165,13 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
 
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
+        res['period'] = 'analysis'
 
         self.previous_analysis_data = data
 
-        from nannyml.drift.model_inputs.univariate.statistical.results import Result
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=self)
+        else:
+            self.result.data = pd.concat([self.result.data, res])
 
-        return Result(results_data=res, calculator=self)
+        return self.result

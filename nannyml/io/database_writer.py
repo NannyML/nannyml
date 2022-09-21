@@ -26,6 +26,7 @@ class Metric(SQLModel, table=True):  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
     run_id: int = Field(default=None, foreign_key="run.id")
     run: Run = Relationship(back_populates="metrics")
+    timestamp: datetime = Field(default=None)
     name: str
     value: float
 
@@ -42,13 +43,10 @@ class DatabaseWriter(Writer):
 
     def _write(self, result: Result, **kwargs):
 
-        print(result.data)
-
         run = Run()
         metrics = [
-            Metric(name=f'estimated_{metric}', value=row[f'estimated_{metric}'], run=run)
-            for metric in ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle']
-            for _, row in result.data.iterrows()
+            Metric(name=metric.name, value=metric.value, run=run)
+            for metric in result.to_metric_list()
         ]
 
         with Session(self._engine) as session:
