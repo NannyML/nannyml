@@ -45,8 +45,8 @@ class Metric(abc.ABC):
         display_name: str,
         column_name: str,
         estimator: AbstractEstimator,
-        upper_threshold_limit: float = None,
-        lower_threshold_limit: float = None,
+        upper_value_limit: float = None,
+        lower_value_limit: float = 0.0,
     ):
         """Creates a new Metric instance.
 
@@ -70,8 +70,8 @@ class Metric(abc.ABC):
 
         self.upper_threshold: Optional[float] = None
         self.lower_threshold: Optional[float] = None
-        self.upper_threshold_limit: Optional[float] = upper_threshold_limit
-        self.lower_threshold_limit: Optional[float] = lower_threshold_limit
+        self.upper_value_limit: Optional[float] = upper_value_limit
+        self.lower_value_limit: Optional[float] = lower_value_limit
 
         self._dee_model: LGBMRegressor
 
@@ -99,7 +99,9 @@ class Metric(abc.ABC):
         reference_chunks = self.estimator.chunker.split(
             reference_data,
         )
-        self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
+        self.lower_threshold, self.upper_threshold = self._alert_thresholds(
+            reference_chunks, lower_limit=self.lower_value_limit, upper_limit=self.upper_value_limit
+        )
 
         # Delegate to subclass
         self._fit(reference_data)
@@ -156,15 +158,20 @@ class Metric(abc.ABC):
 
     def _alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: float = None, upper_limit: float = None
-    ) -> Tuple[float, float]:
+    ) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = [self.realized_performance(chunk.data) for chunk in reference_chunks]
         deviation = np.std(realized_chunk_performance) * std_num
         mean_realised_performance = np.mean(realized_chunk_performance)
         lower_threshold = mean_realised_performance - deviation
-        if lower_limit:
+        if lower_limit is not None:
             lower_threshold = np.maximum(lower_threshold, lower_limit)
+
+        # Special case... in case lower threshold equals 0, it should not be shown at all
+        if lower_threshold == 0.0:
+            lower_threshold = None
+
         upper_threshold = mean_realised_performance + deviation
-        if upper_limit:
+        if upper_limit is not None:
             upper_threshold = np.minimum(upper_threshold, upper_limit)
 
         return lower_threshold, upper_threshold

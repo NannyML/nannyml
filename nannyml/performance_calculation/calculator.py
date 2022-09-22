@@ -193,7 +193,7 @@ class PerformanceCalculator(AbstractCalculator):
             metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
             metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
             metrics_results[f'{metric.column_name}_alert'] = (
-                metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
-            )
+                metric.lower_threshold > chunk_metric if metric.lower_threshold else False
+            ) or (chunk_metric > metric.upper_threshold if metric.upper_threshold else False)
 
         return metrics_results

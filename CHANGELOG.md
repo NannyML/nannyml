@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   multiclass use cases [(#98)](https://github.com/NannyML/nannyml/issues/98)
 - Fix an issue where reference data was rendered incorrectly on joy plots
 - Updated the 'California Housing' example docs, thanks for the help [@NeoKish](https://github.com/NeoKish)
+- Fix lower confidence bounds and thresholds under zero for regression cases. When the lower limit is set to 0,
+  the lower threshold will not be plotted. [(#127)](https://github.com/NannyML/nannyml/issues/127)
 
 ## [0.6.2] - 2022-09-16
 
