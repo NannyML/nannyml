@@ -61,34 +61,27 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> display(reference_df.head())
         >>> calc = nml.StatisticalOutputDriftCalculator(
-        >>>     y_pred_proba='y_pred_proba',
-        >>>     y_pred='y_pred',
-        >>>     timestamp_column_name='timestamp'
+        ...     y_pred='y_pred',
+        ...     y_pred_proba='y_pred_proba',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_binary'
         >>> )
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
-        >>>
-        >>> print(results.data)  # check the numbers
-                     key  start_index  ...  y_pred_proba_alert y_pred_proba_threshold
-        0       [0:4999]            0  ...                True                   0.05
-        1    [5000:9999]         5000  ...               False                   0.05
-        2  [10000:14999]        10000  ...               False                   0.05
-        3  [15000:19999]        15000  ...               False                   0.05
-        4  [20000:24999]        20000  ...               False                   0.05
-        5  [25000:29999]        25000  ...                True                   0.05
-        6  [30000:34999]        30000  ...                True                   0.05
-        7  [35000:39999]        35000  ...                True                   0.05
-        8  [40000:44999]        40000  ...                True                   0.05
-        9  [45000:49999]        45000  ...                True                   0.05
-        >>>
-        >>> results.plot(kind='score_drift', metric='p_value', plot_reference=True).show()
-        >>> results.plot(kind='score_distribution', plot_reference=True).show()
-        >>> results.plot(kind='prediction_drift', plot_reference=True).show()
-        >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
+        >>> display(results.data)
+        >>> score_drift_fig = results.plot(kind='score_drift', plot_reference=True)
+        >>> score_drift_fig.show()
+        >>> score_distribution_fig = results.plot(kind='score_distribution', plot_reference=True)
+        >>> score_distribution_fig.show()
+        >>> prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+        >>> prediction_drift_fig.show()
+        >>> prediction_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+        >>> prediction_distribution_fig.show()
         """
         super(StatisticalOutputDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

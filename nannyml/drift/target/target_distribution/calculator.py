@@ -58,30 +58,24 @@ class TargetDistributionCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+        >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+        >>> display(reference_df.head(3))
         >>> calc = nml.TargetDistributionCalculator(
-        >>>     y_true='work_home_actual',
-        >>>     timestamp_column_name='timestamp'
+        ...     y_true='work_home_actual',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_binary'
         >>> )
         >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
-        >>> print(results.data)  # check the numbers
-                     key  start_index  end_index  ... thresholds  alert significant
-        0       [0:4999]            0       4999  ...       0.05   True        True
-        1    [5000:9999]         5000       9999  ...       0.05  False       False
-        2  [10000:14999]        10000      14999  ...       0.05  False       False
-        3  [15000:19999]        15000      19999  ...       0.05  False       False
-        4  [20000:24999]        20000      24999  ...       0.05  False       False
-        5  [25000:29999]        25000      29999  ...       0.05  False       False
-        6  [30000:34999]        30000      34999  ...       0.05  False       False
-        7  [35000:39999]        35000      39999  ...       0.05  False       False
-        8  [40000:44999]        40000      44999  ...       0.05  False       False
-        9  [45000:49999]        45000      49999  ...       0.05  False       False
-        >>>
-        >>> results.plot(kind='target_drift', plot_reference=True).show()
-        >>> results.plot(kind='target_distribution', plot_reference=True).show()
+        >>> results = calc.calculate(analysis_df)
+        >>> display(results.data.head(3))
+        >>> target_drift_fig = results.plot(kind='target_drift', plot_reference=True)
+        >>> target_drift_fig.show()
+        >>> target_distribution_fig = results.plot(kind='target_distribution', plot_reference=True)
+        >>> target_distribution_fig.show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 

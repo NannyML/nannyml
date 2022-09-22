@@ -91,36 +91,28 @@ class CBPE(AbstractEstimator):
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> display(reference_df.head(3))
         >>> estimator = nml.CBPE(
-        >>>     y_true='work_home_actual',
-        >>>     y_pred='y_pred',
-        >>>     y_pred_proba='y_pred_proba',
-        >>>     timestamp_column_name='timestamp',
-        >>>     metrics=['f1', 'roc_auc'],
-        >>>     problem_type='classification_binary',
+        ...     y_pred_proba='y_pred_proba',
+        ...     y_pred='y_pred',
+        ...     y_true='work_home_actual',
+        ...     timestamp_column_name='timestamp',
+        ...     metrics=['roc_auc', 'f1'],
+        ...     chunk_size=5000,
+        ...     problem_type='classification_binary',
         >>> )
-        >>>
         >>> estimator.fit(reference_df)
-        >>>
         >>> results = estimator.estimate(analysis_df)
-        >>> print(results.data)
-                     key  start_index  ...  lower_threshold_roc_auc alert_roc_auc
-        0       [0:4999]            0  ...                  0.97866         False
-        1    [5000:9999]         5000  ...                  0.97866         False
-        2  [10000:14999]        10000  ...                  0.97866         False
-        3  [15000:19999]        15000  ...                  0.97866         False
-        4  [20000:24999]        20000  ...                  0.97866         False
-        5  [25000:29999]        25000  ...                  0.97866          True
-        6  [30000:34999]        30000  ...                  0.97866          True
-        7  [35000:39999]        35000  ...                  0.97866          True
-        8  [40000:44999]        40000  ...                  0.97866          True
-        9  [45000:49999]        45000  ...                  0.97866          True
+        >>> display(results.data)
         >>> for metric in estimator.metrics:
-        >>>     results.plot(metric=metric, plot_reference=True).show()
-
+        ...     metric_fig = results.plot(kind='performance', metric=metric)
+        ...     metric_fig.show()
+        >>> for metric in estimator.metrics:
+        ...     metric_fig = results.plot(kind='performance', plot_reference=True, metric=metric)
+        ...     metric_fig.show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
