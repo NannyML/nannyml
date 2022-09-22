@@ -26,7 +26,7 @@ class Ranking(abc.ABC):
 
         Parameters
         ----------
-        drift_calculation_result : Result
+        drift_calculation_result : nannyml.drift.model_inputs.univariate.statistical.Result
             The drift calculation results.
         only_drifting : bool
             Omits non-drifting features from the ranking if True.
@@ -132,7 +132,7 @@ class AlertCountRanking(Ranking):
 
         Parameters
         ----------
-        drift_calculation_result : pd.DataFrame
+        drift_calculation_result : nannyml.drift.model_inputs.univariate.statistical.Result
             The drift calculation results. Requires alert columns to be present. These are recognized and parsed
             using the ALERT_COLUMN_SUFFIX pattern, currently equal to ``'_alert'``.
         only_drifting : bool, default=False
