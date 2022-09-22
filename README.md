@@ -167,7 +167,6 @@ estimator = nml.CBPE(
     y_pred_proba='y_pred_proba',
     y_pred='y_pred',
     y_true='work_home_actual',
-    timestamp_column_name='timestamp',
     metrics=['roc_auc'],
     chunk_size=chunk_size,
     problem_type='classification_binary'
