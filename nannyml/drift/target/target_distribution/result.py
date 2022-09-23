@@ -3,12 +3,15 @@
 #  License: Apache Software License 2.0
 
 """The classes representing the results of a target distribution calculation."""
-from typing import Optional
+from __future__ import annotations
+import copy
+from datetime import datetime
+from typing import Optional, List
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import ProblemType
+from nannyml._typing import ProblemType, Metric
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot
@@ -17,6 +20,9 @@ from nannyml.plots._step_plot import _step_plot
 
 class Result(AbstractCalculatorResult):
     """Contains target distribution data and utilities to plot it."""
+
+    metric_to_col_suffix = {'KS': '_dstat', 'Chi2': '_chi2'}
+    col_suffix_to_metric = {v: k for k, v in metric_to_col_suffix.items()}
 
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         """Creates a new instance of the TargetDistributionResults."""
@@ -29,6 +35,56 @@ class Result(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
             )
         self.calculator = calculator
+
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = self.DEFAULT_COLUMNS
+
+        if metrics is None:
+            metrics = list(self.metric_to_col_suffix.keys())
+
+        columns += ['statistical_target_drift']
+
+        columns += ['alert']
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
+
+    def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
+        def _parse(column_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
+            timestamp = start_date + (end_date - start_date) / 2
+
+            return Metric(
+                feature_name=self.calculator.y_true,
+                metric_name="KS" if self.calculator.problem_type == ProblemType.REGRESSION else "Chi2",
+                timestamp=timestamp,
+                value=value,
+            )
+
+        if self.calculator.timestamp_column_name is None:
+            raise NotImplementedError(
+                'no timestamp column was specified. Listing metrics currently requires a '
+                'timestamp column to be specified and present'
+            )
+
+        res: List[Metric] = []
+
+        if metrics is None:
+            metrics = list(self.metric_to_col_suffix.keys())
+
+        filtered = self.filter(period, metrics, *args, **kwargs).data
+
+        target_metric_col = 'statistical_target_drift'
+        res += (
+            filtered[['start_date', 'end_date', target_metric_col]]
+            .apply(lambda r: _parse(target_metric_col, *r), axis=1)
+            .to_list()
+        )
+
+        return res
 
     def plot(self, kind: str = 'target_drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the target distribution calculator.
