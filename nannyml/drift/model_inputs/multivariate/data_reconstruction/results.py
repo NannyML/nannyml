@@ -63,6 +63,7 @@ class Result(AbstractCalculatorResult):
             value,
             upper_threshold,
             lower_threshold,
+            alert,
         ) -> Metric:
             timestamp = start_date + (end_date - start_date) / 2
 
@@ -74,6 +75,7 @@ class Result(AbstractCalculatorResult):
                 value=value,
                 upper_threshold=upper_threshold,
                 lower_threshold=lower_threshold,
+                alert=alert
             )
 
         if self.calculator.timestamp_column_name is None:
@@ -91,7 +93,7 @@ class Result(AbstractCalculatorResult):
 
         for metric_col in metrics:
             res += (
-                filtered[['start_date', 'end_date', metric_col, 'upper_threshold', 'lower_threshold']]
+                filtered[['start_date', 'end_date', metric_col, 'upper_threshold', 'lower_threshold', 'alert']]
                 .apply(lambda r: _parse(metric_col, 'multivariate data reconstruction drift', *r), axis=1)
                 .to_list()
             )

@@ -72,18 +72,19 @@ class Result(AbstractCalculatorResult):
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        def _parse(column_name: str, calculator_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
-            idx = column_name.rindex('_')
+        def _parse(output_name: str, calculator_name: str, metric_name: str, start_date: datetime,
+                   end_date: datetime, value, alert: bool) -> Metric:
             timestamp = start_date + (end_date - start_date) / 2
 
             return Metric(
-                feature_name=column_name[0:idx],
+                feature_name=output_name,
                 calculator_name=calculator_name,
-                metric_name=self.col_suffix_to_metric[column_name[idx:]],
+                metric_name=metric_name,
                 timestamp=timestamp,
                 value=value,
                 upper_threshold=None,
                 lower_threshold=None,
+                alert=alert
             )
 
         if self.calculator.timestamp_column_name is None:
@@ -102,9 +103,14 @@ class Result(AbstractCalculatorResult):
         for output_metric_col in [
             col for col in filtered.columns if str(col).endswith(tuple(self.col_suffix_to_metric))
         ]:
+            idx = output_metric_col.rindex('_')
+            output = output_metric_col[0:idx]
+            metric = self.col_suffix_to_metric[output_metric_col[idx:]]
+            alert_col = f'{output}_alert'
+
             res += (
-                filtered[['start_date', 'end_date', output_metric_col]]
-                .apply(lambda r: _parse(output_metric_col, 'statistical output drift', *r), axis=1)
+                filtered[['start_date', 'end_date', output_metric_col, alert_col]]
+                .apply(lambda r: _parse(output, 'statistical output drift', metric, *r), axis=1)
                 .to_list()
             )
 

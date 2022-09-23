@@ -71,18 +71,19 @@ class Result(AbstractCalculatorResult):
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        def _parse(column_name: str, calculator_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
-            idx = column_name.rindex('_')
+        def _parse(feature_name: str, calculator_name: str, metric_name: str, start_date: datetime,
+                   end_date: datetime, value, alert: bool) -> Metric:
             timestamp = start_date + (end_date - start_date) / 2
 
             return Metric(
-                feature_name=column_name[0:idx],
+                feature_name=feature_name,
                 calculator_name=calculator_name,
-                metric_name=self.col_suffix_to_metric[column_name[idx:]],
+                metric_name=metric_name,
                 timestamp=timestamp,
                 value=value,
                 upper_threshold=None,
                 lower_threshold=None,
+                alert=alert
             )
 
         if self.calculator.timestamp_column_name is None:
@@ -106,9 +107,14 @@ class Result(AbstractCalculatorResult):
         for feature_metric_col in [
             col for col in filtered.columns if str(col).endswith(tuple(self.col_suffix_to_metric))
         ]:
+            idx = feature_metric_col.rindex('_')
+            feature_name = feature_metric_col[0:idx]
+            metric_name = self.col_suffix_to_metric[feature_metric_col[idx:]]
+            alert_col = f'{feature_name}_alert'
+
             res += (
-                filtered[['start_date', 'end_date', feature_metric_col]]
-                .apply(lambda r: _parse(feature_metric_col, 'univariate statistical feature drift', *r), axis=1)
+                filtered[['start_date', 'end_date', feature_metric_col, alert_col]]
+                .apply(lambda r: _parse(feature_name, 'univariate statistical feature drift', metric_name, *r), axis=1)
                 .to_list()
             )
 

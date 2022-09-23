@@ -33,6 +33,7 @@ class Metric(SQLModel, table=True):  # type: ignore
     value: float
     upper_threshold: Optional[float]
     lower_threshold: Optional[float]
+    alert: bool
 
 
 class DatabaseWriter(Writer):
@@ -58,6 +59,7 @@ class DatabaseWriter(Writer):
                 value=metric.value,
                 upper_threshold=metric.upper_threshold,
                 lower_threshold=metric.lower_threshold,
+                alert=metric.alert,
             )
             for metric in result.to_metric_list()
         ]
