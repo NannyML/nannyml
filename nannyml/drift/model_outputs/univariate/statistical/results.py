@@ -3,13 +3,16 @@
 #  License: Apache Software License 2.0
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
+from __future__ import annotations
 
+import copy
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import ProblemType
+from nannyml._typing import ProblemType, Metric
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult, _column_is_categorical, _column_is_continuous
 from nannyml.chunk import Chunk
 from nannyml.exceptions import InvalidArgumentsException
@@ -24,6 +27,9 @@ from nannyml.plots._step_plot import _step_plot
 class Result(AbstractCalculatorResult):
     """Contains the results of the model output statistical drift calculation and provides plotting functionality."""
 
+    metric_to_col_suffix = {'KS': '_dstat', 'Chi2': '_chi2'}
+    col_suffix_to_metric = {v: k for k, v in metric_to_col_suffix.items()}
+
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         super().__init__(results_data)
 
@@ -34,6 +40,71 @@ class Result(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
             )
         self.calculator = calculator
+
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = self.DEFAULT_COLUMNS
+
+        outputs = []
+        if 'outputs' in kwargs:
+            outputs = kwargs['outputs']
+        else:
+            if self.calculator.problem_type is ProblemType.REGRESSION:
+                outputs = [self.calculator.y_pred]
+            elif self.calculator.problem_type is ProblemType.CLASSIFICATION_BINARY:
+                outputs = [self.calculator.y_pred, self.calculator.y_pred_proba]
+            elif self.calculator.problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
+                outputs = [self.calculator.y_pred] + [col for col in self.calculator.y_pred_proba.keys()]
+
+        if self.calculator.problem_type is ProblemType.REGRESSION:
+            columns += [f'y_pred{self.metric_to_col_suffix["KS"]}']
+        else:
+            columns += [f'y_pred{self.metric_to_col_suffix["Chi2"]}',
+                        f'y_pred_proba{self.metric_to_col_suffix["KS"]}']
+
+        columns += [f'{output}_alert' for output in outputs]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
+
+    def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
+        def _parse(column_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
+            idx = column_name.rindex('_')
+            timestamp = start_date + (end_date - start_date) / 2
+
+            return Metric(
+                feature_name=column_name[0:idx],
+                metric_name=self.col_suffix_to_metric[column_name[idx:]],
+                timestamp=timestamp,
+                value=value,
+            )
+
+        if self.calculator.timestamp_column_name is None:
+            raise NotImplementedError(
+                'no timestamp column was specified. Listing metrics currently requires a '
+                'timestamp column to be specified and present'
+            )
+
+        res: List[Metric] = []
+
+        if metrics is None:
+            metrics = list(self.metric_to_col_suffix.keys())
+
+        filtered = self.filter(period, metrics, *args, **kwargs).data
+
+        for output_metric_col in [
+            col for col in filtered.columns if str(col).endswith(tuple(self.col_suffix_to_metric))
+        ]:
+            res += (
+                filtered[['start_date', 'end_date', output_metric_col]]
+                .apply(lambda r: _parse(output_metric_col, *r), axis=1)
+                .to_list()
+            )
+
+        return res
 
     def plot(
         self,
@@ -150,46 +221,6 @@ class Result(AbstractCalculatorResult):
                 "Please provide on of: ['prediction_drift', 'prediction_distribution', 'score_drift',"
                 "'score_distribution']."
             )
-
-    # @property
-    # def plots(self) -> Dict[str, go.Figure]:
-    #     plots: Dict[str, go.Figure] = {}
-    #
-    #     if isinstance(self.metadata, BinaryClassificationMetadata):
-    #         prediction_column_name = self.metadata.predicted_probability_column_name
-    #         plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'statistic'
-    #         )
-    #         plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'p_value'
-    #         )
-    #         plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #             data=self._analysis_data, drift_data=self.data, metadata=self.metadata
-    #         )
-    #     elif isinstance(self.metadata, MulticlassClassificationMetadata):
-    #         for class_label, prediction_column_name in self.metadata.predicted_probabilities_column_names.items():
-    #             plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #                 self.data, self.metadata, 'statistic', class_label
-    #             )
-    #             plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #                 self.data, self.metadata, 'p_value', class_label
-    #             )
-    #             plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #                 data=self._analysis_data, drift_data=self.data, metadata=self.metadata, class_label=class_label
-    #             )
-    #     elif isinstance(self.metadata, RegressionMetadata):
-    #         prediction_column_name = self.metadata.prediction_column_name
-    #         plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'statistic'
-    #         )
-    #         plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'p_value'
-    #         )
-    #         plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #             data=self._analysis_data, drift_data=self.data, metadata=self.metadata
-    #         )
-    #
-    #     return plots
 
 
 def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: str, metric: str) -> Tuple:
