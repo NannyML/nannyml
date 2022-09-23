@@ -128,6 +128,8 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
+        self.result: Optional[Result] = None
+
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
@@ -186,7 +188,8 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             ).std(),
         )
 
-        self.previous_reference_results = self._calculate(data=reference_data).data
+        self.result = self._calculate(data=reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
@@ -234,7 +237,15 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
-        return Result(results_data=res, calculator=self)
+
+        res['period'] = 'analysis'
+
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=self)
+        else:
+            self.result.data = pd.concat([self.result.data, res])
+
+        return self.result
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
         reference_chunks = self.chunker.split(reference_data)  # type: ignore

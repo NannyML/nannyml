@@ -39,7 +39,7 @@ class Result(AbstractCalculatorResult):
         self.calculator = calculator
 
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
-        columns = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
+        columns = self.DEFAULT_COLUMNS
 
         if 'features' in kwargs:
             features = kwargs['features']
@@ -47,7 +47,7 @@ class Result(AbstractCalculatorResult):
             features = self.calculator.feature_column_names
 
         if metrics is None:
-            metrics = ['KS', 'Chi2', 'p-value']
+            metrics = list(self.metric_to_col_suffix.keys())
 
         columns += [
             f'{feature}{self.metric_to_col_suffix["KS"]}'
@@ -70,7 +70,7 @@ class Result(AbstractCalculatorResult):
 
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
-    def _to_metric_list(self, period: str, metrics: List[str], *args, **kwargs) -> List[Metric]:
+    def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
         def _parse(column_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
             idx = column_name.rindex('_')
             timestamp = start_date + (end_date - start_date) / 2
@@ -89,6 +89,9 @@ class Result(AbstractCalculatorResult):
             )
 
         res: List[Metric] = []
+
+        if metrics is None:
+            metrics = list(self.metric_to_col_suffix.keys())
 
         if 'features' in kwargs:
             features = kwargs['features']

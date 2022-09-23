@@ -95,7 +95,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
-        self.result: Result = None
+        self.result: Result
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateStatisticalDriftCalculator:
         """Fits the drift calculator using a set of reference data."""
