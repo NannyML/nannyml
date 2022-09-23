@@ -45,6 +45,8 @@ class Result(AbstractCalculatorResult):
 
         columns += ['alert']
 
+        columns += ['upper_threshold', 'lower_threshold']
+
         if period == 'all':
             data = self.data.loc[:, columns]
         else:
@@ -53,14 +55,18 @@ class Result(AbstractCalculatorResult):
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        def _parse(column_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
+        def _parse(column_name: str, calculator_name: str, start_date: datetime, end_date: datetime,
+                   value, upper_threshold, lower_threshold) -> Metric:
             timestamp = start_date + (end_date - start_date) / 2
 
             return Metric(
                 feature_name=None,
+                calculator_name=calculator_name,
                 metric_name=self.col_to_metric_label[column_name],
                 timestamp=timestamp,
                 value=value,
+                upper_threshold=upper_threshold,
+                lower_threshold=lower_threshold
             )
 
         if self.calculator.timestamp_column_name is None:
@@ -78,8 +84,8 @@ class Result(AbstractCalculatorResult):
 
         for metric_col in metrics:
             res += (
-                filtered[['start_date', 'end_date', metric_col]]
-                .apply(lambda r: _parse(metric_col, *r), axis=1)
+                filtered[['start_date', 'end_date', metric_col, 'upper_threshold', 'lower_threshold']]
+                .apply(lambda r: _parse(metric_col, 'multivariate data reconstruction drift', *r), axis=1)
                 .to_list()
             )
 

@@ -26,10 +26,13 @@ class Metric(SQLModel, table=True):  # type: ignore
     id: Optional[int] = Field(default=None, primary_key=True)
     run_id: int = Field(default=None, foreign_key="run.id")
     run: Run = Relationship(back_populates="metrics")
-    timestamp: datetime = Field(default=None)
+    timestamp: datetime
     metric_name: str
-    feature_name: str = Field(default=None)
+    calculator_name: str
+    feature_name: Optional[str]
     value: float
+    upper_threshold: Optional[float]
+    lower_threshold: Optional[float]
 
 
 class DatabaseWriter(Writer):
@@ -49,9 +52,12 @@ class DatabaseWriter(Writer):
             Metric(
                 run=run,
                 metric_name=metric.metric_name,
+                calculator_name=metric.calculator_name,
                 feature_name=metric.feature_name,
                 timestamp=metric.timestamp,
                 value=metric.value,
+                upper_threshold=metric.upper_threshold,
+                lower_threshold=metric.lower_threshold,
             )
             for metric in result.to_metric_list()
         ]

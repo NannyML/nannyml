@@ -54,14 +54,17 @@ class Result(AbstractCalculatorResult):
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        def _parse(column_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
+        def _parse(feature_name: str, calculator_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
             timestamp = start_date + (end_date - start_date) / 2
 
             return Metric(
-                feature_name=self.calculator.y_true,
+                feature_name=feature_name,
+                calculator_name=calculator_name,
                 metric_name="KS" if self.calculator.problem_type == ProblemType.REGRESSION else "Chi2",
                 timestamp=timestamp,
                 value=value,
+                upper_threshold=None,
+                lower_threshold=None,
             )
 
         if self.calculator.timestamp_column_name is None:
@@ -80,7 +83,7 @@ class Result(AbstractCalculatorResult):
         target_metric_col = 'statistical_target_drift'
         res += (
             filtered[['start_date', 'end_date', target_metric_col]]
-            .apply(lambda r: _parse(target_metric_col, *r), axis=1)
+            .apply(lambda r: _parse(self.calculator.y_true, 'statistical target drift', *r), axis=1)
             .to_list()
         )
 
