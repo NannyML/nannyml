@@ -129,3 +129,4 @@ docs/examples/*.svg
 nannyml.yaml
 nann.yml
 config/*
+!/nml.db

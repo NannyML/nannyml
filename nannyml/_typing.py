@@ -16,14 +16,15 @@ import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
 
-
-Metric = namedtuple('Metric', 'name feature timestamp value')
+Metric = namedtuple('Metric', 'metric_name feature_name timestamp value')
 
 
 class Result(Protocol):
     """The data that was calculated or estimated."""
 
-    def dataa(self, period: str = None, metrics: List[str] = None, *args, **kwargs) -> pd.DataFrame:
+    data: pd.DataFrame
+
+    def filter(self, period: str = None, metrics: List[str] = None, *args, **kwargs) -> pd.DataFrame:
         """"""
 
     def to_metric_list(self, period: str = None, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:

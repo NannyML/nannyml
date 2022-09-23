@@ -3,6 +3,10 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+from __future__ import annotations
+
+import copy
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 import pandas as pd
@@ -20,6 +24,9 @@ from nannyml.plots._step_plot import _step_plot
 class Result(AbstractCalculatorResult):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
+    metric_to_col_suffix = {'KS': '_dstat', 'Chi2': '_chi2'}
+    col_suffix_to_metric = {v: k for k, v in metric_to_col_suffix.items()}
+
     def __init__(self, results_data: pd.DataFrame, calculator):
         super().__init__(results_data)
 
@@ -31,10 +38,8 @@ class Result(AbstractCalculatorResult):
             )
         self.calculator = calculator
 
-    def _data(self, period: str, metrics: List[str], *args, **kwargs) -> pd.DataFrame:
-        metric_to_col_suffix = {'KS': '_dstat', 'Chi2': '_chi2', 'p-value': '_p_value'}
-
-        columns = ['chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
 
         if 'features' in kwargs:
             features = kwargs['features']
@@ -44,32 +49,64 @@ class Result(AbstractCalculatorResult):
         if metrics is None:
             metrics = ['KS', 'Chi2', 'p-value']
 
-        cont_feature_columns = [
-            f'{feature}{metric_to_col_suffix["KS"]}' for feature in features
+        columns += [
+            f'{feature}{self.metric_to_col_suffix["KS"]}'
+            for feature in features
             if feature in self.calculator.continuous_column_names and 'KS' in metrics
         ]
-        columns += cont_feature_columns
 
-        cat_feature_columns = [
-            f'{feature}{metric_to_col_suffix["Chi2"]}' for feature in features
+        columns += [
+            f'{feature}{self.metric_to_col_suffix["Chi2"]}'
+            for feature in features
             if feature in self.calculator.categorical_column_names and 'Chi2' in metrics
         ]
-        columns += cat_feature_columns
 
-        p_value_columns = [
-            f'{feature}{metric_to_col_suffix["p-value"]}' for feature in features if 'p-value' in metrics
-        ]
-        columns += p_value_columns
+        columns += [f'{feature}_alert' for feature in features]
 
         if period == 'all':
-            res = self.data.loc[:, columns]
+            data = self.data.loc[:, columns]
         else:
-            res = self.data.loc[self.data['period'] == period, columns]
+            data = self.data.loc[self.data['period'] == period, columns]
 
-        return res
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def _to_metric_list(self, period: str, metrics: List[str], *args, **kwargs) -> List[Metric]:
-        return []
+        def _parse(column_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
+            idx = column_name.rindex('_')
+            timestamp = start_date + (end_date - start_date) / 2
+
+            return Metric(
+                feature_name=column_name[0:idx],
+                metric_name=self.col_suffix_to_metric[column_name[idx:]],
+                timestamp=timestamp,
+                value=value,
+            )
+
+        if self.calculator.timestamp_column_name is None:
+            raise NotImplementedError(
+                'no timestamp column was specified. Listing metrics currently requires a '
+                'timestamp column to be specified and present'
+            )
+
+        res: List[Metric] = []
+
+        if 'features' in kwargs:
+            features = kwargs['features']
+        else:
+            features = self.calculator.feature_column_names
+
+        filtered = self.filter(period, metrics, features=features, *args, **kwargs).data
+
+        for feature_metric_col in [
+            col for col in filtered.columns if str(col).endswith(tuple(self.col_suffix_to_metric))
+        ]:
+            res += (
+                filtered[['start_date', 'end_date', feature_metric_col]]
+                .apply(lambda r: _parse(feature_metric_col, *r), axis=1)
+                .to_list()
+            )
+
+        return res
 
     def plot(
         self,

@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
+from nannyml._typing import Metric
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
@@ -43,9 +44,9 @@ class AbstractCalculatorResult(ABC):
         """
         self.data = results_data.copy(deep=True)
 
-    def __getattr__(self, attribute):
-        """Redirect function calls directly to the inner DataFrame."""
-        return getattr(self.data, attribute)
+    # def __getattr__(self, attribute):
+    #     """Redirect function calls directly to the inner DataFrame."""
+    #     return getattr(self.data, attribute)
 
     @property
     def _logger(self) -> logging.Logger:
@@ -56,38 +57,28 @@ class AbstractCalculatorResult(ABC):
         """Plots calculation results."""
         raise NotImplementedError
 
-    def dataa(
-        self,
-        period: str = 'analysis',
-        metrics: List[str] = None,
-        include_chunk_columns: bool = True,
-        *args,
-        **kwargs
-    ) -> pd.DataFrame:
+    def to_df(self) -> pd.DataFrame:
+        return self.data
+
+    def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
         """Returns result metric data."""
         try:
-            return self._data(period, metrics, *args, **kwargs)
+            return self._filter(period, metrics, *args, **kwargs)
         except Exception as exc:
             raise CalculatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _data(self, period: str, metrics: List[str], *args, **kwargs) -> pd.DataFrame:
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
         raise NotImplementedError
 
-    def to_metric_list(
-        self,
-        period: str = 'analysis',
-        metrics: List[str] = None,
-        *args,
-        **kwargs
-    ) -> List[Metric]:
+    def to_metric_list(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
         try:
             return self._to_metric_list(period, metrics, *args, **kwargs)
         except Exception as exc:
             raise CalculatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _to_metric_list(self, period: str, metrics: List[str], *args, **kwargs) -> List[Metric]:
+    def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
         raise NotImplementedError
 
 

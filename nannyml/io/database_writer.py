@@ -27,7 +27,8 @@ class Metric(SQLModel, table=True):  # type: ignore
     run_id: int = Field(default=None, foreign_key="run.id")
     run: Run = Relationship(back_populates="metrics")
     timestamp: datetime = Field(default=None)
-    name: str
+    metric_name: str
+    feature_name: str = Field(default=None)
     value: float
 
 
@@ -45,7 +46,13 @@ class DatabaseWriter(Writer):
 
         run = Run()
         metrics = [
-            Metric(name=metric.name, value=metric.value, run=run)
+            Metric(
+                run=run,
+                metric_name=metric.metric_name,
+                feature_name=metric.feature_name,
+                timestamp=metric.timestamp,
+                value=metric.value,
+            )
             for metric in result.to_metric_list()
         ]
 
