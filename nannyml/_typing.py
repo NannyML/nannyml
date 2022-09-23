@@ -16,8 +16,9 @@ import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
 
-Metric = namedtuple('Metric',
-                    'metric_name feature_name calculator_name timestamp value upper_threshold lower_threshold')
+Metric = namedtuple(
+    'Metric', 'metric_name feature_name calculator_name timestamp value upper_threshold lower_threshold'
+)
 
 
 class Result(Protocol):

@@ -4,14 +4,15 @@
 
 """The classes representing the results of a target distribution calculation."""
 from __future__ import annotations
+
 import copy
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import ProblemType, Metric
+from nannyml._typing import Metric, ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot

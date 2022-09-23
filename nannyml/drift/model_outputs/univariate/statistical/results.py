@@ -12,7 +12,7 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import ProblemType, Metric
+from nannyml._typing import Metric, ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult, _column_is_categorical, _column_is_continuous
 from nannyml.chunk import Chunk
 from nannyml.exceptions import InvalidArgumentsException
@@ -53,13 +53,14 @@ class Result(AbstractCalculatorResult):
             elif self.calculator.problem_type is ProblemType.CLASSIFICATION_BINARY:
                 outputs = [self.calculator.y_pred, self.calculator.y_pred_proba]
             elif self.calculator.problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
-                outputs = [self.calculator.y_pred] + [col for col in self.calculator.y_pred_proba.keys()]
+                outputs = [self.calculator.y_pred] + [
+                    col for col in self.calculator.y_pred_proba.keys()  # type: ignore
+                ]
 
         if self.calculator.problem_type is ProblemType.REGRESSION:
             columns += [f'y_pred{self.metric_to_col_suffix["KS"]}']
         else:
-            columns += [f'y_pred{self.metric_to_col_suffix["Chi2"]}',
-                        f'y_pred_proba{self.metric_to_col_suffix["KS"]}']
+            columns += [f'y_pred{self.metric_to_col_suffix["Chi2"]}', f'y_pred_proba{self.metric_to_col_suffix["KS"]}']
 
         columns += [f'{output}_alert' for output in outputs]
 

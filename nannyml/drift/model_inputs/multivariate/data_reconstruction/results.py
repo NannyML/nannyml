@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import copy
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -55,8 +55,15 @@ class Result(AbstractCalculatorResult):
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        def _parse(column_name: str, calculator_name: str, start_date: datetime, end_date: datetime,
-                   value, upper_threshold, lower_threshold) -> Metric:
+        def _parse(
+            column_name: str,
+            calculator_name: str,
+            start_date: datetime,
+            end_date: datetime,
+            value,
+            upper_threshold,
+            lower_threshold,
+        ) -> Metric:
             timestamp = start_date + (end_date - start_date) / 2
 
             return Metric(
@@ -66,7 +73,7 @@ class Result(AbstractCalculatorResult):
                 timestamp=timestamp,
                 value=value,
                 upper_threshold=upper_threshold,
-                lower_threshold=lower_threshold
+                lower_threshold=lower_threshold,
             )
 
         if self.calculator.timestamp_column_name is None:

@@ -71,8 +71,7 @@ class Result(AbstractCalculatorResult):
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        def _parse(column_name: str, calculator_name: str, start_date: datetime, end_date: datetime,
-                   value) -> Metric:
+        def _parse(column_name: str, calculator_name: str, start_date: datetime, end_date: datetime, value) -> Metric:
             idx = column_name.rindex('_')
             timestamp = start_date + (end_date - start_date) / 2
 
