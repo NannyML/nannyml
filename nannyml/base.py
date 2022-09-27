@@ -13,11 +13,11 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
-from nannyml._typing import Metric
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
     CalculatorNotFittedException,
+    EstimatorException,
     InvalidArgumentsException,
     InvalidReferenceDataException,
 )
@@ -71,16 +71,6 @@ class AbstractCalculatorResult(ABC):
 
     @abstractmethod
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
-        raise NotImplementedError
-
-    def to_metric_list(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        try:
-            return self._to_metric_list(period, metrics, *args, **kwargs)
-        except Exception as exc:
-            raise CalculatorException(f"could not read result data: {exc}")
-
-    @abstractmethod
-    def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
         raise NotImplementedError
 
 
@@ -166,6 +156,8 @@ class AbstractEstimatorResult(ABC):
     :class:`~nannyml.drift.base.DriftResult` implementation.
     """
 
+    DEFAULT_COLUMNS = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
+
     def __init__(self, results_data: pd.DataFrame):
         """Creates a new DriftResult instance.
 
@@ -183,6 +175,17 @@ class AbstractEstimatorResult(ABC):
     def __getattr__(self, attribute):
         """Redirect function calls directly to the inner DataFrame."""
         return getattr(self.data, attribute)
+
+    def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        """Returns result metric data."""
+        try:
+            return self._filter(period, metrics, *args, **kwargs)
+        except Exception as exc:
+            raise EstimatorException(f"could not read result data: {exc}")
+
+    @abstractmethod
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Plot drift results."""

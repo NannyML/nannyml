@@ -1,7 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-
+import copy
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
@@ -58,7 +58,7 @@ class _BinaryClassificationCBPE(CBPE):
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
 
-        self.previous_reference_results: Optional[pd.DataFrame] = None
+        self.result: Optional[Result] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         """Fits the drift calculator using a set of reference data."""
@@ -89,7 +89,8 @@ class _BinaryClassificationCBPE(CBPE):
                 aligned_reference_data[self.y_true],
             )
 
-        self.previous_reference_results = self._estimate(reference_data).data
+        self.result = self._estimate(reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
@@ -125,11 +126,19 @@ class _BinaryClassificationCBPE(CBPE):
         )
 
         res = res.reset_index(drop=True)
-        return Result(results_data=res, estimator=self)
+        res['period'] = 'analysis'
+
+        if self.result is None:
+            self.result = Result(results_data=res, estimator=copy.deepcopy(self))
+        else:
+            self.result.data = pd.concat([self.result.data, res])
+
+        return self.result
 
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
+            # TODO: align column naming (metric should be in front)
             estimated_metric = metric.estimate(chunk.data)
             sampling_error = metric.sampling_error(chunk.data)
             estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)

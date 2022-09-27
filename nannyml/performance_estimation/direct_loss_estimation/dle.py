@@ -1,8 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+import copy
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from sklearn.impute import SimpleImputer
@@ -190,6 +191,8 @@ class DLE(AbstractEstimator):
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
         self._categorical_encoders: defaultdict = defaultdict(LabelEncoder)
 
+        self.result: Optional[Result] = None
+
     def __str__(self):
         return (
             f"{self.__class__.__name__}[tune_hyperparameters={self.tune_hyperparameters}, "
@@ -215,7 +218,8 @@ class DLE(AbstractEstimator):
         for metric in self.metrics:
             metric.fit(reference_data)
 
-        self.previous_reference_results = self._estimate(reference_data).data
+        self.result = self._estimate(reference_data)
+        self.result.data['period'] = 'reference'  # type: ignore
 
         return self
 
@@ -250,7 +254,14 @@ class DLE(AbstractEstimator):
         )
 
         res = res.reset_index(drop=True)
-        return Result(results_data=res, estimator=self)
+        res['period'] = 'analysis'
+
+        if self.result is None:
+            self.result = Result(results_data=res, estimator=copy.deepcopy(self))
+        else:
+            self.result.data = pd.concat([self.result.data, res])
+
+        return self.result
 
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}

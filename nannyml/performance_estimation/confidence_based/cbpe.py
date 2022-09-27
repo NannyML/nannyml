@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Implementation of the CBPE estimator."""
+import copy
 from abc import abstractmethod
 from typing import Dict, List, Tuple, Union
 
@@ -152,6 +153,14 @@ class CBPE(AbstractEstimator):
         self.calibrator = calibrator
 
         self.minimum_chunk_size: int = None  # type: ignore
+
+    def __deepcopy__(self, memodict={}):
+        cls = self.__class__
+        result = cls.__new__(cls, y_pred_proba=self.y_pred_proba, problem_type=self.problem_type)
+        memodict[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, copy.deepcopy(v, memodict))
+        return result
 
     @abstractmethod
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:

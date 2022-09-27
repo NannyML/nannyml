@@ -3,7 +3,6 @@
 #  License: Apache Software License 2.0
 
 import typing
-from collections import namedtuple
 from enum import Enum
 from typing import Dict, List, Union  # noqa: TYP001
 
@@ -16,10 +15,6 @@ import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
 
-Metric = namedtuple(
-    'Metric', 'metric_name feature_name calculator_name timestamp value upper_threshold lower_threshold alert'
-)
-
 
 class Result(Protocol):
     """The data that was calculated or estimated."""
@@ -27,9 +22,6 @@ class Result(Protocol):
     data: pd.DataFrame
 
     def filter(self, period: str = None, metrics: List[str] = None, *args, **kwargs) -> pd.DataFrame:
-        """"""
-
-    def to_metric_list(self, period: str = None, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
         """"""
 
 

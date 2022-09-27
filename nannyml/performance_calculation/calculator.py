@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import copy
 from typing import Dict, List, Optional, Union
 
 import numpy as np
@@ -95,7 +96,7 @@ class PerformanceCalculator(AbstractCalculator):
         >>> for metric in calc.metrics:
         >>>     results.plot(metric=metric, plot_reference=True).show()
         """
-        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
         self.y_true = y_true
         self.y_pred = y_pred
@@ -115,6 +116,8 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
+
+        self.result: Optional[Result] = None
 
     def __str__(self):
         return f"PerformanceCalculator[metrics={str(self.metrics)}]"
@@ -137,7 +140,8 @@ class PerformanceCalculator(AbstractCalculator):
             metric.fit(reference_data=reference_data, chunker=self.chunker)
 
         self.previous_reference_data = reference_data
-        self.previous_reference_results = self._calculate(reference_data).data
+        self.result = self._calculate(reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
@@ -182,7 +186,13 @@ class PerformanceCalculator(AbstractCalculator):
             ]
         )
 
-        return Result(results_data=res, calculator=self)
+        res['period'] = 'analysis'
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=copy.deepcopy(self))
+        else:
+            self.result.data = pd.concat([self.result.data, res])
+
+        return self.result
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         metrics_results = {}

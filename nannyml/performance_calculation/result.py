@@ -3,11 +3,15 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the realized performance calculation and provides plotting functionality."""
-from typing import Optional, Union
+from __future__ import annotations
+
+import copy
+from typing import List, Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
@@ -34,9 +38,28 @@ class Result(AbstractCalculatorResult):
             )
         self.calculator = calculator
 
-    @property
-    def calculator_name(self) -> str:
-        return "performance_calculator"
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = self.DEFAULT_COLUMNS
+
+        if metrics is None:
+            if self.calculator.problem_type == ProblemType.REGRESSION:
+                metrics = ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle']
+            else:
+                metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+
+        columns += [metric for metric in metrics]
+
+        columns += [f'{metric}_lower_threshold' for metric in metrics]
+        columns += [f'{metric}_upper_threshold' for metric in metrics]
+
+        columns += [f'{metric}_alert' for metric in metrics]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def plot(
         self,

@@ -3,7 +3,8 @@
 #  License: Apache Software License 2.0
 
 """Module containing CBPE estimation results and plotting implementations."""
-from typing import Union
+import copy
+from typing import List, Union
 
 import pandas as pd
 from plotly import graph_objects as go
@@ -31,9 +32,30 @@ class Result(AbstractEstimatorResult):
             )
         self.estimator = estimator
 
-    @property
-    def estimator_name(self) -> str:
-        return 'confidence_based_performance_estimation'
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        columns = self.DEFAULT_COLUMNS
+
+        if metrics is None:
+            metrics = SUPPORTED_METRIC_VALUES
+
+        _metrics = [
+            MetricFactory.create(metric, self.estimator.problem_type, {'estimator': self.estimator})
+            for metric in metrics
+        ]
+        for metric in _metrics:
+            columns += [
+                f'estimated_{metric.column_name}',
+                f'upper_threshold_{metric.column_name}',
+                f'lower_threshold_{metric.column_name}',
+                f'alert_{metric.column_name}',
+            ]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        return Result(results_data=data, estimator=copy.deepcopy(self.estimator))
 
     def plot(
         self,
@@ -112,13 +134,6 @@ class Result(AbstractEstimatorResult):
             return _plot_cbpe_performance_estimation(self.data, self.estimator, metric, plot_reference)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
-
-    # @property
-    # def plots(self) -> Dict[str, go.Figure]:
-    #     plots: Dict[str, go.Figure] = {}
-    #     for metric in self.metrics:
-    #         plots[f'estimated_{metric}'] = _plot_cbpe_performance_estimation(self.data, metric)
-    #     return plots
 
 
 def _plot_cbpe_performance_estimation(

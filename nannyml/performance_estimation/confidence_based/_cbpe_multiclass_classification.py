@@ -1,6 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+import copy
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -62,7 +63,7 @@ class _MulticlassClassificationCBPE(CBPE):
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
 
-        self.previous_reference_results: Optional[pd.DataFrame] = None
+        self.result: Optional[Result] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         if reference_data.empty:
@@ -81,7 +82,8 @@ class _MulticlassClassificationCBPE(CBPE):
 
         self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator)
 
-        self.previous_reference_results = self._estimate(reference_data).data
+        self.result = self._estimate(reference_data)
+        self.result.data['period'] = 'reference'
         return self
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
@@ -115,7 +117,14 @@ class _MulticlassClassificationCBPE(CBPE):
         )
 
         res = res.reset_index(drop=True)
-        return Result(results_data=res, estimator=self)
+        res['period'] = 'analysis'
+
+        if self.result is None:
+            self.result = Result(results_data=res, estimator=copy.deepcopy(self))
+        else:
+            self.result.data = pd.concat([self.result.data, res])
+
+        return self.result
 
     def _estimate_for_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}

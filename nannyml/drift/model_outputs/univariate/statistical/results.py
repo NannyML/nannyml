@@ -6,13 +6,12 @@
 from __future__ import annotations
 
 import copy
-from datetime import datetime
 from typing import List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import Metric, ProblemType
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult, _column_is_categorical, _column_is_continuous
 from nannyml.chunk import Chunk
 from nannyml.exceptions import InvalidArgumentsException
@@ -70,51 +69,6 @@ class Result(AbstractCalculatorResult):
             data = self.data.loc[self.data['period'] == period, columns]
 
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
-
-    def _to_metric_list(self, period: str, metrics: List[str] = None, *args, **kwargs) -> List[Metric]:
-        def _parse(output_name: str, calculator_name: str, metric_name: str, start_date: datetime,
-                   end_date: datetime, value, alert: bool) -> Metric:
-            timestamp = start_date + (end_date - start_date) / 2
-
-            return Metric(
-                feature_name=output_name,
-                calculator_name=calculator_name,
-                metric_name=metric_name,
-                timestamp=timestamp,
-                value=value,
-                upper_threshold=None,
-                lower_threshold=None,
-                alert=alert
-            )
-
-        if self.calculator.timestamp_column_name is None:
-            raise NotImplementedError(
-                'no timestamp column was specified. Listing metrics currently requires a '
-                'timestamp column to be specified and present'
-            )
-
-        res: List[Metric] = []
-
-        if metrics is None:
-            metrics = list(self.metric_to_col_suffix.keys())
-
-        filtered = self.filter(period, metrics, *args, **kwargs).data
-
-        for output_metric_col in [
-            col for col in filtered.columns if str(col).endswith(tuple(self.col_suffix_to_metric))
-        ]:
-            idx = output_metric_col.rindex('_')
-            output = output_metric_col[0:idx]
-            metric = self.col_suffix_to_metric[output_metric_col[idx:]]
-            alert_col = f'{output}_alert'
-
-            res += (
-                filtered[['start_date', 'end_date', output_metric_col, alert_col]]
-                .apply(lambda r: _parse(output, 'statistical output drift', metric, *r), axis=1)
-                .to_list()
-            )
-
-        return res
 
     def plot(
         self,
