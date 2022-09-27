@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -107,6 +107,8 @@ class AbstractCalculator(ABC):
 
         self.timestamp_column_name = timestamp_column_name
 
+        self.result: Optional[AbstractCalculatorResult] = None
+
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
@@ -123,7 +125,7 @@ class AbstractCalculator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractCalculatorResult:
+    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         """Performs a calculation on the provided data."""
         try:
             self._logger.debug(f"calculating {str(self)}")
@@ -141,7 +143,7 @@ class AbstractCalculator(ABC):
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
@@ -224,6 +226,8 @@ class AbstractEstimator(ABC):
         )
         self.timestamp_column_name = timestamp_column_name
 
+        self.result: Optional[AbstractEstimatorResult] = None
+
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
@@ -244,7 +248,7 @@ class AbstractEstimator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
+    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         """Performs a calculation on the provided data."""
         try:
             self._logger.info(f"estimating {str(self)}")
@@ -262,7 +266,7 @@ class AbstractEstimator(ABC):
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 

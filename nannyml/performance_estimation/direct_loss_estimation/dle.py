@@ -10,7 +10,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 
 from nannyml._typing import ProblemType
-from nannyml.base import AbstractEstimator, AbstractEstimatorResult, _list_missing, _split_features_by_type
+from nannyml.base import AbstractEstimator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation import DEFAULT_METRICS
@@ -223,7 +223,7 @@ class DLE(AbstractEstimator):
 
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 

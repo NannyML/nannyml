@@ -48,7 +48,7 @@ class DatabaseWriter(Writer):
             session.commit()
             session.refresh(run)
             if run.id is None:
-                raise RuntimeError(f"could not retrieve run identifier from the database")
+                raise RuntimeError("could not retrieve run identifier from the database")
             return run.id
 
     def _upsert_model(self, model_name: Optional[str] = None) -> Optional[int]:
