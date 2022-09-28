@@ -37,7 +37,7 @@ class Result(AbstractCalculatorResult):
         self.calculator = calculator
 
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
-        columns = self.DEFAULT_COLUMNS
+        columns = list(self.DEFAULT_COLUMNS)
 
         if 'features' in kwargs:
             features = kwargs['features']
@@ -65,6 +65,8 @@ class Result(AbstractCalculatorResult):
             data = self.data.loc[:, columns]
         else:
             data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
 
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 

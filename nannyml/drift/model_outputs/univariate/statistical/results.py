@@ -41,7 +41,7 @@ class Result(AbstractCalculatorResult):
         self.calculator = calculator
 
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
-        columns = self.DEFAULT_COLUMNS
+        columns = list(self.DEFAULT_COLUMNS)
 
         outputs = []
         if 'outputs' in kwargs:
@@ -67,6 +67,8 @@ class Result(AbstractCalculatorResult):
             data = self.data.loc[:, columns]
         else:
             data = self.data.loc[self.data['period'] == period, columns]
+
+        data.reset_index(drop=True)
 
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
@@ -230,11 +232,8 @@ def _plot_prediction_drift(
 
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-    if plot_reference:
-        reference_results = calculator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data[data['period'] == 'analysis']
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
 
@@ -284,21 +283,12 @@ def _plot_prediction_distribution(
     axis_title = f'{prediction_column_name}'
     drift_column_name = f'{prediction_column_name}_alert'
 
-    drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
-
     feature_table = _create_feature_table(calculator.chunker.split(data))
 
-    if plot_reference:
-        reference_drift = calculator.previous_reference_results.copy()
-        if reference_drift is None:
-            raise RuntimeError(
-                f"could not plot distribution for '{prediction_column_name}': "
-                f"calculator is missing reference results\n{calculator}"
-            )
-        reference_drift['period'] = 'reference'
-        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
-
+    if not plot_reference:
+        drift_data = drift_data[drift_data['period'] == 'analysis']
+    else:
         reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
         reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
@@ -358,7 +348,6 @@ def _plot_score_drift(
         )
 
     # deal with multiclass stuff
-    # if isinstance(calculator.y_pred_proba, Dict):
     if calculator.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
         if class_label is None:
             raise InvalidArgumentsException(
@@ -394,11 +383,8 @@ def _plot_score_drift(
 
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-    if plot_reference:
-        reference_results = calculator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data.loc[data['period'] == 'analysis', :]
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
 
@@ -479,22 +465,14 @@ def _plot_score_distribution(
     drift_column_name = f'{output_column_name}_alert'
     title = f'Distribution over time for {output_column_name}'
 
-    drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
-
     feature_table = _create_feature_table(calculator.chunker.split(data))
 
-    if plot_reference:
-        reference_drift = calculator.previous_reference_results.copy()
-        if reference_drift is None:
-            raise RuntimeError(
-                f"could not plot categorical distribution for feature '{output_column_name}': "
-                f"calculator is missing reference results\n{calculator}"
-            )
-        reference_drift['period'] = 'reference'
-        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
-
+    if not plot_reference:
+        drift_data = drift_data[drift_data['period'] == 'analysis']
+    else:
         reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None

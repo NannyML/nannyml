@@ -131,7 +131,7 @@ class _BinaryClassificationCBPE(CBPE):
         if self.result is None:
             self.result = Result(results_data=res, estimator=copy.deepcopy(self))
         else:
-            self.result.data = pd.concat([self.result.data, res])
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
 

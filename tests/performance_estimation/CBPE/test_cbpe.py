@@ -341,9 +341,12 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
     ).fit(reference)
     results = estimator.estimate(pd.concat([reference, analysis]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
+    # manually remove previous 'analysis' results
+    results.data = results.data[results.data['period'] == 'reference']
     results = estimator.estimate(analysis)
-    assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
-    assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)
+    sut = results.data[results.data['period'] == 'analysis']
+    assert all(sut['lower_confidence_roc_auc'] >= new_lower_bound)
+    assert all(sut['upper_confidence_roc_auc'] <= new_upper_bound)
 
 
 def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
@@ -364,9 +367,11 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
     ).fit(reference)
     results = estimator.estimate(pd.concat([reference, analysis]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
+    results.data = results.data[results.data['period'] == 'reference']
     results = estimator.estimate(analysis)
-    assert all(results.data['lower_confidence_roc_auc'] >= new_lower_bound)
-    assert all(results.data['upper_confidence_roc_auc'] <= new_upper_bound)
+    sut = results.data[results.data['period'] == 'analysis']
+    assert all(sut['lower_confidence_roc_auc'] >= new_lower_bound)
+    assert all(sut['upper_confidence_roc_auc'] <= new_upper_bound)
 
 
 @pytest.mark.parametrize(
@@ -425,7 +430,7 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
         chunk_period='Y',
         problem_type='classification_binary',
     ).fit(reference)
-    results = estimator.estimate(analysis)
+    results = estimator.estimate(analysis).filter(period='analysis')
 
     assert f'sampling_error_{metric}' in results.data.columns
     assert np.array_equal(np.round(results.data[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
@@ -496,10 +501,10 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
         problem_type='classification_multiclass',
     ).fit(reference)
     results = estimator.estimate(analysis)
-    print(results.data[f'sampling_error_{metric}'])
+    sut = results.data[results.data['period'] == 'analysis']
 
-    assert f'sampling_error_{metric}' in results.data.columns
-    assert np.array_equal(np.round(results.data[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
+    assert f'sampling_error_{metric}' in sut.columns
+    assert np.array_equal(np.round(sut[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
 
 
 @pytest.mark.parametrize(

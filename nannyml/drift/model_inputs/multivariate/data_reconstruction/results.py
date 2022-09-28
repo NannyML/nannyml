@@ -34,21 +34,22 @@ class Result(AbstractCalculatorResult):
         self.calculator = calculator
 
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
-        columns = self.DEFAULT_COLUMNS
+        columns = list(self.DEFAULT_COLUMNS)
+        columns += ['sampling_error']
 
         if metrics is None:
             metrics = list(self.col_to_metric_label.keys())
 
         columns += [metric for metric in metrics]
 
-        columns += ['alert']
-
-        columns += ['upper_threshold', 'lower_threshold']
+        columns += ['alert', 'upper_threshold', 'lower_threshold']
 
         if period == 'all':
             data = self.data.loc[:, columns]
         else:
             data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
 
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
@@ -117,12 +118,14 @@ class Result(AbstractCalculatorResult):
 def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figure:
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-
-    if plot_reference:
-        reference_results = calculator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    # data['period'] = 'analysis'
+    #
+    # if plot_reference:
+    #     reference_results = calculator.previous_reference_results.copy()
+    #     reference_results['period'] = 'reference'
+    #     data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data.loc[data['period'] == 'analysis', :]
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
 

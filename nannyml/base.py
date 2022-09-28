@@ -34,7 +34,7 @@ class AbstractCalculatorResult(ABC):
     :class:`~nannyml.base.AbstractCalculatorResult` implementation.
     """
 
-    DEFAULT_COLUMNS = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
+    DEFAULT_COLUMNS = ('key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period')
 
     def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
         """Creates a new :class:`~nannyml.base.AbstractCalculatorResult` instance.

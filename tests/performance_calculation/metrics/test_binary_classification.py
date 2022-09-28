@@ -46,7 +46,9 @@ def performance_calculator() -> PerformanceCalculator:
 @pytest.fixture(scope='module')
 def realized_performance_metrics(performance_calculator, binary_data) -> pd.DataFrame:
     performance_calculator.fit(binary_data[0])
-    results = performance_calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier'))
+    results = performance_calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(
+        period='analysis'
+    )
     return results.data
 
 
@@ -59,7 +61,8 @@ def no_timestamp_metrics(binary_data):
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         problem_type='classification_binary',
     ).fit(binary_data[0])
-    return calc.calculate(binary_data[1].merge(binary_data[2], on='identifier')).data
+    results = calc.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(period='analysis')
+    return results.data
 
 
 @pytest.mark.parametrize(

@@ -169,7 +169,7 @@ class TargetDistributionCalculator(AbstractCalculator):
         if self.result is None:
             self.result = Result(results_data=res, calculator=self)
         else:
-            self.result.data = pd.concat([self.result.data, res])
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
 

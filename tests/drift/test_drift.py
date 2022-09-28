@@ -182,7 +182,7 @@ def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_an
     calc = UnivariateStatisticalDriftCalculator(
         feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
     ).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).data
+    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
 
     chunks = chunker.split(sample_drift_data)
     assert len(chunks) == sut.shape[0]
@@ -317,7 +317,7 @@ def test_univariate_statistical_drift_calculator_works_with_chunker(
     calc = UnivariateStatisticalDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(
         ref_data
     )
-    sut = calc.calculate(data=sample_drift_data).data
+    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
 
     assert all(sut['f1_dstat'] == expected)
 
