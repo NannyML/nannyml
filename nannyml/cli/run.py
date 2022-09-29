@@ -12,9 +12,8 @@ from nannyml._typing import ProblemType
 from nannyml.chunk import ChunkerFactory, DefaultChunker
 from nannyml.cli.cli import cli
 from nannyml.config import Config
-from nannyml.exceptions import IOException
-from nannyml.io.file_reader import FileReader
-from nannyml.io.file_writer import FileWriter
+from nannyml.exceptions import InvalidArgumentsException, IOException
+from nannyml.io import DEFAULT_WRITER, FileReader, WriterFactory
 
 
 @cli.command()
@@ -66,18 +65,25 @@ def run(ctx, ignore_errors: bool):
         else:
             analysis = analysis.join(targets)
 
-    writer = FileWriter(
-        filepath=_render_path_template(config.output.path),
-        data_format=config.output.format,
-        credentials=config.output.credentials,
-        write_args=config.output.write_args,
-    )
+    if config.output:
+        configured_writers = [(w, dict(kwargs)) for w, kwargs in vars(config.output).items() if kwargs is not None]
+        if len(configured_writers) > 1:
+            raise InvalidArgumentsException(
+                f'only one writer is currently supported ' f'but found {len(configured_writers)}'
+            )
+        key, kwargs = configured_writers[0]
+        console.log(f"using '{key}' writer")
+        writer = WriterFactory.create(key, kwargs)
+    else:
+        console.log(f"no writer config found, falling back to default '{DEFAULT_WRITER.__class__.__name__}' writer")
+        writer = DEFAULT_WRITER
 
     if config.chunker:
         chunker = ChunkerFactory.get_chunker(
             chunk_size=config.chunker.chunk_size,
             chunk_number=config.chunker.chunk_count,
             chunk_period=config.chunker.chunk_period,
+            timestamp_column_name=config.column_mapping.dict().get('timestamp', None),
         )
     else:
         chunker = DefaultChunker()

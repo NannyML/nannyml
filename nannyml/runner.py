@@ -38,7 +38,7 @@ def run(
     column_mapping: Dict[str, Any],
     problem_type: ProblemType,
     chunker: Chunker,
-    writer: Writer = RawFilesWriter(filepath='out', data_format='parquet'),
+    writer: Writer,
     ignore_errors: bool = True,
     run_in_console: bool = False,
 ):
@@ -152,14 +152,16 @@ def _run_statistical_univariate_feature_drift_calculator(
             console.log('calculating on analysis data')
         results = calc.calculate(analysis_data)
 
-        if console:
-            console.log('generating result plots')
-        plots = {
-            f'{kind}_{feature}': results.plot(kind, metric, feature)
-            for feature in column_mapping['features']
-            for kind in ['feature_drift', 'feature_distribution']
-            for metric in ['statistic', 'p_value']
-        }
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            plots = {
+                f'{kind}_{feature}': results.plot(kind, metric, feature)
+                for feature in column_mapping['features']
+                for kind in ['feature_drift', 'feature_distribution']
+                for metric in ['statistic', 'p_value']
+            }
     except Exception as exc:
         msg = f"Failed to run statistical univariate feature drift calculator: {exc}"
         if console:
@@ -200,9 +202,11 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
             console.log('calculating on analysis data')
         results = calc.calculate(analysis_data)
 
-        if console:
-            console.log('generating result plots')
-        plots = {f'{kind}': results.plot(kind='drift') for kind in ['drift']}
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            plots = {f'{kind}': results.plot(kind='drift') for kind in ['drift']}
     except Exception as exc:
         msg = f"Failed to run data reconstruction multivariate feature drift calculator: {exc}"
         if console:
@@ -246,41 +250,42 @@ def _run_statistical_model_output_drift_calculator(
             console.log('calculating on analysis data')
         results = calc.calculate(analysis_data)
 
-        if console:
-            console.log('generating result plots')
-        plots: Dict[str, Any] = {}
-        if problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
-            classes = list(column_mapping['y_pred_proba'].keys())
-            plots = {
-                f'{kind}_{clazz}': results.plot(kind, class_label=clazz)
-                for kind in [
-                    'score_drift',
-                    'score_distribution',
-                ]
-                for clazz in classes
-            }
-            plots.update(
-                {
-                    'prediction_drift': results.plot(kind='prediction_drift'),
-                    'prediction_distribution': results.plot(kind='prediction_distribution'),
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            if problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
+                classes = list(column_mapping['y_pred_proba'].keys())
+                plots = {
+                    f'{kind}_{clazz}': results.plot(kind, class_label=clazz)
+                    for kind in [
+                        'score_drift',
+                        'score_distribution',
+                    ]
+                    for clazz in classes
                 }
-            )
-        elif problem_type == ProblemType.CLASSIFICATION_BINARY:
-            plots = {
-                f'{kind}': results.plot(kind)
-                for kind in [
-                    'score_drift',
-                    'score_distribution',
-                    'prediction_drift',
-                    'prediction_distribution',
-                ]
-            }
-        elif problem_type == ProblemType.REGRESSION:
-            plots = {
-                'prediction_drift_ks_stat': results.plot('prediction_drift', 'statistic'),
-                'prediction_drift_p_value': results.plot('prediction_drift', 'p_value'),
-                'prediction_distribution': results.plot('prediction_distribution'),
-            }
+                plots.update(
+                    {
+                        'prediction_drift': results.plot(kind='prediction_drift'),
+                        'prediction_distribution': results.plot(kind='prediction_distribution'),
+                    }
+                )
+            elif problem_type == ProblemType.CLASSIFICATION_BINARY:
+                plots = {
+                    f'{kind}': results.plot(kind)
+                    for kind in [
+                        'score_drift',
+                        'score_distribution',
+                        'prediction_drift',
+                        'prediction_distribution',
+                    ]
+                }
+            elif problem_type == ProblemType.REGRESSION:
+                plots = {
+                    'prediction_drift_ks_stat': results.plot('prediction_drift', 'statistic'),
+                    'prediction_drift_p_value': results.plot('prediction_drift', 'p_value'),
+                    'prediction_distribution': results.plot('prediction_distribution'),
+                }
     except Exception as exc:
         msg = f"Failed to run model output drift calculator: {exc}"
         if console:
@@ -337,9 +342,11 @@ def _run_target_distribution_drift_calculator(
             console.log('calculating on analysis data')
         results = calc.calculate(analysis_data)
 
-        if console:
-            console.log('generating result plots')
-        plots = {f'{kind}': results.plot(kind) for kind in ['target_drift', 'target_distribution']}
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            plots = {f'{kind}': results.plot(kind) for kind in ['target_drift', 'target_distribution']}
     except Exception as exc:
         msg = f"Failed to run target distribution calculator: {exc}"
         if console:
@@ -405,11 +412,15 @@ def _run_realized_performance_calculator(
             console.log('calculating on analysis data')
         results = calc.calculate(analysis_data)
 
-        if console:
-            console.log('generating result plots')
-        plots = {
-            f'realized_{metric}': results.plot(kind, metric=metric) for kind in ['performance'] for metric in metrics
-        }
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            plots = {
+                f'realized_{metric}': results.plot(kind, metric=metric)
+                for kind in ['performance']
+                for metric in metrics
+            }
     except Exception as exc:
         msg = f"Failed to run realized performance calculator: {exc}"
         if console:
@@ -466,11 +477,15 @@ def _run_cbpe_performance_estimation(
             console.log('estimating on analysis data')
         results = estimator.estimate(analysis_data)
 
-        if console:
-            console.log('generating result plots')
-        plots = {
-            f'estimated_{metric}': results.plot(kind, metric=metric) for kind in ['performance'] for metric in metrics
-        }
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            plots = {
+                f'estimated_{metric}': results.plot(kind, metric=metric)
+                for kind in ['performance']
+                for metric in metrics
+            }
 
     except Exception as exc:
         msg = f"Failed to run CBPE performance estimator: {exc}"
@@ -525,14 +540,15 @@ def _run_dee_performance_estimation(
             console.log('estimating on analysis data')
         results = estimator.estimate(analysis_data)
 
-        if console:
-            console.log('generating result plots')
-        plots = {
-            f'estimated_{metric}': results.plot(kind, metric=metric)
-            for kind in ['performance']
-            for metric in DEFAULT_METRICS
-        }
-
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            plots = {
+                f'estimated_{metric}': results.plot(kind, metric=metric)
+                for kind in ['performance']
+                for metric in DEFAULT_METRICS
+            }
     except Exception as exc:
         msg = f"Failed to run DLE performance estimator: {exc}"
         if console:

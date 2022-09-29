@@ -29,11 +29,21 @@ class InputConfig(BaseModel):
     target_data: Optional[TargetDataConfig]
 
 
-class OutputConfig(BaseModel):
+class RawFileWriterConfig(BaseModel):
     path: str
     format: str = 'parquet'
     credentials: Optional[Dict[str, Any]]
     write_args: Optional[Dict[str, Any]]
+
+
+class DatabaseWriterConfig(BaseModel):
+    connection_string: str
+    model_name: Optional[str]
+
+
+class WriterConfig(BaseModel):
+    database: Optional[DatabaseWriterConfig]
+    raw_files: Optional[RawFileWriterConfig]
 
 
 class ColumnMapping(BaseModel):
@@ -52,7 +62,7 @@ class ChunkerConfig(BaseModel):
 
 class Config(BaseModel):
     input: InputConfig
-    output: OutputConfig
+    output: WriterConfig
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
 

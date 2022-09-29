@@ -7,10 +7,11 @@ from typing import Dict
 
 from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.base import get_filepath_str
+from nannyml.io.base import WriterFactory, get_filepath_str
 from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
 
 
+@WriterFactory.register('raw_files')
 class RawFilesWriter(FileWriter):
     def _write(self, result: Result, **kwargs):
         if 'plots' not in kwargs:

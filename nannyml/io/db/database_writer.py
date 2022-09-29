@@ -4,11 +4,12 @@ from sqlmodel import Session, SQLModel, create_engine, select
 
 from nannyml._typing import Result
 from nannyml.exceptions import WriterException
-from nannyml.io.base import Writer
+from nannyml.io.base import Writer, WriterFactory
 from nannyml.io.db.entities import Model, Run
 from nannyml.io.db.mappers import MapperFactory
 
 
+@WriterFactory.register('database')  # registration name matches property used in configuration file
 class DatabaseWriter(Writer):
     def __init__(
         self,

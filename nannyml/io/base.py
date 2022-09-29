@@ -6,7 +6,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from pathlib import PurePath
-from typing import Any, Tuple
+from typing import Any, Callable, Dict, Tuple
 from urllib.parse import urlsplit
 
 import pandas as pd
@@ -42,6 +42,41 @@ class Writer(ABC):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Writer and it must implement the _write method"
         )
+
+
+class WriterFactory:
+    """A factory class that produces Mapper instances for a given Result subclass."""
+
+    registry: Dict[str, Writer] = {}
+
+    @classmethod
+    def _logger(cls) -> logging.Logger:
+        return logging.getLogger(__name__)
+
+    @classmethod
+    def create(cls, key, kwargs: Dict[str, Any] = None) -> Writer:
+        """Returns a Writer instance for a given string."""
+
+        if kwargs is None:
+            kwargs = {}
+
+        if key not in cls.registry:
+            raise InvalidArgumentsException(
+                f"unknown key '{key}' given. " f"Currently registered keys are: {list(cls.registry.keys())}"
+            )
+
+        writer_class = cls.registry[key]
+        return writer_class(**kwargs)  # type: ignore
+
+    @classmethod
+    def register(cls, key) -> Callable:
+        def inner_wrapper(wrapped_class: Writer) -> Writer:
+            if key in cls.registry:
+                cls._logger().warning(f"re-registering Writer for key='{key}'")
+            cls.registry[key] = wrapped_class
+            return wrapped_class
+
+        return inner_wrapper
 
 
 class Reader(ABC):
