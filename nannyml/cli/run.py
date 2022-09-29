@@ -108,6 +108,7 @@ def run(ctx, ignore_errors: bool):
         )
 
     if not config.scheduling:
+        console.log("no scheduler configured, performing one-off run")
         actually_run_it()
     else:
         scheduler = BlockingScheduler()
@@ -115,7 +116,7 @@ def run(ctx, ignore_errors: bool):
         scheduler.add_job(actually_run_it, **trigger_args)
 
         try:
-            console.log("starting scheduler")
+            console.log(f"starting scheduler with trigger args {trigger_args}")
             scheduler.start()
         except KeyboardInterrupt:
             pass
