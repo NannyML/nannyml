@@ -52,6 +52,7 @@ lightgbm = "^3.3.2"
 FLAML = "^1.0.11"
 s3fs = "^2022.8.2"
 sqlmodel = "^0.0.8"
+APScheduler = "^3.9.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"

@@ -1,7 +1,6 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-
 import os
 from functools import lru_cache
 from pathlib import Path
@@ -60,11 +59,28 @@ class ChunkerConfig(BaseModel):
     chunk_count: Optional[int]
 
 
+class IntervalSchedulingConfig(BaseModel):
+    weeks: Optional[int]
+    days: Optional[int]
+    hours: Optional[int]
+    minutes: Optional[int]
+
+
+class CronSchedulingConfig(BaseModel):
+    crontab: str
+
+
+class SchedulingConfig(BaseModel):
+    interval: Optional[IntervalSchedulingConfig]
+    cron: Optional[CronSchedulingConfig]
+
+
 class Config(BaseModel):
     input: InputConfig
     output: WriterConfig
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
+    scheduling: Optional[SchedulingConfig]
 
     problem_type: str
     ignore_errors: Optional[bool]
