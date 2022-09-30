@@ -2,6 +2,7 @@
 #
 #  License: Apache Software License 2.0
 import datetime
+import warnings
 from typing import Any, Dict
 
 import click  # type: ignore
@@ -107,21 +108,27 @@ def run(ctx, ignore_errors: bool):
             ignore_errors=_ignore_errors,
         )
 
+        if config.scheduling:
+            next_run_time = scheduler.get_job(job_id='nml_run').next_run_time
+            console.log(f"run successfully completed, sleeping until next run at {next_run_time}")
+
     if not config.scheduling:
         console.log("no scheduler configured, performing one-off run")
         actually_run_it()
     else:
-        scheduler = BlockingScheduler()
-        trigger_args = _build_scheduling_trigger_args(config)
-        scheduler.add_job(actually_run_it, **trigger_args)
+        with warnings.catch_warnings():  # filter out some deprecation warnings in APscheduler
+            warnings.simplefilter("ignore")
+            scheduler = BlockingScheduler()
+            trigger_args = _build_scheduling_trigger_args(config)
+            scheduler.add_job(actually_run_it, id='nml_run', **trigger_args)
 
-        try:
-            console.log(f"starting scheduler with trigger args {trigger_args}")
-            scheduler.start()
-        except KeyboardInterrupt:
-            pass
-        except SystemExit:
-            pass
+            try:
+                console.log(f"starting scheduler with trigger args {trigger_args}")
+                scheduler.start()
+            except KeyboardInterrupt:
+                pass
+            except SystemExit:
+                pass
 
 
 def _get_ignore_errors(ignore_errors: bool, config: Config) -> bool:
@@ -177,6 +184,6 @@ def _build_scheduling_trigger_args(config: Config) -> Dict[str, Any]:
             raise InvalidArgumentsException(
                 "found multiple values in the 'scheduling.interval' section. " "Provide exactly one interval value."
             )
-        return {'trigger': 'interval', **not_none_intervals}
+        return {'trigger': 'interval', **not_none_intervals, 'next_run_time': datetime.datetime.now()}
 
     return {}

@@ -328,6 +328,35 @@ This section is optional and when it is absent NannyML will use a :class:`~nanny
     chunker:
       chunk_period: W  # chunks grouping observations by week
 
+
+Scheduling section
+*******************
+
+The scheduling section allows you to configure the schedule NannyML is to run on. This section is optional and if none
+is found NannyML will just run a single time, unscheduled.
+
+There are currently two ways of scheduling in NannyML.
+
+- **Interval** scheduling allows you to set the interval between NannyML runs, such as *every 6 hours* or *every 3 days*.
+  The available time increments are ``weeks``, ``days``, ``hours`` and ``minutes``.
+- **Cron** scheduling allows you to leverage the widely known ``crontab`` expressions to control scheduling.
+
+.. code-block:: yaml
+    :caption: Interval based scheduling configuration
+
+    scheduling:
+      interval:
+        days: 1  # wait one day from the timestamp at which the command is run
+
+
+.. code-block:: yaml
+    :caption: ``cron`` based scheduling configuration
+
+    scheduling:
+      cron:
+        crontab: "*/5 * * * *" # every 5 minutes, so on 00:05, 00:10, 00:15, ...
+
+
 Standalone parameters section
 *****************************
 
