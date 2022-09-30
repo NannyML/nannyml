@@ -40,9 +40,16 @@ class DatabaseWriterConfig(BaseModel):
     model_name: Optional[str]
 
 
+class PickleWriterConfig(BaseModel):
+    path: str
+    credentials: Optional[Dict[str, Any]]
+    write_args: Optional[Dict[str, Any]]
+
+
 class WriterConfig(BaseModel):
     database: Optional[DatabaseWriterConfig]
     raw_files: Optional[RawFileWriterConfig]
+    pickle: Optional[PickleWriterConfig]
 
 
 class ColumnMapping(BaseModel):

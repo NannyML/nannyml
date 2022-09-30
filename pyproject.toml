@@ -79,6 +79,9 @@ sphinx-copybutton = "^0.5.0"
 typing-extensions = "^4.3.0"
 sphinx-toolbox = "^3.2.0"
 
+[tool.poetry.group.dev.dependencies]
+pytest-lazy-fixture = "^0.6.3"
+
 [tool.black]
 line-length = 120
 skip-string-normalization = true

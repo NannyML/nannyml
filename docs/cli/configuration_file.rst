@@ -179,6 +179,19 @@ parameter.
           headers: False
 
 
+Writing to a pickle file
+"""""""""""""""""""""""""
+
+NannyML supports directly pickling the ``Result`` objects returned by calculators and estimators.
+Use the following configuration to enable this:
+
+.. code-block:: yaml
+
+    output:
+      pickle:
+        path: /data/out/  # a *.pkl file will be written here by each calculator/estimator
+
+
 Writing to a relational database
 """"""""""""""""""""""""""""""""
 

@@ -2,8 +2,8 @@
 #
 #  License: Apache Software License 2.0
 from io import BytesIO
-from pathlib import Path, PurePosixPath
-from typing import Dict
+from pathlib import Path
+from typing import Any, Dict
 
 from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException
@@ -13,6 +13,19 @@ from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
 
 @WriterFactory.register('raw_files')
 class RawFilesWriter(FileWriter):
+    def __init__(
+        self,
+        path: str,
+        format: str,
+        write_args: Dict[str, Any] = None,
+        credentials: Dict[str, Any] = None,
+        fs_args: Dict[str, Any] = None,
+    ):
+        super().__init__(path, write_args, credentials, fs_args)
+        if format not in ['parquet', 'csv']:
+            raise InvalidArgumentsException(f"unknown value for format '{format}', should be one of 'parquet', 'csv'")
+        self._data_format = format
+
     def _write(self, result: Result, **kwargs):
         if 'plots' not in kwargs:
             raise InvalidArgumentsException("missing parameter 'plots'.")
@@ -26,7 +39,7 @@ class RawFilesWriter(FileWriter):
             raise InvalidArgumentsException("result data cannot be None")
 
         calculator_name = kwargs['calculator_name']
-        write_path = get_filepath_str(PurePosixPath(self.filepath), self._protocol)
+        write_path = get_filepath_str(Path(self.filepath), self._protocol)
 
         images_path = Path(write_path) / calculator_name / "plots"
         images_path.mkdir(parents=True, exist_ok=True)

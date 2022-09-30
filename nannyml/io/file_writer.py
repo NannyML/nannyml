@@ -20,24 +20,21 @@ class FileWriter(Writer, abc.ABC):
     def __init__(
         self,
         path: str,
-        format: str,
         write_args: Dict[str, Any] = None,
         credentials: Dict[str, Any] = None,
         fs_args: Dict[str, Any] = None,
     ):
         super().__init__()
 
-        self.filepath = path
-
         _fs_args = deepcopy(fs_args) or {}
         _credentials = deepcopy(credentials) or {}
-        self._data_format = format
 
         protocol, path = get_protocol_and_path(path)
         if protocol == "file":
             _fs_args.setdefault("auto_mkdir", True)
 
         self._protocol = protocol
+        self.filepath = path
         self._storage_options = {**_credentials, **_fs_args}
         self._fs = fsspec.filesystem(self._protocol, **self._storage_options)
 
