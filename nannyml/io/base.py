@@ -5,7 +5,6 @@
 import logging
 import re
 from abc import ABC, abstractmethod
-from pathlib import PurePath
 from typing import Any, Callable, Dict, Tuple
 from urllib.parse import urlsplit
 
@@ -99,7 +98,7 @@ class Reader(ABC):
         )
 
 
-def get_protocol_and_path(filepath: str) -> Tuple[str, str]:
+def _get_protocol_and_path(filepath: str) -> Tuple[str, str]:
     if re.match(r"^[a-zA-Z]:[\\/]", filepath) or re.match(r"^[a-zA-Z\d]+://", filepath) is None:
         return "file", filepath
 
@@ -124,8 +123,7 @@ def get_protocol_and_path(filepath: str) -> Tuple[str, str]:
     return protocol, path
 
 
-def get_filepath_str(path: PurePath, protocol: str) -> str:
-    path_str = path.as_posix()
+def _get_filepath_str(path: str, protocol: str) -> str:
     if protocol in HTTP_PROTOCOLS:
-        path_str = "".join((protocol, "://", path_str))
-    return path_str
+        path = "".join((protocol, "://", path))
+    return path

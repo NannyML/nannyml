@@ -10,7 +10,7 @@ from typing import Any, Dict
 import fsspec
 
 from nannyml._typing import Result
-from nannyml.io.base import Writer, get_protocol_and_path
+from nannyml.io.base import Writer, _get_protocol_and_path
 
 
 class FileWriter(Writer, abc.ABC):
@@ -29,7 +29,7 @@ class FileWriter(Writer, abc.ABC):
         _fs_args = deepcopy(fs_args) or {}
         _credentials = deepcopy(credentials) or {}
 
-        protocol, path = get_protocol_and_path(path)
+        protocol, path = _get_protocol_and_path(path)
         if protocol == "file":
             _fs_args.setdefault("auto_mkdir", True)
 

@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.base import WriterFactory, get_filepath_str
+from nannyml.io.base import WriterFactory, _get_filepath_str
 from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
 
 
@@ -39,7 +39,7 @@ class RawFilesWriter(FileWriter):
             raise InvalidArgumentsException("result data cannot be None")
 
         calculator_name = kwargs['calculator_name']
-        write_path = get_filepath_str(Path(self.filepath), self._protocol)
+        write_path = _get_filepath_str(self.filepath, self._protocol)
 
         images_path = Path(write_path) / calculator_name / "plots"
         images_path.mkdir(parents=True, exist_ok=True)
