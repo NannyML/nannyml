@@ -268,14 +268,23 @@ class DLE(AbstractEstimator):
         for metric in self.metrics:
             estimated_metric = metric.estimate(chunk.data)
             sampling_error = metric.sampling_error(chunk.data)
+
+            upper_confidence_boundary = estimated_metric + 3 * sampling_error
+            if metric.upper_value_limit is not None:
+                upper_confidence_boundary = min(metric.upper_value_limit, upper_confidence_boundary)
+
+            lower_confidence_boundary = estimated_metric - 3 * sampling_error
+            if metric.lower_value_limit is not None:
+                lower_confidence_boundary = max(metric.lower_value_limit, lower_confidence_boundary)
+
             estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
             estimates[f'estimated_{metric.column_name}'] = estimated_metric
-            estimates[f'upper_confidence_{metric.column_name}'] = estimated_metric + 3 * sampling_error
-            estimates[f'lower_confidence_{metric.column_name}'] = estimated_metric - 3 * sampling_error
+            estimates[f'upper_confidence_{metric.column_name}'] = upper_confidence_boundary
+            estimates[f'lower_confidence_{metric.column_name}'] = lower_confidence_boundary
             estimates[f'sampling_error_{metric.column_name}'] = sampling_error
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
             estimates[f'alert_{metric.column_name}'] = (
-                estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
-            )
+                estimated_metric > metric.upper_threshold if metric.upper_threshold else False
+            ) or (estimated_metric < metric.lower_threshold if metric.lower_threshold else False)
         return estimates

@@ -56,31 +56,45 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> feature_column_names = [col for col in reference_df.columns
-        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> display(reference_df.head())
+        >>> feature_column_names = [
+        ...     col for col in reference_df.columns if col not in [
+        ...     'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+        >>> ]]
         >>> calc = nml.UnivariateStatisticalDriftCalculator(
-        >>>     feature_column_names=feature_column_names,
-        >>>     timestamp_column_name='timestamp'
+        ...     feature_column_names=feature_column_names,
+        ...     timestamp_column_name='timestamp'
         >>> )
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
-        >>> print(results.data)  # check the numbers
-                     key  start_index  ...  identifier_alert identifier_threshold
-        0       [0:4999]            0  ...              True                 0.05
-        1    [5000:9999]         5000  ...              True                 0.05
-        2  [10000:14999]        10000  ...              True                 0.05
-        3  [15000:19999]        15000  ...              True                 0.05
-        4  [20000:24999]        20000  ...              True                 0.05
-        5  [25000:29999]        25000  ...              True                 0.05
-        6  [30000:34999]        30000  ...              True                 0.05
-        7  [35000:39999]        35000  ...              True                 0.05
-        8  [40000:44999]        40000  ...              True                 0.05
-        9  [45000:49999]        45000  ...              True                 0.05
-        >>> fig = results.plot(kind='feature_drift', plot_reference=True, feature_column_name='distance_from_office')
-        >>> fig.show()
+        >>> display(results.data.iloc[:, :9])
+        >>> display(calc.previous_reference_results.iloc[:, :9])
+        >>> for feature in calc.feature_column_names:
+        ...     drift_fig = results.plot(
+        ...         kind='feature_drift',
+        ...         feature_column_name=feature,
+        ...         plot_reference=True
+        ...     )
+        ...     drift_fig.show()
+        >>> for cont_feat in calc.continuous_column_names:
+        ...     figure = results.plot(
+        ...         kind='feature_distribution',
+        ...         feature_column_name=cont_feat,
+        ...         plot_reference=True
+        ...     )
+        ...     figure.show()
+        >>> for cat_feat in calc.categorical_column_names:
+        ...     figure = results.plot(
+        ...         kind='feature_distribution',
+        ...         feature_column_name=cat_feat,
+        ...         plot_reference=True)
+        ...     figure.show()
+        >>> ranker = nml.Ranker.by('alert_count')
+        >>> ranked_features = ranker.rank(results, only_drifting = False)
+        >>> display(ranked_features)
         """
         super(UnivariateStatisticalDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

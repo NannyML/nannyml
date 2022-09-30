@@ -132,15 +132,15 @@ class Metric(abc.ABC):
         std_num: int = 3,
         lower_limit: Optional[float] = None,
         upper_limit: Optional[float] = None,
-    ) -> Tuple[float, float]:
+    ) -> Tuple[Optional[float], Optional[float]]:
         chunked_reference_metric = [self.calculate(chunk.data) for chunk in reference_chunks]
         deviation = np.std(chunked_reference_metric) * std_num
         mean_reference_metric = np.mean(chunked_reference_metric)
         lower_threshold = mean_reference_metric - deviation
-        if lower_limit:
+        if lower_limit is not None:
             lower_threshold = np.maximum(lower_threshold, lower_limit)
         upper_threshold = mean_reference_metric + deviation
-        if upper_limit:
+        if upper_limit is not None:
             upper_threshold = np.minimum(upper_threshold, upper_limit)
         return lower_threshold, upper_threshold
 

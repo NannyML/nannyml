@@ -66,30 +66,27 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> feature_column_names = [col for col in reference_df.columns
-        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> from IPython.display import display
+        >>> # Load synthetic data
+        >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> display(reference.head())
+        >>> # Define feature columns
+        >>> feature_column_names = [
+        ...     col for col in reference.columns if col not in [
+        ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+        ...     ]]
         >>> calc = nml.DataReconstructionDriftCalculator(
-        >>>     feature_column_names=feature_column_names,
-        >>>     timestamp_column_name='timestamp'
+        ...     feature_column_names=feature_column_names,
+        ...     timestamp_column_name='timestamp',
+        ...     chunk_size=5000
         >>> )
-        >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
-        >>> print(results.data)  # access the numbers
-                             key  start_index  ...  upper_threshold alert
-        0       [0:4999]            0  ...         1.511762  True
-        1    [5000:9999]         5000  ...         1.511762  True
-        2  [10000:14999]        10000  ...         1.511762  True
-        3  [15000:19999]        15000  ...         1.511762  True
-        4  [20000:24999]        20000  ...         1.511762  True
-        5  [25000:29999]        25000  ...         1.511762  True
-        6  [30000:34999]        30000  ...         1.511762  True
-        7  [35000:39999]        35000  ...         1.511762  True
-        8  [40000:44999]        40000  ...         1.511762  True
-        9  [45000:49999]        45000  ...         1.511762  True
-        >>> fig = results.plot(kind='drift', plot_reference=True)
-        >>> fig.show()
+        >>> calc.fit(reference)
+        >>> results = calc.calculate(analysis)
+        >>> display(results.data)
+        >>> display(results.calculator.previous_reference_results)
+        >>> figure = results.plot(plot_reference=True)
+        >>> figure.show()
         """
         super(DataReconstructionDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

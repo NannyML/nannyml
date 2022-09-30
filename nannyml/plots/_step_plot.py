@@ -622,25 +622,27 @@ def _plot_thresholds(
 ):
     if lower_threshold_column_name and lower_threshold_column_name in data.columns:
         threshold_value = data[lower_threshold_column_name].values[0]
-        fig.add_hline(
-            threshold_value,
-            annotation_text=threshold_value_format.format(threshold_value),
-            annotation_position="top right",
-            annotation=dict(font_color=colors[-1]),
-            line=dict(color=colors[-1], width=1, dash='dash'),
-            layer='below',
-        )
+        if threshold_value is not None:
+            fig.add_hline(
+                threshold_value,
+                annotation_text=threshold_value_format.format(threshold_value),
+                annotation_position="top right",
+                annotation=dict(font_color=colors[-1]),
+                line=dict(color=colors[-1], width=1, dash='dash'),
+                layer='below',
+            )
 
     if upper_threshold_column_name and upper_threshold_column_name in data.columns:
         threshold_value = data[upper_threshold_column_name].values[0]
-        fig.add_hline(
-            threshold_value,
-            annotation_text=threshold_value_format.format(threshold_value),
-            annotation_position="top right",
-            annotation=dict(font_color=colors[-1]),
-            line=dict(color=colors[-1], width=1, dash='dash'),
-            layer='below',
-        )
+        if threshold_value is not None:
+            fig.add_hline(
+                threshold_value,
+                annotation_text=threshold_value_format.format(threshold_value),
+                annotation_position="top right",
+                annotation=dict(font_color=colors[-1]),
+                line=dict(color=colors[-1], width=1, dash='dash'),
+                layer='below',
+            )
 
 
 def _plot_reference_analysis_separator(

@@ -72,29 +72,27 @@ class PerformanceCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> calc = nml.PerformanceCalculator(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
-        >>>                                  timestamp_column_name='timestamp', metrics=['f1', 'roc_auc'])
-        >>>
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+        >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+        >>> display(reference_df.head(3))
+        >>> calc = nml.PerformanceCalculator(
+        ...     y_pred_proba='y_pred_proba',
+        ...     y_pred='y_pred',
+        ...     y_true='work_home_actual',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_binary',
+        ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        ...     chunk_size=5000)
         >>> calc.fit(reference_df)
-        >>>
-        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
-        >>> print(results.data)
-                     key  start_index  ...  roc_auc_upper_threshold roc_auc_alert
-        0       [0:4999]            0  ...                  0.97866         False
-        1    [5000:9999]         5000  ...                  0.97866         False
-        2  [10000:14999]        10000  ...                  0.97866         False
-        3  [15000:19999]        15000  ...                  0.97866         False
-        4  [20000:24999]        20000  ...                  0.97866         False
-        5  [25000:29999]        25000  ...                  0.97866          True
-        6  [30000:34999]        30000  ...                  0.97866          True
-        7  [35000:39999]        35000  ...                  0.97866          True
-        8  [40000:44999]        40000  ...                  0.97866          True
-        9  [45000:49999]        45000  ...                  0.97866          True
+        >>> results = calc.calculate(analysis_df)
+        >>> display(results.data)
+        >>> display(results.calculator.previous_reference_results)
         >>> for metric in calc.metrics:
-        >>>     results.plot(metric=metric, plot_reference=True).show()
+        ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+        ...     figure.show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
@@ -203,7 +201,7 @@ class PerformanceCalculator(AbstractCalculator):
             metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
             metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
             metrics_results[f'{metric.column_name}_alert'] = (
-                metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
-            )
+                metric.lower_threshold > chunk_metric if metric.lower_threshold else False
+            ) or (chunk_metric > metric.upper_threshold if metric.upper_threshold else False)
 
         return metrics_results
