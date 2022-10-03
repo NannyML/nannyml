@@ -158,7 +158,7 @@ def _plot_performance_metric(
         reference_results['period'] = 'reference'
         results_data = pd.concat([reference_results, results_data], ignore_index=True)
 
-    is_time_based_x_axis = calculator.timestamp_column_name is not None
+    is_time_based_x_axis = not (results_data['start_date'].isna().all() and results_data['end_date'].isna().all())
 
     # Plot metric performance
     fig = _step_plot(

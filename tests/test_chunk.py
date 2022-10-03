@@ -12,7 +12,15 @@ import pandas as pd
 import pytest
 from pandas import Timestamp
 
-from nannyml.chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.chunk import (
+    BootstrapChunker,
+    Chunk,
+    Chunker,
+    CountBasedChunker,
+    DefaultChunker,
+    PeriodBasedChunker,
+    SizeBasedChunker,
+)
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException
 
 rng = np.random.default_rng()
@@ -374,3 +382,40 @@ def test_size_based_chunker_without_timestamp_column_sets_date_boundaries_to_non
 def test_size_based_chunker_sets_chunk_index(sample_chunk_data, chunker):  # noqa: D103
     sut = chunker.split(sample_chunk_data)
     assert all([chunk.chunk_index == chunk_index for chunk_index, chunk in enumerate(sut)])
+
+
+def test_bootstrap_chunker_creates_correct_number_of_chunks(sample_chunk_data):
+    sut = BootstrapChunker(chunk_count=10).split(sample_chunk_data)
+    assert len(sut) == 10
+
+
+def test_bootstrap_chunker_passes_sampling_arguments(sample_chunk_data):
+    n = 30
+    sut = BootstrapChunker(chunk_count=10, n=n).split(sample_chunk_data)
+    assert all([len(chunk.data) == n for chunk in sut])
+
+
+def test_bootstrap_chunker_drops_original_index_by_default(sample_chunk_data):
+    sut = BootstrapChunker(chunk_count=10).split(sample_chunk_data)
+    assert all(['index' not in chunk.data.columns for chunk in sut])
+
+
+def test_bootstrap_chunker_stores_original_index_when_required(sample_chunk_data):
+    sut = BootstrapChunker(chunk_count=10, drop_index=False).split(sample_chunk_data)
+    assert all(['index' in chunk.data.columns for chunk in sut])
+
+
+def test_bootstrap_chunker_chunks_have_no_timestamp_boundaries(sample_chunk_data):
+    sut = BootstrapChunker(chunk_count=10).split(sample_chunk_data)
+    assert all([chunk.start_datetime is None for chunk in sut])
+    assert all([chunk.end_datetime is None for chunk in sut])
+
+
+def test_bootstrap_chunker_raises_exception_when_timestamp_given(sample_chunk_data):
+    with pytest.raises(InvalidArgumentsException):
+        _ = BootstrapChunker(chunk_count=10, timestamp_column_name='timestamp').split(sample_chunk_data)
+
+
+def test_bootstrap_chunker_chunks_have_correct_chunk_index_value(sample_chunk_data):
+    sut = BootstrapChunker(chunk_count=10).split(sample_chunk_data)
+    assert all([chunk.chunk_index == idx for idx, chunk in enumerate(sut)])

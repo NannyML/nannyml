@@ -170,7 +170,9 @@ def _plot_cbpe_performance_estimation(
         lambda r: r[f'alert_{metric.column_name}'] if r['period'] == 'analysis' else False, axis=1
     )
 
-    is_time_based_x_axis = estimator.timestamp_column_name is not None
+    is_time_based_x_axis = not (
+        estimation_results['start_date'].isna().all() and estimation_results['end_date'].isna().all()
+    )
 
     # Plot estimated performance
     fig = _step_plot(

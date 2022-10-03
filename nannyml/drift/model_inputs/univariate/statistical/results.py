@@ -170,7 +170,7 @@ def _feature_drift(
         reference_results['period'] = 'reference'
         data = pd.concat([reference_results, data], ignore_index=True)
 
-    is_time_based_x_axis = calculator.timestamp_column_name is not None
+    is_time_based_x_axis = not (data['start_date'].isna().all() and data['end_date'].isna().all())
 
     fig = _step_plot(
         table=data,
@@ -249,7 +249,7 @@ def _plot_continuous_feature_distribution(
         reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-    is_time_based_x_axis = calculator.timestamp_column_name is not None
+    is_time_based_x_axis = not (drift_data['start_date'].isna().all() and drift_data['end_date'].isna().all())
 
     fig = _joy_plot(
         feature_table=feature_table,
@@ -300,7 +300,7 @@ def _plot_categorical_feature_distribution(
         reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-    is_time_based_x_axis = calculator.timestamp_column_name is not None
+    is_time_based_x_axis = not (drift_data['start_date'].isna().all() and drift_data['end_date'].isna().all())
 
     fig = _stacked_bar_plot(
         feature_table=feature_table,

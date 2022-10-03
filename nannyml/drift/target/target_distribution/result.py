@@ -110,7 +110,7 @@ class Result(AbstractCalculatorResult):
             reference_results['period'] = 'reference'
             data = pd.concat([reference_results, data], ignore_index=True)
 
-        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+        is_time_based_x_axis = not (data['start_date'].isna().all() and data['end_date'].isna().all())
 
         if self.calculator.problem_type == ProblemType.REGRESSION:
             return _step_plot(
@@ -148,7 +148,7 @@ class Result(AbstractCalculatorResult):
     def _plot_target_distribution(self, plot_reference: bool) -> go.Figure:
         plot_period_separator = plot_reference
 
-        results_data = self.data
+        results_data = self.data.copy()
 
         results_data['period'] = 'analysis'
 
@@ -162,11 +162,11 @@ class Result(AbstractCalculatorResult):
             reference_results['period'] = 'reference'
             results_data = pd.concat([reference_results, results_data.copy()], ignore_index=True)
 
-        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+        is_time_based_x_axis = not (results_data['start_date'].isna().all() and results_data['end_date'].isna().all())
 
         if self.calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
             return _step_plot(
-                table=self.data,
+                table=results_data,
                 metric_column_name='metric_target_drift',
                 chunk_column_name='key',
                 drift_column_name='alert',

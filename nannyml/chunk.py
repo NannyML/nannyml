@@ -454,3 +454,21 @@ class DefaultChunker(Chunker):
             data=data
         )
         return chunks
+
+
+class BootstrapChunker(Chunker):
+    def __init__(self, chunk_count: int, drop_index: bool = True, **sampling_args):
+        super().__init__(timestamp_column_name=None)  # not going to use timestamp columns for this one
+        self.chunk_count = chunk_count
+        self.drop_index = drop_index
+
+        if 'timestamp_column_name' in sampling_args:
+            raise InvalidArgumentsException("got an unexpected keyword argument: 'timestamp_column_name'")
+
+        self.sampling_args = sampling_args
+
+    def _split(self, data: pd.DataFrame) -> List[Chunk]:
+        return [
+            Chunk(key=f'sample_{index}', data=data.sample(**self.sampling_args).reset_index(drop=self.drop_index))
+            for index in range(self.chunk_count)
+        ]

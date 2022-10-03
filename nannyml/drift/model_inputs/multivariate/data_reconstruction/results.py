@@ -80,7 +80,7 @@ class Result(AbstractCalculatorResult):
         >>> fig.show()
         """
         if kind == 'drift':
-            return _plot_drift(self.data, self.calculator, plot_reference)
+            return self._plot_drift(self.data, self.calculator, plot_reference)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['drift'].")
 
@@ -88,36 +88,33 @@ class Result(AbstractCalculatorResult):
     # def plots(self) -> Dict[str, go.Figure]:
     #     return {'multivariate_feature_drift': _plot_drift(self.data)}
 
+    def _plot_drift(self, data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figure:
+        plot_period_separator = plot_reference
 
-def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figure:
-    plot_period_separator = plot_reference
+        data['period'] = 'analysis'
 
-    data['period'] = 'analysis'
+        if plot_reference:
+            reference_results = calculator.previous_reference_results.copy()
+            reference_results['period'] = 'reference'
+            data = pd.concat([reference_results, data], ignore_index=True)
 
-    if plot_reference:
-        reference_results = calculator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+        fig = _step_plot(
+            table=data,
+            metric_column_name='reconstruction_error',
+            chunk_column_name='key',
+            drift_column_name='alert',
+            lower_threshold_column_name='lower_threshold',
+            upper_threshold_column_name='upper_threshold',
+            hover_labels=['Chunk', 'Reconstruction error', 'Target data'],
+            title='Data Reconstruction Drift',
+            y_axis_title='Reconstruction Error',
+            v_line_separating_analysis_period=plot_period_separator,
+            sampling_error_column_name='sampling_error',
+            lower_confidence_column_name='lower_confidence_bound',
+            upper_confidence_column_name='upper_confidence_bound',
+            plot_confidence_for_reference=True,
+            start_date_column_name='start_date' if self.is_time_based_x_axis else None,
+            end_date_column_name='end_date' if self.is_time_based_x_axis else None,
+        )
 
-    is_time_based_x_axis = calculator.timestamp_column_name is not None
-
-    fig = _step_plot(
-        table=data,
-        metric_column_name='reconstruction_error',
-        chunk_column_name='key',
-        drift_column_name='alert',
-        lower_threshold_column_name='lower_threshold',
-        upper_threshold_column_name='upper_threshold',
-        hover_labels=['Chunk', 'Reconstruction error', 'Target data'],
-        title='Data Reconstruction Drift',
-        y_axis_title='Reconstruction Error',
-        v_line_separating_analysis_period=plot_period_separator,
-        sampling_error_column_name='sampling_error',
-        lower_confidence_column_name='lower_confidence_bound',
-        upper_confidence_column_name='upper_confidence_bound',
-        plot_confidence_for_reference=True,
-        start_date_column_name='start_date' if is_time_based_x_axis else None,
-        end_date_column_name='end_date' if is_time_based_x_axis else None,
-    )
-
-    return fig
+        return fig
