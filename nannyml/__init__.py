@@ -37,7 +37,15 @@ __version__ = '0.6.3'
 import logging
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
-from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from .chunk import (
+    BootstrapChunker,
+    Chunk,
+    Chunker,
+    CountBasedChunker,
+    DefaultChunker,
+    PeriodBasedChunker,
+    SizeBasedChunker,
+)
 from .cli import cli, run
 from .datasets import (
     load_modified_california_housing_dataset,
