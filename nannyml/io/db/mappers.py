@@ -89,6 +89,8 @@ class StatisticalFeatureDriftResultMapper(Mapper):
             return StatisticalFeatureDriftMetric(
                 feature_name=feature_name,
                 metric_name=metric_name,
+                start_timestamp=start_date,
+                end_timestamp=end_date,
                 timestamp=timestamp,
                 value=value,
                 alert=alert,
@@ -139,6 +141,8 @@ class ReconstructionErrorDriftResultMapper(Mapper):
 
             return DataReconstructionFeatureDriftMetric(
                 metric_name=result.col_to_metric_label[column_name],
+                start_timestamp=start_date,
+                end_timestamp=end_date,
                 timestamp=timestamp,
                 value=value,
                 upper_threshold=upper_threshold,
@@ -179,6 +183,8 @@ class StatisticalOutputDriftMapper(Mapper):
             return StatisticalOutputDriftMetric(
                 output_name=output_name,
                 metric_name=metric_name,
+                start_timestamp=start_date,
+                end_timestamp=end_date,
                 timestamp=timestamp,
                 value=value,
                 alert=alert,
@@ -219,6 +225,8 @@ class TargetDriftMapper(Mapper):
             return TargetDriftMetric(
                 target_name=target_name,
                 metric_name="KS" if result.calculator.problem_type == ProblemType.REGRESSION else "Chi2",
+                start_timestamp=start_date,
+                end_timestamp=end_date,
                 timestamp=timestamp,
                 value=value,
                 alert=alert,
@@ -258,6 +266,8 @@ class RealizedPerformanceMapper(Mapper):
 
             return RealizedPerformanceMetric(
                 metric_name=metric_name,
+                start_timestamp=start_date,
+                end_timestamp=end_date,
                 timestamp=timestamp,
                 value=value,
                 upper_threshold=upper_threshold,
@@ -306,6 +316,8 @@ class CBPEMapper(Mapper):
 
             return CBPEPerformanceMetric(
                 metric_name=metric_name,
+                start_timestamp=start_date,
+                end_timestamp=end_date,
                 timestamp=timestamp,
                 value=value,
                 upper_threshold=upper_threshold,
@@ -353,6 +365,8 @@ class DLEMapper(Mapper):
 
             return DLEPerformanceMetric(
                 metric_name=metric_name,
+                start_timestamp=start_date,
+                end_timestamp=end_date,
                 timestamp=timestamp,
                 value=value,
                 upper_threshold=upper_threshold,

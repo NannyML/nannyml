@@ -26,7 +26,9 @@ class Metric(SQLModel):  # type: ignore
     model_id: Optional[int] = Field(default=None, foreign_key="model.id")
     run_id: int = Field(default=None, foreign_key="run.id")
     # run: Run = Relationship(back_populates="metrics")  # Could not get this to work (due to inheritance)
-    timestamp: datetime
+    start_timestamp: datetime
+    end_timestamp: datetime
+    timestamp: datetime  # 'center' timestamp
     metric_name: str
     value: float
     alert: bool
