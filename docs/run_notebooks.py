@@ -56,7 +56,7 @@ def postprocess(nb: NotebookNode) -> NotebookNode:
 def _clear_execution_metadata(nb: NotebookNode) -> NotebookNode:
     for cell in nb['cells']:
         if 'execution_count' in cell:
-            del cell['execution_count']
+            cell['execution_count'] = None
         if 'metadata' in cell:
             if 'execution' in cell['metadata']:
                 del cell['metadata']['execution']
