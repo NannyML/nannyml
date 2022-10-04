@@ -60,7 +60,7 @@ def test_base_estimator_uses_size_based_chunker_when_given_chunk_size():  # noqa
 def test_base_estimator_uses_count_based_chunker_when_given_chunk_number():  # noqa: D103
     simple_estimator = SimpleEstimator(chunk_number=100)
     assert isinstance(simple_estimator.chunker, CountBasedChunker)
-    assert simple_estimator.chunker.chunk_count == 100
+    assert simple_estimator.chunker.chunk_number == 100
 
 
 def test_base_estimator_uses_period_based_chunker_when_given_chunk_period():  # noqa: D103

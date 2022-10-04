@@ -151,7 +151,7 @@ def test_base_drift_calculator_uses_size_based_chunker_when_given_chunk_size(  #
 def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(sample_drift_data):  # noqa: D103
     calc = SimpleDriftCalculator(chunk_number=1000)
     assert isinstance(calc.chunker, CountBasedChunker)
-    assert calc.chunker.chunk_count == 1000
+    assert calc.chunker.chunk_number == 1000
 
 
 def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period(sample_drift_data):  # noqa: D103
@@ -171,7 +171,7 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(sa
         (PeriodBasedChunker(offset='W', timestamp_column_name='timestamp')),
         (PeriodBasedChunker(offset='M', timestamp_column_name='timestamp')),
         (SizeBasedChunker(chunk_size=1000)),
-        CountBasedChunker(chunk_count=25),
+        CountBasedChunker(chunk_number=25),
     ],
     ids=['chunk_period_weekly', 'chunk_period_monthly', 'chunk_size_1000', 'chunk_count_25'],
 )
@@ -245,11 +245,11 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
     [
         (
             {'chunk_size': 5000},
-            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.2435952380952381, 0.21061507936507934],
+            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.24206810631229236],
         ),
         (
             {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
-            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.2435952380952381, 0.21061507936507934],
+            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.24206810631229236],
         ),
         (
             {'chunk_number': 5},
