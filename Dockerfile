@@ -10,7 +10,7 @@
 ARG APP_NAME=nannyml
 ARG APP_PATH=/opt/$APP_NAME
 ARG PYTHON_VERSION=3.10.0-slim-bullseye
-ARG POETRY_VERSION=1.1.11
+ARG POETRY_VERSION=1.2.0
 
 #
 # Stage: staging
@@ -50,6 +50,8 @@ COPY . .
 FROM staging as development
 ARG APP_NAME
 ARG APP_PATH
+
+ENV POETRY_INSTALLER_MAX_WORKERS=10
 
 # Install project in editable mode and with development dependencies
 WORKDIR $APP_PATH
