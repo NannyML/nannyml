@@ -45,7 +45,7 @@ def run(ctx, ignore_errors: bool):
             credentials=config.input.reference_data.credentials,
             read_args=config.input.reference_data.read_args,
         ).read()
-        console.log(f"read {reference.size} rows from {config.input.reference_data.path}")
+        console.log(f"read {reference.size} rows from {reference_path}")
 
         analysis_path = _render_path_template(config.input.analysis_data.path)
         console.log(f"reading analysis data from {analysis_path}")
@@ -54,7 +54,7 @@ def run(ctx, ignore_errors: bool):
             credentials=config.input.analysis_data.credentials,
             read_args=config.input.analysis_data.read_args,
         ).read()
-        console.log(f"read {analysis.size} rows from {config.input.analysis_data.path}")
+        console.log(f"read {analysis.size} rows from {analysis_path}")
 
         if config.input.target_data:
             target_path = _render_path_template(config.input.target_data.path)
@@ -77,7 +77,10 @@ def run(ctx, ignore_errors: bool):
                     f'only one writer is currently supported ' f'but found {len(configured_writers)}'
                 )
             key, kwargs = configured_writers[0]
-            kwargs['path'] = _render_path_template(kwargs['path'])
+
+            if 'path' in kwargs:
+                kwargs['path'] = _render_path_template(kwargs['path'])
+
             console.log(f"using '{key}' writer")
             writer = WriterFactory.create(key, kwargs)
         else:
@@ -146,12 +149,12 @@ def _render_path_template(path_template: str) -> str:
         env = jinja2.Environment()
         tpl = env.from_string(path_template)
         return tpl.render(
-            minute=datetime.datetime.today().minute,
-            hour=datetime.datetime.today().hour,
-            day=datetime.datetime.today().day,
+            minute=datetime.datetime.strftime(datetime.datetime.today(), "%M"),
+            hour=datetime.datetime.strftime(datetime.datetime.today(), "%H"),
+            day=datetime.datetime.strftime(datetime.datetime.today(), "%d"),
             weeknumber=datetime.date.today().isocalendar()[1],
-            month=datetime.date.today().month,
-            year=datetime.date.today().year,
+            month=datetime.datetime.strftime(datetime.datetime.today(), "%m"),
+            year=datetime.datetime.strftime(datetime.datetime.today(), "%Y"),
         )
     except Exception as exc:
         raise IOException(f"could not render file path template: '{path_template}': {exc}")
