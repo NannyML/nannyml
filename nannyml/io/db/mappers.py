@@ -117,7 +117,9 @@ class StatisticalFeatureDriftResultMapper(Mapper):
             alert_col = f'{feature_name}_alert'
 
             res += (
-                result.data[['start_date', 'end_date', feature_metric_col, alert_col]]
+                result.data.loc[
+                    result.data['period'] == 'analysis', ['start_date', 'end_date', feature_metric_col, alert_col]
+                ]
                 .apply(lambda r: _parse(feature_name, metric_name, *r), axis=1)
                 .to_list()
             )
@@ -164,7 +166,10 @@ class ReconstructionErrorDriftResultMapper(Mapper):
 
         for metric_col in result.col_to_metric_label.keys():
             res += (
-                result.data[['start_date', 'end_date', metric_col, 'upper_threshold', 'lower_threshold', 'alert']]
+                result.data.loc[
+                    result.data['period'] == 'analysis',
+                    ['start_date', 'end_date', metric_col, 'upper_threshold', 'lower_threshold', 'alert'],
+                ]
                 .apply(lambda r: _parse(metric_col, *r), axis=1)
                 .to_list()
             )
@@ -208,7 +213,9 @@ class StatisticalOutputDriftMapper(Mapper):
             alert_col = f'{output}_alert'
 
             res += (
-                result.data[['start_date', 'end_date', output_metric_col, alert_col]]
+                result.data.loc[
+                    result.data['period'] == 'analysis', ['start_date', 'end_date', output_metric_col, alert_col]
+                ]
                 .apply(lambda r: _parse(output, metric, *r), axis=1)
                 .to_list()
             )
@@ -242,7 +249,9 @@ class TargetDriftMapper(Mapper):
         res: List[TargetDriftMetric] = []
 
         res += (
-            result.data[['start_date', 'end_date', 'statistical_target_drift', 'alert']]
+            result.data.loc[
+                result.data['period'] == 'analysis', ['start_date', 'end_date', 'statistical_target_drift', 'alert']
+            ]
             .apply(lambda r: _parse(result.calculator.y_true, *r), axis=1)
             .to_list()
         )
@@ -290,8 +299,9 @@ class RealizedPerformanceMapper(Mapper):
             alert_col = f'{metric.column_name}_alert'
 
             res += (
-                result.data[
-                    ['start_date', 'end_date', metric.column_name, upper_threshold_col, lower_threshold_col, alert_col]
+                result.data.loc[
+                    result.data['period'] == 'analysis',
+                    ['start_date', 'end_date', metric.column_name, upper_threshold_col, lower_threshold_col, alert_col],
                 ]
                 .apply(lambda r: _parse(metric.display_name, *r), axis=1)
                 .to_list()
@@ -341,7 +351,10 @@ class CBPEMapper(Mapper):
             alert_col = f'alert_{metric.column_name}'
 
             res += (
-                result.data[['start_date', 'end_date', metric_col, upper_threshold_col, lower_threshold_col, alert_col]]
+                result.data.loc[
+                    result.data['period'] == 'analysis',
+                    ['start_date', 'end_date', metric_col, upper_threshold_col, lower_threshold_col, alert_col],
+                ]
                 .apply(lambda r: _parse(metric.display_name, *r), axis=1)
                 .to_list()
             )
@@ -390,7 +403,10 @@ class DLEMapper(Mapper):
             alert_col = f'alert_{metric.column_name}'
 
             res += (
-                result.data[['start_date', 'end_date', metric_col, upper_threshold_col, lower_threshold_col, alert_col]]
+                result.data.loc[
+                    result.data['period'] == 'analysis',
+                    ['start_date', 'end_date', metric_col, upper_threshold_col, lower_threshold_col, alert_col],
+                ]
                 .apply(lambda r: _parse(metric.display_name, *r), axis=1)
                 .to_list()
             )
