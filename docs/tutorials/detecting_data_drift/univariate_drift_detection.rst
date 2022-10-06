@@ -70,7 +70,7 @@ is a drift alert for that feature and chunk.
     :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb
     :cell: 5
 
-The drift results from the reference data are accessible though the ``previous_reference_results`` property of the drift calculator:
+The drift results from the reference data are accessible though the ``filter()`` method of the drift calculator results:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Statistical.ipynb

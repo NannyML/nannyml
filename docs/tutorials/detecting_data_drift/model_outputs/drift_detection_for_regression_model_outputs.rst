@@ -74,7 +74,7 @@ We can then display the results in a table.
     :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
     :cell: 5
 
-The drift results from the reference data are accessible though the ``previous_reference_results`` property of the drift calculator who is also accessible from the results object.
+The drift results from the reference data are accessible though the ``filter()`` method of the drift calculator results:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Model Outputs - Regression.ipynb
