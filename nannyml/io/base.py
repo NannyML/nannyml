@@ -5,13 +5,12 @@
 import logging
 import re
 from abc import ABC, abstractmethod
-from pathlib import PurePath, PurePosixPath
-from typing import Any, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple
 from urllib.parse import urlsplit
 
 import pandas as pd
-from plotly.graph_objs import Figure
 
+from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException, ReaderException, WriterException
 
 HTTP_PROTOCOLS = ['http', 'https']
@@ -21,36 +20,62 @@ CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss']
 class Writer(ABC):
     """Base class for writing out results"""
 
-    def __init__(
-        self,
-        filepath: PurePosixPath,
-    ):
-        self.filepath = filepath
-
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def write(self, data: pd.DataFrame, plots: Dict[str, Figure] = None, **kwargs) -> Any:
-        if data is None:
+    def write(self, result: Result, **kwargs) -> Any:
+        if result is None:
             raise InvalidArgumentsException("Trying to write 'None'")
-
-        if plots is None:
-            plots = {}
 
         if kwargs is None:
             kwargs = {}
 
         try:
-            self._write(data=data, plots=plots, **kwargs)
+            self._write(result, **kwargs)
         except Exception as exc:
             raise WriterException(f"Failed writing data. \n{str(exc)}")
 
     @abstractmethod
-    def _write(self, data: pd.DataFrame, plots: Dict[str, Figure], **kwargs):
+    def _write(self, result: Result, **kwargs):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Writer and it must implement the _write method"
         )
+
+
+class WriterFactory:
+    """A factory class that produces Mapper instances for a given Result subclass."""
+
+    registry: Dict[str, Writer] = {}
+
+    @classmethod
+    def _logger(cls) -> logging.Logger:
+        return logging.getLogger(__name__)
+
+    @classmethod
+    def create(cls, key, kwargs: Dict[str, Any] = None) -> Writer:
+        """Returns a Writer instance for a given string."""
+
+        if kwargs is None:
+            kwargs = {}
+
+        if key not in cls.registry:
+            raise InvalidArgumentsException(
+                f"unknown key '{key}' given. " f"Currently registered keys are: {list(cls.registry.keys())}"
+            )
+
+        writer_class = cls.registry[key]
+        return writer_class(**kwargs)  # type: ignore
+
+    @classmethod
+    def register(cls, key) -> Callable:
+        def inner_wrapper(wrapped_class: Writer) -> Writer:
+            if key in cls.registry:
+                cls._logger().warning(f"re-registering Writer for key='{key}'")
+            cls.registry[key] = wrapped_class
+            return wrapped_class
+
+        return inner_wrapper
 
 
 class Reader(ABC):
@@ -73,7 +98,7 @@ class Reader(ABC):
         )
 
 
-def get_protocol_and_path(filepath: str) -> Tuple[str, str]:
+def _get_protocol_and_path(filepath: str) -> Tuple[str, str]:
     if re.match(r"^[a-zA-Z]:[\\/]", filepath) or re.match(r"^[a-zA-Z\d]+://", filepath) is None:
         return "file", filepath
 
@@ -98,8 +123,7 @@ def get_protocol_and_path(filepath: str) -> Tuple[str, str]:
     return protocol, path
 
 
-def get_filepath_str(path: PurePath, protocol: str) -> str:
-    path_str = path.as_posix()
+def _get_filepath_str(path: str, protocol: str) -> str:
     if protocol in HTTP_PROTOCOLS:
-        path_str = "".join((protocol, "://", path_str))
-    return path_str
+        path = "".join((protocol, "://", path))
+    return path

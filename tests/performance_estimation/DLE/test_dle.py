@@ -171,7 +171,7 @@ def test_direct_error_estimator_sets_custom_hyperparameter_tuning_config_when_gi
     ],
 )
 def test_direct_error_estimation_yields_correct_results_for_metric(estimates, metric, expected):
-    all(round(estimates.data[f'estimated_{metric}'], 5) == expected)
+    all(round(estimates.data.loc[estimates.data['period'] == 'analysis', f'estimated_{metric}'], 5) == expected)
 
 
 @pytest.mark.parametrize(
@@ -188,7 +188,12 @@ def test_direct_error_estimation_yields_correct_results_for_metric(estimates, me
 def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertuning(
     hypertuned_estimates, metric, expected
 ):
-    all(round(hypertuned_estimates.data[f'estimated_{metric}'], 5) == expected)
+    all(
+        round(
+            hypertuned_estimates.data.loc[hypertuned_estimates.data['period'] == 'analysis', f'estimated_{metric}'], 5
+        )
+        == expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -205,7 +210,15 @@ def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertun
 def test_direct_error_estimation_yields_correct_results_for_metric_with_custom_hyperparameters(
     custom_hyperparameter_estimates, metric, expected
 ):
-    all(round(custom_hyperparameter_estimates.data[f'estimated_{metric}'], 5) == expected)
+    all(
+        round(
+            custom_hyperparameter_estimates.data.loc[
+                custom_hyperparameter_estimates.data['period'] == 'analysis', f'estimated_{metric}'
+            ],
+            5,
+        )
+        == expected
+    )
 
 
 def test_result_plot_raises_runtime_error_when_given_fake_estimator(estimates):

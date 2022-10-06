@@ -12,7 +12,6 @@ else:
     Protocol = object
 
 import pandas as pd
-from plotly.graph_objs import Figure
 
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -22,8 +21,8 @@ class Result(Protocol):
 
     data: pd.DataFrame
 
-    """all available plots"""
-    plots: Dict[str, Figure]
+    def filter(self, period: str = None, metrics: List[str] = None, *args, **kwargs) -> pd.DataFrame:
+        """"""
 
 
 class Calculator(Protocol):

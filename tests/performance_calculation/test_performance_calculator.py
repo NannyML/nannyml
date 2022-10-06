@@ -139,11 +139,12 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
         metrics=['roc_auc', 'f1'],
         problem_type='classification_binary',
     ).fit(reference_data=ref_data)
-    sut = calc.calculate(data)
+    result = calc.calculate(data)
+    sut = result.data[result.data['period'] == 'analysis'].reset_index(drop=True)
 
-    assert 'targets_missing_rate' in sut.data.columns
-    assert sut.data.loc[0, 'targets_missing_rate'] == 0.1
-    assert sut.data.loc[1, 'targets_missing_rate'] == 0.9
+    assert 'targets_missing_rate' in sut.columns
+    assert sut.loc[0, 'targets_missing_rate'] == 0.1
+    assert sut.loc[1, 'targets_missing_rate'] == 0.9
 
 
 @pytest.mark.parametrize(

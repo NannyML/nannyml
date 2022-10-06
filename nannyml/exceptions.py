@@ -22,7 +22,11 @@ class InvalidReferenceDataException(BaseException):
 
 
 class CalculatorException(BaseException):
-    """An exception indicating an error occurred during (drift) calculation."""
+    """An exception indicating an error occurred during calculation."""
+
+
+class EstimatorException(BaseException):
+    """An exception indicating an error occurred during estimation."""
 
 
 class CalculatorNotFittedException(CalculatorException):

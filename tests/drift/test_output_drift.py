@@ -151,14 +151,14 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
         problem_type=ProblemType.REGRESSION,
     ).fit(reference)
     results = calc.calculate(analysis)
+    sut = results.data.loc[results.data['period'] == 'analysis', :]
 
     assert (
-        round(results.data['y_pred_dstat'], 5)
+        round(sut['y_pred_dstat'], 5)
         == [0.01135, 0.01213, 0.00545, 0.01125, 0.01443, 0.00937, 0.2017, 0.2076, 0.21713, 0.19368, 0.21497, 0.21142]
     ).all()
     assert (
-        round(results.data['y_pred_p_value'], 5)
-        == [0.588, 0.501, 0.999, 0.599, 0.289, 0.809, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        round(sut['y_pred_p_value'], 5) == [0.588, 0.501, 0.999, 0.599, 0.289, 0.809, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     ).all()
 
 
@@ -340,8 +340,9 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis)
+    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
 
-    pd.testing.assert_frame_equal(expected, results.data[['key', 'y_pred_dstat', 'y_pred_p_value']])
+    pd.testing.assert_frame_equal(expected, sut[['key', 'y_pred_dstat', 'y_pred_p_value']])
 
 
 @pytest.mark.parametrize(
@@ -579,9 +580,10 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis)
+    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
 
     pd.testing.assert_frame_equal(
-        expected, results.data[['key', 'y_pred_chi2', 'y_pred_p_value', 'y_pred_proba_dstat', 'y_pred_proba_p_value']]
+        expected, sut[['key', 'y_pred_chi2', 'y_pred_p_value', 'y_pred_proba_dstat', 'y_pred_proba_p_value']]
     )
 
 
@@ -830,10 +832,11 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis)
+    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
 
     pd.testing.assert_frame_equal(
         expected,
-        results.data[
+        sut[
             [
                 'key',
                 'y_pred_chi2',

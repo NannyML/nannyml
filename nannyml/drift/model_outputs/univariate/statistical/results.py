@@ -3,7 +3,9 @@
 #  License: Apache Software License 2.0
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
+from __future__ import annotations
 
+import copy
 from typing import List, Optional, Tuple
 
 import pandas as pd
@@ -24,6 +26,9 @@ from nannyml.plots._step_plot import _step_plot
 class Result(AbstractCalculatorResult):
     """Contains the results of the model output statistical drift calculation and provides plotting functionality."""
 
+    metric_to_col_suffix = {'KS': '_dstat', 'Chi2': '_chi2'}
+    col_suffix_to_metric = {v: k for k, v in metric_to_col_suffix.items()}
+
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         super().__init__(results_data)
 
@@ -34,6 +39,38 @@ class Result(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
             )
         self.calculator = calculator
+
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = list(self.DEFAULT_COLUMNS)
+
+        outputs = []
+        if 'outputs' in kwargs:
+            outputs = kwargs['outputs']
+        else:
+            if self.calculator.problem_type is ProblemType.REGRESSION:
+                outputs = [self.calculator.y_pred]
+            elif self.calculator.problem_type is ProblemType.CLASSIFICATION_BINARY:
+                outputs = [self.calculator.y_pred, self.calculator.y_pred_proba]
+            elif self.calculator.problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
+                outputs = [self.calculator.y_pred] + [
+                    col for col in self.calculator.y_pred_proba.keys()  # type: ignore
+                ]
+
+        if self.calculator.problem_type is ProblemType.REGRESSION:
+            columns += [f'y_pred{self.metric_to_col_suffix["KS"]}']
+        else:
+            columns += [f'y_pred{self.metric_to_col_suffix["Chi2"]}', f'y_pred_proba{self.metric_to_col_suffix["KS"]}']
+
+        columns += [f'{output}_alert' for output in outputs]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data.reset_index(drop=True)
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def plot(
         self,
@@ -151,46 +188,6 @@ class Result(AbstractCalculatorResult):
                 "'score_distribution']."
             )
 
-    # @property
-    # def plots(self) -> Dict[str, go.Figure]:
-    #     plots: Dict[str, go.Figure] = {}
-    #
-    #     if isinstance(self.metadata, BinaryClassificationMetadata):
-    #         prediction_column_name = self.metadata.predicted_probability_column_name
-    #         plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'statistic'
-    #         )
-    #         plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'p_value'
-    #         )
-    #         plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #             data=self._analysis_data, drift_data=self.data, metadata=self.metadata
-    #         )
-    #     elif isinstance(self.metadata, MulticlassClassificationMetadata):
-    #         for class_label, prediction_column_name in self.metadata.predicted_probabilities_column_names.items():
-    #             plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #                 self.data, self.metadata, 'statistic', class_label
-    #             )
-    #             plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #                 self.data, self.metadata, 'p_value', class_label
-    #             )
-    #             plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #                 data=self._analysis_data, drift_data=self.data, metadata=self.metadata, class_label=class_label
-    #             )
-    #     elif isinstance(self.metadata, RegressionMetadata):
-    #         prediction_column_name = self.metadata.prediction_column_name
-    #         plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'statistic'
-    #         )
-    #         plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'p_value'
-    #         )
-    #         plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #             data=self._analysis_data, drift_data=self.data, metadata=self.metadata
-    #         )
-    #
-    #     return plots
-
 
 def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: str, metric: str) -> Tuple:
     metric_column_name, metric_label, threshold_column_name = None, None, None
@@ -235,11 +232,8 @@ def _plot_prediction_drift(
 
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-    if plot_reference:
-        reference_results = calculator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data[data['period'] == 'analysis']
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
 
@@ -289,21 +283,12 @@ def _plot_prediction_distribution(
     axis_title = f'{prediction_column_name}'
     drift_column_name = f'{prediction_column_name}_alert'
 
-    drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
-
     feature_table = _create_feature_table(calculator.chunker.split(data))
 
-    if plot_reference:
-        reference_drift = calculator.previous_reference_results.copy()
-        if reference_drift is None:
-            raise RuntimeError(
-                f"could not plot distribution for '{prediction_column_name}': "
-                f"calculator is missing reference results\n{calculator}"
-            )
-        reference_drift['period'] = 'reference'
-        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
-
+    if not plot_reference:
+        drift_data = drift_data[drift_data['period'] == 'analysis']
+    else:
         reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
         reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
@@ -363,7 +348,6 @@ def _plot_score_drift(
         )
 
     # deal with multiclass stuff
-    # if isinstance(calculator.y_pred_proba, Dict):
     if calculator.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
         if class_label is None:
             raise InvalidArgumentsException(
@@ -399,11 +383,8 @@ def _plot_score_drift(
 
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-    if plot_reference:
-        reference_results = calculator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data.loc[data['period'] == 'analysis', :]
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
 
@@ -484,22 +465,14 @@ def _plot_score_distribution(
     drift_column_name = f'{output_column_name}_alert'
     title = f'Distribution over time for {output_column_name}'
 
-    drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
-
     feature_table = _create_feature_table(calculator.chunker.split(data))
 
-    if plot_reference:
-        reference_drift = calculator.previous_reference_results.copy()
-        if reference_drift is None:
-            raise RuntimeError(
-                f"could not plot categorical distribution for feature '{output_column_name}': "
-                f"calculator is missing reference results\n{calculator}"
-            )
-        reference_drift['period'] = 'reference'
-        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
-
+    if not plot_reference:
+        drift_data = drift_data[drift_data['period'] == 'analysis']
+    else:
         reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None

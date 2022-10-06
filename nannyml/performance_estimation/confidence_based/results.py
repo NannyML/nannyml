@@ -3,7 +3,8 @@
 #  License: Apache Software License 2.0
 
 """Module containing CBPE estimation results and plotting implementations."""
-from typing import Union
+import copy
+from typing import List, Union
 
 import pandas as pd
 from plotly import graph_objects as go
@@ -31,9 +32,26 @@ class Result(AbstractEstimatorResult):
             )
         self.estimator = estimator
 
-    @property
-    def estimator_name(self) -> str:
-        return 'confidence_based_performance_estimation'
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        columns = list(self.DEFAULT_COLUMNS)
+
+        for metric in self.estimator.metrics:
+            columns += [
+                f'estimated_{metric.column_name}',
+                f'upper_threshold_{metric.column_name}',
+                f'lower_threshold_{metric.column_name}',
+                f'alert_{metric.column_name}',
+                f'sampling_error_{metric.column_name}',
+            ]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data.reset_index(drop=True)
+
+        return Result(results_data=data, estimator=copy.deepcopy(self.estimator))
 
     def plot(
         self,
@@ -113,13 +131,6 @@ class Result(AbstractEstimatorResult):
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
-    # @property
-    # def plots(self) -> Dict[str, go.Figure]:
-    #     plots: Dict[str, go.Figure] = {}
-    #     for metric in self.metrics:
-    #         plots[f'estimated_{metric}'] = _plot_cbpe_performance_estimation(self.data, metric)
-    #     return plots
-
 
 def _plot_cbpe_performance_estimation(
     estimation_results: pd.DataFrame, estimator, metric: Metric, plot_reference: bool
@@ -150,14 +161,10 @@ def _plot_cbpe_performance_estimation(
 
     plot_period_separator = plot_reference
 
-    estimation_results['period'] = 'analysis'
     estimation_results['estimated'] = True
 
-    if plot_reference:
-        reference_results = estimator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        reference_results['estimated'] = False
-        estimation_results = pd.concat([reference_results, estimation_results], ignore_index=True)
+    if not plot_reference:
+        estimation_results = estimation_results[estimation_results['period'] == 'analysis']
 
     # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
     estimation_results['plottable'] = estimation_results.apply(

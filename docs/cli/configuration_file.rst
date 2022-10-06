@@ -129,7 +129,7 @@ Output section
 **************
 
 The output section allows you to instruct NannyML on how and where to write the outputs of the calculations.
-We currently only support writing data and plots to a local or cloud filesystem.
+We currently support writing data and plots to a local or cloud filesystem or exporting data to a relational database.
 
 
 .. warning::
@@ -137,6 +137,9 @@ We currently only support writing data and plots to a local or cloud filesystem.
     This is a very early release and additional ways of outputting data are on their way.
     This configuration section will be prone to big changes in the future.
 
+
+Writing to filesystem
+""""""""""""""""""""""
 
 You can specify the folder to write outputs to using the ``path`` parameter.
 The optional ``format`` parameter allows you to choose the format to export the results DataFrames in.
@@ -146,14 +149,16 @@ Allowed values are ``csv`` and ``parquet``, with ``parquet`` being the default.
 .. code-block:: yaml
 
     output:
-      path: /data/out/
-      format: parquet
+      raw_files:
+        path: /data/out/
+        format: parquet
 
 The output section supports the use of credentials:
 
 .. code-block:: yaml
 
     output:
+      raw_files:
         path: s3://nml-data/synthetic_sample_reference.pq
         credentials:  # providing example AWS credentials
           client_kwargs:
@@ -167,10 +172,108 @@ parameter.
 .. code-block:: yaml
 
     output:
-      path: /data/out/
-      format: csv
-      write_args:
-        headers: False
+      raw_files:
+        path: /data/out/
+        format: csv
+        write_args:
+          headers: False
+
+
+Writing to a pickle file
+"""""""""""""""""""""""""
+
+NannyML supports directly pickling the ``Result`` objects returned by calculators and estimators.
+Use the following configuration to enable this:
+
+.. code-block:: yaml
+
+    output:
+      pickle:
+        path: /data/out/  # a *.pkl file will be written here by each calculator/estimator
+
+
+Writing to a relational database
+""""""""""""""""""""""""""""""""
+
+NannyML can also export its data to a relational database. When provided with a connection string NannyML will create
+the required table structure and insert calculator and estimator results in there.
+
+.. warning::
+
+    Your data must contain a :term:`timestamp<Timestamp>` column in order to use this functionality.
+
+
+There is a separate table for each calculator and estimator. The following sample from the `cbpe_performance_metrics`
+table illustrates their overall structure:
+
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| id  | model_id  | run_id  | timestamp                   | metric_name  | value               | alert  |
++=====+===========+=========+=============================+==============+=====================+========+
+| 1   | 2         | 4       | 2014-05-09 12:00:00.000000  | ROC AUC      | 0.9395984406102346  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 2   | 2         | 4       | 2014-05-10 12:00:00.000000  | ROC AUC      | 0.9669333004887973  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 3   | 2         | 4       | 2014-05-11 12:00:00.000000  | ROC AUC      | 0.9616566861394408  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 4   | 2         | 4       | 2014-05-12 12:00:00.000000  | ROC AUC      | 0.9631921191605108  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 5   | 2         | 4       | 2014-05-13 12:00:00.000000  | ROC AUC      | 0.9679918198658687  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 6   | 2         | 4       | 2014-05-14 12:00:00.000000  | ROC AUC      | 0.9680751598579069  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 7   | 2         | 4       | 2014-05-15 12:00:00.000000  | ROC AUC      | 0.9593668335222013  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 8   | 2         | 4       | 2014-05-16 12:00:00.000000  | ROC AUC      | 0.964513389926401   | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+| 9   | 2         | 4       | 2014-05-17 12:00:00.000000  | ROC AUC      | 0.9674120045991212  | false  |
++-----+-----------+---------+-----------------------------+--------------+---------------------+--------+
+
+- **id** is the database primary (technical) key, uniquely identifying each row.
+
+- **model_id** is a foreign key to the `model` table. It currently only contains a name for a model
+  but having this allows you to filter on a model when performing queries or visualizing in dashboards.
+
+- **run_id** is a foreign key to the `run` table. It contains information about how and when NannyML was run.
+  It also serves to filter metrics that were inserted during a given run, allowing you to easily remove these in case of errors.
+
+- **timestamp** is a :term:`timestamp<Timestamp>` created by finding the middle point of the start and
+  end timestamps for each :term:`chunk<Data Chunk>`. E.g. for a chunk starting at midnight and ending just before
+  midnight of that day, the generated timestamp will be at noon.
+
+- **metric_name** is a column specific to some calculators and estimators. It contains the name of the metric
+  that's being calculated or estimated.
+
+- **value** contains the actual value that was being calculated. This might be a realized or estimated performance
+  metric or a drift metric.
+
+- **alert** contains a boolean value (``true`` or ``false``) indicating whether the metric crossed a threshold,
+  thus raising an alert.
+
+- **upper_threshold** contains the value of the upper threshold for the metric.
+  Exceeding this value results in an alert.
+
+- **lower_threshold** contains the value of the lower threshold for the metric.
+  Diving under this value results in an alert.
+
+- **feature_name** is not listed here but is present in univariate calculator results. It contains the name of the
+  feature the metric value belongs to.
+
+We currently support all databases supported by SQLAlchemy. You can find more information on the required
+connection strings in their `Engine Configuration <https://docs.sqlalchemy.org/en/14/core/engines.html#database-urls>`_.
+The following snippet illustrates how to configure the database export to a Postgres database running locally.
+
+.. code-block:: yaml
+
+    output:
+      database:
+        connection_string: postgresql://postgres:mysecretpassword@localhost:5432/postgres
+        model_name: my regression model
+
+
+Note the presence of the ``model_name`` value. It will ensure an entry for the given name is present in the `model`
+table (by either retrieving or creating it) and link it to the metrics using the ``model.id`` value as a foreign key.
+This configuration is optional but recommended. Dropping this parameter results in the metrics being written without
+a ``model_id`` value, which makes them harder to link to a single given model.
 
 
 Column mapping section
@@ -237,6 +340,35 @@ This section is optional and when it is absent NannyML will use a :class:`~nanny
 
     chunker:
       chunk_period: W  # chunks grouping observations by week
+
+
+Scheduling section
+*******************
+
+The scheduling section allows you to configure the schedule NannyML is to run on. This section is optional and if none
+is found NannyML will just run a single time, unscheduled.
+
+There are currently two ways of scheduling in NannyML.
+
+- **Interval** scheduling allows you to set the interval between NannyML runs, such as *every 6 hours* or *every 3 days*.
+  The available time increments are ``weeks``, ``days``, ``hours`` and ``minutes``.
+- **Cron** scheduling allows you to leverage the widely known ``crontab`` expressions to control scheduling.
+
+.. code-block:: yaml
+    :caption: Interval based scheduling configuration
+
+    scheduling:
+      interval:
+        days: 1  # wait one day from the timestamp at which the command is run
+
+
+.. code-block:: yaml
+    :caption: ``cron`` based scheduling configuration
+
+    scheduling:
+      cron:
+        crontab: "*/5 * * * *" # every 5 minutes, so on 00:05, 00:10, 00:15, ...
+
 
 Standalone parameters section
 *****************************
@@ -382,3 +514,42 @@ The results are written to another S3 bucket, also using a templated path.
     problem_type: classification_multiclass
 
     ignore_errors: False
+
+
+The following example contains the configuration required to run the ``nml`` CLI
+for the :ref:`dataset-synthetic-binary`. The data is read from the local filesystem but written to an external database.
+
+.. code-block:: yaml
+
+    input:
+      reference_data:
+        path: data/regression_synthetic_reference.csv
+
+      analysis_data:
+        path: data/regression_synthetic_analysis.csv
+
+      target_data:
+        path: data/regression_synthetic_analysis_targets.csv
+
+    output:
+      database:
+        connection_string: postgresql://postgres:mysecretpassword@localhost:5432/postgres
+        model_name: regression_car_price
+
+    problem_type: regression
+
+    chunker:
+      chunk_period: D
+
+    column_mapping:
+      features:
+        - car_age
+        - km_driven
+        - price_new
+        - accident_count
+        - door_count
+        - transmission
+        - fuel
+      timestamp: timestamp
+      y_pred: y_pred
+      y_true: y_true

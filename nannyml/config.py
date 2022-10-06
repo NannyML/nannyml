@@ -1,7 +1,6 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-
 import os
 from functools import lru_cache
 from pathlib import Path
@@ -29,11 +28,28 @@ class InputConfig(BaseModel):
     target_data: Optional[TargetDataConfig]
 
 
-class OutputConfig(BaseModel):
+class RawFileWriterConfig(BaseModel):
     path: str
     format: str = 'parquet'
     credentials: Optional[Dict[str, Any]]
     write_args: Optional[Dict[str, Any]]
+
+
+class DatabaseWriterConfig(BaseModel):
+    connection_string: str
+    model_name: Optional[str]
+
+
+class PickleWriterConfig(BaseModel):
+    path: str
+    credentials: Optional[Dict[str, Any]]
+    write_args: Optional[Dict[str, Any]]
+
+
+class WriterConfig(BaseModel):
+    database: Optional[DatabaseWriterConfig]
+    raw_files: Optional[RawFileWriterConfig]
+    pickle: Optional[PickleWriterConfig]
 
 
 class ColumnMapping(BaseModel):
@@ -50,11 +66,28 @@ class ChunkerConfig(BaseModel):
     chunk_count: Optional[int]
 
 
+class IntervalSchedulingConfig(BaseModel):
+    weeks: Optional[int]
+    days: Optional[int]
+    hours: Optional[int]
+    minutes: Optional[int]
+
+
+class CronSchedulingConfig(BaseModel):
+    crontab: str
+
+
+class SchedulingConfig(BaseModel):
+    interval: Optional[IntervalSchedulingConfig]
+    cron: Optional[CronSchedulingConfig]
+
+
 class Config(BaseModel):
     input: InputConfig
-    output: OutputConfig
+    output: WriterConfig
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
+    scheduling: Optional[SchedulingConfig]
 
     problem_type: str
     ignore_errors: Optional[bool]

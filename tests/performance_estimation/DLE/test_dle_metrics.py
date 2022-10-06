@@ -321,7 +321,7 @@ def test_metric_creation_with_non_dle_estimator_raises_runtime_exc(metric):
         'default_with_timestamp',
     ],
 )
-def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expected):
+def test_dle_for_regression_with_timestamps(calculator_opts, expected):
     ref_df, ana_df, _ = load_synthetic_car_price_dataset()
     dle = DLE(
         feature_column_names=[col for col in ref_df.columns if col not in ['timestamp', 'y_true', 'y_pred']],
@@ -330,7 +330,8 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
         **calculator_opts,
     ).fit(ref_df)
-    sut = dle.estimate(ana_df).data
+    result = dle.estimate(ana_df).data
+    sut = result[result['period'] == 'analysis'].reset_index(drop=True)
 
     pd.testing.assert_frame_equal(
         expected,

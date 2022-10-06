@@ -152,7 +152,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
     calc = TargetDistributionCalculator(
         y_true='y_true', timestamp_column_name='timestamp', problem_type='regression'
     ).fit(reference)
-    result = calc.calculate(analysis.join(analysis_targets))
+    result = calc.calculate(analysis.join(analysis_targets)).filter(period='analysis')
 
     assert (
         round(result.data['statistical_target_drift'], 5)
@@ -171,9 +171,10 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
         y_true='y_true', timestamp_column_name='timestamp', problem_type='regression'
     ).fit(reference)
     result = calc.calculate(analysis.join(analysis_targets))
+    sut = result.data[result.data['period'] == 'analysis'].reset_index(drop=True)
 
     assert (
-        round(result.data['metric_target_drift'], 5)
+        round(sut['metric_target_drift'], 5)
         == [
             4862.94117,
             4790.5815,
@@ -399,8 +400,9 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis.join(analysis_targets))
+    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
 
-    pd.testing.assert_frame_equal(expected, results.data[['key', 'metric_target_drift', 'statistical_target_drift']])
+    pd.testing.assert_frame_equal(expected, sut[['key', 'metric_target_drift', 'statistical_target_drift']])
 
 
 @pytest.mark.parametrize(
@@ -597,8 +599,9 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
 
-    pd.testing.assert_frame_equal(expected, results.data[['key', 'metric_target_drift', 'statistical_target_drift']])
+    pd.testing.assert_frame_equal(expected, sut[['key', 'metric_target_drift', 'statistical_target_drift']])
 
 
 @pytest.mark.parametrize(
@@ -766,9 +769,10 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
         problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    results = calc.calculate(analysis.merge(analysis_targets, on='identifier')).filter(period='analysis')
+    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
 
-    pd.testing.assert_frame_equal(expected, results.data[['key', 'statistical_target_drift']])
+    pd.testing.assert_frame_equal(expected, sut[['key', 'statistical_target_drift']])
 
 
 @pytest.mark.parametrize(

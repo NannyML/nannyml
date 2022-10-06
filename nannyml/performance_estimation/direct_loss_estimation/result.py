@@ -1,4 +1,5 @@
-from typing import Union
+import copy
+from typing import List, Union
 
 import pandas as pd
 from plotly.graph_objects import Figure
@@ -12,6 +13,8 @@ from nannyml.plots._step_plot import _step_plot
 
 
 class Result(AbstractEstimatorResult):
+    SUPPORTED_METRIC_VALUES = ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle']
+
     def __init__(self, results_data: pd.DataFrame, estimator: AbstractEstimator):
         super().__init__(results_data)
 
@@ -23,9 +26,32 @@ class Result(AbstractEstimatorResult):
             )
         self.estimator = estimator
 
-    @property
-    def estimator_name(self) -> str:
-        return "direct_error_estimator"
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        columns = self.DEFAULT_COLUMNS
+
+        if metrics is None:
+            metrics = self.SUPPORTED_METRIC_VALUES
+
+        _metrics = [
+            MetricFactory.create(metric, ProblemType.REGRESSION, {'estimator': self.estimator}) for metric in metrics
+        ]
+        for metric in _metrics:
+            columns += [
+                f'estimated_{metric.column_name}',
+                f'upper_threshold_{metric.column_name}',
+                f'lower_threshold_{metric.column_name}',
+                f'alert_{metric.column_name}',
+                f'sampling_error_{metric.column_name}',
+            ]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
+
+        return Result(results_data=data, estimator=copy.deepcopy(self.estimator))
 
     def plot(
         self,
@@ -54,15 +80,10 @@ def _plot_direct_error_estimation_performance(
     estimation_results = estimation_results.copy()
 
     plot_period_separator = plot_reference
-
-    estimation_results['period'] = 'analysis'
     estimation_results['estimated'] = True
 
-    if plot_reference:
-        reference_results = estimator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        reference_results['estimated'] = False
-        estimation_results = pd.concat([reference_results, estimation_results], ignore_index=True)
+    if not plot_reference:
+        estimation_results = estimation_results[estimation_results['period'] == 'analysis']
 
     # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
     estimation_results['plottable'] = estimation_results.apply(

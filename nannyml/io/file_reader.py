@@ -10,7 +10,7 @@ import fsspec
 import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.base import Reader, get_filepath_str, get_protocol_and_path
+from nannyml.io.base import Reader, _get_filepath_str, _get_protocol_and_path
 
 
 class FileReader(Reader):
@@ -24,7 +24,7 @@ class FileReader(Reader):
         _fs_args = deepcopy(fs_args) or {}
         _credentials = deepcopy(credentials) or {}
 
-        protocol, path = get_protocol_and_path(filepath)
+        protocol, path = _get_protocol_and_path(filepath)
         if protocol == "file":
             _fs_args.setdefault("auto_mkdir", True)
 
@@ -36,7 +36,7 @@ class FileReader(Reader):
         self._read_args = read_args or {}  # type: Dict[str, Any]
 
     def _read(self) -> pd.DataFrame:
-        read_path = get_filepath_str(self._filepath, self._protocol)
+        read_path = _get_filepath_str(str(self._filepath), self._protocol)
 
         with self._fs.open(read_path, mode='rb') as f:
             if self._filepath.suffix in ['.pq', '.parquet']:

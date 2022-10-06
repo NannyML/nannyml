@@ -3,7 +3,10 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
-from typing import Optional
+from __future__ import annotations
+
+import copy
+from typing import List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -16,6 +19,9 @@ from nannyml.plots._step_plot import _step_plot
 class Result(AbstractCalculatorResult):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
+    metric_label_to_col = {'reconstruction error': 'reconstruction_error'}
+    col_to_metric_label = {v: k for k, v in metric_label_to_col.items()}
+
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         super().__init__(results_data)
 
@@ -26,6 +32,26 @@ class Result(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
             )
         self.calculator = calculator
+
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = list(self.DEFAULT_COLUMNS)
+        columns += ['sampling_error']
+
+        if metrics is None:
+            metrics = list(self.col_to_metric_label.keys())
+
+        columns += [metric for metric in metrics]
+
+        columns += ['alert', 'upper_threshold', 'lower_threshold']
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
@@ -92,12 +118,14 @@ class Result(AbstractCalculatorResult):
 def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figure:
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-
-    if plot_reference:
-        reference_results = calculator.previous_reference_results.copy()
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    # data['period'] = 'analysis'
+    #
+    # if plot_reference:
+    #     reference_results = calculator.previous_reference_results.copy()
+    #     reference_results['period'] = 'reference'
+    #     data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data.loc[data['period'] == 'analysis', :]
 
     is_time_based_x_axis = calculator.timestamp_column_name is not None
 

@@ -103,6 +103,8 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
+        self.result: Optional[Result] = None
+
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
@@ -123,7 +125,8 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         # Reference stability
         self._reference_stability = 0  # TODO: Jakub
 
-        self.previous_reference_results = self._calculate(reference_data).data
+        self.result = self._calculate(reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
@@ -193,4 +196,11 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
 
-        return Result(results_data=res, calculator=self)
+        res['period'] = 'analysis'
+
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=self)
+        else:
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+
+        return self.result

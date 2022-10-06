@@ -3,7 +3,10 @@
 #  License: Apache Software License 2.0
 
 """The classes representing the results of a target distribution calculation."""
-from typing import Optional
+from __future__ import annotations
+
+import copy
+from typing import List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -18,6 +21,9 @@ from nannyml.plots._step_plot import _step_plot
 class Result(AbstractCalculatorResult):
     """Contains target distribution data and utilities to plot it."""
 
+    metric_to_col_suffix = {'KS': '_dstat', 'Chi2': '_chi2'}
+    col_suffix_to_metric = {v: k for k, v in metric_to_col_suffix.items()}
+
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         """Creates a new instance of the TargetDistributionResults."""
         super().__init__(results_data)
@@ -29,6 +35,25 @@ class Result(AbstractCalculatorResult):
                 f"{calculator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
             )
         self.calculator = calculator
+
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = list(self.DEFAULT_COLUMNS)
+
+        if metrics is None:
+            metrics = list(self.metric_to_col_suffix.keys())
+
+        columns += ['statistical_target_drift']
+
+        columns += ['alert']
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data.reset_index(drop=True)
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def plot(self, kind: str = 'target_drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the target distribution calculator.
@@ -99,16 +124,8 @@ class Result(AbstractCalculatorResult):
         plot_period_separator = plot_reference
         data = self.data.copy()
 
-        data['period'] = 'analysis'
-        if plot_reference:
-            reference_results = self.calculator.previous_reference_results
-            if reference_results is None:
-                raise RuntimeError(
-                    f"could not plot distribution for '{self.calculator.y_true}': "
-                    f"calculator is missing reference results\n{self.calculator}"
-                )
-            reference_results['period'] = 'reference'
-            data = pd.concat([reference_results, data], ignore_index=True)
+        if not plot_reference:
+            data = data[data['period'] == 'analysis']
 
         is_time_based_x_axis = self.calculator.timestamp_column_name is not None
 
@@ -150,17 +167,8 @@ class Result(AbstractCalculatorResult):
 
         results_data = self.data
 
-        results_data['period'] = 'analysis'
-
-        if plot_reference:
-            reference_results = self.calculator.previous_reference_results
-            if reference_results is None:
-                raise RuntimeError(
-                    f"could not plot distribution for '{self.calculator.y_true}': "
-                    f"calculator is missing reference results\n{self.calculator}"
-                )
-            reference_results['period'] = 'reference'
-            results_data = pd.concat([reference_results, results_data.copy()], ignore_index=True)
+        if not plot_reference:
+            results_data = results_data[results_data['period'] == 'analysis']
 
         is_time_based_x_axis = self.calculator.timestamp_column_name is not None
 
@@ -187,16 +195,9 @@ class Result(AbstractCalculatorResult):
                 ]
             )
 
-            if plot_reference:
-                reference_drift = self.calculator.previous_reference_results
-                if reference_drift is None:
-                    raise RuntimeError(
-                        f"could not plot categorical distribution for target '{self.calculator.y_true}': "
-                        f"calculator is missing reference results\n{self.calculator}"
-                    )
-                reference_drift['period'] = 'reference'
-                results_data = pd.concat([reference_drift, results_data], ignore_index=True)
-
+            if not plot_reference:
+                results_data = results_data[results_data['period'] == 'analysis']
+            else:
                 reference_feature_table = pd.concat(
                     [
                         chunk.data.assign(key=chunk.key)

@@ -40,7 +40,7 @@ def realized_performance_metrics(performance_calculator, regression_data) -> pd.
     analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
 
     performance_calculator.fit(reference)
-    results = performance_calculator.calculate(analysis.join(regression_data[2]))
+    results = performance_calculator.calculate(analysis.join(regression_data[2])).filter(period='analysis')
     return results.data
 
 
@@ -57,7 +57,7 @@ def no_timestamp_metrics(regression_data) -> pd.DataFrame:
         metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
         problem_type='regression',
     ).fit(reference)
-    results = performance_calculator.calculate(analysis.join(regression_data[2]))
+    results = performance_calculator.calculate(analysis.join(regression_data[2])).filter(period='analysis')
     return results.data
 
 

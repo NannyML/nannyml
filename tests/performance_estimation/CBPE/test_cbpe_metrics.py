@@ -360,7 +360,8 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         **calculator_opts,
     ).fit(ref_df)
-    sut = cbpe.estimate(ana_df).data
+    result = cbpe.estimate(ana_df).data
+    sut = result[result['period'] == 'analysis'].reset_index(drop=True)
 
     pd.testing.assert_frame_equal(
         expected,
@@ -708,7 +709,8 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         **calculator_opts,
     ).fit(ref_df)
-    sut = cbpe.estimate(ana_df).data
+    result = cbpe.estimate(ana_df).data
+    sut = result[result['period'] == 'analysis'].reset_index(drop=True)
 
     pd.testing.assert_frame_equal(
         expected,

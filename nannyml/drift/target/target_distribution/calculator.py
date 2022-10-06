@@ -89,6 +89,8 @@ class TargetDistributionCalculator(AbstractCalculator):
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
+        self.result: Optional[Result] = None
+
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> TargetDistributionCalculator:
         """Fits the calculator to reference data."""
         if reference_data.empty:
@@ -105,11 +107,12 @@ class TargetDistributionCalculator(AbstractCalculator):
         self._reference_stability = 0  # TODO: Jakub
 
         self.previous_reference_data = reference_data
-        self.previous_reference_results = self._calculate(reference_data).data
+        self.result = self._calculate(reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs):
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the target distribution of a binary classifier."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -124,7 +127,6 @@ class TargetDistributionCalculator(AbstractCalculator):
         data['NML_TARGET_INCOMPLETE'] = data[self.y_true].isna().astype(np.int16)
 
         # Generate chunks
-        # features_and_metadata = NML_METADATA_COLUMNS + ['NML_TARGET_INCOMPLETE']
         chunks = self.chunker.split(
             data,
             columns=[self.y_true, 'NML_TARGET_INCOMPLETE'],
@@ -156,7 +158,14 @@ class TargetDistributionCalculator(AbstractCalculator):
 
         self.previous_analysis_data = data.copy()
 
-        return Result(results_data=res, calculator=self)
+        res['period'] = 'analysis'
+
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=self)
+        else:
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+
+        return self.result
 
     def _calculate_target_drift_for_chunk(self, reference_targets: pd.Series, analysis_targets: pd.Series) -> Dict:
         if self.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
