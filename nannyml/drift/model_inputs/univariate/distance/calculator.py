@@ -12,15 +12,15 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 
-from nannyml.base import AbstractCalculator, _list_missing, _column_is_continuous
+from nannyml.base import AbstractCalculator, _column_is_continuous, _list_missing
 from nannyml.chunk import Chunker
-from nannyml.drift.model_inputs.univariate.distance.results import UnivariateDistanceDriftCalculatorResult
+from nannyml.drift.model_inputs.univariate.distance.results import Result
 from nannyml.exceptions import InvalidArgumentsException
 
 ALERT_THRESHOLD_DISTANCE = 0.1
 
 
-class UnivariateDistanceDriftCalculator(AbstractCalculator):
+class DistanceDriftCalculator(AbstractCalculator):
     """Calculates drift for individual features using statistical tests."""
 
     def __init__(
@@ -55,47 +55,21 @@ class UnivariateDistanceDriftCalculator(AbstractCalculator):
 
         Examples
         --------
-        >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> feature_column_names = [col for col in reference_df.columns
-        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
-        >>> calc = nml.UnivariateStatisticalDriftCalculator(
-        >>>     feature_column_names=feature_column_names,
-        >>>     timestamp_column_name='timestamp'
-        >>> )
-        >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
-        >>> print(results.data)  # check the numbers
-                     key  start_index  ...  identifier_alert identifier_threshold
-        0       [0:4999]            0  ...              True                 0.05
-        1    [5000:9999]         5000  ...              True                 0.05
-        2  [10000:14999]        10000  ...              True                 0.05
-        3  [15000:19999]        15000  ...              True                 0.05
-        4  [20000:24999]        20000  ...              True                 0.05
-        5  [25000:29999]        25000  ...              True                 0.05
-        6  [30000:34999]        30000  ...              True                 0.05
-        7  [35000:39999]        35000  ...              True                 0.05
-        8  [40000:44999]        40000  ...              True                 0.05
-        9  [45000:49999]        45000  ...              True                 0.05
-        >>> fig = results.plot(kind='feature_drift', plot_reference=True, feature_column_name='distance_from_office')
-        >>> fig.show()
+        # TODO provide example
         """
-        super(UnivariateDistanceDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super(DistanceDriftCalculator, self).__init__(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
 
         self.feature_column_names = feature_column_names
-        self.continuous_column_names: List[str] = []
-        self.categorical_column_names: List[str] = []
-
-        self.timestamp_column_name = timestamp_column_name
 
         # required for distribution plots
-        self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateDistanceDriftCalculator:
+        self.result: Optional[Result] = None
+
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> DistanceDriftCalculator:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -103,29 +77,25 @@ class UnivariateDistanceDriftCalculator(AbstractCalculator):
         _list_missing(self.feature_column_names, reference_data)
 
         self.previous_reference_data = reference_data.copy()
-        self.previous_reference_results = self._calculate(self.previous_reference_data).data
+        self.result = self._calculate(self.previous_reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> UnivariateDistanceDriftCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the jenson-shannon divergence for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing(self.feature_column_names, data)
 
-        # self.continuous_column_names, self.categorical_column_names = _split_features_by_type(
-        #     data, self.feature_column_names
-        # )
-
         chunks = self.chunker.split(data)
 
         chunk_drifts = []
-        # Calculate chunk-wise drift statistics.
-        # Append all into resulting DataFrame indexed by chunk key.
         for chunk in chunks:
             chunk_drift: Dict[str, Any] = {
                 'key': chunk.key,
+                'chunk_index': chunk.chunk_index,
                 'start_index': chunk.start_index,
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
@@ -133,7 +103,9 @@ class UnivariateDistanceDriftCalculator(AbstractCalculator):
             }
 
             for feature in self.feature_column_names:
-                ref_binned_data, ana_binned_data = get_binned_data(self.previous_reference_data[feature], chunk.data[feature])
+                ref_binned_data, ana_binned_data = get_binned_data(
+                    self.previous_reference_data[feature], chunk.data[feature]
+                )
                 dis = distance.jensenshannon(ref_binned_data, ana_binned_data)
                 pd.concat(
                     [
@@ -142,7 +114,7 @@ class UnivariateDistanceDriftCalculator(AbstractCalculator):
                     ],
                     axis=1,
                 ).fillna(0)
-                chunk_drift[f'{feature}_js'] = dis
+                chunk_drift[f'{feature}_jensen_shannon'] = dis
                 chunk_drift[f'{feature}_alert'] = dis > ALERT_THRESHOLD_DISTANCE
                 chunk_drift[f'{feature}_threshold'] = ALERT_THRESHOLD_DISTANCE
 
@@ -150,12 +122,16 @@ class UnivariateDistanceDriftCalculator(AbstractCalculator):
 
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
+        res['period'] = 'analysis'
 
         self.previous_analysis_data = data
 
-        from nannyml.drift.model_inputs.univariate.statistical.results import UnivariateStatisticalDriftCalculatorResult
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=self)
+        else:
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
-        return UnivariateStatisticalDriftCalculatorResult(results_data=res, calculator=self)
+        return self.result
 
 
 def get_binned_data(reference_feature: pd.Series, analysis_feature: pd.Series):
@@ -168,16 +144,16 @@ def get_binned_data(reference_feature: pd.Series, analysis_feature: pd.Series):
         curr_binned_pdf: probability estimate in each bucket for reference
     """
     n_vals = reference_feature.nunique()
-    if _column_is_continuous(reference_feature) == "num" and n_vals > 20:
+    if _column_is_continuous(reference_feature) and n_vals > 20:
         bins = np.histogram_bin_edges(list(reference_feature) + list(analysis_feature), bins="sturges")
         refq = pd.cut(reference_feature, bins=bins)
         anaq = pd.cut(analysis_feature, bins=bins)
-        ref_binned_pdf = list(refq.value_counts(sort=False)/len(reference_feature))
-        ana_binned_pdf = list(anaq.value_counts(sort=False)/len(analysis_feature))
+        ref_binned_pdf = list(refq.value_counts(sort=False) / len(reference_feature))
+        ana_binned_pdf = list(anaq.value_counts(sort=False) / len(analysis_feature))
 
     else:
         keys = list((set(reference_feature.unique()) | set(analysis_feature.unique())) - {np.nan})
-        ref_binned_pdf = [(reference_feature == i).sum()/len(reference_feature) for i in keys]
-        ana_binned_pdf = [(analysis_feature == i).sum()/len(analysis_feature) for i in keys]
+        ref_binned_pdf = [(reference_feature == i).sum() / len(reference_feature) for i in keys]
+        ana_binned_pdf = [(analysis_feature == i).sum() / len(analysis_feature) for i in keys]
 
     return ref_binned_pdf, ana_binned_pdf

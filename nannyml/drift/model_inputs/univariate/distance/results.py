@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
-from typing import List, Tuple
+from typing import List
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -16,28 +16,27 @@ from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
 
 
-class UnivariateDistanceDriftCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(self, results_data: pd.DataFrame, calculator):
         super().__init__(results_data)
 
-        from nannyml.drift.model_inputs.univariate.distance.calculator import UnivariateDistanceDriftCalculator
+        from nannyml.drift.model_inputs.univariate.distance.calculator import DistanceDriftCalculator
 
-        if not isinstance(calculator, UnivariateDistanceDriftCalculator):
+        if not isinstance(calculator, DistanceDriftCalculator):
             raise RuntimeError(
                 f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
             )
         self.calculator = calculator
 
-    @property
-    def calculator_name(self) -> str:
-        return "univariate_distance_feature_drift"
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
+        pass
 
     def plot(
         self,
-        kind: str = 'feature',
-        metric: str = 'distance',
+        metric: str = 'jensen_shannon',
+        kind: str = 'feature_drift',
         feature_column_name: str = None,
         plot_reference: bool = False,
         *args,
@@ -58,13 +57,12 @@ class UnivariateDistanceDriftCalculatorResult(AbstractCalculatorResult):
         ----------
         kind: str, default=`feature_drift`
             The kind of plot you want to have. Allowed values are `feature_drift`` and ``feature_distribution``.
-        metric : str, default=``statistic``
-            The metric to plot. Allowed values are ``statistic`` and ``p_value``.
-            Not applicable when plotting distributions.
         feature_column_name : str
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
+        metric: str
+            The name of the metric to plot. Allowed values are 'jensen_shannon'.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
@@ -78,34 +76,7 @@ class UnivariateDistanceDriftCalculatorResult(AbstractCalculatorResult):
 
         Examples
         --------
-        >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> feature_column_names = [col for col in reference_df.columns
-        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
-        >>> calc = nml.UnivariateStatisticalDriftCalculator(
-        >>>     feature_column_names=feature_column_names,
-        >>>     timestamp_column_name='timestamp'
-        >>> )
-        >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
-        >>> print(results.data)  # check the numbers
-                     key  start_index  ...  identifier_alert identifier_threshold
-        0       [0:4999]            0  ...              True                 0.05
-        1    [5000:9999]         5000  ...              True                 0.05
-        2  [10000:14999]        10000  ...              True                 0.05
-        3  [15000:19999]        15000  ...              True                 0.05
-        4  [20000:24999]        20000  ...              True                 0.05
-        5  [25000:29999]        25000  ...              True                 0.05
-        6  [30000:34999]        30000  ...              True                 0.05
-        7  [35000:39999]        35000  ...              True                 0.05
-        8  [40000:44999]        40000  ...              True                 0.05
-        9  [45000:49999]        45000  ...              True                 0.05
-        >>> for feature in cal.feature_column_names:
-        >>>     fig = results.plot(kind='feature_drift', metric='statistic', plot_reference=True,
-        >>>                        feature_column_name=feature)
-        >>>     fig.show()
+        # TODO: add example
 
         """
         if kind == 'feature_drift':
@@ -113,7 +84,7 @@ class UnivariateDistanceDriftCalculatorResult(AbstractCalculatorResult):
                 raise InvalidArgumentsException(
                     "must specify a feature to plot " "using the 'feature_column_name' parameter"
                 )
-            return _feature_drift(self.data, self.calculator, feature_column_name, metric, plot_reference)
+            return self.plot_feature_drift(metric, feature_column_name, plot_reference)
         elif kind == 'feature_distribution':
             if feature_column_name is None:
                 raise InvalidArgumentsException(
@@ -138,81 +109,44 @@ class UnivariateDistanceDriftCalculatorResult(AbstractCalculatorResult):
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-        if feature_column_name in self.calculator.continuous_column_names:
-            return _plot_continuous_feature_distribution(
-                analysis_data, drift_data, feature_column_name, self.calculator, plot_reference
-            )
-        if feature_column_name in self.calculator.categorical_column_names:
-            return _plot_categorical_feature_distribution(
-                analysis_data, drift_data, feature_column_name, self.calculator, plot_reference
-            )
+        # if feature_column_name in self.calculator.continuous_column_names:
+        #     return _plot_continuous_feature_distribution(
+        #         analysis_data, drift_data, feature_column_name, self.calculator, plot_reference
+        #     )
+        # if feature_column_name in self.calculator.categorical_column_names:
+        #     return _plot_categorical_feature_distribution(
+        #         analysis_data, drift_data, feature_column_name, self.calculator, plot_reference
+        #     )
+        pass
 
+    def plot_feature_drift(
+        self,
+        metric: str,
+        feature: str,
+        plot_reference: bool = False,
+    ) -> go.Figure:
+        """Renders a line plot for a chosen metric of univariate statistical feature drift calculation results."""
+        result_data = self.data.copy()
 
-def _feature_drift(
-    data: pd.DataFrame,
-    calculator,
-    feature: str,
-    metric: str = 'statistic',
-    plot_reference: bool = False,
-) -> go.Figure:
-    """Renders a line plot for a chosen metric of univariate statistical feature drift calculation results."""
+        if not plot_reference:
+            result_data = result_data[result_data['period'] == 'analysis']
 
-    (
-        metric_column_name,
-        metric_label,
-        threshold_column_name,
-        drift_column_name,
-        title,
-    ) = _get_drift_column_names_for_feature(
-        feature, metric, calculator.continuous_column_names, calculator.categorical_column_names
-    )
+        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
 
-    data['period'] = 'analysis'
-
-    if plot_reference:
-        reference_results = calculator.previous_reference_results
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
-
-    fig = _step_plot(
-        table=data,
-        metric_column_name=metric_column_name,
-        chunk_column_name='key',
-        drift_column_name=drift_column_name,
-        lower_threshold_column_name=threshold_column_name,
-        hover_labels=['Chunk', metric_label, 'Target data'],
-        title=title,
-        y_axis_title=metric_label,
-        v_line_separating_analysis_period=plot_reference,
-        statistically_significant_column_name=drift_column_name,
-    )
-    return fig
-
-
-def _get_drift_column_names_for_feature(
-    feature_column_name: str,
-    metric: str,
-    continuous_feature_column_names: List[str],
-    categorical_feature_column_names: List[str],
-) -> Tuple:
-    metric_column_name, metric_label, threshold_column_name = None, None, None
-    if metric == 'statistic':
-        if feature_column_name in categorical_feature_column_names:
-            metric_column_name = f'{feature_column_name}_chi2'
-            metric_label = 'Chi-square statistic'
-        elif feature_column_name in continuous_feature_column_names:
-            metric_column_name = f'{feature_column_name}_dstat'
-            metric_label = 'KS statistic'
-        threshold_column_name = None
-    elif metric == 'p_value':
-        metric_column_name = f'{feature_column_name}_p_value'
-        metric_label = 'P-value'
-        threshold_column_name = f'{feature_column_name}_threshold'
-
-    drift_column_name = f'{feature_column_name}_alert'
-    title = f'{metric_label} for {feature_column_name}'
-
-    return metric_column_name, metric_label, threshold_column_name, drift_column_name, title
+        fig = _step_plot(
+            table=result_data,
+            metric_column_name=f'{feature}_{metric}',
+            chunk_column_name='key',
+            start_date_column_name='start_date' if is_time_based_x_axis else None,
+            end_date_column_name='end_date' if is_time_based_x_axis else None,
+            drift_column_name=f'{feature}_alert',
+            lower_threshold_column_name=f'{feature}_threshold',
+            hover_labels=['Chunk', f'{metric}', 'Target data'],
+            title=f'{metric} distance for {feature}',
+            y_axis_title=f'{metric}',
+            v_line_separating_analysis_period=plot_reference,
+        )
+        return fig
 
 
 def _plot_continuous_feature_distribution(
