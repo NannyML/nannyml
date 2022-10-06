@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Updated the handling of "leftover" observations when using the `SizeBasedChunker` and `CountBasedChunker`.
+  Renamed the parameter for tweaking that behavior to `incomplete`, that can be set to `keep`, `drop` or `append`.
+  Default behavior for both is now to append leftover observations to the last _full_ chunk.
+
 ## [0.6.3] - 2022-09-22
 
 ### Changed

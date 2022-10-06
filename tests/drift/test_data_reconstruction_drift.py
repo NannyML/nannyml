@@ -280,11 +280,11 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data)
     [
         (
             {'chunk_size': 5000},
-            [0.7998744001719177, 0.8020996183121666, 0.8043000024523013, 0.735524850766471, 0.7608678766056979],
+            [0.7998744001719177, 0.8020996183121666, 0.8043000024523013, 0.73631],
         ),
         (
             {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
-            [0.7998744001719177, 0.8020996183121666, 0.8043000024523013, 0.735524850766471, 0.7608678766056979],
+            [0.7998744001719177, 0.8020996183121666, 0.8043000024523013, 0.73631],
         ),
         (
             {'chunk_number': 5},
@@ -425,7 +425,7 @@ def test_data_reconstruction_drift_calculator_raises_type_error_when_missing_fea
 def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
-    chunker = SizeBasedChunker(chunk_size=2500, drop_incomplete=True)
+    chunker = SizeBasedChunker(chunk_size=2500, incomplete='drop')
 
     calc = DataReconstructionDriftCalculator(
         feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker

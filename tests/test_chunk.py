@@ -241,12 +241,12 @@ def test_size_based_chunker_returns_chunks_of_required_size(sample_chunk_data): 
     chunker = SizeBasedChunker(chunk_size=chunk_size)
     sut = chunker.split(sample_chunk_data)
     assert len(sut[0]) == chunk_size
-    assert len(sut) == math.ceil(sample_chunk_data.shape[0] / chunk_size)
+    assert len(sut) == math.ceil(sample_chunk_data.shape[0] / chunk_size) - 1
 
 
 def test_size_based_chunker_returns_last_chunk_that_is_partially_filled(sample_chunk_data):  # noqa: D103
     chunk_size = 3333
-    expected_last_chunk_size = sample_chunk_data.shape[0] % chunk_size
+    expected_last_chunk_size = chunk_size + sample_chunk_data.shape[0] % chunk_size
     chunker = SizeBasedChunker(chunk_size)
     sut = chunker.split(sample_chunk_data)
     assert len(sut[-1]) == expected_last_chunk_size
@@ -265,13 +265,34 @@ def test_size_based_chunker_works_when_data_set_is_multiple_of_chunk_size(sample
     assert len(sut[-1]) == chunk_size
 
 
-def test_size_based_chunker_drops_last_incomplete_chunk_when_set_drop_incomplete_is_true(  # noqa: D103
+def test_size_based_chunker_drops_last_incomplete_chunk_when_incomplete_set_to_drop(  # noqa: D103
     sample_chunk_data,
 ):
     chunk_size = 3333
-    chunker = SizeBasedChunker(chunk_size, drop_incomplete=True)
+    chunker = SizeBasedChunker(chunk_size, incomplete='drop')
     sut = chunker.split(sample_chunk_data)
     assert len(sut[-1]) == chunk_size
+    assert len(sut) == 6
+
+
+def test_size_based_chunker_keeps_last_incomplete_chunk_when_incomplete_set_to_keep(  # noqa: D103
+    sample_chunk_data,
+):
+    chunk_size = 3333
+    chunker = SizeBasedChunker(chunk_size, incomplete='keep')
+    sut = chunker.split(sample_chunk_data)
+    assert len(sut[-1]) == len(sample_chunk_data) % chunk_size
+    assert len(sut) == 7
+
+
+def test_size_based_chunker_appends_to_last_chunk_when_incomplete_set_to_append(  # noqa: D103
+    sample_chunk_data,
+):
+    chunk_size = 3333
+    chunker = SizeBasedChunker(chunk_size, incomplete='append')
+    sut = chunker.split(sample_chunk_data)
+    assert len(sut[-1]) == chunk_size + (len(sample_chunk_data) % chunk_size)
+    assert len(sut) == 6
 
 
 def test_size_based_chunker_uses_observations_to_set_chunk_date_boundaries(sample_chunk_data):  # noqa: D103
@@ -283,7 +304,7 @@ def test_size_based_chunker_uses_observations_to_set_chunk_date_boundaries(sampl
 
 def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
     chunk_size = 1500
-    last_chunk_start = (sample_chunk_data.shape[0] // chunk_size) * chunk_size
+    last_chunk_start = ((sample_chunk_data.shape[0] // chunk_size) - 1) * chunk_size
     last_chunk_end = sample_chunk_data.shape[0] - 1
 
     chunker = SizeBasedChunker(chunk_size=chunk_size)
@@ -295,44 +316,44 @@ def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk
 
 def test_count_based_chunker_raises_exception_when_passed_nan_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
-        _ = CountBasedChunker(chunk_count='size?')
+        _ = CountBasedChunker(chunk_number='size?')
 
 
 def test_count_based_chunker_raises_exception_when_passed_negative_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
-        _ = CountBasedChunker(chunk_count=-1)
+        _ = CountBasedChunker(chunk_number=-1)
 
 
 def test_count_based_chunker_raises_exception_when_passed_zero_size(sample_chunk_data):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
-        _ = CountBasedChunker(chunk_count=0)
+        _ = CountBasedChunker(chunk_number=0)
 
 
 def test_count_based_chunker_works_with_empty_dataset():  # noqa: D103
-    chunker = CountBasedChunker(chunk_count=5)
+    chunker = CountBasedChunker(chunk_number=5)
     sut = chunker.split(pd.DataFrame(columns=['date', 'timestamp', 'f1', 'f2', 'f3', 'f4']))
     assert len(sut) == 0
 
 
 def test_count_based_chunker_returns_chunks_of_required_size(sample_chunk_data):  # noqa: D103
     chunk_count = 5
-    chunker = CountBasedChunker(chunk_count=chunk_count)
+    chunker = CountBasedChunker(chunk_number=chunk_count)
     sut = chunker.split(sample_chunk_data)
     assert len(sut[0]) == sample_chunk_data.shape[0] // chunk_count
     assert len(sut) == chunk_count
 
 
 def test_count_based_chunker_uses_observations_to_set_chunk_date_boundaries(sample_chunk_data):  # noqa: D103
-    chunker = CountBasedChunker(chunk_count=20, timestamp_column_name='timestamp')
+    chunker = CountBasedChunker(chunk_number=20, timestamp_column_name='timestamp')
     sut = chunker.split(sample_chunk_data)
     assert sut[0].start_datetime == Timestamp(year=2020, month=1, day=6, hour=0, minute=0, second=0)
     assert sut[-1].end_datetime == Timestamp(year=2020, month=5, day=24, hour=23, minute=50, second=0)
 
 
 def test_count_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
-    chunk_count = 5
+    chunk_number = 5
 
-    chunker = CountBasedChunker(chunk_count=chunk_count)
+    chunker = CountBasedChunker(chunk_number=chunk_number)
     sut = chunker.split(sample_chunk_data)
     assert sut[0].key == '[0:4031]'
     assert sut[1].key == '[4032:8063]'
@@ -349,7 +370,7 @@ def test_default_chunker_splits_into_ten_chunks(sample_chunk_data):  # noqa: D10
 
 
 @pytest.mark.parametrize(
-    'chunker', [SizeBasedChunker(chunk_size=5000), CountBasedChunker(chunk_count=10), DefaultChunker()]
+    'chunker', [SizeBasedChunker(chunk_size=5000), CountBasedChunker(chunk_number=10), DefaultChunker()]
 )
 def test_size_based_chunker_without_timestamp_column_sets_date_boundaries_to_none(  # noqa: D103
     sample_chunk_data, chunker
@@ -363,10 +384,10 @@ def test_size_based_chunker_without_timestamp_column_sets_date_boundaries_to_non
     'chunker',
     [
         SizeBasedChunker(chunk_size=5000),
-        CountBasedChunker(chunk_count=10),
+        CountBasedChunker(chunk_number=10),
         DefaultChunker(),
         SizeBasedChunker(chunk_size=5000, timestamp_column_name='timestamp'),
-        CountBasedChunker(chunk_count=10, timestamp_column_name='timestamp'),
+        CountBasedChunker(chunk_number=10, timestamp_column_name='timestamp'),
         DefaultChunker(timestamp_column_name='timestamp'),
         PeriodBasedChunker(offset='W', timestamp_column_name='timestamp'),
     ],
