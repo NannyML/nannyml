@@ -174,9 +174,8 @@ class AbstractEstimatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def __getattr__(self, attribute):
-        """Redirect function calls directly to the inner DataFrame."""
-        return getattr(self.data, attribute)
+    def to_df(self):
+        return self.data
 
     def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
         """Returns result metric data."""

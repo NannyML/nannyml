@@ -29,13 +29,7 @@ class Result(AbstractEstimatorResult):
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
         columns = self.DEFAULT_COLUMNS
 
-        if metrics is None:
-            metrics = self.SUPPORTED_METRIC_VALUES
-
-        _metrics = [
-            MetricFactory.create(metric, ProblemType.REGRESSION, {'estimator': self.estimator}) for metric in metrics
-        ]
-        for metric in _metrics:
+        for metric in self.estimator.metrics:
             columns += [
                 f'estimated_{metric.column_name}',
                 f'upper_threshold_{metric.column_name}',

@@ -49,7 +49,7 @@ class Result(AbstractEstimatorResult):
         else:
             data = self.data.loc[self.data['period'] == period, columns]
 
-        data.reset_index(drop=True)
+        data = data.reset_index(drop=True)
 
         return Result(results_data=data, estimator=copy.deepcopy(self.estimator))
 

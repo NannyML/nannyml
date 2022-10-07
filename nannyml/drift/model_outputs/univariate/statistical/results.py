@@ -53,13 +53,21 @@ class Result(AbstractCalculatorResult):
                 outputs = [self.calculator.y_pred, self.calculator.y_pred_proba]
             elif self.calculator.problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
                 outputs = [self.calculator.y_pred] + [
-                    col for col in self.calculator.y_pred_proba.keys()  # type: ignore
+                    col for col in self.calculator.y_pred_proba.values()  # type: ignore
                 ]
 
         if self.calculator.problem_type is ProblemType.REGRESSION:
-            columns += [f'y_pred{self.metric_to_col_suffix["KS"]}']
-        else:
-            columns += [f'y_pred{self.metric_to_col_suffix["Chi2"]}', f'y_pred_proba{self.metric_to_col_suffix["KS"]}']
+            columns += [f'{self.calculator.y_pred}{self.metric_to_col_suffix["KS"]}']
+        elif self.calculator.problem_type is ProblemType.CLASSIFICATION_BINARY:
+            columns += [
+                f'{self.calculator.y_pred}{self.metric_to_col_suffix["Chi2"]}',
+                f'{self.calculator.y_pred_proba}{self.metric_to_col_suffix["KS"]}',
+            ]
+        elif self.calculator.problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
+            columns += [f'{self.calculator.y_pred}{self.metric_to_col_suffix["Chi2"]}'] + [
+                f'{col}{self.metric_to_col_suffix["KS"]}'
+                for col in self.calculator.y_pred_proba.values()  # type: ignore
+            ]
 
         columns += [f'{output}_alert' for output in outputs]
 
@@ -68,7 +76,7 @@ class Result(AbstractCalculatorResult):
         else:
             data = self.data.loc[self.data['period'] == period, columns]
 
-        data.reset_index(drop=True)
+        data = data.reset_index(drop=True)
 
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
