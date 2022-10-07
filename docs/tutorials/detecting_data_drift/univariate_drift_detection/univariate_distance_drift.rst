@@ -5,14 +5,12 @@ Univariate Distance Drift Detection
 ======================================
 
 
-
-
 Just The Code
 -------------
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Univariate Distance.ipynb
-    :cells: 1 3 4 6 8 10 12 14
+    :cells: 1 3 4 6 8 10 11
 
 .. _univariate_distance_drift_detection_walkthrough:
 
