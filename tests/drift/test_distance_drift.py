@@ -24,6 +24,7 @@ def distance_drift_calculator(data) -> DistanceDriftCalculator:
             col for col in data[0].columns if col not in ['y_pred_proba', 'y_pred', 'timestamp', 'work_home_actual']
         ],
         timestamp_column_name='timestamp',
+        metrics=['jensen_shannon'],
     )
 
 
@@ -34,6 +35,7 @@ def test_rando(data):
                 col for col in data[0].columns if col not in ['y_pred_proba', 'y_pred', 'timestamp', 'work_home_actual']
             ],
             timestamp_column_name='timestamp',
+            metrics=['jensen_shannon'],
         )
         _ = calc.fit(data[1])
 
