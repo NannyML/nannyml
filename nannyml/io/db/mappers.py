@@ -8,11 +8,17 @@ from typing import Any, Callable, Dict, List
 
 from nannyml._typing import ProblemType
 from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import Result as DataReconstructionDriftResult
+from nannyml.drift.model_inputs.univariate.distance.results import Result as DistanceFeatureDriftResult
 from nannyml.drift.model_inputs.univariate.statistical.results import Result as StatisticalFeatureDriftResult
 from nannyml.drift.model_outputs.univariate.statistical.results import Result as StatisticalOutputDriftResult
 from nannyml.drift.target.target_distribution.result import Result as TargetDriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.db.entities import CBPEPerformanceMetric, DataReconstructionFeatureDriftMetric, DLEPerformanceMetric
+from nannyml.io.db.entities import (
+    CBPEPerformanceMetric,
+    DataReconstructionFeatureDriftMetric,
+    DistanceFeatureDriftMetric,
+    DLEPerformanceMetric,
+)
 from nannyml.io.db.entities import Metric as DbMetric
 from nannyml.io.db.entities import (
     RealizedPerformanceMetric,
@@ -123,6 +129,72 @@ class StatisticalFeatureDriftResultMapper(Mapper):
                 .apply(lambda r: _parse(feature_name, metric_name, *r), axis=1)
                 .to_list()
             )
+
+        return res
+
+
+@MapperFactory.register(DistanceFeatureDriftResult)
+class DistanceFeatureDriftResultMapper(Mapper):
+    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
+        def _parse(
+            feature_name: str,
+            metric_name: str,
+            start_date: datetime,
+            end_date: datetime,
+            value,
+            lower_threshold: float,
+            upper_threshold: float,
+            alert: bool,
+        ) -> DbMetric:
+            timestamp = start_date + (end_date - start_date) / 2
+
+            return DistanceFeatureDriftMetric(
+                feature_name=feature_name,
+                metric_name=metric_name,
+                start_timestamp=start_date,
+                end_timestamp=end_date,
+                timestamp=timestamp,
+                value=value,
+                lower_threshold=lower_threshold,
+                upper_threshold=upper_threshold,
+                alert=alert,
+                **metric_args,
+            )
+
+        if not isinstance(result, DistanceFeatureDriftResult):
+            raise InvalidArgumentsException(f"{self.__class__.__name__} can not deal with '{type(result)}'")
+
+        if result.calculator.timestamp_column_name is None:
+            raise NotImplementedError(
+                'no timestamp column was specified. Listing metrics currently requires a '
+                'timestamp column to be specified and present'
+            )
+
+        res: List[DistanceFeatureDriftMetric] = []
+
+        for feature in result.calculator.feature_column_names:
+            for metric in result.calculator.metrics:
+                feature_metric_column = f'{feature}_{metric.column_name}'
+                if feature_metric_column in result.data.columns:
+                    alert_column = f'{feature_metric_column}_alert'
+                    lower_threshold_column = f'{feature_metric_column}_lower_threshold'
+                    upper_threshold_column = f'{feature_metric_column}_upper_threshold'
+
+                    res += (
+                        result.data.loc[
+                            result.data['period'] == 'analysis',
+                            [
+                                'start_date',
+                                'end_date',
+                                feature_metric_column,
+                                lower_threshold_column,
+                                upper_threshold_column,
+                                alert_column,
+                            ],
+                        ]
+                        .apply(lambda r: _parse(feature, metric.column_name, *r), axis=1)
+                        .to_list()
+                    )
 
         return res
 

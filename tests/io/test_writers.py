@@ -12,6 +12,7 @@ from nannyml.datasets import (
     load_synthetic_multiclass_classification_dataset,
 )
 from nannyml.drift.model_inputs.multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from nannyml.drift.model_inputs.univariate.distance import DistanceDriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 from nannyml.drift.target.target_distribution import TargetDistributionCalculator
@@ -63,6 +64,56 @@ def univariate_statistical_feature_drift_for_regression_result():
     calc = UnivariateStatisticalDriftCalculator(
         feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
         timestamp_column_name='timestamp',
+    ).fit(reference_df)
+    result = calc.calculate(analysis_df)
+    return result
+
+
+@pytest.fixture(scope='module')
+def univariate_distance_feature_drift_for_binary_classification_result():
+    reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
+    calc = DistanceDriftCalculator(
+        feature_column_names=[
+            col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_pred_proba', 'work_home_actual']
+        ],
+        timestamp_column_name='timestamp',
+        metrics=['jensen_shannon'],
+    ).fit(reference_df)
+    result = calc.calculate(analysis_df)
+    return result
+
+
+@pytest.fixture(scope='module')
+def univariate_distance_feature_drift_for_multiclass_classification_result():
+    reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
+    calc = DistanceDriftCalculator(
+        feature_column_names=[
+            col
+            for col in reference_df
+            if col
+            not in [
+                'timestamp',
+                'y_pred',
+                'y_pred_proba_upmarket_card',
+                'y_pred_proba_highstreet_card',
+                'y_pred_proba_prepaid_card',
+                'y_true',
+            ]
+        ],
+        timestamp_column_name='timestamp',
+        metrics=['jensen_shannon'],
+    ).fit(reference_df)
+    result = calc.calculate(analysis_df)
+    return result
+
+
+@pytest.fixture(scope='module')
+def univariate_distance_feature_drift_for_regression_result():
+    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
+    calc = DistanceDriftCalculator(
+        feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+        timestamp_column_name='timestamp',
+        metrics=['jensen_shannon'],
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
     return result
@@ -287,6 +338,9 @@ def dle_estimated_performance_for_regression_result():
         lazy_fixture('univariate_statistical_feature_drift_for_binary_classification_result'),
         lazy_fixture('univariate_statistical_feature_drift_for_multiclass_classification_result'),
         lazy_fixture('univariate_statistical_feature_drift_for_regression_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_binary_classification_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_multiclass_classification_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_regression_result'),
         lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_regression_result'),
@@ -319,6 +373,9 @@ def test_raw_files_writer_raises_no_exceptions_when_writing(result):
         lazy_fixture('univariate_statistical_feature_drift_for_binary_classification_result'),
         lazy_fixture('univariate_statistical_feature_drift_for_multiclass_classification_result'),
         lazy_fixture('univariate_statistical_feature_drift_for_regression_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_binary_classification_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_multiclass_classification_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_regression_result'),
         lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_regression_result'),
@@ -350,6 +407,9 @@ def test_database_writer_raises_no_exceptions_when_writing(result):
         lazy_fixture('univariate_statistical_feature_drift_for_binary_classification_result'),
         lazy_fixture('univariate_statistical_feature_drift_for_multiclass_classification_result'),
         lazy_fixture('univariate_statistical_feature_drift_for_regression_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_binary_classification_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_multiclass_classification_result'),
+        lazy_fixture('univariate_distance_feature_drift_for_regression_result'),
         lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_regression_result'),

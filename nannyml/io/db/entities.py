@@ -40,11 +40,19 @@ class StatisticalFeatureDriftMetric(Metric, table=True):  # type: ignore
     feature_name: str
 
 
+class DistanceFeatureDriftMetric(Metric, table=True):  # type: ignore
+    __tablename__ = 'statistical_distance_drift_metrics'
+
+    feature_name: str
+    upper_threshold: Optional[float]
+    lower_threshold: Optional[float]
+
+
 class DataReconstructionFeatureDriftMetric(Metric, table=True):  # type: ignore
     __tablename__ = 'data_reconstruction_feature_drift_metrics'
 
-    upper_threshold: float
-    lower_threshold: float
+    upper_threshold: Optional[float]
+    lower_threshold: Optional[float]
 
 
 class StatisticalOutputDriftMetric(Metric, table=True):  # type: ignore
@@ -62,19 +70,19 @@ class TargetDriftMetric(Metric, table=True):  # type: ignore
 class RealizedPerformanceMetric(Metric, table=True):  # type: ignore
     __tablename__ = 'realized_performance_metrics'
 
-    upper_threshold: float
-    lower_threshold: float
+    upper_threshold: Optional[float]
+    lower_threshold: Optional[float]
 
 
 class CBPEPerformanceMetric(Metric, table=True):  # type: ignore
     __tablename__ = "cbpe_performance_metrics"
 
-    upper_threshold: float
-    lower_threshold: float
+    upper_threshold: Optional[float]
+    lower_threshold: Optional[float]
 
 
 class DLEPerformanceMetric(Metric, table=True):  # type: ignore
     __tablename__ = "dle_performance_metrics"
 
-    upper_threshold: float
-    lower_threshold: float
+    upper_threshold: Optional[float]
+    lower_threshold: Optional[float]

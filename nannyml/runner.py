@@ -14,12 +14,12 @@ from typing import Any, Dict
 
 import pandas as pd
 from rich.console import Console
-from rich.panel import Panel
 from rich.progress import Progress
 
 from nannyml._typing import ProblemType
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from nannyml.drift.model_inputs.univariate.distance import DistanceDriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
 from nannyml.drift.target.target_distribution import TargetDistributionCalculator
@@ -43,18 +43,22 @@ def run(
     run_in_console: bool = False,
 ):
     with Progress() as progress:
-        task = progress.add_task('Calculating drift', total=1) if run_in_console else None
+        # task = progress.add_task('Calculating drift', total=1) if run_in_console else None
         _run_statistical_univariate_feature_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task is not None:
-            progress.update(task, advance=1 / 6)
+        # if task is not None:
+        #     progress.update(task, advance=1 / 6)
+
+        _run_distance_feature_drift_calculator(
+            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
+        )
 
         _run_data_reconstruction_multivariate_feature_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        if task is not None:
-            progress.update(task, advance=2 / 6)
+        # if task is not None:
+        #     progress.update(task, advance=2 / 6)
 
         _run_statistical_model_output_drift_calculator(
             reference_data,
@@ -66,8 +70,8 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        if task is not None:
-            progress.update(task, advance=3 / 6)
+        # if task is not None:
+        #     progress.update(task, advance=3 / 6)
 
         _run_target_distribution_drift_calculator(
             reference_data,
@@ -79,8 +83,8 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        if task is not None:
-            progress.update(task, advance=4 / 6)
+        # if task is not None:
+        #     progress.update(task, advance=4 / 6)
 
         _run_realized_performance_calculator(
             reference_data,
@@ -92,8 +96,8 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        if task is not None:
-            progress.update(task, description='Calculating realized performance', advance=5 / 6)
+        # if task is not None:
+        #     progress.update(task, description='Calculating realized performance', advance=5 / 6)
 
         _run_cbpe_performance_estimation(
             reference_data,
@@ -105,8 +109,8 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        if task is not None:
-            progress.update(task, description='Estimating performance', advance=5 / 6)
+        # if task is not None:
+        #     progress.update(task, description='Estimating performance', advance=5 / 6)
 
         _run_dee_performance_estimation(
             reference_data,
@@ -118,12 +122,13 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        if task is not None:
-            progress.update(task, description='Run complete', advance=7 / 7)
+        # if task is not None:
+        #     progress.update(task, description='Run complete', advance=7 / 7)
 
         progress.console.line(2)
         if isinstance(writer, RawFilesWriter):
-            progress.console.print(Panel(f"View results in {Path(writer.filepath)}"))
+            progress.console.rule()
+            progress.console.log(f"view results in {Path(writer.filepath)}")
 
 
 def _run_statistical_univariate_feature_drift_calculator(
@@ -176,6 +181,57 @@ def _run_statistical_univariate_feature_drift_calculator(
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='statistical_univariate_feature_drift')
+
+
+def _run_distance_feature_drift_calculator(
+    reference_data: pd.DataFrame,
+    analysis_data: pd.DataFrame,
+    column_mapping: Dict[str, Any],
+    chunker: Chunker,
+    writer: Writer,
+    ignore_errors: bool,
+    console: Console = None,
+):
+    if console:
+        console.rule('[cyan]DistanceDriftCalculator[/]')
+    try:
+        if console:
+            console.log('fitting on reference data')
+        calc = DistanceDriftCalculator(
+            feature_column_names=column_mapping['features'],
+            timestamp_column_name=column_mapping.get('timestamp', None),
+            metrics=['jensen_shannon'],
+            chunker=chunker,
+        ).fit(reference_data)
+
+        if console:
+            console.log('calculating on analysis data')
+        results = calc.calculate(analysis_data)
+
+        plots = {}
+        if isinstance(writer, RawFilesWriter):
+            if console:
+                console.log('generating result plots')
+            plots = {
+                f'{kind}_{feature}': results.plot(kind, metric, feature)
+                for feature in column_mapping['features']
+                for kind in ['feature_drift', 'feature_distribution']
+                for metric in calc.metrics  # type: ignore
+            }
+    except Exception as exc:
+        msg = f"Failed to run statistical univariate feature drift calculator: {exc}"
+        if console:
+            console.log(msg, style='red')
+        else:
+            _logger.error(msg)
+        if ignore_errors:
+            return
+        else:
+            sys.exit(1)
+
+    if console:
+        console.log('writing results')
+    writer.write(result=results, plots=plots, calculator_name='distance_drift_calculator')
 
 
 def _run_data_reconstruction_multivariate_feature_drift_calculator(
