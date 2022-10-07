@@ -51,7 +51,7 @@ class Result(AbstractCalculatorResult):
         else:
             data = self.data.loc[self.data['period'] == period, columns]
 
-        data.reset_index(drop=True)
+        data = data.reset_index(drop=True)
 
         return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
