@@ -88,7 +88,7 @@ NannyML can also visualize those results on plots.
 
 .. image:: /_static/drift-guide-gas_price_per_litre.svg
 
-.. _univariate_drift_detection_tenure:
+.. _univariate_distance_drift_detection_tenure:
 .. image:: /_static/drift-guide-tenure.svg
 
 .. image:: /_static/drift-guide-wfh_prev_workday.svg
