@@ -57,7 +57,17 @@ class DistanceDriftCalculator(AbstractCalculator):
 
         Examples
         --------
-        # TODO provide example
+        >>> import nannyml as nml
+        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
+        >>> calc = nml.DistanceDriftCalculator(
+        ...     timestamp_column_name='timestamp',
+        ...     metrics=['jensen_shannon'],
+        ...     feature_column_names=[col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        ... ).fit(reference)
+        >>> res = calc.calculate(analysis)
+        >>> for feature in calc.feature_column_names:
+        ...     for metric in calc.metrics:
+        ...         res.plot(kind='feature_distribution', feature_column_name=feature, metric=metric).show()
         """
         super(DistanceDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+import copy
 from typing import List, Optional, Union
 
 import pandas as pd
@@ -32,12 +33,40 @@ class Result(AbstractCalculatorResult):
         self.calculator = calculator
 
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
-        pass
+        columns = list(self.DEFAULT_COLUMNS)
+
+        if 'features' in kwargs:
+            features = kwargs['features']
+        else:
+            features = self.calculator.feature_column_names
+
+        if metrics is None:
+            _metrics = self.calculator.metrics
+        else:
+            _metrics = [MetricFactory.create(metric, kwargs={'calculator': self.calculator}) for metric in metrics]
+
+        for feature in features:
+            for metric in _metrics:
+                columns += [
+                    f'{feature}_{metric.column_name}',
+                    f'{feature}_{metric.column_name}_alert',
+                    f'{feature}_{metric.column_name}_lower_threshold',
+                    f'{feature}_{metric.column_name}_upper_threshold',
+                ]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def plot(
         self,
         kind: str = 'feature_drift',
-        metric: Union[str, Metric] = None,
+        metric: Union[str, Metric] = 'jensen_shannon',
         feature_column_name: str = None,
         plot_reference: bool = False,
         *args,
@@ -77,7 +106,17 @@ class Result(AbstractCalculatorResult):
 
         Examples
         --------
-        # TODO: add example
+        >>> import nannyml as nml
+        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
+        >>> calc = nml.DistanceDriftCalculator(
+        ...     timestamp_column_name='timestamp',
+        ...     metrics=['jensen_shannon'],
+        ...     feature_column_names=[col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        ... ).fit(reference)
+        >>> res = calc.calculate(analysis)
+        >>> for feature in calc.feature_column_names:
+        ...     for metric in calc.metrics:
+        ...         res.plot(kind='feature_distribution', feature_column_name=feature, metric=metric).show()
 
         """
         if metric is None:

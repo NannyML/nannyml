@@ -49,6 +49,7 @@ from .datasets import (
 from .drift import (
     AlertCountRanking,
     DataReconstructionDriftCalculator,
+    DistanceDriftCalculator,
     Ranker,
     Ranking,
     StatisticalOutputDriftCalculator,
