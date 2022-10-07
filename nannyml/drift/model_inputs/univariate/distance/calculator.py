@@ -8,12 +8,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-import numpy as np
 import pandas as pd
-from scipy.spatial import distance
 
-from nannyml.base import AbstractCalculator, _column_is_continuous, _list_missing
+from nannyml.base import AbstractCalculator, _list_missing
 from nannyml.chunk import Chunker
+from nannyml.drift.model_inputs.univariate.distance.metrics import Metric, MetricFactory
 from nannyml.drift.model_inputs.univariate.distance.results import Result
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -26,7 +25,8 @@ class DistanceDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         feature_column_names: List[str],
-        timestamp_column_name: str,
+        metrics: List[str],
+        timestamp_column_name: Optional[str],
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -39,6 +39,8 @@ class DistanceDriftCalculator(AbstractCalculator):
         feature_column_names: List[str]
             A list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
+        metrics: List[str]
+            A list of metrics to calculate. Must be one of: `jensen_shannon`.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
         chunk_size: int
@@ -62,6 +64,8 @@ class DistanceDriftCalculator(AbstractCalculator):
         )
 
         self.feature_column_names = feature_column_names
+
+        self.metrics: List[Metric] = [MetricFactory.create(m, {'calculator': self}) for m in metrics]  # type: ignore
 
         # required for distribution plots
         self.previous_reference_results: Optional[pd.DataFrame] = None
@@ -101,22 +105,15 @@ class DistanceDriftCalculator(AbstractCalculator):
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
             }
-
             for feature in self.feature_column_names:
-                ref_binned_data, ana_binned_data = get_binned_data(
-                    self.previous_reference_data[feature], chunk.data[feature]
-                )
-                dis = distance.jensenshannon(ref_binned_data, ana_binned_data)
-                pd.concat(
-                    [
-                        self.previous_reference_data[feature].value_counts(),  # type: ignore
-                        chunk.data[feature].value_counts(),
-                    ],
-                    axis=1,
-                ).fillna(0)
-                chunk_drift[f'{feature}_jensen_shannon'] = dis
-                chunk_drift[f'{feature}_alert'] = dis > ALERT_THRESHOLD_DISTANCE
-                chunk_drift[f'{feature}_threshold'] = ALERT_THRESHOLD_DISTANCE
+                for metric in self.metrics:
+                    distance = metric.calculate(chunk.data, feature)
+                    chunk_drift[f'{feature}_{metric.column_name}'] = distance
+                    chunk_drift[f'{feature}_{metric.column_name}_alert'] = (
+                        metric.lower_threshold is not None and distance < metric.lower_threshold
+                    ) or (metric.upper_threshold is not None and distance > metric.upper_threshold)
+                    chunk_drift[f'{feature}_{metric.column_name}_upper_threshold'] = metric.upper_threshold
+                    chunk_drift[f'{feature}_{metric.column_name}_lower_threshold'] = metric.lower_threshold
 
             chunk_drifts.append(chunk_drift)
 
@@ -132,28 +129,3 @@ class DistanceDriftCalculator(AbstractCalculator):
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
-
-
-def get_binned_data(reference_feature: pd.Series, analysis_feature: pd.Series):
-    """Split variable into n buckets based on reference quantiles
-    Args:
-        reference_feature: reference data
-        analysis_feature: analysis data
-    Returns:
-        ref_binned_pdf: probability estimate in each bucket for reference
-        curr_binned_pdf: probability estimate in each bucket for reference
-    """
-    n_vals = reference_feature.nunique()
-    if _column_is_continuous(reference_feature) and n_vals > 20:
-        bins = np.histogram_bin_edges(list(reference_feature) + list(analysis_feature), bins="sturges")
-        refq = pd.cut(reference_feature, bins=bins)
-        anaq = pd.cut(analysis_feature, bins=bins)
-        ref_binned_pdf = list(refq.value_counts(sort=False) / len(reference_feature))
-        ana_binned_pdf = list(anaq.value_counts(sort=False) / len(analysis_feature))
-
-    else:
-        keys = list((set(reference_feature.unique()) | set(analysis_feature.unique())) - {np.nan})
-        ref_binned_pdf = [(reference_feature == i).sum() / len(reference_feature) for i in keys]
-        ana_binned_pdf = [(analysis_feature == i).sum() / len(analysis_feature) for i in keys]
-
-    return ref_binned_pdf, ana_binned_pdf

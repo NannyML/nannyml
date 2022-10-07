@@ -3,13 +3,14 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
-from typing import List
+from typing import List, Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult
 from nannyml.chunk import Chunk
+from nannyml.drift.model_inputs.univariate.distance.metrics import Metric, MetricFactory
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
@@ -35,13 +36,13 @@ class Result(AbstractCalculatorResult):
 
     def plot(
         self,
-        metric: str = 'jensen_shannon',
         kind: str = 'feature_drift',
+        metric: Union[str, Metric] = None,
         feature_column_name: str = None,
         plot_reference: bool = False,
         *args,
         **kwargs,
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the univariate distance drift calculator.
 
         For any feature you can render the statistic value or p-values as a step plot, or create a distribution plot.
@@ -62,7 +63,7 @@ class Result(AbstractCalculatorResult):
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
         metric: str
-            The name of the metric to plot. Allowed values are 'jensen_shannon'.
+            The name of the metric to plot. Allowed values are [`jensen_shannon`].
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
@@ -80,6 +81,10 @@ class Result(AbstractCalculatorResult):
 
         """
         if kind == 'feature_drift':
+            if metric is None:
+                raise InvalidArgumentsException(
+                    "no value for 'metric' given. Please provide the name of a metric to display."
+                )
             if feature_column_name is None:
                 raise InvalidArgumentsException(
                     "must specify a feature to plot " "using the 'feature_column_name' parameter"
@@ -121,12 +126,15 @@ class Result(AbstractCalculatorResult):
 
     def plot_feature_drift(
         self,
-        metric: str,
+        metric: Union[str, Metric],
         feature: str,
         plot_reference: bool = False,
     ) -> go.Figure:
         """Renders a line plot for a chosen metric of univariate statistical feature drift calculation results."""
         result_data = self.data.copy()
+
+        if isinstance(metric, str):
+            metric = MetricFactory.create(key=metric, kwargs={'calculator': self.calculator})
 
         if not plot_reference:
             result_data = result_data[result_data['period'] == 'analysis']
@@ -135,15 +143,16 @@ class Result(AbstractCalculatorResult):
 
         fig = _step_plot(
             table=result_data,
-            metric_column_name=f'{feature}_{metric}',
+            metric_column_name=f'{feature}_{metric.column_name}',
             chunk_column_name='key',
             start_date_column_name='start_date' if is_time_based_x_axis else None,
             end_date_column_name='end_date' if is_time_based_x_axis else None,
-            drift_column_name=f'{feature}_alert',
-            lower_threshold_column_name=f'{feature}_threshold',
-            hover_labels=['Chunk', f'{metric}', 'Target data'],
-            title=f'{metric} distance for {feature}',
-            y_axis_title=f'{metric}',
+            drift_column_name=f'{feature}_{metric.column_name}_alert',
+            lower_threshold_column_name=f'{feature}_{metric.column_name}_lower_threshold',
+            upper_threshold_column_name=f'{feature}_{metric.column_name}_upper_threshold',
+            hover_labels=['Chunk', f'{metric.display_name}', 'Target data'],
+            title=f'{metric.display_name} distance for {feature}',
+            y_axis_title=f'{metric.display_name}',
             v_line_separating_analysis_period=plot_reference,
         )
         return fig
