@@ -5,11 +5,14 @@
 
 """NannyML module providing intelligent splitting of data into chunks."""
 
+from __future__ import annotations
+
 import abc
+import copy
 import logging
 import warnings
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -28,8 +31,10 @@ class Chunk:
         self,
         key: str,
         data: pd.DataFrame,
-        start_datetime: datetime = datetime.max,
-        end_datetime: datetime = datetime.max,
+        start_datetime: Optional[datetime] = None,
+        end_datetime: Optional[datetime] = None,
+        start_index: int = -1,
+        end_index: int = -1,
         period: str = None,
     ):
         """Creates a new chunk.
@@ -55,8 +60,9 @@ class Chunk:
 
         self.start_datetime = start_datetime
         self.end_datetime = end_datetime
-        self.start_index: int = 0
-        self.end_index: int = 0
+        self.start_index: int = start_index
+        self.end_index: int = end_index
+        self.chunk_index: int = -1
 
     def __repr__(self):
         """Returns textual summary of a chunk.
@@ -84,6 +90,25 @@ class Chunk:
         """
         return self.data.shape[0]
 
+    def __lt__(self, other: Chunk):
+        if self.start_datetime and self.end_datetime and other.start_datetime and other.end_datetime:
+            return self.end_datetime < other.start_datetime
+        else:
+            return self.end_index < other.start_index
+
+    def merge(self, other: Chunk):
+        """Merge two chunks together into a single one"""
+        if self < other:
+            first, second = self, other
+        else:
+            first, second = other, self
+
+        result = copy.deepcopy(first)
+        result.data = pd.concat([first.data, second.data])
+        result.end_datetime = second.end_datetime
+        result.key = f'[{first.start_index}:{second.end_index}]'
+        return result
+
 
 def _get_boundary_indices(c: Chunk):
     return c.data.index.min(), c.data.index.max()
@@ -97,16 +122,14 @@ class Chunker(abc.ABC):
     or a preferred number of Chunks.
     """
 
-    def __init__(self):
+    def __init__(self, timestamp_column_name: Optional[str] = None):
         """Creates a new Chunker."""
-        pass
+        self.timestamp_column_name = timestamp_column_name
 
     def split(
         self,
         data: pd.DataFrame,
-        timestamp_column_name: str,
         columns=None,
-        minimum_chunk_size: int = None,
     ) -> List[Chunk]:
         """Splits a given data frame into a list of chunks.
 
@@ -124,16 +147,8 @@ class Chunker(abc.ABC):
         ----------
         data: DataFrame
             The data to be split into chunks
-        timestamp_column_name: str
-            Name of the column containing the timestamp of an observation.
-        period_column_name: str
-            Name of the column containing the period of an observation, if any.
         columns: List[str], default=None
             A list of columns to be included in the resulting chunk data. Unlisted columns will be dropped.
-        minimum_chunk_size: int, default=None
-            The recommended minimum number of observations a :class:`~nannyml.chunk.Chunk` should hold.
-            When specified a warning will appear if the split results in underpopulated chunks.
-            When not specified there will be no checks for underpopulated chunks.
 
         Returns
         -------
@@ -141,23 +156,25 @@ class Chunker(abc.ABC):
             The list of chunks
 
         """
-        if timestamp_column_name not in data.columns:
-            raise InvalidArgumentsException(
-                f"timestamp column '{timestamp_column_name}' not in columns: {list(data.columns)}."
-            )
+        if self.timestamp_column_name:
+            if self.timestamp_column_name not in data.columns:
+                raise InvalidArgumentsException(
+                    f"timestamp column '{self.timestamp_column_name}' not in columns: {list(data.columns)}."
+                )
 
-        data = data.sort_values(by=[timestamp_column_name]).reset_index(drop=True)
+            data = data.sort_values(by=[self.timestamp_column_name]).reset_index(drop=True)
 
         try:
-            chunks = self._split(data, timestamp_column_name, minimum_chunk_size)
+            chunks = self._split(data)
         except Exception as exc:
             raise ChunkerException(f"could not split data into chunks: {exc}")
 
-        for c in chunks:
-            c.start_index, c.end_index = _get_boundary_indices(c)
+        for chunk_index, chunk in enumerate(chunks):
+            chunk.start_index, chunk.end_index = _get_boundary_indices(chunk)
+            chunk.chunk_index = chunk_index
 
             if columns is not None:
-                c.data = c.data[columns]
+                chunk.data = chunk.data[columns]
 
         if len(chunks) < 6:
             # TODO wording
@@ -166,24 +183,11 @@ class Chunker(abc.ABC):
                 'Please consider splitting your data in a different way or continue at your own risk.'
             )
 
-        # check if all chunk sizes > minimal chunk size. If not, render a warning message.
-        if minimum_chunk_size:
-            underpopulated_chunks = [c for c in chunks if len(c) < minimum_chunk_size]
-
-            if len(underpopulated_chunks) > 0:
-                # TODO wording
-                warnings.warn(
-                    f'The resulting list of chunks contains {len(underpopulated_chunks)} underpopulated chunks. '
-                    'They contain too few records to be statistically robust and might negatively influence '
-                    'the quality of calculations. '
-                    'Please consider splitting your data in a different way or continue at your own risk.'
-                )
-
         return chunks
 
     # TODO wording
     @abc.abstractmethod
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame) -> List[Chunk]:
         """Splits the DataFrame into chunks.
 
         Abstract method, to be implemented within inheriting classes.
@@ -192,8 +196,6 @@ class Chunker(abc.ABC):
         ----------
         data: pandas.DataFrame
             The full dataset that should be split into Chunks
-        minimum_chunk_size: int, default=None
-            The recommended minimum number of observations a :class:`~nannyml.chunk.Chunk` should hold.
 
         Returns
         -------
@@ -224,17 +226,20 @@ class ChunkerFactory:
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
+        timestamp_column_name: str = None,
     ) -> Chunker:
         if chunker is not None:
             return chunker
         if chunk_size:
-            return SizeBasedChunker(chunk_size=chunk_size)  # type: ignore
+            return SizeBasedChunker(chunk_size=chunk_size, timestamp_column_name=timestamp_column_name)  # type: ignore
         elif chunk_number:
-            return CountBasedChunker(chunk_count=chunk_number)  # type: ignore
+            return CountBasedChunker(
+                chunk_number=chunk_number, timestamp_column_name=timestamp_column_name  # type: ignore
+            )
         elif chunk_period:
-            return PeriodBasedChunker(offset=chunk_period)  # type: ignore
+            return PeriodBasedChunker(offset=chunk_period, timestamp_column_name=timestamp_column_name)  # type: ignore
         else:
-            return DefaultChunker()  # type: ignore
+            return DefaultChunker(timestamp_column_name=timestamp_column_name)  # type: ignore
 
 
 class PeriodBasedChunker(Chunker):
@@ -246,20 +251,21 @@ class PeriodBasedChunker(Chunker):
 
     >>> from nannyml.chunk import PeriodBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = PeriodBasedChunker(date_column_name='observation_date', offset='M')
+    >>> chunker = PeriodBasedChunker(timestamp_column_name='observation_date', offset='M')
     >>> chunks = chunker.split(data=df)
 
     Or chunk using weekly periods
 
     >>> from nannyml.chunk import PeriodBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = PeriodBasedChunker(date_column=df['observation_date'], offset='W', minimum_chunk_size=50)
+    >>> chunker = PeriodBasedChunker(timestamp_column_name=df['observation_date'], offset='W', minimum_chunk_size=50)
     >>> chunks = chunker.split(data=df)
 
     """
 
     def __init__(
         self,
+        timestamp_column_name: str,
         offset: str = 'W',
     ):
         """Creates a new PeriodBasedChunker.
@@ -274,14 +280,14 @@ class PeriodBasedChunker(Chunker):
         -------
         chunker: a PeriodBasedChunker instance used to split data into time-based Chunks.
         """
-        super().__init__()
+        super().__init__(timestamp_column_name)
 
         self.offset = offset
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame) -> List[Chunk]:
         chunks = []
         try:
-            grouped_data = data.groupby(pd.to_datetime(data[timestamp_column_name]).dt.to_period(self.offset))
+            grouped_data = data.groupby(pd.to_datetime(data[self.timestamp_column_name]).dt.to_period(self.offset))
 
             k: Period
             for k in grouped_data.groups.keys():
@@ -290,11 +296,11 @@ class PeriodBasedChunker(Chunker):
                 )
                 chunks.append(chunk)
         except KeyError:
-            raise ChunkerException(f"could not find date_column '{timestamp_column_name}' in given data")
+            raise ChunkerException(f"could not find date_column '{self.timestamp_column_name}' in given data")
 
         except ParserError:
             raise ChunkerException(
-                f"could not parse date_column '{timestamp_column_name}' values as dates."
+                f"could not parse date_column '{self.timestamp_column_name}' values as dates."
                 f"Please verify if you've specified the correct date column."
             )
 
@@ -316,28 +322,36 @@ class SizeBasedChunker(Chunker):
 
     >>> from nannyml.chunk import SizeBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = SizeBasedChunker(chunk_size=2000, minimum_chunk_size=50)
+    >>> chunker = SizeBasedChunker(chunk_size=2000, drop_incomplete = True)
     >>> chunks = chunker.split(data=df)
 
     """
 
-    def __init__(self, chunk_size: int, drop_incomplete: bool = False):
+    def __init__(self, chunk_size: int, incomplete: str = 'append', timestamp_column_name: Optional[str] = None):
         """Create a new SizeBasedChunker.
 
         Parameters
         ----------
         chunk_size: int
             The preferred size of the resulting Chunks, i.e. the number of observations in each Chunk.
-        drop_incomplete: bool, default=False
-            Indicates whether the final Chunk after splitting should be dropped if it doesn't contain
-            ``chunk_size`` observations. Defaults to ``False``, i.e. the final chunk will always be kept.
+        incomplete: str, default='append'
+            Choose how to handle any leftover observations that don't make up a full Chunk.
+            The following options are available:
+
+            - ``'drop'``: drop the leftover observations
+
+            - ``'keep'``: keep the incomplete Chunk (containing less than ``chunk_size`` observations)
+
+            - ``'append'``: append leftover observations to the last complete Chunk (overfilling it)
+
+            Defaults to ``'append'``.
 
         Returns
         -------
         chunker: a size-based instance used to split data into Chunks of a constant size.
 
         """
-        super().__init__()
+        super().__init__(timestamp_column_name)
 
         # TODO wording
         if not isinstance(chunk_size, (int, np.int64)):
@@ -354,19 +368,21 @@ class SizeBasedChunker(Chunker):
             )
 
         self.chunk_size = chunk_size
-        self.drop_incomplete = drop_incomplete
+        self.incomplete = incomplete
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
             chunk_data = data.loc[index : index + chunk_size - 1, :]
-            min_date = pd.to_datetime(chunk_data[timestamp_column_name].min())
-            max_date = pd.to_datetime(chunk_data[timestamp_column_name].max())
-            return Chunk(
+            chunk = Chunk(
                 key=f'[{index}:{index + chunk_size - 1}]',
                 data=chunk_data,
-                start_datetime=min_date,
-                end_datetime=max_date,
+                start_index=index,
+                end_index=index + chunk_size - 1,
             )
+            if self.timestamp_column_name:
+                chunk.start_datetime = pd.to_datetime(chunk.data[self.timestamp_column_name].min())
+                chunk.end_datetime = pd.to_datetime(chunk.data[self.timestamp_column_name].max())
+            return chunk
 
         data = data.copy().reset_index(drop=True)
         chunks = [
@@ -375,14 +391,24 @@ class SizeBasedChunker(Chunker):
             if i + self.chunk_size - 1 < len(data)
         ]
 
-        if not self.drop_incomplete and (data.shape[0] % self.chunk_size != 0):
-            chunks += [
-                _create_chunk(
-                    index=self.chunk_size * (data.shape[0] // self.chunk_size),
-                    data=data,
-                    chunk_size=(data.shape[0] % self.chunk_size),
+        # deal with unassigned observations
+        if data.shape[0] % self.chunk_size != 0:
+            incomplete_chunk = _create_chunk(
+                index=self.chunk_size * (data.shape[0] // self.chunk_size),
+                data=data,
+                chunk_size=(data.shape[0] % self.chunk_size),
+            )
+            if self.incomplete == 'keep':
+                chunks += [incomplete_chunk]
+            elif self.incomplete == 'append':
+                chunks[-1] = chunks[-1].merge(incomplete_chunk)
+            elif self.incomplete == 'drop':
+                pass
+            else:
+                raise InvalidArgumentsException(
+                    f"unknown value '{self.incomplete}' for 'incomplete'. "
+                    f"Value should be one of ['drop', 'keep', 'append']"
                 )
-            ]
 
         return chunks
 
@@ -394,12 +420,12 @@ class CountBasedChunker(Chunker):
     --------
     >>> from nannyml.chunk import CountBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = CountBasedChunker(chunk_count=100, minimum_chunk_size=50)
+    >>> chunker = CountBasedChunker(chunk_count=100)
     >>> chunks = chunker.split(data=df)
 
     """
 
-    def __init__(self, chunk_count: int):
+    def __init__(self, chunk_number: int, incomplete: str = 'append', timestamp_column_name: Optional[str] = None):
         """Creates a new CountBasedChunker.
 
         It will calculate the amount of observations per chunk based on the given chunk count.
@@ -407,42 +433,56 @@ class CountBasedChunker(Chunker):
 
         Parameters
         ----------
-        chunk_count: int
+        chunk_number: int
             The amount of chunks to split the data in.
+                incomplete: str, default='append'
+        incomplete: str, default='append'
+            Choose how to handle any leftover observations that don't make up a full Chunk.
+            The following options are available:
+
+            - ``'drop'``: drop the leftover observations
+
+            - ``'keep'``: keep the incomplete Chunk (containing less than ``chunk_size`` observations)
+
+            - ``'append'``: append leftover observations to the last complete Chunk (overfilling it)
+
+            Defaults to ``'append'``.
 
         Returns
         -------
         chunker: CountBasedChunker
 
         """
-        super().__init__()
+        super().__init__(timestamp_column_name)
+        self.incomplete = incomplete
 
         # TODO wording
-        if not isinstance(chunk_count, int):
+        if not isinstance(chunk_number, int):
             raise InvalidArgumentsException(
-                f"given chunk_count is of type {type(chunk_count)} but should be an int."
+                f"given chunk_count is of type {type(chunk_number)} but should be an int."
                 f"Please provide an integer as a chunk count"
             )
 
         # TODO wording
-        if chunk_count <= 0:
+        if chunk_number <= 0:
             raise InvalidArgumentsException(
-                f"given chunk_count {chunk_count} is less then or equal to zero."
+                f"given chunk_count {chunk_number} is less then or equal to zero."
                 f"The chunk count should always be larger then zero"
             )
 
-        self.chunk_count = chunk_count
+        self.chunk_number = chunk_number
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
         data = data.copy().reset_index()
 
-        chunk_size = data.shape[0] // self.chunk_count
-        chunks = SizeBasedChunker(chunk_size=chunk_size).split(
-            data=data, timestamp_column_name=timestamp_column_name, minimum_chunk_size=minimum_chunk_size
-        )
+        chunk_size = data.shape[0] // self.chunk_number
+        chunks = SizeBasedChunker(
+            chunk_size=chunk_size, incomplete=self.incomplete, timestamp_column_name=self.timestamp_column_name
+        ).split(data=data)
+
         return chunks
 
 
@@ -453,26 +493,24 @@ class DefaultChunker(Chunker):
     --------
     >>> from nannyml.chunk import DefaultChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = DefaultChunker(minimum_chunk_size=50)
+    >>> chunker = DefaultChunker()
     >>> chunks = chunker.split(data=df)
     """
 
     DEFAULT_CHUNK_COUNT = 10
 
-    def __init__(self):
+    def __init__(self, timestamp_column_name: Optional[str] = None):
         """Creates a new DefaultChunker."""
-        super(DefaultChunker, self).__init__()
+        super(DefaultChunker, self).__init__(timestamp_column_name)
 
-    def _split(self, data: pd.DataFrame, timestamp_column_name: str, minimum_chunk_size: int = None) -> List[Chunk]:
+    def _split(self, data: pd.DataFrame) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
 
         data = data.copy().reset_index(drop=True)
 
         chunk_size = data.shape[0] // self.DEFAULT_CHUNK_COUNT
-        chunks = SizeBasedChunker(chunk_size=chunk_size).split(
-            data=data,
-            timestamp_column_name=timestamp_column_name,
-            minimum_chunk_size=minimum_chunk_size,
+        chunks = SizeBasedChunker(chunk_size=chunk_size, timestamp_column_name=self.timestamp_column_name).split(
+            data=data
         )
         return chunks

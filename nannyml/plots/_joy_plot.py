@@ -65,8 +65,12 @@ def _create_kde_table(
     post_kde_clip=None,
 ):
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
+    group_by_cols = [chunk_column_name]
+    if 'period' in feature_table.columns:
+        group_by_cols += ['period']
     data = (
-        feature_table.groupby(chunk_column_name)[feature_column_name]
+        #  group by period too, 'key' column can be there for both reference and analysis
+        feature_table.groupby(group_by_cols)[feature_column_name]
         .apply(get_kde_partial_application)
         .to_frame('kde')
         .reset_index()
@@ -113,14 +117,13 @@ def _create_joy_table(
     drift_table,
     kde_table,
     feature_column_name,
-    chunk_column_name='chunk',
-    chunk_type_column_name='chunk_type',
-    end_date_column_name='end_date',
-    drift_column_name='drift',
-    chunk_types=None,
+    chunk_column_name,
+    chunk_type_column_name,
+    end_date_column_name,
+    chunk_index_column_name,
+    drift_column_name,
+    chunk_types,
 ):
-    if chunk_types is None:
-        chunk_types = ['reference', 'analysis']
 
     joy_table = pd.merge(drift_table, kde_table)
 
@@ -132,7 +135,10 @@ def _create_joy_table(
         joy_table.loc[joy_table[drift_column_name], 'hue'] = -1
 
     # Sort to make sure most current chunks are plotted in front of the others
-    joy_table = joy_table.sort_values(end_date_column_name, ascending=True).reset_index(drop=True)
+    if end_date_column_name:
+        joy_table = joy_table.sort_values(end_date_column_name, ascending=True).reset_index(drop=True)
+    else:
+        joy_table = joy_table.sort_values(chunk_index_column_name, ascending=True).reset_index(drop=True)
 
     return joy_table
 
@@ -142,6 +148,7 @@ def _create_joy_plot(
     chunk_column_name,
     start_date_column_name,
     end_date_column_name,
+    chunk_index_column_name,
     chunk_type_column_name,
     drift_column_name,
     chunk_types,
@@ -174,10 +181,20 @@ def _create_joy_plot(
     if colors is None:
         colors = [Colors.BLUE_SKY_CRAYOLA, Colors.INDIGO_PERSIAN, Colors.GRAY_DARK, Colors.RED_IMPERIAL]
 
+    is_time_based_x_axis = start_date_column_name and end_date_column_name
+    offset = (
+        joy_table.loc[joy_table['period'] == 'reference', 'chunk_index'].max() + 1
+        if len(joy_table.loc[joy_table['period'] == 'reference']) > 0
+        else 0
+    )
+    joy_table['chunk_index_unified'] = [
+        idx + offset if period == 'analysis' else idx
+        for idx, period in zip(joy_table['chunk_index'], joy_table['period'])
+    ]
+
     colors_transparent = [
         'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha)) for color in colors
     ]
-    hover_template = chunk_hover_label + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}, %{customdata[3]}'
 
     layout = go.Layout(
         title=title,
@@ -210,8 +227,16 @@ def _create_joy_plot(
         fig = go.Figure(layout=layout)
 
     for i, row in joy_table.iterrows():
-        y_date_position = row[start_date_column_name]
-        y_date_height_scaler = row[start_date_column_name] - row[end_date_column_name]
+        start_date_label_hover, end_date_label_hover = '', ''
+        if is_time_based_x_axis:
+            y_date_position = row[start_date_column_name]
+            y_date_height_scaler = row[start_date_column_name] - row[end_date_column_name]
+            start_date_label_hover = row[start_date_column_name].strftime(date_label_hover_format)
+            end_date_label_hover = row[end_date_column_name].strftime(date_label_hover_format)
+        else:
+            y_date_position = row['chunk_index_unified']
+            y_date_height_scaler = -1
+
         kde_support = row['kde_support']
         kde_density_scaled = row['kde_density_scaled'] * joy_overlap
         kde_quartiles = [(q[0], q[1] * joy_overlap) for q in row['kde_quartiles_scaled']]
@@ -219,9 +244,6 @@ def _create_joy_plot(
         color_drift = colors[row['hue']]
         color_fill = colors_transparent[row['hue']]
         trace_name = hue_joy_hover_labels[row['hue']]
-
-        start_date_label_hover = row[start_date_column_name].strftime(date_label_hover_format)
-        end_date_label_hover = row[end_date_column_name].strftime(date_label_hover_format)
 
         # ____Plot elements___#
         fig.add_trace(
@@ -252,12 +274,27 @@ def _create_joy_plot(
         if quartiles_legend_label:
             for kde_quartile in kde_quartiles:
 
-                hover_content = (
-                    row[chunk_column_name],
-                    start_date_label_hover,
-                    end_date_label_hover,
-                    np.round(kde_quartile[0], 3),
-                )
+                if is_time_based_x_axis:
+                    hover_content = (
+                        row[chunk_column_name],
+                        start_date_label_hover,
+                        end_date_label_hover,
+                        np.round(kde_quartile[0], 3),
+                    )
+                    hover_template = (
+                        chunk_hover_label
+                        + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}, <b>%{customdata[3]}</b>'
+                    )
+                else:
+                    hover_content = (
+                        row[chunk_column_name],
+                        row['chunk_index_unified'],
+                        np.round(kde_quartile[0], 3),
+                    )
+                    hover_template = (
+                        chunk_hover_label
+                        + ' %{customdata[0]}: chunk index <b>%{customdata[1]}</b>, <b>%{customdata[2]}</b>'
+                    )
 
                 hover_data = np.asarray([hover_content, hover_content])
 
@@ -279,8 +316,12 @@ def _create_joy_plot(
                 )
 
     # ____Add elements to legend___#
-    x = [np.nan] * len(joy_table) if style == 'horizontal' else joy_table[end_date_column_name]
-    y = joy_table[end_date_column_name] if style == 'horizontal' else [np.nan] * len(joy_table)
+    if is_time_based_x_axis:
+        x = [np.nan] * len(joy_table) if style == 'horizontal' else joy_table[end_date_column_name]
+        y = joy_table[end_date_column_name] if style == 'horizontal' else [np.nan] * len(joy_table)
+    else:
+        x = [np.nan] * len(joy_table) if style == 'horizontal' else joy_table['chunk_index_unified']
+        y = joy_table['chunk_index_unified'] if style == 'horizontal' else [np.nan] * len(joy_table)
 
     # Add joy coloring
     for i, hue_label in enumerate(hue_legend_labels):
@@ -324,8 +365,9 @@ def _joy_plot(
     feature_table,
     feature_column_name,
     chunk_column_name='chunk',
-    start_date_column_name='start_date',
-    end_date_column_name='end_date',
+    start_date_column_name: str = None,
+    end_date_column_name: str = None,
+    chunk_index_column_name='chunk_index',
     chunk_type_column_name='period',
     drift_column_name='drift',
     chunk_types=None,
@@ -337,10 +379,10 @@ def _joy_plot(
     joy_hover_format='{0:.2f}',
     joy_overlap=1,
     figure=None,
-    title='Feature: distribution over time',
+    title=None,
     x_axis_title='Feature',
     x_axis_lim=None,
-    y_axis_title='Time',
+    y_axis_title=None,
     alpha=0.2,
     colors=None,
     kde_cut=3,
@@ -364,6 +406,16 @@ def _joy_plot(
     if colors is None:
         colors = [Colors.BLUE_SKY_CRAYOLA, Colors.INDIGO_PERSIAN, Colors.GRAY_DARK, Colors.RED_IMPERIAL]
 
+    is_time_based_x_axis = start_date_column_name and end_date_column_name
+
+    if not x_axis_title:
+        x_axis_title = (
+            'Feature distribution over time' if is_time_based_x_axis else 'Feature distribution across chunks'
+        )
+
+    if not y_axis_title:
+        y_axis_title = 'Time' if is_time_based_x_axis else 'Chunk index'
+
     kde_table = _create_kde_table(
         feature_table, feature_column_name, chunk_column_name, kde_cut, kde_clip, post_kde_clip
     )
@@ -375,6 +427,7 @@ def _joy_plot(
         chunk_column_name,
         chunk_type_column_name,
         end_date_column_name,
+        chunk_index_column_name,
         drift_column_name,
         chunk_types,
     )
@@ -384,6 +437,7 @@ def _joy_plot(
         chunk_column_name,
         start_date_column_name,
         end_date_column_name,
+        chunk_index_column_name,
         chunk_type_column_name,
         drift_column_name,
         chunk_types,

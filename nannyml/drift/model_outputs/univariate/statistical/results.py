@@ -3,12 +3,15 @@
 #  License: Apache Software License 2.0
 
 """Module containing univariate statistical drift calculation results and associated plotting implementations."""
+from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+import copy
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult, _column_is_categorical, _column_is_continuous
 from nannyml.chunk import Chunk
 from nannyml.exceptions import InvalidArgumentsException
@@ -20,8 +23,11 @@ from nannyml.plots._step_plot import _step_plot
 """Contains the results of the model output statistical drift calculation and provides plotting functionality."""
 
 
-class UnivariateDriftResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the model output statistical drift calculation and provides plotting functionality."""
+
+    metric_to_col_suffix = {'KS': '_dstat', 'Chi2': '_chi2'}
+    col_suffix_to_metric = {v: k for k, v in metric_to_col_suffix.items()}
 
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         super().__init__(results_data)
@@ -34,9 +40,45 @@ class UnivariateDriftResult(AbstractCalculatorResult):
             )
         self.calculator = calculator
 
-    @property
-    def calculator_name(self) -> str:
-        return 'univariate_statistical_output_drift'
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = list(self.DEFAULT_COLUMNS)
+
+        outputs = []
+        if 'outputs' in kwargs:
+            outputs = kwargs['outputs']
+        else:
+            if self.calculator.problem_type is ProblemType.REGRESSION:
+                outputs = [self.calculator.y_pred]
+            elif self.calculator.problem_type is ProblemType.CLASSIFICATION_BINARY:
+                outputs = [self.calculator.y_pred, self.calculator.y_pred_proba]
+            elif self.calculator.problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
+                outputs = [self.calculator.y_pred] + [
+                    col for col in self.calculator.y_pred_proba.values()  # type: ignore
+                ]
+
+        if self.calculator.problem_type is ProblemType.REGRESSION:
+            columns += [f'{self.calculator.y_pred}{self.metric_to_col_suffix["KS"]}']
+        elif self.calculator.problem_type is ProblemType.CLASSIFICATION_BINARY:
+            columns += [
+                f'{self.calculator.y_pred}{self.metric_to_col_suffix["Chi2"]}',
+                f'{self.calculator.y_pred_proba}{self.metric_to_col_suffix["KS"]}',
+            ]
+        elif self.calculator.problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
+            columns += [f'{self.calculator.y_pred}{self.metric_to_col_suffix["Chi2"]}'] + [
+                f'{col}{self.metric_to_col_suffix["KS"]}'
+                for col in self.calculator.y_pred_proba.values()  # type: ignore
+            ]
+
+        columns += [f'{output}_alert' for output in outputs]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def plot(
         self,
@@ -46,7 +88,7 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         plot_reference: bool = False,
         *args,
         **kwargs,
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the univariate statistical drift calculator.
 
         For both model predictions and outputs you can render the statistic value or p-values as a step plot,
@@ -55,21 +97,21 @@ class UnivariateDriftResult(AbstractCalculatorResult):
 
         Select a plot using the ``kind`` parameter:
 
-        - ``predicted_labels_drift``
-                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
-        - ``predicted_labels_distribution``
-                plots the distribution per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
         - ``prediction_drift``
-                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model outputs ``y_pred_proba``.
+                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
         - ``prediction_distribution``
+                plots the distribution per :class:`~nannyml.chunk.Chunk` for the model predictions ``y_pred``.
+        - ``score_drift``
+                plots the drift metric per :class:`~nannyml.chunk.Chunk` for the model outputs ``y_pred_proba``.
+        - ``score_distribution``
                 plots the distribution per per :class:`~nannyml.chunk.Chunk` for the model outputs ``y_pred_proba``
 
 
         Parameters
         ----------
-        kind: str, default=`predicted_labels_drift`
-            The kind of plot you want to have. Allowed values are ``predicted_labels_drift``,
-            ``predicted_labels_distribution``, ``prediction_drift`` and ``prediction_distribution``.
+        kind: str, default=`prediction_drift`
+            The kind of plot you want to have. Allowed values are ``prediction_drift``,
+            ``prediction_distribution``, ``score_drift`` and ``score_distribution``.
         metric : str, default=``statistic``
             The metric to plot. Allowed values are ``statistic`` and ``p_value``.
             Not applicable when plotting distributions.
@@ -116,13 +158,13 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         8  [40000:44999]        40000  ...                True                   0.05
         9  [45000:49999]        45000  ...                True                   0.05
         >>>
-        >>> results.plot(kind='predicted_labels_drift', metric='p_value', plot_reference=True).show()
-        >>> results.plot(kind='predicted_labels_distribution', plot_reference=True).show()
+        >>> results.plot(kind='score_drift', plot_reference=True).show()
+        >>> results.plot(kind='score_distribution', plot_reference=True).show()
         >>> results.plot(kind='prediction_drift', plot_reference=True).show()
         >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
 
         """
-        if kind == 'predicted_labels_drift':
+        if kind == 'prediction_drift':
             return _plot_prediction_drift(
                 self.data,
                 self.calculator,
@@ -130,17 +172,17 @@ class UnivariateDriftResult(AbstractCalculatorResult):
                 plot_reference,
                 metric,
             )
-        elif kind == 'predicted_labels_distribution':
+        elif kind == 'prediction_distribution':
             return _plot_prediction_distribution(
                 data=self.calculator.previous_analysis_data,
                 drift_data=self.data,
                 calculator=self.calculator,
                 plot_reference=plot_reference,
             )
-        elif kind == 'prediction_drift':
-            return _plot_output_drift(self.data, self.calculator, plot_reference, metric, class_label)
-        elif kind == 'prediction_distribution':
-            return _plot_output_distribution(
+        elif kind == 'score_drift':
+            return _plot_score_drift(self.data, self.calculator, plot_reference, metric, class_label)
+        elif kind == 'score_distribution':
+            return _plot_score_distribution(
                 data=self.calculator.previous_analysis_data,
                 drift_data=self.data,
                 calculator=self.calculator,
@@ -150,49 +192,9 @@ class UnivariateDriftResult(AbstractCalculatorResult):
         else:
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. "
-                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'predicted_labels_drift',"
-                "'predicted_labels_distribution']."
+                "Please provide on of: ['prediction_drift', 'prediction_distribution', 'score_drift',"
+                "'score_distribution']."
             )
-
-    # @property
-    # def plots(self) -> Dict[str, go.Figure]:
-    #     plots: Dict[str, go.Figure] = {}
-    #
-    #     if isinstance(self.metadata, BinaryClassificationMetadata):
-    #         prediction_column_name = self.metadata.predicted_probability_column_name
-    #         plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'statistic'
-    #         )
-    #         plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'p_value'
-    #         )
-    #         plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #             data=self._analysis_data, drift_data=self.data, metadata=self.metadata
-    #         )
-    #     elif isinstance(self.metadata, MulticlassClassificationMetadata):
-    #         for class_label, prediction_column_name in self.metadata.predicted_probabilities_column_names.items():
-    #             plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #                 self.data, self.metadata, 'statistic', class_label
-    #             )
-    #             plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #                 self.data, self.metadata, 'p_value', class_label
-    #             )
-    #             plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #                 data=self._analysis_data, drift_data=self.data, metadata=self.metadata, class_label=class_label
-    #             )
-    #     elif isinstance(self.metadata, RegressionMetadata):
-    #         prediction_column_name = self.metadata.prediction_column_name
-    #         plots[f'{prediction_column_name}_drift_statistic'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'statistic'
-    #         )
-    #         plots[f'{prediction_column_name}_drift_p_value'] = _plot_prediction_drift(
-    #             self.data, self.metadata, 'p_value'
-    #         )
-    #         plots[f'{prediction_column_name}_distribution'] = _plot_prediction_distribution(
-    #             data=self._analysis_data, drift_data=self.data, metadata=self.metadata
-    #         )
-    #
-    #     return plots
 
 
 def _get_drift_column_names_for_feature(feature_column_name: str, feature_type: str, metric: str) -> Tuple:
@@ -232,17 +234,16 @@ def _plot_prediction_drift(
         title,
     ) = _get_drift_column_names_for_feature(
         y_pred,
-        'continuous' if _column_is_continuous(calculator.previous_analysis_data[y_pred]) else 'categorical',
+        'continuous' if calculator.problem_type == ProblemType.REGRESSION else 'categorical',
         metric,
     )
 
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-    if plot_reference:
-        reference_results = calculator.previous_reference_results
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data[data['period'] == 'analysis']
+
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     fig = _step_plot(
         table=data,
@@ -255,6 +256,8 @@ def _plot_prediction_drift(
         y_axis_title=metric_label,
         v_line_separating_analysis_period=plot_period_separator,
         statistically_significant_column_name=drift_column_name,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 
@@ -273,55 +276,72 @@ def _plot_prediction_distribution(
         The original model inputs and outputs
     drift_data : pd.DataFrame
         The results of the drift calculation
-    metadata: ModelMetadata
-        The metadata for the monitored model
-    class_label: str, default=None
-        The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
     Returns
     -------
     fig: plotly.graph_objects.Figure
         A visualization of the data distribution and drift using joy-plots.
     """
-    y_pred = calculator.y_pred
-    axis_title = f'{y_pred}'
-    drift_column_name = f'{y_pred}_alert'
-    title = f'Distribution over time for {y_pred}'
 
-    drift_data['period'] = 'analysis'
+    clip: Optional[Tuple[int, int]] = None
+    if calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
+        clip = (0, 1)
+
+    prediction_column_name = calculator.y_pred
+    axis_title = f'{prediction_column_name}'
+    drift_column_name = f'{prediction_column_name}_alert'
+
     data['period'] = 'analysis'
+    feature_table = _create_feature_table(calculator.chunker.split(data))
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
-
-    if plot_reference:
-        reference_drift = calculator.previous_reference_results
-        if reference_drift is None:
-            raise RuntimeError(
-                f"could not plot categorical distribution for feature '{y_pred}': "
-                f"calculator is missing reference results\n{calculator}"
-            )
-        reference_drift['period'] = 'reference'
-        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
-
-        reference_feature_table = _create_feature_table(
-            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
-        )
+    if not plot_reference:
+        drift_data = drift_data[drift_data['period'] == 'analysis']
+    else:
+        reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-    fig = _stacked_bar_plot(
-        feature_table=feature_table,
-        drift_table=drift_data,
-        chunk_column_name='key',
-        drift_column_name=drift_column_name,
-        feature_column_name=y_pred,
-        yaxis_title=axis_title,
-        title=title,
-    )
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
+
+    if calculator.problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
+        fig = _stacked_bar_plot(
+            feature_table=feature_table,
+            drift_table=drift_data,
+            chunk_column_name='key',
+            drift_column_name=drift_column_name,
+            feature_column_name=prediction_column_name,
+            yaxis_title=axis_title,
+            title=f'Distribution over time for {prediction_column_name}',
+            start_date_column_name='start_date' if is_time_based_x_axis else None,
+            end_date_column_name='end_date' if is_time_based_x_axis else None,
+        )
+    elif calculator.problem_type == ProblemType.REGRESSION:
+        fig = _joy_plot(
+            feature_table=feature_table,
+            drift_table=drift_data,
+            chunk_column_name=CHUNK_KEY_COLUMN_NAME,
+            drift_column_name=drift_column_name,
+            feature_column_name=prediction_column_name,
+            x_axis_title=axis_title,
+            post_kde_clip=clip,
+            title=f'Distribution over time for {prediction_column_name}'
+            if is_time_based_x_axis
+            else f'Distribution over chunks for {prediction_column_name}',
+            style='vertical',
+            start_date_column_name='start_date' if is_time_based_x_axis else None,
+            end_date_column_name='end_date' if is_time_based_x_axis else None,
+        )
+    else:
+        raise RuntimeError(
+            f"dtype '{data[prediction_column_name].dtype}' is not supported yet.\nPlease convert to one of "
+            f"the following dtypes: ['object', 'string', 'category', 'bool'] for categorical data\n"
+            f"or ['float64', 'int64'] for continuous data."
+        )
 
     return fig
 
 
-def _plot_output_drift(
+def _plot_score_drift(
     data: pd.DataFrame,
     calculator,
     plot_reference: bool,
@@ -329,9 +349,14 @@ def _plot_output_drift(
     class_label: str = None,
 ) -> go.Figure:
     """Renders a line plot of the drift metric for a given feature."""
+    if calculator.problem_type == ProblemType.REGRESSION:
+        raise InvalidArgumentsException(
+            "plot of kind 'score_drift' don't support "
+            "regression problems. Please use the 'prediction_distribution' plot."
+        )
 
     # deal with multiclass stuff
-    if isinstance(calculator.y_pred_proba, Dict):
+    if calculator.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
         if class_label is None:
             raise InvalidArgumentsException(
                 "a class label is required when plotting multiclass model"
@@ -344,11 +369,11 @@ def _plot_output_drift(
                 f"Please provide a value that is present in the model outputs."
             )
         output_column_name = calculator.y_pred_proba[class_label]
-    elif isinstance(calculator.y_pred_proba, str):
+    elif calculator.problem_type == ProblemType.CLASSIFICATION_BINARY:
         output_column_name = calculator.y_pred_proba
     else:
         raise InvalidArgumentsException(
-            "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
+            f"parameter 'y_pred_proba' is of type '{type(calculator.y_pred_proba)}' "
             "but should be of type 'Union[str, Dict[str, str].'"
         )
 
@@ -366,11 +391,10 @@ def _plot_output_drift(
 
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
-    if plot_reference:
-        reference_results = calculator.previous_reference_results
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data.loc[data['period'] == 'analysis', :]
+
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     fig = _step_plot(
         table=data,
@@ -383,11 +407,13 @@ def _plot_output_drift(
         y_axis_title=metric_label,
         v_line_separating_analysis_period=plot_period_separator,
         statistically_significant_column_name=drift_column_name,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
     return fig
 
 
-def _plot_output_distribution(
+def _plot_score_distribution(
     data: pd.DataFrame, drift_data: pd.DataFrame, calculator, plot_reference: bool, class_label: str = None
 ) -> go.Figure:
     """Plots the data distribution and associated drift for each chunk of the model predictions.
@@ -398,8 +424,10 @@ def _plot_output_distribution(
         The original model inputs and outputs
     drift_data : pd.DataFrame
         The results of the drift calculation
-    metadata: ModelMetadata
-        The metadata for the monitored model
+    calculator:
+        The calculator that produced these results
+    plot_reference: bool
+        Flag instructing to either include reference data on the plot or not
     class_label: str, default=None
         The label of the class to plot the prediction distribution for. Only required in case of multiclass models.
 
@@ -408,10 +436,16 @@ def _plot_output_distribution(
     fig: plotly.graph_objects.Figure
         A visualization of the data distribution and drift using joy-plots.
     """
+    if calculator.problem_type == ProblemType.REGRESSION:
+        raise InvalidArgumentsException(
+            "plot of kind 'score_distribution' don't support "
+            "regression problems. Please use the 'prediction_distribution' plot."
+        )
+
     clip: Optional[Tuple[int, int]] = None
 
     # deal with multiclass stuff
-    if isinstance(calculator.y_pred_proba, Dict):
+    if calculator.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
         if class_label is None:
             raise InvalidArgumentsException(
                 "a class label is required when plotting multiclass model"
@@ -425,12 +459,13 @@ def _plot_output_distribution(
             )
         output_column_name = calculator.y_pred_proba[class_label]
         clip = (0, 1)
-    elif isinstance(calculator.y_pred_proba, str):
+    # elif isinstance(calculator.y_pred_proba, str):
+    elif calculator.problem_type == ProblemType.CLASSIFICATION_BINARY:
         output_column_name = calculator.y_pred_proba
         clip = (0, 1)
     else:
         raise InvalidArgumentsException(
-            "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
+            f"parameter 'y_pred_proba' is of type '{type(calculator.y_pred_proba)}' "
             "but should be of type 'Union[str, Dict[str, str].'"
         )
 
@@ -438,25 +473,17 @@ def _plot_output_distribution(
     drift_column_name = f'{output_column_name}_alert'
     title = f'Distribution over time for {output_column_name}'
 
-    drift_data['period'] = 'analysis'
     data['period'] = 'analysis'
+    feature_table = _create_feature_table(calculator.chunker.split(data))
 
-    feature_table = _create_feature_table(calculator.chunker.split(data, calculator.timestamp_column_name))
-
-    if plot_reference:
-        reference_drift = calculator.previous_reference_results
-        if reference_drift is None:
-            raise RuntimeError(
-                f"could not plot categorical distribution for feature '{output_column_name}': "
-                f"calculator is missing reference results\n{calculator}"
-            )
-        reference_drift['period'] = 'reference'
-        drift_data = pd.concat([reference_drift, drift_data], ignore_index=True)
-
-        reference_feature_table = _create_feature_table(
-            calculator.chunker.split(calculator.previous_reference_data, calculator.timestamp_column_name)
-        )
+    if not plot_reference:
+        drift_data = drift_data[drift_data['period'] == 'analysis']
+    else:
+        reference_feature_table = _create_feature_table(calculator.chunker.split(calculator.previous_reference_data))
+        reference_feature_table['period'] = 'reference'
         feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
+
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     if _column_is_categorical(data[output_column_name]):
         fig = _stacked_bar_plot(
@@ -467,6 +494,8 @@ def _plot_output_distribution(
             feature_column_name=output_column_name,
             yaxis_title=axis_title,
             title=title,
+            start_date_column_name='start_date' if is_time_based_x_axis else None,
+            end_date_column_name='end_date' if is_time_based_x_axis else None,
         )
     elif _column_is_continuous(data[output_column_name]):
         fig = _joy_plot(
@@ -479,6 +508,8 @@ def _plot_output_distribution(
             post_kde_clip=clip,
             title=title,
             style='vertical',
+            start_date_column_name='start_date' if is_time_based_x_axis else None,
+            end_date_column_name='end_date' if is_time_based_x_axis else None,
         )
     else:
         raise RuntimeError(

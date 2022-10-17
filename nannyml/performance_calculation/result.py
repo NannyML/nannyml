@@ -3,21 +3,23 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the realized performance calculation and provides plotting functionality."""
-from typing import Union
+from __future__ import annotations
+
+import copy
+from typing import List, Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml import InvalidArgumentsException
+from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
+from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
-from .._typing import derive_use_case
-from .metrics import Metric, MetricFactory
 
-
-class PerformanceCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     def __init__(
@@ -25,7 +27,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         results_data: pd.DataFrame,
         calculator: AbstractCalculator,
     ):
-        """Creates a new PerformanceCalculatorResult instance."""
+        """Creates a new Result instance."""
         super().__init__(results_data)
 
         from .calculator import PerformanceCalculator
@@ -36,9 +38,30 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
             )
         self.calculator = calculator
 
-    @property
-    def calculator_name(self) -> str:
-        return "performance_calculator"
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = list(self.DEFAULT_COLUMNS)
+
+        if metrics is None:
+            if self.calculator.problem_type == ProblemType.REGRESSION:
+                metrics = ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle']
+            else:
+                metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+
+        columns += [metric for metric in metrics]
+
+        columns += [f'{metric}_lower_threshold' for metric in metrics]
+        columns += [f'{metric}_upper_threshold' for metric in metrics]
+
+        columns += [f'{metric}_alert' for metric in metrics]
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
 
     def plot(
         self,
@@ -46,7 +69,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         plot_reference: bool = False,
         *args,
         **kwargs,
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """Render realized performance metrics.
 
             The following kinds of plots are available:
@@ -59,7 +82,7 @@ class PerformanceCalculatorResult(AbstractCalculatorResult):
         ----------
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
-        metric: Union[str, Metric], default=None
+        metric: Union[str, nannyml.performance_calculation.metrics.base.Metric], default=None
             The name of the metric to plot. Value should be one of:
             - 'roc_auc'
             - 'f1'
@@ -131,7 +154,7 @@ def _plot_performance_metric(
     ----------
     results_data : pd.DataFrame
         Results of the data CBPE performance estimation
-    metric: str, default=None
+    metric: Union[str, nannyml.performance_calculation.metrics.base.Metric]
             The name of the metric to plot. Value should be one of:
             - 'roc_auc'
             - 'f1'
@@ -150,15 +173,14 @@ def _plot_performance_metric(
     results_data = results_data.copy()
 
     if isinstance(metric, str):
-        metric = MetricFactory.create(metric, derive_use_case(calculator.y_pred_proba), {'calculator': calculator})
+        metric = MetricFactory.create(metric, calculator.problem_type, {'calculator': calculator})
 
     plot_period_separator = plot_reference
 
-    results_data['period'] = 'analysis'
-    if plot_reference:
-        reference_results = calculator.previous_reference_results
-        reference_results['period'] = 'reference'
-        results_data = pd.concat([reference_results, results_data], ignore_index=True)
+    if not plot_reference:
+        results_data = results_data[results_data['period'] == 'analysis']
+
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     # Plot metric performance
     fig = _step_plot(
@@ -176,6 +198,9 @@ def _plot_performance_metric(
         title=f'Realized performance: {metric.display_name}',
         y_axis_title='Realized performance',
         v_line_separating_analysis_period=plot_period_separator,
+        sampling_error_column_name=f'{metric.column_name}_sampling_error',
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
 
     return fig

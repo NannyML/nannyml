@@ -22,7 +22,11 @@ class InvalidReferenceDataException(BaseException):
 
 
 class CalculatorException(BaseException):
-    """An exception indicating an error occurred during (drift) calculation."""
+    """An exception indicating an error occurred during calculation."""
+
+
+class EstimatorException(BaseException):
+    """An exception indicating an error occurred during estimation."""
 
 
 class CalculatorNotFittedException(CalculatorException):
@@ -35,3 +39,11 @@ class NotFittedException(BaseException):
 
 class WriterException(BaseException):
     """An exception indicating something went wrong whilst trying to write out results."""
+
+
+class ReaderException(BaseException):
+    """An exception indicating something went wrong whilst trying to read out data."""
+
+
+class IOException(BaseException):
+    """An exception indicating something went wrong during IO."""

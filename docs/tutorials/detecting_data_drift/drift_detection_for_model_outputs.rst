@@ -9,3 +9,4 @@ Drift Detection for Model Outputs
 
    model_outputs/drift_detection_for_binary_classification_model_outputs
    model_outputs/drift_detection_for_multiclass_classification_model_outputs
+   model_outputs/drift_detection_for_regression_model_outputs

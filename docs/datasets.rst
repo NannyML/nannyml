@@ -10,3 +10,4 @@ Example Datasets
     datasets/binary.rst
     datasets/multiclass.rst
     datasets/california.rst
+    datasets/regression.rst

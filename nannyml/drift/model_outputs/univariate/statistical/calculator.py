@@ -4,17 +4,16 @@
 
 """Calculates drift for model predictions and model outputs using statistical tests."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml._typing import ModelOutputsType, model_output_column_names
-from nannyml.analytics import UsageEvent, track
-from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
+from nannyml._typing import ModelOutputsType, ProblemType, model_output_column_names
+from nannyml.base import AbstractCalculator, _column_is_categorical, _list_missing
 from nannyml.chunk import Chunker
-from nannyml.drift.model_outputs.univariate.statistical.results import UnivariateDriftResult
+from nannyml.drift.model_outputs.univariate.statistical.results import Result
 from nannyml.exceptions import InvalidArgumentsException
 
 ALERT_THRESHOLD_P_VALUE = 0.05
@@ -25,9 +24,10 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
         y_pred: str,
-        timestamp_column_name: str,
+        problem_type: Union[str, ProblemType],
+        y_pred_proba: ModelOutputsType = None,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -44,118 +44,129 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
         y_pred: str
             The name of the column containing your model predictions.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> display(reference_df.head())
         >>> calc = nml.StatisticalOutputDriftCalculator(
-        >>>     y_pred_proba='y_pred_proba',
-        >>>     y_pred='y_pred',
-        >>>     timestamp_column_name='timestamp'
+        ...     y_pred='y_pred',
+        ...     y_pred_proba='y_pred_proba',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_binary'
         >>> )
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
-        >>>
-        >>> print(results.data)  # check the numbers
-                     key  start_index  ...  y_pred_proba_alert y_pred_proba_threshold
-        0       [0:4999]            0  ...                True                   0.05
-        1    [5000:9999]         5000  ...               False                   0.05
-        2  [10000:14999]        10000  ...               False                   0.05
-        3  [15000:19999]        15000  ...               False                   0.05
-        4  [20000:24999]        20000  ...               False                   0.05
-        5  [25000:29999]        25000  ...                True                   0.05
-        6  [30000:34999]        30000  ...                True                   0.05
-        7  [35000:39999]        35000  ...                True                   0.05
-        8  [40000:44999]        40000  ...                True                   0.05
-        9  [45000:49999]        45000  ...                True                   0.05
-        >>>
-        >>> results.plot(kind='predicted_labels_drift', metric='p_value', plot_reference=True).show()
-        >>> results.plot(kind='predicted_labels_distribution', plot_reference=True).show()
-        >>> results.plot(kind='prediction_drift', plot_reference=True).show()
-        >>> results.plot(kind='prediction_distribution', plot_reference=True).show()
+        >>> display(results.data)
+        >>> score_drift_fig = results.plot(kind='score_drift', plot_reference=True)
+        >>> score_drift_fig.show()
+        >>> score_distribution_fig = results.plot(kind='score_distribution', plot_reference=True)
+        >>> score_distribution_fig.show()
+        >>> prediction_drift_fig = results.plot(kind='prediction_drift', plot_reference=True)
+        >>> prediction_drift_fig.show()
+        >>> prediction_distribution_fig = results.plot(kind='prediction_distribution', plot_reference=True)
+        >>> prediction_distribution_fig.show()
         """
-        super(StatisticalOutputDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super(StatisticalOutputDriftCalculator, self).__init__(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
 
         self.y_pred_proba = y_pred_proba
         self.y_pred = y_pred
-        self.timestamp_column_name = timestamp_column_name
+
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+        self.problem_type: ProblemType = problem_type  # type: ignore
+
+        if self.problem_type is not ProblemType.REGRESSION and self.y_pred_proba is None:
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' can not be 'None' for " f"problem type {self.problem_type.value}"
+            )
 
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
         self.previous_analysis_data: Optional[pd.DataFrame] = None
 
-    @track(UsageEvent.OUTPUT_DRIFT_CALC_FIT)
+        self.result: Optional[Result] = None
+
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
+        if self.y_pred_proba:
+            _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
+        else:
+            _list_missing([self.y_pred], reference_data)
 
         self.previous_reference_data = reference_data.copy()
 
-        # predicted labels should always be considered categorical
-        reference_data[self.y_pred] = reference_data[self.y_pred].astype('category')
+        # Force categorical columns to be set to 'category' pandas dtype
+        # TODO: we should try to get rid of this
+        if _column_is_categorical(reference_data[self.y_pred]):
+            reference_data[self.y_pred] = reference_data[self.y_pred].astype('category')
 
-        self.previous_reference_results = self._calculate(reference_data).data
+        # Reference stability
+        self._reference_stability = 0  # TODO: Jakub
+
+        self.result = self._calculate(reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
-    @track(UsageEvent.OUTPUT_DRIFT_CALC_RUN)
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> UnivariateDriftResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
+        self.previous_analysis_data = data.copy()
 
-        # predicted labels should always be considered categorical
-        data[self.y_pred] = data[self.y_pred].astype('category')
-
-        columns = [self.y_pred]
-        if isinstance(self.y_pred_proba, Dict):
-            columns += [v for _, v in self.y_pred_proba.items()]
-        elif isinstance(self.y_pred_proba, str):
-            columns += [self.y_pred_proba]
+        if self.y_pred_proba:
+            _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
         else:
-            raise InvalidArgumentsException(
-                "parameter 'y_pred_proba' is of type '{type(y_pred_proba)}' "
-                "but should be of type 'Union[str, Dict[str, str].'"
-            )
+            _list_missing([self.y_pred], data)
 
-        continuous_columns, categorical_columns = _split_features_by_type(data, columns)
+        continuous_columns: List[str] = []
+        categorical_columns: List[str] = []
+        if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
+            if isinstance(self.y_pred_proba, str):
+                continuous_columns += [self.y_pred_proba]
+            categorical_columns += [self.y_pred]
+        elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
+            if self.y_pred_proba is not None:
+                continuous_columns += model_output_column_names(self.y_pred_proba)
+            categorical_columns += [self.y_pred]
+        elif self.problem_type == ProblemType.REGRESSION:
+            continuous_columns += [self.y_pred]
 
-        chunks = self.chunker.split(
-            data, columns=columns, minimum_chunk_size=500, timestamp_column_name=self.timestamp_column_name
-        )
-
+        chunks = self.chunker.split(data, columns=continuous_columns + categorical_columns)
         chunk_drifts = []
         # Calculate chunk-wise drift statistics.
         # Append all into resulting DataFrame indexed by chunk key.
         for chunk in chunks:
             chunk_drift: Dict[str, Any] = {
                 'key': chunk.key,
+                'chunk_index': chunk.chunk_index,
                 'start_index': chunk.start_index,
                 'end_index': chunk.end_index,
                 'start_date': chunk.start_datetime,
                 'end_date': chunk.end_datetime,
-                'period': 'analysis' if chunk.is_transition else chunk.period,
             }
 
             for column in categorical_columns:
@@ -185,6 +196,11 @@ class StatisticalOutputDriftCalculator(AbstractCalculator):
         res = pd.DataFrame.from_records(chunk_drifts)
         res = res.reset_index(drop=True)
 
-        self.previous_analysis_data = data.copy()
+        res['period'] = 'analysis'
 
-        return UnivariateDriftResult(results_data=res, calculator=self)
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=self)
+        else:
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+
+        return self.result

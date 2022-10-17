@@ -4,4 +4,4 @@
 
 """Package for target based drift monitoring."""
 
-from .target_distribution import TargetDistributionCalculator, TargetDistributionResult
+from .target_distribution import Result, TargetDistributionCalculator

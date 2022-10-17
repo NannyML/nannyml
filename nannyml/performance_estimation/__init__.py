@@ -5,3 +5,4 @@
 """Contains all performance estimation implementations and utilities."""
 
 from .confidence_based import CBPE
+from .direct_loss_estimation import DLE

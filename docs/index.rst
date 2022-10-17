@@ -29,6 +29,7 @@ Welcome to NannyML's documentation!
    examples
    datasets
    glossary
+   cli
    API reference <nannyml/modules>
    contributing
 

@@ -4,6 +4,129 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Updated the handling of "leftover" observations when using the `SizeBasedChunker` and `CountBasedChunker`.
+  Renamed the parameter for tweaking that behavior to `incomplete`, that can be set to `keep`, `drop` or `append`.
+  Default behavior for both is now to append leftover observations to the last _full_ chunk.
+
+## [0.6.3] - 2022-09-22
+
+### Changed
+
+- `dependencybot` dependency updates
+- `stalebot` setup
+
+### Fixed
+
+- CBPE now uses uncalibrated `y_pred_proba` values to calculate realized performance. Fixed for both binary and
+  multiclass use cases [(#98)](https://github.com/NannyML/nannyml/issues/98)
+- Fix an issue where reference data was rendered incorrectly on joy plots
+- Updated the 'California Housing' example docs, thanks for the help [@NeoKish](https://github.com/NeoKish)
+- Fix lower confidence bounds and thresholds under zero for regression cases. When the lower limit is set to 0,
+  the lower threshold will not be plotted. [(#127)](https://github.com/NannyML/nannyml/issues/127)
+
+## [0.6.2] - 2022-09-16
+
+### Changed
+
+- Made the `timestamp_column_name` required by all calculators and estimators optional. The main consequences of this
+  are plots have a chunk-index based x-axis now when no timestamp column name was given. You can also not chunk by
+  period when the timestamp column name is not specified.
+
+### Fixed
+
+- Added missing `s3fs` dependency
+- Fixed outdated plotting kind constants in the runner (used by CLI)
+- Fixed some missing images and incorrect version numbers in the README, thanks [@NeoKish](https://github.com/NeoKish)!
+
+### Added
+
+- Added a lot of additional tests, mainly concerning plotting and the [`Runner`](nannyml/runner.py) class
+
+## [0.6.1] - 2022-09-09
+
+### Changed
+
+- Use the `problem_type` parameter to determine the correct graph to output when plotting model output drift
+
+### Fixed
+
+- Showing the wrong plot title for DLE estimation result plots, thanks [@NeoKish](https://github.com/NeoKish)
+- Fixed incorrect plot kinds in some error feedback for the model output drift calculator
+- Fixed missing `problem_type` argument in the Quickstart guide
+- Fix incorrect visualization of confidence bands on reference data in DEE and CBPE result plots
+
+## [0.6.0] - 2022-09-07
+
+### Added
+
+- Added support for regression problems across all calculators and estimators.
+  In some cases a required `problem_type` parameter is required during calculator/estimator initialization, this
+  is a breaking change. Read more about using regression in our
+  [tutorials](https://nannyml.readthedocs.io/en/main/tutorials.html) and about our new performance estimation
+  for regression using the [Direct Loss Estimation (DLE)](https://nannyml.readthedocs.io/en/main/how_it_works/performance_estimation.html#direct-loss-estimation-dle) algorithm.
+
+### Changed
+
+- Improved `tox` running speed by skipping some unnecessary package installations.
+  Thanks [@baskervilski](https://github.com/baskervilski)!
+
+### Fixed
+
+- Fixed an issue where some Pandas column datatypes were not recognized as continuous by NannyML, causing them to be
+  dropped in calculations. Thanks for reporting [@Dbhasin1](https://github.com/Dbhasin1)!
+- Fixed an issue where some helper columns for visualization crept into the stored reference results. Good catch
+  [@Dbhasin1](https://github.com/Dbhasin1)!
+- Fixed an issue where a `Reader` instance would raise a `WriteException`. Thanks for those eagle eyes
+  [@baskervilski](https://github.com/baskervilski)!
+
+## [0.5.3] - 2022-08-30
+
+### Changed
+
+- We've completely overhauled the way we determine the "stability" of our estimations. We've moved on from determining
+  a minimum `Chunk` size to estimating the *sampling error* for an operation on a `Chunk`.
+  - A **sampling error** value will be provided per metric per `Chunk` in the result data for
+    **reconstruction error multivariate drift calculator**, all **performance calculation metrics** and
+    all **performance estimation metrics**.
+  - Confidence bounds are now also based on this *sampling error* and will display a range around an estimation +/- 3
+    times the *sampling error* in **CBPE** and **reconstruction error multivariate drift calculator**.
+  Be sure to check out our [in-depth documentation](https://nannyml.readthedocs.io/en/main/how_it_works/estimation_of_standard_error.html#estimation-of-standard-error)
+  on how it works or dive right into the [implementation](nannyml/sampling_error).
+
+### Fixed
+
+- Fixed issue where an outdated version of Numpy caused Pandas to fail reading string columns in some scenarios
+  [(#93)](https://github.com/NannyML/nannyml/issues/93). Thank you, [@bernhardbarker](https://github.com/bernhardbarker) and
+  [@ga-tardochisalles](https://github.com/ga-tardochisalles) for the investigative work!
+
+## [0.5.2] - 2022-08-17
+
+### Changed
+
+- Swapped out ASCII art library from 'art' to 'PyFiglet' because the former was not yet present in conda-forge.
+
+### Fixed
+
+- Some leftover parameter was forgotten during cleanup, breaking CLI functionality
+- CLI progressbar was broken due to a boolean check with task ID 0.
+
+
+## [0.5.1] - 2022-08-16
+
+### Added
+
+- Added simple CLI implementation to support automation and MLOps toolchain use cases. Supports reading/writing to
+  cloud storage using S3, GCS, ADL, ABFS and AZ protocols. Containerized version available at
+  [dockerhub](https://hub.docker.com/repository/docker/nannyml/nannyml).
+
+### Changed
+
+- `make clean` now also clears `__pycache__`
+- Fixed some inconsistencies in docstrings (they still need some additional love though)
 
 ## [0.5.0] - 2022-07-07
 

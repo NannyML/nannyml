@@ -6,22 +6,22 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+import copy
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from nannyml._typing import ModelOutputsType, derive_use_case
-from nannyml.analytics import UsageEvent, track
+from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
-from nannyml.performance_calculation.metrics import Metric, MetricFactory
-from nannyml.performance_calculation.result import PerformanceCalculatorResult
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
+from nannyml.performance_calculation.result import Result
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
-_tracking_metadata: Dict[str, Any] = {}
+SUPPORTED_METRICS = list(MetricFactory.registry.keys())
 
 
 class PerformanceCalculator(AbstractCalculator):
@@ -29,11 +29,12 @@ class PerformanceCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        timestamp_column_name: str,
         metrics: List[str],
         y_true: str,
-        y_pred_proba: Optional[ModelOutputsType],
-        y_pred: Optional[str],
+        y_pred: str,
+        problem_type: Union[str, ProblemType],
+        y_pred_proba: ModelOutputsType = None,
+        timestamp_column_name: str = None,
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -52,67 +53,73 @@ class PerformanceCalculator(AbstractCalculator):
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
         y_pred: str
             The name of the column containing your model predictions.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         metrics: List[str]
             A list of metrics to calculate.
-        chunk_size: int
+        chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int
+        chunk_number: int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str
+        chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
 
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> calc = nml.PerformanceCalculator(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
-        >>>                                  timestamp_column_name='timestamp', metrics=['f1', 'roc_auc'])
-        >>>
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+        >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+        >>> display(reference_df.head(3))
+        >>> calc = nml.PerformanceCalculator(
+        ...     y_pred_proba='y_pred_proba',
+        ...     y_pred='y_pred',
+        ...     y_true='work_home_actual',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_binary',
+        ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        ...     chunk_size=5000)
         >>> calc.fit(reference_df)
-        >>>
-        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
-        >>> print(results.data)
-                     key  start_index  ...  roc_auc_upper_threshold roc_auc_alert
-        0       [0:4999]            0  ...                  0.97866         False
-        1    [5000:9999]         5000  ...                  0.97866         False
-        2  [10000:14999]        10000  ...                  0.97866         False
-        3  [15000:19999]        15000  ...                  0.97866         False
-        4  [20000:24999]        20000  ...                  0.97866         False
-        5  [25000:29999]        25000  ...                  0.97866          True
-        6  [30000:34999]        30000  ...                  0.97866          True
-        7  [35000:39999]        35000  ...                  0.97866          True
-        8  [40000:44999]        40000  ...                  0.97866          True
-        9  [45000:49999]        45000  ...                  0.97866          True
+        >>> results = calc.calculate(analysis_df)
+        >>> display(results.data)
+        >>> display(results.calculator.previous_reference_results)
         >>> for metric in calc.metrics:
-        >>>     results.plot(metric=metric, plot_reference=True).show()
+        ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+        ...     figure.show()
         """
-        super().__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
         self.y_true = y_true
         self.y_pred = y_pred
+
         self.y_pred_proba = y_pred_proba
-        self.timestamp_column_name = timestamp_column_name
+
+        if isinstance(problem_type, str):
+            problem_type = ProblemType.parse(problem_type)
+        self.problem_type = problem_type
+
+        if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
+            raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
+
         self.metrics: List[Metric] = [
-            MetricFactory.create(m, derive_use_case(self.y_pred_proba), {'calculator': self})  # type: ignore
-            for m in metrics
+            MetricFactory.create(m, problem_type, {'calculator': self}) for m in metrics  # type: ignore
         ]
 
-        self._minimum_chunk_size = None
         self.previous_reference_data: Optional[pd.DataFrame] = None
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
-        _tracking_metadata.update({'metrics': metrics})
+        self.result: Optional[Result] = None
 
-    @track(UsageEvent.TARGET_DISTRIBUTION_DRIFT_CALC_FIT, _tracking_metadata)
+    def __str__(self):
+        return f"PerformanceCalculator[metrics={str(self.metrics)}]"
+
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
         if reference_data.empty:
@@ -130,15 +137,13 @@ class PerformanceCalculator(AbstractCalculator):
         for metric in self.metrics:
             metric.fit(reference_data=reference_data, chunker=self.chunker)
 
-        self._minimum_chunk_size = np.max([metric.minimum_chunk_size() for metric in self.metrics])
-
         self.previous_reference_data = reference_data
-        self.previous_reference_results = self._calculate(reference_data).data
+        self.result = self._calculate(reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
-    @track(UsageEvent.TARGET_DISTRIBUTION_DRIFT_CALC_RUN, _tracking_metadata)
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -158,17 +163,14 @@ class PerformanceCalculator(AbstractCalculator):
                 'Please ensure you run ``calculator.fit()`` '
                 'before running ``calculator.calculate()``'
             )
-        chunks = self.chunker.split(
-            data,
-            minimum_chunk_size=self._minimum_chunk_size,
-            timestamp_column_name=self.timestamp_column_name,
-        )
+        chunks = self.chunker.split(data)
 
         # Construct result frame
         res = pd.DataFrame.from_records(
             [
                 {
                     'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
                     'start_index': chunk.start_index,
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
@@ -182,7 +184,13 @@ class PerformanceCalculator(AbstractCalculator):
             ]
         )
 
-        return PerformanceCalculatorResult(results_data=res, calculator=self)
+        res['period'] = 'analysis'
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=copy.deepcopy(self))
+        else:
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+
+        return self.result
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         metrics_results = {}
@@ -191,8 +199,9 @@ class PerformanceCalculator(AbstractCalculator):
             metrics_results[metric.column_name] = chunk_metric
             metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
             metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
+            metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
             metrics_results[f'{metric.column_name}_alert'] = (
-                metric.lower_threshold > chunk_metric or chunk_metric > metric.upper_threshold
-            )
+                metric.lower_threshold > chunk_metric if metric.lower_threshold else False
+            ) or (chunk_metric > metric.upper_threshold if metric.upper_threshold else False)
 
         return metrics_results

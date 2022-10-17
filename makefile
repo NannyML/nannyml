@@ -29,13 +29,25 @@ clean:
 	rm -rf *.egg-info
 	rm -rf .tox dist site
 	rm -rf coverage.xml .coverage
+	find . -type d -name __pycache__ -exec rm -r {} \+
 
-docs: ## generate Sphinx HTML documentation, including API docs
+
+clean-docs:
 	rm -rf docs/nannyml
-	#sphinx-apidoc -o docs/nannyml nannyml tests nannyml/datasets/data
 	$(MAKE) -C docs clean
+
+test-notebooks:
+	python docs/run_notebooks.py "docs/example_notebooks/*.ipynb"
+
+build-docs:
 	$(MAKE) -C docs html
+
+serve-docs:
 	$(BROWSER) docs/_build/html/index.html
+
+docs: clean-docs test-notebooks build-docs serve-docs
+
+
 
 
 # For some reason make docs doesn't work!
@@ -57,11 +69,16 @@ server.serve_forever()
 endef
 export BROWSER_PYSCRIPT
 
-servedocs: ## generate Sphinx HTML documentation, including API docs
+showdocs: ## generate Sphinx HTML documentation, including API docs
 	rm -rf docs/nannyml
 	#sphinx-apidoc -o docs/nannyml nannyml tests nannyml/datasets/data
 	$(MAKE) -C docs clean
+	python docs/run_notebooks.py "docs/example_notebooks/*.ipynb"
 	$(MAKE) -C docs html
 	python -c "$$BROWSER_PYSCRIPT"
 
 # Use Ctrl+C to stop serving docs.
+
+# custom serve
+cserve-docs:
+	python -c "$$BROWSER_PYSCRIPT"

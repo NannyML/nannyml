@@ -9,10 +9,18 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.datasets import load_synthetic_binary_classification_dataset
+from nannyml._typing import ProblemType
+from nannyml.datasets import (
+    load_synthetic_binary_classification_dataset,
+    load_synthetic_car_price_dataset,
+    load_synthetic_multiclass_classification_dataset,
+)
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation import PerformanceCalculator
-from nannyml.performance_calculation.metrics import BinaryClassificationAUROC, BinaryClassificationF1
+from nannyml.performance_calculation.metrics.binary_classification import (
+    BinaryClassificationAUROC,
+    BinaryClassificationF1,
+)
 
 
 @pytest.fixture
@@ -32,13 +40,19 @@ def performance_calculator() -> PerformanceCalculator:
         y_pred='y_pred',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     )
 
 
 def test_calculator_init_with_empty_metrics_should_not_fail():  # noqa: D103, F821
     try:
         _ = PerformanceCalculator(
-            timestamp_column_name='timestamp', y_pred='y_pred', y_pred_proba='y_pred_proba', y_true='y_true', metrics=[]
+            timestamp_column_name='timestamp',
+            y_pred='y_pred',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=[],
+            problem_type='classification_binary',
         )
     except Exception as exc:
         pytest.fail(f'unexpected exception: {exc}')
@@ -51,6 +65,7 @@ def test_calculator_init_should_set_metrics(performance_calculator):  # noqa: D1
         y_pred_proba='y_pred_proba',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     )
     sut = calc.metrics
     assert len(sut) == 2
@@ -65,6 +80,7 @@ def test_calculator_fit_should_raise_invalid_args_exception_when_no_target_data_
         y_pred_proba='y_pred_proba',
         y_true='y_true',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     )
     with pytest.raises(InvalidArgumentsException):
         _ = calc.fit(reference_data=data[0])
@@ -77,6 +93,7 @@ def test_calculator_calculate_should_raise_invalid_args_exception_when_no_target
         y_pred_proba='y_pred_proba',
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     ).fit(reference_data=data[0])
     with pytest.raises(InvalidArgumentsException):
         _ = calc.calculate(data[1])
@@ -89,6 +106,7 @@ def test_calculator_calculate_should_include_chunk_information_columns(data):  #
         y_pred_proba='y_pred_proba',
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     ).fit(reference_data=data[0])
 
     ref_with_tgt = data[1].merge(data[2], on='identifier')
@@ -119,23 +137,109 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
         y_pred_proba='y_pred_proba',
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
     ).fit(reference_data=ref_data)
-    sut = calc.calculate(data)
+    result = calc.calculate(data)
+    sut = result.data[result.data['period'] == 'analysis'].reset_index(drop=True)
 
-    assert 'targets_missing_rate' in sut.data.columns
-    assert sut.data.loc[0, 'targets_missing_rate'] == 0.1
-    assert sut.data.loc[1, 'targets_missing_rate'] == 0.9
+    assert 'targets_missing_rate' in sut.columns
+    assert sut.loc[0, 'targets_missing_rate'] == 0.1
+    assert sut.loc[1, 'targets_missing_rate'] == 0.9
 
 
-def test_calculator_calculates_minimum_chunk_size_for_each_metric(data):  # noqa: D103
-    metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
-    for metric in metrics:
-        calc = PerformanceCalculator(
-            timestamp_column_name='timestamp',
-            y_pred='y_pred',
-            y_pred_proba='y_pred_proba',
-            y_true='work_home_actual',
-            metrics=['roc_auc', 'f1'],
-        ).fit(reference_data=data[0])
-        assert calc._minimum_chunk_size > 0
-        assert calc._minimum_chunk_size <= len(data[0])
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'mae'}),
+        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'mae'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'mae'}),
+        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'mae'}),
+    ],
+    ids=[
+        'performance_with_timestamp_without_reference',
+        'performance_without_timestamp_without_reference',
+        'performance_with_timestamp_with_reference',
+        'performance_without_timestamp_with_reference',
+    ],
+)
+def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
+    calc = PerformanceCalculator(
+        y_true='y_true', y_pred='y_pred', problem_type=ProblemType.REGRESSION, metrics=['mae', 'mape'], **calc_args
+    ).fit(reference)
+    sut = calc.calculate(analysis.join(analysis_targets))
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+    ],
+    ids=[
+        'performance_with_timestamp_without_reference',
+        'performance_without_timestamp_without_reference',
+        'performance_with_timestamp_with_reference',
+        'performance_without_timestamp_with_reference',
+    ],
+)
+def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
+    calc = PerformanceCalculator(
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba={
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+        },
+        problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
+        metrics=['roc_auc', 'f1'],
+        **calc_args,
+    ).fit(reference)
+    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'calc_args, plot_args',
+    [
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
+    ],
+    ids=[
+        'performance_with_timestamp_without_reference',
+        'performance_without_timestamp_without_reference',
+        'performance_with_timestamp_with_reference',
+        'performance_without_timestamp_with_reference',
+    ],
+)
+def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
+    calc = PerformanceCalculator(
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        problem_type=ProblemType.CLASSIFICATION_BINARY,
+        metrics=['roc_auc', 'f1'],
+        **calc_args,
+    ).fit(reference)
+    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+
+    try:
+        _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

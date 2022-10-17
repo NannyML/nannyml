@@ -3,6 +3,10 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
+from __future__ import annotations
+
+import copy
+from typing import List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -12,8 +16,11 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._step_plot import _step_plot
 
 
-class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
+class Result(AbstractCalculatorResult):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
+
+    metric_label_to_col = {'reconstruction error': 'reconstruction_error'}
+    col_to_metric_label = {v: k for k, v in metric_label_to_col.items()}
 
     def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
         super().__init__(results_data)
@@ -26,11 +33,27 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
             )
         self.calculator = calculator
 
-    @property
-    def calculator_name(self) -> str:
-        return "multivariate_data_reconstruction_feature_drift"
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+        columns = list(self.DEFAULT_COLUMNS)
+        columns += ['sampling_error']
 
-    def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> go.Figure:
+        if metrics is None:
+            metrics = list(self.col_to_metric_label.keys())
+
+        columns += [metric for metric in metrics]
+
+        columns += ['alert', 'upper_threshold', 'lower_threshold']
+
+        if period == 'all':
+            data = self.data.loc[:, columns]
+        else:
+            data = self.data.loc[self.data['period'] == period, columns]
+
+        data = data.reset_index(drop=True)
+
+        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
+
+    def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
         The different plot kinds that are available:
@@ -85,11 +108,7 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
         if kind == 'drift':
             return _plot_drift(self.data, self.calculator, plot_reference)
         else:
-            raise InvalidArgumentsException(
-                f"unknown plot kind '{kind}'. "
-                f"Please provide on of: ['feature_drift', 'feature_distribution', "
-                f"'prediction_drift', 'prediction_distribution']."
-            )
+            raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['drift'].")
 
     # @property
     # def plots(self) -> Dict[str, go.Figure]:
@@ -99,12 +118,16 @@ class DataReconstructionDriftCalculatorResult(AbstractCalculatorResult):
 def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figure:
     plot_period_separator = plot_reference
 
-    data['period'] = 'analysis'
+    # data['period'] = 'analysis'
+    #
+    # if plot_reference:
+    #     reference_results = calculator.previous_reference_results.copy()
+    #     reference_results['period'] = 'reference'
+    #     data = pd.concat([reference_results, data], ignore_index=True)
+    if not plot_reference:
+        data = data.loc[data['period'] == 'analysis', :]
 
-    if plot_reference:
-        reference_results = calculator.previous_reference_results
-        reference_results['period'] = 'reference'
-        data = pd.concat([reference_results, data], ignore_index=True)
+    is_time_based_x_axis = calculator.timestamp_column_name is not None
 
     fig = _step_plot(
         table=data,
@@ -117,6 +140,12 @@ def _plot_drift(data: pd.DataFrame, calculator, plot_reference: bool) -> go.Figu
         title='Data Reconstruction Drift',
         y_axis_title='Reconstruction Error',
         v_line_separating_analysis_period=plot_period_separator,
+        sampling_error_column_name='sampling_error',
+        lower_confidence_column_name='lower_confidence_bound',
+        upper_confidence_column_name='upper_confidence_bound',
+        plot_confidence_for_reference=True,
+        start_date_column_name='start_date' if is_time_based_x_axis else None,
+        end_date_column_name='end_date' if is_time_based_x_axis else None,
     )
 
     return fig

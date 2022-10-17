@@ -13,11 +13,11 @@ from sklearn.decomposition import PCA
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 
-from nannyml.analytics import UsageEvent, track
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import DataReconstructionDriftCalculatorResult
+from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import Result
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 
 class DataReconstructionDriftCalculator(AbstractCalculator):
@@ -26,7 +26,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         feature_column_names: List[str],
-        timestamp_column_name: str,
+        timestamp_column_name: str = None,
         n_components: Union[int, float, str] = 0.65,
         chunk_size: int = None,
         chunk_number: int = None,
@@ -42,7 +42,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         feature_column_names: List[str]
             A list containing the names of features in the provided data set. All of these features will be used by
             the multivariate data reconstruction drift calculator to calculate an aggregate drift score.
-        timestamp_column_name: str
+        timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         n_components: Union[int, float, str], default=0.65
             The n_components parameter as passed to the sklearn.decomposition.PCA constructor.
@@ -66,37 +66,35 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> feature_column_names = [col for col in reference_df.columns
-        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> from IPython.display import display
+        >>> # Load synthetic data
+        >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
+        >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
+        >>> display(reference.head())
+        >>> # Define feature columns
+        >>> feature_column_names = [
+        ...     col for col in reference.columns if col not in [
+        ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+        ...     ]]
         >>> calc = nml.DataReconstructionDriftCalculator(
-        >>>     feature_column_names=feature_column_names,
-        >>>     timestamp_column_name='timestamp'
+        ...     feature_column_names=feature_column_names,
+        ...     timestamp_column_name='timestamp',
+        ...     chunk_size=5000
         >>> )
-        >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
-        >>> print(results.data)  # access the numbers
-                             key  start_index  ...  upper_threshold alert
-        0       [0:4999]            0  ...         1.511762  True
-        1    [5000:9999]         5000  ...         1.511762  True
-        2  [10000:14999]        10000  ...         1.511762  True
-        3  [15000:19999]        15000  ...         1.511762  True
-        4  [20000:24999]        20000  ...         1.511762  True
-        5  [25000:29999]        25000  ...         1.511762  True
-        6  [30000:34999]        30000  ...         1.511762  True
-        7  [35000:39999]        35000  ...         1.511762  True
-        8  [40000:44999]        40000  ...         1.511762  True
-        9  [45000:49999]        45000  ...         1.511762  True
-        >>> fig = results.plot(kind='drift', plot_reference=True)
-        >>> fig.show()
+        >>> calc.fit(reference)
+        >>> results = calc.calculate(analysis)
+        >>> display(results.data)
+        >>> display(results.calculator.previous_reference_results)
+        >>> figure = results.plot(plot_reference=True)
+        >>> figure.show()
         """
-        super(DataReconstructionDriftCalculator, self).__init__(chunk_size, chunk_number, chunk_period, chunker)
+        super(DataReconstructionDriftCalculator, self).__init__(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
         self.feature_column_names = feature_column_names
         self.continuous_feature_column_names: List[str] = []
         self.categorical_feature_column_names: List[str] = []
 
-        self.timestamp_column_name = timestamp_column_name
         self._n_components = n_components
 
         self._scaler = None
@@ -122,9 +120,13 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             imputer_continuous = SimpleImputer(missing_values=np.nan, strategy='mean')
         self._imputer_continuous = imputer_continuous
 
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
-    @track(UsageEvent.MULTIVAR_RECONST_DRIFT_CALC_FIT)
+        self.result: Optional[Result] = None
+
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
@@ -168,12 +170,27 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         # Calculate thresholds
         self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
 
-        self.previous_reference_results = self._calculate(data=reference_data).data
+        # Reference stability
+        self._sampling_error_components = (
+            _calculate_reconstruction_error_for_data(
+                feature_column_names=self.feature_column_names,
+                categorical_feature_column_names=self.categorical_feature_column_names,
+                continuous_feature_column_names=self.continuous_feature_column_names,
+                data=reference_data,  # TODO: check with Nikos if this needs to be chunked or not?
+                encoder=self._encoder,
+                scaler=self._scaler,
+                pca=self._pca,
+                imputer_categorical=self._imputer_categorical,
+                imputer_continuous=self._imputer_continuous,
+            ).std(),
+        )
+
+        self.result = self._calculate(data=reference_data)
+        self.result.data['period'] = 'reference'
 
         return self
 
-    @track(UsageEvent.MULTIVAR_RECONST_DRIFT_CALC_RUN)
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> DataReconstructionDriftCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -184,21 +201,18 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             data, self.feature_column_names
         )
 
-        chunks = self.chunker.split(
-            data,
-            columns=self.feature_column_names,
-            minimum_chunk_size=_minimum_chunk_size(self.feature_column_names),
-            timestamp_column_name=self.timestamp_column_name,
-        )
+        chunks = self.chunker.split(data, columns=self.feature_column_names)
 
         res = pd.DataFrame.from_records(
             [
                 {
                     'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
                     'start_index': chunk.start_index,
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
+                    'sampling_error': sampling_error(self._sampling_error_components, chunk.data),
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
                         feature_column_names=self.feature_column_names,
                         categorical_feature_column_names=self.categorical_feature_column_names,
@@ -209,20 +223,29 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                         pca=self._pca,
                         imputer_categorical=self._imputer_categorical,
                         imputer_continuous=self._imputer_continuous,
-                    ),
+                    ).mean(),
                 }
                 for chunk in chunks
             ]
         )
-
+        res['upper_confidence_bound'] = res['reconstruction_error'] + SAMPLING_ERROR_RANGE * res['sampling_error']
+        res['lower_confidence_bound'] = res['reconstruction_error'] - SAMPLING_ERROR_RANGE * res['sampling_error']
         res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
         res = res.reset_index(drop=True)
-        return DataReconstructionDriftCalculatorResult(results_data=res, calculator=self)
+
+        res['period'] = 'analysis'
+
+        if self.result is None:
+            self.result = Result(results_data=res, calculator=self)
+        else:
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+
+        return self.result
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
-        reference_chunks = self.chunker.split(reference_data, self.timestamp_column_name)  # type: ignore
+        reference_chunks = self.chunker.split(reference_data)  # type: ignore
         reference_reconstruction_error = pd.Series(
             [
                 _calculate_reconstruction_error_for_data(
@@ -235,7 +258,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                     pca=self._pca,
                     imputer_categorical=self._imputer_categorical,
                     imputer_continuous=self._imputer_continuous,
-                )
+                ).mean()
                 for chunk in reference_chunks
             ]
         )
@@ -256,7 +279,7 @@ def _calculate_reconstruction_error_for_data(
     pca: PCA,
     imputer_categorical: SimpleImputer,
     imputer_continuous: SimpleImputer,
-) -> pd.DataFrame:
+) -> pd.Series:
     """Calculates reconstruction error for a single Chunk.
 
     Parameters
@@ -317,8 +340,7 @@ def _calculate_reconstruction_error_for_data(
         rc_error=lambda x: _calculate_distance(data, feature_column_names, reconstructed_feature_column_names)
     )
 
-    res = data['rc_error'].mean()
-    return res
+    return data['rc_error']
 
 
 def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], features_reconstructed: List[str]):
@@ -344,8 +366,5 @@ def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_th
     return alert
 
 
-def _minimum_chunk_size(
-    features: List[str] = None,
-) -> int:
-
-    return int(20 * np.power(len(features), 5 / 6))  # type: ignore
+def sampling_error(components: Tuple, data: pd.DataFrame) -> float:
+    return components[0] / np.sqrt(len(data))

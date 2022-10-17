@@ -35,8 +35,34 @@ Glossary
         You can find more information on the `wikipedia Chi-squared test page`_. At NannyML we use the `scipy implementation of the
         Chi-square test of independence of variables in a contingency table`_.
 
+    Child model
+        Another name for the monitored model. It is used when describing solutions for which NannyML trains its own
+        model called :term:`nanny model`.
+
     Concept Drift
         A change in the underlying pattern (or mapping) between the :term:`Model Inputs` and the :term:`Target` (P(y|X)).
+
+    Confidence Band
+        When we estimate a statistic from a sample our estimation has to take into account the variance of that statistic
+        from it's sampled distribution. We do that by calculating :term:`Sampling Error`. When we visualize our results
+        we show a Confidence Band above and below our estimation. This confidence band comprises of the values that have distance
+        less than the sampling error from our estimatiuon. This helps us know when changes in the value of a statistic are
+        statistically significant instead of happening due to the natural variance of the statistic.
+
+        Note that the confidence band is also described as sampling error range at the hover information that appears on
+        the interactive plots.
+
+    Confidence Score
+        A score that is returned by classification model together with class prediction. It expresses the confidence
+        of the prediction i.e. the closer the score is to its minimum or maximum the more confident the classifier is
+        with its prediction. If the score is in the range between 0 and 1 it is called *probability estimate*. It can also be
+        the actual *probability*. Regardless of the algorithm type, all classification models calculate some form of
+        confidence scores. These scores are then thresholded to return the predicted class. Confidence scores can be
+        turned into calibrated probabilities and uset to estimate performance of classification models in the absence
+        of ground truth (see how :ref:`here<how-it-works-cbpe>`).
+
+    Covariate Shift
+        A synonym for :term:`Data Drift`.
 
     Data Drift
         A change in joint distribution of :term:`Model Inputs` (P(X)).
@@ -59,6 +85,11 @@ Glossary
         In the absence of targets performance in the analysis period can be estimated.
 
         You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
+
+    Error
+        The error of a statistic on a sample is defined as the difference between the value of the observation and the true value.
+        The sample size can sometimes be 1 but is usually bigger. When the error consists only of the effects
+        of sampling we call it :term:`sampling error<Sampling Error>`.
 
     Estimated Performance
         The performance the monitored model is expected to have as a result of the :term:`Performance Estimation` process.
@@ -112,9 +143,18 @@ Glossary
         You can find more information on the `wikipedia KS test page`_. At NannyML we use the `scipy implementation of the
         two sample KS test`_.
 
+    Loss
+        Loss is a real number that quantifies the negative aspects associated with an event. It is defined by
+        a :term:`Loss Function` that, for the purposes of Model Monitoring, comes from a specified performance metric.
+        NannyML uses loss for :ref:`Performance Estimation for Regression<how-it-works-dle>`
+        with the constraint that the :term:`Loss Function` is positive.
+
+    Loss Function
+        A `loss function`_ is a function that maps the :term:`residuals<Residual>` to a real number that
+        represents a :term:`loss<Loss>` associated with the event.
+
     Model inputs
         Every :term:`Feature` used by the model.
-
 
     Model outputs
         The scores or probabilities that your model predicts for its target outcome.
@@ -122,11 +162,13 @@ Glossary
     Model predictions
         A synonym for :term:`Model outputs`.
 
-
     Multivariate Drift Detection
         Drift Detection steps that involve all model features in order to
         create appropriate drift measures.
 
+    Nanny model
+        An extra model created as a part of NannyML monitoring solution. The name is used to distinguish from the
+        monitored model which is sometimes referred to as :term:`child model`.
 
     Partition Column
         A column that tells us what :term:`Data Period` the data is in. A partition column is necessary for NannyML
@@ -167,8 +209,35 @@ Glossary
     Reconstruction Error
         The average euclidean distance between the original and the reconstructed data points in a dataset.
         The reconstructed dataset is created by transforming our model inputs to a :term:`Latent space` and
-        then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be lossless there will always be a difference
-        between the original and the reconstructed data. This difference is captured by the reconstruction error.
+
+        then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be
+        lossless there will always be a difference between the original and the reconstructed data. This difference
+        is captured by the reconstruction error.
+
+    Residual
+        The residual of a statistic on a sample is defined as the difference between the value of the observation and the expected value.
+        The sample size can sometimes be 1 but is usually bigger.
+        For example the mean squared error regression metric could also be called mean squared residual because it uses the difference
+        between expected value (`y_pred`) and the observed results (`y_true`).
+
+    Sampling Error
+        Sampling errors are statistical errors that arise when a sample does not accurately represent the whole population.
+        They are the difference between the real values of the population, which we don't always know, and the values
+        derived by using samples from the population. In order to quantify the sampling error we use the :term:`Standard Error`.
+
+    Standard Error
+        The Standard Error of a statistic is the standard deviation of the probability distribution we are sampling it from.
+        It can also be an estimate of that standard deviation. If the statistic is the sample mean, then it is called
+        Standard Error of the Mean and abbreviated as SEM.
+
+        The exact value of standard error from an independent sample of :math:`n` observations taken from a statistical population with
+        standard deviation :math:`\sigma` is:
+
+        .. math::
+            {\sigma }_{\bar {x}}\ ={\frac {\sigma }{\sqrt {n}}}
+
+        Knowing the standard error of a statistic we can calculate an appropriate range of values where the true value of the
+        statistic lies with a given probability. More information can be read at the `Wikipedia Standard Error page`_.
 
     Target
         The actual outcome of the event the machine learning model is trying to predict. Also referred to as
@@ -200,3 +269,5 @@ Glossary
 .. _`scipy implementation of the Chi-square test of independence of variables in a contingency table`:
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2_contingency.html
 .. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_analysis
+.. _`Wikipedia Standard Error page`: https://en.wikipedia.org/wiki/Standard_error
+.. _`loss function`: https://en.wikipedia.org/wiki/Loss_function`

@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
@@ -16,6 +17,7 @@ from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
     CalculatorNotFittedException,
+    EstimatorException,
     InvalidArgumentsException,
     InvalidReferenceDataException,
 )
@@ -32,7 +34,9 @@ class AbstractCalculatorResult(ABC):
     :class:`~nannyml.base.AbstractCalculatorResult` implementation.
     """
 
-    def __init__(self, results_data: pd.DataFrame):
+    DEFAULT_COLUMNS = ('key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period')
+
+    def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
         """Creates a new :class:`~nannyml.base.AbstractCalculatorResult` instance.
 
         Parameters
@@ -42,17 +46,31 @@ class AbstractCalculatorResult(ABC):
         """
         self.data = results_data.copy(deep=True)
 
+    # def __getattr__(self, attribute):
+    #     """Redirect function calls directly to the inner DataFrame."""
+    #     return getattr(self.data, attribute)
+
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    @property
     @abstractmethod
-    def calculator_name(self) -> str:
+    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
+        """Plots calculation results."""
         raise NotImplementedError
 
-    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
-        """Plots calculation results."""
+    def to_df(self) -> pd.DataFrame:
+        return self.data
+
+    def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
+        """Returns result metric data."""
+        try:
+            return self._filter(period, metrics, *args, **kwargs)
+        except Exception as exc:
+            raise CalculatorException(f"could not read result data: {exc}")
+
+    @abstractmethod
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
         raise NotImplementedError
 
 
@@ -65,6 +83,7 @@ class AbstractCalculator(ABC):
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
+        timestamp_column_name: Optional[str] = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
 
@@ -82,7 +101,13 @@ class AbstractCalculator(ABC):
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         """
-        self.chunker = ChunkerFactory.get_chunker(chunk_size, chunk_number, chunk_period, chunker)
+        self.chunker = ChunkerFactory.get_chunker(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
+
+        self.timestamp_column_name = timestamp_column_name
+
+        self.result: Optional[AbstractCalculatorResult] = None
 
     @property
     def _logger(self) -> logging.Logger:
@@ -100,7 +125,7 @@ class AbstractCalculator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractCalculatorResult:
+    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         """Performs a calculation on the provided data."""
         try:
             self._logger.debug(f"calculating {str(self)}")
@@ -118,7 +143,7 @@ class AbstractCalculator(ABC):
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractCalculatorResult:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
@@ -132,6 +157,8 @@ class AbstractEstimatorResult(ABC):
     For each :class:`~nannyml.drift.base.DriftCalculator` class there will be an associated
     :class:`~nannyml.drift.base.DriftResult` implementation.
     """
+
+    DEFAULT_COLUMNS = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
 
     def __init__(self, results_data: pd.DataFrame):
         """Creates a new DriftResult instance.
@@ -147,9 +174,18 @@ class AbstractEstimatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    @property
+    def to_df(self):
+        return self.data
+
+    def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        """Returns result metric data."""
+        try:
+            return self._filter(period, metrics, *args, **kwargs)
+        except Exception as exc:
+            raise EstimatorException(f"could not read result data: {exc}")
+
     @abstractmethod
-    def estimator_name(self) -> str:
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
         raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
@@ -166,6 +202,7 @@ class AbstractEstimator(ABC):
         chunk_number: int = None,
         chunk_period: str = None,
         chunker: Chunker = None,
+        timestamp_column_name: str = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
 
@@ -183,16 +220,24 @@ class AbstractEstimator(ABC):
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         """
-        self.chunker = ChunkerFactory.get_chunker(chunk_size, chunk_number, chunk_period, chunker)
+        self.chunker = ChunkerFactory.get_chunker(
+            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+        )
+        self.timestamp_column_name = timestamp_column_name
+
+        self.result: Optional[AbstractEstimatorResult] = None
 
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    def __str__(self):
+        return self.__class__.__name__
+
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Trains the calculator using reference data."""
         try:
-            self._logger.debug(f"fitting {str(self)}")
+            self._logger.info(f"fitting {str(self)}")
             reference_data = reference_data.copy()
             return self._fit(reference_data, *args, **kwargs)
         except InvalidArgumentsException:
@@ -202,10 +247,10 @@ class AbstractEstimator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
+    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         """Performs a calculation on the provided data."""
         try:
-            self._logger.debug(f"calculating {str(self)}")
+            self._logger.info(f"estimating {str(self)}")
             data = data.copy()
             return self._estimate(data, *args, **kwargs)
         except InvalidArgumentsException:
@@ -220,7 +265,7 @@ class AbstractEstimator(ABC):
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
@@ -237,7 +282,21 @@ def _column_is_categorical(column: pd.Series) -> bool:
 
 
 def _column_is_continuous(column: pd.Series) -> bool:
-    return column.dtype in ['float64', 'int64']
+    return column.dtype in [
+        'int_',
+        'int8',
+        'int16',
+        'int32',
+        'int64',
+        'uint8',
+        'uint16',
+        'uint32',
+        'uint64',
+        'float_',
+        'float16',
+        'float32',
+        'float64',
+    ]
 
 
 def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFrame]):
@@ -247,3 +306,24 @@ def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFra
     missing = [col for col in columns_to_find if col not in dataset_columns]
     if len(missing) > 0:
         raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")
+
+
+def _raise_exception_for_negative_values(column: pd.Series):
+    """Raises an InvalidArgumentsException if a given column contains negative values.
+
+    Parameters
+    ----------
+    column: pd.Series
+        Column to check for negative values.
+
+    Raises
+    ------
+    nannyml.exceptions.InvalidArgumentsException
+    """
+    if any(column.values < 0):
+        negative_item_indices = np.where(column.values < 0)
+        raise InvalidArgumentsException(
+            f"target values '{column.name}' contain negative values.\n"
+            f"\tLog-based metrics are not supported for negative target values.\n"
+            f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
+        )

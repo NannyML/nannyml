@@ -9,3 +9,4 @@ Drift Detection for Model Targets
 
    model_targets/drift_detection_for_binary_classification_model_targets.rst
    model_targets/drift_detection_for_multiclass_classification_model_targets
+   model_targets/drift_detection_for_regression_model_targets

@@ -4,7 +4,7 @@
 
 """Unit tests for performance estimation."""
 
-from typing import Tuple
+from typing import List, Tuple
 
 import pandas as pd
 import pytest
@@ -38,13 +38,16 @@ class SimpleEstimatorResult(AbstractEstimatorResult):
     def plot(self):
         pass
 
+    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        pass
+
 
 class SimpleEstimator(AbstractEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):  # noqa: D102
         return self
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> SimpleEstimatorResult:  # noqa: D102
-        chunks = self.chunker.split(data, timestamp_column_name='timestamp', minimum_chunk_size=50)
+        chunks = self.chunker.split(data)
         return SimpleEstimatorResult(
             results_data=pd.DataFrame(columns=data.columns).assign(key=[chunk.key for chunk in chunks]),
             calculator=self,
@@ -60,7 +63,7 @@ def test_base_estimator_uses_size_based_chunker_when_given_chunk_size():  # noqa
 def test_base_estimator_uses_count_based_chunker_when_given_chunk_number():  # noqa: D103
     simple_estimator = SimpleEstimator(chunk_number=100)
     assert isinstance(simple_estimator.chunker, CountBasedChunker)
-    assert simple_estimator.chunker.chunk_count == 100
+    assert simple_estimator.chunker.chunk_number == 100
 
 
 def test_base_estimator_uses_period_based_chunker_when_given_chunk_period():  # noqa: D103
