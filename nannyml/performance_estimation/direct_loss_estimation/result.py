@@ -27,7 +27,7 @@ class Result(AbstractEstimatorResult):
         self.estimator = estimator
 
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
-        columns = self.DEFAULT_COLUMNS
+        columns = list(self.DEFAULT_COLUMNS)
 
         for metric in self.estimator.metrics:
             columns += [
