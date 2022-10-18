@@ -56,7 +56,9 @@ class RawFilesWriter(FileWriter):
 
         bytes_buffer = BytesIO()
         if self._data_format == "parquet":
-            result.data.to_parquet(bytes_buffer, **self._write_args)
+            result.data.to_parquet(
+                bytes_buffer, **self._write_args, coerce_timestamps='ms', allow_truncated_timestamps=True
+            )
             _write_bytes_to_filesystem(bytes_buffer.getvalue(), data_path / f"{calculator_name}.pq", self._fs)
         elif self._data_format == "csv":
             result.data.to_csv(bytes_buffer, **self._write_args)

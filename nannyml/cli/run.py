@@ -18,6 +18,7 @@ from nannyml.cli.cli import cli
 from nannyml.config import Config
 from nannyml.exceptions import InvalidArgumentsException, IOException
 from nannyml.io import DEFAULT_WRITER, FileReader, WriterFactory
+from nannyml.user_analytics import UsageEvent, track
 
 
 @cli.command()
@@ -29,6 +30,7 @@ from nannyml.io import DEFAULT_WRITER, FileReader, WriterFactory
     default=None,
     help='Continues the next calculation if the previous one errors out',
 )
+@track(UsageEvent.CLI_RUN)
 def run(ctx, ignore_errors: bool):
     config = ctx.obj['config']
 

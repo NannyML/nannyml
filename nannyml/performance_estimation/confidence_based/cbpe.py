@@ -5,7 +5,7 @@
 """Implementation of the CBPE estimator."""
 import copy
 from abc import abstractmethod
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 
@@ -16,6 +16,9 @@ from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
+from nannyml.user_analytics import UsageEvent, track
+
+_analytics_metadata: Dict[str, Any] = {}
 
 
 class CBPE(AbstractEstimator):
@@ -146,6 +149,8 @@ class CBPE(AbstractEstimator):
 
         self.minimum_chunk_size: int = None  # type: ignore
 
+        _analytics_metadata.update({'metrics': metrics})
+
     def __deepcopy__(self, memodict={}):
         cls = self.__class__
         result = cls.__new__(cls, y_pred_proba=self.y_pred_proba, problem_type=self.problem_type)
@@ -155,6 +160,7 @@ class CBPE(AbstractEstimator):
         return result
 
     @abstractmethod
+    @track(UsageEvent.CBPE_ESTIMATOR_FIT, metadata=_analytics_metadata)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Fits the drift calculator using a set of reference data.
 
@@ -180,6 +186,7 @@ class CBPE(AbstractEstimator):
         pass
 
     @abstractmethod
+    @track(UsageEvent.CBPE_ESTIMATOR_RUN, metadata=_analytics_metadata)
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set.
 
