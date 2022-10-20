@@ -155,11 +155,11 @@ class AlertCountRanking(Ranking):
         >>>
         >>> display(reference_df.head())
         >>>
-        >>> feature_column_names = [
+        >>> column_names = [
         >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period',
         >>>                                                        'y_pred', 'repaid']]
         >>>
-        >>> calc = nml.UnivariateStatisticalDriftCalculator(feature_column_names=feature_column_names,
+        >>> calc = nml.UnivariateStatisticalDriftCalculator(column_names=column_names,
         >>>                                                 timestamp_column_name='timestamp')
         >>>
         >>> calc.fit(reference_df)

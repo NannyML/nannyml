@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import Result
+from nannyml.drift.multivariate.data_reconstruction.results import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
@@ -72,12 +72,12 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
         >>> display(reference.head())
         >>> # Define feature columns
-        >>> feature_column_names = [
+        >>> column_names = [
         ...     col for col in reference.columns if col not in [
         ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
         ...     ]]
         >>> calc = nml.DataReconstructionDriftCalculator(
-        ...     feature_column_names=feature_column_names,
+        ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
         ...     chunk_size=5000
         >>> )

@@ -82,10 +82,10 @@ class Result(AbstractCalculatorResult):
         >>> import nannyml as nml
         >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>>
-        >>> feature_column_names = [col for col in reference_df.columns
+        >>> column_names = [col for col in reference_df.columns
         >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
         >>> calc = nml.DataReconstructionDriftCalculator(
-        >>>     feature_column_names=feature_column_names,
+        >>>     column_names=column_names,
         >>>     timestamp_column_name='timestamp'
         >>> )
         >>> calc.fit(reference_df)

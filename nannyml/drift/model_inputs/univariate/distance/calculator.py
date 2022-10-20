@@ -62,10 +62,10 @@ class DistanceDriftCalculator(AbstractCalculator):
         >>> calc = nml.DistanceDriftCalculator(
         ...     timestamp_column_name='timestamp',
         ...     metrics=['jensen_shannon'],
-        ...     feature_column_names=[col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        ...     column_names=[col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
-        >>> for feature in calc.feature_column_names:
+        >>> for feature in calc.column_names:
         ...     for metric in calc.metrics:
         ...         res.plot(kind='feature_distribution', feature_column_name=feature, metric=metric).show()
         """

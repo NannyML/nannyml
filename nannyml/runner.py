@@ -18,7 +18,7 @@ from rich.progress import Progress
 
 from nannyml._typing import ProblemType
 from nannyml.chunk import Chunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.model_inputs.univariate.distance import DistanceDriftCalculator
 from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
 from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator

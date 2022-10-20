@@ -9,6 +9,7 @@ from typing import List, Optional, Union
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml.drift.univariate.methods import Method
 from nannyml.base import AbstractCalculatorResult, _column_is_continuous
 from nannyml.chunk import Chunk
 from nannyml.drift.model_inputs.univariate.distance.metrics import Metric, MetricFactory
@@ -24,40 +25,30 @@ class Result(AbstractCalculatorResult):
     def __init__(self, results_data: pd.DataFrame, calculator):
         super().__init__(results_data)
 
-        from nannyml.drift.model_inputs.univariate.distance.calculator import DistanceDriftCalculator
+        from nannyml.drift.univariate.calculator import UnivariateDriftCalculator
 
-        if not isinstance(calculator, DistanceDriftCalculator):
+        if not isinstance(calculator, UnivariateDriftCalculator):
             raise RuntimeError(
-                f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateStatisticalDriftCalculator"
+                f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateDriftCalculator"
             )
         self.calculator = calculator
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
-        columns = list(self.DEFAULT_COLUMNS)
-
-        if 'features' in kwargs:
-            features = kwargs['features']
+    def _filter(self, period: str, *args, **kwargs) -> AbstractCalculatorResult:
+        if 'column_names' in kwargs:
+            column_names = kwargs['column_names']
         else:
-            features = self.calculator.feature_column_names
+            column_names = self.calculator.column_names
 
-        if metrics is None:
-            _metrics = self.calculator.metrics
+        if 'methods' in kwargs:
+            methods = kwargs['methods']
         else:
-            _metrics = [MetricFactory.create(metric, kwargs={'calculator': self.calculator}) for metric in metrics]
+            methods = list(set(self.calculator.categorical_method_names + self.calculator.continuous_method_names))
 
-        for feature in features:
-            for metric in _metrics:
-                columns += [
-                    f'{feature}_{metric.column_name}',
-                    f'{feature}_{metric.column_name}_alert',
-                    f'{feature}_{metric.column_name}_lower_threshold',
-                    f'{feature}_{metric.column_name}_upper_threshold',
-                ]
+        data = pd.concat([self.data.loc[:, (['chunk'])],
+                          self.data.loc[:, (column_names, methods)]], axis=1)
 
-        if period == 'all':
-            data = self.data.loc[:, columns]
-        else:
-            data = self.data.loc[self.data['period'] == period, columns]
+        if period != 'all':
+            data = data.loc[data[('chunk', 'chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
 
@@ -66,8 +57,8 @@ class Result(AbstractCalculatorResult):
     def plot(
         self,
         kind: str = 'feature_drift',
-        metric: Union[str, Metric] = 'jensen_shannon',
-        feature_column_name: str = None,
+        method: Union[str, Method] = 'jensen_shannon',
+        column_name: str = None,
         plot_reference: bool = False,
         *args,
         **kwargs,
@@ -87,11 +78,11 @@ class Result(AbstractCalculatorResult):
         ----------
         kind: str, default=`feature_drift`
             The kind of plot you want to have. Allowed values are `feature_drift`` and ``feature_distribution``.
-        feature_column_name : str
+        column_name : str
             Column name identifying a feature according to the preset model metadata. The function will raise an
             exception when no feature using that column name was found in the metadata.
             Either ``feature_column_name`` or ``feature_label`` should be specified.
-        metric: str
+        method: str
             The name of the metric to plot. Allowed values are [`jensen_shannon`].
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
@@ -119,27 +110,27 @@ class Result(AbstractCalculatorResult):
         ...         res.plot(kind='feature_distribution', feature_column_name=feature, metric=metric).show()
 
         """
-        if metric is None:
+        if method is None:
             raise InvalidArgumentsException(
-                "no value for 'metric' given. Please provide the name of a metric to display."
+                "no value for 'method' given. Please provide the name of a metric to display."
             )
         if kind == 'feature_drift':
-            if feature_column_name is None:
+            if column_name is None:
                 raise InvalidArgumentsException(
-                    "must specify a feature to plot " "using the 'feature_column_name' parameter"
+                    "must specify a feature to plot " "using the 'column_name' parameter"
                 )
-            return self.plot_feature_drift(metric, feature_column_name, plot_reference)
+            return self.plot_feature_drift(method, column_name, plot_reference)
         elif kind == 'feature_distribution':
-            if feature_column_name is None:
+            if column_name is None:
                 raise InvalidArgumentsException(
-                    "must specify a feature to plot " "using the 'feature_column_name' parameter"
+                    "must specify a feature to plot " "using the 'column_name' parameter"
                 )
             return self._plot_feature_distribution(
                 analysis_data=self.calculator.previous_analysis_data,
                 plot_reference=plot_reference,
                 drift_data=self.data,
-                feature_column_name=feature_column_name,
-                metric=metric,
+                column_name=column_name,
+                metric=method,
             )
         else:
             raise InvalidArgumentsException(
@@ -150,18 +141,18 @@ class Result(AbstractCalculatorResult):
         self,
         analysis_data: pd.DataFrame,
         drift_data: pd.DataFrame,
-        feature_column_name: str,
+        column_name: str,
         metric: Union[str, Metric],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-        if _column_is_continuous(analysis_data[feature_column_name]):
+        if _column_is_continuous(analysis_data[column_name]):
             return self._plot_continuous_feature_distribution(
-                analysis_data, drift_data, feature_column_name, metric, plot_reference
+                analysis_data, drift_data, column_name, metric, plot_reference
             )
         else:
             return self._plot_categorical_feature_distribution(
-                analysis_data, drift_data, feature_column_name, metric, plot_reference
+                analysis_data, drift_data, column_name, metric, plot_reference
             )
         # pass
 

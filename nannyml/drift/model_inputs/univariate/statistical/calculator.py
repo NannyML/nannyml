@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
+from nannyml.drift.univariate.methods import MethodFactory, FeatureType
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.univariate.statistical.results import Result
@@ -27,6 +28,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         self,
         feature_column_names: List[str],
         timestamp_column_name: str = None,
+
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
@@ -41,6 +43,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
             A drift score will be calculated for each entry in this list.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
+
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -60,19 +63,19 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
         >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
         >>> display(reference_df.head())
-        >>> feature_column_names = [
+        >>> column_names = [
         ...     col for col in reference_df.columns if col not in [
         ...     'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
         >>> ]]
         >>> calc = nml.UnivariateStatisticalDriftCalculator(
-        ...     feature_column_names=feature_column_names,
+        ...     column_names=column_names,
         ...     timestamp_column_name='timestamp'
         >>> )
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
         >>> display(results.data.iloc[:, :9])
         >>> display(calc.previous_reference_results.iloc[:, :9])
-        >>> for feature in calc.feature_column_names:
+        >>> for feature in calc.column_names:
         ...     drift_fig = results.plot(
         ...         kind='feature_drift',
         ...         feature_column_name=feature,
@@ -101,6 +104,7 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         )
 
         self.feature_column_names = feature_column_names
+
         self.continuous_column_names: List[str] = []
         self.categorical_column_names: List[str] = []
 

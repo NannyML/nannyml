@@ -59,8 +59,14 @@ class AbstractCalculatorResult(ABC):
         """Plots calculation results."""
         raise NotImplementedError
 
-    def to_df(self) -> pd.DataFrame:
-        return self.data
+    def to_df(self, multilevel: bool = True) -> pd.DataFrame:
+        if multilevel:
+            return self.data
+        else:
+            column_names = ['_'.join(col) for col in self.data.columns.values]
+            single_level_data = self.data.copy(deep=True)
+            single_level_data.columns = column_names
+            return single_level_data
 
     def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
         """Returns result metric data."""

@@ -118,10 +118,10 @@ class Result(AbstractCalculatorResult):
         >>>
         >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>>
-        >>> feature_column_names = [col for col in reference_df.columns
+        >>> column_names = [col for col in reference_df.columns
         >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
         >>> calc = nml.UnivariateStatisticalDriftCalculator(
-        >>>     feature_column_names=feature_column_names,
+        >>>     column_names=column_names,
         >>>     timestamp_column_name='timestamp'
         >>> )
         >>> calc.fit(reference_df)
@@ -138,7 +138,7 @@ class Result(AbstractCalculatorResult):
         7  [35000:39999]        35000  ...              True                 0.05
         8  [40000:44999]        40000  ...              True                 0.05
         9  [45000:49999]        45000  ...              True                 0.05
-        >>> for feature in calc.feature_column_names:
+        >>> for feature in calc.column_names:
         >>>     fig = results.plot(kind='feature_drift', metric='statistic', plot_reference=True,
         >>>                        feature_column_name=feature)
         >>>     fig.show()

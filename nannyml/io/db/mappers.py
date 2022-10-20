@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List
 
 from nannyml._typing import ProblemType
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.results import Result as DataReconstructionDriftResult
+from nannyml.drift.multivariate.data_reconstruction.results import Result as DataReconstructionDriftResult
 from nannyml.drift.model_inputs.univariate.distance.results import Result as DistanceFeatureDriftResult
 from nannyml.drift.model_inputs.univariate.statistical.results import Result as StatisticalFeatureDriftResult
 from nannyml.drift.model_outputs.univariate.statistical.results import Result as StatisticalOutputDriftResult
