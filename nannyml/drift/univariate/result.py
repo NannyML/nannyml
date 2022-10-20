@@ -9,10 +9,10 @@ from typing import List, Optional, Union
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.drift.univariate.methods import Method
 from nannyml.base import AbstractCalculatorResult, _column_is_continuous
 from nannyml.chunk import Chunk
 from nannyml.drift.model_inputs.univariate.distance.metrics import Metric, MetricFactory
+from nannyml.drift.univariate.methods import Method, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
@@ -44,8 +44,7 @@ class Result(AbstractCalculatorResult):
         else:
             methods = list(set(self.calculator.categorical_method_names + self.calculator.continuous_method_names))
 
-        data = pd.concat([self.data.loc[:, (['chunk'])],
-                          self.data.loc[:, (column_names, methods)]], axis=1)
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, methods)]], axis=1)
 
         if period != 'all':
             data = data.loc[data[('chunk', 'chunk', 'period')] == period, :]
@@ -116,15 +115,11 @@ class Result(AbstractCalculatorResult):
             )
         if kind == 'feature_drift':
             if column_name is None:
-                raise InvalidArgumentsException(
-                    "must specify a feature to plot " "using the 'column_name' parameter"
-                )
+                raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
             return self.plot_feature_drift(method, column_name, plot_reference)
         elif kind == 'feature_distribution':
             if column_name is None:
-                raise InvalidArgumentsException(
-                    "must specify a feature to plot " "using the 'column_name' parameter"
-                )
+                raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
             return self._plot_feature_distribution(
                 analysis_data=self.calculator.previous_analysis_data,
                 plot_reference=plot_reference,
@@ -158,33 +153,40 @@ class Result(AbstractCalculatorResult):
 
     def plot_feature_drift(
         self,
-        metric: Union[str, Metric],
-        feature: str,
+        method: Union[str, Method],
+        column_name: str,
         plot_reference: bool = False,
     ) -> go.Figure:
         """Renders a line plot for a chosen metric of univariate statistical feature drift calculation results."""
-        result_data = self.data.copy()
+        result_data = self.to_df(multilevel=False)
 
-        if isinstance(metric, str):
-            metric = MetricFactory.create(key=metric, kwargs={'calculator': self.calculator})
+        if isinstance(method, str):
+            _supported_feature_types = list(MethodFactory.registry[method].keys())
+            if len(_supported_feature_types) == 0:
+                raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
+            method = MethodFactory.create(
+                key=method, feature_type=_supported_feature_types[0], calculator=self.calculator
+            )
 
         if not plot_reference:
-            result_data = result_data[result_data['period'] == 'analysis']
+            result_data = result_data[result_data['chunk_chunk_period'] == 'analysis']
 
         is_time_based_x_axis = self.calculator.timestamp_column_name is not None
 
         fig = _step_plot(
             table=result_data,
-            metric_column_name=f'{feature}_{metric.column_name}',
-            chunk_column_name='key',
-            start_date_column_name='start_date' if is_time_based_x_axis else None,
-            end_date_column_name='end_date' if is_time_based_x_axis else None,
-            drift_column_name=f'{feature}_{metric.column_name}_alert',
-            lower_threshold_column_name=f'{feature}_{metric.column_name}_lower_threshold',
-            upper_threshold_column_name=f'{feature}_{metric.column_name}_upper_threshold',
-            hover_labels=['Chunk', f'{metric.display_name}', 'Target data'],
-            title=f'{metric.display_name} distance for {feature}',
-            y_axis_title=f'{metric.display_name}',
+            metric_column_name=f'{column_name}_{method.column_name}_value',
+            chunk_column_name='chunk_chunk_key',
+            chunk_index_column_name='chunk_chunk_chunk_index',
+            chunk_type_column_name='chunk_chunk_period',
+            start_date_column_name='chunk_chunk_start_date' if is_time_based_x_axis else None,
+            end_date_column_name='chunk_chunk_end_date' if is_time_based_x_axis else None,
+            drift_column_name=f'{column_name}_{method.column_name}_alert',
+            lower_threshold_column_name=f'{column_name}_{method.column_name}_lower_threshold',
+            upper_threshold_column_name=f'{column_name}_{method.column_name}_upper_threshold',
+            hover_labels=['Chunk', f'{method.display_name}', 'Target data'],
+            title=f'{method.display_name} distance for {column_name}',
+            y_axis_title=f'{method.display_name}',
             v_line_separating_analysis_period=plot_reference,
         )
         return fig

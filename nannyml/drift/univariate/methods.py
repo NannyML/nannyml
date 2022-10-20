@@ -7,10 +7,10 @@ import abc
 import logging
 from enum import Enum
 from logging import Logger
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple
 
 import pandas as pd
-from scipy.stats import ks_2samp, chi2_contingency
+from scipy.stats import chi2_contingency, ks_2samp
 
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 
@@ -50,8 +50,9 @@ class Method(abc.ABC):
         from nannyml.drift.univariate import UnivariateDriftCalculator
 
         if not isinstance(calculator, UnivariateDriftCalculator):
-            raise RuntimeError(f"{calculator.__class__.__name__} is not an instance "
-                               "of type " f"UnivariateDriftCalculator")
+            raise RuntimeError(
+                f"{calculator.__class__.__name__} is not an instance " "of type " f"UnivariateDriftCalculator"
+            )
 
         self.calculator: UnivariateDriftCalculator = calculator
 
@@ -128,7 +129,7 @@ class FeatureType(str, Enum):
 
 
 class MethodFactory:
-    """A factory class that produces Metric instances based on a given magic string or a metric specification."""
+    """A factory class that produces Method instances given a 'key' string and a 'feature_type' it supports."""
 
     registry: Dict[str, Dict[FeatureType, Method]] = {}
 
@@ -148,9 +149,7 @@ class MethodFactory:
             )
 
         if feature_type not in cls.registry[key]:
-            raise InvalidArgumentsException(
-                f"method {key} does not support {feature_type.value} features."
-            )
+            raise InvalidArgumentsException(f"method {key} does not support {feature_type.value} features.")
 
         if kwargs is None:
             kwargs = {}
@@ -197,9 +196,7 @@ class JensenShannonDistance(Method):
 
     def _alert(self, data: pd.Series):
         value = self.calculate(data)
-        return (
-            self.lower_threshold is not None and value < self.lower_threshold
-        ) or (
+        return (self.lower_threshold is not None and value < self.lower_threshold) or (
             self.upper_threshold is not None and value > self.upper_threshold
         )
 
@@ -209,10 +206,10 @@ class KolmogorovSmirnovStatistic(Method):
     def __init__(self, calculator):
         super().__init__(
             display_name='Kolmogorov-Smirnov statistic',
-            column_name='kolmogorov-smirnov',
+            column_name='kolmogorov_smirnov',
             calculator=calculator,
             upper_threshold_limit=1,
-            lower_threshold=0.05
+            lower_threshold=0.05,
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
@@ -223,8 +220,9 @@ class KolmogorovSmirnovStatistic(Method):
 
     def _calculate(self, data: pd.Series):
         if self._reference_data is None:
-            raise NotFittedException("tried to call 'calculate' on an unfitted method "
-                                     f"{self.display_name}. Please run 'fit' first")
+            raise NotFittedException(
+                "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
+            )
 
         stat, p_value = ks_2samp(self._reference_data, data)
         self._p_value = p_value
@@ -248,7 +246,7 @@ class Chi2Statistic(Method):
             column_name='chi2',
             calculator=calculator,
             upper_threshold_limit=1.0,
-            lower_threshold=0.05
+            lower_threshold=0.05,
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
@@ -259,22 +257,27 @@ class Chi2Statistic(Method):
 
     def _calculate(self, data: pd.Series):
         if self._reference_data is None:
-            raise NotFittedException("tried to call 'calculate' on an unfitted method "
-                                     f"{self.display_name}. Please run 'fit' first")
+            raise NotFittedException(
+                "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
+            )
 
-        stat, p_value, _, _ = chi2_contingency(pd.concat([
-                            self._reference_data.value_counts(),  # type: ignore
-                            data.value_counts()], axis=1,
-                    ).fillna(0))
+        stat, p_value, _, _ = chi2_contingency(
+            pd.concat(
+                [self._reference_data.value_counts(), data.value_counts()],  # type: ignore
+                axis=1,
+            ).fillna(0)
+        )
         self._p_value = p_value
         return stat
 
     def _alert(self, data: pd.Series):
         if self._p_value is None:
-            _, self._p_value, _, _ = chi2_contingency(pd.concat([
-                self._reference_data.value_counts(),  # type: ignore
-                data.value_counts()], axis=1,
-            ).fillna(0))
+            _, self._p_value, _, _ = chi2_contingency(
+                pd.concat(
+                    [self._reference_data.value_counts(), data.value_counts()],  # type: ignore
+                    axis=1,
+                ).fillna(0)
+            )
 
         alert = self._p_value < self.lower_threshold
         self._p_value = None
