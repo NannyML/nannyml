@@ -4,3 +4,4 @@
 
 from .calculator import UnivariateDriftCalculator
 from .methods import FeatureType, Method, MethodFactory
+from .result import Result

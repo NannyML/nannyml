@@ -24,7 +24,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         column_names: List[str],
-        timestamp_column_name: Optional[str],
+        timestamp_column_name: Optional[str] = None,
         categorical_methods: List[str] = None,
         continuous_methods: List[str] = None,
         chunk_size: int = None,
@@ -78,8 +78,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         )
 
         self.column_names = column_names
-        self.continuous_method_names = continuous_methods or []
-        self.categorical_method_names = categorical_methods or []
+        self.continuous_method_names = continuous_methods or ['kolmogorov_smirnov']
+        self.categorical_method_names = categorical_methods or ['chi2']
         # self.continuous_methods = [
         #     MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, calculator=self)
         #     for method in continuous_methods

@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from nannyml.datasets import load_synthetic_binary_classification_dataset
-from nannyml.drift.model_inputs.univariate.distance import DistanceDriftCalculator
+from nannyml.drift.univariate import UnivariateDriftCalculator
 
 
 @pytest.fixture
@@ -18,24 +18,26 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 
 @pytest.fixture()
-def distance_drift_calculator(data) -> DistanceDriftCalculator:
-    return DistanceDriftCalculator(
-        feature_column_names=[
+def distance_drift_calculator(data) -> UnivariateDriftCalculator:
+    return UnivariateDriftCalculator(
+        column_names=[
             col for col in data[0].columns if col not in ['y_pred_proba', 'y_pred', 'timestamp', 'work_home_actual']
         ],
         timestamp_column_name='timestamp',
-        metrics=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+        continuous_methods=['jensen_shannon'],
     )
 
 
 def test_rando(data):
     try:
-        calc = DistanceDriftCalculator(
-            feature_column_names=[
+        calc = UnivariateDriftCalculator(
+            column_names=[
                 col for col in data[0].columns if col not in ['y_pred_proba', 'y_pred', 'timestamp', 'work_home_actual']
             ],
             timestamp_column_name='timestamp',
-            metrics=['jensen_shannon'],
+            continuous_methods=['jensen_shannon'],
+            categorical_methods=['jensen_shannon'],
         )
         _ = calc.fit(data[1])
 

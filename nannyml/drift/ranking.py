@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict
 
 import pandas as pd
 
-from nannyml.drift.model_inputs.univariate.statistical import Result
+from nannyml.drift.univariate.result import Result
 from nannyml.exceptions import InvalidArgumentsException
 
 
@@ -184,7 +184,7 @@ class AlertCountRanking(Ranking):
             raise InvalidArgumentsException('drift results contain no data to use for ranking')
 
         alert_column_names = [
-            f'{name}{self.ALERT_COLUMN_SUFFIX}' for name in drift_calculation_result.calculator.feature_column_names
+            f'{name}{self.ALERT_COLUMN_SUFFIX}' for name in drift_calculation_result.calculator.column_names
         ]
 
         ranking = pd.DataFrame(drift_calculation_result.data[alert_column_names].sum()).reset_index()

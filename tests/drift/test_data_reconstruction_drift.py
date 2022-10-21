@@ -10,7 +10,7 @@ import pytest
 from sklearn.impute import SimpleImputer
 
 from nannyml.chunk import PeriodBasedChunker, SizeBasedChunker
-from nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator import DataReconstructionDriftCalculator
+from nannyml.drift.multivariate.data_reconstruction.calculator import DataReconstructionDriftCalculator
 
 
 @pytest.fixture

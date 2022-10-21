@@ -7,8 +7,8 @@
 import pandas as pd
 import pytest
 
-from nannyml.drift.model_inputs.univariate.statistical import Result, UnivariateStatisticalDriftCalculator
 from nannyml.drift.ranking import AlertCountRanking
+from nannyml.drift.univariate import Result, UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 
 
@@ -27,9 +27,7 @@ def sample_drift_result() -> Result:  # noqa: D103
                 'f4': [1, 1, 1, 1, 1, 1],
             }
         ),
-        calculator=UnivariateStatisticalDriftCalculator(
-            timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']
-        ),
+        calculator=UnivariateDriftCalculator(timestamp_column_name='timestamp', column_names=['f1', 'f2', 'f3', 'f4']),
     )
 
 
@@ -39,8 +37,8 @@ def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_resul
         ranking.rank(
             Result(
                 results_data=pd.DataFrame(columns=['f1', 'f1_alert']),
-                calculator=UnivariateStatisticalDriftCalculator(
-                    timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']
+                calculator=UnivariateDriftCalculator(
+                    timestamp_column_name='timestamp', column_names=['f1', 'f2', 'f3', 'f4']
                 ),
             )
         )
@@ -75,8 +73,8 @@ def test_alert_count_ranking_should_raise_invalid_arguments_exception_when_given
         _ = AlertCountRanking().rank(
             Result(
                 results_data=pd.DataFrame(columns=['f1', 'f1_alert']),
-                calculator=UnivariateStatisticalDriftCalculator(
-                    timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']
+                calculator=UnivariateDriftCalculator(
+                    timestamp_column_name='timestamp', column_names=['f1', 'f2', 'f3', 'f4']
                 ),
             )
         )
