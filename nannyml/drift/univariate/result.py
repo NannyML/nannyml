@@ -123,7 +123,7 @@ class Result(AbstractCalculatorResult):
             return self._plot_feature_distribution(
                 analysis_data=self.calculator.previous_analysis_data,
                 plot_reference=plot_reference,
-                drift_data=self.data,
+                drift_data=self.to_df(multilevel=False),
                 column_name=column_name,
                 metric=method,
             )
@@ -195,29 +195,35 @@ class Result(AbstractCalculatorResult):
         self,
         data: pd.DataFrame,
         drift_data: pd.DataFrame,
-        feature_column_name: str,
-        metric: Union[str, Metric],
+        column_name: str,
+        method: Union[str, Metric],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-        if isinstance(metric, str):
-            metric = MetricFactory.create(key=metric, kwargs={'calculator': self.calculator})
+        if isinstance(method, str):
+            _supported_feature_types = list(MethodFactory.registry[method].keys())
+            if len(_supported_feature_types) == 0:
+                raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
+            method = MethodFactory.create(
+                key=method, feature_type=_supported_feature_types[0], calculator=self.calculator
+            )
 
         if not plot_reference:
-            drift_data = drift_data.loc[drift_data['period'] == 'analysis']
+            drift_data = drift_data.loc[drift_data['chunk_chunk_period'] == 'analysis']
 
-        x_axis_title = f'{feature_column_name}'
-        drift_column_name = f'{feature_column_name}_{metric.column_name}_alert'
-        title = f'Distribution over time for {feature_column_name}'
+        x_axis_title = f'{column_name}'
+        drift_column_name = f'{column_name}_{method.column_name}_alert'
+        title = f'Distribution over time for {column_name}'
+        key_column_name = 'chunk_chunk_key'
 
         data['period'] = 'analysis'
-        feature_table = _create_feature_table(self.calculator.chunker.split(data))
+        feature_table = _create_feature_table(self.calculator.chunker.split(data), key_column_name)
 
         if plot_reference:
             reference_feature_table = _create_feature_table(
-                self.calculator.chunker.split(self.calculator.previous_reference_data)
+                self.calculator.chunker.split(self.calculator.previous_reference_data), key_column_name
             )
-            reference_feature_table['period'] = 'reference'
+            reference_feature_table['chunk_chunk_period'] = 'reference'
             feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
         is_time_based_x_axis = self.calculator.timestamp_column_name is not None
@@ -225,14 +231,16 @@ class Result(AbstractCalculatorResult):
         fig = _joy_plot(
             feature_table=feature_table,
             drift_table=drift_data,
-            chunk_column_name='key',
+            chunk_column_name='chunk_chunk_key',
+            chunk_index_column_name='chunk_chunk_chunk_index',
+            chunk_type_column_name='chunk_chunk_period',
             drift_column_name=drift_column_name,
-            feature_column_name=feature_column_name,
+            feature_column_name=column_name,
             x_axis_title=x_axis_title,
             title=title,
             style='vertical',
-            start_date_column_name='start_date' if is_time_based_x_axis else None,
-            end_date_column_name='end_date' if is_time_based_x_axis else None,
+            start_date_column_name='chunk_chunk_start_date' if is_time_based_x_axis else None,
+            end_date_column_name='chunk_chunk_end_date' if is_time_based_x_axis else None,
         )
         return fig
 
@@ -240,29 +248,35 @@ class Result(AbstractCalculatorResult):
         self,
         data: pd.DataFrame,
         drift_data: pd.DataFrame,
-        feature_column_name: str,
-        metric: Union[str, Metric],
+        column_name: str,
+        method: Union[str, Method],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given categorical feature."""
-        if isinstance(metric, str):
-            metric = MetricFactory.create(key=metric, kwargs={'calculator': self.calculator})
+        if isinstance(method, str):
+            _supported_feature_types = list(MethodFactory.registry[method].keys())
+            if len(_supported_feature_types) == 0:
+                raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
+            method = MethodFactory.create(
+                key=method, feature_type=_supported_feature_types[0], calculator=self.calculator
+            )
 
         if not plot_reference:
-            drift_data = drift_data.loc[drift_data['period'] == 'analysis']
+            drift_data = drift_data.loc[drift_data['chunk_chunk_period'] == 'analysis']
 
-        yaxis_title = f'{feature_column_name}'
-        drift_column_name = f'{feature_column_name}_alert'
-        title = f'Distribution over time for {feature_column_name}'
+        yaxis_title = f'{column_name}'
+        drift_column_name = f'{column_name}_{method.column_name}_alert'
+        title = f'Distribution over time for {column_name}'
+        key_column_name = 'chunk_chunk_key'
 
-        data['period'] = 'analysis'
-        feature_table = _create_feature_table(self.calculator.chunker.split(data))
+        data['chunk_chunk_period'] = 'analysis'
+        feature_table = _create_feature_table(self.calculator.chunker.split(data), key_column_name)
 
         if plot_reference:
             reference_feature_table = _create_feature_table(
-                self.calculator.chunker.split(self.calculator.previous_reference_data)
+                self.calculator.chunker.split(self.calculator.previous_reference_data), key_column_name
             )
-            reference_feature_table['period'] = 'reference'
+            reference_feature_table['chunk_chunk_period'] = 'reference'
             feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
         is_time_based_x_axis = self.calculator.timestamp_column_name is not None
@@ -270,16 +284,18 @@ class Result(AbstractCalculatorResult):
         fig = _stacked_bar_plot(
             feature_table=feature_table,
             drift_table=drift_data,
-            chunk_column_name='key',
+            chunk_column_name='chunk_chunk_key',
+            chunk_type_column_name='chunk_chunk_period',
+            chunk_index_column_name='chunk_chunk_chunk_index',
             drift_column_name=drift_column_name,
-            feature_column_name=feature_column_name,
+            feature_column_name=column_name,
             yaxis_title=yaxis_title,
             title=title,
-            start_date_column_name='start_date' if is_time_based_x_axis else None,
-            end_date_column_name='end_date' if is_time_based_x_axis else None,
+            start_date_column_name='chunk_chunk_start_date' if is_time_based_x_axis else None,
+            end_date_column_name='chunk_chunk_end_date' if is_time_based_x_axis else None,
         )
         return fig
 
 
-def _create_feature_table(chunks: List[Chunk]) -> pd.DataFrame:
-    return pd.concat([chunk.data.assign(key=chunk.key) for chunk in chunks])
+def _create_feature_table(chunks: List[Chunk], key_column_name: str) -> pd.DataFrame:
+    return pd.concat([chunk.data.assign(**{key_column_name: chunk.key}) for chunk in chunks])
