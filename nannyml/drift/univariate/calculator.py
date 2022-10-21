@@ -13,7 +13,7 @@ from pandas import MultiIndex
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift.univariate.methods import MethodFactory, FeatureType, Method
+from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.drift.univariate.result import Result
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -78,8 +78,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         )
 
         self.column_names = column_names
-        self.continuous_method_names = continuous_methods
-        self.categorical_method_names = categorical_methods
+        self.continuous_method_names = continuous_methods or []
+        self.categorical_method_names = categorical_methods or []
         # self.continuous_methods = [
         #     MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, calculator=self)
         #     for method in continuous_methods
@@ -111,7 +111,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
         for column_name in self.continuous_column_names:
             self._column_to_models_mapping[column_name] += [
                 MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, calculator=self).fit(
-                    reference_data[column_name]) for method in self.continuous_method_names
+                    reference_data[column_name]
+                )
+                for method in self.continuous_method_names
             ]
 
         # for column_name in self.continuous_column_names:
@@ -126,7 +128,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
         for column_name in self.categorical_column_names:
             self._column_to_models_mapping[column_name] += [
                 MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL, calculator=self).fit(
-                    reference_data[column_name]) for method in self.categorical_method_names
+                    reference_data[column_name]
+                )
+                for method in self.categorical_method_names
             ]
 
         self.previous_reference_data = reference_data.copy()
@@ -147,9 +151,13 @@ class UnivariateDriftCalculator(AbstractCalculator):
         rows = []
         for chunk in chunks:
             row = {
-                'key': chunk.key, 'chunk_index': chunk.chunk_index, 'start_index': chunk.start_index,
-                'end_index': chunk.end_index, 'start_datetime': chunk.start_datetime,
-                'end_datetime': chunk.end_datetime, 'period': 'analysis'
+                'key': chunk.key,
+                'chunk_index': chunk.chunk_index,
+                'start_index': chunk.start_index,
+                'end_index': chunk.end_index,
+                'start_datetime': chunk.start_datetime,
+                'end_datetime': chunk.end_datetime,
+                'period': 'analysis',
             }
 
             for column_name in self.column_names:
@@ -197,18 +205,20 @@ def _create_multilevel_index(
 ):
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     method_column_names = ['value', 'upper_threshold', 'lower_threshold', 'alert']
-    chunk_tuples = [('chunk', 'chunk', chunk_column_name)
-                    for chunk_column_name in chunk_column_names
-                    ]
-    continuous_column_tuples = [(column_name, method_name, method_column_name)
-                                for column_name in continuous_column_names
-                                for method_name in continuous_method_names
-                                for method_column_name in method_column_names]
+    chunk_tuples = [('chunk', 'chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
+    continuous_column_tuples = [
+        (column_name, method_name, method_column_name)
+        for column_name in continuous_column_names
+        for method_name in continuous_method_names
+        for method_column_name in method_column_names
+    ]
 
-    categorical_column_tuples = [(column_name, method_name, method_column_name)
-                                 for column_name in categorical_column_names
-                                 for method_name in categorical_method_names
-                                 for method_column_name in method_column_names]
+    categorical_column_tuples = [
+        (column_name, method_name, method_column_name)
+        for column_name in categorical_column_names
+        for method_name in categorical_method_names
+        for method_column_name in method_column_names
+    ]
 
     tuples = chunk_tuples + continuous_column_tuples + categorical_column_tuples
 

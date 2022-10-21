@@ -12,10 +12,10 @@ This module currently contains the following implementations of drift calculatio
   inputs and then applying the inverse transofrmation on the latent (reduced) space.
 
 """
-from .multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from .model_inputs.univariate.distance import DistanceDriftCalculator
 from .model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
 from .model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
+from .multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from .ranking import AlertCountRanking, Ranker, Ranking
 from .target.target_distribution import TargetDistributionCalculator
-from .univariate import UnivariateDriftCalculator, MethodFactory, Method, FeatureType
+from .univariate import FeatureType, Method, MethodFactory, UnivariateDriftCalculator

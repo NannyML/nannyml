@@ -20,4 +20,3 @@ to look for drift.
 
    univariate_drift_detection/univariate_distance_drift.rst
    univariate_drift_detection/univariate_statistical_drift
-

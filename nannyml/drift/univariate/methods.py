@@ -7,7 +7,7 @@ import abc
 import logging
 from enum import Enum
 from logging import Logger
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Optional
 
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
@@ -232,7 +232,7 @@ class KolmogorovSmirnovStatistic(Method):
         if self._p_value is None:
             _, self._p_value = ks_2samp(self._reference_data, data)
 
-        alert = self._p_value < self.lower_threshold
+        alert = self.lower_threshold and self._p_value < self.lower_threshold
         self._p_value = None  # just cleaning up state before running on new chunk data (optimization)
 
         return alert
@@ -279,6 +279,6 @@ class Chi2Statistic(Method):
                 ).fillna(0)
             )
 
-        alert = self._p_value < self.lower_threshold
+        alert = self.lower_threshold and self._p_value < self.lower_threshold
         self._p_value = None
         return alert

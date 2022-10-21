@@ -11,7 +11,6 @@ import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult, _column_is_continuous
 from nannyml.chunk import Chunk
-from nannyml.drift.model_inputs.univariate.distance.metrics import Metric, MetricFactory
 from nannyml.drift.univariate.methods import Method, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot
@@ -125,7 +124,7 @@ class Result(AbstractCalculatorResult):
                 plot_reference=plot_reference,
                 drift_data=self.to_df(multilevel=False),
                 column_name=column_name,
-                metric=method,
+                method=method,
             )
         else:
             raise InvalidArgumentsException(
@@ -137,17 +136,17 @@ class Result(AbstractCalculatorResult):
         analysis_data: pd.DataFrame,
         drift_data: pd.DataFrame,
         column_name: str,
-        metric: Union[str, Metric],
+        method: Union[str, Method],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
         if _column_is_continuous(analysis_data[column_name]):
             return self._plot_continuous_feature_distribution(
-                analysis_data, drift_data, column_name, metric, plot_reference
+                analysis_data, drift_data, column_name, method, plot_reference
             )
         else:
             return self._plot_categorical_feature_distribution(
-                analysis_data, drift_data, column_name, metric, plot_reference
+                analysis_data, drift_data, column_name, method, plot_reference
             )
         # pass
 
@@ -196,7 +195,7 @@ class Result(AbstractCalculatorResult):
         data: pd.DataFrame,
         drift_data: pd.DataFrame,
         column_name: str,
-        method: Union[str, Metric],
+        method: Union[str, Method],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given continuous feature."""

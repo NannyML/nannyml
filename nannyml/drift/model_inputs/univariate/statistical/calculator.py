@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml.drift.univariate.methods import MethodFactory, FeatureType
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.model_inputs.univariate.statistical.results import Result
@@ -28,7 +27,6 @@ class UnivariateStatisticalDriftCalculator(AbstractCalculator):
         self,
         feature_column_names: List[str],
         timestamp_column_name: str = None,
-
         chunk_size: int = None,
         chunk_number: int = None,
         chunk_period: str = None,
