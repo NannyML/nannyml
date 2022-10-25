@@ -8,12 +8,15 @@ import logging
 from enum import Enum
 from logging import Logger
 from typing import Callable, Dict, Optional, Tuple
+from copy import copy
 
+import numpy as np
 import pandas as pd
 from scipy.stats import chi2_contingency, ks_2samp
+from scipy.spatial.distance import jensenshannon
 
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
-
+from nannyml.base import  _column_is_categorical
 
 class Method(abc.ABC):
     """A performance metric used to calculate realized model performance."""
@@ -188,11 +191,63 @@ class JensenShannonDistance(Method):
         )
         self.upper_threshold = 0.1
 
+        self._treat_as_type: Optional[str] = None
+        self._bins: Optional[np.ndarray] = None
+        self._reference_proba_in_bins: Optional[np.ndarray] = None
+
     def _fit(self, reference_data: pd.Series):
-        pass
+        if _column_is_categorical(reference_data):
+            treat_as_type = 'cat'
+        else:
+            n_unique_values = len(np.unique(reference_data))
+            len_reference = len(reference_data)
+            if n_unique_values > 50 or n_unique_values/len_reference > 0.1:
+                treat_as_type = 'cont'
+            else:
+                treat_as_type = 'cat'
+
+        if treat_as_type == 'cont':
+            bins = np.histogram_bin_edges(reference_data, bins='doane')
+            reference_proba_in_bins = np.histogram(reference_data, bins=bins)[0] / len_reference
+            self._bins = bins
+            self._reference_proba_in_bins = reference_proba_in_bins
+        else:
+            reference_unique, reference_counts = np.unique(reference_data, return_counts=True)
+            reference_proba_per_unique = reference_counts/len(reference_data)
+            self._bins = reference_unique
+            self._reference_proba_in_bins = reference_proba_per_unique
+
+
+        self._treat_as_type = treat_as_type
+
+        return self
 
     def _calculate(self, data: pd.Series):
-        return 0.03
+        reference_proba_in_bins = copy(self._reference_proba_in_bins)
+        if self._treat_as_type == 'cont':
+            len_data = len(data)
+            data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
+
+        else:
+            data_unique, data_counts = np.unique(data, return_counts=True)
+            data_counts_dic = dict(zip(data_unique, data_counts))
+            data_count_on_ref_bins = [
+                data_counts_dic[key] if key in data_counts_dic else 0
+                for key in self._bins]
+            data_proba_in_bins = np.array(data_count_on_ref_bins) / len(data)
+
+        leftover = 1 - np.sum(data_proba_in_bins)
+        if leftover > 0:
+            data_proba_in_bins = np.append(data_proba_in_bins, leftover)
+            reference_proba_in_bins = np.append(reference_proba_in_bins, 0)
+
+        distance = jensenshannon(reference_proba_in_bins, data_proba_in_bins)
+        self._p_value = None
+
+        del reference_proba_in_bins
+
+        return distance
+
 
     def _alert(self, data: pd.Series):
         value = self.calculate(data)
