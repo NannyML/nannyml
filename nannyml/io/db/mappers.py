@@ -92,7 +92,7 @@ class UnivariateDriftResultMapper(Mapper):
         if not isinstance(result, UnivariateDriftResult):
             raise InvalidArgumentsException(f"{self.__class__.__name__} can not deal with '{type(result)}'")
 
-        if result.calculator.timestamp_column_name is None:
+        if result.timestamp_column_name is None:
             raise NotImplementedError(
                 'no timestamp column was specified. Listing metrics currently requires a '
                 'timestamp column to be specified and present'
@@ -100,21 +100,37 @@ class UnivariateDriftResultMapper(Mapper):
 
         res: List[UnivariateDriftMetric] = []
 
-        for feature_metric_col in [
-            col for col in result.data.columns if str(col).endswith(tuple(result.col_suffix_to_metric))
-        ]:
-            idx = feature_metric_col.rindex('_')
-            feature_name = feature_metric_col[0:idx]
-            metric_name = result.col_suffix_to_metric[feature_metric_col[idx:]]
-            alert_col = f'{feature_name}_alert'
+        for column_name in result.continuous_column_names:
+            for method in result.continuous_method_names:
+                res += (
+                    result.filter(period='analysis')
+                    .to_df()[
+                        [
+                            ('chunk', 'chunk', 'start_date'),
+                            ('chunk', 'chunk', 'end_date'),
+                            (column_name, method, 'value'),
+                            (column_name, method, 'alert'),
+                        ]
+                    ]
+                    .apply(lambda r: _parse(column_name, method, *r), axis=1)
+                    .to_list()
+                )
 
-            res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis', ['start_date', 'end_date', feature_metric_col, alert_col]
-                ]
-                .apply(lambda r: _parse(feature_name, metric_name, *r), axis=1)
-                .to_list()
-            )
+        for column_name in result.categorical_column_names:
+            for method in result.categorical_method_names:
+                res += (
+                    result.filter(period='analysis')
+                    .to_df()[
+                        [
+                            ('chunk', 'chunk', 'start_date'),
+                            ('chunk', 'chunk', 'end_date'),
+                            (column_name, method, 'value'),
+                            (column_name, method, 'alert'),
+                        ]
+                    ]
+                    .apply(lambda r: _parse(column_name, method, *r), axis=1)
+                    .to_list()
+                )
 
         return res
 

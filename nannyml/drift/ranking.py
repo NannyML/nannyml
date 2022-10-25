@@ -169,7 +169,7 @@ class AlertCountRanking(Ranking):
         >>> ranker = nml.Ranker.by('alert_count')
         >>> ranked_features = ranker.rank(results, only_drifting=False)
         >>> display(ranked_features)
-                              feature  number_of_alerts  rank
+                          column_name  number_of_alerts  rank
         0                  identifier                10     1
         1        distance_from_office                 5     2
         2                salary_range                 5     3
@@ -183,14 +183,16 @@ class AlertCountRanking(Ranking):
         if drift_calculation_result.data.empty:
             raise InvalidArgumentsException('drift results contain no data to use for ranking')
 
-        alert_column_names = [
-            f'{name}{self.ALERT_COLUMN_SUFFIX}' for name in drift_calculation_result.calculator.column_names
-        ]
-
-        ranking = pd.DataFrame(drift_calculation_result.data[alert_column_names].sum()).reset_index()
-        ranking.columns = ['feature', 'number_of_alerts']
-        ranking['feature'] = ranking['feature'].str.replace(self.ALERT_COLUMN_SUFFIX, '')
-        ranking = ranking.sort_values('number_of_alerts', ascending=False, ignore_index=True)
+        non_chunk = list(set(drift_calculation_result.data.columns.get_level_values(0)) - {'chunk'})
+        ranking = (
+            drift_calculation_result.filter(period='analysis')
+            .to_df()
+            .loc[:, (non_chunk, slice(None), 'alert')]
+            .sum()
+            .reset_index()[['level_0', 0]]
+        )
+        ranking.columns = ['column_name', 'number_of_alerts']
+        ranking = ranking.sort_values(['number_of_alerts', 'column_name'], ascending=False, ignore_index=True)
         ranking['rank'] = ranking.index + 1
         if only_drifting:
             ranking = ranking.loc[ranking['number_of_alerts'] != 0, :]

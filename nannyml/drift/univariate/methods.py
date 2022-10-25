@@ -22,7 +22,6 @@ class Method(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        calculator,
         upper_threshold: float = None,
         lower_threshold: float = None,
         upper_threshold_limit: float = None,
@@ -37,8 +36,6 @@ class Method(abc.ABC):
             ``calculation_function``.
         column_name: str
             The name used to indicate the metric in columns of a DataFrame.
-        calculator: PerformanceCalculator
-            The calculator using the Metric instance.
         upper_threshold_limit : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold_limit : float, default=None
@@ -46,15 +43,6 @@ class Method(abc.ABC):
         """
         self.display_name = display_name
         self.column_name = column_name
-
-        from nannyml.drift.univariate import UnivariateDriftCalculator
-
-        if not isinstance(calculator, UnivariateDriftCalculator):
-            raise RuntimeError(
-                f"{calculator.__class__.__name__} is not an instance " "of type " f"UnivariateDriftCalculator"
-            )
-
-        self.calculator: UnivariateDriftCalculator = calculator
 
         self.upper_threshold: Optional[float] = upper_threshold
         self.lower_threshold: Optional[float] = lower_threshold
@@ -179,11 +167,10 @@ class MethodFactory:
 class JensenShannonDistance(Method):
     """Calculates Jensen-Shannon distance."""
 
-    def __init__(self, calculator):
+    def __init__(self):
         super().__init__(
             display_name='Jensen-Shannon distance',
             column_name='jensen_shannon',
-            calculator=calculator,
             lower_threshold_limit=0,
         )
         self.upper_threshold = 0.1
@@ -203,11 +190,10 @@ class JensenShannonDistance(Method):
 
 @MethodFactory.register(key='kolmogorov_smirnov', feature_type=FeatureType.CONTINUOUS)
 class KolmogorovSmirnovStatistic(Method):
-    def __init__(self, calculator):
+    def __init__(self):
         super().__init__(
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
-            calculator=calculator,
             upper_threshold_limit=1,
             lower_threshold=0.05,
         )
@@ -240,11 +226,10 @@ class KolmogorovSmirnovStatistic(Method):
 
 @MethodFactory.register(key='chi2', feature_type=FeatureType.CATEGORICAL)
 class Chi2Statistic(Method):
-    def __init__(self, calculator):
+    def __init__(self):
         super().__init__(
             display_name='Chi2',
             column_name='chi2',
-            calculator=calculator,
             upper_threshold_limit=1.0,
             lower_threshold=0.05,
         )

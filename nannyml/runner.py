@@ -41,7 +41,14 @@ def run(
 ):
     with Progress() as progress:
         _run_statistical_univariate_feature_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
+            reference_data,
+            analysis_data,
+            column_mapping,
+            problem_type,
+            chunker,
+            writer,
+            ignore_errors,
+            console=progress.console,
         )
 
         _run_data_reconstruction_multivariate_feature_drift_calculator(
@@ -91,6 +98,7 @@ def _run_statistical_univariate_feature_drift_calculator(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
@@ -101,10 +109,15 @@ def _run_statistical_univariate_feature_drift_calculator(
     try:
         if console:
             console.log('fitting on reference data')
+        if problem_type == ProblemType.CLASSIFICATION_BINARY:
+            y_pred_proba_column_names = [column_mapping['y_pred_proba']]
+        elif problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
+            y_pred_proba_column_names = list(column_mapping['y_pred_proba'].values())
+        else:
+            y_pred_proba_column_names = []
+
         calc = UnivariateDriftCalculator(
-            column_names=(
-                column_mapping['features'] + column_mapping['y_pred'] + column_mapping.get('y_pred_proba', default=[])
-            ),
+            column_names=(column_mapping['features'] + [column_mapping['y_pred']] + y_pred_proba_column_names),
             timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
             categorical_methods=['chi2', 'jensen_shannon'],
@@ -122,11 +135,19 @@ def _run_statistical_univariate_feature_drift_calculator(
             if console:
                 console.log('generating result plots')
             plots = {
-                f'{kind}_{feature}': results.plot(kind, metric, feature)
-                for feature in column_mapping['features']
+                f'{kind}_{column_name}': results.plot(kind, method, column_name)
+                for column_name in results.continuous_column_names
+                for method in results.continuous_method_names
                 for kind in ['feature_drift', 'feature_distribution']
-                for metric in ['statistic', 'p_value']
             }
+            plots.update(
+                {
+                    f'{kind}_{column_name}': results.plot(kind, method, column_name)
+                    for column_name in results.categorical_column_names
+                    for method in results.categorical_method_names
+                    for kind in ['feature_drift', 'feature_distribution']
+                }
+            )
     except Exception as exc:
         msg = f"Failed to run statistical univariate feature drift calculator: {exc}"
         if console:

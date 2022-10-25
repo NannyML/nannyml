@@ -80,14 +80,6 @@ class UnivariateDriftCalculator(AbstractCalculator):
         self.column_names = column_names
         self.continuous_method_names = continuous_methods or ['kolmogorov_smirnov']
         self.categorical_method_names = categorical_methods or ['chi2']
-        # self.continuous_methods = [
-        #     MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, calculator=self)
-        #     for method in continuous_methods
-        # ]
-        # self.categorical_methods = [
-        #     MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL, calculator=self)
-        #     for method in categorical_methods
-        # ]
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
@@ -110,32 +102,19 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         for column_name in self.continuous_column_names:
             self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, calculator=self).fit(
-                    reference_data[column_name]
-                )
+                MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS).fit(reference_data[column_name])
                 for method in self.continuous_method_names
             ]
 
-        # for column_name in self.continuous_column_names:
-        #     for method in self.continuous_method_names:
-        #         MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, calculator=self
-        #         ).fit(reference_data[column_name])
-
-        # for column_name in self.categorical_column_names:
-        #     for method in self.categorical_method_names:
-        #         method.fit(reference_data[column_name])
-
         for column_name in self.categorical_column_names:
             self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL, calculator=self).fit(
-                    reference_data[column_name]
-                )
+                MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL).fit(reference_data[column_name])
                 for method in self.categorical_method_names
             ]
 
-        self.previous_reference_data = reference_data.copy()
-        self.result = self._calculate(self.previous_reference_data)
+        self.result = self._calculate(reference_data)
         self.result.data['chunk', 'chunk', 'period'] = 'reference'
+        self.result.reference_data = reference_data.copy()
 
         return self
 
@@ -160,7 +139,12 @@ class UnivariateDriftCalculator(AbstractCalculator):
                 'period': 'analysis',
             }
 
-            for column_name in self.column_names:
+            for column_name in self.continuous_column_names:
+                for method in self._column_to_models_mapping[column_name]:
+                    for k, v in _calculate_for_column(chunk.data, column_name, method).items():
+                        row[f'{column_name}_{method.column_name}_{k}'] = v
+
+            for column_name in self.categorical_column_names:
                 for method in self._column_to_models_mapping[column_name]:
                     for k, v in _calculate_for_column(chunk.data, column_name, method).items():
                         row[f'{column_name}_{method.column_name}_{k}'] = v
@@ -177,12 +161,20 @@ class UnivariateDriftCalculator(AbstractCalculator):
         res.columns = result_index
         res = res.reset_index(drop=True)
 
-        self.previous_analysis_data = data
-
         if self.result is None:
-            self.result = Result(results_data=res, calculator=self)
+            self.result = Result(
+                results_data=res,
+                column_names=self.column_names,
+                continuous_column_names=self.continuous_column_names,
+                categorical_column_names=self.categorical_column_names,
+                continuous_method_names=self.continuous_method_names,
+                categorical_method_names=self.categorical_method_names,
+                timestamp_column_name=self.timestamp_column_name,
+                chunker=self.chunker,
+            )
         else:
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.analysis_data = data.copy()
 
         return self.result
 

@@ -23,7 +23,7 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 def univariate_drift_for_binary_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = UnivariateDriftCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'work_home_actual']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -34,7 +34,7 @@ def univariate_drift_for_binary_classification_result():
 def univariate_drift_for_multiclass_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -42,10 +42,10 @@ def univariate_drift_for_multiclass_classification_result():
 
 
 @pytest.fixture(scope='module')
-def univariate_statistical_feature_drift_for_regression_result():
+def univariate_drift_for_regression_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
