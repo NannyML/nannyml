@@ -179,7 +179,7 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
         if console:
             console.log('fitting on reference data')
         calc = DataReconstructionDriftCalculator(
-            feature_column_names=column_mapping['features'],
+            column_names=column_mapping['features'],
             timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
         ).fit(reference_data)

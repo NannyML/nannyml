@@ -114,14 +114,13 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 def test_data_reconstruction_drift_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'],
+        column_names=['f1', 'f2', 'f3', 'f4'],
         timestamp_column_name='timestamp',
         n_components=0.75,
         chunk_period='W',
     ).fit(ref_data)
     try:
-        drift = calc.calculate(data=sample_drift_data)
-        print(drift)
+        _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
 
@@ -129,11 +128,10 @@ def test_data_reconstruction_drift_calculator_with_params_should_not_fail(sample
 def test_data_reconstruction_drift_calculator_with_default_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+        column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
     ).fit(ref_data)
     try:
-        drift = calc.calculate(data=sample_drift_data)
-        print(drift)
+        _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
 
@@ -143,14 +141,13 @@ def test_data_reconstruction_drift_calculator_with_default_params_should_not_fai
 ):
     ref_data = sample_drift_data_with_nans.loc[sample_drift_data_with_nans['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'],
+        column_names=['f1', 'f2', 'f3', 'f4'],
         timestamp_column_name='timestamp',
         n_components=0.75,
         chunk_period='W',
     ).fit(ref_data)
     try:
-        drift = calc.calculate(data=sample_drift_data_with_nans)
-        print(drift)
+        _ = calc.calculate(data=sample_drift_data_with_nans)
     except Exception:
         pytest.fail()
 
@@ -160,7 +157,7 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'],
+        column_names=['f1', 'f2', 'f3', 'f4'],
         timestamp_column_name='timestamp',
         n_components=0.75,
         chunk_period='W',
@@ -169,26 +166,26 @@ def test_data_reconstruction_drift_calculator_should_contain_chunk_details_and_s
 
     sut = drift.data.columns
     assert len(sut) == 14
-    assert 'key' in sut
-    assert 'chunk_index' in sut
-    assert 'start_index' in sut
-    assert 'start_date' in sut
-    assert 'end_index' in sut
-    assert 'end_date' in sut
-    assert 'sampling_error' in sut
-    assert 'upper_confidence_bound' in sut
-    assert 'lower_confidence_bound' in sut
-    assert 'upper_threshold' in sut
-    assert 'lower_threshold' in sut
-    assert 'alert' in sut
-    assert 'reconstruction_error' in sut
-    assert 'period'
+    assert ('chunk', 'key') in sut
+    assert ('chunk', 'chunk_index') in sut
+    assert ('chunk', 'start_index') in sut
+    assert ('chunk', 'start_date') in sut
+    assert ('chunk', 'end_index') in sut
+    assert ('chunk', 'end_date') in sut
+    assert ('chunk', 'period') in sut
+    assert ('reconstruction_error', 'sampling_error') in sut
+    assert ('reconstruction_error', 'upper_confidence_boundary') in sut
+    assert ('reconstruction_error', 'lower_confidence_boundary') in sut
+    assert ('reconstruction_error', 'upper_threshold') in sut
+    assert ('reconstruction_error', 'lower_threshold') in sut
+    assert ('reconstruction_error', 'alert') in sut
+    assert ('reconstruction_error', 'value') in sut
 
 
 def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chunk(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'],
+        column_names=['f1', 'f2', 'f3', 'f4'],
         timestamp_column_name='timestamp',
         n_components=0.75,
         chunk_period='W',
@@ -206,9 +203,7 @@ def test_data_reconstruction_drift_calculator_should_not_fail_when_using_feature
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
-    calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f3'], timestamp_column_name='timestamp').fit(
-        ref_data
-    )
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f3'], timestamp_column_name='timestamp').fit(ref_data)
     try:
         calc.fit(ref_data)
         calc.calculate(sample_drift_data)
@@ -221,7 +216,7 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data)
 
     # calc = DataReconstructionDriftCalculator(sample_drift_metadata, chunk_period='W').fit(ref_data)
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunk_period='W'
+        column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunk_period='W'
     ).fit(ref_data)
     drift = calc.calculate(data=sample_drift_data).filter(period='analysis')
     expected_drift = pd.DataFrame.from_dict(
@@ -272,7 +267,9 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data)
             ],
         }
     )
-    pd.testing.assert_frame_equal(expected_drift, drift.data[['key', 'reconstruction_error']])
+    sut = drift.to_df()[[('chunk', 'key'), ('reconstruction_error', 'value')]]
+    sut.columns = ['key', 'reconstruction_error']
+    pd.testing.assert_frame_equal(expected_drift, sut)
 
 
 @pytest.mark.parametrize(
@@ -343,19 +340,15 @@ def test_data_reconstruction_drift_calculator_works_with_chunker(
     sample_drift_data, calculator_opts, expected  # noqa: D103
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(
-        ref_data
-    )
-    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(ref_data)
+    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').to_df()
 
-    assert all(round(sut['reconstruction_error'], 5) == [round(n, 5) for n in expected])
+    assert all(round(sut.loc[:, ('reconstruction_error', 'value')], 5) == [round(n, 5) for n in expected])
 
 
 def test_data_reconstruction_drift_calculator_with_only_numeric_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f2'], timestamp_column_name='timestamp').fit(
-        ref_data
-    )
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2'], timestamp_column_name='timestamp').fit(ref_data)
     try:
         calc.calculate(data=sample_drift_data)
     except Exception:
@@ -364,9 +357,7 @@ def test_data_reconstruction_drift_calculator_with_only_numeric_should_not_fail(
 
 def test_data_reconstruction_drift_calculator_with_only_categorical_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = DataReconstructionDriftCalculator(feature_column_names=['f3', 'f4'], timestamp_column_name='timestamp').fit(
-        ref_data
-    )
+    calc = DataReconstructionDriftCalculator(column_names=['f3', 'f4'], timestamp_column_name='timestamp').fit(ref_data)
     try:
         calc.calculate(data=sample_drift_data)
     except Exception:
@@ -378,7 +369,7 @@ def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_object_rai
 ):
     with pytest.raises(TypeError):
         DataReconstructionDriftCalculator(
-            feature_column_names=['f1', 'f2', 'f3', 'f4'],
+            column_names=['f1', 'f2', 'f3', 'f4'],
             timestamp_column_name='timestamp',
             chunk_period='W',
             imputer_categorical=5,
@@ -391,7 +382,7 @@ def test_data_reconstruction_drift_calculator_given_wrong_cat_imputer_strategy_r
 ):
     with pytest.raises(ValueError):
         DataReconstructionDriftCalculator(
-            feature_column_names=['f1', 'f2', 'f3', 'f4'],
+            column_names=['f1', 'f2', 'f3', 'f4'],
             timestamp_column_name='timestamp',
             chunk_period='W',
             imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='median'),
@@ -404,7 +395,7 @@ def test_data_reconstruction_drift_calculator_given_wrong_cont_imputer_object_ra
 ):
     with pytest.raises(TypeError):
         DataReconstructionDriftCalculator(
-            feature_column_names=['f1', 'f2', 'f3', 'f4'],
+            column_names=['f1', 'f2', 'f3', 'f4'],
             timestamp_column_name='timestamp',
             chunk_period='W',
             imputer_categorical=SimpleImputer(missing_values=np.nan, strategy='most_frequent'),
@@ -428,14 +419,14 @@ def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(samp
     chunker = SizeBasedChunker(chunk_size=2500, incomplete='drop')
 
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
+        column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
     ).fit(ref_data)
     results = calc.calculate(data=sample_drift_data)
-    print(results.data['sampling_error'])
 
-    assert 'sampling_error' in results.data.columns
+    assert ('reconstruction_error', 'sampling_error') in results.data.columns
     assert np.array_equal(
-        np.round(results.data['sampling_error'], 4), np.round([0.01164 for _ in range(len(results.data))], 4)
+        np.round(results.to_df().loc[:, ('reconstruction_error', 'sampling_error')], 4),
+        np.round([0.01164 for _ in range(len(results.data))], 4),
     )
 
 
@@ -443,13 +434,13 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunk_period='M'
+        column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunk_period='M'
     ).fit(ref_data)
     results = calc.calculate(data=sample_drift_data)
 
-    assert 'sampling_error' in results.data.columns
+    assert ('reconstruction_error', 'sampling_error') in results.data.columns
     assert np.array_equal(
-        np.round(results.data.loc[results.data['period'] == 'analysis', 'sampling_error'], 4),
+        np.round(results.filter(period='analysis').to_df().loc[:, ('reconstruction_error', 'sampling_error')], 4),
         np.round([0.009511, 0.009005, 0.008710, 0.008854, 0.009899], 4),
     )
 
@@ -472,7 +463,7 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
 def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
-    calc = DataReconstructionDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calc_args).fit(ref_data)
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4'], **calc_args).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data).filter(period='analysis')
 
     try:

@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 from typing import Any, Callable, Dict, List
 
-from nannyml.drift.multivariate.data_reconstruction.results import Result as DataReconstructionDriftResult
+from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io.db.entities import CBPEPerformanceMetric, DataReconstructionFeatureDriftMetric, DLEPerformanceMetric
@@ -139,7 +139,7 @@ class UnivariateDriftResultMapper(Mapper):
 class ReconstructionErrorDriftResultMapper(Mapper):
     def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
         def _parse(
-            column_name: str,
+            metric_name: str,
             start_date: datetime,
             end_date: datetime,
             value,
@@ -150,7 +150,7 @@ class ReconstructionErrorDriftResultMapper(Mapper):
             timestamp = start_date + (end_date - start_date) / 2
 
             return DataReconstructionFeatureDriftMetric(
-                metric_name=result.col_to_metric_label[column_name],
+                metric_name=metric_name,
                 start_timestamp=start_date,
                 end_timestamp=end_date,
                 timestamp=timestamp,
@@ -164,7 +164,7 @@ class ReconstructionErrorDriftResultMapper(Mapper):
         if not isinstance(result, DataReconstructionDriftResult):
             raise InvalidArgumentsException(f"{self.__class__.__name__} can not deal with '{type(result)}'")
 
-        if result.calculator.timestamp_column_name is None:
+        if result.timestamp_column_name is None:
             raise NotImplementedError(
                 'no timestamp column was specified. Listing metrics currently requires a '
                 'timestamp column to be specified and present'
@@ -172,13 +172,20 @@ class ReconstructionErrorDriftResultMapper(Mapper):
 
         res: List[DbMetric] = []
 
-        for metric_col in result.col_to_metric_label.keys():
+        for metric in result.metrics:
             res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis',
-                    ['start_date', 'end_date', metric_col, 'upper_threshold', 'lower_threshold', 'alert'],
+                result.filter(period='analysis')
+                .to_df()[
+                    [
+                        ('chunk', 'start_date'),
+                        ('chunk', 'end_date'),
+                        (metric, 'value'),
+                        (metric, 'upper_threshold'),
+                        (metric, 'lower_threshold'),
+                        (metric, 'alert'),
+                    ]
                 ]
-                .apply(lambda r: _parse(metric_col, *r), axis=1)
+                .apply(lambda r: _parse(metric, *r), axis=1)
                 .to_list()
             )
 
