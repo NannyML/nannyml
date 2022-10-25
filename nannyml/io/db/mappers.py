@@ -218,7 +218,7 @@ class RealizedPerformanceMapper(Mapper):
                 **metric_args,
             )
 
-        if result.calculator.timestamp_column_name is None:
+        if result.timestamp_column_name is None:
             raise NotImplementedError(
                 'no timestamp column was specified. Listing metrics currently requires a '
                 'timestamp column to be specified and present'
@@ -226,17 +226,20 @@ class RealizedPerformanceMapper(Mapper):
 
         res: List[RealizedPerformanceMetric] = []
 
-        for metric in result.calculator.metrics:
-            lower_threshold_col = f'{metric.column_name}_lower_threshold'
-            upper_threshold_col = f'{metric.column_name}_upper_threshold'
-            alert_col = f'{metric.column_name}_alert'
-
+        for metric in [metric.column_name for metric in result.metrics]:
             res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis',
-                    ['start_date', 'end_date', metric.column_name, upper_threshold_col, lower_threshold_col, alert_col],
+                result.filter(partition='analysis')
+                .to_df()[
+                    [
+                        ('chunk', 'start_date'),
+                        ('chunk', 'end_date'),
+                        (metric, 'value'),
+                        (metric, 'upper_threshold'),
+                        (metric, 'lower_threshold'),
+                        (metric, 'alert'),
+                    ]
                 ]
-                .apply(lambda r: _parse(metric.display_name, *r), axis=1)
+                .apply(lambda r: _parse(metric, *r), axis=1)
                 .to_list()
             )
 

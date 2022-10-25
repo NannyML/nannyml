@@ -69,8 +69,8 @@ def test_calculator_init_should_set_metrics(performance_calculator):  # noqa: D1
     )
     sut = calc.metrics
     assert len(sut) == 2
-    assert sut[0] == BinaryClassificationAUROC(calc)
-    assert sut[1] == BinaryClassificationF1(calc)
+    assert sut[0] == BinaryClassificationAUROC(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut[1] == BinaryClassificationF1(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
 
 
 def test_calculator_fit_should_raise_invalid_args_exception_when_no_target_data_present(data):  # noqa: D103, F821
@@ -112,12 +112,12 @@ def test_calculator_calculate_should_include_chunk_information_columns(data):  #
     ref_with_tgt = data[1].merge(data[2], on='identifier')
     sut = calc.calculate(ref_with_tgt)
 
-    assert 'key' in sut.data.columns
-    assert 'start_index' in sut.data.columns
-    assert 'end_index' in sut.data.columns
-    assert 'start_date' in sut.data.columns
-    assert 'end_date' in sut.data.columns
-    assert 'period' in sut.data.columns
+    assert ('chunk', 'key') in sut.data.columns
+    assert ('chunk', 'start_index') in sut.data.columns
+    assert ('chunk', 'end_index') in sut.data.columns
+    assert ('chunk', 'start_date') in sut.data.columns
+    assert ('chunk', 'end_date') in sut.data.columns
+    assert ('chunk', 'period') in sut.data.columns
 
 
 def test_calculator_calculate_should_include_target_completeness_rate(data):  # noqa: D103
@@ -140,11 +140,11 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
         problem_type='classification_binary',
     ).fit(reference_data=ref_data)
     result = calc.calculate(data)
-    sut = result.data[result.data['period'] == 'analysis'].reset_index(drop=True)
+    sut = result.filter(period='analysis').to_df()
 
-    assert 'targets_missing_rate' in sut.columns
-    assert sut.loc[0, 'targets_missing_rate'] == 0.1
-    assert sut.loc[1, 'targets_missing_rate'] == 0.9
+    assert ('chunk', 'targets_missing_rate') in sut.columns
+    assert sut.loc[0, ('chunk', 'targets_missing_rate')] == 0.1
+    assert sut.loc[1, ('chunk', 'targets_missing_rate')] == 0.9
 
 
 @pytest.mark.parametrize(
