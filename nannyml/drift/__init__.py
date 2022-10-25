@@ -13,6 +13,7 @@ This module currently contains the following implementations of drift calculatio
 
 """
 from .multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from .univariate import UnivariateDriftCalculator
 from .model_inputs.univariate.distance import DistanceDriftCalculator
 from .model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
 from .model_outputs.univariate.statistical import StatisticalOutputDriftCalculator

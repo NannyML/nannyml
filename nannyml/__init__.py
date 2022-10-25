@@ -55,6 +55,7 @@ from .drift import (
     StatisticalOutputDriftCalculator,
     TargetDistributionCalculator,
     UnivariateStatisticalDriftCalculator,
+    UnivariateDriftCalculator
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .performance_calculation import PerformanceCalculator
