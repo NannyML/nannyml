@@ -19,10 +19,7 @@ from rich.progress import Progress
 from nannyml._typing import ProblemType
 from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
-from nannyml.drift.model_inputs.univariate.distance import DistanceDriftCalculator
-from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
-from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
-from nannyml.drift.target.target_distribution import TargetDistributionCalculator
+from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.io.base import Writer
 from nannyml.io.raw_files_writer import RawFilesWriter
 from nannyml.performance_calculation import PerformanceCalculator
@@ -43,48 +40,20 @@ def run(
     run_in_console: bool = False,
 ):
     with Progress() as progress:
-        # task = progress.add_task('Calculating drift', total=1) if run_in_console else None
         _run_statistical_univariate_feature_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
-        )
-        # if task is not None:
-        #     progress.update(task, advance=1 / 6)
-
-        _run_distance_feature_drift_calculator(
-            reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
+            reference_data,
+            analysis_data,
+            column_mapping,
+            problem_type,
+            chunker,
+            writer,
+            ignore_errors,
+            console=progress.console,
         )
 
         _run_data_reconstruction_multivariate_feature_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
-        # if task is not None:
-        #     progress.update(task, advance=2 / 6)
-
-        _run_statistical_model_output_drift_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            ignore_errors,
-            console=progress.console,
-        )
-        # if task is not None:
-        #     progress.update(task, advance=3 / 6)
-
-        _run_target_distribution_drift_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            ignore_errors,
-            console=progress.console,
-        )
-        # if task is not None:
-        #     progress.update(task, advance=4 / 6)
 
         _run_realized_performance_calculator(
             reference_data,
@@ -96,8 +65,6 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        # if task is not None:
-        #     progress.update(task, description='Calculating realized performance', advance=5 / 6)
 
         _run_cbpe_performance_estimation(
             reference_data,
@@ -109,8 +76,6 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        # if task is not None:
-        #     progress.update(task, description='Estimating performance', advance=5 / 6)
 
         _run_dee_performance_estimation(
             reference_data,
@@ -122,8 +87,6 @@ def run(
             ignore_errors,
             console=progress.console,
         )
-        # if task is not None:
-        #     progress.update(task, description='Run complete', advance=7 / 7)
 
         progress.console.line(2)
         if isinstance(writer, RawFilesWriter):
@@ -135,6 +98,7 @@ def _run_statistical_univariate_feature_drift_calculator(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
+    problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
@@ -145,10 +109,19 @@ def _run_statistical_univariate_feature_drift_calculator(
     try:
         if console:
             console.log('fitting on reference data')
-        calc = UnivariateStatisticalDriftCalculator(
-            feature_column_names=column_mapping['features'],
+        if problem_type == ProblemType.CLASSIFICATION_BINARY:
+            y_pred_proba_column_names = [column_mapping['y_pred_proba']]
+        elif problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
+            y_pred_proba_column_names = list(column_mapping['y_pred_proba'].values())
+        else:
+            y_pred_proba_column_names = []
+
+        calc = UnivariateDriftCalculator(
+            column_names=(column_mapping['features'] + [column_mapping['y_pred']] + y_pred_proba_column_names),
             timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
+            categorical_methods=['chi2', 'jensen_shannon'],
+            continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
         ).fit(reference_data)
 
         # raise RuntimeError("🔥 something's not right there... 🔥")
@@ -162,11 +135,19 @@ def _run_statistical_univariate_feature_drift_calculator(
             if console:
                 console.log('generating result plots')
             plots = {
-                f'{kind}_{feature}': results.plot(kind, metric, feature)
-                for feature in column_mapping['features']
+                f'{kind}_{column_name}': results.plot(kind, method, column_name)
+                for column_name in results.continuous_column_names
+                for method in results.continuous_method_names
                 for kind in ['feature_drift', 'feature_distribution']
-                for metric in ['statistic', 'p_value']
             }
+            plots.update(
+                {
+                    f'{kind}_{column_name}': results.plot(kind, method, column_name)
+                    for column_name in results.categorical_column_names
+                    for method in results.categorical_method_names
+                    for kind in ['feature_drift', 'feature_distribution']
+                }
+            )
     except Exception as exc:
         msg = f"Failed to run statistical univariate feature drift calculator: {exc}"
         if console:
@@ -181,57 +162,6 @@ def _run_statistical_univariate_feature_drift_calculator(
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='statistical_univariate_feature_drift')
-
-
-def _run_distance_feature_drift_calculator(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    chunker: Chunker,
-    writer: Writer,
-    ignore_errors: bool,
-    console: Console = None,
-):
-    if console:
-        console.rule('[cyan]DistanceDriftCalculator[/]')
-    try:
-        if console:
-            console.log('fitting on reference data')
-        calc = DistanceDriftCalculator(
-            feature_column_names=column_mapping['features'],
-            timestamp_column_name=column_mapping.get('timestamp', None),
-            metrics=['jensen_shannon'],
-            chunker=chunker,
-        ).fit(reference_data)
-
-        if console:
-            console.log('calculating on analysis data')
-        results = calc.calculate(analysis_data)
-
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            plots = {
-                f'{kind}_{feature}': results.plot(kind, metric, feature)
-                for feature in column_mapping['features']
-                for kind in ['feature_drift', 'feature_distribution']
-                for metric in calc.metrics  # type: ignore
-            }
-    except Exception as exc:
-        msg = f"Failed to run statistical univariate feature drift calculator: {exc}"
-        if console:
-            console.log(msg, style='red')
-        else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
-
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='distance_drift_calculator')
 
 
 def _run_data_reconstruction_multivariate_feature_drift_calculator(
@@ -249,7 +179,7 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
         if console:
             console.log('fitting on reference data')
         calc = DataReconstructionDriftCalculator(
-            feature_column_names=column_mapping['features'],
+            column_names=column_mapping['features'],
             timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
         ).fit(reference_data)
@@ -277,146 +207,6 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='data_reconstruction_multivariate_feature_drift')
-
-
-def _run_statistical_model_output_drift_calculator(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    ignore_errors: bool,
-    console: Console = None,
-):
-    if console:
-        console.rule('[cyan]Model output drift calculator[/]')
-    try:
-        if console:
-            console.log('fitting on reference data')
-        calc = StatisticalOutputDriftCalculator(
-            y_pred=column_mapping['y_pred'],
-            y_pred_proba=column_mapping.get('y_pred_proba', None),
-            timestamp_column_name=column_mapping.get('timestamp', None),
-            problem_type=problem_type,
-            chunker=chunker,
-        ).fit(reference_data)
-
-        if console:
-            console.log('calculating on analysis data')
-        results = calc.calculate(analysis_data)
-
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            if problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
-                classes = list(column_mapping['y_pred_proba'].keys())
-                plots = {
-                    f'{kind}_{clazz}': results.plot(kind, class_label=clazz)
-                    for kind in [
-                        'score_drift',
-                        'score_distribution',
-                    ]
-                    for clazz in classes
-                }
-                plots.update(
-                    {
-                        'prediction_drift': results.plot(kind='prediction_drift'),
-                        'prediction_distribution': results.plot(kind='prediction_distribution'),
-                    }
-                )
-            elif problem_type == ProblemType.CLASSIFICATION_BINARY:
-                plots = {
-                    f'{kind}': results.plot(kind)
-                    for kind in [
-                        'score_drift',
-                        'score_distribution',
-                        'prediction_drift',
-                        'prediction_distribution',
-                    ]
-                }
-            elif problem_type == ProblemType.REGRESSION:
-                plots = {
-                    'prediction_drift_ks_stat': results.plot('prediction_drift', 'statistic'),
-                    'prediction_drift_p_value': results.plot('prediction_drift', 'p_value'),
-                    'prediction_distribution': results.plot('prediction_distribution'),
-                }
-    except Exception as exc:
-        msg = f"Failed to run model output drift calculator: {exc}"
-        if console:
-            console.log(msg, style='red')
-        else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
-
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='statistical_model_output_drift')
-
-
-def _run_target_distribution_drift_calculator(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    ignore_errors: bool,
-    console: Console = None,
-):
-    if console:
-        console.rule('[cyan]TargetDistributionCalculator[/]')
-
-    if column_mapping['y_true'] not in analysis_data.columns:
-        _logger.info(
-            f"target values column '{column_mapping['y_true']}' not present in analysis data. "
-            "Skipping target distribution calculation."
-        )
-        if console:
-            console.log(
-                f"target values column '{column_mapping['y_true']}' not present in analysis data. "
-                "Skipping target distribution calculation.",
-                style='yellow',
-            )
-        return
-
-    try:
-        if console:
-            console.log('fitting on reference data')
-        calc = TargetDistributionCalculator(
-            y_true=column_mapping['y_true'],
-            timestamp_column_name=column_mapping.get('timestamp', None),
-            chunker=chunker,
-            problem_type=problem_type,
-        ).fit(reference_data)
-
-        if console:
-            console.log('calculating on analysis data')
-        results = calc.calculate(analysis_data)
-
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            plots = {f'{kind}': results.plot(kind) for kind in ['target_drift', 'target_distribution']}
-    except Exception as exc:
-        msg = f"Failed to run target distribution calculator: {exc}"
-        if console:
-            console.log(msg, style='red')
-        else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
-
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='target_distribution')
 
 
 def _run_realized_performance_calculator(

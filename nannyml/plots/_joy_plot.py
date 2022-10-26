@@ -183,13 +183,13 @@ def _create_joy_plot(
 
     is_time_based_x_axis = start_date_column_name and end_date_column_name
     offset = (
-        joy_table.loc[joy_table['period'] == 'reference', 'chunk_index'].max() + 1
-        if len(joy_table.loc[joy_table['period'] == 'reference']) > 0
+        joy_table.loc[joy_table[chunk_type_column_name] == 'reference', chunk_index_column_name].max() + 1
+        if len(joy_table.loc[joy_table[chunk_type_column_name] == 'reference']) > 0
         else 0
     )
     joy_table['chunk_index_unified'] = [
         idx + offset if period == 'analysis' else idx
-        for idx, period in zip(joy_table['chunk_index'], joy_table['period'])
+        for idx, period in zip(joy_table[chunk_index_column_name], joy_table[chunk_type_column_name])
     ]
 
     colors_transparent = [

@@ -34,18 +34,10 @@ class Metric(SQLModel):  # type: ignore
     alert: bool
 
 
-class StatisticalFeatureDriftMetric(Metric, table=True):  # type: ignore
-    __tablename__ = 'statistical_feature_drift_metrics'
+class UnivariateDriftMetric(Metric, table=True):  # type: ignore
+    __tablename__ = 'univariate_drift_metrics'
 
     feature_name: str
-
-
-class DistanceFeatureDriftMetric(Metric, table=True):  # type: ignore
-    __tablename__ = 'statistical_distance_drift_metrics'
-
-    feature_name: str
-    upper_threshold: Optional[float]
-    lower_threshold: Optional[float]
 
 
 class DataReconstructionFeatureDriftMetric(Metric, table=True):  # type: ignore
@@ -53,18 +45,6 @@ class DataReconstructionFeatureDriftMetric(Metric, table=True):  # type: ignore
 
     upper_threshold: Optional[float]
     lower_threshold: Optional[float]
-
-
-class StatisticalOutputDriftMetric(Metric, table=True):  # type: ignore
-    __tablename__ = 'statistical_output_drift_metrics'
-
-    output_name: str
-
-
-class TargetDriftMetric(Metric, table=True):  # type: ignore
-    __tablename__ = 'target_drift_metrics'
-
-    target_name: str
 
 
 class RealizedPerformanceMetric(Metric, table=True):  # type: ignore

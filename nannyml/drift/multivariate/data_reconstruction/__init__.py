@@ -5,4 +5,4 @@
 """Package containing the Data Reconstruction Drift Calculator implementation."""
 
 from .calculator import DataReconstructionDriftCalculator
-from .results import Result
+from .result import Result

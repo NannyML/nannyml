@@ -7,8 +7,8 @@ import abc
 import logging
 from enum import Enum
 from logging import Logger
-from typing import Callable, Dict, Optional, Tuple
 from copy import copy
+from typing import Callable, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,8 @@ from scipy.stats import chi2_contingency, ks_2samp
 from scipy.spatial.distance import jensenshannon
 
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
-from nannyml.base import  _column_is_categorical
+from nannyml.base import _column_is_categorical
+
 
 class Method(abc.ABC):
     """A performance metric used to calculate realized model performance."""
@@ -25,7 +26,6 @@ class Method(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        calculator,
         upper_threshold: float = None,
         lower_threshold: float = None,
         upper_threshold_limit: float = None,
@@ -40,8 +40,6 @@ class Method(abc.ABC):
             ``calculation_function``.
         column_name: str
             The name used to indicate the metric in columns of a DataFrame.
-        calculator: PerformanceCalculator
-            The calculator using the Metric instance.
         upper_threshold_limit : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold_limit : float, default=None
@@ -49,15 +47,6 @@ class Method(abc.ABC):
         """
         self.display_name = display_name
         self.column_name = column_name
-
-        from nannyml.drift.univariate import UnivariateDriftCalculator
-
-        if not isinstance(calculator, UnivariateDriftCalculator):
-            raise RuntimeError(
-                f"{calculator.__class__.__name__} is not an instance " "of type " f"UnivariateDriftCalculator"
-            )
-
-        self.calculator: UnivariateDriftCalculator = calculator
 
         self.upper_threshold: Optional[float] = upper_threshold
         self.lower_threshold: Optional[float] = lower_threshold
@@ -182,11 +171,10 @@ class MethodFactory:
 class JensenShannonDistance(Method):
     """Calculates Jensen-Shannon distance."""
 
-    def __init__(self, calculator):
+    def __init__(self):
         super().__init__(
             display_name='Jensen-Shannon distance',
             column_name='jensen_shannon',
-            calculator=calculator,
             lower_threshold_limit=0,
         )
         self.upper_threshold = 0.1
@@ -216,7 +204,6 @@ class JensenShannonDistance(Method):
             reference_proba_per_unique = reference_counts/len(reference_data)
             self._bins = reference_unique
             self._reference_proba_in_bins = reference_proba_per_unique
-
 
         self._treat_as_type = treat_as_type
 
@@ -248,7 +235,6 @@ class JensenShannonDistance(Method):
 
         return distance
 
-
     def _alert(self, data: pd.Series):
         value = self.calculate(data)
         return (self.lower_threshold is not None and value < self.lower_threshold) or (
@@ -258,11 +244,10 @@ class JensenShannonDistance(Method):
 
 @MethodFactory.register(key='kolmogorov_smirnov', feature_type=FeatureType.CONTINUOUS)
 class KolmogorovSmirnovStatistic(Method):
-    def __init__(self, calculator):
+    def __init__(self):
         super().__init__(
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
-            calculator=calculator,
             upper_threshold_limit=1,
             lower_threshold=0.05,
         )
@@ -287,7 +272,7 @@ class KolmogorovSmirnovStatistic(Method):
         if self._p_value is None:
             _, self._p_value = ks_2samp(self._reference_data, data)
 
-        alert = self._p_value < self.lower_threshold
+        alert = self.lower_threshold and self._p_value < self.lower_threshold
         self._p_value = None  # just cleaning up state before running on new chunk data (optimization)
 
         return alert
@@ -295,11 +280,10 @@ class KolmogorovSmirnovStatistic(Method):
 
 @MethodFactory.register(key='chi2', feature_type=FeatureType.CATEGORICAL)
 class Chi2Statistic(Method):
-    def __init__(self, calculator):
+    def __init__(self):
         super().__init__(
             display_name='Chi2',
             column_name='chi2',
-            calculator=calculator,
             upper_threshold_limit=1.0,
             lower_threshold=0.05,
         )
@@ -334,6 +318,6 @@ class Chi2Statistic(Method):
                 ).fillna(0)
             )
 
-        alert = self._p_value < self.lower_threshold
+        alert = self.lower_threshold and self._p_value < self.lower_threshold
         self._p_value = None
         return alert

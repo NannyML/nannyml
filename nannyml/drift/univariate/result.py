@@ -10,8 +10,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult, _column_is_continuous
-from nannyml.chunk import Chunk
-from nannyml.drift.model_inputs.univariate.distance.metrics import Metric, MetricFactory
+from nannyml.chunk import Chunk, Chunker
 from nannyml.drift.univariate.methods import Method, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot
@@ -22,27 +21,42 @@ from nannyml.plots._step_plot import _step_plot
 class Result(AbstractCalculatorResult):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
-    def __init__(self, results_data: pd.DataFrame, calculator):
+    def __init__(
+        self,
+        results_data: pd.DataFrame,
+        column_names: List[str],
+        categorical_column_names: List[str],
+        continuous_column_names: List[str],
+        categorical_method_names: List[str],
+        continuous_method_names: List[str],
+        timestamp_column_name: Optional[str],
+        chunker: Chunker,
+        analysis_data: pd.DataFrame = None,
+        reference_data: pd.DataFrame = None,
+    ):
         super().__init__(results_data)
 
-        from nannyml.drift.univariate.calculator import UnivariateDriftCalculator
+        self.column_names = column_names
+        self.continuous_column_names = continuous_column_names
+        self.categorical_column_names = categorical_column_names
+        self.timestamp_column_name = timestamp_column_name
+        self.categorical_method_names = categorical_method_names
+        self.continuous_method_names = continuous_method_names
+        self.chunker = chunker
 
-        if not isinstance(calculator, UnivariateDriftCalculator):
-            raise RuntimeError(
-                f"{calculator.__class__.__name__} is not an instance of type " f"UnivariateDriftCalculator"
-            )
-        self.calculator = calculator
+        self.analysis_data = analysis_data
+        self.reference_data = reference_data
 
     def _filter(self, period: str, *args, **kwargs) -> AbstractCalculatorResult:
         if 'column_names' in kwargs:
             column_names = kwargs['column_names']
         else:
-            column_names = self.calculator.column_names
+            column_names = self.column_names
 
         if 'methods' in kwargs:
             methods = kwargs['methods']
         else:
-            methods = list(set(self.calculator.categorical_method_names + self.calculator.continuous_method_names))
+            methods = list(set(self.categorical_method_names + self.continuous_method_names))
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, methods)]], axis=1)
 
@@ -51,7 +65,9 @@ class Result(AbstractCalculatorResult):
 
         data = data.reset_index(drop=True)
 
-        return Result(results_data=data, calculator=copy.deepcopy(self.calculator))
+        result = copy.deepcopy(self)
+        result.data = data
+        return result
 
     def plot(
         self,
@@ -121,11 +137,11 @@ class Result(AbstractCalculatorResult):
             if column_name is None:
                 raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
             return self._plot_feature_distribution(
-                analysis_data=self.calculator.previous_analysis_data,
+                analysis_data=self.analysis_data,
                 plot_reference=plot_reference,
-                drift_data=self.data,
+                drift_data=self.to_df(multilevel=False),
                 column_name=column_name,
-                metric=method,
+                method=method,
             )
         else:
             raise InvalidArgumentsException(
@@ -137,19 +153,18 @@ class Result(AbstractCalculatorResult):
         analysis_data: pd.DataFrame,
         drift_data: pd.DataFrame,
         column_name: str,
-        metric: Union[str, Metric],
+        method: Union[str, Method],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
         if _column_is_continuous(analysis_data[column_name]):
             return self._plot_continuous_feature_distribution(
-                analysis_data, drift_data, column_name, metric, plot_reference
+                analysis_data, drift_data, column_name, method, plot_reference
             )
         else:
             return self._plot_categorical_feature_distribution(
-                analysis_data, drift_data, column_name, metric, plot_reference
+                analysis_data, drift_data, column_name, method, plot_reference
             )
-        # pass
 
     def plot_feature_drift(
         self,
@@ -164,14 +179,12 @@ class Result(AbstractCalculatorResult):
             _supported_feature_types = list(MethodFactory.registry[method].keys())
             if len(_supported_feature_types) == 0:
                 raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
-            method = MethodFactory.create(
-                key=method, feature_type=_supported_feature_types[0], calculator=self.calculator
-            )
+            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0])
 
         if not plot_reference:
             result_data = result_data[result_data['chunk_chunk_period'] == 'analysis']
 
-        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+        is_time_based_x_axis = self.timestamp_column_name is not None
 
         fig = _step_plot(
             table=result_data,
@@ -195,44 +208,48 @@ class Result(AbstractCalculatorResult):
         self,
         data: pd.DataFrame,
         drift_data: pd.DataFrame,
-        feature_column_name: str,
-        metric: Union[str, Metric],
+        column_name: str,
+        method: Union[str, Method],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given continuous feature."""
-        if isinstance(metric, str):
-            metric = MetricFactory.create(key=metric, kwargs={'calculator': self.calculator})
+        if isinstance(method, str):
+            _supported_feature_types = list(MethodFactory.registry[method].keys())
+            if len(_supported_feature_types) == 0:
+                raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
+            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0])
 
         if not plot_reference:
-            drift_data = drift_data.loc[drift_data['period'] == 'analysis']
+            drift_data = drift_data.loc[drift_data['chunk_chunk_period'] == 'analysis']
 
-        x_axis_title = f'{feature_column_name}'
-        drift_column_name = f'{feature_column_name}_{metric.column_name}_alert'
-        title = f'Distribution over time for {feature_column_name}'
+        x_axis_title = f'{column_name}'
+        drift_column_name = f'{column_name}_{method.column_name}_alert'
+        title = f'Distribution over time for {column_name}'
+        key_column_name = 'chunk_chunk_key'
 
         data['period'] = 'analysis'
-        feature_table = _create_feature_table(self.calculator.chunker.split(data))
+        feature_table = _create_feature_table(self.chunker.split(data), key_column_name)
 
         if plot_reference:
-            reference_feature_table = _create_feature_table(
-                self.calculator.chunker.split(self.calculator.previous_reference_data)
-            )
-            reference_feature_table['period'] = 'reference'
+            reference_feature_table = _create_feature_table(self.chunker.split(self.reference_data), key_column_name)
+            reference_feature_table['chunk_chunk_period'] = 'reference'
             feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+        is_time_based_x_axis = self.timestamp_column_name is not None
 
         fig = _joy_plot(
             feature_table=feature_table,
             drift_table=drift_data,
-            chunk_column_name='key',
+            chunk_column_name='chunk_chunk_key',
+            chunk_index_column_name='chunk_chunk_chunk_index',
+            chunk_type_column_name='chunk_chunk_period',
             drift_column_name=drift_column_name,
-            feature_column_name=feature_column_name,
+            feature_column_name=column_name,
             x_axis_title=x_axis_title,
             title=title,
             style='vertical',
-            start_date_column_name='start_date' if is_time_based_x_axis else None,
-            end_date_column_name='end_date' if is_time_based_x_axis else None,
+            start_date_column_name='chunk_chunk_start_date' if is_time_based_x_axis else None,
+            end_date_column_name='chunk_chunk_end_date' if is_time_based_x_axis else None,
         )
         return fig
 
@@ -240,46 +257,50 @@ class Result(AbstractCalculatorResult):
         self,
         data: pd.DataFrame,
         drift_data: pd.DataFrame,
-        feature_column_name: str,
-        metric: Union[str, Metric],
+        column_name: str,
+        method: Union[str, Method],
         plot_reference: bool,
     ) -> go.Figure:
         """Plots the data distribution and associated drift for each chunk of a given categorical feature."""
-        if isinstance(metric, str):
-            metric = MetricFactory.create(key=metric, kwargs={'calculator': self.calculator})
+        if isinstance(method, str):
+            _supported_feature_types = list(MethodFactory.registry[method].keys())
+            if len(_supported_feature_types) == 0:
+                raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
+            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0])
 
         if not plot_reference:
-            drift_data = drift_data.loc[drift_data['period'] == 'analysis']
+            drift_data = drift_data.loc[drift_data['chunk_chunk_period'] == 'analysis']
 
-        yaxis_title = f'{feature_column_name}'
-        drift_column_name = f'{feature_column_name}_alert'
-        title = f'Distribution over time for {feature_column_name}'
+        yaxis_title = f'{column_name}'
+        drift_column_name = f'{column_name}_{method.column_name}_alert'
+        title = f'Distribution over time for {column_name}'
+        key_column_name = 'chunk_chunk_key'
 
-        data['period'] = 'analysis'
-        feature_table = _create_feature_table(self.calculator.chunker.split(data))
+        data['chunk_chunk_period'] = 'analysis'
+        feature_table = _create_feature_table(self.chunker.split(data), key_column_name)
 
         if plot_reference:
-            reference_feature_table = _create_feature_table(
-                self.calculator.chunker.split(self.calculator.previous_reference_data)
-            )
-            reference_feature_table['period'] = 'reference'
+            reference_feature_table = _create_feature_table(self.chunker.split(self.reference_data), key_column_name)
+            reference_feature_table['chunk_chunk_period'] = 'reference'
             feature_table = pd.concat([reference_feature_table, feature_table], ignore_index=True)
 
-        is_time_based_x_axis = self.calculator.timestamp_column_name is not None
+        is_time_based_x_axis = self.timestamp_column_name is not None
 
         fig = _stacked_bar_plot(
             feature_table=feature_table,
             drift_table=drift_data,
-            chunk_column_name='key',
+            chunk_column_name='chunk_chunk_key',
+            chunk_type_column_name='chunk_chunk_period',
+            chunk_index_column_name='chunk_chunk_chunk_index',
             drift_column_name=drift_column_name,
-            feature_column_name=feature_column_name,
+            feature_column_name=column_name,
             yaxis_title=yaxis_title,
             title=title,
-            start_date_column_name='start_date' if is_time_based_x_axis else None,
-            end_date_column_name='end_date' if is_time_based_x_axis else None,
+            start_date_column_name='chunk_chunk_start_date' if is_time_based_x_axis else None,
+            end_date_column_name='chunk_chunk_end_date' if is_time_based_x_axis else None,
         )
         return fig
 
 
-def _create_feature_table(chunks: List[Chunk]) -> pd.DataFrame:
-    return pd.concat([chunk.data.assign(key=chunk.key) for chunk in chunks])
+def _create_feature_table(chunks: List[Chunk], key_column_name: str) -> pd.DataFrame:
+    return pd.concat([chunk.data.assign(**{key_column_name: chunk.key}) for chunk in chunks])

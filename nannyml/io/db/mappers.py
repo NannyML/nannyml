@@ -6,26 +6,12 @@ import logging
 from datetime import datetime
 from typing import Any, Callable, Dict, List
 
-from nannyml._typing import ProblemType
-from nannyml.drift.multivariate.data_reconstruction.results import Result as DataReconstructionDriftResult
-from nannyml.drift.model_inputs.univariate.distance.results import Result as DistanceFeatureDriftResult
-from nannyml.drift.model_inputs.univariate.statistical.results import Result as StatisticalFeatureDriftResult
-from nannyml.drift.model_outputs.univariate.statistical.results import Result as StatisticalOutputDriftResult
-from nannyml.drift.target.target_distribution.result import Result as TargetDriftResult
+from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
+from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.db.entities import (
-    CBPEPerformanceMetric,
-    DataReconstructionFeatureDriftMetric,
-    DistanceFeatureDriftMetric,
-    DLEPerformanceMetric,
-)
+from nannyml.io.db.entities import CBPEPerformanceMetric, DataReconstructionFeatureDriftMetric, DLEPerformanceMetric
 from nannyml.io.db.entities import Metric as DbMetric
-from nannyml.io.db.entities import (
-    RealizedPerformanceMetric,
-    StatisticalFeatureDriftMetric,
-    StatisticalOutputDriftMetric,
-    TargetDriftMetric,
-)
+from nannyml.io.db.entities import RealizedPerformanceMetric, UnivariateDriftMetric
 from nannyml.performance_calculation.result import Result as RealizedPerformanceResult
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResult
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResult
@@ -84,15 +70,15 @@ class MapperFactory:
         return inner_wrapper
 
 
-@MapperFactory.register(StatisticalFeatureDriftResult)
-class StatisticalFeatureDriftResultMapper(Mapper):
+@MapperFactory.register(UnivariateDriftResult)
+class UnivariateDriftResultMapper(Mapper):
     def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
         def _parse(
             feature_name: str, metric_name: str, start_date: datetime, end_date: datetime, value, alert: bool
         ) -> DbMetric:
             timestamp = start_date + (end_date - start_date) / 2
 
-            return StatisticalFeatureDriftMetric(
+            return UnivariateDriftMetric(
                 feature_name=feature_name,
                 metric_name=metric_name,
                 start_timestamp=start_date,
@@ -103,98 +89,48 @@ class StatisticalFeatureDriftResultMapper(Mapper):
                 **metric_args,
             )
 
-        if not isinstance(result, StatisticalFeatureDriftResult):
+        if not isinstance(result, UnivariateDriftResult):
             raise InvalidArgumentsException(f"{self.__class__.__name__} can not deal with '{type(result)}'")
 
-        if result.calculator.timestamp_column_name is None:
+        if result.timestamp_column_name is None:
             raise NotImplementedError(
                 'no timestamp column was specified. Listing metrics currently requires a '
                 'timestamp column to be specified and present'
             )
 
-        res: List[StatisticalFeatureDriftMetric] = []
+        res: List[UnivariateDriftMetric] = []
 
-        for feature_metric_col in [
-            col for col in result.data.columns if str(col).endswith(tuple(result.col_suffix_to_metric))
-        ]:
-            idx = feature_metric_col.rindex('_')
-            feature_name = feature_metric_col[0:idx]
-            metric_name = result.col_suffix_to_metric[feature_metric_col[idx:]]
-            alert_col = f'{feature_name}_alert'
-
-            res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis', ['start_date', 'end_date', feature_metric_col, alert_col]
-                ]
-                .apply(lambda r: _parse(feature_name, metric_name, *r), axis=1)
-                .to_list()
-            )
-
-        return res
-
-
-@MapperFactory.register(DistanceFeatureDriftResult)
-class DistanceFeatureDriftResultMapper(Mapper):
-    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
-        def _parse(
-            feature_name: str,
-            metric_name: str,
-            start_date: datetime,
-            end_date: datetime,
-            value,
-            lower_threshold: float,
-            upper_threshold: float,
-            alert: bool,
-        ) -> DbMetric:
-            timestamp = start_date + (end_date - start_date) / 2
-
-            return DistanceFeatureDriftMetric(
-                feature_name=feature_name,
-                metric_name=metric_name,
-                start_timestamp=start_date,
-                end_timestamp=end_date,
-                timestamp=timestamp,
-                value=value,
-                lower_threshold=lower_threshold,
-                upper_threshold=upper_threshold,
-                alert=alert,
-                **metric_args,
-            )
-
-        if not isinstance(result, DistanceFeatureDriftResult):
-            raise InvalidArgumentsException(f"{self.__class__.__name__} can not deal with '{type(result)}'")
-
-        if result.calculator.timestamp_column_name is None:
-            raise NotImplementedError(
-                'no timestamp column was specified. Listing metrics currently requires a '
-                'timestamp column to be specified and present'
-            )
-
-        res: List[DistanceFeatureDriftMetric] = []
-
-        for feature in result.calculator.feature_column_names:
-            for metric in result.calculator.metrics:
-                feature_metric_column = f'{feature}_{metric.column_name}'
-                if feature_metric_column in result.data.columns:
-                    alert_column = f'{feature_metric_column}_alert'
-                    lower_threshold_column = f'{feature_metric_column}_lower_threshold'
-                    upper_threshold_column = f'{feature_metric_column}_upper_threshold'
-
-                    res += (
-                        result.data.loc[
-                            result.data['period'] == 'analysis',
-                            [
-                                'start_date',
-                                'end_date',
-                                feature_metric_column,
-                                lower_threshold_column,
-                                upper_threshold_column,
-                                alert_column,
-                            ],
+        for column_name in result.continuous_column_names:
+            for method in result.continuous_method_names:
+                res += (
+                    result.filter(period='analysis')
+                    .to_df()[
+                        [
+                            ('chunk', 'chunk', 'start_date'),
+                            ('chunk', 'chunk', 'end_date'),
+                            (column_name, method, 'value'),
+                            (column_name, method, 'alert'),
                         ]
-                        .apply(lambda r: _parse(feature, metric.column_name, *r), axis=1)
-                        .to_list()
-                    )
+                    ]
+                    .apply(lambda r: _parse(column_name, method, *r), axis=1)
+                    .to_list()
+                )
+
+        for column_name in result.categorical_column_names:
+            for method in result.categorical_method_names:
+                res += (
+                    result.filter(period='analysis')
+                    .to_df()[
+                        [
+                            ('chunk', 'chunk', 'start_date'),
+                            ('chunk', 'chunk', 'end_date'),
+                            (column_name, method, 'value'),
+                            (column_name, method, 'alert'),
+                        ]
+                    ]
+                    .apply(lambda r: _parse(column_name, method, *r), axis=1)
+                    .to_list()
+                )
 
         return res
 
@@ -203,7 +139,7 @@ class DistanceFeatureDriftResultMapper(Mapper):
 class ReconstructionErrorDriftResultMapper(Mapper):
     def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
         def _parse(
-            column_name: str,
+            metric_name: str,
             start_date: datetime,
             end_date: datetime,
             value,
@@ -214,7 +150,7 @@ class ReconstructionErrorDriftResultMapper(Mapper):
             timestamp = start_date + (end_date - start_date) / 2
 
             return DataReconstructionFeatureDriftMetric(
-                metric_name=result.col_to_metric_label[column_name],
+                metric_name=metric_name,
                 start_timestamp=start_date,
                 end_timestamp=end_date,
                 timestamp=timestamp,
@@ -228,7 +164,7 @@ class ReconstructionErrorDriftResultMapper(Mapper):
         if not isinstance(result, DataReconstructionDriftResult):
             raise InvalidArgumentsException(f"{self.__class__.__name__} can not deal with '{type(result)}'")
 
-        if result.calculator.timestamp_column_name is None:
+        if result.timestamp_column_name is None:
             raise NotImplementedError(
                 'no timestamp column was specified. Listing metrics currently requires a '
                 'timestamp column to be specified and present'
@@ -236,97 +172,22 @@ class ReconstructionErrorDriftResultMapper(Mapper):
 
         res: List[DbMetric] = []
 
-        for metric_col in result.col_to_metric_label.keys():
+        for metric in result.metrics:
             res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis',
-                    ['start_date', 'end_date', metric_col, 'upper_threshold', 'lower_threshold', 'alert'],
+                result.filter(period='analysis')
+                .to_df()[
+                    [
+                        ('chunk', 'start_date'),
+                        ('chunk', 'end_date'),
+                        (metric, 'value'),
+                        (metric, 'upper_threshold'),
+                        (metric, 'lower_threshold'),
+                        (metric, 'alert'),
+                    ]
                 ]
-                .apply(lambda r: _parse(metric_col, *r), axis=1)
+                .apply(lambda r: _parse(metric, *r), axis=1)
                 .to_list()
             )
-
-        return res
-
-
-@MapperFactory.register(StatisticalOutputDriftResult)
-class StatisticalOutputDriftMapper(Mapper):
-    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
-        def _parse(
-            output_name: str, metric_name: str, start_date: datetime, end_date: datetime, value, alert: bool
-        ) -> StatisticalOutputDriftMetric:
-            timestamp = start_date + (end_date - start_date) / 2
-
-            return StatisticalOutputDriftMetric(
-                output_name=output_name,
-                metric_name=metric_name,
-                start_timestamp=start_date,
-                end_timestamp=end_date,
-                timestamp=timestamp,
-                value=value,
-                alert=alert,
-                **metric_args,
-            )
-
-        if result.calculator.timestamp_column_name is None:
-            raise NotImplementedError(
-                'no timestamp column was specified. Listing metrics currently requires a '
-                'timestamp column to be specified and present'
-            )
-
-        res: List[StatisticalOutputDriftMetric] = []
-
-        for output_metric_col in [
-            col for col in result.data.columns if str(col).endswith(tuple(result.col_suffix_to_metric))
-        ]:
-            idx = output_metric_col.rindex('_')
-            output = output_metric_col[0:idx]
-            metric = result.col_suffix_to_metric[output_metric_col[idx:]]
-            alert_col = f'{output}_alert'
-
-            res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis', ['start_date', 'end_date', output_metric_col, alert_col]
-                ]
-                .apply(lambda r: _parse(output, metric, *r), axis=1)
-                .to_list()
-            )
-
-        return res
-
-
-@MapperFactory.register(TargetDriftResult)
-class TargetDriftMapper(Mapper):
-    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
-        def _parse(target_name: str, start_date: datetime, end_date: datetime, value, alert: bool) -> TargetDriftMetric:
-            timestamp = start_date + (end_date - start_date) / 2
-
-            return TargetDriftMetric(
-                target_name=target_name,
-                metric_name="KS" if result.calculator.problem_type == ProblemType.REGRESSION else "Chi2",
-                start_timestamp=start_date,
-                end_timestamp=end_date,
-                timestamp=timestamp,
-                value=value,
-                alert=alert,
-                **metric_args,
-            )
-
-        if result.calculator.timestamp_column_name is None:
-            raise NotImplementedError(
-                'no timestamp column was specified. Listing metrics currently requires a '
-                'timestamp column to be specified and present'
-            )
-
-        res: List[TargetDriftMetric] = []
-
-        res += (
-            result.data.loc[
-                result.data['period'] == 'analysis', ['start_date', 'end_date', 'statistical_target_drift', 'alert']
-            ]
-            .apply(lambda r: _parse(result.calculator.y_true, *r), axis=1)
-            .to_list()
-        )
 
         return res
 
@@ -357,7 +218,7 @@ class RealizedPerformanceMapper(Mapper):
                 **metric_args,
             )
 
-        if result.calculator.timestamp_column_name is None:
+        if result.timestamp_column_name is None:
             raise NotImplementedError(
                 'no timestamp column was specified. Listing metrics currently requires a '
                 'timestamp column to be specified and present'
@@ -365,17 +226,20 @@ class RealizedPerformanceMapper(Mapper):
 
         res: List[RealizedPerformanceMetric] = []
 
-        for metric in result.calculator.metrics:
-            lower_threshold_col = f'{metric.column_name}_lower_threshold'
-            upper_threshold_col = f'{metric.column_name}_upper_threshold'
-            alert_col = f'{metric.column_name}_alert'
-
+        for metric in [metric.column_name for metric in result.metrics]:
             res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis',
-                    ['start_date', 'end_date', metric.column_name, upper_threshold_col, lower_threshold_col, alert_col],
+                result.filter(partition='analysis')
+                .to_df()[
+                    [
+                        ('chunk', 'start_date'),
+                        ('chunk', 'end_date'),
+                        (metric, 'value'),
+                        (metric, 'upper_threshold'),
+                        (metric, 'lower_threshold'),
+                        (metric, 'alert'),
+                    ]
                 ]
-                .apply(lambda r: _parse(metric.display_name, *r), axis=1)
+                .apply(lambda r: _parse(metric, *r), axis=1)
                 .to_list()
             )
 
