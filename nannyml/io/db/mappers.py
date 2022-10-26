@@ -326,7 +326,7 @@ class DLEMapper(Mapper):
                 **metric_args,
             )
 
-        if result.estimator.timestamp_column_name is None:
+        if result.timestamp_column_name is None:
             raise NotImplementedError(
                 'no timestamp column was specified. Listing metrics currently requires a '
                 'timestamp column to be specified and present'
@@ -334,18 +334,20 @@ class DLEMapper(Mapper):
 
         res: List[DLEPerformanceMetric] = []
 
-        for metric in result.estimator.metrics:
-            metric_col = f'estimated_{metric.column_name}'
-            lower_threshold_col = f'lower_threshold_{metric.column_name}'
-            upper_threshold_col = f'upper_threshold_{metric.column_name}'
-            alert_col = f'alert_{metric.column_name}'
-
+        for metric in [metric.column_name for metric in result.metrics]:
             res += (
-                result.data.loc[
-                    result.data['period'] == 'analysis',
-                    ['start_date', 'end_date', metric_col, upper_threshold_col, lower_threshold_col, alert_col],
+                result.filter(period='analysis')
+                .to_df()[
+                    [
+                        ('chunk', 'start_date'),
+                        ('chunk', 'end_date'),
+                        (metric, 'value'),
+                        (metric, 'upper_threshold'),
+                        (metric, 'lower_threshold'),
+                        (metric, 'alert'),
+                    ]
                 ]
-                .apply(lambda r: _parse(metric.display_name, *r), axis=1)
+                .apply(lambda r: _parse(metric, *r), axis=1)
                 .to_list()
             )
 

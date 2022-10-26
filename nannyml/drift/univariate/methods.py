@@ -131,7 +131,7 @@ class MethodFactory:
 
     @classmethod
     def create(cls, key: str, feature_type: FeatureType, **kwargs) -> Method:
-        """Returns a Metric instance for a given key."""
+        """Returns a Method instance for a given key."""
         if not isinstance(key, str):
             raise InvalidArgumentsException(f"cannot create method given a '{type(key)}'. Please provide a string.")
 
