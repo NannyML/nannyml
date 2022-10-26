@@ -360,23 +360,21 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         **calculator_opts,
     ).fit(ref_df)
-    result = cbpe.estimate(ana_df).data
-    sut = result[result['period'] == 'analysis'].reset_index(drop=True)
+    result = cbpe.estimate(ana_df)
+    sut = result.filter(period='analysis').to_df()[
+        [('chunk', 'key')] + [(m.column_name, 'value') for m in result.metrics]
+    ]
+    sut.columns = [
+        'key',
+        'estimated_roc_auc',
+        'estimated_f1',
+        'estimated_precision',
+        'estimated_recall',
+        'estimated_specificity',
+        'estimated_accuracy',
+    ]
 
-    pd.testing.assert_frame_equal(
-        expected,
-        sut[
-            [
-                'key',
-                'estimated_roc_auc',
-                'estimated_f1',
-                'estimated_precision',
-                'estimated_recall',
-                'estimated_specificity',
-                'estimated_accuracy',
-            ]
-        ],
-    )
+    pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
@@ -709,20 +707,18 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         **calculator_opts,
     ).fit(ref_df)
-    result = cbpe.estimate(ana_df).data
-    sut = result[result['period'] == 'analysis'].reset_index(drop=True)
+    result = cbpe.estimate(ana_df)
+    sut = result.filter(period='analysis').to_df()[
+        [('chunk', 'key')] + [(m.column_name, 'value') for m in result.metrics]
+    ]
+    sut.columns = [
+        'key',
+        'estimated_roc_auc',
+        'estimated_f1',
+        'estimated_precision',
+        'estimated_recall',
+        'estimated_specificity',
+        'estimated_accuracy',
+    ]
 
-    pd.testing.assert_frame_equal(
-        expected,
-        sut[
-            [
-                'key',
-                'estimated_roc_auc',
-                'estimated_f1',
-                'estimated_precision',
-                'estimated_recall',
-                'estimated_specificity',
-                'estimated_accuracy',
-            ]
-        ],
-    )
+    pd.testing.assert_frame_equal(expected, sut)

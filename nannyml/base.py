@@ -180,8 +180,14 @@ class AbstractEstimatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def to_df(self):
-        return self.data
+    def to_df(self, multilevel: bool = True):
+        if multilevel:
+            return self.data
+        else:
+            column_names = ['_'.join(col) for col in self.data.columns.values]
+            single_level_data = self.data.copy(deep=True)
+            single_level_data.columns = column_names
+            return single_level_data
 
     def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
         """Returns result metric data."""
