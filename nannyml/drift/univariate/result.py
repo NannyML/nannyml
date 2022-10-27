@@ -74,7 +74,7 @@ class Result(AbstractCalculatorResult):
     def plot(  # type: ignore
         self,
         method: Union[str, Method],
-        kind: str = 'feature_drift',
+        kind: str = 'drift',
         column_name: str = None,
         plot_reference: bool = False,
         *args,
@@ -235,7 +235,7 @@ class Result(AbstractCalculatorResult):
         title = f'Distribution over time for {column_name}'
         key_column_name = 'chunk_chunk_key'
 
-        data['period'] = 'analysis'
+        data['chunk_chunk_period'] = 'analysis'
         feature_table = _create_feature_table(self.chunker.split(data), key_column_name)
 
         if plot_reference:

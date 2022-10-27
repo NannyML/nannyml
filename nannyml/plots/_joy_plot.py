@@ -60,14 +60,15 @@ def _create_kde_table(
     feature_table,
     feature_column_name,
     chunk_column_name,
+    chunk_type_column_name,
     kde_cut=3,
     kde_clip=(-np.inf, np.inf),
     post_kde_clip=None,
 ):
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
     group_by_cols = [chunk_column_name]
-    if 'period' in feature_table.columns:
-        group_by_cols += ['period']
+    if chunk_type_column_name in feature_table.columns:
+        group_by_cols += [chunk_type_column_name]
     data = (
         #  group by period too, 'key' column can be there for both reference and analysis
         feature_table.groupby(group_by_cols)[feature_column_name]
@@ -417,7 +418,7 @@ def _joy_plot(
         y_axis_title = 'Time' if is_time_based_x_axis else 'Chunk index'
 
     kde_table = _create_kde_table(
-        feature_table, feature_column_name, chunk_column_name, kde_cut, kde_clip, post_kde_clip
+        feature_table, feature_column_name, chunk_column_name, chunk_type_column_name, kde_cut, kde_clip, post_kde_clip
     )
 
     joy_table = _create_joy_table(
