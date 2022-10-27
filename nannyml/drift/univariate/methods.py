@@ -5,18 +5,18 @@ from __future__ import annotations
 
 import abc
 import logging
+from copy import copy
 from enum import Enum
 from logging import Logger
-from copy import copy
 from typing import Callable, Dict, Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2_contingency, ks_2samp
 from scipy.spatial.distance import jensenshannon
+from scipy.stats import chi2_contingency, ks_2samp
 
-from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.base import _column_is_categorical
+from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 
 
 class Method(abc.ABC):
@@ -131,7 +131,7 @@ class MethodFactory:
 
     @classmethod
     def create(cls, key: str, feature_type: FeatureType, **kwargs) -> Method:
-        """Returns a Metric instance for a given key."""
+        """Returns a Method instance for a given key."""
         if not isinstance(key, str):
             raise InvalidArgumentsException(f"cannot create method given a '{type(key)}'. Please provide a string.")
 
@@ -179,9 +179,9 @@ class JensenShannonDistance(Method):
         )
         self.upper_threshold = 0.1
 
-        self._treat_as_type: Optional[str] = None
-        self._bins: Optional[np.ndarray] = None
-        self._reference_proba_in_bins: Optional[np.ndarray] = None
+        self._treat_as_type: str
+        self._bins: np.ndarray
+        self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series):
         if _column_is_categorical(reference_data):
@@ -189,7 +189,7 @@ class JensenShannonDistance(Method):
         else:
             n_unique_values = len(np.unique(reference_data))
             len_reference = len(reference_data)
-            if n_unique_values > 50 or n_unique_values/len_reference > 0.1:
+            if n_unique_values > 50 or n_unique_values / len_reference > 0.1:
                 treat_as_type = 'cont'
             else:
                 treat_as_type = 'cat'
@@ -201,7 +201,7 @@ class JensenShannonDistance(Method):
             self._reference_proba_in_bins = reference_proba_in_bins
         else:
             reference_unique, reference_counts = np.unique(reference_data, return_counts=True)
-            reference_proba_per_unique = reference_counts/len(reference_data)
+            reference_proba_per_unique = reference_counts / len(reference_data)
             self._bins = reference_unique
             self._reference_proba_in_bins = reference_proba_per_unique
 
@@ -218,9 +218,7 @@ class JensenShannonDistance(Method):
         else:
             data_unique, data_counts = np.unique(data, return_counts=True)
             data_counts_dic = dict(zip(data_unique, data_counts))
-            data_count_on_ref_bins = [
-                data_counts_dic[key] if key in data_counts_dic else 0
-                for key in self._bins]
+            data_count_on_ref_bins = [data_counts_dic[key] if key in data_counts_dic else 0 for key in self._bins]
             data_proba_in_bins = np.array(data_count_on_ref_bins) / len(data)
 
         leftover = 1 - np.sum(data_proba_in_bins)

@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,8 +19,7 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels
-from nannyml.base import AbstractEstimator
-from nannyml.chunk import Chunk
+from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 
 
@@ -31,7 +30,11 @@ class Metric(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        estimator: AbstractEstimator,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
     ):
         """Creates a new Metric instance.
 
@@ -46,18 +49,17 @@ class Metric(abc.ABC):
         self.display_name = display_name
         self.column_name = column_name
 
-        from .cbpe import CBPE
-
-        if not isinstance(estimator, CBPE):
-            raise RuntimeError(f"{estimator.__class__.__name__} is not an instance of type " f"CBPE")
-
-        self.estimator = estimator
+        self.y_pred_proba = y_pred_proba
+        self.y_pred = y_pred
+        self.y_true = y_true
+        self.timestamp_column_name = timestamp_column_name
+        self.chunker = chunker
 
         self.upper_threshold: Optional[float] = None
         self.lower_threshold: Optional[float] = None
         self.confidence_deviation: Optional[float] = None
 
-        self.uncalibrated_y_pred_proba = f'uncalibrated_{self.estimator.y_pred_proba}'
+        self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
 
     def __str__(self):
         return self.column_name
@@ -72,7 +74,7 @@ class Metric(abc.ABC):
 
         """
         # Calculate alert thresholds
-        reference_chunks = self.estimator.chunker.split(
+        reference_chunks = self.chunker.split(
             reference_data,
         )
         self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
@@ -159,22 +161,22 @@ class Metric(abc.ABC):
         self, data: pd.DataFrame, y_pred_proba_column_name: str = None
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if y_pred_proba_column_name is None:
-            if not isinstance(self.estimator.y_pred_proba, str):
+            if not isinstance(self.y_pred_proba, str):
                 raise InvalidArgumentsException(
-                    f"'y_pred_proba' is of type '{type(self.estimator.y_pred_proba)}'. "
+                    f"'y_pred_proba' is of type '{type(self.y_pred_proba)}'. "
                     f"Binary use cases require 'y_pred_proba' to be a string."
                 )
-            y_pred_proba_column_name = self.estimator.y_pred_proba
+            y_pred_proba_column_name = self.y_pred_proba
 
-        clean_targets = self.estimator.y_true in data.columns and not data[self.estimator.y_true].isna().all()
+        clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
 
         y_pred_proba = data[y_pred_proba_column_name]
-        y_pred = data[self.estimator.y_pred]
+        y_pred = data[self.y_pred]
 
         y_pred_proba.dropna(inplace=True)
 
         if clean_targets:
-            y_true = data[self.estimator.y_true]
+            y_true = data[self.y_true]
             y_true = y_true[~y_pred_proba.isna()]
             y_pred_proba = y_pred_proba[~y_true.isna()]
             y_pred = y_pred[~y_true.isna()]
@@ -195,7 +197,7 @@ class MetricFactory:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key: str, use_case: ProblemType, kwargs: Dict[str, Any] = None) -> Metric:
+    def create(cls, key: str, use_case: ProblemType, **kwargs) -> Metric:
         if kwargs is None:
             kwargs = {}
 
@@ -237,20 +239,35 @@ class MetricFactory:
 
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='ROC AUC', column_name='roc_auc', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='ROC AUC',
+            column_name='roc_auc',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.auroc_sampling_error_components(
-            y_true_reference=reference_data[self.estimator.y_true],
-            y_pred_proba_reference=reference_data[self.estimator.y_pred_proba],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_proba_reference=reference_data[self.y_pred_proba],
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.estimator.y_pred_proba]
+        y_pred_proba = data[self.y_pred_proba]
 
         return estimate_roc_auc(y_pred_proba)
 
@@ -293,21 +310,36 @@ def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationF1(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='F1', column_name='f1', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='F1',
+            column_name='f1',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.f1_sampling_error_components(
-            y_true_reference=reference_data[self.estimator.y_true],
-            y_pred_reference=reference_data[self.estimator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.estimator.y_pred_proba]
-        y_pred = data[self.estimator.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
+        y_pred = data[self.y_pred]
 
         return estimate_f1(y_pred, y_pred_proba)
 
@@ -334,22 +366,37 @@ def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Precision', column_name='precision', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Precision',
+            column_name='precision',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.precision_sampling_error_components(
-            y_true_reference=reference_data[self.estimator.y_true],
-            y_pred_reference=reference_data[self.estimator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.estimator.y_pred_proba]
-        y_pred = data[self.estimator.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
+        y_pred = data[self.y_pred]
 
         return estimate_precision(y_pred, y_pred_proba)
 
@@ -375,21 +422,36 @@ def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> floa
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Recall', column_name='recall', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Recall',
+            column_name='recall',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.recall_sampling_error_components(
-            y_true_reference=reference_data[self.estimator.y_true],
-            y_pred_reference=reference_data[self.estimator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.estimator.y_pred_proba]
-        y_pred = data[self.estimator.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
+        y_pred = data[self.y_pred]
 
         return estimate_recall(y_pred, y_pred_proba)
 
@@ -415,21 +477,36 @@ def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Specificity', column_name='specificity', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Specificity',
+            column_name='specificity',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.specificity_sampling_error_components(
-            y_true_reference=reference_data[self.estimator.y_true],
-            y_pred_reference=reference_data[self.estimator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.estimator.y_pred_proba]
-        y_pred = data[self.estimator.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
+        y_pred = data[self.y_pred]
 
         return estimate_specificity(y_pred, y_pred_proba)
 
@@ -456,21 +533,36 @@ def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> fl
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Accuracy', column_name='accuracy', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Accuracy',
+            column_name='accuracy',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.accuracy_sampling_error_components(
-            y_true_reference=reference_data[self.estimator.y_true],
-            y_pred_reference=reference_data[self.estimator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.estimator.y_pred_proba]
-        y_pred = data[self.estimator.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
+        y_pred = data[self.y_pred]
 
         tp = np.where(y_pred == 1, y_pred_proba, 0)
         tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
@@ -520,25 +612,38 @@ def _get_multiclass_uncalibrated_predictions(data: pd.DataFrame, y_pred: str, y_
 
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='ROC AUC', column_name='roc_auc', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='ROC AUC',
+            column_name='roc_auc',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
-        classes = class_labels(self.estimator.y_pred_proba)
-        binarized_y_true = list(label_binarize(reference_data[self.estimator.y_true], classes=classes).T)
-        y_pred_proba = [reference_data[self.estimator.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore
+        classes = class_labels(self.y_pred_proba)
+        binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
+        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore
 
         self._sampling_error_components = mse.auroc_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
         )
 
     def _estimate(self, data: pd.DataFrame):
-        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred_proba_class in y_pred_probas:
             ovr_estimates.append(estimate_roc_auc(y_pred_proba_class))
@@ -549,38 +654,49 @@ class MulticlassClassificationAUROC(Metric):
         return mse.auroc_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+        if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
-        y_true = data[self.estimator.y_true]
-        _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_true = data[self.y_true]
+        _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
 
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='F1', column_name='f1', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='F1',
+            column_name='f1',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error:
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.estimator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.estimator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = mse.f1_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_f1(y_pred, y_pred_proba))
@@ -592,38 +708,49 @@ class MulticlassClassificationF1(Metric):
         return mse.f1_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+        if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
-        y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_true = data[self.y_true]
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Precision', column_name='precision', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Precision',
+            column_name='precision',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.estimator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.estimator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = mse.precision_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_precision(y_pred, y_pred_proba))
@@ -635,38 +762,49 @@ class MulticlassClassificationPrecision(Metric):
         return mse.precision_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+        if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
-        y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_true = data[self.y_true]
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Recall', column_name='recall', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Recall',
+            column_name='recall',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.estimator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.estimator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = mse.recall_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_recall(y_pred, y_pred_proba))
@@ -678,38 +816,49 @@ class MulticlassClassificationRecall(Metric):
         return mse.recall_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+        if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
-        y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_true = data[self.y_true]
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Specificity', column_name='specificity', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Specificity',
+            column_name='specificity',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.estimator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.estimator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = mse.specificity_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_specificity(y_pred, y_pred_proba))
@@ -721,13 +870,11 @@ class MulticlassClassificationSpecificity(Metric):
         return mse.specificity_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+        if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
-        y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_true = data[self.y_true]
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
         tn_sum = mcm[:, 0, 0]
@@ -738,25 +885,38 @@ class MulticlassClassificationSpecificity(Metric):
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='Accuracy', column_name='accuracy', estimator=estimator)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+    ):
+        super().__init__(
+            display_name='Accuracy',
+            column_name='accuracy',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
         label_binarizer = LabelBinarizer()
-        binarized_y_true = label_binarizer.fit_transform(reference_data[self.estimator.y_true])
-        binarized_y_pred = label_binarizer.transform(reference_data[self.estimator.y_pred])
+        binarized_y_true = label_binarizer.fit_transform(reference_data[self.y_true])
+        binarized_y_pred = label_binarizer.transform(reference_data[self.y_pred])
 
         self._sampling_error_components = mse.accuracy_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         y_preds_array = np.asarray(y_preds).T
         y_pred_probas_array = np.asarray(y_pred_probas).T
         probability_of_predicted = np.max(y_preds_array * y_pred_probas_array, axis=1)
@@ -766,12 +926,10 @@ class MulticlassClassificationAccuracy(Metric):
         return mse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        if self.estimator.y_true not in data.columns or data[self.estimator.y_true].isna().all():
+        if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
-        y_true = data[self.estimator.y_true]
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(
-            data, self.estimator.y_pred, self.estimator.y_pred_proba
-        )
+        y_true = data[self.y_true]
+        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         return accuracy_score(y_true, y_pred)

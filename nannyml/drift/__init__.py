@@ -13,6 +13,5 @@ This module currently contains the following implementations of drift calculatio
 
 """
 from .multivariate.data_reconstruction import DataReconstructionDriftCalculator
-from .univariate import UnivariateDriftCalculator
 from .ranking import AlertCountRanking, Ranker, Ranking
 from .univariate import FeatureType, Method, MethodFactory, UnivariateDriftCalculator
