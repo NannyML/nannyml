@@ -191,8 +191,11 @@ class AlertCountRanking(Ranking):
             .sum()
             .reset_index()[['level_0', 0]]
         )
-        ranking.columns = ['column_name', 'number_of_alerts']
-        ranking = ranking.sort_values(['number_of_alerts', 'column_name'], ascending=False, ignore_index=True)
+        ranking = ranking.groupby('level_0').sum()
+        ranking.columns = ['number_of_alerts']
+        ranking['column_name'] = ranking.index
+        ranking = ranking.sort_values(['number_of_alerts', 'column_name'], ascending=False)
+        ranking = ranking.reset_index(drop=True)
         ranking['rank'] = ranking.index + 1
         if only_drifting:
             ranking = ranking.loc[ranking['number_of_alerts'] != 0, :]

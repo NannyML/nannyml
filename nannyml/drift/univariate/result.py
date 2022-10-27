@@ -71,8 +71,8 @@ class Result(AbstractCalculatorResult):
 
     def plot(
         self,
+        method: Union[str, Method],
         kind: str = 'feature_drift',
-        method: Union[str, Method] = 'jensen_shannon',
         column_name: str = None,
         plot_reference: bool = False,
         *args,
@@ -83,15 +83,15 @@ class Result(AbstractCalculatorResult):
         For any feature you can render the statistic value or p-values as a step plot, or create a distribution plot.
         Select a plot using the ``kind`` parameter:
 
-        - ``feature_drift``
+        - ``drift``
                 plots drift per :class:`~nannyml.chunk.Chunk` for a single feature of a chunked data set.
-        - ``feature_distribution``
+        - ``distribution``
                 plots feature distribution per :class:`~nannyml.chunk.Chunk`.
                 Joyplot for continuous features, stacked bar charts for categorical features.
 
         Parameters
         ----------
-        kind: str, default=`feature_drift`
+        kind: str, default=`drift`
             The kind of plot you want to have. Allowed values are `feature_drift`` and ``feature_distribution``.
         column_name : str
             Column name identifying a feature according to the preset model metadata. The function will raise an
@@ -129,11 +129,11 @@ class Result(AbstractCalculatorResult):
             raise InvalidArgumentsException(
                 "no value for 'method' given. Please provide the name of a metric to display."
             )
-        if kind == 'feature_drift':
+        if kind == 'drift':
             if column_name is None:
                 raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
             return self.plot_feature_drift(method, column_name, plot_reference)
-        elif kind == 'feature_distribution':
+        elif kind == 'distribution':
             if column_name is None:
                 raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
             return self._plot_feature_distribution(
@@ -145,7 +145,7 @@ class Result(AbstractCalculatorResult):
             )
         else:
             raise InvalidArgumentsException(
-                f"unknown plot kind '{kind}'. " f"Please provide on of: ['feature_drift', 'feature_distribution']."
+                f"unknown plot kind '{kind}'. " f"Please provide on of: ['drift', 'distribution']."
             )
 
     def _plot_feature_distribution(
@@ -186,6 +186,11 @@ class Result(AbstractCalculatorResult):
 
         is_time_based_x_axis = self.timestamp_column_name is not None
 
+        metric_column_name = f'{column_name}_{method.column_name}_value'
+        if metric_column_name not in result_data.columns:
+            raise InvalidArgumentsException(f"found no values for column '{column_name}' "
+                                            f"and method '{method.column_name}'")
+
         fig = _step_plot(
             table=result_data,
             metric_column_name=f'{column_name}_{method.column_name}_value',
@@ -198,7 +203,7 @@ class Result(AbstractCalculatorResult):
             lower_threshold_column_name=f'{column_name}_{method.column_name}_lower_threshold',
             upper_threshold_column_name=f'{column_name}_{method.column_name}_upper_threshold',
             hover_labels=['Chunk', f'{method.display_name}', 'Target data'],
-            title=f'{method.display_name} distance for {column_name}',
+            title=f'{method.display_name} for {column_name}',
             y_axis_title=f'{method.display_name}',
             v_line_separating_analysis_period=plot_reference,
         )

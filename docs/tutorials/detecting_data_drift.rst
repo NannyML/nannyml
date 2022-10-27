@@ -35,5 +35,3 @@ Below we can explore the various ways in which NannyML allows you to detect data
 
    detecting_data_drift/univariate_drift_detection
    detecting_data_drift/multivariate_drift_detection
-   detecting_data_drift/drift_detection_for_model_outputs
-   detecting_data_drift/drift_detection_for_model_targets

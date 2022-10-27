@@ -670,24 +670,24 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'}),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'}),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': False, 'column_name': 'y_true'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': False, 'column_name': 'y_true'}),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': True, 'column_name': 'y_true'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': True, 'column_name': 'y_true'}),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true'}),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
@@ -716,24 +716,24 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'}),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'}),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': False, 'column_name': 'work_home_actual'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'work_home_actual'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': False, 'column_name': 'work_home_actual'}),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'work_home_actual'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': True, 'column_name': 'work_home_actual'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'work_home_actual'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': True, 'column_name': 'work_home_actual'}),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'work_home_actual'}),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
@@ -764,30 +764,30 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
         ),
         (
             {},
-            {'kind': 'feature_drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
         ),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
         ),
         (
             {},
-            {'kind': 'feature_drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
         ),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': False, 'column_name': 'y_true'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': False, 'column_name': 'y_true'}),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': True, 'column_name': 'y_true'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': True, 'column_name': 'y_true'}),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true'}),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
