@@ -259,7 +259,7 @@ Glossary
 
     Univariate Drift Detection
         Drift Detection methods that use each model feature individually
-        in order to detect change in :term:`Model Inputs`.
+        in order to detect change.
 
 
 .. _`wikipedia KS test page`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
