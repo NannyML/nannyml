@@ -22,6 +22,7 @@ def sample_drift_result() -> Result:  # noqa: D103
         column_names=[
             col for col in reference.columns if col not in ['timestamp', 'identifier', 'work_home_actual', 'period']
         ],
+        continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
         chunk_size=5000,
     ).fit(reference)
     result = calc.calculate(analysis)
@@ -48,9 +49,9 @@ def test_alert_count_ranks_by_sum_of_alerts_per_feature(sample_drift_result):  #
     ranking = AlertCountRanking()
     sut = ranking.rank(sample_drift_result)
     assert sut.loc[sut['rank'] == 1, 'column_name'].values[0] == 'y_pred_proba'
-    assert sut.loc[sut['rank'] == 2, 'column_name'].values[0] == 'y_pred'
-    assert sut.loc[sut['rank'] == 3, 'column_name'].values[0] == 'wfh_prev_workday'
-    assert sut.loc[sut['rank'] == 4, 'column_name'].values[0] == 'salary_range'
+    assert sut.loc[sut['rank'] == 2, 'column_name'].values[0] == 'public_transportation_cost'
+    assert sut.loc[sut['rank'] == 3, 'column_name'].values[0] == 'distance_from_office'
+    assert sut.loc[sut['rank'] == 4, 'column_name'].values[0] == 'y_pred'
 
 
 def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_option_set(  # noqa: D103

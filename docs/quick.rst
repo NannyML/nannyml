@@ -55,7 +55,7 @@ Just the code
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 1 4 5 7 9 11 13
+    :cells: 1 4 5 7 9 11
 
 .. _walk_through_the_quickstart:
 
@@ -154,22 +154,13 @@ When there are a lot of drifted features, NannyML can also rank them by the numb
     :path: ./example_notebooks/Quickstart.ipynb
     :cell: 10
 
-
-There is also functionality for visualizing data drift for model outputs. We can see how it works below:
-
-.. nbimport::
-    :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 11
-
-.. image:: ./_static/quick-start-score-drift.svg
-
 More complex data drift cases can get detected by Data Reconstruction with PCA. For more information
 see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 13
+    :cells: 11
 
 .. image:: ./_static/quick-start-drift-multivariate.svg
 

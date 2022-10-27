@@ -280,7 +280,7 @@ class KolmogorovSmirnovStatistic(Method):
 class Chi2Statistic(Method):
     def __init__(self):
         super().__init__(
-            display_name='Chi2',
+            display_name='Chi2 statistic',
             column_name='chi2',
             upper_threshold_limit=1.0,
             lower_threshold=0.05,

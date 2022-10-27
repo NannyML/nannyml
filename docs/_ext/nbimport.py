@@ -31,23 +31,27 @@ class NbImport(SphinxDirective):
     def run(self) -> List[nodes.Node]:
         cell_content: List[str] = []
         with open(self.options['path']) as nb_file:
-            nb = json.load(nb_file)
-            for cell_index in self.options['cells']:
-                if 'hide_source' not in self.options:
-                    source_lines = nb['cells'][cell_index - 1]['source']
-                    source_lines = [line.replace('\n', '') for line in source_lines]
-                    if 'hide_prompts' not in self.options:
-                        cell_content += [_add_prompts(line) for line in source_lines]
-                    else:
-                        cell_content += source_lines
-                if 'show_output' in self.options:
-                    outputs = nb['cells'][cell_index - 1]['outputs'][0]
-                    if 'text' in outputs:
-                        output = outputs['text']
-                    elif 'data' in outputs:
-                        output = outputs['data']['text/plain']
-                    cell_content += [line.replace('\n', '') for line in output]
-                cell_content.append('')
+            try:
+                nb = json.load(nb_file)
+                for cell_index in self.options['cells']:
+                    if 'hide_source' not in self.options:
+                        source_lines = nb['cells'][cell_index - 1]['source']
+                        source_lines = [line.replace('\n', '') for line in source_lines]
+                        if 'hide_prompts' not in self.options:
+                            cell_content += [_add_prompts(line) for line in source_lines]
+                        else:
+                            cell_content += source_lines
+                    if 'show_output' in self.options:
+                        outputs = nb['cells'][cell_index - 1]['outputs'][0]
+                        if 'text' in outputs:
+                            output = outputs['text']
+                        elif 'data' in outputs:
+                            output = outputs['data']['text/plain']
+                        cell_content += [line.replace('\n', '') for line in output]
+                    cell_content.append('')
+            except Exception as exc:
+                print(f"Exception occurred while processing path=[{self.options['path']}], "
+                      f"cell=[{self.options['cells']}]]\n{exc}")
 
         node = CodeBlock(
             content=cell_content,
