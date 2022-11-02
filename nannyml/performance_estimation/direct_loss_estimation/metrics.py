@@ -90,7 +90,10 @@ class Metric(abc.ABC):
         return logging.getLogger(__name__)
 
     def __str__(self):
-        return self.__class__.__name__
+        return self.display_name
+
+    def __repr__(self):
+        return self.column_name
 
     def fit(self, reference_data: pd.DataFrame):
         """Fits a Metric on reference data.

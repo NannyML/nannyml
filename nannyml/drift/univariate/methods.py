@@ -114,6 +114,12 @@ class Method(abc.ABC):
             and self.lower_threshold == other.lower_threshold
         )
 
+    def __str__(self):
+        return self.display_name
+
+    def __repr__(self):
+        return self.column_name
+
 
 class FeatureType(str, Enum):
     """An enumeration indicating if a Method is applicable to continuous data, categorical data or both."""

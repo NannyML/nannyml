@@ -62,6 +62,9 @@ class Metric(abc.ABC):
         self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
 
     def __str__(self):
+        return self.display_name
+
+    def __repr__(self):
         return self.column_name
 
     def fit(self, reference_data: pd.DataFrame):
