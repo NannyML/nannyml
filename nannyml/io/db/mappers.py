@@ -74,12 +74,12 @@ class MapperFactory:
 class UnivariateDriftResultMapper(Mapper):
     def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
         def _parse(
-            feature_name: str, metric_name: str, start_date: datetime, end_date: datetime, value, alert: bool
+            column_name: str, metric_name: str, start_date: datetime, end_date: datetime, value, alert: bool
         ) -> DbMetric:
             timestamp = start_date + (end_date - start_date) / 2
 
             return UnivariateDriftMetric(
-                feature_name=feature_name,
+                column_name=column_name,
                 metric_name=metric_name,
                 start_timestamp=start_date,
                 end_timestamp=end_date,

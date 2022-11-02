@@ -20,7 +20,7 @@ from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 
 
 class Method(abc.ABC):
-    """A performance metric used to calculate realized model performance."""
+    """A method to express the amount of drift between two distributions."""
 
     def __init__(
         self,
@@ -54,7 +54,7 @@ class Method(abc.ABC):
         self.upper_threshold_limit: Optional[float] = upper_threshold_limit
 
     def fit(self, reference_data: pd.Series) -> Method:
-        """Fits a Metric on reference data.
+        """Fits a Method on reference data.
 
         Parameters
         ----------
@@ -72,12 +72,12 @@ class Method(abc.ABC):
         )
 
     def calculate(self, data: pd.Series):
-        """Calculates performance metrics on data.
+        """Calculates drift within data with respect to the reference data.
 
         Parameters
         ----------
         data: pd.DataFrame
-            The data to run the predefined methods on.
+            The data to compare to the reference data.
         """
         return self._calculate(data)
 
@@ -116,6 +116,8 @@ class Method(abc.ABC):
 
 
 class FeatureType(str, Enum):
+    """An enumeration indicating if a Method is applicable to continuous data, categorical data or both."""
+
     CONTINUOUS = "continuous"
     CATEGORICAL = "categorical"
 
@@ -131,7 +133,14 @@ class MethodFactory:
 
     @classmethod
     def create(cls, key: str, feature_type: FeatureType, **kwargs) -> Method:
-        """Returns a Method instance for a given key."""
+        """Returns a Method instance for a given key and FeatureType.
+
+        The value for the `key` is passed explicitly by the end user (provided within the `UnivariateDriftCalculator`
+        initializer). The value for the FeatureType is provided implicitly by deducing it from the reference data upon
+        fitting the `UnivariateDriftCalculator`.
+
+        Any additional keyword arguments are passed along to the initializer of the Method.
+        """
         if not isinstance(key, str):
             raise InvalidArgumentsException(f"cannot create method given a '{type(key)}'. Please provide a string.")
 
@@ -151,6 +160,29 @@ class MethodFactory:
 
     @classmethod
     def register(cls, key: str, feature_type: FeatureType) -> Callable:
+        """A decorator used to register a specific Method implementation to the factory.
+
+        Registering a Method requires a `key` string and a FeatureType.
+
+        The `key` sets the string value to select a Method by, e.g. `chi2` to select the Chi2-contingency implementation
+        when creating a `UnivariateDriftCalculator`.
+
+        Some Methods will only be applicable to one FeatureType,
+        e.g. Kolmogorov-Smirnov can only be used with continuous
+        data, Chi2-contingency only with categorical data.
+        Some support multiple types however, such as the Jensen-Shannon distance.
+        These can be registered multiple times, once for each FeatureType they support. The value for `key` can be
+        identical, the factory will use both the FeatureType and the `key` value to determine which class
+        to instantiate.
+
+        Examples
+        --------
+        >>> @MethodFactory.register(key='jensen_shannon', feature_type=FeatureType.CONTINUOUS)
+        >>> @MethodFactory.register(key='jensen_shannon', feature_type=FeatureType.CATEGORICAL)
+        >>> class JensenShannonDistance(Method):
+        ...   pass
+        """
+
         def inner_wrapper(wrapped_class: Method) -> Method:
             if key not in cls.registry:
                 cls.registry[key] = {feature_type: wrapped_class}
@@ -169,7 +201,10 @@ class MethodFactory:
 @MethodFactory.register(key='jensen_shannon', feature_type=FeatureType.CONTINUOUS)
 @MethodFactory.register(key='jensen_shannon', feature_type=FeatureType.CATEGORICAL)
 class JensenShannonDistance(Method):
-    """Calculates Jensen-Shannon distance."""
+    """Calculates Jensen-Shannon distance.
+
+    An alert will be raised if `distance > 0.1`.
+    """
 
     def __init__(self):
         super().__init__(
@@ -242,6 +277,11 @@ class JensenShannonDistance(Method):
 
 @MethodFactory.register(key='kolmogorov_smirnov', feature_type=FeatureType.CONTINUOUS)
 class KolmogorovSmirnovStatistic(Method):
+    """Calculates the Kolmogorov-Smirnov d-stat.
+
+    An alert will be raised for a Chunk if `p_value < 0.05`.
+    """
+
     def __init__(self):
         super().__init__(
             display_name='Kolmogorov-Smirnov statistic',
@@ -278,6 +318,11 @@ class KolmogorovSmirnovStatistic(Method):
 
 @MethodFactory.register(key='chi2', feature_type=FeatureType.CATEGORICAL)
 class Chi2Statistic(Method):
+    """Calculates the Chi2-contingency statistic.
+
+    An alert will be raised for a Chunk if `p_value < 0.05`.
+    """
+
     def __init__(self):
         super().__init__(
             display_name='Chi2 statistic',

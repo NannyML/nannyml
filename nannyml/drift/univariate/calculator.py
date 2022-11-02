@@ -63,15 +63,18 @@ class UnivariateDriftCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
-        >>> calc = nml.DistanceDriftCalculator(
-        ...     timestamp_column_name='timestamp',
-        ...     metrics=['jensen_shannon'],
-        ...     column_names=[col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        >>> calc = nml.UnivariateDriftCalculator(
+        ...   column_names=column_names,
+        ...   timestamp_column_name='timestamp',
+        ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        ...   categorical_methods=['chi2', 'jensen_shannon'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
-        >>> for feature in calc.column_names:
-        ...     for metric in calc.metrics:
-        ...         res.plot(kind='feature_distribution', feature_column_name=feature, metric=metric).show()
+        >>> res = res.filter(period='analysis')
+        >>> for column_name in res.continuous_column_names:
+        ...  for method in res.continuous_method_names:
+        ...    res.plot(kind='drift', column_name=column_name, method=method).show()
         """
         super(UnivariateDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

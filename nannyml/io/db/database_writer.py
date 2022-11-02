@@ -11,12 +11,48 @@ from nannyml.io.db.mappers import MapperFactory
 
 @WriterFactory.register('database')  # registration name matches property used in configuration file
 class DatabaseWriter(Writer):
+    """A Writer implementation that writes a Result as a list of values into a database table.
+
+    The Result class is transformed into a list of DbMetric objects by an appropriate Mapper instance.
+    These DbMetrics are written into a database table, specific to the Result class.
+
+    Any database that is supported by SQLAlchemy is currently supported.
+    """
+
     def __init__(
         self,
         connection_string: str,
         connection_options: Optional[Dict[str, Any]] = None,
         model_name: Optional[str] = None,
     ):
+        """
+        Creates a new DatabaseWriter instance.
+
+        Parameters
+        ----------
+        connection_string : str
+            The connection string that configures the connection to the database.
+            Might contain user credentials as well.
+        connection_options : Dict[str, Any]
+            Additional options passed along to the underlying SQLAlchemy engine.
+        model_name : str
+            An optional name for the model being monitored. When given this will cause a record to be created in the
+            ``models`` table and having each DbMetric link to that one. This allows easy filtering and dropdown
+            population in data visualization tools in case of multiple models exporting into the same database
+            structure.
+
+        Examples
+        --------
+        >>> # write to local in-memory database
+        >>> sqlite_writer = DatabaseWriter(connection_string='sqlite:///', model_name='car_loan_prediction')
+        >>> sqlite_writer.write(result)
+
+        >>> postgres_writer = DatabaseWriter(
+        ...  connection_string='postgresql://postgres:mysecretpassword@localhost:5432/postgres',
+        ...  model_name='car_loan_prediction'
+        ... )
+        >>> postgres_writer.write(result)
+        """
         super().__init__()
         self.connection_string = connection_string
         if connection_options is None:
