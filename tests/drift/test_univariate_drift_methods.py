@@ -21,7 +21,7 @@ def test_js_for_both_continuous():
     js = JensenShannonDistance()
     js.fit(reference)
     distance = js.calculate(analysis)
-    assert np.round(distance, 2) == 0.04
+    assert np.round(distance, 2) == 0.05
 
 
 def test_js_for_quasi_continuous():
@@ -31,7 +31,7 @@ def test_js_for_quasi_continuous():
     js = JensenShannonDistance()
     js.fit(reference)
     distance = js.calculate(analysis)
-    assert np.round(distance, 2) == 0.61
+    assert np.round(distance, 2) == 0.73
 
 
 def test_js_for_categorical():
@@ -41,4 +41,4 @@ def test_js_for_categorical():
     js = JensenShannonDistance()
     js.fit(reference)
     distance = js.calculate(analysis)
-    assert np.round(distance, 2) == 0.42
+    assert np.round(distance, 2) == 0.5
