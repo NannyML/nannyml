@@ -54,6 +54,10 @@ class AbstractCalculatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    # TODO: define more specific interface (add common arguments)
+    def __len__(self):
+        return len(self.data)
+
     @abstractmethod
     def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Plots calculation results."""

@@ -50,8 +50,10 @@ class NbImport(SphinxDirective):
                         cell_content += [line.replace('\n', '') for line in output]
                     cell_content.append('')
             except Exception as exc:
-                print(f"Exception occurred while processing path=[{self.options['path']}], "
-                      f"cell=[{self.options['cells']}]]\n{exc}")
+                print(
+                    f"Exception occurred while processing path=[{self.options['path']}], "
+                    f"cell=[{self.options['cells']}]]\n{exc}"
+                )
 
         node = CodeBlock(
             content=cell_content,

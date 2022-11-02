@@ -1,6 +1,6 @@
 """Unit tests for the UnivariateDriftCalculator methods."""
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from nannyml.drift.univariate.methods import JensenShannonDistance
 
@@ -42,4 +42,3 @@ def test_js_for_categorical():
     js.fit(reference)
     distance = js.calculate(analysis)
     assert np.round(distance, 2) == 0.42
-

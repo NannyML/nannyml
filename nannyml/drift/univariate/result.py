@@ -3,6 +3,8 @@
 #  License: Apache Software License 2.0
 
 """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+from __future__ import annotations
+
 import copy
 from typing import List, Optional, Union
 
@@ -47,7 +49,7 @@ class Result(AbstractCalculatorResult):
         self.analysis_data = analysis_data
         self.reference_data = reference_data
 
-    def _filter(self, period: str, *args, **kwargs) -> AbstractCalculatorResult:
+    def _filter(self, period: str, *args, **kwargs) -> Result:
         if 'column_names' in kwargs:
             column_names = kwargs['column_names']
         else:
@@ -69,10 +71,10 @@ class Result(AbstractCalculatorResult):
         result.data = data
         return result
 
-    def plot(
+    def plot(  # type: ignore
         self,
         method: Union[str, Method],
-        kind: str = 'feature_drift',
+        kind: str = 'drift',
         column_name: str = None,
         plot_reference: bool = False,
         *args,
@@ -188,8 +190,9 @@ class Result(AbstractCalculatorResult):
 
         metric_column_name = f'{column_name}_{method.column_name}_value'
         if metric_column_name not in result_data.columns:
-            raise InvalidArgumentsException(f"found no values for column '{column_name}' "
-                                            f"and method '{method.column_name}'")
+            raise InvalidArgumentsException(
+                f"found no values for column '{column_name}' " f"and method '{method.column_name}'"
+            )
 
         fig = _step_plot(
             table=result_data,
@@ -232,7 +235,7 @@ class Result(AbstractCalculatorResult):
         title = f'Distribution over time for {column_name}'
         key_column_name = 'chunk_chunk_key'
 
-        data['period'] = 'analysis'
+        data['chunk_chunk_period'] = 'analysis'
         feature_table = _create_feature_table(self.chunker.split(data), key_column_name)
 
         if plot_reference:
