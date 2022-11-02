@@ -226,7 +226,7 @@ class JensenShannonDistance(Method):
             data_proba_in_bins = np.append(data_proba_in_bins, leftover)
             reference_proba_in_bins = np.append(reference_proba_in_bins, 0)
 
-        distance = jensenshannon(reference_proba_in_bins, data_proba_in_bins)
+        distance = jensenshannon(reference_proba_in_bins, data_proba_in_bins, base=2)
         self._p_value = None
 
         del reference_proba_in_bins
