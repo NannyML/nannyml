@@ -14,6 +14,8 @@ from nannyml.io.base import Reader, _get_filepath_str, _get_protocol_and_path
 
 
 class FileReader(Reader):
+    """A Reader implementation that retrieves data from a file (either local or cloud based)."""
+
     def __init__(
         self,
         filepath: str,
@@ -21,6 +23,42 @@ class FileReader(Reader):
         credentials: Dict[str, Any] = None,
         fs_args: Dict[str, Any] = None,
     ):
+        """
+        Creates a new FileReader instance.
+
+        Parameters
+        ----------
+        filepath : str
+            The path to read data from. Can be a regular file path or contain a protocol.
+        read_args : Dict[str, Any]
+            Specific arguments passed along to the methods doing the actual reading (mostly Pandas-based).
+        credentials : Dict[str, Any]
+            Used to provide credential information following specific ``fsspec`` implementations.
+        fs_args :
+            Specific arguments passed along to the ``fsspec`` filesystem initializer.
+
+        Examples
+        --------
+        >>> local_reader = FileReader(
+        ...   filepath='/my-data-directory/data.pq'
+        ... )
+
+        >>> aws_reader = FileReader(
+        ...   filepath='s3://my-data-directory/data.pq',
+        ...   credentials={'key': 'my_key', 'secret': 'my_secret'}
+        ... )
+
+        >>> aws_reader2 = FileReader(
+        ...   filepath='s3://my-data-directory/data.pq',
+        ...   credentials={'aws_access_key_id': 'access_key_id', 'aws_secret_access_key': 'secret_access_key'}
+        ... )
+
+        >>> gcp_reader = FileReader(
+        ...   filepath='s3://my-data-directory/data.pq',
+        ...   credentials={'token': 'my_service_account_credential_file.json'}
+        ... )
+
+        """
         _fs_args = deepcopy(fs_args) or {}
         _credentials = deepcopy(credentials) or {}
 

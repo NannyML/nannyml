@@ -18,8 +18,8 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import AbstractEstimator, _raise_exception_for_negative_values
-from nannyml.chunk import Chunk
+from nannyml.base import _raise_exception_for_negative_values
+from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
@@ -44,7 +44,13 @@ class Metric(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        estimator: AbstractEstimator,
+        feature_column_names: List[str],
+        y_true: str,
+        y_pred: str,
+        chunker: Chunker,
+        tune_hyperparameters: bool,
+        hyperparameter_tuning_config: Dict[str, Any],
+        hyperparameters: Dict[str, Any],
         upper_value_limit: float = None,
         lower_value_limit: float = 0.0,
     ):
@@ -61,12 +67,14 @@ class Metric(abc.ABC):
         self.display_name = display_name
         self.column_name = column_name
 
-        from .dle import DLE
+        self.feature_column_names = feature_column_names
+        self.y_true = y_true
+        self.y_pred = y_pred
+        self.chunker = chunker
 
-        if not isinstance(estimator, DLE):
-            raise RuntimeError(f"{estimator.__class__.__name__} is not an instance of type " f"DLE")
-
-        self.estimator = estimator
+        self.tune_hyperparameters = tune_hyperparameters  # type: ignore
+        self.hyperparameter_tuning_config = hyperparameter_tuning_config  # type: ignore
+        self.hyperparameters = hyperparameters  # type: ignore
 
         self.upper_threshold: Optional[float] = None
         self.lower_threshold: Optional[float] = None
@@ -96,7 +104,7 @@ class Metric(abc.ABC):
         self._logger.debug(f"fitting {self.__class__.__name__}")
 
         # Calculate alert thresholds
-        reference_chunks = self.estimator.chunker.split(
+        reference_chunks = self.chunker.split(
             reference_data,
         )
         self.lower_threshold, self.upper_threshold = self._alert_thresholds(
@@ -187,11 +195,11 @@ class Metric(abc.ABC):
         return self.display_name == other.display_name and self.column_name == other.column_name
 
     def _common_cleaning(self, data: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
-        clean_targets = self.estimator.y_true in data.columns and not data[self.estimator.y_true].isna().all()
+        clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
 
-        y_pred = data[self.estimator.y_pred]
+        y_pred = data[self.y_pred]
         if clean_targets:
-            y_true = data[self.estimator.y_true]
+            y_true = data[self.y_true]
             y_pred = y_pred[~y_true.isna()]
             y_true.dropna(inplace=True)
         else:
@@ -222,7 +230,7 @@ class Metric(abc.ABC):
 
             automl = AutoML()
             automl.fit(X_train, y_train, **hyperparameter_tuning_config)
-            self.estimator.hyperparameters = {**automl.model.estimator.get_params()}  # type: ignore
+            self.hyperparameters = {**automl.model.estimator.get_params()}  # type: ignore
             model = LGBMRegressor(**automl.model.estimator.get_params())
             model.fit(X_train, y_train)
         else:
@@ -245,10 +253,7 @@ class MetricFactory:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key: str, problem_type: ProblemType, kwargs: Dict[str, Any] = None) -> Metric:
-        if kwargs is None:
-            kwargs = {}
-
+    def create(cls, key: str, problem_type: ProblemType, **kwargs) -> Metric:
         """Returns a Metric instance for a given key."""
         if not isinstance(key, str):
             raise InvalidArgumentsException(
@@ -288,12 +293,31 @@ class MetricFactory:
 
 @MetricFactory.register('mae', ProblemType.REGRESSION)
 class MAE(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='MAE', column_name='mae', estimator=estimator)
+    def __init__(
+        self,
+        feature_column_names: List[str],
+        y_true: str,
+        y_pred: str,
+        chunker: Chunker,
+        tune_hyperparameters: bool,
+        hyperparameter_tuning_config: Dict[str, Any],
+        hyperparameters: Dict[str, Any],
+    ):
+        super().__init__(
+            display_name='MAE',
+            column_name='mae',
+            feature_column_names=feature_column_names,
+            y_true=y_true,
+            y_pred=y_pred,
+            chunker=chunker,
+            tune_hyperparameters=tune_hyperparameters,
+            hyperparameter_tuning_config=hyperparameter_tuning_config,
+            hyperparameters=hyperparameters,
+        )
 
     def _fit(self, reference_data: pd.DataFrame):
-        y_true = reference_data[self.estimator.y_true]
-        y_pred = reference_data[self.estimator.y_pred]
+        y_true = reference_data[self.y_true]
+        y_pred = reference_data[self.y_pred]
 
         self._sampling_error_components = mae_sampling_error_components(
             y_true_reference=y_true, y_pred_reference=y_pred
@@ -302,17 +326,15 @@ class MAE(Metric):
         observation_level_metric = abs(y_true - y_pred)
 
         self._dee_model = self._train_direct_error_estimation_model(
-            X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
+            X_train=reference_data[self.feature_column_names + [self.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
-            hyperparameters=self.estimator.hyperparameters,  # type: ignore
+            tune_hyperparameters=self.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(
-            X=data[self.estimator.feature_column_names + [self.estimator.y_pred]]
-        )
+        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -330,12 +352,31 @@ class MAE(Metric):
 
 @MetricFactory.register('mape', ProblemType.REGRESSION)
 class MAPE(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='MAPE', column_name='mape', estimator=estimator)
+    def __init__(
+        self,
+        feature_column_names: List[str],
+        y_true: str,
+        y_pred: str,
+        chunker: Chunker,
+        tune_hyperparameters: bool,
+        hyperparameter_tuning_config: Dict[str, Any],
+        hyperparameters: Dict[str, Any],
+    ):
+        super().__init__(
+            display_name='MAPE',
+            column_name='mape',
+            feature_column_names=feature_column_names,
+            y_true=y_true,
+            y_pred=y_pred,
+            chunker=chunker,
+            tune_hyperparameters=tune_hyperparameters,
+            hyperparameter_tuning_config=hyperparameter_tuning_config,
+            hyperparameters=hyperparameters,
+        )
 
     def _fit(self, reference_data: pd.DataFrame):
-        y_true = reference_data[self.estimator.y_true]
-        y_pred = reference_data[self.estimator.y_pred]
+        y_true = reference_data[self.y_true]
+        y_pred = reference_data[self.y_pred]
 
         self._sampling_error_components = mape_sampling_error_components(
             y_true_reference=y_true, y_pred_reference=y_pred
@@ -345,17 +386,15 @@ class MAPE(Metric):
         observation_level_metric = abs(y_true - y_pred) / (np.maximum(epsilon, abs(y_true)))
 
         self._dee_model = self._train_direct_error_estimation_model(
-            X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
+            X_train=reference_data[self.feature_column_names + [self.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
-            hyperparameters=self.estimator.hyperparameters,  # type: ignore
+            tune_hyperparameters=self.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(
-            X=data[self.estimator.feature_column_names + [self.estimator.y_pred]]
-        )
+        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -373,12 +412,31 @@ class MAPE(Metric):
 
 @MetricFactory.register('mse', ProblemType.REGRESSION)
 class MSE(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='MSE', column_name='mse', estimator=estimator)
+    def __init__(
+        self,
+        feature_column_names: List[str],
+        y_true: str,
+        y_pred: str,
+        chunker: Chunker,
+        tune_hyperparameters: bool,
+        hyperparameter_tuning_config: Dict[str, Any],
+        hyperparameters: Dict[str, Any],
+    ):
+        super().__init__(
+            display_name='MSE',
+            column_name='mse',
+            feature_column_names=feature_column_names,
+            y_true=y_true,
+            y_pred=y_pred,
+            chunker=chunker,
+            tune_hyperparameters=tune_hyperparameters,
+            hyperparameter_tuning_config=hyperparameter_tuning_config,
+            hyperparameters=hyperparameters,
+        )
 
     def _fit(self, reference_data: pd.DataFrame):
-        y_true = reference_data[self.estimator.y_true]
-        y_pred = reference_data[self.estimator.y_pred]
+        y_true = reference_data[self.y_true]
+        y_pred = reference_data[self.y_pred]
 
         self._sampling_error_components = mse_sampling_error_components(
             y_true_reference=y_true, y_pred_reference=y_pred
@@ -387,17 +445,15 @@ class MSE(Metric):
         observation_level_metric = np.square(y_true - y_pred)
 
         self._dee_model = self._train_direct_error_estimation_model(
-            X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
+            X_train=reference_data[self.feature_column_names + [self.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
-            hyperparameters=self.estimator.hyperparameters,  # type: ignore
+            tune_hyperparameters=self.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(
-            X=data[self.estimator.feature_column_names + [self.estimator.y_pred]]
-        )
+        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -415,12 +471,31 @@ class MSE(Metric):
 
 @MetricFactory.register('msle', ProblemType.REGRESSION)
 class MSLE(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='MSLE', column_name='msle', estimator=estimator)
+    def __init__(
+        self,
+        feature_column_names: List[str],
+        y_true: str,
+        y_pred: str,
+        chunker: Chunker,
+        tune_hyperparameters: bool,
+        hyperparameter_tuning_config: Dict[str, Any],
+        hyperparameters: Dict[str, Any],
+    ):
+        super().__init__(
+            display_name='MSLE',
+            column_name='msle',
+            feature_column_names=feature_column_names,
+            y_true=y_true,
+            y_pred=y_pred,
+            chunker=chunker,
+            tune_hyperparameters=tune_hyperparameters,
+            hyperparameter_tuning_config=hyperparameter_tuning_config,
+            hyperparameters=hyperparameters,
+        )
 
     def _fit(self, reference_data: pd.DataFrame):
-        y_true = reference_data[self.estimator.y_true]
-        y_pred = reference_data[self.estimator.y_pred]
+        y_true = reference_data[self.y_true]
+        y_pred = reference_data[self.y_pred]
 
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
@@ -432,17 +507,15 @@ class MSLE(Metric):
         observation_level_metric = np.square(np.log1p(y_true) - np.log1p(y_pred))
 
         self._dee_model = self._train_direct_error_estimation_model(
-            X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
+            X_train=reference_data[self.feature_column_names + [self.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
-            hyperparameters=self.estimator.hyperparameters,  # type: ignore
+            tune_hyperparameters=self.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(
-            X=data[self.estimator.feature_column_names + [self.estimator.y_pred]]
-        )
+        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -463,12 +536,31 @@ class MSLE(Metric):
 
 @MetricFactory.register('rmse', ProblemType.REGRESSION)
 class RMSE(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='RMSE', column_name='rmse', estimator=estimator)
+    def __init__(
+        self,
+        feature_column_names: List[str],
+        y_true: str,
+        y_pred: str,
+        chunker: Chunker,
+        tune_hyperparameters: bool,
+        hyperparameter_tuning_config: Dict[str, Any],
+        hyperparameters: Dict[str, Any],
+    ):
+        super().__init__(
+            display_name='RMSE',
+            column_name='rmse',
+            feature_column_names=feature_column_names,
+            y_true=y_true,
+            y_pred=y_pred,
+            chunker=chunker,
+            tune_hyperparameters=tune_hyperparameters,
+            hyperparameter_tuning_config=hyperparameter_tuning_config,
+            hyperparameters=hyperparameters,
+        )
 
     def _fit(self, reference_data: pd.DataFrame):
-        y_true = reference_data[self.estimator.y_true]
-        y_pred = reference_data[self.estimator.y_pred]
+        y_true = reference_data[self.y_true]
+        y_pred = reference_data[self.y_pred]
 
         self._sampling_error_components = rmse_sampling_error_components(
             y_true_reference=y_true, y_pred_reference=y_pred
@@ -477,17 +569,15 @@ class RMSE(Metric):
         observation_level_metric = np.square(y_true - y_pred)
 
         self._dee_model = self._train_direct_error_estimation_model(
-            X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
+            X_train=reference_data[self.feature_column_names + [self.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
-            hyperparameters=self.estimator.hyperparameters,  # type: ignore
+            tune_hyperparameters=self.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(
-            X=data[self.estimator.feature_column_names + [self.estimator.y_pred]]
-        )
+        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
         chunk_level_estimate = np.sqrt(np.mean(observation_level_estimates))
         return chunk_level_estimate
 
@@ -505,12 +595,31 @@ class RMSE(Metric):
 
 @MetricFactory.register('rmsle', ProblemType.REGRESSION)
 class RMSLE(Metric):
-    def __init__(self, estimator):
-        super().__init__(display_name='RMSLE', column_name='rmsle', estimator=estimator)
+    def __init__(
+        self,
+        feature_column_names: List[str],
+        y_true: str,
+        y_pred: str,
+        chunker: Chunker,
+        tune_hyperparameters: bool,
+        hyperparameter_tuning_config: Dict[str, Any],
+        hyperparameters: Dict[str, Any],
+    ):
+        super().__init__(
+            display_name='RMSLE',
+            column_name='rmsle',
+            feature_column_names=feature_column_names,
+            y_true=y_true,
+            y_pred=y_pred,
+            chunker=chunker,
+            tune_hyperparameters=tune_hyperparameters,
+            hyperparameter_tuning_config=hyperparameter_tuning_config,
+            hyperparameters=hyperparameters,
+        )
 
     def _fit(self, reference_data: pd.DataFrame):
-        y_true = reference_data[self.estimator.y_true]
-        y_pred = reference_data[self.estimator.y_pred]
+        y_true = reference_data[self.y_true]
+        y_pred = reference_data[self.y_pred]
 
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
@@ -522,17 +631,15 @@ class RMSLE(Metric):
         observation_level_metric = np.square(np.log1p(y_true) - np.log1p(y_pred))
 
         self._dee_model = self._train_direct_error_estimation_model(
-            X_train=reference_data[self.estimator.feature_column_names + [self.estimator.y_pred]],
+            X_train=reference_data[self.feature_column_names + [self.y_pred]],
             y_train=observation_level_metric,
-            tune_hyperparameters=self.estimator.tune_hyperparameters,  # type: ignore
-            hyperparameter_tuning_config=self.estimator.hyperparameter_tuning_config,  # type: ignore
-            hyperparameters=self.estimator.hyperparameters,  # type: ignore
+            tune_hyperparameters=self.tune_hyperparameters,  # type: ignore
+            hyperparameter_tuning_config=self.hyperparameter_tuning_config,  # type: ignore
+            hyperparameters=self.hyperparameters,  # type: ignore
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(
-            X=data[self.estimator.feature_column_names + [self.estimator.y_pred]]
-        )
+        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
         chunk_level_estimate = np.sqrt(np.mean(observation_level_estimates))
         return chunk_level_estimate
 

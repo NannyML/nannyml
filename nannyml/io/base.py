@@ -18,7 +18,7 @@ CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss']
 
 
 class Writer(ABC):
-    """Base class for writing out results"""
+    """Base class for writing Result instances to an external medium such as disk, database or API."""
 
     @property
     def _logger(self) -> logging.Logger:
@@ -44,7 +44,11 @@ class Writer(ABC):
 
 
 class WriterFactory:
-    """A factory class that produces Mapper instances for a given Result subclass."""
+    """A factory class that produces Writer instances for a given ``key``.
+
+    The value for this ``key`` is passed along explicitly by the user, either by providing it directly during
+    ``Writer`` initialization or passed along in the ``nann.yml`` configuration file.
+    """
 
     registry: Dict[str, Writer] = {}
 

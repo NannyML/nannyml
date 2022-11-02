@@ -60,14 +60,15 @@ def _create_kde_table(
     feature_table,
     feature_column_name,
     chunk_column_name,
+    chunk_type_column_name,
     kde_cut=3,
     kde_clip=(-np.inf, np.inf),
     post_kde_clip=None,
 ):
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
     group_by_cols = [chunk_column_name]
-    if 'period' in feature_table.columns:
-        group_by_cols += ['period']
+    if chunk_type_column_name in feature_table.columns:
+        group_by_cols += [chunk_type_column_name]
     data = (
         #  group by period too, 'key' column can be there for both reference and analysis
         feature_table.groupby(group_by_cols)[feature_column_name]
@@ -183,13 +184,13 @@ def _create_joy_plot(
 
     is_time_based_x_axis = start_date_column_name and end_date_column_name
     offset = (
-        joy_table.loc[joy_table['period'] == 'reference', 'chunk_index'].max() + 1
-        if len(joy_table.loc[joy_table['period'] == 'reference']) > 0
+        joy_table.loc[joy_table[chunk_type_column_name] == 'reference', chunk_index_column_name].max() + 1
+        if len(joy_table.loc[joy_table[chunk_type_column_name] == 'reference']) > 0
         else 0
     )
     joy_table['chunk_index_unified'] = [
         idx + offset if period == 'analysis' else idx
-        for idx, period in zip(joy_table['chunk_index'], joy_table['period'])
+        for idx, period in zip(joy_table[chunk_index_column_name], joy_table[chunk_type_column_name])
     ]
 
     colors_transparent = [
@@ -417,7 +418,7 @@ def _joy_plot(
         y_axis_title = 'Time' if is_time_based_x_axis else 'Chunk index'
 
     kde_table = _create_kde_table(
-        feature_table, feature_column_name, chunk_column_name, kde_cut, kde_clip, post_kde_clip
+        feature_table, feature_column_name, chunk_column_name, chunk_type_column_name, kde_cut, kde_clip, post_kde_clip
     )
 
     joy_table = _create_joy_table(

@@ -25,6 +25,8 @@ def _data_prep_step_plot(
     partial_target_column_name: str,
     sampling_error_column_name: str,
     drift_column_name: str,
+    chunk_index_column_name: str,
+    chunk_type_column_name: str,
     start_date_column_name: str = None,
     end_date_column_name: str = None,
     hover_metric_format='{0:.4f}',
@@ -41,12 +43,13 @@ def _data_prep_step_plot(
         data['end_date_label'] = data[end_date_column_name].dt.strftime(hover_date_label_format)
 
     offset = (
-        data.loc[data['period'] == 'reference', 'chunk_index'].max() + 1
-        if len(data.loc[data['period'] == 'reference']) > 0
+        data.loc[data[chunk_type_column_name] == 'reference', chunk_index_column_name].max() + 1
+        if len(data.loc[data[chunk_type_column_name] == 'reference']) > 0
         else 0
     )
     data['chunk_index_unified'] = [
-        idx + offset if period == 'analysis' else idx for idx, period in zip(data['chunk_index'], data['period'])
+        idx + offset if period == 'analysis' else idx
+        for idx, period in zip(data[chunk_index_column_name], data[chunk_type_column_name])
     ]
 
     data['metric_label'] = data[metric_column_name].apply(lambda x: hover_metric_format.format(x))
@@ -54,7 +57,7 @@ def _data_prep_step_plot(
     if sampling_error_column_name is not None:
         data['plt_sampling_error'] = np.round(SAMPLING_ERROR_RANGE * data[sampling_error_column_name], 4)
 
-    data['hover_period'] = data['period'].apply(
+    data['hover_period'] = data[chunk_type_column_name].apply(
         lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
         if x == 'reference'
         else f'<b style="color:{Colors.INDIGO_PERSIAN};line-height:60px">Analysis</b>'
@@ -151,6 +154,8 @@ def _step_plot(
         partial_target_column_name,
         sampling_error_column_name,
         drift_column_name,
+        chunk_index_column_name,
+        chunk_type_column_name,
         start_date_column_name,
         end_date_column_name,
         hover_metric_format,

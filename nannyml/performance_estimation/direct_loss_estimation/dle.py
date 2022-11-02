@@ -1,11 +1,11 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-import copy
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from pandas import MultiIndex
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 
@@ -169,12 +169,6 @@ class DLE(AbstractEstimator):
         self.y_pred = y_pred
         self.y_true = y_true
 
-        if metrics is None:
-            metrics = DEFAULT_METRICS
-        self.metrics: List[Metric] = [
-            MetricFactory.create(metric, ProblemType.REGRESSION, kwargs={'estimator': self}) for metric in metrics
-        ]
-
         if hyperparameter_tuning_config is None:
             hyperparameter_tuning_config = {
                 "time_budget": 15,  # total running time in seconds
@@ -190,6 +184,23 @@ class DLE(AbstractEstimator):
         self.hyperparameter_tuning_config = hyperparameter_tuning_config
         self.tune_hyperparameters = tune_hyperparameters
         self.hyperparameters = hyperparameters
+
+        if metrics is None:
+            metrics = DEFAULT_METRICS
+        self.metrics: List[Metric] = [
+            MetricFactory.create(
+                metric,
+                ProblemType.REGRESSION,
+                feature_column_names=self.feature_column_names,
+                y_true=self.y_true,
+                y_pred=self.y_pred,
+                chunker=self.chunker,
+                tune_hyperparameters=self.tune_hyperparameters,
+                hyperparameter_tuning_config=self.hyperparameter_tuning_config,
+                hyperparameters=self.hyperparameters,
+            )
+            for metric in metrics
+        ]
 
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
         self._categorical_encoders: defaultdict = defaultdict(LabelEncoder)
@@ -225,7 +236,7 @@ class DLE(AbstractEstimator):
             metric.fit(reference_data)
 
         self.result = self._estimate(reference_data)
-        self.result.data['period'] = 'reference'  # type: ignore
+        self.result.data[('chunk', 'period')] = 'reference'  # type: ignore
 
         return self
 
@@ -254,17 +265,30 @@ class DLE(AbstractEstimator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
+                    'period': 'analysis',
                     **self._estimate_chunk(chunk),
                 }
                 for chunk in chunks
             ]
         )
 
+        multilevel_index = _create_multilevel_index([metric.column_name for metric in self.metrics])
+        res.columns = multilevel_index
         res = res.reset_index(drop=True)
-        res['period'] = 'analysis'
 
         if self.result is None:
-            self.result = Result(results_data=res, estimator=copy.deepcopy(self))
+            self.result = Result(
+                results_data=res,
+                metrics=self.metrics,
+                feature_column_names=self.feature_column_names,
+                y_pred=self.y_pred,
+                y_true=self.y_true,
+                timestamp_column_name=self.timestamp_column_name,
+                chunker=self.chunker,
+                tune_hyperparameters=self.tune_hyperparameters,
+                hyperparameter_tuning_config=self.hyperparameter_tuning_config,
+                hyperparameters=self.hyperparameters,
+            )
         else:
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
@@ -284,14 +308,44 @@ class DLE(AbstractEstimator):
             if metric.lower_value_limit is not None:
                 lower_confidence_boundary = max(metric.lower_value_limit, lower_confidence_boundary)
 
+            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
             estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
             estimates[f'estimated_{metric.column_name}'] = estimated_metric
             estimates[f'upper_confidence_{metric.column_name}'] = upper_confidence_boundary
             estimates[f'lower_confidence_{metric.column_name}'] = lower_confidence_boundary
-            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
             estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
             estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
             estimates[f'alert_{metric.column_name}'] = (
                 estimated_metric > metric.upper_threshold if metric.upper_threshold else False
             ) or (estimated_metric < metric.lower_threshold if metric.lower_threshold else False)
         return estimates
+
+
+def _create_multilevel_index(metric_names: List[str]):
+    chunk_column_names = [
+        'key',
+        'chunk_index',
+        'start_index',
+        'end_index',
+        'start_date',
+        'end_date',
+        'period',
+    ]
+    method_column_names = [
+        'sampling_error',
+        'realized',
+        'value',
+        'upper_confidence_boundary',
+        'lower_confidence_boundary',
+        'upper_threshold',
+        'lower_threshold',
+        'alert',
+    ]
+    chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
+    reconstruction_tuples = [
+        (metric_name, column_name) for metric_name in metric_names for column_name in method_column_names
+    ]
+
+    tuples = chunk_tuples + reconstruction_tuples
+
+    return MultiIndex.from_tuples(tuples)

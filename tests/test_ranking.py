@@ -3,47 +3,40 @@
 #  License: Apache Software License 2.0
 
 """Unit tests for drift ranking."""
+import copy
 
 import pandas as pd
 import pytest
 
-from nannyml.drift.model_inputs.univariate.statistical import Result, UnivariateStatisticalDriftCalculator
+from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.drift.ranking import AlertCountRanking
+from nannyml.drift.univariate import Result, UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def sample_drift_result() -> Result:  # noqa: D103
-    return Result(
-        results_data=pd.DataFrame(
-            {
-                'f1_alert': [0, 0, 0, 0, 1, 1],
-                'f2_alert': [0, 0, 0, 1, 1, 1],
-                'f3_alert': [0, 0, 0, 1, 0, 1],
-                'f4_alert': [0, 0, 0, 0, 0, 0],
-                'f1': [0, 0, 0, 0, 0, 0],
-                'f2': [1, 1, 1, 1, 1, 1],
-                'f3': [0, 0, 0, 0, 0, 0],
-                'f4': [1, 1, 1, 1, 1, 1],
-            }
-        ),
-        calculator=UnivariateStatisticalDriftCalculator(
-            timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']
-        ),
-    )
+    reference, analysis, _ = load_synthetic_binary_classification_dataset()
+    calc = UnivariateDriftCalculator(
+        timestamp_column_name='timestamp',
+        column_names=[
+            col for col in reference.columns if col not in ['timestamp', 'identifier', 'work_home_actual', 'period']
+        ],
+        continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        chunk_size=5000,
+    ).fit(reference)
+    result = calc.calculate(analysis)
+    return result
 
 
-def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty():  # noqa: D103
+def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(
+    sample_drift_result,
+):  # noqa: D103
     ranking = AlertCountRanking()
-    with pytest.raises(InvalidArgumentsException, match='drift results contain no data to use for ranking'):
-        ranking.rank(
-            Result(
-                results_data=pd.DataFrame(columns=['f1', 'f1_alert']),
-                calculator=UnivariateStatisticalDriftCalculator(
-                    timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']
-                ),
-            )
-        )
+    result = copy.deepcopy(sample_drift_result)
+    result.data = pd.DataFrame(columns=['f1', 'f2', 'f3', 'f4'])
+    with pytest.raises(InvalidArgumentsException, match='drift results contain no data'):
+        ranking.rank(result)
 
 
 def test_alert_count_ranking_contains_rank_column(sample_drift_result):  # noqa: D103
@@ -55,10 +48,10 @@ def test_alert_count_ranking_contains_rank_column(sample_drift_result):  # noqa:
 def test_alert_count_ranks_by_sum_of_alerts_per_feature(sample_drift_result):  # noqa: D103
     ranking = AlertCountRanking()
     sut = ranking.rank(sample_drift_result)
-    assert sut.loc[sut['rank'] == 1, 'feature'].values[0] == 'f2'
-    assert sut.loc[sut['rank'] == 2, 'feature'].values[0] == 'f1'
-    assert sut.loc[sut['rank'] == 3, 'feature'].values[0] == 'f3'
-    assert sut.loc[sut['rank'] == 4, 'feature'].values[0] == 'f4'
+    assert sut.loc[sut['rank'] == 1, 'column_name'].values[0] == 'y_pred_proba'
+    assert sut.loc[sut['rank'] == 2, 'column_name'].values[0] == 'public_transportation_cost'
+    assert sut.loc[sut['rank'] == 3, 'column_name'].values[0] == 'distance_from_office'
+    assert sut.loc[sut['rank'] == 4, 'column_name'].values[0] == 'y_pred'
 
 
 def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_option_set(  # noqa: D103
@@ -66,17 +59,5 @@ def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_opt
 ):
     ranking = AlertCountRanking()
     sut = ranking.rank(sample_drift_result, only_drifting=True)
-    assert len(sut) == 3
-    assert len(sut[sut['feature'] == 'f4']) == 0
-
-
-def test_alert_count_ranking_should_raise_invalid_arguments_exception_when_given_wrong_drift_results():  # noqa: D103
-    with pytest.raises(InvalidArgumentsException, match="drift results contain no data to use for ranking"):
-        _ = AlertCountRanking().rank(
-            Result(
-                results_data=pd.DataFrame(columns=['f1', 'f1_alert']),
-                calculator=UnivariateStatisticalDriftCalculator(
-                    timestamp_column_name='timestamp', feature_column_names=['f1', 'f2', 'f3', 'f4']
-                ),
-            )
-        )
+    assert len(sut) == 7
+    assert not any(sut['column_name'] == 'gas_price_per_litre')

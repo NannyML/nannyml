@@ -4,11 +4,9 @@
 import pandas as pd
 import pytest
 
-from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.performance_estimation.direct_loss_estimation import DLE
-from nannyml.performance_estimation.direct_loss_estimation.metrics import MetricFactory
 
 
 class FakeEstimator(AbstractEstimator):
@@ -17,12 +15,6 @@ class FakeEstimator(AbstractEstimator):
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
         pass
-
-
-@pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
-def test_metric_creation_with_non_dle_estimator_raises_runtime_exc(metric):
-    with pytest.raises(RuntimeError, match='not an instance of type DLE'):
-        MetricFactory.create(key=metric, problem_type=ProblemType.REGRESSION, kwargs={'estimator': FakeEstimator()})
 
 
 @pytest.mark.parametrize(
@@ -327,23 +319,21 @@ def test_dle_for_regression_with_timestamps(calculator_opts, expected):
         feature_column_names=[col for col in ref_df.columns if col not in ['timestamp', 'y_true', 'y_pred']],
         y_pred='y_pred',
         y_true='y_true',
-        metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+        metrics=['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle'],
         **calculator_opts,
     ).fit(ref_df)
-    result = dle.estimate(ana_df).data
-    sut = result[result['period'] == 'analysis'].reset_index(drop=True)
+    result = dle.estimate(ana_df)
+    sut = result.filter(period='analysis').to_df()[
+        [('chunk', 'key')] + [(metric.column_name, 'value') for metric in result.metrics]
+    ]
+    sut.columns = [
+        'key',
+        'estimated_mae',
+        'estimated_mape',
+        'estimated_mse',
+        'estimated_rmse',
+        'estimated_msle',
+        'estimated_rmsle',
+    ]
 
-    pd.testing.assert_frame_equal(
-        expected,
-        sut[
-            [
-                'key',
-                'estimated_mae',
-                'estimated_mape',
-                'estimated_mse',
-                'estimated_rmse',
-                'estimated_msle',
-                'estimated_rmsle',
-            ]
-        ],
-    )
+    pd.testing.assert_frame_equal(expected, sut)

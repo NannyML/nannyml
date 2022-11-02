@@ -6,11 +6,11 @@
 
 from __future__ import annotations
 
-import copy
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+from pandas import MultiIndex
 
 from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractCalculator
@@ -105,14 +105,16 @@ class PerformanceCalculator(AbstractCalculator):
         self.y_pred_proba = y_pred_proba
 
         if isinstance(problem_type, str):
-            problem_type = ProblemType.parse(problem_type)
-        self.problem_type = problem_type
+            self.problem_type = ProblemType.parse(problem_type)
+        else:
+            self.problem_type = problem_type
 
         if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
             raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
 
         self.metrics: List[Metric] = [
-            MetricFactory.create(m, problem_type, {'calculator': self}) for m in metrics  # type: ignore
+            MetricFactory.create(m, self.problem_type, y_true=y_true, y_pred=y_pred, y_pred_proba=y_pred_proba)
+            for m in metrics  # type: ignore
         ]
 
         self.previous_reference_data: Optional[pd.DataFrame] = None
@@ -145,7 +147,8 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.previous_reference_data = reference_data
         self.result = self._calculate(reference_data)
-        self.result.data['period'] = 'reference'  # type: ignore
+        self.result.data[('chunk', 'period')] = 'reference'  # type: ignore
+        self.result.reference_data = reference_data.copy()  # type: ignore
 
         return self
 
@@ -182,7 +185,7 @@ class PerformanceCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis' if chunk.is_transition else chunk.period,
+                    'period': 'analysis',
                     'targets_missing_rate': chunk.data[TARGET_COMPLETENESS_RATE_COLUMN_NAME].sum()
                     / chunk.data[TARGET_COMPLETENESS_RATE_COLUMN_NAME].count(),
                     **self._calculate_metrics_for_chunk(chunk),
@@ -191,11 +194,22 @@ class PerformanceCalculator(AbstractCalculator):
             ]
         )
 
-        res['period'] = 'analysis'
+        multilevel_index = _create_multilevel_index(metric_names=[metric.column_name for metric in self.metrics])
+        res.columns = multilevel_index
+
         if self.result is None:
-            self.result = Result(results_data=res, calculator=copy.deepcopy(self))
+            self.result = Result(
+                results_data=res,
+                metrics=self.metrics,
+                y_true=self.y_true,
+                y_pred=self.y_pred,
+                y_pred_proba=self.y_pred_proba,
+                timestamp_column_name=self.timestamp_column_name,
+                problem_type=self.problem_type,
+            )
         else:
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.analysis_data = data.copy()
 
         return self.result
 
@@ -203,12 +217,40 @@ class PerformanceCalculator(AbstractCalculator):
         metrics_results = {}
         for metric in self.metrics:
             chunk_metric = metric.calculate(chunk.data)
-            metrics_results[metric.column_name] = chunk_metric
-            metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
-            metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
             metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
+            metrics_results[metric.column_name] = chunk_metric
+            metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
+            metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
             metrics_results[f'{metric.column_name}_alert'] = (
                 metric.lower_threshold > chunk_metric if metric.lower_threshold else False
             ) or (chunk_metric > metric.upper_threshold if metric.upper_threshold else False)
 
         return metrics_results
+
+
+def _create_multilevel_index(metric_names: List[str]):
+    chunk_column_names = [
+        'key',
+        'chunk_index',
+        'start_index',
+        'end_index',
+        'start_date',
+        'end_date',
+        'period',
+        'targets_missing_rate',
+    ]
+    method_column_names = [
+        'sampling_error',
+        'value',
+        'upper_threshold',
+        'lower_threshold',
+        'alert',
+    ]
+    chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
+    reconstruction_tuples = [
+        (metric_name, column_name) for metric_name in metric_names for column_name in method_column_names
+    ]
+
+    tuples = chunk_tuples + reconstruction_tuples
+
+    return MultiIndex.from_tuples(tuples)

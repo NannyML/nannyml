@@ -95,13 +95,14 @@ def _create_stacked_bar_table(
         )
 
     offset = (
-        stacked_bar_table.loc[stacked_bar_table['period'] == 'reference', 'chunk_index'].max() + 1
-        if len(stacked_bar_table.loc[stacked_bar_table['period'] == 'reference']) > 0
+        stacked_bar_table.loc[stacked_bar_table[chunk_type_column_name] == 'reference', chunk_index_column_name].max()
+        + 1
+        if len(stacked_bar_table.loc[stacked_bar_table[chunk_type_column_name] == 'reference']) > 0
         else 0
     )
     stacked_bar_table['chunk_index_unified'] = [
         idx + offset if period == 'analysis' else idx
-        for idx, period in zip(stacked_bar_table['chunk_index'], stacked_bar_table['period'])
+        for idx, period in zip(stacked_bar_table[chunk_index_column_name], stacked_bar_table[chunk_type_column_name])
     ]
 
     return stacked_bar_table

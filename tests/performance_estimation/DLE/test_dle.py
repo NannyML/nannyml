@@ -11,7 +11,7 @@ from nannyml._typing import ProblemType
 from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.direct_loss_estimation import DLE, Result
+from nannyml.performance_estimation.direct_loss_estimation import DLE
 from nannyml.performance_estimation.direct_loss_estimation.metrics import MetricFactory
 
 
@@ -171,7 +171,8 @@ def test_direct_error_estimator_sets_custom_hyperparameter_tuning_config_when_gi
     ],
 )
 def test_direct_error_estimation_yields_correct_results_for_metric(estimates, metric, expected):
-    all(round(estimates.data.loc[estimates.data['period'] == 'analysis', f'estimated_{metric}'], 5) == expected)
+    sut = estimates.filter(period='analysis').to_df()
+    all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
 @pytest.mark.parametrize(
@@ -188,12 +189,8 @@ def test_direct_error_estimation_yields_correct_results_for_metric(estimates, me
 def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertuning(
     hypertuned_estimates, metric, expected
 ):
-    all(
-        round(
-            hypertuned_estimates.data.loc[hypertuned_estimates.data['period'] == 'analysis', f'estimated_{metric}'], 5
-        )
-        == expected
-    )
+    sut = hypertuned_estimates.filter(period='analysis').to_df()
+    all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
 @pytest.mark.parametrize(
@@ -210,20 +207,8 @@ def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertun
 def test_direct_error_estimation_yields_correct_results_for_metric_with_custom_hyperparameters(
     custom_hyperparameter_estimates, metric, expected
 ):
-    all(
-        round(
-            custom_hyperparameter_estimates.data.loc[
-                custom_hyperparameter_estimates.data['period'] == 'analysis', f'estimated_{metric}'
-            ],
-            5,
-        )
-        == expected
-    )
-
-
-def test_result_plot_raises_runtime_error_when_given_fake_estimator(estimates):
-    with pytest.raises(RuntimeError):
-        _ = Result(results_data=estimates.data, estimator=FakeEstimator())
+    sut = custom_hyperparameter_estimates.filter(period='analysis').to_df()
+    all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
 def test_result_plot_raises_invalid_args_exception_when_given_no_metric(estimates):
@@ -239,7 +224,15 @@ def test_result_plot_raises_invalid_args_exception_when_given_incorrect_kind(est
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
 def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_error_estimator, metric):
     _metric = MetricFactory.create(
-        key=metric, problem_type=ProblemType.REGRESSION, kwargs={'estimator': direct_error_estimator}
+        key=metric,
+        problem_type=ProblemType.REGRESSION,
+        feature_column_names=direct_error_estimator.feature_column_names,
+        y_true=direct_error_estimator.y_true,
+        y_pred=direct_error_estimator.y_pred,
+        chunker=direct_error_estimator.chunker,
+        tune_hyperparameters=direct_error_estimator.tune_hyperparameters,
+        hyperparameter_tuning_config=direct_error_estimator.hyperparameter_tuning_config,
+        hyperparameters=direct_error_estimator.hyperparameters,
     )
 
     sut = estimates.plot(metric=metric).to_dict()
@@ -249,7 +242,15 @@ def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
 def test_result_plot_with_metric_object_returns_plotly_figure(estimates, direct_error_estimator, metric):
     _metric = MetricFactory.create(
-        key=metric, problem_type=ProblemType.REGRESSION, kwargs={'estimator': direct_error_estimator}
+        key=metric,
+        problem_type=ProblemType.REGRESSION,
+        feature_column_names=direct_error_estimator.feature_column_names,
+        y_true=direct_error_estimator.y_true,
+        y_pred=direct_error_estimator.y_pred,
+        chunker=direct_error_estimator.chunker,
+        tune_hyperparameters=direct_error_estimator.tune_hyperparameters,
+        hyperparameter_tuning_config=direct_error_estimator.hyperparameter_tuning_config,
+        hyperparameters=direct_error_estimator.hyperparameters,
     )
 
     sut = estimates.plot(metric=_metric)
