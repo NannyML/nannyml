@@ -32,8 +32,10 @@ class NbTable(SphinxDirective):
                 output = nb['cells'][self.options['cell'] - 1]['outputs'][0]['text']
                 output_lines = output
             except Exception as exc:
-                print(f"Exception occurred while processing path=[{self.options['path']}], "
-                      f"cell=[{self.options['cell']}]]\n{exc}")
+                print(
+                    f"Exception occurred while processing path=[{self.options['path']}], "
+                    f"cell=[{self.options['cell']}]]\n{exc}"
+                )
 
         content = f".. table::\n\n{''.join(['    ' + line for line in output_lines])}\n\n"
 

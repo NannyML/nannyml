@@ -416,24 +416,24 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
         ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1'}),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1'}),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3'}),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3'}),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'}),
     ],
     ids=[
         'continuous_feature_drift_with_timestamp_without_reference',
