@@ -12,14 +12,35 @@ from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
 
 @WriterFactory.register('pickle')
 class PickleFileWriter(FileWriter):
+    """A Writer implementation that writes Results to disk (local/remote/cloud) as a pickle file."""
+
     def __init__(
         self,
         path: str,
-        write_args: Dict[str, Any] = None,
         credentials: Dict[str, Any] = None,
         fs_args: Dict[str, Any] = None,
     ):
-        super().__init__(path, write_args, credentials, fs_args)
+        """
+
+        Parameters
+        ----------
+        path : str
+            The directory in which to output the generated pickle file. The name of the pickle file will equal
+            the fully qualified result class name with a `pkl` extension, e.g. `nannyml.drift.univariate.result.pkl`
+        credentials : Dict[str, Any]
+            Used to provide credential information following specific ``fsspec`` implementations.
+        fs_args :
+            Specific arguments passed along to the ``fsspec`` filesystem initializer.
+
+        Examples
+        --------
+        >>> writer = PickleFileWriter(
+        ...    path='s3://my-output-bucket/output',
+        ...    credentials={'aws_access_key_id': 'access_key_id', 'aws_secret_access_key': 'secret_access_key'}
+        ... )
+        >>> writer.write(result)
+        """
+        super().__init__(path, None, credentials, fs_args)
 
     def _write(self, result: Result, **kwargs):
         file_name = f'{result.__module__}.pkl'

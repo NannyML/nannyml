@@ -94,13 +94,12 @@ class Result(AbstractCalculatorResult):
         Parameters
         ----------
         kind: str, default=`drift`
-            The kind of plot you want to have. Allowed values are `feature_drift`` and ``feature_distribution``.
+            The kind of plot you want to have. Allowed values are `drift`` and ``distribution``.
         column_name : str
-            Column name identifying a feature according to the preset model metadata. The function will raise an
-            exception when no feature using that column name was found in the metadata.
-            Either ``feature_column_name`` or ``feature_label`` should be specified.
+            The name of the column you wish to see the drift results for. Can refer to a model feature, score,
+            prediction or target (if provided).
         method: str
-            The name of the metric to plot. Allowed values are [`jensen_shannon`].
+            The name of the metric to plot. Allowed values are ``jensen_shannon``, ``kolmogorov_smirnov`` and ``chi2``.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
@@ -116,15 +115,18 @@ class Result(AbstractCalculatorResult):
         --------
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
-        >>> calc = nml.DistanceDriftCalculator(
-        ...     timestamp_column_name='timestamp',
-        ...     metrics=['jensen_shannon'],
-        ...     column_names=[col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        >>> calc = nml.UnivariateDriftCalculator(
+        ...   column_names=column_names,
+        ...   timestamp_column_name='timestamp',
+        ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        ...   categorical_methods=['chi2', 'jensen_shannon'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
-        >>> for feature in calc.column_names:
-        ...     for metric in calc.metrics:
-        ...         res.plot(kind='feature_distribution', feature_column_name=feature, metric=metric).show()
+        >>> res = res.filter(period='analysis')
+        >>> for column_name in res.continuous_column_names:
+        ...  for method in res.continuous_method_names:
+        ...    res.plot(kind='drift', column_name=column_name, method=method).show()
 
         """
         if method is None:
@@ -134,11 +136,11 @@ class Result(AbstractCalculatorResult):
         if kind == 'drift':
             if column_name is None:
                 raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
-            return self.plot_feature_drift(method, column_name, plot_reference)
+            return self._plot_drift(method, column_name, plot_reference)
         elif kind == 'distribution':
             if column_name is None:
                 raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
-            return self._plot_feature_distribution(
+            return self._plot_distribution(
                 analysis_data=self.analysis_data,
                 plot_reference=plot_reference,
                 drift_data=self.to_df(multilevel=False),
@@ -150,7 +152,7 @@ class Result(AbstractCalculatorResult):
                 f"unknown plot kind '{kind}'. " f"Please provide on of: ['drift', 'distribution']."
             )
 
-    def _plot_feature_distribution(
+    def _plot_distribution(
         self,
         analysis_data: pd.DataFrame,
         drift_data: pd.DataFrame,
@@ -168,7 +170,7 @@ class Result(AbstractCalculatorResult):
                 analysis_data, drift_data, column_name, method, plot_reference
             )
 
-    def plot_feature_drift(
+    def _plot_drift(
         self,
         method: Union[str, Method],
         column_name: str,
