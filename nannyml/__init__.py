@@ -47,5 +47,6 @@ from .datasets import (
 )
 from .drift import AlertCountRanking, DataReconstructionDriftCalculator, Ranker, Ranking, UnivariateDriftCalculator
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
+from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, DLE
