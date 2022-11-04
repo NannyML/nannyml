@@ -113,7 +113,7 @@ class Result(AbstractEstimatorResult):
             metric_column_name='plottable',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             start_date_column_name='chunk_start_date' if is_time_based_x_axis else None,
             end_date_column_name='chunk_end_date' if is_time_based_x_axis else None,
             chunk_legend_labels=[

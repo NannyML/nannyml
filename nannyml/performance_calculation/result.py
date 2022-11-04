@@ -182,7 +182,7 @@ class Result(AbstractCalculatorResult):
             metric_column_name=f'{metric.column_name}_value',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             drift_column_name=f'{metric.column_name}_alert',
             drift_legend_label='Degraded performance',
             hover_labels=['Chunk', metric.display_name, 'Target data'],

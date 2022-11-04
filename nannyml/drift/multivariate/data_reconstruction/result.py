@@ -122,7 +122,7 @@ class Result(AbstractCalculatorResult):
             metric_column_name='reconstruction_error_value',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             drift_column_name='reconstruction_error_alert',
             sampling_error_column_name='reconstruction_error_sampling_error',
             lower_threshold_column_name='reconstruction_error_lower_threshold',

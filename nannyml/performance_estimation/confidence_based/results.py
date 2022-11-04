@@ -196,7 +196,7 @@ class Result(AbstractEstimatorResult):
             metric_column_name='plottable',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             chunk_legend_labels=[
                 f'Reference period (realized {metric.display_name})',
                 f'Analysis period (estimated {metric.display_name})',

@@ -46,10 +46,6 @@ class AbstractCalculatorResult(ABC):
         """
         self.data = results_data.copy(deep=True)
 
-    # def __getattr__(self, attribute):
-    #     """Redirect function calls directly to the inner DataFrame."""
-    #     return getattr(self.data, attribute)
-
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
@@ -67,7 +63,10 @@ class AbstractCalculatorResult(ABC):
         if multilevel:
             return self.data
         else:
-            column_names = ['_'.join(col) for col in self.data.columns.values]
+            column_names = [
+                '_'.join(col).replace('chunk_chunk_chunk', 'chunk').replace('chunk_chunk', 'chunk')
+                for col in self.data.columns.values
+            ]
             single_level_data = self.data.copy(deep=True)
             single_level_data.columns = column_names
             return single_level_data
@@ -188,7 +187,10 @@ class AbstractEstimatorResult(ABC):
         if multilevel:
             return self.data
         else:
-            column_names = ['_'.join(col) for col in self.data.columns.values]
+            column_names = [
+                '_'.join(col).replace('chunk_chunk_chunk', 'chunk').replace('chunk_chunk', 'chunk')
+                for col in self.data.columns.values
+            ]
             single_level_data = self.data.copy(deep=True)
             single_level_data.columns = column_names
             return single_level_data
