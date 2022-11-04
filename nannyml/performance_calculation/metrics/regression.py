@@ -57,9 +57,15 @@ class RegressionMetric(Metric, ABC):
 class MAE(RegressionMetric):
     """Mean Absolute Error metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
         """Creates a new MAE instance."""
-        super().__init__(display_name='MAE', column_name='mae', calculator=calculator)
+        super().__init__(
+            display_name='MAE',
+            column_name='mae',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
@@ -68,18 +74,18 @@ class MAE(RegressionMetric):
         return "MAE"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
         self._sampling_error_components = mae_sampling_error_components(
-            y_true_reference=reference_data[self.calculator.y_true],
-            y_pred_reference=reference_data[self.calculator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
 
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -96,9 +102,15 @@ class MAE(RegressionMetric):
 class MAPE(RegressionMetric):
     """Mean Absolute Percentage Error metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
         """Creates a new MAPE instance."""
-        super().__init__(display_name='MAPE', column_name='mape', calculator=calculator)
+        super().__init__(
+            display_name='MAPE',
+            column_name='mape',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
@@ -107,18 +119,18 @@ class MAPE(RegressionMetric):
         return "MAPE"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
         self._sampling_error_components = mape_sampling_error_components(
-            y_true_reference=reference_data[self.calculator.y_true],
-            y_pred_reference=reference_data[self.calculator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
 
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -135,9 +147,15 @@ class MAPE(RegressionMetric):
 class MSE(RegressionMetric):
     """Mean Squared Error metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
         """Creates a new MSE instance."""
-        super().__init__(display_name='MSE', column_name='mse', calculator=calculator)
+        super().__init__(
+            display_name='MSE',
+            column_name='mse',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
@@ -146,18 +164,18 @@ class MSE(RegressionMetric):
         return "MSE"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
         self._sampling_error_components = mse_sampling_error_components(
-            y_true_reference=reference_data[self.calculator.y_true],
-            y_pred_reference=reference_data[self.calculator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
 
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -174,9 +192,15 @@ class MSE(RegressionMetric):
 class MSLE(RegressionMetric):
     """Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
         """Creates a new MSLE instance."""
-        super().__init__(display_name='MSLE', column_name='msle', calculator=calculator)
+        super().__init__(
+            display_name='MSLE',
+            column_name='msle',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
@@ -185,18 +209,18 @@ class MSLE(RegressionMetric):
         return "MSLE"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
         self._sampling_error_components = msle_sampling_error_components(
-            y_true_reference=reference_data[self.calculator.y_true],
-            y_pred_reference=reference_data[self.calculator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
 
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -218,9 +242,15 @@ class MSLE(RegressionMetric):
 class RMSE(RegressionMetric):
     """Root Mean Squared Error metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
         """Creates a new RMSE instance."""
-        super().__init__(display_name='RMSE', column_name='rmse', calculator=calculator)
+        super().__init__(
+            display_name='RMSE',
+            column_name='rmse',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
@@ -229,18 +259,18 @@ class RMSE(RegressionMetric):
         return "RMSE"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
         self._sampling_error_components = rmse_sampling_error_components(
-            y_true_reference=reference_data[self.calculator.y_true],
-            y_pred_reference=reference_data[self.calculator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
 
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
@@ -257,9 +287,15 @@ class RMSE(RegressionMetric):
 class RMSLE(RegressionMetric):
     """Root Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
         """Creates a new RMSLE instance."""
-        super().__init__(display_name='RMSLE', column_name='rmsle', calculator=calculator)
+        super().__init__(
+            display_name='RMSLE',
+            column_name='rmsle',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+        )
 
         # sampling error
         self._sampling_error_components: Tuple = ()
@@ -268,18 +304,18 @@ class RMSLE(RegressionMetric):
         return "RMSLE"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
         self._sampling_error_components = rmsle_sampling_error_components(
-            y_true_reference=reference_data[self.calculator.y_true],
-            y_pred_reference=reference_data[self.calculator.y_pred],
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
         )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(data.columns))
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
 
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 

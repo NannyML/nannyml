@@ -81,8 +81,10 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
         problem_type='regression',
     )
-    sut = MetricFactory.create(key, problem_type, {'calculator': calc})
-    assert sut == metric(calculator=calc)
+    sut = MetricFactory.create(
+        key, problem_type, y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba
+    )
+    assert sut == metric(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
 
 
 @pytest.mark.parametrize(
@@ -128,7 +130,7 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
     ],
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
-    metric_values = realized_performance_metrics[metric]
+    metric_values = realized_performance_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
 
@@ -175,5 +177,5 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
     ],
 )
 def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_metrics, metric, expected):
-    metric_values = no_timestamp_metrics[metric]
+    metric_values = no_timestamp_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()

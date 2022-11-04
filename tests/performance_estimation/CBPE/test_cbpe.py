@@ -316,8 +316,8 @@ def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_o
 
 
 def reduce_confidence_bounds(monkeypatch, estimator, results):
-    min_confidence = results.data['lower_confidence_roc_auc'].min()
-    max_confidence = results.data['upper_confidence_roc_auc'].max()
+    min_confidence = results.data[('roc_auc', 'lower_confidence_boundary')].min()
+    max_confidence = results.data[('roc_auc', 'upper_confidence_boundary')].max()
 
     new_lower_bound = min_confidence + 0.001
     new_upper_bound = max_confidence - 0.001
@@ -342,11 +342,11 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
     results = estimator.estimate(pd.concat([reference, analysis]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
     # manually remove previous 'analysis' results
-    results.data = results.data[results.data['period'] == 'reference']
+    results.data = results.data[results.data[('chunk', 'period')] == 'reference']
     results = estimator.estimate(analysis)
-    sut = results.data[results.data['period'] == 'analysis']
-    assert all(sut['lower_confidence_roc_auc'] >= new_lower_bound)
-    assert all(sut['upper_confidence_roc_auc'] <= new_upper_bound)
+    sut = results.filter(period='analysis').to_df()
+    assert all(sut.loc[:, ('roc_auc', 'lower_confidence_boundary')] >= new_lower_bound)
+    assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
 
 def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
@@ -367,11 +367,11 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
     ).fit(reference)
     results = estimator.estimate(pd.concat([reference, analysis]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
-    results.data = results.data[results.data['period'] == 'reference']
+    results.data = results.filter(period='reference').to_df()
     results = estimator.estimate(analysis)
-    sut = results.data[results.data['period'] == 'analysis']
-    assert all(sut['lower_confidence_roc_auc'] >= new_lower_bound)
-    assert all(sut['upper_confidence_roc_auc'] <= new_upper_bound)
+    sut = results.filter(period='analysis').to_df()
+    assert all(sut.loc[:, ('roc_auc', 'lower_confidence_boundary')] >= new_lower_bound)
+    assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
 
 @pytest.mark.parametrize(
@@ -399,9 +399,9 @@ def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_
     ).fit(reference)
     results = estimator.estimate(analysis)
 
-    assert f'sampling_error_{metric}' in results.data.columns
+    assert (metric, 'sampling_error') in results.data.columns
     assert all(
-        np.round(results.data[f'sampling_error_{metric}'], 4)
+        np.round(results.to_df().loc[:, (metric, 'sampling_error')], 4)
         == pd.Series(np.round(sampling_error, 4), index=range(len(results.data)))
     )
 
@@ -431,9 +431,9 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
         problem_type='classification_binary',
     ).fit(reference)
     results = estimator.estimate(analysis).filter(period='analysis')
-
-    assert f'sampling_error_{metric}' in results.data.columns
-    assert np.array_equal(np.round(results.data[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
+    sut = results.to_df()
+    assert (metric, 'sampling_error') in sut.columns
+    assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
 
 
 @pytest.mark.parametrize(
@@ -464,11 +464,11 @@ def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_const
         problem_type='classification_multiclass',
     ).fit(reference)
     results = estimator.estimate(analysis)
-
-    assert f'sampling_error_{metric}' in results.data.columns
+    sut = results.to_df()
+    assert (metric, 'sampling_error') in sut.columns
     assert all(
-        np.round(results.data[f'sampling_error_{metric}'], 4)
-        == pd.Series(np.round(sampling_error, 4), index=range(len(results.data)))
+        np.round(sut.loc[:, (metric, 'sampling_error')], 4)
+        == pd.Series(np.round(sampling_error, 4), index=range(len(sut)))
     )
 
 
@@ -501,10 +501,10 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
         problem_type='classification_multiclass',
     ).fit(reference)
     results = estimator.estimate(analysis)
-    sut = results.data[results.data['period'] == 'analysis']
+    sut = results.filter(period='analysis').to_df()
 
-    assert f'sampling_error_{metric}' in sut.columns
-    assert np.array_equal(np.round(sut[f'sampling_error_{metric}'], 4), np.round(sampling_error, 4))
+    assert (metric, 'sampling_error') in sut.columns
+    assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
 
 
 @pytest.mark.parametrize(

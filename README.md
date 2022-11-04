@@ -204,7 +204,7 @@ for feature in univariate_calculator.feature_column_names:
 
 # Rank features based on number of alerts
 ranker = nml.Ranker.by('alert_count')
-ranked_features = ranker.rank(univariate_results, only_drifting = False)
+ranked_features = ranker.rank(univariate_results, only_drifting=False)
 display(ranked_features)
 
 calc = nml.StatisticalOutputDriftCalculator(
@@ -220,7 +220,9 @@ figure = results.plot(kind='prediction_drift', plot_reference=True)
 figure.show()
 
 # Let's initialize the object that will detect Multivariate Drift
-rcerror_calculator = nml.DataReconstructionDriftCalculator(feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_size=chunk_size).fit(reference_data=reference)
+rcerror_calculator = nml.DataReconstructionDriftCalculator(column_names=feature_column_names,
+                                                           timestamp_column_name='timestamp',
+                                                           chunk_size=chunk_size).fit(reference_data=reference)
 # let's see Reconstruction error statistics for all available data
 rcerror_results = rcerror_calculator.calculate(analysis)
 figure = rcerror_results.plot(kind='drift', plot_reference=True)

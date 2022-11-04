@@ -14,6 +14,11 @@ from nannyml.io.base import Writer, _get_protocol_and_path
 
 
 class FileWriter(Writer, abc.ABC):
+    """An abstract Writer implementation that writes results out to a filesystem (either local or remote / cloud).
+
+    This abstract base class provides a helper ``_write_bytes_to_filesystem`` function that helps to implement the
+    abstract ``_write`` function.
+    """
 
     _logger = logging.getLogger(__name__)
 
@@ -24,6 +29,20 @@ class FileWriter(Writer, abc.ABC):
         credentials: Dict[str, Any] = None,
         fs_args: Dict[str, Any] = None,
     ):
+        """
+        Creates a new FileWriter
+
+        Parameters
+        ----------
+        path : str
+            The path to read data from. Can be a regular file path or contain a protocol.
+        write_args : Dict[str, Any]
+            Specific arguments passed along the method performing the actual writing.
+        credentials : Dict[str, Any]
+            Used to provide credential information following specific ``fsspec`` implementations.
+        fs_args :
+            Specific arguments passed along to the ``fsspec`` filesystem initializer.
+        """
         super().__init__()
 
         _fs_args = deepcopy(fs_args) or {}

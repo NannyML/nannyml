@@ -11,10 +11,8 @@ from nannyml.datasets import (
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
-from nannyml.drift.model_inputs.multivariate.data_reconstruction import DataReconstructionDriftCalculator
-from nannyml.drift.model_inputs.univariate.statistical import UnivariateStatisticalDriftCalculator
-from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
-from nannyml.drift.target.target_distribution import TargetDistributionCalculator
+from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
@@ -22,12 +20,10 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 
 
 @pytest.fixture(scope='module')
-def univariate_statistical_feature_drift_for_binary_classification_result():
+def univariate_drift_for_binary_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=[
-            col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_pred_proba', 'work_home_actual']
-        ],
+    calc = UnivariateDriftCalculator(
+        column_names=[col for col in reference_df if col not in ['timestamp', 'work_home_actual']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -35,22 +31,10 @@ def univariate_statistical_feature_drift_for_binary_classification_result():
 
 
 @pytest.fixture(scope='module')
-def univariate_statistical_feature_drift_for_multiclass_classification_result():
+def univariate_drift_for_multiclass_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=[
-            col
-            for col in reference_df
-            if col
-            not in [
-                'timestamp',
-                'y_pred',
-                'y_pred_proba_upmarket_card',
-                'y_pred_proba_highstreet_card',
-                'y_pred_proba_prepaid_card',
-                'y_true',
-            ]
-        ],
+    calc = UnivariateDriftCalculator(
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -58,10 +42,10 @@ def univariate_statistical_feature_drift_for_multiclass_classification_result():
 
 
 @pytest.fixture(scope='module')
-def univariate_statistical_feature_drift_for_regression_result():
+def univariate_drift_for_regression_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+    calc = UnivariateDriftCalculator(
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -72,7 +56,7 @@ def univariate_statistical_feature_drift_for_regression_result():
 def data_reconstruction_drift_for_binary_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=[
+        column_names=[
             col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_pred_proba', 'work_home_actual']
         ],
         timestamp_column_name='timestamp',
@@ -85,7 +69,7 @@ def data_reconstruction_drift_for_binary_classification_result():
 def data_reconstruction_drift_for_multiclass_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=[
+        column_names=[
             col
             for col in reference_df
             if col
@@ -108,80 +92,10 @@ def data_reconstruction_drift_for_multiclass_classification_result():
 def data_reconstruction_drift_for_regression_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = DataReconstructionDriftCalculator(
-        feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
-    return result
-
-
-@pytest.fixture(scope='module')
-def statistical_model_output_drift_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        y_pred_proba='y_pred_proba',
-        problem_type='classification_binary',
-        timestamp_column_name='timestamp',
-    ).fit(reference_df)
-    result = calc.calculate(analysis_df)
-    return result
-
-
-@pytest.fixture(scope='module')
-def statistical_model_output_drift_for_multiclass_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        y_pred_proba={
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-        },
-        timestamp_column_name='timestamp',
-        problem_type='classification_multiclass',
-    ).fit(reference_df)
-    result = calc.calculate(analysis_df)
-    return result
-
-
-@pytest.fixture(scope='module')
-def statistical_model_output_drift_for_regression_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred', timestamp_column_name='timestamp', problem_type='regression'
-    ).fit(reference_df)
-    result = calc.calculate(analysis_df)
-    return result
-
-
-@pytest.fixture(scope='module')
-def target_drift_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='work_home_actual', problem_type='classification_binary', timestamp_column_name='timestamp'
-    ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='identifier'))
-    return result
-
-
-@pytest.fixture(scope='module')
-def target_drift_for_multiclass_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='y_true', timestamp_column_name='timestamp', problem_type='classification_multiclass'
-    ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='identifier'))
-    return result
-
-
-@pytest.fixture(scope='module')
-def target_drift_for_regression_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='y_true', timestamp_column_name='timestamp', problem_type='regression'
-    ).fit(reference_df)
-    result = calc.calculate(analysis_df.join(analysis_targets_df))
     return result
 
 
@@ -284,18 +198,12 @@ def dle_estimated_performance_for_regression_result():
 @pytest.mark.parametrize(
     'result',
     [
-        lazy_fixture('univariate_statistical_feature_drift_for_binary_classification_result'),
-        lazy_fixture('univariate_statistical_feature_drift_for_multiclass_classification_result'),
-        lazy_fixture('univariate_statistical_feature_drift_for_regression_result'),
+        lazy_fixture('univariate_drift_for_binary_classification_result'),
+        lazy_fixture('univariate_drift_for_multiclass_classification_result'),
+        lazy_fixture('univariate_drift_for_regression_result'),
         lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_regression_result'),
-        lazy_fixture('statistical_model_output_drift_for_binary_classification_result'),
-        lazy_fixture('statistical_model_output_drift_for_multiclass_classification_result'),
-        lazy_fixture('statistical_model_output_drift_for_regression_result'),
-        lazy_fixture('target_drift_for_binary_classification_result'),
-        lazy_fixture('target_drift_for_multiclass_classification_result'),
-        lazy_fixture('target_drift_for_regression_result'),
         lazy_fixture('realized_performance_for_binary_classification_result'),
         lazy_fixture('realized_performance_for_multiclass_classification_result'),
         lazy_fixture('realized_performance_for_regression_result'),
@@ -316,18 +224,12 @@ def test_raw_files_writer_raises_no_exceptions_when_writing(result):
 @pytest.mark.parametrize(
     'result',
     [
-        lazy_fixture('univariate_statistical_feature_drift_for_binary_classification_result'),
-        lazy_fixture('univariate_statistical_feature_drift_for_multiclass_classification_result'),
-        lazy_fixture('univariate_statistical_feature_drift_for_regression_result'),
+        lazy_fixture('univariate_drift_for_binary_classification_result'),
+        lazy_fixture('univariate_drift_for_multiclass_classification_result'),
+        lazy_fixture('univariate_drift_for_regression_result'),
         lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_regression_result'),
-        lazy_fixture('statistical_model_output_drift_for_binary_classification_result'),
-        lazy_fixture('statistical_model_output_drift_for_multiclass_classification_result'),
-        lazy_fixture('statistical_model_output_drift_for_regression_result'),
-        lazy_fixture('target_drift_for_binary_classification_result'),
-        lazy_fixture('target_drift_for_multiclass_classification_result'),
-        lazy_fixture('target_drift_for_regression_result'),
         lazy_fixture('realized_performance_for_binary_classification_result'),
         lazy_fixture('realized_performance_for_multiclass_classification_result'),
         lazy_fixture('realized_performance_for_regression_result'),
@@ -347,18 +249,12 @@ def test_database_writer_raises_no_exceptions_when_writing(result):
 @pytest.mark.parametrize(
     'result',
     [
-        lazy_fixture('univariate_statistical_feature_drift_for_binary_classification_result'),
-        lazy_fixture('univariate_statistical_feature_drift_for_multiclass_classification_result'),
-        lazy_fixture('univariate_statistical_feature_drift_for_regression_result'),
+        lazy_fixture('univariate_drift_for_binary_classification_result'),
+        lazy_fixture('univariate_drift_for_multiclass_classification_result'),
+        lazy_fixture('univariate_drift_for_regression_result'),
         lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
         lazy_fixture('data_reconstruction_drift_for_regression_result'),
-        lazy_fixture('statistical_model_output_drift_for_binary_classification_result'),
-        lazy_fixture('statistical_model_output_drift_for_multiclass_classification_result'),
-        lazy_fixture('statistical_model_output_drift_for_regression_result'),
-        lazy_fixture('target_drift_for_binary_classification_result'),
-        lazy_fixture('target_drift_for_multiclass_classification_result'),
-        lazy_fixture('target_drift_for_regression_result'),
         lazy_fixture('realized_performance_for_binary_classification_result'),
         lazy_fixture('realized_performance_for_multiclass_classification_result'),
         lazy_fixture('realized_performance_for_regression_result'),

@@ -7,7 +7,7 @@
 #  License: Apache Software License 2.0
 
 """Module containing metric utilities and implementations."""
-from typing import Dict, List, Tuple  # noqa: TYP001
+from typing import Dict, List, Optional, Tuple, Union  # noqa: TYP001
 
 import numpy as np
 import pandas as pd
@@ -45,12 +45,14 @@ from nannyml.sampling_error.multiclass_classification import (
 class MulticlassClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None):
         """Creates a new AUROC instance."""
         super().__init__(
             display_name='ROC AUC',
             column_name='roc_auc',
-            calculator=calculator,
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
         )
@@ -62,33 +64,33 @@ class MulticlassClassificationAUROC(Metric):
         return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], list(reference_data.columns))
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
 
         # sampling error
-        classes = class_labels(self.calculator.y_pred_proba)  # type: ignore
-        binarized_y_true = list(label_binarize(reference_data[self.calculator.y_true], classes=classes).T)
-        y_pred_proba = [reference_data[self.calculator.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore
+        classes = class_labels(self.y_pred_proba)  # type: ignore
+        binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
+        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore
 
         self._sampling_error_components = auroc_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
         )
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.calculator.y_pred_proba, Dict):
+        if not isinstance(self.y_pred_proba, Dict):
             raise InvalidArgumentsException(
-                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
                 f"multiclass use cases require 'y_pred_proba' to "
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true] + model_output_column_names(self.calculator.y_pred_proba), data)
+        _list_missing([self.y_true] + model_output_column_names(self.y_pred_proba), data)
 
         labels, class_probability_columns = [], []
-        for label in sorted(list(self.calculator.y_pred_proba.keys())):
+        for label in sorted(list(self.y_pred_proba.keys())):
             labels.append(label)
-            class_probability_columns.append(self.calculator.y_pred_proba[label])
+            class_probability_columns.append(self.y_pred_proba[label])
 
-        y_true = data[self.calculator.y_true]
+        y_true = data[self.y_true]
         y_pred = data[class_probability_columns]
 
         if y_pred.isna().all().any():
@@ -109,10 +111,16 @@ class MulticlassClassificationAUROC(Metric):
 class MulticlassClassificationF1(Metric):
     """F1 score metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None):
         """Creates a new F1 instance."""
         super().__init__(
-            display_name='F1', column_name='f1', calculator=calculator, lower_threshold_limit=0, upper_threshold_limit=1
+            display_name='F1',
+            column_name='f1',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+            lower_threshold_limit=0,
+            upper_threshold_limit=1,
         )
 
         # sampling error
@@ -122,30 +130,30 @@ class MulticlassClassificationF1(Metric):
         return "f1"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        _list_missing([self.y_true, self.y_pred], reference_data)
 
         # sampling error
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.calculator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.calculator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = f1_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.calculator.y_pred_proba, Dict):
+        if not isinstance(self.y_pred_proba, Dict):
             raise InvalidArgumentsException(
-                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
                 f"multiclass use cases require 'y_pred_proba' to "
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
+        _list_missing([self.y_true, self.y_pred], data)
 
-        labels = sorted(list(self.calculator.y_pred_proba.keys()))
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        labels = sorted(list(self.y_pred_proba.keys()))
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
@@ -165,12 +173,14 @@ class MulticlassClassificationF1(Metric):
 class MulticlassClassificationPrecision(Metric):
     """Precision metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None):
         """Creates a new Precision instance."""
         super().__init__(
             display_name='Precision',
             column_name='precision',
-            calculator=calculator,
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
         )
@@ -182,30 +192,30 @@ class MulticlassClassificationPrecision(Metric):
         return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        _list_missing([self.y_true, self.y_pred], reference_data)
 
         # sampling error
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.calculator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.calculator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = precision_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.calculator.y_pred_proba, Dict):
+        if not isinstance(self.y_pred_proba, Dict):
             raise InvalidArgumentsException(
-                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
                 f"multiclass use cases require 'y_pred_proba' to "
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
+        _list_missing([self.y_true, self.y_pred], data)
 
-        labels = sorted(list(self.calculator.y_pred_proba.keys()))
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        labels = sorted(list(self.y_pred_proba.keys()))
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
@@ -225,12 +235,14 @@ class MulticlassClassificationPrecision(Metric):
 class MulticlassClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None):
         """Creates a new Recall instance."""
         super().__init__(
             display_name='Recall',
             column_name='recall',
-            calculator=calculator,
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
         )
@@ -242,30 +254,30 @@ class MulticlassClassificationRecall(Metric):
         return "recall"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        _list_missing([self.y_true, self.y_pred], reference_data)
 
         # sampling error
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.calculator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.calculator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = recall_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.calculator.y_pred_proba, Dict):
+        if not isinstance(self.y_pred_proba, Dict):
             raise InvalidArgumentsException(
-                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
                 f"multiclass use cases require 'y_pred_proba' to "
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
+        _list_missing([self.y_true, self.y_pred], data)
 
-        labels = sorted(list(self.calculator.y_pred_proba.keys()))
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        labels = sorted(list(self.y_pred_proba.keys()))
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
@@ -285,12 +297,14 @@ class MulticlassClassificationRecall(Metric):
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None):
         """Creates a new Specificity instance."""
         super().__init__(
             display_name='Specificity',
             column_name='specificity',
-            calculator=calculator,
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
         )
@@ -302,30 +316,30 @@ class MulticlassClassificationSpecificity(Metric):
         return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        _list_missing([self.y_true, self.y_pred], reference_data)
 
         # sampling error
         label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.calculator.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.calculator.y_pred]).T)
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
 
         self._sampling_error_components = specificity_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _calculate(self, data: pd.DataFrame):
-        if not isinstance(self.calculator.y_pred_proba, Dict):
+        if not isinstance(self.y_pred_proba, Dict):
             raise InvalidArgumentsException(
-                f"'y_pred_proba' is of type {type(self.calculator.y_pred_proba)}\n"
+                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
                 f"multiclass use cases require 'y_pred_proba' to "
                 "be a dictionary mapping classes to columns."
             )
 
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
+        _list_missing([self.y_true, self.y_pred], data)
 
-        labels = sorted(list(self.calculator.y_pred_proba.keys()))
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        labels = sorted(list(self.y_pred_proba.keys()))
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(
@@ -349,12 +363,14 @@ class MulticlassClassificationSpecificity(Metric):
 class MulticlassClassificationAccuracy(Metric):
     """Accuracy metric."""
 
-    def __init__(self, calculator):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None):
         """Creates a new Accuracy instance."""
         super().__init__(
             display_name='Accuracy',
             column_name='accuracy',
-            calculator=calculator,
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
         )
@@ -366,22 +382,22 @@ class MulticlassClassificationAccuracy(Metric):
         return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], reference_data)
+        _list_missing([self.y_true, self.y_pred], reference_data)
 
         # sampling error
         label_binarizer = LabelBinarizer()
-        binarized_y_true = label_binarizer.fit_transform(reference_data[self.calculator.y_true])
-        binarized_y_pred = label_binarizer.transform(reference_data[self.calculator.y_pred])
+        binarized_y_true = label_binarizer.fit_transform(reference_data[self.y_true])
+        binarized_y_pred = label_binarizer.transform(reference_data[self.y_pred])
 
         self._sampling_error_components = accuracy_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
     def _calculate(self, data: pd.DataFrame):
-        _list_missing([self.calculator.y_true, self.calculator.y_pred], data)
+        _list_missing([self.y_true, self.y_pred], data)
 
-        y_true = data[self.calculator.y_true]
-        y_pred = data[self.calculator.y_pred]
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         if y_pred.isna().all().any():
             raise InvalidArgumentsException(

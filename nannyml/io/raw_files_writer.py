@@ -13,6 +13,8 @@ from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
 
 @WriterFactory.register('raw_files')
 class RawFilesWriter(FileWriter):
+    """A Writer implementation that dumps the Result contents (data and plots) on disk (local/remote/cloud)."""
+
     def __init__(
         self,
         path: str,
@@ -21,6 +23,30 @@ class RawFilesWriter(FileWriter):
         credentials: Dict[str, Any] = None,
         fs_args: Dict[str, Any] = None,
     ):
+        """
+        Creates a new RawFilesWriter instance
+
+        Parameters
+        ----------
+        path : str
+            The directory to write the results in. Each Result being written there will end create its own subdirectory.
+            Each of those will contain `data` and `plots` subdirectories.
+        format: str
+            The file format for the data export. Should be one of ``parquet`` or ``csv``.
+        write_args : Dict[str, Any]
+            Specific arguments passed along the method performing the actual writing.
+        credentials : Dict[str, Any]
+            Used to provide credential information following specific ``fsspec`` implementations.
+        fs_args :
+            Specific arguments passed along to the ``fsspec`` filesystem initializer.
+
+        Examples
+        --------
+        >>> writer = RawFilesWriter(path='/output', format="parquet")
+        >>> # plots is a Dictionary mapping a plot name to a plotly Figure
+        >>> # this is some legacy stuff to be cleaned up
+        >>> writer.write(result, plots={}, calculator_name='test')
+        """
         super().__init__(path, write_args, credentials, fs_args)
         if format not in ['parquet', 'csv']:
             raise InvalidArgumentsException(f"unknown value for format '{format}', should be one of 'parquet', 'csv'")

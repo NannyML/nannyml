@@ -4,7 +4,7 @@
 import abc
 import logging
 from logging import Logger
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,9 @@ class Metric(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        calculator,
+        y_true: str,
+        y_pred: str,
+        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         upper_threshold_limit: float = None,
         lower_threshold_limit: float = None,
     ):
@@ -34,8 +36,6 @@ class Metric(abc.ABC):
             ``calculation_function``.
         column_name: str
             The name used to indicate the metric in columns of a DataFrame.
-        calculator: PerformanceCalculator
-            The calculator using the Metric instance.
         upper_threshold_limit : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold_limit : float, default=None
@@ -43,13 +43,9 @@ class Metric(abc.ABC):
         """
         self.display_name = display_name
         self.column_name = column_name
-
-        from nannyml.performance_calculation.calculator import PerformanceCalculator
-
-        if not isinstance(calculator, PerformanceCalculator):
-            raise RuntimeError(f"{calculator.__class__.__name__} is not an instance of type " f"PerformanceCalculator")
-
-        self.calculator: PerformanceCalculator = calculator
+        self.y_true = y_true
+        self.y_pred = y_pred
+        self.y_pred_proba = y_pred_proba
 
         self.upper_threshold: Optional[float] = None
         self.lower_threshold: Optional[float] = None
@@ -164,7 +160,7 @@ class MetricFactory:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key: str, use_case: ProblemType, kwargs: Dict[str, Any] = {}) -> Metric:
+    def create(cls, key: str, use_case: ProblemType, **kwargs) -> Metric:
         """Returns a Metric instance for a given key."""
         if not isinstance(key, str):
             raise InvalidArgumentsException(

@@ -6,13 +6,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml._typing import ProblemType
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
-from nannyml.drift.model_outputs.univariate.statistical import StatisticalOutputDriftCalculator
+from nannyml.drift.univariate import UnivariateDriftCalculator
 
 
 @pytest.fixture
@@ -114,12 +113,10 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 
 def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='output',
-        y_pred_proba='y_pred_proba',
+    calc = UnivariateDriftCalculator(
+        column_names=['output', 'y_pred_proba'],
         timestamp_column_name='timestamp',
         chunk_period='W',
-        problem_type=ProblemType.CLASSIFICATION_BINARY,
     ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
@@ -129,12 +126,9 @@ def test_output_drift_calculator_with_params_should_not_fail(sample_drift_data):
 
 def test_output_drift_calculator_with_default_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='output',
-        y_pred_proba='y_pred_proba',
+    calc = UnivariateDriftCalculator(
+        column_names=['output', 'y_pred_proba'],
         timestamp_column_name='timestamp',
-        chunk_period='W',
-        problem_type=ProblemType.CLASSIFICATION_BINARY,
     ).fit(ref_data)
     try:
         _ = calc.calculate(data=sample_drift_data)
@@ -144,21 +138,17 @@ def test_output_drift_calculator_with_default_params_should_not_fail(sample_drif
 
 def test_output_drift_calculator_for_regression_problems():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_price_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
+    calc = UnivariateDriftCalculator(
+        column_names=['y_pred'],
         timestamp_column_name='timestamp',
         chunk_size=5000,
-        problem_type=ProblemType.REGRESSION,
     ).fit(reference)
     results = calc.calculate(analysis)
-    sut = results.data.loc[results.data['period'] == 'analysis', :]
+    sut = results.filter(period='analysis').to_df()
 
     assert (
-        round(sut['y_pred_dstat'], 5)
+        round(sut['y_pred', 'kolmogorov_smirnov', 'value'], 5)
         == [0.01135, 0.01213, 0.00545, 0.01125, 0.01443, 0.00937, 0.2017, 0.2076, 0.21713, 0.19368, 0.21497, 0.21142]
-    ).all()
-    assert (
-        round(sut['y_pred_p_value'], 5) == [0.588, 0.501, 0.999, 0.599, 0.289, 0.809, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     ).all()
 
 
@@ -185,7 +175,6 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.20484999999999998,
                         0.21286666666666665,
                     ],
-                    'y_pred_p_value': [0.303, 0.763, 0.766, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -209,7 +198,6 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.20484999999999998,
                         0.21286666666666665,
                     ],
-                    'y_pred_p_value': [0.303, 0.763, 0.766, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -225,7 +213,6 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.20601666666666663,
                         0.21116666666666667,
                     ],
-                    'y_pred_p_value': [0.357, 0.641, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -241,7 +228,6 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.20601666666666663,
                         0.21116666666666667,
                     ],
-                    'y_pred_p_value': [0.357, 0.641, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -251,7 +237,6 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                 {
                     'key': ['2017-02', '2017-03'],
                     'y_pred_dstat': [0.010885590414630303, 0.20699588120912144],
-                    'y_pred_p_value': [0.015, 0.0],
                 }
             ),
         ),
@@ -283,7 +268,6 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.20713333333333334,
                         0.21588333333333334,
                     ],
-                    'y_pred_p_value': [0.743, 0.107, 0.544, 0.62, 0.562, 0.0, 0.0, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -315,7 +299,6 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.20713333333333334,
                         0.21588333333333334,
                     ],
-                    'y_pred_p_value': [0.743, 0.107, 0.544, 0.62, 0.562, 0.0, 0.0, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -334,15 +317,17 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
     calculator_opts, expected  # noqa: D103
 ):
     reference, analysis, _ = load_synthetic_car_price_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        problem_type=ProblemType.REGRESSION,
+    calc = UnivariateDriftCalculator(
+        column_names=['y_pred'],
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis)
-    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
+    sut = results.filter(period='analysis').to_df()[
+        [('chunk', 'chunk', 'key'), ('y_pred', 'kolmogorov_smirnov', 'value')]
+    ]
+    sut.columns = ['key', 'y_pred_dstat']
 
-    pd.testing.assert_frame_equal(expected, sut[['key', 'y_pred_dstat', 'y_pred_p_value']])
+    pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
@@ -360,7 +345,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         19.49553770190838,
                         24.09326946563376,
                     ],
-                    'y_pred_p_value': [0.354, 0.08, 0.01, 0.0, 0.0],
                     'y_pred_proba_dstat': [
                         0.009019999999999972,
                         0.011160000000000003,
@@ -368,7 +352,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.1286,
                         0.12749999999999997,
                     ],
-                    'y_pred_proba_p_value': [0.504, 0.249, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -384,7 +367,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         19.49553770190838,
                         24.09326946563376,
                     ],
-                    'y_pred_p_value': [0.354, 0.08, 0.01, 0.0, 0.0],
                     'y_pred_proba_dstat': [
                         0.009019999999999972,
                         0.011160000000000003,
@@ -392,7 +374,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.1286,
                         0.12749999999999997,
                     ],
-                    'y_pred_proba_p_value': [0.504, 0.249, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -408,7 +389,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         19.49553770190838,
                         24.09326946563376,
                     ],
-                    'y_pred_p_value': [0.354, 0.08, 0.01, 0.0, 0.0],
                     'y_pred_proba_dstat': [
                         0.009019999999999972,
                         0.011160000000000003,
@@ -416,7 +396,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.1286,
                         0.12749999999999997,
                     ],
-                    'y_pred_proba_p_value': [0.504, 0.249, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -432,7 +411,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         19.49553770190838,
                         24.09326946563376,
                     ],
-                    'y_pred_p_value': [0.354, 0.08, 0.01, 0.0, 0.0],
                     'y_pred_proba_dstat': [
                         0.009019999999999972,
                         0.011160000000000003,
@@ -440,7 +418,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.1286,
                         0.12749999999999997,
                     ],
-                    'y_pred_proba_p_value': [0.504, 0.249, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -456,7 +433,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         30.73593452676024,
                         0.12120817142905127,
                     ],
-                    'y_pred_p_value': [0.006, 0.039, 0.0, 0.0, 0.728],
                     'y_pred_proba_dstat': [
                         0.0258059773828756,
                         0.010519551545707828,
@@ -464,7 +440,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.12807136369707492,
                         0.46668,
                     ],
-                    'y_pred_proba_p_value': [0.005, 0.153, 0.0, 0.0, 0.016],
                 }
             ),
         ),
@@ -496,7 +471,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         3.786524136939082,
                         27.99003983833193,
                     ],
-                    'y_pred_p_value': [0.006, 0.18, 0.189, 0.207, 0.805, 0.0, 0.001, 0.002, 0.052, 0.0],
                     'y_pred_proba_dstat': [
                         0.025300000000000045,
                         0.012299999999999978,
@@ -509,7 +483,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.11969999999999997,
                         0.13751999999999998,
                     ],
-                    'y_pred_proba_p_value': [0.006, 0.494, 0.17, 0.685, 0.325, 0.0, 0.0, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -541,7 +514,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         3.786524136939082,
                         27.99003983833193,
                     ],
-                    'y_pred_p_value': [0.006, 0.18, 0.189, 0.207, 0.805, 0.0, 0.001, 0.002, 0.052, 0.0],
                     'y_pred_proba_dstat': [
                         0.025300000000000045,
                         0.012299999999999978,
@@ -554,7 +526,6 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.11969999999999997,
                         0.13751999999999998,
                     ],
-                    'y_pred_proba_p_value': [0.006, 0.494, 0.17, 0.685, 0.325, 0.0, 0.0, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -573,18 +544,18 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
     calculator_opts, expected  # noqa: D103
 ):
     reference, analysis, _ = load_synthetic_binary_classification_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        y_pred_proba='y_pred_proba',
-        problem_type=ProblemType.CLASSIFICATION_BINARY,
+    reference['y_pred'] = reference['y_pred'].astype("category")
+    calc = UnivariateDriftCalculator(
+        column_names=['y_pred_proba', 'y_pred'],
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis)
-    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
+    sut = results.filter(period='analysis').to_df()[
+        [('chunk', 'chunk', 'key'), ('y_pred', 'chi2', 'value'), ('y_pred_proba', 'kolmogorov_smirnov', 'value')]
+    ]
+    sut.columns = ['key', 'y_pred_chi2', 'y_pred_proba_dstat']
 
-    pd.testing.assert_frame_equal(
-        expected, sut[['key', 'y_pred_chi2', 'y_pred_p_value', 'y_pred_proba_dstat', 'y_pred_proba_p_value']]
-    )
+    pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
@@ -610,7 +581,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         263.46933956608086,
                         228.68832812811945,
                     ],
-                    'y_pred_p_value': [0.388, 0.604, 0.069, 0.0, 0.0, 0.0],
                     'y_pred_proba_upmarket_card_dstat': [
                         0.009450000000000014,
                         0.006950000000000012,
@@ -619,7 +589,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.13885000000000003,
                         0.14631666666666668,
                     ],
-                    'y_pred_proba_upmarket_card_p_value': [0.426, 0.799, 0.067, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -643,7 +612,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         263.46933956608086,
                         228.68832812811945,
                     ],
-                    'y_pred_p_value': [0.388, 0.604, 0.069, 0.0, 0.0, 0.0],
                     'y_pred_proba_upmarket_card_dstat': [
                         0.009450000000000014,
                         0.006950000000000012,
@@ -652,7 +620,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.13885000000000003,
                         0.14631666666666668,
                     ],
-                    'y_pred_proba_upmarket_card_p_value': [0.426, 0.799, 0.067, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -668,7 +635,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         306.95758434731476,
                         275.337354950812,
                     ],
-                    'y_pred_p_value': [0.39, 0.611, 0.0, 0.0, 0.0],
                     'y_pred_proba_upmarket_card_dstat': [
                         0.0076166666666666605,
                         0.00876666666666659,
@@ -676,7 +642,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.14246666666666666,
                         0.1448,
                     ],
-                    'y_pred_proba_upmarket_card_p_value': [0.605, 0.423, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -692,7 +657,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         306.95758434731476,
                         275.337354950812,
                     ],
-                    'y_pred_p_value': [0.39, 0.611, 0.0, 0.0, 0.0],
                     'y_pred_proba_upmarket_card_dstat': [
                         0.0076166666666666605,
                         0.00876666666666659,
@@ -700,7 +664,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.14246666666666666,
                         0.1448,
                     ],
-                    'y_pred_proba_upmarket_card_p_value': [0.605, 0.423, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -710,9 +673,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                 {
                     'key': ['2020', '2021'],
                     'y_pred_chi2': [207.2554347384955, 6.288483345011454],
-                    'y_pred_p_value': [0.0, 0.043],
                     'y_pred_proba_upmarket_card_dstat': [0.07220877811346088, 0.16619285714285714],
-                    'y_pred_proba_upmarket_card_p_value': [0.0, 0.0],
                 }
             ),
         ),
@@ -744,7 +705,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         137.68526858822366,
                         164.40667669928519,
                     ],
-                    'y_pred_p_value': [0.298, 0.532, 0.9, 0.593, 0.236, 0.0, 0.0, 0.0, 0.0, 0.0],
                     'y_pred_proba_upmarket_card_dstat': [
                         0.012283333333333368,
                         0.008450000000000013,
@@ -757,7 +717,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.14205,
                         0.14755,
                     ],
-                    'y_pred_proba_upmarket_card_p_value': [0.38, 0.828, 0.886, 0.347, 0.347, 0.0, 0.0, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -789,7 +748,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         137.68526858822366,
                         164.40667669928519,
                     ],
-                    'y_pred_p_value': [0.298, 0.532, 0.9, 0.593, 0.236, 0.0, 0.0, 0.0, 0.0, 0.0],
                     'y_pred_proba_upmarket_card_dstat': [
                         0.012283333333333368,
                         0.008450000000000013,
@@ -802,7 +760,6 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.14205,
                         0.14755,
                     ],
-                    'y_pred_proba_upmarket_card_p_value': [0.38, 0.828, 0.886, 0.347, 0.347, 0.0, 0.0, 0.0, 0.0, 0.0],
                 }
             ),
         ),
@@ -821,31 +778,26 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
     calculator_opts, expected  # noqa: D103
 ):
     reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        y_pred_proba={
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-        },
-        problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
+    calc = UnivariateDriftCalculator(
+        column_names=[
+            'y_pred',
+            'y_pred_proba_upmarket_card',
+            'y_pred_proba_highstreet_card',
+            'y_pred_proba_prepaid_card',
+        ],
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis)
-    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
+    sut = results.filter(period='analysis').to_df()[
+        [
+            ('chunk', 'chunk', 'key'),
+            ('y_pred', 'chi2', 'value'),
+            ('y_pred_proba_upmarket_card', 'kolmogorov_smirnov', 'value'),
+        ]
+    ]
+    sut.columns = ['key', 'y_pred_chi2', 'y_pred_proba_upmarket_card_dstat']
 
-    pd.testing.assert_frame_equal(
-        expected,
-        sut[
-            [
-                'key',
-                'y_pred_chi2',
-                'y_pred_p_value',
-                'y_pred_proba_upmarket_card_dstat',
-                'y_pred_proba_upmarket_card_p_value',
-            ]
-        ],
-    )
+    pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
@@ -853,32 +805,96 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'score_drift', 'plot_reference': False, 'class_label': 'upmarket_card'},
+            {
+                'kind': 'drift',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
         ),
-        ({}, {'kind': 'score_drift', 'plot_reference': False, 'class_label': 'upmarket_card'}),
+        (
+            {},
+            {
+                'kind': 'drift',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'score_drift', 'plot_reference': True, 'class_label': 'upmarket_card'},
+            {
+                'kind': 'drift',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
         ),
-        ({}, {'kind': 'score_drift', 'plot_reference': True, 'class_label': 'upmarket_card'}),
+        (
+            {},
+            {
+                'kind': 'drift',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'score_distribution', 'plot_reference': False, 'class_label': 'upmarket_card'},
+            {
+                'kind': 'distribution',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
         ),
-        ({}, {'kind': 'score_distribution', 'plot_reference': False, 'class_label': 'upmarket_card'}),
+        (
+            {},
+            {
+                'kind': 'distribution',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'score_distribution', 'plot_reference': True, 'class_label': 'upmarket_card'},
+            {
+                'kind': 'distribution',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
         ),
-        ({}, {'kind': 'score_distribution', 'plot_reference': True, 'class_label': 'upmarket_card'}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': False}),
-        ({}, {'kind': 'prediction_drift', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': True}),
-        ({}, {'kind': 'prediction_drift', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': False}),
-        ({}, {'kind': 'prediction_distribution', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': True}),
-        ({}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+        (
+            {},
+            {
+                'kind': 'distribution',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba_upmarket_card',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': False, 'method': 'chi2', 'column_name': 'y_pred'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'method': 'chi2', 'column_name': 'y_pred'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': True, 'method': 'chi2', 'column_name': 'y_pred'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'method': 'chi2', 'column_name': 'y_pred'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'}),
     ],
     ids=[
         'score_drift_with_timestamp_without_reference',
@@ -901,14 +917,13 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
     reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred',
-        y_pred_proba={
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-        },
-        problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
+    calc = UnivariateDriftCalculator(
+        column_names=[
+            'y_pred',
+            'y_pred_proba_upmarket_card',
+            'y_pred_proba_highstreet_card',
+            'y_pred_proba_prepaid_card',
+        ],
         **calc_args,
     ).fit(reference)
     sut = calc.calculate(analysis)
@@ -922,22 +937,98 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_drift', 'plot_reference': False}),
-        ({}, {'kind': 'score_drift', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_drift', 'plot_reference': True}),
-        ({}, {'kind': 'score_drift', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_distribution', 'plot_reference': False}),
-        ({}, {'kind': 'score_distribution', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'score_distribution', 'plot_reference': True}),
-        ({}, {'kind': 'score_distribution', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': False}),
-        ({}, {'kind': 'prediction_drift', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': True}),
-        ({}, {'kind': 'prediction_drift', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': False}),
-        ({}, {'kind': 'prediction_distribution', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': True}),
-        ({}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {
+                'kind': 'drift',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {},
+            {
+                'kind': 'drift',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {
+                'kind': 'drift',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {},
+            {
+                'kind': 'drift',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {
+                'kind': 'distribution',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {},
+            {
+                'kind': 'distribution',
+                'plot_reference': False,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {
+                'kind': 'distribution',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {},
+            {
+                'kind': 'distribution',
+                'plot_reference': True,
+                'column_name': 'y_pred_proba',
+                'method': 'kolmogorov_smirnov',
+            },
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'}),
     ],
     ids=[
         'score_drift_with_timestamp_without_reference',
@@ -960,9 +1051,8 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 )
 def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
     reference, analysis, _ = load_synthetic_binary_classification_dataset()
-    calc = StatisticalOutputDriftCalculator(
-        y_pred='y_pred', y_pred_proba='y_pred_proba', problem_type=ProblemType.CLASSIFICATION_BINARY, **calc_args
-    ).fit(reference)
+    reference['y_pred'] = reference['y_pred'].astype("category")
+    calc = UnivariateDriftCalculator(column_names=['y_pred', 'y_pred_proba'], **calc_args).fit(reference)
     sut = calc.calculate(analysis)
 
     try:
@@ -974,14 +1064,35 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': False}),
-        ({}, {'kind': 'prediction_drift', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_drift', 'plot_reference': True}),
-        ({}, {'kind': 'prediction_drift', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': False}),
-        ({}, {'kind': 'prediction_distribution', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'prediction_distribution', 'plot_reference': True}),
-        ({}, {'kind': 'prediction_distribution', 'plot_reference': True}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'}),
     ],
     ids=[
         'prediction_drift_with_timestamp_without_reference',
@@ -996,9 +1107,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 )
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
     reference, analysis, _ = load_synthetic_car_price_dataset()
-    calc = StatisticalOutputDriftCalculator(y_pred='y_pred', problem_type=ProblemType.REGRESSION, **calc_args).fit(
-        reference
-    )
+    calc = UnivariateDriftCalculator(column_names=['y_pred'], **calc_args).fit(reference)
     sut = calc.calculate(analysis)
 
     try:

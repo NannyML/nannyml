@@ -1,7 +1,6 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-import copy
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -15,6 +14,7 @@ from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
+from nannyml.performance_estimation.confidence_based.cbpe import _create_multilevel_index
 from nannyml.performance_estimation.confidence_based.results import Result
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
@@ -83,7 +83,7 @@ class _MulticlassClassificationCBPE(CBPE):
         self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator)
 
         self.result = self._estimate(reference_data)
-        self.result.data['period'] = 'reference'
+        self.result.data[('chunk', 'period')] = 'reference'
         return self
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
@@ -110,17 +110,28 @@ class _MulticlassClassificationCBPE(CBPE):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
+                    'period': 'analysis',
                     **self._estimate_for_chunk(chunk),
                 }
                 for chunk in chunks
             ]
         )
 
+        multilevel_index = _create_multilevel_index(metric_names=[m.column_name for m in self.metrics])
+        res.columns = multilevel_index
         res = res.reset_index(drop=True)
-        res['period'] = 'analysis'
 
         if self.result is None:
-            self.result = Result(results_data=res, estimator=copy.deepcopy(self))
+            self.result = Result(
+                results_data=res,
+                y_pred_proba=self.y_pred_proba,
+                y_pred=self.y_pred,
+                y_true=self.y_true,
+                timestamp_column_name=self.timestamp_column_name,
+                metrics=self.metrics,
+                problem_type=self.problem_type,
+                chunker=self.chunker,
+            )
         else:
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
@@ -131,9 +142,10 @@ class _MulticlassClassificationCBPE(CBPE):
         for metric in self.metrics:
             estimated_metric = metric.estimate(chunk.data)
             sampling_error = metric.sampling_error(chunk.data)
+            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
+
             estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
             estimates[f'estimated_{metric.column_name}'] = estimated_metric
-            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
             estimates[f'upper_confidence_{metric.column_name}'] = min(
                 self.confidence_upper_bound, estimated_metric + SAMPLING_ERROR_RANGE * sampling_error
             )

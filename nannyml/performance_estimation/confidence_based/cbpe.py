@@ -8,6 +8,7 @@ from abc import abstractmethod
 from typing import Dict, List, Tuple, Union
 
 import pandas as pd
+from pandas import MultiIndex
 
 from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractEstimator
@@ -128,12 +129,21 @@ class CBPE(AbstractEstimator):
             )
 
         if isinstance(problem_type, str):
-            problem_type = ProblemType.parse(problem_type)
-
-        self.problem_type: ProblemType = problem_type  # type: ignore
+            self.problem_type = ProblemType.parse(problem_type)
+        else:
+            self.problem_type = problem_type
 
         self.metrics = [
-            MetricFactory.create(metric, problem_type, {'estimator': self}) for metric in metrics  # type: ignore
+            MetricFactory.create(
+                metric,
+                self.problem_type,
+                y_pred_proba=self.y_pred_proba,
+                y_pred=self.y_pred,
+                y_true=self.y_true,
+                timestamp_column_name=self.timestamp_column_name,
+                chunker=self.chunker,
+            )
+            for metric in metrics
         ]
 
         self._confidence_deviations: Dict[str, float] = {}
@@ -206,3 +216,33 @@ class CBPE(AbstractEstimator):
         >>> estimates = estimator.estimate(data)
         """
         pass
+
+
+def _create_multilevel_index(metric_names: List[str]):
+    chunk_column_names = [
+        'key',
+        'chunk_index',
+        'start_index',
+        'end_index',
+        'start_date',
+        'end_date',
+        'period',
+    ]
+    method_column_names = [
+        'sampling_error',
+        'realized',
+        'value',
+        'upper_confidence_boundary',
+        'lower_confidence_boundary',
+        'upper_threshold',
+        'lower_threshold',
+        'alert',
+    ]
+    chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
+    reconstruction_tuples = [
+        (metric_name, column_name) for metric_name in metric_names for column_name in method_column_names
+    ]
+
+    tuples = chunk_tuples + reconstruction_tuples
+
+    return MultiIndex.from_tuples(tuples)

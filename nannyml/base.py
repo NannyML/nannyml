@@ -46,21 +46,30 @@ class AbstractCalculatorResult(ABC):
         """
         self.data = results_data.copy(deep=True)
 
-    # def __getattr__(self, attribute):
-    #     """Redirect function calls directly to the inner DataFrame."""
-    #     return getattr(self.data, attribute)
-
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
+
+    # TODO: define more specific interface (add common arguments)
+    def __len__(self):
+        return len(self.data)
 
     @abstractmethod
     def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
         """Plots calculation results."""
         raise NotImplementedError
 
-    def to_df(self) -> pd.DataFrame:
-        return self.data
+    def to_df(self, multilevel: bool = True) -> pd.DataFrame:
+        if multilevel:
+            return self.data
+        else:
+            column_names = [
+                '_'.join(col).replace('chunk_chunk_chunk', 'chunk').replace('chunk_chunk', 'chunk')
+                for col in self.data.columns.values
+            ]
+            single_level_data = self.data.copy(deep=True)
+            single_level_data.columns = column_names
+            return single_level_data
 
     def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
         """Returns result metric data."""
@@ -174,8 +183,17 @@ class AbstractEstimatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def to_df(self):
-        return self.data
+    def to_df(self, multilevel: bool = True):
+        if multilevel:
+            return self.data
+        else:
+            column_names = [
+                '_'.join(col).replace('chunk_chunk_chunk', 'chunk').replace('chunk_chunk', 'chunk')
+                for col in self.data.columns.values
+            ]
+            single_level_data = self.data.copy(deep=True)
+            single_level_data.columns = column_names
+            return single_level_data
 
     def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
         """Returns result metric data."""

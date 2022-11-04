@@ -4,15 +4,16 @@
 
 """Module containing CBPE estimation results and plotting implementations."""
 import copy
-from typing import List, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 from plotly import graph_objects as go
 
-from nannyml.base import AbstractEstimator, AbstractEstimatorResult
+from nannyml._typing import ModelOutputsType, ProblemType
+from nannyml.base import AbstractEstimatorResult
+from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric, MetricFactory
-from nannyml.plots import CHUNK_KEY_COLUMN_NAME
 from nannyml.plots._step_plot import _step_plot
 
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
@@ -21,37 +22,40 @@ SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity'
 class Result(AbstractEstimatorResult):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
-    def __init__(self, results_data: pd.DataFrame, estimator: AbstractEstimator):
+    def __init__(
+        self,
+        results_data: pd.DataFrame,
+        metrics: List[Metric],
+        y_pred: str,
+        y_pred_proba: ModelOutputsType,
+        y_true: str,
+        chunker: Chunker,
+        problem_type: ProblemType,
+        timestamp_column_name: Optional[str] = None,
+    ):
         super().__init__(results_data)
 
-        from .cbpe import CBPE
-
-        if not isinstance(estimator, CBPE):
-            raise RuntimeError(
-                f"{estimator.__class__.__name__} is not an instance of type " f"DataReconstructionDriftCalculator"
-            )
-        self.estimator = estimator
+        self.metrics = metrics
+        self.y_pred = y_pred
+        self.y_pred_proba = y_pred_proba
+        self.y_true = y_true
+        self.timestamp_column_name = timestamp_column_name
+        self.problem_type = problem_type
+        self.chunker = chunker
 
     def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
-        columns = list(self.DEFAULT_COLUMNS)
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
 
-        for metric in self.estimator.metrics:
-            columns += [
-                f'estimated_{metric.column_name}',
-                f'upper_threshold_{metric.column_name}',
-                f'lower_threshold_{metric.column_name}',
-                f'alert_{metric.column_name}',
-                f'sampling_error_{metric.column_name}',
-            ]
-
-        if period == 'all':
-            data = self.data.loc[:, columns]
-        else:
-            data = self.data.loc[self.data['period'] == period, columns]
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
+        if period != 'all':
+            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
+        res = copy.deepcopy(self)
+        res.data = data
 
-        return Result(results_data=data, estimator=copy.deepcopy(self.estimator))
+        return res
 
     def plot(
         self,
@@ -126,84 +130,93 @@ class Result(AbstractEstimatorResult):
                     "no value for 'metric' given. Please provide the name of a metric to display."
                 )
             if isinstance(metric, str):
-                metric = MetricFactory.create(metric, self.estimator.problem_type, kwargs={'estimator': self.estimator})
-            return _plot_cbpe_performance_estimation(self.data, self.estimator, metric, plot_reference)
+                metric = MetricFactory.create(
+                    metric,
+                    self.problem_type,
+                    y_pred_proba=self.y_pred_proba,
+                    y_pred=self.y_pred,
+                    y_true=self.y_true,
+                    chunker=self.chunker,
+                    timestamp_column_name=self.timestamp_column_name,
+                )
+            return self._plot_cbpe_performance_estimation(self.to_df(multilevel=False), self, metric, plot_reference)
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
+    def _plot_cbpe_performance_estimation(
+        self, estimation_results: pd.DataFrame, estimator, metric: Metric, plot_reference: bool
+    ) -> go.Figure:
+        """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
 
-def _plot_cbpe_performance_estimation(
-    estimation_results: pd.DataFrame, estimator, metric: Metric, plot_reference: bool
-) -> go.Figure:
-    """Renders a line plot of the ``reconstruction_error`` of the data reconstruction drift calculation results.
+        Chunks are set on a time-based X-axis by using the period containing their observations.
+        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
+        a vertical separation if the drift results contain multiple periods.
 
-    Chunks are set on a time-based X-axis by using the period containing their observations.
-    Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-    a vertical separation if the drift results contain multiple periods.
+        If the ``realized_performance`` data is also provided, an extra line shall be plotted to allow an easy
+        comparison of the estimated versus realized performance.
 
-    If the ``realized_performance`` data is also provided, an extra line shall be plotted to allow an easy
-    comparison of the estimated versus realized performance.
+        Parameters
+        ----------
+        estimation_results : pd.DataFrame
+            Results of the data CBPE performance estimation
+        metric: str, default=None
+                The metric to plot when rendering a plot of kind 'performance'.
 
-    Parameters
-    ----------
-    estimation_results : pd.DataFrame
-        Results of the data CBPE performance estimation
-    metric: str, default=None
-            The metric to plot when rendering a plot of kind 'performance'.
+        Returns
+        -------
+        fig: plotly.graph_objects.Figure
+            A ``Figure`` object containing the requested performance estimation plot.
+            Can be saved to disk or shown rendered on screen using ``fig.show()``.
+        """
+        estimation_results = estimation_results.copy()
 
-    Returns
-    -------
-    fig: plotly.graph_objects.Figure
-        A ``Figure`` object containing the requested performance estimation plot.
-        Can be saved to disk or shown rendered on screen using ``fig.show()``.
-    """
-    estimation_results = estimation_results.copy()
+        plot_period_separator = plot_reference
 
-    plot_period_separator = plot_reference
+        estimation_results['estimated'] = True
 
-    estimation_results['estimated'] = True
+        if not plot_reference:
+            estimation_results = estimation_results[estimation_results['chunk_period'] == 'analysis']
 
-    if not plot_reference:
-        estimation_results = estimation_results[estimation_results['period'] == 'analysis']
+        # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
+        estimation_results['plottable'] = estimation_results.apply(
+            lambda r: r[f'{metric.column_name}_value']
+            if r['chunk_period'] == 'analysis'
+            else r[f'{metric.column_name}_realized'],
+            axis=1,
+        )
+        estimation_results['alert'] = estimation_results.apply(
+            lambda r: r[f'{metric.column_name}_alert'] if r['chunk_period'] == 'analysis' else False, axis=1
+        )
 
-    # TODO: hack, assembling single results column to pass to plotting, overriding alert cols
-    estimation_results['plottable'] = estimation_results.apply(
-        lambda r: r[f'estimated_{metric.column_name}']
-        if r['period'] == 'analysis'
-        else r[f'realized_{metric.column_name}'],
-        axis=1,
-    )
-    estimation_results['alert'] = estimation_results.apply(
-        lambda r: r[f'alert_{metric.column_name}'] if r['period'] == 'analysis' else False, axis=1
-    )
+        is_time_based_x_axis = self.timestamp_column_name is not None
 
-    is_time_based_x_axis = estimator.timestamp_column_name is not None
+        # Plot estimated performance
+        fig = _step_plot(
+            table=estimation_results,
+            metric_column_name='plottable',
+            chunk_column_name='chunk_key',
+            chunk_type_column_name='chunk_period',
+            chunk_index_column_name='chunk_index',
+            chunk_legend_labels=[
+                f'Reference period (realized {metric.display_name})',
+                f'Analysis period (estimated {metric.display_name})',
+            ],
+            drift_column_name='alert',
+            drift_legend_label='Degraded performance',
+            hover_labels=['Chunk', f'{metric.display_name}', 'Target data'],
+            hover_marker_labels=['Reference', 'No change', 'Change'],
+            lower_threshold_column_name=f'{metric.column_name}_lower_threshold',
+            upper_threshold_column_name=f'{metric.column_name}_upper_threshold',
+            threshold_legend_label='Performance threshold',
+            title=f'CBPE - Estimated {metric.display_name}',
+            y_axis_title=f'{metric.display_name}',
+            v_line_separating_analysis_period=plot_period_separator,
+            estimated_column_name='estimated',
+            lower_confidence_column_name=f'{metric.column_name}_lower_confidence_boundary',
+            upper_confidence_column_name=f'{metric.column_name}_upper_confidence_boundary',
+            sampling_error_column_name=f'{metric.column_name}_sampling_error',
+            start_date_column_name='chunk_start_date' if is_time_based_x_axis else None,
+            end_date_column_name='chunk_end_date' if is_time_based_x_axis else None,
+        )
 
-    # Plot estimated performance
-    fig = _step_plot(
-        table=estimation_results,
-        metric_column_name='plottable',
-        chunk_column_name=CHUNK_KEY_COLUMN_NAME,
-        chunk_legend_labels=[
-            f'Reference period (realized {metric.display_name})',
-            f'Analysis period (estimated {metric.display_name})',
-        ],
-        drift_column_name='alert',
-        drift_legend_label='Degraded performance',
-        hover_labels=['Chunk', f'{metric.display_name}', 'Target data'],
-        hover_marker_labels=['Reference', 'No change', 'Change'],
-        lower_threshold_column_name=f'lower_threshold_{metric.column_name}',
-        upper_threshold_column_name=f'upper_threshold_{metric.column_name}',
-        threshold_legend_label='Performance threshold',
-        title=f'CBPE - Estimated {metric.display_name}',
-        y_axis_title=f'{metric.display_name}',
-        v_line_separating_analysis_period=plot_period_separator,
-        estimated_column_name='estimated',
-        lower_confidence_column_name=f'lower_confidence_{metric.column_name}',
-        upper_confidence_column_name=f'upper_confidence_{metric.column_name}',
-        sampling_error_column_name=f'sampling_error_{metric.column_name}',
-        start_date_column_name='start_date' if is_time_based_x_axis else None,
-        end_date_column_name='end_date' if is_time_based_x_axis else None,
-    )
-
-    return fig
+        return fig

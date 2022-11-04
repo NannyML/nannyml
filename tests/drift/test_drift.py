@@ -12,7 +12,7 @@ import pytest
 
 from nannyml.base import AbstractCalculator, AbstractCalculatorResult
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from nannyml.drift.model_inputs.univariate.statistical.calculator import UnivariateStatisticalDriftCalculator
+from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 
 
@@ -178,55 +178,63 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(sa
     ],
     ids=['chunk_period_weekly', 'chunk_period_monthly', 'chunk_size_1000', 'chunk_count_25'],
 )
-def test_univariate_statistical_drift_calculator_should_return_a_row_for_each_analysis_chunk_key(  # noqa: D103
+def test_univariate_drift_calculator_should_return_a_row_for_each_analysis_chunk_key(  # noqa: D103
     sample_drift_data, chunker
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        chunker=chunker,
     ).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
 
     chunks = chunker.split(sample_drift_data)
     assert len(chunks) == sut.shape[0]
     chunk_keys = [c.key for c in chunks]
-    assert 'key' in sut.columns
-    assert sorted(chunk_keys) == sorted(sut['key'].values)
+    assert ('chunk', 'chunk', 'key') in sut.columns
+    assert sorted(chunk_keys) == sorted(sut[('chunk', 'chunk', 'key')].values)
 
 
 def test_univariate_statistical_drift_calculator_should_contain_chunk_details(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
     ).fit(ref_data)
 
     drift = calc.calculate(data=sample_drift_data)
 
     sut = drift.data.columns
-    assert 'key' in sut
-    assert 'start_index' in sut
-    assert 'start_date' in sut
-    assert 'end_index' in sut
-    assert 'end_date' in sut
+    assert ('chunk', 'chunk', 'key') in sut
+    assert ('chunk', 'chunk', 'start_index') in sut
+    assert ('chunk', 'chunk', 'start_date') in sut
+    assert ('chunk', 'chunk', 'end_index') in sut
+    assert ('chunk', 'chunk', 'end_date') in sut
 
 
-def test_univariate_statistical_drift_calculator_returns_stat_column_and_p_value_column_for_each_feature(  # noqa: D103
+def test_univariate_statistical_drift_calculator_returns_stat_column_for_each_feature(  # noqa: D103
     sample_drift_data,
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
     ).fit(ref_data)
 
     sut = calc.calculate(data=sample_drift_data).data.columns
 
     for f in ['f1', 'f2']:
-        assert f'{f}_dstat' in sut
-        assert f'{f}_p_value' in sut
+        assert (f, 'kolmogorov_smirnov', 'value') in sut
 
     for f in ['f3', 'f4']:
-        assert f'{f}_chi2' in sut
-        assert f'{f}_p_value' in sut
+        assert (f, 'chi2', 'value') in sut
 
 
 def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_drift_data):  # noqa: D103
@@ -234,13 +242,15 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
     sample_drift_data.loc[10080:16000, 'f3'] = 0
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     analysis_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
     ).fit(ref_data)
     results = calc.calculate(data=analysis_data)
 
-    assert not np.isnan(results.data.loc[0, 'f3_chi2'])
-    assert not np.isnan(results.data.loc[0, 'f3_p_value'])
+    assert not np.isnan(results.data.loc[0, ('f3', 'chi2', 'value')])
 
 
 @pytest.mark.parametrize(
@@ -317,26 +327,32 @@ def test_univariate_statistical_drift_calculator_works_with_chunker(
     sample_drift_data, calculator_opts, expected  # noqa: D103
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(feature_column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(
-        ref_data
-    )
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        **calculator_opts,
+    ).fit(ref_data)
     sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
 
-    assert all(sut['f1_dstat'] == expected)
+    assert all(sut[('f1', 'kolmogorov_smirnov', 'value')] == expected)
 
 
 def test_statistical_drift_calculator_raises_type_error_when_features_missing():  # noqa: D103
 
-    with pytest.raises(TypeError, match='feature_column_names'):
-        UnivariateStatisticalDriftCalculator(timestamp_column_name='timestamp')
+    with pytest.raises(TypeError, match='column_names'):
+        UnivariateDriftCalculator(timestamp_column_name='timestamp')
 
 
 def test_statistical_drift_calculator_given_empty_reference_data_should_raise_invalid_args_exception(  # noqa: D103
     sample_drift_data,
 ):
     ref_data = pd.DataFrame(columns=sample_drift_data.columns)
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
     )
     with pytest.raises(InvalidArgumentsException):
         calc.fit(ref_data)
@@ -346,8 +362,11 @@ def test_base_drift_calculator_given_empty_analysis_data_should_raise_invalid_ar
     sample_drift_data,
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
     ).fit(ref_data)
     with pytest.raises(InvalidArgumentsException):
         calc.calculate(data=pd.DataFrame(columns=sample_drift_data.columns))
@@ -359,13 +378,17 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f3'], timestamp_column_name='timestamp'
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
     ).fit(ref_data)
-    sut = calc.calculate(data=ana_data)
+    res = calc.calculate(data=ana_data)
+    sut = list(set(res.data.columns.get_level_values(level=0)))
 
-    assert len([col for col in list(sut.data.columns) if col.startswith('f2')]) == 0
-    assert len([col for col in list(sut.data.columns) if col.startswith('f4')]) == 0
+    assert 'f2' not in sut
+    assert 'f4' not in sut
 
 
 @pytest.mark.parametrize(
@@ -373,44 +396,44 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f1'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f1'}),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f1'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f1'}),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f3'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': False, 'feature_column_name': 'f3'}),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f3'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_drift', 'plot_reference': True, 'feature_column_name': 'f3'}),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f1'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f1'}),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f1'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f1'}),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f3'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': False, 'feature_column_name': 'f3'}),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f3'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'},
         ),
-        ({}, {'kind': 'feature_distribution', 'plot_reference': True, 'feature_column_name': 'f3'}),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'}),
     ],
     ids=[
         'continuous_feature_drift_with_timestamp_without_reference',
@@ -435,8 +458,10 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
-    calc = UnivariateStatisticalDriftCalculator(
-        feature_column_names=['f1', 'f3'],
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
         **calc_args,
     ).fit(ref_data)
     sut = calc.calculate(data=ana_data)
@@ -445,3 +470,35 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_repeat_calculation_results_return_only_latest_calculation_results(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    chunker = SizeBasedChunker(chunk_size=1000, timestamp_column_name='timestamp')
+    analysis_chunks = chunker.split(ana_data)
+
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        chunker=chunker,
+        timestamp_column_name='timestamp',
+    ).fit(ref_data)
+
+    res0 = calc.calculate(analysis_chunks[0].data).filter(period='analysis')
+
+    res1 = calc.calculate(analysis_chunks[1].data).filter(period='analysis')
+
+    res2 = calc.calculate(analysis_chunks[2].data).filter(period='analysis')
+
+    assert len(res0) == 1
+    assert res0.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[0].start_datetime
+    assert res0.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[0].end_datetime
+    assert len(res1) == 1
+    assert res1.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[1].start_datetime
+    assert res1.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[1].end_datetime
+    assert len(res2) == 1
+    assert res2.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[2].start_datetime
+    assert res2.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[2].end_datetime

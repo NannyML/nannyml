@@ -7,13 +7,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml._typing import ProblemType
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
-from nannyml.drift.target.target_distribution import TargetDistributionCalculator
+from nannyml.drift.univariate import UnivariateDriftCalculator
 
 
 @pytest.fixture
@@ -122,10 +121,10 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 
 def test_target_distribution_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = TargetDistributionCalculator(
-        y_true='actual', timestamp_column_name='timestamp', chunk_period='W', problem_type='classification_binary'
-    ).fit(ref_data)
     try:
+        calc = UnivariateDriftCalculator(
+            column_names=['actual'], timestamp_column_name='timestamp', chunk_period='W'
+        ).fit(ref_data)
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
@@ -133,10 +132,8 @@ def test_target_distribution_calculator_with_params_should_not_fail(sample_drift
 
 def test_target_distribution_calculator_with_default_params_should_not_fail(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = TargetDistributionCalculator(
-        y_true='actual', timestamp_column_name='timestamp', problem_type='classification_binary'
-    ).fit(ref_data)
     try:
+        calc = UnivariateDriftCalculator(column_names=['actual']).fit(ref_data)
         _ = calc.calculate(data=sample_drift_data)
     except Exception:
         pytest.fail()
@@ -149,44 +146,12 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
     reference = regression_data[0][~(regression_data[0]['y_pred'] < 0)]
     analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
 
-    calc = TargetDistributionCalculator(
-        y_true='y_true', timestamp_column_name='timestamp', problem_type='regression'
-    ).fit(reference)
+    calc = UnivariateDriftCalculator(column_names=['y_true'], timestamp_column_name='timestamp').fit(reference)
     result = calc.calculate(analysis.join(analysis_targets)).filter(period='analysis')
 
     assert (
-        round(result.data['statistical_target_drift'], 5)
+        round(result.data[('y_true', 'kolmogorov_smirnov', 'value')], 5)
         == [0.01425, 0.01657, 0.01007, 0.01192, 0.00867, 0.17168, 0.18012, 0.17907, 0.18323, 0.18738]
-    ).all()
-
-
-def test_target_distribution_calculator_for_regression_problems_mean_drift(regression_data):  # noqa: D103
-    reference, analysis, analysis_targets = regression_data
-
-    # Get rid of negative values for log based metrics
-    reference = regression_data[0][~(regression_data[0]['y_pred'] < 0)]
-    analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
-
-    calc = TargetDistributionCalculator(
-        y_true='y_true', timestamp_column_name='timestamp', problem_type='regression'
-    ).fit(reference)
-    result = calc.calculate(analysis.join(analysis_targets))
-    sut = result.data[result.data['period'] == 'analysis'].reset_index(drop=True)
-
-    assert (
-        round(sut['metric_target_drift'], 5)
-        == [
-            4862.94117,
-            4790.5815,
-            4793.34933,
-            4838.25617,
-            4799.1335,
-            4852.63667,
-            4875.45667,
-            4867.589,
-            4885.108,
-            4787.09417,
-        ]
     ).all()
 
 
@@ -205,7 +170,6 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
                         '[40000:49999]',
                         '[50000:59999]',
                     ],
-                    'metric_target_drift': [4834.7893, 4776.1287, 4839.639, 4868.6151, 4873.9113, 4818.2043],
                     'statistical_target_drift': [
                         0.014583333333333337,
                         0.006916666666666682,
@@ -229,7 +193,6 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
                         '[40000:49999]',
                         '[50000:59999]',
                     ],
-                    'metric_target_drift': [4834.7893, 4776.1287, 4839.639, 4868.6151, 4873.9113, 4818.2043],
                     'statistical_target_drift': [
                         0.014583333333333337,
                         0.006916666666666682,
@@ -246,13 +209,6 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
             pd.DataFrame(
                 {
                     'key': ['[0:11999]', '[12000:23999]', '[24000:35999]', '[36000:47999]', '[48000:59999]'],
-                    'metric_target_drift': [
-                        4826.761333333333,
-                        4815.80275,
-                        4825.885083333334,
-                        4871.522833333333,
-                        4836.101083333333,
-                    ],
                     'statistical_target_drift': [
                         0.014516666666666678,
                         0.00869999999999993,
@@ -268,13 +224,6 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
             pd.DataFrame(
                 {
                     'key': ['[0:11999]', '[12000:23999]', '[24000:35999]', '[36000:47999]', '[48000:59999]'],
-                    'metric_target_drift': [
-                        4826.761333333333,
-                        4815.80275,
-                        4825.885083333334,
-                        4871.522833333333,
-                        4836.101083333333,
-                    ],
                     'statistical_target_drift': [
                         0.014516666666666678,
                         0.00869999999999993,
@@ -290,7 +239,6 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
             pd.DataFrame(
                 {
                     'key': ['2017-02', '2017-03'],
-                    'metric_target_drift': [4826.1297808607915, 4845.4011313417],
                     'statistical_target_drift': [0.008650415155814883, 0.17979488539272875],
                 }
             ),
@@ -310,18 +258,6 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
                         '[42000:47999]',
                         '[48000:53999]',
                         '[54000:59999]',
-                    ],
-                    'metric_target_drift': [
-                        4862.9411666666665,
-                        4790.5815,
-                        4793.349333333334,
-                        4838.256166666667,
-                        4799.1335,
-                        4852.636666666666,
-                        4875.456666666667,
-                        4867.589,
-                        4885.108,
-                        4787.094166666667,
                     ],
                     'statistical_target_drift': [
                         0.014249999999999985,
@@ -353,18 +289,6 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
                         '[42000:47999]',
                         '[48000:53999]',
                         '[54000:59999]',
-                    ],
-                    'metric_target_drift': [
-                        4862.9411666666665,
-                        4790.5815,
-                        4793.349333333334,
-                        4838.256166666667,
-                        4799.1335,
-                        4852.636666666666,
-                        4875.456666666667,
-                        4867.589,
-                        4885.108,
-                        4787.094166666667,
                     ],
                     'statistical_target_drift': [
                         0.014249999999999985,
@@ -394,15 +318,16 @@ def test_target_distribution_calculator_for_regression_problems_mean_drift(regre
 )
 def test_target_drift_for_regression_works_with_chunker(calculator_opts, expected):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='y_true',
-        problem_type=ProblemType.REGRESSION,
+    calc = UnivariateDriftCalculator(
+        column_names=['y_true'],
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis.join(analysis_targets))
-    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
-
-    pd.testing.assert_frame_equal(expected, sut[['key', 'metric_target_drift', 'statistical_target_drift']])
+    sut = results.filter(period='analysis').to_df()[
+        [('chunk', 'chunk', 'key'), ('y_true', 'kolmogorov_smirnov', 'value')]
+    ]
+    sut.columns = ['key', 'statistical_target_drift']
+    pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
@@ -413,7 +338,6 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
             pd.DataFrame(
                 {
                     'key': ['[0:9999]', '[10000:19999]', '[20000:29999]', '[30000:39999]', '[40000:49999]'],
-                    'metric_target_drift': [0.5044, 0.4911, 0.501, 0.5028, 0.5041],
                     'statistical_target_drift': [
                         0.7552537772547374,
                         2.3632451058508988,
@@ -429,7 +353,6 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
             pd.DataFrame(
                 {
                     'key': ['[0:9999]', '[10000:19999]', '[20000:29999]', '[30000:39999]', '[40000:49999]'],
-                    'metric_target_drift': [0.5044, 0.4911, 0.501, 0.5028, 0.5041],
                     'statistical_target_drift': [
                         0.7552537772547374,
                         2.3632451058508988,
@@ -445,7 +368,6 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
             pd.DataFrame(
                 {
                     'key': ['[0:9999]', '[10000:19999]', '[20000:29999]', '[30000:39999]', '[40000:49999]'],
-                    'metric_target_drift': [0.5044, 0.4911, 0.501, 0.5028, 0.5041],
                     'statistical_target_drift': [
                         0.7552537772547374,
                         2.3632451058508988,
@@ -461,7 +383,6 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
             pd.DataFrame(
                 {
                     'key': ['[0:9999]', '[10000:19999]', '[20000:29999]', '[30000:39999]', '[40000:49999]'],
-                    'metric_target_drift': [0.5044, 0.4911, 0.501, 0.5028, 0.5041],
                     'statistical_target_drift': [
                         0.7552537772547374,
                         2.3632451058508988,
@@ -477,13 +398,6 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
             pd.DataFrame(
                 {
                     'key': ['2017', '2018', '2019', '2020', '2021'],
-                    'metric_target_drift': [
-                        0.5175686591276252,
-                        0.49144221838927954,
-                        0.5021347565043363,
-                        0.5030052090289836,
-                        0.4,
-                    ],
                     'statistical_target_drift': [
                         5.760397194889025,
                         3.0356541961122385,
@@ -509,18 +423,6 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         '[35000:39999]',
                         '[40000:44999]',
                         '[45000:49999]',
-                    ],
-                    'metric_target_drift': [
-                        0.5172,
-                        0.4916,
-                        0.4858,
-                        0.4964,
-                        0.5026,
-                        0.4994,
-                        0.505,
-                        0.5006,
-                        0.4964,
-                        0.5118,
                     ],
                     'statistical_target_drift': [
                         5.574578416652949,
@@ -553,18 +455,6 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         '[40000:44999]',
                         '[45000:49999]',
                     ],
-                    'metric_target_drift': [
-                        0.5172,
-                        0.4916,
-                        0.4858,
-                        0.4964,
-                        0.5026,
-                        0.4994,
-                        0.505,
-                        0.5006,
-                        0.4964,
-                        0.5118,
-                    ],
                     'statistical_target_drift': [
                         5.574578416652949,
                         1.1261313647806923,
@@ -593,15 +483,16 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
 )
 def test_target_drift_for_binary_classification_works_with_chunker(calculator_opts, expected):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='work_home_actual',
-        problem_type=ProblemType.CLASSIFICATION_BINARY,
+    reference['work_home_actual'] = reference['work_home_actual'].astype('category')
+    analysis_targets['work_home_actual'] = analysis_targets['work_home_actual'].astype('category')
+    calc = UnivariateDriftCalculator(
+        column_names=['work_home_actual'],
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
-    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
-
-    pd.testing.assert_frame_equal(expected, sut[['key', 'metric_target_drift', 'statistical_target_drift']])
+    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('work_home_actual', 'chi2', 'value')]]
+    sut.columns = ['key', 'statistical_target_drift']
+    pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
@@ -764,28 +655,39 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
 )
 def test_target_drift_for_multiclass_classification_works_with_chunker(calculator_opts, expected):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='y_true',
-        problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
+    calc = UnivariateDriftCalculator(
+        column_names=['y_true'],
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis.merge(analysis_targets, on='identifier')).filter(period='analysis')
-    sut = results.data[results.data['period'] == 'analysis'].reset_index(drop=True)
-
-    pd.testing.assert_frame_equal(expected, sut[['key', 'statistical_target_drift']])
+    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'chi2', 'value')]]
+    sut.columns = ['key', 'statistical_target_drift']
+    pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': False}),
-        ({}, {'kind': 'target_drift', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': True}),
-        ({}, {'kind': 'target_drift', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': False}),
-        ({}, {'kind': 'target_distribution', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': True}),
-        ({}, {'kind': 'target_distribution', 'plot_reference': True}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'chi2'}),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
@@ -800,9 +702,7 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='y_true', problem_type=ProblemType.CLASSIFICATION_MULTICLASS, **calc_args
-    ).fit(reference)
+    calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
     sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
 
     try:
@@ -814,14 +714,26 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': False}),
-        ({}, {'kind': 'target_drift', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': True}),
-        ({}, {'kind': 'target_drift', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': False}),
-        ({}, {'kind': 'target_distribution', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': True}),
-        ({}, {'kind': 'target_distribution', 'plot_reference': True}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'chi2'}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'chi2'}),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
@@ -836,9 +748,9 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 )
 def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
-    calc = TargetDistributionCalculator(
-        y_true='work_home_actual', problem_type=ProblemType.CLASSIFICATION_BINARY, **calc_args
-    ).fit(reference)
+    reference['work_home_actual'] = reference['work_home_actual'].astype('category')
+    analysis_targets['work_home_actual'] = analysis_targets['work_home_actual'].astype('category')
+    calc = UnivariateDriftCalculator(column_names=['work_home_actual'], **calc_args).fit(reference)
     sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
 
     try:
@@ -850,14 +762,35 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': False}),
-        ({}, {'kind': 'target_drift', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_drift', 'plot_reference': True}),
-        ({}, {'kind': 'target_drift', 'plot_reference': True}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': False}),
-        ({}, {'kind': 'target_distribution', 'plot_reference': False}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'target_distribution', 'plot_reference': True}),
-        ({}, {'kind': 'target_distribution', 'plot_reference': True}),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {},
+            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {},
+            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {},
+            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+        ),
+        (
+            {'timestamp_column_name': 'timestamp'},
+            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'},
+        ),
+        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'kolmogorov_smirnov'}),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
@@ -872,9 +805,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 )
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
-    calc = TargetDistributionCalculator(y_true='y_true', problem_type=ProblemType.REGRESSION, **calc_args).fit(
-        reference
-    )
+    calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
     sut = calc.calculate(analysis.join(analysis_targets))
 
     try:
