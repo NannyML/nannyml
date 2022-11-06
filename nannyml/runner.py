@@ -120,7 +120,7 @@ def _run_statistical_univariate_feature_drift_calculator(
             column_names=(column_mapping['features'] + [column_mapping['y_pred']] + y_pred_proba_column_names),
             timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
-            categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm'],
+            categorical_methods=['chi2', 'jensen_shannon'],
             continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
         ).fit(reference_data)
 
