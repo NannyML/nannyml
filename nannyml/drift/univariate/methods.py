@@ -366,7 +366,7 @@ class Chi2Statistic(Method):
         return alert
 
 
-@MethodFactory.register(key='infinity-norm', feature_type=FeatureType.CATEGORICAL)
+@MethodFactory.register(key='infinity_norm', feature_type=FeatureType.CATEGORICAL)
 class InfinityNormDistance(Method):
     """Calculates the L-Infinity Distance.
 
@@ -376,7 +376,7 @@ class InfinityNormDistance(Method):
     def __init__(self):
         super().__init__(
             display_name='Infinity Norm',
-            column_name='infinity-norm',
+            column_name='infinity_norm',
             lower_threshold_limit=0,
         )
 
@@ -406,7 +406,7 @@ class InfinityNormDistance(Method):
         return max(differences.values())
 
     def _alert(self, data: pd.Series):
-        value = self.calculate(data)
+        value = self._calculate(data)
         return (self.lower_threshold is not None and value < self.lower_threshold) or (
             self.upper_threshold is not None and value > self.upper_threshold
         )
