@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from nannyml.drift.univariate.methods import JensenShannonDistance, InfinityNormDistance
-import nannyml as nml 
+import nannyml as nml
 
 
 def test_js_for_0_distance():
@@ -70,6 +70,7 @@ def test_infinity_norm_for_total_change():
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.67
+
 
 @pytest.fixture
 def sample_drift_data() -> pd.DataFrame:  # noqa: D103
@@ -156,6 +157,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
 
     return data
 
+
 @pytest.mark.parametrize(
     'continuous_methods, categorical_methods',
     [
@@ -186,10 +188,6 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
 def test_result_plots_raise_no_exceptions(sample_drift_data, continuous_methods, categorical_methods):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
-    print('printing feature 1')
-    print(ref_data['f1'])
-    print('printing feature 2')
-    print(print(ref_data['f3']))
     try:
         calc = nml.UnivariateDriftCalculator(
             column_names=['f1', 'f3'],
@@ -197,6 +195,6 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, continuous_methods,
             continuous_methods=continuous_methods,
             categorical_methods=categorical_methods,
         ).fit(ref_data)
-        sut = calc.calculate(data=ana_data)
+        calc.calculate(ana_data)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
