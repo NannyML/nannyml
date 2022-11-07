@@ -83,7 +83,7 @@ A square root of Jensen-Shannon Divergence [2]_ which measures similarity betwee
 is a distance metric in range 0-1 which makes it easier to interpret and get familiar with. For
 categorical data, JS distance is calculated based on the relative frequencies of each category in reference and
 analysis data. The intuition is that it measures an *average* of all changes in relative frequencies of categories.
-Frequencies are compared by dividing one by another therefore (see [2]_) therefore JS distance, just like Chi-squared,
+Frequencies are compared by dividing one by another (see [2]_) therefore JS distance, just like Chi-squared,
 is sensitive to changes in less frequent classes (an absolute change of 1 percentage point for less frequent class will have stronger
 attribution to the final JS distance than the same change in more frequent class). For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
