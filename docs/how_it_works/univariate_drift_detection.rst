@@ -79,7 +79,7 @@ Additionally, the statistic is non-negative and not limited - this makes it some
 difficult to interpret. Still it is a common choice amongst practitioners as it provides pvalue together with the
 statistic that helps to better evaluate its result.
 
-Jensen-Shanon Distance
+Jensen-Shannon Distance
 ........................
 A square root of Jensen-Shannon Divergence [2]_ which measures similarity between two probability distributions. It
 is a distance metric in range 0-1 which makes it easier to interpret and get familiar with. For
