@@ -4,13 +4,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.7.0] - 2022-11-07
 
 ### Changed
 
 - Updated the handling of "leftover" observations when using the `SizeBasedChunker` and `CountBasedChunker`.
   Renamed the parameter for tweaking that behavior to `incomplete`, that can be set to `keep`, `drop` or `append`.
   Default behavior for both is now to append leftover observations to the last _full_ chunk.
+- Refactored the `nannyml.drift` module. The intermediate structural level (`model_inputs`, `model_outputs`, `targets`)
+  has been removed and turned into a single unified `UnivariateDriftCalculator`. The old built-in statistics have been
+  re-implemented as `Methods`, allowing us to add new methods to detect univariate drift.
+- Simplified a lot of the codebase (but also complicated some bits) by storing results internally as multilevel-indexed
+  DataFrames. This means we no longer have to 'convey information' by encoding data column names and method names in
+  the names of result columns. We've introduced a new paradigm to deal with results. Drill down to the data you really
+  need by using the `filter` method, which returns a new `Result` instance, with a smaller 'scope'. Then turn this
+  `Result` into a DataFrame using the `to_df` method.
+- Changed the structure of the [pyproject.toml](pyproject.toml) file due to a Poetry upgrade to version 1.2.1.
+
+### Added
+
+- Expanded the `nannyml.io` module with new `Writer` implementations: `DatabaseWriter` that exports data into multiple
+  tables in a relational database and the `PickleFileWriter` which stores the
+  pickled `Results` on local/remote/cloud disk.
+- Added a new univariate drift detection method based on the Jensen-Shannon distance.
+  Used within the `UnivariateDriftCalculator`.
+
+### Fixed
+
+- Added [lightgbm](https://github.com/microsoft/LightGBM) installation instructions to our installation guide.
 
 ## [0.6.3] - 2022-09-22
 
