@@ -13,8 +13,6 @@ can be a good choice. Methods are grouped
 by the ones applicable to categorical (discrete) and continuous variables. Even if a method can be used for both,
 usually the implementation between categorical and continuous is different so it is mentioned in both places.
 
-TBD describe why are we looking at statistic/distance first, still having pvalue though.
-
 .. _univariate-drift-detection-continuous-methods:
 
 Methods for Continuous Variables
@@ -106,5 +104,3 @@ may not be the best choice for categorical variables with many low-frequency cla
 .. [2] https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
 .. [3] https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. [4] https://en.wikipedia.org/wiki/Chi-squared_test
-
-
