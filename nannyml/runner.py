@@ -135,17 +135,17 @@ def _run_statistical_univariate_feature_drift_calculator(
             if console:
                 console.log('generating result plots')
             plots = {
-                f'{kind}_{column_name}': results.plot(kind, method, column_name)
+                f'{kind}_{column_name}': results.plot(kind=kind, method=method, column_name=column_name)
                 for column_name in results.continuous_column_names
                 for method in results.continuous_method_names
-                for kind in ['feature_drift', 'feature_distribution']
+                for kind in ['drift', 'distribution']
             }
             plots.update(
                 {
-                    f'{kind}_{column_name}': results.plot(kind, method, column_name)
+                    f'{kind}_{column_name}': results.plot(kind=kind, method=method, column_name=column_name)
                     for column_name in results.categorical_column_names
                     for method in results.categorical_method_names
-                    for kind in ['feature_drift', 'feature_distribution']
+                    for kind in ['drift', 'distribution']
                 }
             )
     except Exception as exc:
