@@ -121,6 +121,10 @@ Because NannyML can estimate performance, it is possible to weed out data drift 
 
 ### Install NannyML
 
+NannyML depends on [LightGBM](https://github.com/microsoft/LightGBM). This might require you to set install additional
+OS-specific binaries. You can follow the [official installation guide](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html).
+
+
 From PyPI:
 
 ```bash
