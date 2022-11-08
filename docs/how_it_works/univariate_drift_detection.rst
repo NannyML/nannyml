@@ -60,6 +60,35 @@ binning is done using Doane's formula [3]_. If continuous variable has relativel
 unique values are less then 10% of the reference dataset size) each value becomes a bin. This rule holds
 up to 50 unique values. If there are more - Doane's formula is used again.
 
+.. _univariate-drift-detection-cont-wasserstein:
+
+Wasserstein Distance
+........................
+The Wasserstein Distance is a measure of the difference between two probability distributions. Wasserstein distance
+can be thought of as the minimum amount of work needed to transform one distribution into the other. Informally, if
+the PDF of each distribution is imagined as a pile of dirt, the Wasserstein distance is the amount of work it would 
+take to transform one pile of dirt into the other.
+
+While finding the Wasserstein distance can be framed as an optimal transport problem, when each distribution is
+one-dimensional, the CDFs of the two distributions can be used instead. When defined in this way, the Wasserstein
+distance is the integral of the absolute value of the difference between the two CDFs, as can be seen in the figure below.
+
+.. image:: ../_static/how-it-works-univariate-drift-detection-wasserstein-pdf-cdf.svg
+    :width: 1400pt
+
+Mathematically this can be expressed as:
+
+.. math::
+    W_1((X_1,...,X_n)_{ref},(X_1,...,X_m)_{ana}) = \int_\mathbb{R}|\hat{F}_{ref}(x)-\hat{F}_{ana}(x)|dx 
+
+Alternatively, this can be thought of as the area between the two CDFs, as can be seen in the figure below. 
+
+.. image:: ../_static/how-it-works-univariate-drift-detection-wasserstein-area.svg
+    :width: 800pt
+
+When using Wasserstein distance for drift detection, we do not have access to the true CDF, but we can use the empirical CDF,
+which can be built from the sample.
+
 .. _univariate-drift-detection-categorical-methods:
 
 Methods for Categorical Variables

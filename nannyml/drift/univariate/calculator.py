@@ -67,7 +67,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         >>> calc = nml.UnivariateDriftCalculator(
         ...   column_names=column_names,
         ...   timestamp_column_name='timestamp',
-        ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
         ...   categorical_methods=['chi2', 'jensen_shannon'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
@@ -105,13 +105,13 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         for column_name in self.continuous_column_names:
             self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS).fit(reference_data[column_name])
+                MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, chunker = self.chunker).fit(reference_data[column_name])
                 for method in self.continuous_method_names
             ]
 
         for column_name in self.categorical_column_names:
             self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL).fit(reference_data[column_name])
+                MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL, chunker = self.chunker).fit(reference_data[column_name])
                 for method in self.categorical_method_names
             ]
 
