@@ -124,8 +124,8 @@ Performance Monitoring
 **********************
 
 :term:`Standard Error` for realized performance monitoring is calculated using SEM [1]_ in a way described in
-:ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. Since targets are available only in the
-reference dataset, the nominator of the SEM formula is calculated based on observation-level metrics from the reference
+:ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. The nominator of the SEM formula is calculated
+based on observation-level metrics from the reference
 dataset. The sample size in the denominator is the size of a chunk for which standard error is estimated.
 
 Since realized performance is the actual performance of
