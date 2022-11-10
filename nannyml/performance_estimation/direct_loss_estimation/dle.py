@@ -42,15 +42,15 @@ class DLE(AbstractEstimator):
         feature_column_names: List[str],
         y_pred: str,
         y_true: str,
-        timestamp_column_name: str = None,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
-        metrics: List[str] = None,
-        hyperparameters: Dict[str, Any] = None,
+        timestamp_column_name: Optional[str] = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
+        metrics: Optional[List[str]] = None,
+        hyperparameters: Optional[Dict[str, Any]] = None,
         tune_hyperparameters: bool = False,
-        hyperparameter_tuning_config: Dict[str, Any] = None,
+        hyperparameter_tuning_config: Optional[Dict[str, Any]] = None,
     ):
         """
         Creates a new Direct Loss Estimator.

@@ -33,12 +33,12 @@ class PerformanceCalculator(AbstractCalculator):
         y_true: str,
         y_pred: str,
         problem_type: Union[str, ProblemType],
-        y_pred_proba: ModelOutputsType = None,
-        timestamp_column_name: str = None,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
+        y_pred_proba: Optional[ModelOutputsType] = None,
+        timestamp_column_name: Optional[str] = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
     ):
         """Creates a new performance calculator.
 

@@ -13,8 +13,6 @@ can be a good choice. Methods are grouped
 by the ones applicable to categorical (discrete) and continuous variables. Even if a method can be used for both,
 usually the implementation between categorical and continuous is different so it is mentioned in both places.
 
-TBD describe why are we looking at statistic/distance first, still having pvalue though.
-
 .. _univariate-drift-detection-continuous-methods:
 
 Methods for Continuous Variables
@@ -79,13 +77,13 @@ Additionally, the statistic is non-negative and not limited - this makes it some
 difficult to interpret. Still it is a common choice amongst practitioners as it provides pvalue together with the
 statistic that helps to better evaluate its result.
 
-Jensen-Shanon Distance
+Jensen-Shannon Distance
 ........................
 A square root of Jensen-Shannon Divergence [2]_ which measures similarity between two probability distributions. It
 is a distance metric in range 0-1 which makes it easier to interpret and get familiar with. For
 categorical data, JS distance is calculated based on the relative frequencies of each category in reference and
 analysis data. The intuition is that it measures an *average* of all changes in relative frequencies of categories.
-Frequencies are compared by dividing one by another therefore (see [2]_) therefore JS distance, just like Chi-squared,
+Frequencies are compared by dividing one by another (see [2]_) therefore JS distance, just like Chi-squared,
 is sensitive to changes in less frequent classes (an absolute change of 1 percentage point for less frequent class will have stronger
 attribution to the final JS distance than the same change in more frequent class). For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
@@ -112,5 +110,3 @@ as Chi-squared and Jenson-Shannon of being sensitive to changes in less frequent
 .. [2] https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
 .. [3] https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. [4] https://en.wikipedia.org/wiki/Chi-squared_test
-
-

@@ -35,7 +35,7 @@ class Result(AbstractCalculatorResult):
         self.timestamp_column_name = timestamp_column_name
         self.metrics = ['reconstruction_error']
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
             metrics = self.metrics
 

@@ -117,20 +117,12 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 class SimpleDriftResult(AbstractCalculatorResult):
     """Dummy DriftResult implementation."""
 
-    def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
-        super().__init__(results_data)
-        self.calculator = calculator
-
-    @property
-    def calculator_name(self) -> str:
-        return "dummy_calculator"
-
-    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Fake plot."""
-        pass
+        return plotly.graph_objects.Figure()
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
-        pass
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
+        return self
 
 
 class SimpleDriftCalculator(AbstractCalculator):

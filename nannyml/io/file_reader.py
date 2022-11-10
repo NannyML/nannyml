@@ -4,7 +4,7 @@
 
 from copy import deepcopy
 from pathlib import PurePosixPath
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import fsspec
 import pandas as pd
@@ -19,9 +19,9 @@ class FileReader(Reader):
     def __init__(
         self,
         filepath: str,
-        read_args: Dict[str, Any] = None,
-        credentials: Dict[str, Any] = None,
-        fs_args: Dict[str, Any] = None,
+        read_args: Optional[Dict[str, Any]] = None,
+        credentials: Optional[Dict[str, Any]] = None,
+        fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
         Creates a new FileReader instance.

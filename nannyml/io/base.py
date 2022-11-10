@@ -5,7 +5,7 @@
 import logging
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 from urllib.parse import urlsplit
 
 import pandas as pd
@@ -57,7 +57,7 @@ class WriterFactory:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, key, kwargs: Dict[str, Any] = None) -> Writer:
+    def create(cls, key, kwargs: Optional[Dict[str, Any]] = None) -> Writer:
         """Returns a Writer instance for a given string."""
 
         if kwargs is None:

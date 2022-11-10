@@ -4,12 +4,13 @@
 import abc
 import logging
 from datetime import datetime
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io.db.entities import CBPEPerformanceMetric, DataReconstructionFeatureDriftMetric, DLEPerformanceMetric
+from nannyml.io.db.entities import Metric
 from nannyml.io.db.entities import Metric as DbMetric
 from nannyml.io.db.entities import RealizedPerformanceMetric, UnivariateDriftMetric
 from nannyml.performance_calculation.result import Result as RealizedPerformanceResult
@@ -40,7 +41,7 @@ class MapperFactory:
         return logging.getLogger(__name__)
 
     @classmethod
-    def create(cls, result, kwargs: Dict[str, Any] = None) -> Mapper:
+    def create(cls, result, kwargs: Optional[Dict[str, Any]] = None) -> Mapper:
         """Returns a Mapper instance for a given result class."""
 
         if kwargs is None:
@@ -98,7 +99,7 @@ class UnivariateDriftResultMapper(Mapper):
                 'timestamp column to be specified and present'
             )
 
-        res: List[UnivariateDriftMetric] = []
+        res: List[Metric] = []
 
         for column_name in result.continuous_column_names:
             for method in result.continuous_method_names:
@@ -224,7 +225,7 @@ class RealizedPerformanceMapper(Mapper):
                 'timestamp column to be specified and present'
             )
 
-        res: List[RealizedPerformanceMetric] = []
+        res: List[Metric] = []
 
         for metric in [metric.column_name for metric in result.metrics]:
             res += (
@@ -278,7 +279,7 @@ class CBPEMapper(Mapper):
                 'timestamp column to be specified and present'
             )
 
-        res: List[CBPEPerformanceMetric] = []
+        res: List[Metric] = []
 
         for metric in [metric.column_name for metric in result.metrics]:
             res += (
@@ -332,7 +333,7 @@ class DLEMapper(Mapper):
                 'timestamp column to be specified and present'
             )
 
-        res: List[DLEPerformanceMetric] = []
+        res: List[Metric] = []
 
         for metric in [metric.column_name for metric in result.metrics]:
             res += (
