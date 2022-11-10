@@ -9,3 +9,5 @@
 """Module containing plotting implementations."""
 
 CHUNK_KEY_COLUMN_NAME = 'key'
+
+from .figure import Figure  # noqa: E402
