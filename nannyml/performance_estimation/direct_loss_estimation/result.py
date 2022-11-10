@@ -52,6 +52,7 @@ class Result(AbstractEstimatorResult):
         data = data.reset_index(drop=True)
         res = copy.deepcopy(self)
         res.data = data
+        res.metrics = [m for m in self.metrics if m.column_name in metrics]
 
         return res
 

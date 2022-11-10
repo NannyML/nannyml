@@ -69,6 +69,9 @@ class Result(AbstractCalculatorResult):
 
         result = copy.deepcopy(self)
         result.data = data
+        result.categorical_method_names = [m for m in self.categorical_method_names if m in methods]
+        result.continuous_method_names = [m for m in self.continuous_method_names if m in methods]
+        result.column_names = [c for c in self.column_names if c in column_names]
         return result
 
     def plot(  # type: ignore

@@ -60,6 +60,7 @@ class Result(AbstractCalculatorResult):
 
         res = copy.deepcopy(self)
         res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
 
         return res
 

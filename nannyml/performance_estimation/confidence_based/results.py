@@ -49,11 +49,12 @@ class Result(AbstractEstimatorResult):
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
         if period != 'all':
-            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+            data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
         res = copy.deepcopy(self)
         res.data = data
+        res.metrics = [m for m in self.metrics if m.column_name in metrics]
 
         return res
 
