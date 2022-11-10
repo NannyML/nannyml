@@ -464,6 +464,48 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
+@pytest.mark.parametrize(
+    'cont_methods, cat_methods',
+    [
+        (
+            [],
+            ['chi2'],
+        ),
+        (
+            ['jensen_shannon'],
+            ['jensen_shannon'],
+        ),
+        (
+            [],
+            ['infinity_norm'],
+        ),
+        (
+            ['kolmogorov_smirnov'],
+            [],
+        ),
+    ],
+    ids=[
+        'feature_drift_with_ks_and_chi2',
+        'feature_drift_with_js_and_js',
+        'feature_drift_with_none_and_infinitynorm',
+        'feature_drift_with_ks_and_none',
+    ],
+)
+def test_calculator_with_diff_methods_raise_no_exceptions(sample_drift_data, cont_methods, cat_methods):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    try:
+        calc = UnivariateDriftCalculator(
+            column_names=['f1', 'f3'],
+            timestamp_column_name='timestamp',
+            continuous_methods=cont_methods,
+            categorical_methods=cat_methods,
+        ).fit(ref_data)
+        calc.calculate(ana_data)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
 def test_repeat_calculation_results_return_only_latest_calculation_results(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']

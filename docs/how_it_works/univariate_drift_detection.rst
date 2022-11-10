@@ -88,6 +88,12 @@ is sensitive to changes in less frequent classes (an absolute change of 1 percen
 attribution to the final JS distance than the same change in more frequent class). For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
 
+Infinity-Norm Distance
+........................
+Belonging to the family of vector norms, this norm measures the maximum of the absolute difference between the percentage
+of each category in the reference and analysis data (see [5]_). The intuition behind this metric is very similar to that of 
+Kolmogorov-Smirnov but for categoricals. It falls into the range of 0-1 and is easy to interpret however it faces the same challenges
+as Chi-squared and Jenson-Shannon of being sensitive to changes in less frequent classes. 
 
 
 
