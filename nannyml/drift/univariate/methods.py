@@ -373,7 +373,7 @@ class InfinityNormDistance(Method):
     An alert will be raised if `distance > 0.1`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             display_name='Infinity Norm',
             column_name='infinity_norm',
