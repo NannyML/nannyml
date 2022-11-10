@@ -47,7 +47,7 @@ class Result(AbstractCalculatorResult):
         self.reference_data = reference_data
         self.analysis_data = analysis_data
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 

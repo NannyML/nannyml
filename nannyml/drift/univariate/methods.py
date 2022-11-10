@@ -26,10 +26,10 @@ class Method(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        upper_threshold: float = None,
-        lower_threshold: float = None,
-        upper_threshold_limit: float = None,
-        lower_threshold_limit: float = None,
+        upper_threshold: Optional[float] = None,
+        lower_threshold: Optional[float] = None,
+        upper_threshold_limit: Optional[float] = None,
+        lower_threshold_limit: Optional[float] = None,
     ):
         """Creates a new Metric instance.
 
@@ -206,7 +206,7 @@ class JensenShannonDistance(Method):
     An alert will be raised if `distance > 0.1`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             display_name='Jensen-Shannon distance',
             column_name='jensen_shannon',
@@ -282,7 +282,7 @@ class KolmogorovSmirnovStatistic(Method):
     An alert will be raised for a Chunk if `p_value < 0.05`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
@@ -323,7 +323,7 @@ class Chi2Statistic(Method):
     An alert will be raised for a Chunk if `p_value < 0.05`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             display_name='Chi2 statistic',
             column_name='chi2',

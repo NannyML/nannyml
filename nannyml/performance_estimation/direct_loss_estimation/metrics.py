@@ -51,7 +51,7 @@ class Metric(abc.ABC):
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
-        upper_value_limit: float = None,
+        upper_value_limit: Optional[float] = None,
         lower_value_limit: float = 0.0,
     ):
         """Creates a new Metric instance.
@@ -165,7 +165,11 @@ class Metric(abc.ABC):
         )
 
     def _alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: float = None, upper_limit: float = None
+        self,
+        reference_chunks: List[Chunk],
+        std_num: int = 3,
+        lower_limit: Optional[float] = None,
+        upper_limit: Optional[float] = None,
     ) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = [self.realized_performance(chunk.data) for chunk in reference_chunks]
         deviation = np.std(realized_chunk_performance) * std_num

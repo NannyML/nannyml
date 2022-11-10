@@ -75,7 +75,7 @@ class Result(AbstractCalculatorResult):
         self,
         method: Union[str, Method],
         kind: str = 'drift',
-        column_name: str = None,
+        column_name: Optional[str] = None,
         plot_reference: bool = False,
         *args,
         **kwargs,

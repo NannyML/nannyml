@@ -7,7 +7,7 @@
 #  License: Apache Software License 2.0
 
 """Module containing plotting logic."""
-from typing import List
+from typing import List, Optional
 
 import matplotlib
 import numpy as np
@@ -27,8 +27,8 @@ def _data_prep_step_plot(
     drift_column_name: str,
     chunk_index_column_name: str,
     chunk_type_column_name: str,
-    start_date_column_name: str = None,
-    end_date_column_name: str = None,
+    start_date_column_name: Optional[str] = None,
+    end_date_column_name: Optional[str] = None,
     hover_metric_format='{0:.4f}',
     hover_date_label_format='%b-%d-%Y',
 ):

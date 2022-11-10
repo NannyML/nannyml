@@ -43,7 +43,7 @@ class Result(AbstractEstimatorResult):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
@@ -60,7 +60,7 @@ class Result(AbstractEstimatorResult):
     def plot(
         self,
         kind: str = 'performance',
-        metric: Union[str, Metric] = None,
+        metric: Optional[Union[str, Metric]] = None,
         plot_reference: bool = False,
         *args,
         **kwargs,

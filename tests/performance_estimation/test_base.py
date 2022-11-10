@@ -4,7 +4,7 @@
 
 """Unit tests for performance estimation."""
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import pytest
@@ -38,8 +38,8 @@ class SimpleEstimatorResult(AbstractEstimatorResult):
     def plot(self):
         pass
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
-        pass
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        return SimpleEstimatorResult(self.data, self.calculator)
 
 
 class SimpleEstimator(AbstractEstimator):  # noqa: D101
