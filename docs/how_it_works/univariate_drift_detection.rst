@@ -110,3 +110,4 @@ as Chi-squared and Jenson-Shannon of being sensitive to changes in less frequent
 .. [2] https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
 .. [3] https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. [4] https://en.wikipedia.org/wiki/Chi-squared_test
+.. [5] https://en.wikipedia.org/wiki/L-infinity
