@@ -1,14 +1,15 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from plotly.graph_objects import Scatter
+from plotly.graph_objects import Figure
 
 
-def step_plot(
+def metric(
+    figure: Figure,
     data: Union[np.ndarray, pd.Series],
     name,
     color,
@@ -17,7 +18,7 @@ def step_plot(
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
     plot_markers: bool = True,
     **kwargs,
-) -> List[Scatter]:
+) -> Figure:
 
     from nannyml.plots.figure import _check_and_convert
 
@@ -27,26 +28,55 @@ def step_plot(
 
     x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
 
-    scatters = [_get_line_scatter(data, x, name, color, **kwargs)]
-
+    figure = _add_metric_line(figure, data, x, name, color, **kwargs)
     if plot_markers:
-        scatters.append(_get_marker_scatter(data, x, name, color, **kwargs))
+        figure = _add_metric_markers(figure, data, x, name, color, **kwargs)
 
-    return scatters
+    return figure
 
 
-def _get_line_scatter(
+def alert(
+    figure: Figure,
+    data: Union[np.ndarray, pd.Series],
+    alerts: Union[np.ndarray, pd.Series],
+    name,
+    color,
+    chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    **kwargs,
+) -> Figure:
+    from nannyml.plots.figure import _check_and_convert
+
+    data, start_dates, end_dates, indices = _check_and_convert(data, chunk_start_dates, chunk_end_dates, chunk_indices)
+
+    from nannyml.plots.figure import add_artificial_endpoint
+
+    x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
+
+    if isinstance(alerts, pd.Series):
+        alerts = alerts.to_numpy()
+    alerts = np.append(alerts, alerts[-1])
+
+    figure = _add_alert_markers(figure, data, alerts, x, name, color, **kwargs)
+    figure = _add_alert_areas(figure, data, alerts, x, name, color, **kwargs)
+
+    return figure
+
+
+def _add_metric_line(
+    figure: Figure,
     data: Union[np.ndarray, pd.Series],
     x: Union[np.ndarray, pd.Series],
     name: str,
     color: str,
     line_args: Optional[Dict[str, Any]] = None,
     **kwargs,
-) -> Scatter:
+) -> Figure:
     if line_args is None:
         line_args = {}
 
-    return Scatter(
+    figure.add_scatter(
         name=name,
         mode='lines',
         x=x,
@@ -55,22 +85,24 @@ def _get_line_scatter(
         hoverinfo='skip',
         **kwargs,
     )
+    return figure
 
 
-def _get_marker_scatter(
+def _add_metric_markers(
+    figure: Figure,
     data: Union[np.ndarray, pd.Series],
     x: Union[np.ndarray, pd.Series],
     name: str,
     color: str,
     marker_args: Optional[Dict[str, Any]] = None,
     **kwargs,
-) -> Scatter:
+) -> Figure:
     if marker_args is None:
         marker_args = {}
 
     x_mid = [x1 + (x2 - x1) / 2 for x1, x2 in _pairwise(x)]
 
-    return Scatter(
+    figure.add_scatter(
         name=name,
         mode='markers',
         x=x_mid,
@@ -80,6 +112,70 @@ def _get_marker_scatter(
         showlegend=False,
         **kwargs,
     )
+
+    return figure
+
+
+def _add_alert_markers(
+    figure: Figure,
+    data: np.ndarray,
+    alerts: np.ndarray,
+    x: np.ndarray,
+    name: str,
+    color: str,
+    marker_args: Optional[Dict[str, Any]] = None,
+    **kwargs,
+) -> Figure:
+    if marker_args is None:
+        marker_args = {}
+
+    alert_indices = [idx for idx, alert in enumerate(alerts) if alert]
+
+    x = x[alert_indices]
+    data = data[alert_indices]
+
+    x_mid = [x1 + (x2 - x1) / 2 for x1, x2 in _pairwise(x)]
+
+    figure.add_scatter(
+        name=name,
+        mode='markers',
+        x=x_mid,
+        y=data,
+        # TODO: hover
+        marker=dict(color=color, size=6, symbol='diamond', **marker_args),
+        showlegend=False,
+        **kwargs,
+    )
+    return figure
+
+
+def _add_alert_areas(
+    figure: Figure,
+    data: np.ndarray,
+    alerts: np.ndarray,
+    x: np.ndarray,
+    name: str,
+    color: str,
+    marker_args: Optional[Dict[str, Any]] = None,
+    alpha: float = 0.2,
+    **kwargs,
+) -> Figure:
+    if marker_args is None:
+        marker_args = {}
+
+    alert_indices = [idx for idx, alert in enumerate(alerts) if alert]
+
+    for x0, x1 in _pairwise(x[alert_indices]):
+        figure.add_vrect(
+            x0=x0,
+            x1=x1,
+            fillcolor=color,
+            opacity=alpha,
+            layer='below',
+            line_width=0,
+        )
+
+    return figure
 
 
 def _pairwise(x: np.ndarray):

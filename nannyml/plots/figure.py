@@ -11,13 +11,24 @@ import plotly.graph_objs as go
 
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.colors import Colors
-from nannyml.plots.step_plot import step_plot
+from nannyml.plots.step_plot import alert as step_plot_alert
+from nannyml.plots.step_plot import metric as step_plot_metric
 
 
 class Figure(go.Figure):
     """Extending the Plotly Figure class functionality."""
 
-    def __init__(self, title: str, x_axis_title: str, y_axis_title: str, y_axis_limit: Optional[List] = None, **kwargs):
+    SUPPORTED_METRIC_STYLES = ['step']
+
+    def __init__(
+        self,
+        title: str,
+        x_axis_title: str,
+        y_axis_title: str,
+        y_axis_limit: Optional[List] = None,
+        metric_style: str = 'step',
+        **kwargs,
+    ):
         """Creates a new Figure."""
 
         layout = go.Layout(
@@ -40,6 +51,14 @@ class Figure(go.Figure):
         )
         super().__init__(layout=layout)
 
+        if metric_style not in self.SUPPORTED_METRIC_STYLES:
+            raise InvalidArgumentsException(
+                f"metric style '{metric_style}' is not supported. "
+                "Please provide one of the following values: "
+                f"{str.join(',', self.SUPPORTED_METRIC_STYLES)}"
+            )
+        self._metric_style: str = metric_style
+
     def add_metric(
         self,
         data: Union[np.ndarray, pd.Series],
@@ -50,8 +69,16 @@ class Figure(go.Figure):
         end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
         **kwargs,
     ):
-        self.add_traces(
-            step_plot(
+        if self._metric_style not in self.SUPPORTED_METRIC_STYLES:
+            raise InvalidArgumentsException(
+                f"metric style '{self._metric_style}' is not supported. "
+                "Please provide one of the following values: "
+                f"{str.join(',', self.SUPPORTED_METRIC_STYLES)}"
+            )
+
+        if self._metric_style == 'step':
+            step_plot_metric(
+                figure=self,
                 data=data,
                 chunk_indices=indices,
                 chunk_start_dates=start_dates,
@@ -60,7 +87,6 @@ class Figure(go.Figure):
                 color=color,
                 **kwargs,
             )
-        )
 
     def add_period_separator(self, x, color=Colors.BLUE_SKY_CRAYOLA):
         self.add_vline(
@@ -144,6 +170,35 @@ class Figure(go.Figure):
                 ),
             ]
         )
+
+    def add_alert(
+        self,
+        data: Union[np.ndarray, pd.Series],
+        name: str,
+        color: str = Colors.RED_IMPERIAL,
+        indices: Optional[Union[np.ndarray, pd.Series]] = None,
+        start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+        end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+        **kwargs,
+    ):
+        if self._metric_style not in self.SUPPORTED_METRIC_STYLES:
+            raise InvalidArgumentsException(
+                f"metric style '{self._metric_style}' is not supported. "
+                "Please provide one of the following values: "
+                f"{str.join(',', self.SUPPORTED_METRIC_STYLES)}"
+            )
+
+        if self._metric_style == 'step':
+            step_plot_alert(
+                figure=self,
+                data=data,
+                chunk_indices=indices,
+                chunk_start_dates=start_dates,
+                chunk_end_dates=end_dates,
+                name=name,
+                color=color,
+                **kwargs,
+            )
 
 
 def is_time_based_x_axis(
