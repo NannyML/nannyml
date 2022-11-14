@@ -44,6 +44,7 @@ def alert(
     chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    plot_areas: bool = True,
     **kwargs,
 ) -> Figure:
     from nannyml.plots.figure import _check_and_convert
@@ -59,7 +60,8 @@ def alert(
     alerts = np.append(alerts, alerts[-1])
 
     figure = _add_alert_markers(figure, data, alerts, x, name, color, **kwargs)
-    figure = _add_alert_areas(figure, data, alerts, x, name, color, **kwargs)
+    if plot_areas:
+        figure = _add_alert_areas(figure, data, alerts, x, name, color, **kwargs)
 
     return figure
 
@@ -142,8 +144,7 @@ def _add_alert_markers(
         x=x_mid,
         y=data,
         # TODO: hover
-        marker=dict(color=color, size=6, symbol='diamond', **marker_args),
-        showlegend=False,
+        marker=dict(color=color, size=8, symbol='diamond', **marker_args),
         **kwargs,
     )
     return figure
@@ -165,16 +166,11 @@ def _add_alert_areas(
 
     alert_indices = [idx for idx, alert in enumerate(alerts) if alert]
 
-    for x0, x1 in _pairwise(x[alert_indices]):
-        figure.add_vrect(
-            x0=x0,
-            x1=x1,
-            fillcolor=color,
-            opacity=alpha,
-            layer='below',
-            line_width=0,
-        )
+    if 'legendgroup' in kwargs:
+        del kwargs['legendgroup']
 
+    for x0, x1 in _pairwise(x[alert_indices]):
+        figure.add_vrect(x0=x0, x1=x1, fillcolor=color, opacity=alpha, layer='below', line_width=0, **kwargs)
     return figure
 
 
