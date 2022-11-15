@@ -49,6 +49,7 @@ def test_js_for_categorical():
 
 # ************* Wasserstein Tests *************
 
+
 def test_wasserstein_both_continuous_0_distance():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000))
