@@ -81,16 +81,16 @@ def render_partial_target_string(partial_target_column: Union[np.ndarray, pd.Ser
 
 
 def render_x_coordinate(
-    indices_column: Union[np.ndarray, pd.Series],
-    start_dates_column: Union[np.ndarray, pd.Series],
-    end_dates_column: Union[np.ndarray, pd.Series],
+    indices_column: Optional[Union[np.ndarray, pd.Series]] = None,
+    start_dates_column: Optional[Union[np.ndarray, pd.Series]] = None,
+    end_dates_column: Optional[Union[np.ndarray, pd.Series]] = None,
     date_format: str = '%b-%d-%Y',
 ) -> np.ndarray:
     if is_time_based_x_axis(start_dates_column, end_dates_column):
         return np.array(
             [
                 f'From <b>{s.strftime(date_format)}</b> to <b>{e.strftime(date_format)}</b>'
-                for s, e in zip(start_dates_column, end_dates_column)
+                for s, e in zip(start_dates_column, end_dates_column)  # type: ignore
             ]
         )
     else:

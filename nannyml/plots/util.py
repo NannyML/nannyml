@@ -20,10 +20,13 @@ def add_artificial_endpoint(
     chunk_indexes: Optional[np.ndarray],
     start_dates: Optional[np.ndarray],
     end_dates: Optional[np.ndarray],
-    data: np.ndarray,
+    data: Union[np.ndarray, List[np.ndarray]],
 ):
     _data = copy.deepcopy(data)
-    _data = np.append(_data, _data[-1])
+    if isinstance(_data, List):
+        _data = [np.append(e, e[-1]) for e in data]
+    else:
+        _data = np.append(_data, _data[-1])
     if is_time_based_x_axis(start_dates, end_dates):
         _start_dates = copy.deepcopy(start_dates)
         _start_dates = np.append(_start_dates, end_dates[-1])  # type: ignore
@@ -59,7 +62,7 @@ def check_and_convert(
         _data = []
         for d in data:
             _d = copy.deepcopy(d)
-            if isinstance(data, pd.Series):
+            if isinstance(_d, pd.Series):
                 _d = _d.to_numpy()
             _data.append(_d)
 
