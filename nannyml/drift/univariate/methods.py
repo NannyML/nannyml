@@ -13,9 +13,10 @@ from typing import Callable, Dict, Optional
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
-from scipy.stats import chi2_contingency, ks_2samp
+from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
 
 from nannyml.base import _column_is_categorical
+from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 
 
@@ -26,6 +27,7 @@ class Method(abc.ABC):
         self,
         display_name: str,
         column_name: str,
+        chunker: Optional[Chunker] = None,
         upper_threshold: Optional[float] = None,
         lower_threshold: Optional[float] = None,
         upper_threshold_limit: Optional[float] = None,
@@ -52,6 +54,8 @@ class Method(abc.ABC):
         self.lower_threshold: Optional[float] = lower_threshold
         self.lower_threshold_limit: Optional[float] = lower_threshold_limit
         self.upper_threshold_limit: Optional[float] = upper_threshold_limit
+
+        self.chunker: Optional[Chunker] = chunker
 
     def fit(self, reference_data: pd.Series) -> Method:
         """Fits a Method on reference data.
@@ -206,11 +210,12 @@ class JensenShannonDistance(Method):
     An alert will be raised if `distance > 0.1`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(
             display_name='Jensen-Shannon distance',
             column_name='jensen_shannon',
             lower_threshold_limit=0,
+            **kwargs,
         )
         self.upper_threshold = 0.1
 
@@ -282,12 +287,13 @@ class KolmogorovSmirnovStatistic(Method):
     An alert will be raised for a Chunk if `p_value < 0.05`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
             upper_threshold_limit=1,
             lower_threshold=0.05,
+            **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
@@ -323,12 +329,13 @@ class Chi2Statistic(Method):
     An alert will be raised for a Chunk if `p_value < 0.05`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(
             display_name='Chi2 statistic',
             column_name='chi2',
             upper_threshold_limit=1.0,
             lower_threshold=0.05,
+            **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
@@ -373,11 +380,12 @@ class InfinityNormDistance(Method):
     An alert will be raised if `distance > 0.1`.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         super().__init__(
             display_name='Infinity Norm',
             column_name='infinity_norm',
             lower_threshold_limit=0,
+            **kwargs,
         )
 
         self.upper_threshold = 0.1
@@ -410,3 +418,61 @@ class InfinityNormDistance(Method):
         return (self.lower_threshold is not None and value < self.lower_threshold) or (
             self.upper_threshold is not None and value > self.upper_threshold
         )
+
+
+@MethodFactory.register(key='wasserstein_distance', feature_type=FeatureType.CONTINUOUS)
+class WassersteinDistance(Method):
+    """Calculates the Wasserstein Distance between two distributions.
+
+    An alert will be raised for a Chunk if .
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(
+            display_name='Wasserstein distance',
+            column_name='wasserstein_distance',
+            **kwargs,
+        )
+
+        self._reference_data: Optional[pd.Series] = None
+        self._p_value: Optional[float] = None
+
+    def _fit(self, reference_data: pd.Series) -> Method:
+        self._reference_data = reference_data
+
+        if self.chunker is None:
+            self.upper_threshold = 1
+        else:
+            ref_chunk_distances = [
+                self._calculate(
+                    chunk.data.values.reshape(
+                        -1,
+                    )
+                )
+                for chunk in self.chunker.split(pd.DataFrame(reference_data))
+            ]
+            self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
+
+        self.lower_threshold = 0
+
+        return self
+
+    def _calculate(self, data: pd.Series):
+        if self._reference_data is None:
+            raise NotFittedException(
+                "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
+            )
+
+        # reshape data to be a 1d array
+        # data = data.values.reshape(-1,)
+
+        distance = wasserstein_distance(self._reference_data, data)
+        self._p_value = None
+
+        return distance
+
+    def _alert(self, data: pd.Series):
+        value = self.calculate(data)
+        alert = value < self.lower_threshold or value > self.upper_threshold
+
+        return alert

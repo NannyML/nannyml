@@ -1,7 +1,10 @@
 """Unit tests for the UnivariateDriftCalculator methods."""
 import numpy as np
 import pandas as pd
-from nannyml.drift.univariate.methods import JensenShannonDistance, InfinityNormDistance
+
+from nannyml.drift.univariate.methods import InfinityNormDistance, JensenShannonDistance, WassersteinDistance
+
+# ************* JS Tests *************
 
 
 def test_js_for_0_distance():
@@ -68,3 +71,33 @@ def test_infinity_norm_for_total_change():
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.67
+
+
+# ************* Wasserstein Tests *************
+
+
+def test_wasserstein_both_continuous_0_distance():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10_000))
+    analysis = reference
+    wass_dist = WassersteinDistance().fit(reference).calculate(analysis)
+    wass_dist = np.round(wass_dist, 2)
+    assert wass_dist == 0
+
+
+def test_wasserstein_both_continuous_positive_means_small_drift():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10000))
+    analysis = pd.Series(np.random.normal(1, 1, 1000))
+    wass_dist = WassersteinDistance().fit(reference).calculate(analysis)
+    wass_dist = np.round(wass_dist, 2)
+    assert wass_dist == 1.01
+
+
+def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10000))
+    analysis = pd.Series(np.random.normal(-4, 1, 1000))
+    wass_dist = WassersteinDistance().fit(reference).calculate(analysis)
+    wass_dist = np.round(wass_dist, 2)
+    assert wass_dist == 3.99
