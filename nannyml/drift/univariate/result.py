@@ -78,7 +78,7 @@ class Result(AbstractCalculatorResult):
         self,
         method: Union[str, Method],
         kind: str = 'drift',
-        column_name: str = None,
+        column_name: Optional[str] = None,
         plot_reference: bool = False,
         *args,
         **kwargs,
@@ -102,7 +102,8 @@ class Result(AbstractCalculatorResult):
             The name of the column you wish to see the drift results for. Can refer to a model feature, score,
             prediction or target (if provided).
         method: str
-            The name of the metric to plot. Allowed values are ``jensen_shannon``, ``kolmogorov_smirnov`` and ``chi2``.
+            The name of the metric to plot. Allowed values are ``jensen_shannon``, ``kolmogorov_smirnov``, 
+            ``chi2`` and ``infinity_norm``.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
@@ -123,7 +124,7 @@ class Result(AbstractCalculatorResult):
         ...   column_names=column_names,
         ...   timestamp_column_name='timestamp',
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
-        ...   categorical_methods=['chi2', 'jensen_shannon'],
+        ...   categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> res = res.filter(period='analysis')

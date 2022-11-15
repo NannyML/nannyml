@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 import pickle
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from nannyml._typing import Result
 from nannyml.io.base import WriterFactory, _get_filepath_str
@@ -17,8 +17,8 @@ class PickleFileWriter(FileWriter):
     def __init__(
         self,
         path: str,
-        credentials: Dict[str, Any] = None,
-        fs_args: Dict[str, Any] = None,
+        credentials: Optional[Dict[str, Any]] = None,
+        fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
 

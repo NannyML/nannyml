@@ -10,7 +10,7 @@
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pandas as pd
 from rich.console import Console
@@ -102,7 +102,7 @@ def _run_statistical_univariate_feature_drift_calculator(
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
-    console: Console = None,
+    console: Optional[Console] = None,
 ):
     if console:
         console.rule('[cyan]UnivariateStatisticalDriftCalculator[/]')
@@ -120,7 +120,7 @@ def _run_statistical_univariate_feature_drift_calculator(
             column_names=(column_mapping['features'] + [column_mapping['y_pred']] + y_pred_proba_column_names),
             timestamp_column_name=column_mapping.get('timestamp', None),
             chunker=chunker,
-            categorical_methods=['chi2', 'jensen_shannon'],
+            categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm'],
             continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
         ).fit(reference_data)
 
@@ -171,7 +171,7 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
-    console: Console = None,
+    console: Optional[Console] = None,
 ):
     if console:
         console.rule('[cyan]DataReconstructionDriftCalculator[/]')
@@ -217,7 +217,7 @@ def _run_realized_performance_calculator(
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
-    console: Console = None,
+    console: Optional[Console] = None,
 ):
     if console:
         console.rule('[cyan]PerformanceCalculator[/]')
@@ -291,7 +291,7 @@ def _run_cbpe_performance_estimation(
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
-    console: Console = None,
+    console: Optional[Console] = None,
 ):
     if console:
         console.rule('[cyan]Confidence Base Performance Estimator[/]')
@@ -357,7 +357,7 @@ def _run_dee_performance_estimation(
     chunker: Chunker,
     writer: Writer,
     ignore_errors: bool,
-    console: Console = None,
+    console: Optional[Console] = None,
 ):
     if console:
         console.rule('[cyan]Direct Loss Estimator[/]')

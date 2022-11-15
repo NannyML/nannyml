@@ -27,14 +27,14 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         column_names: List[str],
-        timestamp_column_name: str = None,
+        timestamp_column_name: Optional[str] = None,
         n_components: Union[int, float, str] = 0.65,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
-        imputer_categorical: SimpleImputer = None,
-        imputer_continuous: SimpleImputer = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
+        imputer_categorical: Optional[SimpleImputer] = None,
+        imputer_continuous: Optional[SimpleImputer] = None,
     ):
         """Creates a new DataReconstructionDriftCalculator instance.
 

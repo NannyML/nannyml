@@ -26,10 +26,10 @@ class Method(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        upper_threshold: float = None,
-        lower_threshold: float = None,
-        upper_threshold_limit: float = None,
-        lower_threshold_limit: float = None,
+        upper_threshold: Optional[float] = None,
+        lower_threshold: Optional[float] = None,
+        upper_threshold_limit: Optional[float] = None,
+        lower_threshold_limit: Optional[float] = None,
     ):
         """Creates a new Metric instance.
 
@@ -206,7 +206,7 @@ class JensenShannonDistance(Method):
     An alert will be raised if `distance > 0.1`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             display_name='Jensen-Shannon distance',
             column_name='jensen_shannon',
@@ -282,7 +282,7 @@ class KolmogorovSmirnovStatistic(Method):
     An alert will be raised for a Chunk if `p_value < 0.05`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
@@ -323,7 +323,7 @@ class Chi2Statistic(Method):
     An alert will be raised for a Chunk if `p_value < 0.05`.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             display_name='Chi2 statistic',
             column_name='chi2',
@@ -364,3 +364,49 @@ class Chi2Statistic(Method):
         alert = self.lower_threshold and self._p_value < self.lower_threshold
         self._p_value = None
         return alert
+
+
+@MethodFactory.register(key='infinity_norm', feature_type=FeatureType.CATEGORICAL)
+class InfinityNormDistance(Method):
+    """Calculates the L-Infinity Distance.
+
+    An alert will be raised if `distance > 0.1`.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            display_name='Infinity Norm',
+            column_name='infinity_norm',
+            lower_threshold_limit=0,
+        )
+
+        self.upper_threshold = 0.1
+        self._reference_proba: Optional[dict] = None
+
+    def _fit(self, reference_data: pd.Series) -> Method:
+        ref_labels = reference_data.unique()
+        self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
+        return self
+
+    def _calculate(self, data: pd.Series):
+        if self._reference_proba is None:
+            raise NotFittedException(
+                "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
+            )
+
+        data_labels = data.unique()
+        data_ratios = {label: (data == label).sum() / len(data) for label in data_labels}
+
+        union_labels = set(self._reference_proba.keys()) | set(data_labels)
+
+        differences = {}
+        for label in union_labels:
+            differences[label] = np.abs(self._reference_proba.get(label, 0) - data_ratios.get(label, 0))
+
+        return max(differences.values())
+
+    def _alert(self, data: pd.Series):
+        value = self._calculate(data)
+        return (self.lower_threshold is not None and value < self.lower_threshold) or (
+            self.upper_threshold is not None and value > self.upper_threshold
+        )

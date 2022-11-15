@@ -6,7 +6,7 @@
 
 import abc
 import logging
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import pandas as pd
 
@@ -80,7 +80,7 @@ class Ranker:
         return inner_wrapper
 
     @classmethod
-    def by(cls, key: str = 'alert_count', ranking_args: Dict[str, Any] = None) -> Ranking:
+    def by(cls, key: str = 'alert_count', ranking_args: Optional[Dict[str, Any]] = None) -> Ranking:
         """Returns a Ranking subclass instance given a key value.
 
         If the provided key equals ``None``, then a new instance of the default Ranking (AlertCountRanking)

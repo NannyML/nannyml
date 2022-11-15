@@ -25,12 +25,12 @@ class UnivariateDriftCalculator(AbstractCalculator):
         self,
         column_names: List[str],
         timestamp_column_name: Optional[str] = None,
-        categorical_methods: List[str] = None,
-        continuous_methods: List[str] = None,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
+        categorical_methods: Optional[List[str]] = None,
+        continuous_methods: Optional[List[str]] = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
     ):
         """Creates a new UnivariateDriftCalculator instance.
 
@@ -68,7 +68,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         ...   column_names=column_names,
         ...   timestamp_column_name='timestamp',
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
-        ...   categorical_methods=['chi2', 'jensen_shannon'],
+        ...   categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> res = res.filter(period='analysis')

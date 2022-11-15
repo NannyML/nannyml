@@ -24,8 +24,8 @@ class Metric(abc.ABC):
         y_true: str,
         y_pred: str,
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
-        upper_threshold_limit: float = None,
-        lower_threshold_limit: float = None,
+        upper_threshold_limit: Optional[float] = None,
+        lower_threshold_limit: Optional[float] = None,
     ):
         """Creates a new Metric instance.
 
