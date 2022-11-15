@@ -1,8 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-import copy
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import matplotlib.colors
 import numpy as np
@@ -11,8 +10,10 @@ import plotly.graph_objs as go
 
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.colors import Colors
+from nannyml.plots.hover import Hover
 from nannyml.plots.step_plot import alert as step_plot_alert
 from nannyml.plots.step_plot import metric as step_plot_metric
+from nannyml.plots.util import add_artificial_endpoint, check_and_convert, is_time_based_x_axis
 
 
 class Figure(go.Figure):
@@ -67,6 +68,7 @@ class Figure(go.Figure):
         indices: Optional[Union[np.ndarray, pd.Series]] = None,
         start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
         end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+        hover: Optional[Hover] = None,
         **kwargs,
     ):
         if self._metric_style not in self.SUPPORTED_METRIC_STYLES:
@@ -85,6 +87,7 @@ class Figure(go.Figure):
                 chunk_end_dates=end_dates,
                 name=name,
                 color=color,
+                hover=hover,
                 **kwargs,
             )
 
@@ -106,7 +109,7 @@ class Figure(go.Figure):
         with_additional_endpoint: bool = False,
         **kwargs,
     ):
-        data, start_dates, end_dates, indices = _check_and_convert(data, start_dates, end_dates, indices)
+        data, start_dates, end_dates, indices = check_and_convert(data, start_dates, end_dates, indices)
         x = start_dates if is_time_based_x_axis(start_dates, end_dates) else indices
 
         if with_additional_endpoint:
@@ -136,7 +139,7 @@ class Figure(go.Figure):
         with_additional_endpoint: bool = False,
         **kwargs,
     ):
-        data, start_dates, end_dates, indices = _check_and_convert(
+        data, start_dates, end_dates, indices = check_and_convert(
             [upper_confidence_boundaries, lower_confidence_boundaries], start_dates, end_dates, indices
         )
         x = start_dates if is_time_based_x_axis(start_dates, end_dates) else indices
@@ -199,75 +202,3 @@ class Figure(go.Figure):
                 color=color,
                 **kwargs,
             )
-
-
-def is_time_based_x_axis(
-    start_dates: Optional[Union[np.ndarray, pd.Series]], end_dates: Optional[Union[np.ndarray, pd.Series]]
-) -> bool:
-    return start_dates is not None and end_dates is not None
-
-
-def add_artificial_endpoint(
-    chunk_indexes: np.ndarray,
-    start_dates: np.ndarray,
-    end_dates: np.ndarray,
-    data: np.ndarray,
-):
-    _data = copy.deepcopy(data)
-    _data = np.append(_data, _data[-1])
-    if is_time_based_x_axis(start_dates, end_dates):
-        _start_dates = copy.deepcopy(start_dates)
-        _start_dates = np.append(_start_dates, end_dates[-1])
-        return _start_dates, _data
-    else:
-        _chunk_indexes = copy.deepcopy(chunk_indexes)
-        _chunk_indexes = np.append(_chunk_indexes, _chunk_indexes[-1] + 1)
-        return _chunk_indexes, _data
-
-
-def _check_and_convert(
-    data: Union[Union[np.ndarray, pd.Series], List[Union[np.ndarray, pd.Series]]],
-    chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
-) -> Tuple[np.ndarray, Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
-    if chunk_start_dates is None and chunk_end_dates is None and chunk_indices is None:
-        raise InvalidArgumentsException(
-            "please provide either 'chunk_indices' or " "'chunks_start_dates' and 'chunk_end_dates'"
-        )
-
-    if chunk_start_dates is not None and chunk_end_dates is None:
-        raise InvalidArgumentsException("'chunk_end_dates' should not be None when 'chunk_start_dates' is not None")
-
-    if chunk_start_dates is None and chunk_end_dates is not None:
-        raise InvalidArgumentsException("'chunk_start_dates' should not be None when 'chunk_end_dates' is not None")
-
-    if not isinstance(data, List):
-        _data = copy.deepcopy(data)
-        if isinstance(data, pd.Series):
-            _data = _data.to_numpy()
-    else:
-        _data = []
-        for d in data:
-            _d = copy.deepcopy(d)
-            if isinstance(data, pd.Series):
-                _d = _d.to_numpy()
-            _data.append(_d)
-
-    if chunk_start_dates is not None and chunk_end_dates is not None:
-        _start_dates = copy.deepcopy(chunk_start_dates)
-        if isinstance(_start_dates, pd.Series):
-            _start_dates = _start_dates.to_numpy(dtype=object)
-
-        _end_dates = copy.deepcopy(chunk_end_dates)
-        if isinstance(_end_dates, pd.Series):
-            _end_dates = _end_dates.to_numpy(dtype=object)
-
-        return _data, _start_dates, _end_dates, None
-
-    else:
-        _chunk_indices = copy.deepcopy(chunk_indices)
-        if isinstance(_chunk_indices, pd.Series):
-            _chunk_indices = _chunk_indices.to_numpy()
-
-        return _data, None, None, _chunk_indices

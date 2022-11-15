@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 from plotly.graph_objects import Figure
 
+from nannyml.plots.hover import Hover
+from nannyml.plots.util import add_artificial_endpoint, check_and_convert
+
 
 def metric(
     figure: Figure,
@@ -16,20 +19,18 @@ def metric(
     chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    hover: Optional[Hover] = None,
     plot_markers: bool = True,
     **kwargs,
 ) -> Figure:
-
-    from nannyml.plots.figure import _check_and_convert
-
-    data, start_dates, end_dates, indices = _check_and_convert(data, chunk_start_dates, chunk_end_dates, chunk_indices)
-
-    from nannyml.plots.figure import add_artificial_endpoint
-
+    data, start_dates, end_dates, indices = check_and_convert(data, chunk_start_dates, chunk_end_dates, chunk_indices)
     x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
 
     figure = _add_metric_line(figure, data, x, name, color, **kwargs)
     if plot_markers:
+        if hover is not None:
+            kwargs['hovertemplate'] = hover.get_template()
+            kwargs['customdata'] = hover.get_custom_data()
         figure = _add_metric_markers(figure, data, x, name, color, **kwargs)
 
     return figure
@@ -47,12 +48,7 @@ def alert(
     plot_areas: bool = True,
     **kwargs,
 ) -> Figure:
-    from nannyml.plots.figure import _check_and_convert
-
-    data, start_dates, end_dates, indices = _check_and_convert(data, chunk_start_dates, chunk_end_dates, chunk_indices)
-
-    from nannyml.plots.figure import add_artificial_endpoint
-
+    data, start_dates, end_dates, indices = check_and_convert(data, chunk_start_dates, chunk_end_dates, chunk_indices)
     x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
 
     if isinstance(alerts, pd.Series):
@@ -143,7 +139,7 @@ def _add_alert_markers(
         mode='markers',
         x=x_mid,
         y=data,
-        # TODO: hover
+        hoverinfo='skip',
         marker=dict(color=color, size=8, symbol='diamond', **marker_args),
         **kwargs,
     )
