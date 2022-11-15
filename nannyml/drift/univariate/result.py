@@ -99,7 +99,8 @@ class Result(AbstractCalculatorResult):
             The name of the column you wish to see the drift results for. Can refer to a model feature, score,
             prediction or target (if provided).
         method: str
-            The name of the metric to plot. Allowed values are ``jensen_shannon``, ``kolmogorov_smirnov``, ``chi2``, and ``wasserstein``.
+            The name of the metric to plot. Allowed values are ``jensen_shannon``, ``kolmogorov_smirnov``, ``chi2``,
+            and ``wasserstein``.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
@@ -183,7 +184,7 @@ class Result(AbstractCalculatorResult):
             _supported_feature_types = list(MethodFactory.registry[method].keys())
             if len(_supported_feature_types) == 0:
                 raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
-            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0], chunker = self.chunker)
+            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0], chunker=self.chunker)
 
         if not plot_reference:
             result_data = result_data[result_data['chunk_period'] == 'analysis']
@@ -227,7 +228,7 @@ class Result(AbstractCalculatorResult):
             _supported_feature_types = list(MethodFactory.registry[method].keys())
             if len(_supported_feature_types) == 0:
                 raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
-            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0], chunker = self.chunker)
+            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0], chunker=self.chunker)
 
         if not plot_reference:
             drift_data = drift_data.loc[drift_data['chunk_period'] == 'analysis']
@@ -276,7 +277,7 @@ class Result(AbstractCalculatorResult):
             _supported_feature_types = list(MethodFactory.registry[method].keys())
             if len(_supported_feature_types) == 0:
                 raise InvalidArgumentsException(f"method '{method}' can not be used for column '{column_name}'")
-            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0], chunker = self.chunker)
+            method = MethodFactory.create(key=method, feature_type=_supported_feature_types[0], chunker=self.chunker)
 
         if not plot_reference:
             drift_data = drift_data.loc[drift_data['chunk_period'] == 'analysis']

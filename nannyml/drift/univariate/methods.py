@@ -16,8 +16,8 @@ from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
 
 from nannyml.base import _column_is_categorical
-from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.chunk import Chunker
+from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 
 
 class Method(abc.ABC):
@@ -27,12 +27,11 @@ class Method(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        chunker: Chunker,
+        chunker: Optional[Chunker] = None,
         upper_threshold: float = None,
         lower_threshold: float = None,
         upper_threshold_limit: float = None,
         lower_threshold_limit: float = None,
-        
     ):
         """Creates a new Metric instance.
 
@@ -57,7 +56,6 @@ class Method(abc.ABC):
         self.upper_threshold_limit: Optional[float] = upper_threshold_limit
 
         self.chunker: Chunker = chunker
-        
 
     def fit(self, reference_data: pd.Series) -> Method:
         """Fits a Method on reference data.
@@ -374,6 +372,7 @@ class Chi2Statistic(Method):
         self._p_value = None
         return alert
 
+
 @MethodFactory.register(key='wasserstein_distance', feature_type=FeatureType.CONTINUOUS)
 class WassersteinDistance(Method):
     """Calculates the Wasserstein Distance between two distributions.
@@ -391,18 +390,23 @@ class WassersteinDistance(Method):
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
 
-
     def _fit(self, reference_data: pd.Series) -> Method:
         self._reference_data = reference_data
 
-        if self.chunker == None:
+        if self.chunker is None:
             self.upper_threshold = 1
         else:
-            ref_chunk_distances = [self._calculate(chunk.data.values.reshape(-1,)) for chunk in self.chunker.split(pd.DataFrame(reference_data))]
+            ref_chunk_distances = [
+                self._calculate(
+                    chunk.data.values.reshape(
+                        -1,
+                    )
+                )
+                for chunk in self.chunker.split(pd.DataFrame(reference_data))
+            ]
             self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
-        
+
         self.lower_threshold = 0
-        
 
         return self
 
@@ -412,8 +416,8 @@ class WassersteinDistance(Method):
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
 
-        #reshape data to be a 1d array
-        #data = data.values.reshape(-1,)
+        # reshape data to be a 1d array
+        # data = data.values.reshape(-1,)
 
         distance = wasserstein_distance(self._reference_data, data)
         self._p_value = None
