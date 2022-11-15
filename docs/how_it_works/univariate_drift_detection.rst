@@ -13,8 +13,6 @@ can be a good choice. Methods are grouped
 by the ones applicable to categorical (discrete) and continuous variables. Even if a method can be used for both,
 usually the implementation between categorical and continuous is different so it is mentioned in both places.
 
-TBD describe why are we looking at statistic/distance first, still having pvalue though.
-
 .. _univariate-drift-detection-continuous-methods:
 
 Methods for Continuous Variables
@@ -66,7 +64,7 @@ Wasserstein Distance
 ........................
 The Wasserstein Distance is a measure of the difference between two probability distributions. Wasserstein distance
 can be thought of as the minimum amount of work needed to transform one distribution into the other. Informally, if
-the PDF of each distribution is imagined as a pile of dirt, the Wasserstein distance is the amount of work it would 
+the PDF of each distribution is imagined as a pile of dirt, the Wasserstein distance is the amount of work it would
 take to transform one pile of dirt into the other.
 
 While finding the Wasserstein distance can be framed as an optimal transport problem, when each distribution is
@@ -79,9 +77,9 @@ distance is the integral of the absolute value of the difference between the two
 Mathematically this can be expressed as:
 
 .. math::
-    W_1((X_1,...,X_n)_{ref},(X_1,...,X_m)_{ana}) = \int_\mathbb{R}|\hat{F}_{ref}(x)-\hat{F}_{ana}(x)|dx 
+    W_1((X_1,...,X_n)_{ref},(X_1,...,X_m)_{ana}) = \int_\mathbb{R}|\hat{F}_{ref}(x)-\hat{F}_{ana}(x)|dx
 
-Alternatively, this can be thought of as the area between the two CDFs, as can be seen in the figure below. 
+Alternatively, this can be thought of as the area between the two CDFs, as can be seen in the figure below.
 
 .. image:: ../_static/how-it-works-univariate-drift-detection-wasserstein-area.svg
     :width: 800pt
@@ -108,17 +106,23 @@ Additionally, the statistic is non-negative and not limited - this makes it some
 difficult to interpret. Still it is a common choice amongst practitioners as it provides pvalue together with the
 statistic that helps to better evaluate its result.
 
-Jensen-Shanon Distance
+Jensen-Shannon Distance
 ........................
 A square root of Jensen-Shannon Divergence [2]_ which measures similarity between two probability distributions. It
 is a distance metric in range 0-1 which makes it easier to interpret and get familiar with. For
 categorical data, JS distance is calculated based on the relative frequencies of each category in reference and
 analysis data. The intuition is that it measures an *average* of all changes in relative frequencies of categories.
-Frequencies are compared by dividing one by another therefore (see [2]_) therefore JS distance, just like Chi-squared,
+Frequencies are compared by dividing one by another (see [2]_) therefore JS distance, just like Chi-squared,
 is sensitive to changes in less frequent classes (an absolute change of 1 percentage point for less frequent class will have stronger
 attribution to the final JS distance than the same change in more frequent class). For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
 
+Infinity-Norm Distance
+........................
+Belonging to the family of vector norms, this norm measures the maximum of the absolute difference between the percentage
+of each category in the reference and analysis data (see [5]_). The intuition behind this metric is very similar to that of
+Kolmogorov-Smirnov but for categoricals. It falls into the range of 0-1 and is easy to interpret however it faces the same challenges
+as Chi-squared and Jenson-Shannon of being sensitive to changes in less frequent classes.
 
 
 
@@ -135,5 +139,3 @@ may not be the best choice for categorical variables with many low-frequency cla
 .. [2] https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
 .. [3] https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. [4] https://en.wikipedia.org/wiki/Chi-squared_test
-
-

@@ -117,20 +117,12 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 class SimpleDriftResult(AbstractCalculatorResult):
     """Dummy DriftResult implementation."""
 
-    def __init__(self, results_data: pd.DataFrame, calculator: AbstractCalculator):
-        super().__init__(results_data)
-        self.calculator = calculator
-
-    @property
-    def calculator_name(self) -> str:
-        return "dummy_calculator"
-
-    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Fake plot."""
-        pass
+        return plotly.graph_objects.Figure()
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
-        pass
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
+        return self
 
 
 class SimpleDriftCalculator(AbstractCalculator):
@@ -468,6 +460,48 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
 
     try:
         _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'cont_methods, cat_methods',
+    [
+        (
+            [],
+            ['chi2'],
+        ),
+        (
+            ['jensen_shannon'],
+            ['jensen_shannon'],
+        ),
+        (
+            [],
+            ['infinity_norm'],
+        ),
+        (
+            ['kolmogorov_smirnov'],
+            [],
+        ),
+    ],
+    ids=[
+        'feature_drift_with_ks_and_chi2',
+        'feature_drift_with_js_and_js',
+        'feature_drift_with_none_and_infinitynorm',
+        'feature_drift_with_ks_and_none',
+    ],
+)
+def test_calculator_with_diff_methods_raise_no_exceptions(sample_drift_data, cont_methods, cat_methods):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    try:
+        calc = UnivariateDriftCalculator(
+            column_names=['f1', 'f3'],
+            timestamp_column_name='timestamp',
+            continuous_methods=cont_methods,
+            categorical_methods=cat_methods,
+        ).fit(ref_data)
+        calc.calculate(ana_data)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 

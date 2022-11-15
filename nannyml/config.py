@@ -94,13 +94,13 @@ class Config(BaseModel):
 
     @classmethod
     @lru_cache(maxsize=1)
-    def load(cls, config_path: str = None):
+    def load(cls, config_path: Optional[str] = None):
         with open(get_config_path(config_path), "r") as config_file:
             config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
             return Config.parse_obj(config_dict)
 
 
-def get_config_path(custom_config_path: str = None) -> Path:
+def get_config_path(custom_config_path: Optional[str] = None) -> Path:
     if custom_config_path:
         return Path(custom_config_path)
 
