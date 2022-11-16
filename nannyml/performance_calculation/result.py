@@ -54,13 +54,13 @@ class Result(AbstractCalculatorResult):
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
 
         if period != 'all':
-            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
 
         res = copy.deepcopy(self)
         res.data = data
-
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
         return res
 
     def plot(
