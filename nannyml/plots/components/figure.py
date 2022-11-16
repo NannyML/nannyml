@@ -1,7 +1,11 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  #
+#  License: Apache Software License 2.0
+
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import matplotlib.colors
 import numpy as np
@@ -9,11 +13,11 @@ import pandas as pd
 import plotly.graph_objs as go
 
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.colors import Colors
-from nannyml.plots.hover import Hover
-from nannyml.plots.step_plot import alert as step_plot_alert
-from nannyml.plots.step_plot import metric as step_plot_metric
-from nannyml.plots.util import add_artificial_endpoint, check_and_convert, is_time_based_x_axis
+from nannyml.plots.components.colors import Colors
+from nannyml.plots.components.hover import Hover
+from nannyml.plots.components.step_plot import alert as step_plot_alert
+from nannyml.plots.components.step_plot import metric as step_plot_metric
+from nannyml.plots.components.util import add_artificial_endpoint, check_and_convert, is_time_based_x_axis
 
 
 class Figure(go.Figure):
@@ -28,6 +32,7 @@ class Figure(go.Figure):
         y_axis_title: str,
         y_axis_limit: Optional[List] = None,
         metric_style: str = 'step',
+        subplot_args: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         """Creates a new Figure."""

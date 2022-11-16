@@ -1,4 +1,8 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  #
+#  License: Apache Software License 2.0
+
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
 from typing import Any, Dict, Optional, Union
@@ -7,8 +11,8 @@ import numpy as np
 import pandas as pd
 from plotly.graph_objects import Figure
 
-from nannyml.plots.hover import Hover
-from nannyml.plots.util import add_artificial_endpoint, check_and_convert
+from nannyml.plots.components.hover import Hover
+from nannyml.plots.components.util import add_artificial_endpoint, check_and_convert
 
 
 def metric(

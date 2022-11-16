@@ -14,9 +14,8 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml.plots.components.colors import Colors
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-
-from .colors import Colors
 
 
 def _data_prep_step_plot(

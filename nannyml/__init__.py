@@ -50,3 +50,4 @@ from .exceptions import ChunkerException, InvalidArgumentsException, MissingMeta
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, DLE
+from .plots import calculate_chunk_distributions

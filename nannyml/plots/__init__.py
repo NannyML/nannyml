@@ -8,6 +8,7 @@
 
 """Module containing plotting implementations."""
 
-CHUNK_KEY_COLUMN_NAME = 'key'
+from nannyml.plots.components.figure import Figure  # noqa: E402
+from nannyml.plots.components.joy_plot import calculate_chunk_distributions
 
-from .figure import Figure  # noqa: E402
+CHUNK_KEY_COLUMN_NAME = 'key'
