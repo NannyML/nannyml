@@ -16,6 +16,8 @@ from scipy.integrate import cumulative_trapezoid
 from statsmodels import api as sm
 
 from nannyml.chunk import Chunker
+from nannyml.plots.components.hover import Hover, render_x_coordinate
+from nannyml.plots.components.util import ensure_numpy, is_time_based_x_axis
 
 
 def _get_kde(array, cut=3, clip=(-np.inf, np.inf)):
@@ -78,10 +80,13 @@ def calculate_chunk_distributions(
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
 
     data_with_chunk_keys = pd.concat(
-        [chunk.data.assign(chunk_key=chunk.key) for chunk in chunker.split(pd.concat([data, timestamps], axis=1))]
+        [
+            chunk.data.assign(chunk_key=chunk.key, chunk_index=chunk.chunk_index)
+            for chunk in chunker.split(pd.concat([data, timestamps], axis=1))
+        ]
     )
 
-    group_by_cols = ['chunk_key']
+    group_by_cols = ['chunk_index', 'chunk_key']
     if data_periods is not None:
         data_with_chunk_keys['period'] = data_periods
         group_by_cols += ['period']
@@ -119,7 +124,7 @@ def calculate_chunk_distributions(
         axis=1,
     )
     data['kde_density_local_max'] = data['kde_density'].apply(lambda x: max(x) if len(x) > 0 else 0)
-    data['kde_density_global_max'] = data.groupby('chunk_key')['kde_density_local_max'].max().max()
+    data['kde_density_global_max'] = data.groupby('chunk_index')['kde_density_local_max'].max().max()
     data['kde_density_scaled'] = data[['kde_density', 'kde_density_global_max']].apply(
         lambda row: np.divide(np.array(row['kde_density']), row['kde_density_global_max']), axis=1
     )
@@ -146,22 +151,23 @@ def _create_joy_table(data_distributions: pd.DataFrame, result_data: pd.DataFram
 def joy(
     fig: go.Figure,
     data_distributions: pd.DataFrame,
-    result_data: pd.DataFrame,
     color: str,
     name: str,
+    chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
     alpha=0.2,
     plot_quartiles: bool = True,
-):
-    joy_table = _create_joy_table(data_distributions, result_data)
+) -> go.Figure:
+    chunk_indices, chunk_start_dates, chunk_end_dates = ensure_numpy(chunk_indices, chunk_start_dates, chunk_end_dates)
     joy_overlap = 1
-    is_time_based_x_axis = not result_data['chunk_end_date'].isnull().values.any()
 
-    for i, row in joy_table.iterrows():
-        if is_time_based_x_axis:
-            y_date_position = row['chunk_start_date']
-            y_date_height_scaler = row['chunk_start_date'] - row['chunk_end_date']
+    for i, row in data_distributions.iterrows():
+        if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
+            y_date_position = chunk_start_dates[i]
+            y_date_height_scaler = chunk_start_dates[i] - chunk_end_dates[i]
         else:
-            y_date_position = row['chunk_index_unified']
+            y_date_position = chunk_indices[i]
             y_date_height_scaler = -1
 
         kde_support = row['kde_support']
@@ -177,7 +183,6 @@ def joy(
                 line=dict(color=color, width=1),
                 hoverinfo='skip',
                 showlegend=False,
-                # hoverlabel=dict(bgcolor=color_drift, font=dict(color='white')),
             )
         )
 
@@ -195,30 +200,12 @@ def joy(
 
         if plot_quartiles:
             for kde_quartile in kde_quartiles:
-
-                # if is_time_based_x_axis:
-                #     hover_content = (
-                #         row[chunk_column_name],
-                #         start_date_label_hover,
-                #         end_date_label_hover,
-                #         np.round(kde_quartile[0], 3),
-                #     )
-                #     hover_template = (
-                #         chunk_hover_label
-                #         + ' %{customdata[0]}: %{customdata[1]} - %{customdata[2]}, <b>%{customdata[3]}</b>'
-                #     )
-                # else:
-                #     hover_content = (
-                #         row[chunk_column_name],
-                #         row['chunk_index_unified'],
-                #         np.round(kde_quartile[0], 3),
-                #     )
-                #     hover_template = (
-                #         chunk_hover_label
-                #         + ' %{customdata[0]}: chunk index <b>%{customdata[1]}</b>, <b>%{customdata[2]}</b>'
-                #     )
-                #
-                # hover_data = np.asarray([hover_content, hover_content])
+                hover = Hover(template='Chunk %{chunk_key}: %{x_coordinate}, <b>%{quartile}</b>')
+                hover.add(row['chunk_key'], name='chunk_key')
+                hover.add(
+                    render_x_coordinate(chunk_indices, chunk_start_dates, chunk_end_dates)[i], name='x_coordinate'
+                )
+                hover.add(np.round(kde_quartile[0], 3), name='quartile')
 
                 fig.add_trace(
                     go.Scatter(
@@ -227,10 +214,46 @@ def joy(
                         y=[kde_quartile[0], kde_quartile[0]],
                         mode='lines',
                         line=dict(color=color, width=1, dash='dot'),
-                        # hovertemplate=hover_template,
-                        # customdata=hover_data,
+                        hovertemplate=hover.get_template(),
+                        customdata=hover.get_custom_data(),
+                        hoverlabel=dict(bgcolor=color, font=dict(color='white')),
                         showlegend=False,
                     )
                 )
 
     return fig
+
+
+def alert(
+    fig: go.Figure,
+    data_distributions: pd.DataFrame,
+    color: str,
+    name: str,
+    alerts: Union[np.ndarray, pd.Series],
+    chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    alpha=0.3,
+    plot_quartiles: bool = True,
+) -> go.Figure:
+    data = pd.DataFrame(
+        {
+            'chunk_indices': chunk_indices,
+            'chunk_start_dates': chunk_start_dates,
+            'chunk_end_dates': chunk_end_dates,
+            'alerts': alerts,
+        }
+    )
+    data = pd.concat([data, data_distributions], axis=1)
+    alerts_data = data.loc[data['alerts']].reset_index(drop=True)
+    return joy(
+        fig,
+        alerts_data[data_distributions.columns],
+        color,
+        name,
+        alerts_data['chunk_start_dates'],
+        alerts_data['chunk_end_dates'],
+        alerts_data['chunk_indices'],
+        alpha,
+        plot_quartiles,
+    )

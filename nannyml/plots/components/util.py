@@ -83,3 +83,17 @@ def check_and_convert(
             _chunk_indices = _chunk_indices.to_numpy()
 
         return _data, None, None, _chunk_indices
+
+
+def ensure_numpy(*args) -> Tuple:
+    converted: List[Optional[np.ndarray]] = []
+    for d in args:
+        if d is None:
+            converted.append(None)
+        elif isinstance(d, pd.Series):
+            converted.append(d.to_numpy(dtype='object'))
+        elif isinstance(d, np.ndarray):
+            converted.append(d)
+        else:
+            raise InvalidArgumentsException(f"could not convert type '{type(d)}' to 'np.ndarray'")
+    return tuple(converted)

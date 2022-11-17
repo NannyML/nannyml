@@ -49,6 +49,11 @@ class Hover:
         return subbed_template
 
     def get_custom_data(self) -> np.ndarray:
+        # check if custom data is just a single row
+        # no idea why we have to do this :-)
+        if not isinstance(self.custom_data[0], (List, np.ndarray)):
+            return np.asarray([self.custom_data, self.custom_data])
+
         return np.stack(self.custom_data, axis=-1)
 
 
