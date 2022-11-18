@@ -97,3 +97,11 @@ def ensure_numpy(*args) -> Tuple:
         else:
             raise InvalidArgumentsException(f"could not convert type '{type(d)}' to 'np.ndarray'")
     return tuple(converted)
+
+
+def pairwise(x: np.ndarray):
+    it = iter(x)
+    x1 = next(it, None)
+    for x2 in it:
+        yield x1, x2
+        x1 = x2

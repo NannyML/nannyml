@@ -57,6 +57,9 @@ class Figure(go.Figure):
         )
         super().__init__(layout=layout)
 
+        if subplot_args is not None:
+            self.set_subplots(**subplot_args)
+
         if metric_style not in self.SUPPORTED_METRIC_STYLES:
             raise InvalidArgumentsException(
                 f"metric style '{metric_style}' is not supported. "
@@ -74,6 +77,7 @@ class Figure(go.Figure):
         start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
         end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
         hover: Optional[Hover] = None,
+        subplot_args: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         if self._metric_style not in self.SUPPORTED_METRIC_STYLES:
@@ -93,15 +97,17 @@ class Figure(go.Figure):
                 name=name,
                 color=color,
                 hover=hover,
+                subplot_args=subplot_args,
                 **kwargs,
             )
 
-    def add_period_separator(self, x, color=Colors.BLUE_SKY_CRAYOLA):
-        self.add_vline(
-            x=x,
-            line=dict(color=color, width=1, dash='dash'),
-            layer='below',
-        )
+    def add_period_separator(
+        self, x, color=Colors.BLUE_SKY_CRAYOLA, subplot_args: Optional[Dict[str, Any]] = None, **kwargs
+    ):
+        if subplot_args is not None:
+            kwargs.update(subplot_args)
+
+        self.add_vline(x=x, line=dict(color=color, width=1, dash='dash'), layer='below', **kwargs)
 
     def add_threshold(
         self,
@@ -112,6 +118,7 @@ class Figure(go.Figure):
         end_dates=None,
         color=Colors.RED_IMPERIAL,
         with_additional_endpoint: bool = False,
+        subplot_args: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         data, start_dates, end_dates, indices = check_and_convert(data, start_dates, end_dates, indices)
@@ -119,6 +126,15 @@ class Figure(go.Figure):
 
         if with_additional_endpoint:
             x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
+
+        show_in_legend = True
+        if subplot_args is None:
+            subplot_args = {}
+        else:
+            if 'showlegend' in kwargs:
+                is_first_subplot = subplot_args.get('row', 0) == 1 and subplot_args.get('col', 0) == 1
+                show_in_legend = kwargs['showlegend'] and is_first_subplot
+        kwargs['showlegend'] = show_in_legend
 
         self.add_trace(
             go.Scatter(
@@ -129,7 +145,8 @@ class Figure(go.Figure):
                 line=dict(color=color, width=2, dash='dash'),
                 hoverinfo='skip',
                 **kwargs,
-            )
+            ),
+            **subplot_args,
         )
 
     def add_confidence_band(
@@ -142,6 +159,7 @@ class Figure(go.Figure):
         end_dates=None,
         color=Colors.RED_IMPERIAL,
         with_additional_endpoint: bool = False,
+        subplot_args: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         data, start_dates, end_dates, indices = check_and_convert(
@@ -152,31 +170,41 @@ class Figure(go.Figure):
         if with_additional_endpoint:
             x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
 
-        self.add_traces(
-            [
-                go.Scatter(
-                    name=name,
-                    mode='lines',
-                    x=x,
-                    y=data[0],
-                    line=dict(shape='hv', color='rgba(0,0,0,0)'),
-                    hoverinfo='skip',
-                    showlegend=False,
-                    **kwargs,
-                ),
-                go.Scatter(
-                    name=name,
-                    mode='lines',
-                    x=x,
-                    y=data[1],
-                    line=dict(shape='hv', color='rgba(0,0,0,0)'),
-                    fill='tonexty',
-                    fillcolor='rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha=0.2)),
-                    hoverinfo='skip',
-                    showlegend=True,
-                    **kwargs,
-                ),
-            ]
+        show_in_legend = True
+        if subplot_args is None:
+            subplot_args = {}
+        else:
+            show_in_legend = subplot_args.get('row', 0) == 1 and subplot_args.get('col', 0) == 1
+
+        del kwargs['showlegend']
+
+        self.add_trace(
+            go.Scatter(
+                name=name,
+                mode='lines',
+                x=x,
+                y=data[0],
+                line=dict(shape='hv', color='rgba(0,0,0,0)'),
+                hoverinfo='skip',
+                showlegend=False,
+                **kwargs,
+            ),
+            **subplot_args,
+        )
+        self.add_trace(
+            go.Scatter(
+                name=name,
+                mode='lines',
+                x=x,
+                y=data[1],
+                line=dict(shape='hv', color='rgba(0,0,0,0)'),
+                fill='tonexty',
+                fillcolor='rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha=0.2)),
+                hoverinfo='skip',
+                showlegend=show_in_legend,
+                **kwargs,
+            ),
+            **subplot_args,
         )
 
     def add_alert(
@@ -187,6 +215,7 @@ class Figure(go.Figure):
         indices: Optional[Union[np.ndarray, pd.Series]] = None,
         start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
         end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+        subplot_args: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         if self._metric_style not in self.SUPPORTED_METRIC_STYLES:
@@ -205,5 +234,6 @@ class Figure(go.Figure):
                 chunk_end_dates=end_dates,
                 name=name,
                 color=color,
+                subplot_args=subplot_args,
                 **kwargs,
             )
