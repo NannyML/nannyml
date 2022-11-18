@@ -6,7 +6,7 @@
 #
 #  License: Apache Software License 2.0
 from functools import partial
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import matplotlib
 import numpy as np
@@ -16,6 +16,7 @@ from scipy.integrate import cumulative_trapezoid
 from statsmodels import api as sm
 
 from nannyml.chunk import Chunker
+from nannyml.plots.components.colors import Colors
 from nannyml.plots.components.hover import Hover, render_x_coordinate
 from nannyml.plots.components.util import ensure_numpy, is_time_based_x_axis
 
@@ -156,11 +157,37 @@ def joy(
     chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    subplot_args: Optional[Dict[str, Any]] = None,
     alpha=0.2,
     plot_quartiles: bool = True,
+    **kwargs,
 ) -> go.Figure:
     chunk_indices, chunk_start_dates, chunk_end_dates = ensure_numpy(chunk_indices, chunk_start_dates, chunk_end_dates)
     joy_overlap = 1
+
+    if subplot_args is None:
+        subplot_args = {}
+    else:
+        fig.update_xaxes(
+            linecolor=Colors.INDIGO_PERSIAN,
+            showgrid=False,
+            mirror=True,
+            zeroline=False,
+            matches='x',
+            title=fig.layout.xaxis.title,
+            row=subplot_args['row'],
+            col=subplot_args['col'],
+        )
+        fig.update_yaxes(
+            linecolor=Colors.INDIGO_PERSIAN,
+            showgrid=False,
+            range=fig.layout.yaxis.range,
+            title=fig.layout.yaxis.title,
+            mirror=True,
+            zeroline=False,
+            row=subplot_args['row'],
+            col=subplot_args['col'],
+        )
 
     for i, row in data_distributions.iterrows():
         if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
@@ -183,7 +210,9 @@ def joy(
                 line=dict(color=color, width=1),
                 hoverinfo='skip',
                 showlegend=False,
-            )
+                **kwargs,
+            ),
+            **subplot_args,
         )
 
         fig.add_trace(
@@ -195,7 +224,9 @@ def joy(
                 fillcolor='rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(color), alpha)),
                 hoverinfo='skip',
                 showlegend=False,
-            )
+                **kwargs,
+            ),
+            **subplot_args,
         )
 
         if plot_quartiles:
@@ -218,7 +249,9 @@ def joy(
                         customdata=hover.get_custom_data(),
                         hoverlabel=dict(bgcolor=color, font=dict(color='white')),
                         showlegend=False,
-                    )
+                        **kwargs,
+                    ),
+                    **subplot_args,
                 )
 
     return fig
@@ -233,8 +266,10 @@ def alert(
     chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    subplot_args: Optional[Dict[str, Any]] = None,
     alpha=0.3,
     plot_quartiles: bool = True,
+    **kwargs,
 ) -> go.Figure:
     data = pd.DataFrame(
         {
@@ -254,6 +289,8 @@ def alert(
         alerts_data['chunk_start_dates'],
         alerts_data['chunk_end_dates'],
         alerts_data['chunk_indices'],
+        subplot_args,
         alpha,
         plot_quartiles,
+        **kwargs,
     )
