@@ -292,7 +292,6 @@ class KolmogorovSmirnovStatistic(Method):
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
             upper_threshold_limit=1,
-            lower_threshold=0.05,
             **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None
@@ -316,7 +315,7 @@ class KolmogorovSmirnovStatistic(Method):
         if self._p_value is None:
             _, self._p_value = ks_2samp(self._reference_data, data)
 
-        alert = self.lower_threshold and self._p_value < self.lower_threshold
+        alert = self._p_value < 0.05
         self._p_value = None  # just cleaning up state before running on new chunk data (optimization)
 
         return alert
@@ -334,7 +333,6 @@ class Chi2Statistic(Method):
             display_name='Chi2 statistic',
             column_name='chi2',
             upper_threshold_limit=1.0,
-            lower_threshold=0.05,
             **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None
@@ -368,7 +366,7 @@ class Chi2Statistic(Method):
                 ).fillna(0)
             )
 
-        alert = self.lower_threshold and self._p_value < self.lower_threshold
+        alert = self._p_value < 0.05
         self._p_value = None
         return alert
 
