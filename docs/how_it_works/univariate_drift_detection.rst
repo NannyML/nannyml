@@ -125,10 +125,11 @@ may not be the best choice for categorical variables with many low-frequency cla
 Infinity-Norm Distance
 ........................
 
-L-infinity norm measures the maximum of the absolute difference between the percentage of each category between two datasets. It's values 
-fall in the 0, 1 range and are easy to interpret. Because of it's definition L-infinity is not sensitive to low frequency labels that have 
-smaller percentage changes compared to other variables. This behavior is different compared to Chi Squared test where even small changes 
-in low frequency labels can heavily influence the resulting test statistic.
+We are using L-Infinity to measure the similarity of categorical features. L-Infinity, for categorical features, is defined as
+the maximum of the absolute difference between the percentage of each category in the reference and analysis data.
+You can find more about `L-Infinity at Wikipedia`_. It falls into the range of 0-1 and is easy to interpret as it selects
+the category that had the biggest change in it's relative frequency. This behavior is different compared to Chi Squared test
+where even small changes in low frequency labels can heavily influence the resulting test statistic.
 
 
 **References**
