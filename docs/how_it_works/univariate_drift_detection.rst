@@ -18,6 +18,7 @@ usually the implementation between categorical and continuous is different so it
 Methods for Continuous Variables
 --------------------------------
 
+.. _univ_cont_method_ks:
 
 Kolmogorov-Smirnov Test
 .......................
@@ -95,6 +96,8 @@ which can be built from the sample.
 Methods for Categorical Variables
 ---------------------------------
 
+.. _univ_cat_method_chi2:
+
 Chi-squared Test
 ................
 
@@ -110,6 +113,8 @@ Additionally, the statistic is non-negative and not limited - this makes it some
 difficult to interpret. Still it is a common choice amongst practitioners as it provides pvalue together with the
 statistic that helps to better evaluate its result.
 
+.. _univ_cat_method_js:
+
 Jensen-Shannon Distance
 ........................
 
@@ -121,6 +126,9 @@ Frequencies are compared by dividing one by another (see [2]_) therefore JS dist
 is sensitive to changes in less frequent classes (an absolute change of 1 percentage point for less frequent class will have stronger
 attribution to the final JS distance than the same change in more frequent class). For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
+
+
+.. _univ_cat_method_l8:
 
 L-Infinity Distance
 ...................

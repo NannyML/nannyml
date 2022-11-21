@@ -40,11 +40,13 @@ We begin by loading some synthetic data provided in the NannyML package. This is
 
 The :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class implements the functionality needed for univariate drift detection.
 We need to instantiate it with appropriate parameters:
--  the names of the columns to be evaluated
--  the name of a column containing the observation timestamps, optional
--  a list of methods to use on continuous columns
--  a list of methods to use on categorical columns
--  some specifications on how to chunk the data
+
+* The names of the columns to be evaluated.
+* A list of methods to use on continuous columns. You can chose from :ref:`kolmogorov_smirnov<univ_cont_method_ks>`,
+  :ref:`jensen_shannon<univariate-drift-detection-cont-jensen-shannon>` and :ref:`wasserstein<univariate-drift-detection-cont-wasserstein>`.
+* A list of methods to use on categorical columns. You can chose from :ref:`chi2<univ_cat_method_js>`, :ref:`jensen_shannon<univ_cat_method_js>` and :ref:`infinity_norm<univ_cat_method_l8>`.
+* Optionally, the name of the column containing the observation timestamps.
+* Optionally, a chunking approach or a predifined chunker. If neither is provided, the default chunker creating 10 chunks will be used.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
