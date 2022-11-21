@@ -119,10 +119,10 @@ may not be the best choice for categorical variables with many low-frequency cla
 
 Infinity-Norm Distance
 ........................
-Belonging to the family of vector norms, this norm measures the maximum of the absolute difference between the percentage
-of each category in the reference and analysis data (see [5]_). The intuition behind this metric is very similar to that of
-Kolmogorov-Smirnov but for categoricals. It falls into the range of 0-1 and is easy to interpret however it faces the same challenges
-as Chi-squared and Jenson-Shannon of being sensitive to changes in less frequent classes.
+L-infinity norm measures the maximum of the absolute difference between the percentage of each category between two datasets. It's values 
+fall in the 0, 1 range and are easy to interpret. Because of it's definition L-infinity is not sensitive to low frequency labels that have 
+smaller percentage changes compared to other variables. This behavior is different compared to Chi Squared test where even small changes 
+in low frequency labels can heavily influence the resulting test statistic.
 
 
 
