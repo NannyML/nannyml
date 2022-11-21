@@ -6,7 +6,7 @@ Univariate Drift Detection
 Univariate Drift Detection looks at each feature individually and checks whether its
 distribution has changed compared to reference data. There are many ways to compare two samples of data and measure
 their *similarity*. NannyML provides several methods so that the users can choose the one that suits
-their data best, the one they are familiar with (and trust) or just use a couple or even all of them to look at
+their data best, the one they are familiar with or just use a couple or even all of them to look at
 distribution change from all the different perspectives. This page explains on which aspect of the distribution change
 each method is focused, what are the important implementation details and in which situations a specific method
 can be a good choice. Methods are grouped
@@ -22,11 +22,12 @@ Methods for Continuous Variables
 Kolmogorov-Smirnov Test
 .......................
 
-A two-sample, non-parametric statistical test that compares empirical (i.e. build from the data) Cumulative
-Distribution Functions (CDF) [1]_. Test statistic (called D-statistic) is the maximum absolute difference between the
-two CDFs.
-D-statistic is robust, easy to interpret, falls into range 0-1 and is sensitive to changes in both - shape and
-location of the empirical distributions. This makes KS test a number one choice for many data distribution monitoring
+The Kolmogorov-Smirnov test is a two-sample, non-parametric statistical test. It is used to test for the equality of
+one-dimentional continuous distributions. The test outputs the test statistic, called D-statistic, and an associated p-value.
+The test statistic is the maximum distance of the cululative distribution functions (CDF) of the two samples.
+
+The D-statistic is robust to small changes in the data, easy to interpret and falls into  0-1 range.
+This makes the Kolmogorov-Smirnov test a popular choice for many data distribution monitoring
 practitioners. See the image below to get intuition on how the value of D-statistic changes with the change of data
 distribution.
 
@@ -38,6 +39,7 @@ distribution.
 
 Jensen-Shannon Distance
 ........................
+
 A square root of Jensen-Shannon Divergence [2]_ which measures similarity between two probability distributions. It
 is a distance metric in range 0-1. Unlike KS D-static that looks at maximum difference
 between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
@@ -62,6 +64,7 @@ up to 50 unique values. If there are more - Doane's formula is used again.
 
 Wasserstein Distance
 ........................
+
 The Wasserstein Distance is a measure of the difference between two probability distributions. Wasserstein distance
 can be thought of as the minimum amount of work needed to transform one distribution into the other. Informally, if
 the PDF of each distribution is imagined as a pile of dirt, the Wasserstein distance is the amount of work it would
@@ -94,6 +97,7 @@ Methods for Categorical Variables
 
 Chi-squared Test
 ................
+
 Statistical hypothesis test of independence for categorical data [4]_. Test statistic is a sum of terms calculated
 for each category. The value of the term for a single category is equal to the
 squared difference between expected (reference) frequency and observed (analysis) frequency divided by expected
@@ -108,6 +112,7 @@ statistic that helps to better evaluate its result.
 
 Jensen-Shannon Distance
 ........................
+
 A square root of Jensen-Shannon Divergence [2]_ which measures similarity between two probability distributions. It
 is a distance metric in range 0-1 which makes it easier to interpret and get familiar with. For
 categorical data, JS distance is calculated based on the relative frequencies of each category in reference and
@@ -119,18 +124,12 @@ may not be the best choice for categorical variables with many low-frequency cla
 
 Infinity-Norm Distance
 ........................
-L-infinity norm measures the maximum of the absolute difference between the percentage of each category between two datasets. It's values 
-fall in the 0, 1 range and are easy to interpret. Because of it's definition L-infinity is not sensitive to low frequency labels that have 
-smaller percentage changes compared to other variables. This behavior is different compared to Chi Squared test where even small changes 
-in low frequency labels can heavily influence the resulting test statistic.
 
-
-
-
-
-
-
-
+We are using L-Infinity to measure the similarity of categorical features. L-Infinity, for categorical features, is defined as
+the maximum of the absolute difference between the percentage of each category in the reference and analysis data.
+You can find more about `L-Infinity at Wikipedia`_. It falls into the range of 0-1 and is easy to interpret as it selects
+the category that had the biggest change in it's relative frequency. This behavior is different compared to Chi Squared test
+where even small changes in low frequency labels can heavily influence the resulting test statistic.
 
 
 **References**
@@ -139,4 +138,6 @@ in low frequency labels can heavily influence the resulting test statistic.
 .. [2] https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
 .. [3] https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. [4] https://en.wikipedia.org/wiki/Chi-squared_test
-.. [5] https://en.wikipedia.org/wiki/L-infinity
+
+
+.. _`L-Infinity at Wikipedia`: https://en.wikipedia.org/wiki/L-infinity
