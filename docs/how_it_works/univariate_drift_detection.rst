@@ -122,8 +122,8 @@ is sensitive to changes in less frequent classes (an absolute change of 1 percen
 attribution to the final JS distance than the same change in more frequent class). For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
 
-Infinity-Norm Distance
-........................
+L-Infinity Distance
+...................
 
 We are using L-Infinity to measure the similarity of categorical features. L-Infinity, for categorical features, is defined as
 the maximum of the absolute difference between the percentage of each category in the reference and analysis data.
