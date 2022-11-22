@@ -30,8 +30,8 @@ Kolmogorov-Smirnov Test
 .......................
 
 The `Kolmogorov-Smirnov Test`_ is a two-sample, non-parametric statistical test. It is used to test for the equality of
-one-dimentional continuous distributions. The test outputs the test statistic, called D-statistic, and an associated p-value.
-The test statistic is the maximum distance of the cululative distribution functions (CDF) of the two samples.
+one-dimensional continuous distributions. The test outputs the test statistic, called D-statistic, and an associated p-value.
+The test statistic is the maximum distance of the cumulative distribution functions (CDF) of the two samples.
 
 The D-statistic is robust to small changes in the data, easy to interpret and falls into  0-1 range.
 This makes the Kolmogorov-Smirnov test a popular choice for many data distribution monitoring
@@ -61,9 +61,9 @@ And `Jensen-Shannon Divergence`_ is defined as:
 .. math::
     D_{JS} \left(P || Q \right) = \frac{1}{2} \left[ D_{KL} \left(P \Bigg|\Bigg| \frac{1}{2}(P+Q) \right) + D_{KL} \left(Q \Bigg|\Bigg| \frac{1}{2}(P+Q) \right)\right]
 
-and is a method of measuring the similarity between to probability distributions.
+and is a method of measuring the similarity between two probability distributions.
 
-Jensen-Shannon Distance is then defined as the squared root of Jensen-Shannon divrgence and is a proper distance metric.
+Jensen-Shannon Distance is then defined as the squared root of Jensen-Shannon divergence and is a proper distance metric.
 Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
 (PDF). This makes it
 more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
@@ -75,7 +75,7 @@ In the two rows we see two different changes been induced to the reference datas
 We can see from the cumulative density functions on the right that the resulting KS distance is the same.
 On the left we see the probability density functions of the samples and the resulting Jensen-Shannon Divergence
 at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
-see that the resulting Jensen-Shannon distance is able to differentitate the two changes.
+see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
 
 NannyML works on data hence the actual implementation splits a continuous feature into
 bins, calculates the relative frequency for each bin from reference and analyzed data and calculates the
@@ -120,27 +120,34 @@ Chi-squared Test
 ................
 
 The `Chi-squared test`_ is a statistical hypothesis test of independence for categorical data.
-The test outputs the test statistic, sometimes called called chi2 statistic, and an associated p-value.
-The test statistic is defined as:
+The test outputs the test statistic, sometimes called chi2 statistic, and an associated p-value.
+
+We can understand the Chi-squared test in the following way. We create a `contingency table`_ from the
+categories present in the data and the two samples we are comparing. The expected frequencies,
+denoted :math:`m_i`, are calculated from the marginal sums of the contingency table.
+The observed frequencies, denoted :math:`x_i`, are calculated from the actual
+frequency entries of the contingency table. The test statistic is then given by the formula:
 
 .. math::
     \chi^2 = \sum_{i=1}^k \frac{(x_i - m_i)^2}{m_i}
 
-We see that the test statistic is a sum of terms calculated for each category.
-The value of each term for a single category is equal to the squared difference between expected frequency,
-depicted as :math:`m_i` and calculated from reference data, and observed frequency,
-depicted as :math:`x_i` and calculated from analysis data, divided by the expected frequency.
+where we sum over all entries in the contingency table.
 
-This makes the chi-squared statistic sensitive to all changes in the distribution, specifically to the ones in low-frequency categories, as the
-expected frequency is in the denominator. It is therefore not recommended for categorical variables with many
-low-frequency classes or high cardinality, large number
-of distinct values, unless the sample size is really large. Otherwise, in both cases false-positive alarms are expected.
-Additionally, the statistic is non-negative and not limited - this makes it sometimes
-difficult to interpret. Still it is a common choice amongst practitioners as it provides p-value together with the
+This makes the chi-squared statistic sensitive to all changes in the distribution,
+especially to the ones in low-frequency categories, as the expected frequency is in the denominator.
+It is therefore not recommended for categorical features with many low-frequency categories or high cardinality
+features, unless the sample size is really large.
+Otherwise, in both cases false-positive alarms are expected.
+Additionally, the statistic is non-negative and not limited which sometimes makes it difficult to interpret.
+Despite that, the Chi-squared test is a common choice amongst practitioners as it provides p-value together with the
 statistic that helps to better evaluate its result.
 
-Below is a visualization of the chi-squared statistic for a categorical variable with two categories, a and b. The red bars represent the difference between the observed and expected frequencies.
-As mentioned above, in the chi-squared statistic formula, the difference is squared and divided by the expected frequency and the resulting value is then summed over all categories.
+On the image below there is a visualization of the chi-squared statistic for a categorical variable with two
+categories, a and b. You can see the expected values are calculated from both the reference and analysis data.
+The red bars represent the difference between the observed and expected frequencies.
+As mentioned above, in the chi-squared statistic formula,
+the difference is squared and divided by the expected frequency and the resulting value is then summed over all categories
+for both samples.
 
 .. image:: ../_static/how-it-works-chi2.svg
     :width: 1400pt
@@ -164,9 +171,9 @@ And `Jensen-Shannon Divergence`_ is defined as:
 .. math::
     D_{JS} \left(P || Q \right) = \frac{1}{2} \left[ D_{KL} \left(P \Bigg|\Bigg| \frac{1}{2}(P+Q) \right) + D_{KL} \left(Q \Bigg|\Bigg| \frac{1}{2}(P+Q) \right)\right]
 
-and is a method of measuring the similarity between to probability distributions.
+and is a method of measuring the similarity between two probability distributions.
 
-Jensen-Shannon Distance is then defined as the squared root of Jensen-Shannon divrgence and is a proper distance metric.
+Jensen-Shannon Distance is then defined as the squared root of Jensen-Shannon divergence and is a proper distance metric.
 As we see for
 categorical data, JS distance is calculated based on the relative frequencies of each category in reference and
 analysis data. The intuition is that it measures an *average* of all changes in relative frequencies of categories.
@@ -176,7 +183,7 @@ frequent class will have stronger
 contribution to the final JS distance value than the same change in more frequent class. For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
 
-To help our intuitionwe can look at the image below:
+To help our intuition we can look at the image below:
 
 .. image:: ../_static/how-it-works-cat_js.svg
     :width: 1400pt
@@ -196,7 +203,7 @@ You can find more about `L-Infinity at Wikipedia`_. It falls into the range of 0
 is the greatest change in relative frequency among all categories. This behavior is different compared to Chi Squared test
 where even small changes in low frequency labels can heavily influence the resulting test statistic.
 
-To help our intuitionwe can look at the image below:
+To help our intuition we can look at the image below:
 
 .. image:: ../_static/how-it-works-linf.svg
     :width: 1400pt
@@ -205,7 +212,6 @@ We see how the relative frequencies of three categories have changed between ref
 We also see that the resulting L-Infinity distance is the relative frequency change in category c.
 
 
-**References**
 
 .. _`Chi-squared test`: https://en.wikipedia.org/wiki/Chi-squared_test
 .. _`Kolmogorov-Smirnov Test`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
@@ -214,3 +220,4 @@ We also see that the resulting L-Infinity distance is the relative frequency cha
 .. _`Kullback-Leibler divergence`: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
 .. _`Doane's formula`: https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. _`Wasserstein Distance`: https://en.wikipedia.org/wiki/Wasserstein_metric
+.. _`contingency table`: https://en.wikipedia.org/wiki/Contingency_table
