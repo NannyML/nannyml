@@ -1,8 +1,8 @@
 .. _univariate_drift_detection:
 
-======================================
-Univariate Statistical Drift Detection
-======================================
+==========================
+Univariate Drift Detection
+==========================
 
 
 Just The Code

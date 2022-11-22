@@ -38,7 +38,7 @@ This makes the Kolmogorov-Smirnov test a popular choice for many data distributi
 practitioners. See the image below to get intuition on how the value of D-statistic changes with the change of data
 distribution.
 
-.. image:: ../_static/how-it-works-KS.svg
+.. image:: ../_static/how-it-works-ks.svg
     :width: 1400pt
 
 
@@ -68,7 +68,7 @@ Unlike KS D-static that looks at maximum difference between two empirical CDFs, 
 (PDF). This makes it
 more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
 
-.. image:: ../_static/how-it-works-JS.svg
+.. image:: ../_static/how-it-works-js.svg
     :width: 1400pt
 
 In the two rows we see two different changes been induced to the reference dataset, depicted with grey color.
@@ -161,7 +161,7 @@ L-Infinity Distance
 
 We are using L-Infinity to measure the similarity of categorical features. L-Infinity, for categorical features, is defined as
 the maximum of the absolute difference between the relative frequencies of each category in the reference and analysis data.
-You can find more about `L-Infinity at Wikipedia`_. It falls into the range of 0-1 and is easy to interpret as it selects
+You can find more about `L-Infinity at Wikipedia`_. It falls into the range of 0-1 and is easy to interpret as it selects the absolute change of
 the category that had the biggest change in it's relative frequency. This behavior is different compared to Chi Squared test
 where even small changes in low frequency labels can heavily influence the resulting test statistic.
 
