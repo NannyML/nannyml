@@ -31,8 +31,9 @@ class Hover:
             if name is None:
                 raise InvalidArgumentsException("parameter 'name' is required when 'data' is of type 'np.ndarray'")
 
-        if isinstance(data, pd.Series) and name is None:
-            name = data.name
+        if isinstance(data, pd.Series):
+            if name is None:
+                name = data.name
             data = data.to_numpy(dtype='object')
 
         self.custom_column_names.append(name)  # type: ignore

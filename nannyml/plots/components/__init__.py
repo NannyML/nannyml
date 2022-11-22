@@ -4,3 +4,4 @@
 
 from .figure import Figure
 from .joy_plot import calculate_chunk_distributions
+from .stacked_bar_plot import calculate_value_counts
