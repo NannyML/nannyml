@@ -5,7 +5,7 @@ import abc
 import logging
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import fsspec
 
@@ -25,9 +25,9 @@ class FileWriter(Writer, abc.ABC):
     def __init__(
         self,
         path: str,
-        write_args: Dict[str, Any] = None,
-        credentials: Dict[str, Any] = None,
-        fs_args: Dict[str, Any] = None,
+        write_args: Optional[Dict[str, Any]] = None,
+        credentials: Optional[Dict[str, Any]] = None,
+        fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
         Creates a new FileWriter

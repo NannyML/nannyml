@@ -10,7 +10,6 @@ from nannyml.base import AbstractEstimatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric, MetricFactory
 from nannyml.plots._step_plot import _step_plot
-from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractEstimatorResult):
@@ -41,7 +40,7 @@ class Result(AbstractEstimatorResult):
         self.hyperparameter_tuning_config = (hyperparameter_tuning_config,)
         self.hyperparameters = hyperparameters
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
@@ -53,14 +52,13 @@ class Result(AbstractEstimatorResult):
         data = data.reset_index(drop=True)
         res = copy.deepcopy(self)
         res.data = data
-
+        res.metrics = [m for m in self.metrics if m.column_name in metrics]
         return res
 
-    @log_usage(UsageEvent.DLE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',
-        metric: Union[str, Metric] = None,
+        metric: Optional[Union[str, Metric]] = None,
         plot_reference: bool = False,
         *args,
         **kwargs,
@@ -115,7 +113,7 @@ class Result(AbstractEstimatorResult):
             metric_column_name='plottable',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             start_date_column_name='chunk_start_date' if is_time_based_x_axis else None,
             end_date_column_name='chunk_end_date' if is_time_based_x_axis else None,
             chunk_legend_labels=[

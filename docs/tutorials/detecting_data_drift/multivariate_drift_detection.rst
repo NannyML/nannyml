@@ -1,8 +1,8 @@
 .. _multivariate_drift_detection:
 
-=================================
-Multivariate Data Drift Detection
-=================================
+============================
+Multivariate Drift Detection
+============================
 
 Why Perform Multivariate Drift Detection
 ----------------------------------------

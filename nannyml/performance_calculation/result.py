@@ -16,7 +16,6 @@ from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.plots._step_plot import _step_plot
-from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractCalculatorResult):
@@ -48,23 +47,22 @@ class Result(AbstractCalculatorResult):
         self.reference_data = reference_data
         self.analysis_data = analysis_data
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
 
         if period != 'all':
-            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
 
         res = copy.deepcopy(self)
         res.data = data
-
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
         return res
 
-    @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',
@@ -184,7 +182,7 @@ class Result(AbstractCalculatorResult):
             metric_column_name=f'{metric.column_name}_value',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             drift_column_name=f'{metric.column_name}_alert',
             drift_legend_label='Degraded performance',
             hover_labels=['Chunk', metric.display_name, 'Target data'],

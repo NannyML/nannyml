@@ -35,7 +35,7 @@ class Chunk:
         end_datetime: Optional[datetime] = None,
         start_index: int = -1,
         end_index: int = -1,
-        period: str = None,
+        period: Optional[str] = None,
     ):
         """Creates a new chunk.
 
@@ -222,11 +222,11 @@ class ChunkerFactory:
     @classmethod
     def get_chunker(
         cls,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
-        timestamp_column_name: str = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
+        timestamp_column_name: Optional[str] = None,
     ) -> Chunker:
         if chunker is not None:
             return chunker

@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 from functools import partial
+from typing import Optional
 
 import matplotlib
 import numpy as np
@@ -366,8 +367,8 @@ def _joy_plot(
     feature_table,
     feature_column_name,
     chunk_column_name='chunk',
-    start_date_column_name: str = None,
-    end_date_column_name: str = None,
+    start_date_column_name: Optional[str] = None,
+    end_date_column_name: Optional[str] = None,
     chunk_index_column_name='chunk_index',
     chunk_type_column_name='period',
     drift_column_name='drift',

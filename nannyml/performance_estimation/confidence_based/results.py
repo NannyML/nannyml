@@ -15,7 +15,6 @@ from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric, MetricFactory
 from nannyml.plots._step_plot import _step_plot
-from nannyml.usage_logging import UsageEvent, log_usage
 
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
@@ -44,25 +43,24 @@ class Result(AbstractEstimatorResult):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
         if period != 'all':
-            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+            data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
         res = copy.deepcopy(self)
         res.data = data
-
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
         return res
 
-    @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',
-        metric: Union[str, Metric] = None,
+        metric: Optional[Union[str, Metric]] = None,
         plot_reference: bool = False,
         *args,
         **kwargs,
@@ -198,7 +196,7 @@ class Result(AbstractEstimatorResult):
             metric_column_name='plottable',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             chunk_legend_labels=[
                 f'Reference period (realized {metric.display_name})',
                 f'Analysis period (estimated {metric.display_name})',

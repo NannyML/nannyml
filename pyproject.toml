@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "nannyml"
-version = "0.6.3"
+version = "0.7.0"
 homepage = "https://github.com/nannyml/nannyml"
 description = "NannyML, Your library for monitoring model performance."
 authors = ["Niels Nuyttens <niels@nannyml.com>"]
@@ -63,7 +63,7 @@ isort = "^5.8.0"
 flake8 = "^3.9.2"
 flake8-docstrings = "^1.6.0"
 flake8-typing-imports = "^1.12.0"
-mypy = "^0.900"
+mypy = "^0.990"
 pytest = "^6.2.4"
 pytest-cov = "^2.12.0"
 pytest-mock = "^3.7.0"
@@ -79,7 +79,7 @@ sphinx = "^4.5.0"
 sphinx-rtd-theme = "^1.0.0"
 sphinx-toggleprompt = "^0.2.0"
 sphinx-copybutton = "^0.5.0"
-typing-extensions = "^4.3.0"
+typing-extensions = "^4.4.0"
 sphinx-toolbox = "^3.2.0"
 pytest-lazy-fixture = "^0.6.3"
 

@@ -18,7 +18,6 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
-from nannyml.usage_logging import UsageEvent, log_usage
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
@@ -34,12 +33,12 @@ class PerformanceCalculator(AbstractCalculator):
         y_true: str,
         y_pred: str,
         problem_type: Union[str, ProblemType],
-        y_pred_proba: ModelOutputsType = None,
-        timestamp_column_name: str = None,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
+        y_pred_proba: Optional[ModelOutputsType] = None,
+        timestamp_column_name: Optional[str] = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
     ):
         """Creates a new performance calculator.
 
@@ -123,7 +122,6 @@ class PerformanceCalculator(AbstractCalculator):
     def __str__(self):
         return f"PerformanceCalculator[metrics={str(self.metrics)}]"
 
-    @log_usage(UsageEvent.PERFORMANCE_CALC_FIT, metadata_from_self=['metrics', 'problem_type'])
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
         if reference_data.empty:
@@ -143,12 +141,11 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.previous_reference_data = reference_data
         self.result = self._calculate(reference_data)
-        self.result.data[('chunk', 'period')] = 'reference'  # type: ignore
-        self.result.reference_data = reference_data.copy()  # type: ignore
+        self.result.data[('chunk', 'period')] = 'reference'
+        self.result.reference_data = reference_data.copy()
 
         return self
 
-    @log_usage(UsageEvent.PERFORMANCE_CALC_RUN, metadata_from_self=['metrics', 'problem_type'])
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:

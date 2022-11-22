@@ -161,7 +161,7 @@ class Metric(abc.ABC):
         return self.display_name == other.display_name and self.column_name == other.column_name
 
     def _common_cleaning(
-        self, data: pd.DataFrame, y_pred_proba_column_name: str = None
+        self, data: pd.DataFrame, y_pred_proba_column_name: Optional[str] = None
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if y_pred_proba_column_name is None:
             if not isinstance(self.y_pred_proba, str):

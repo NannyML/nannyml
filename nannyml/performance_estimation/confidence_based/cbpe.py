@@ -5,7 +5,7 @@
 """Implementation of the CBPE estimator."""
 import copy
 from abc import abstractmethod
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from pandas import MultiIndex
@@ -45,13 +45,13 @@ class CBPE(AbstractEstimator):
         y_pred_proba: ModelOutputsType,
         y_true: str,
         problem_type: Union[str, ProblemType],
-        timestamp_column_name: str = None,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
-        calibration: str = None,
-        calibrator: Calibrator = None,
+        timestamp_column_name: Optional[str] = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
+        calibration: Optional[str] = None,
+        calibrator: Optional[Calibrator] = None,
     ):
         """Initializes a new CBPE performance estimator.
 

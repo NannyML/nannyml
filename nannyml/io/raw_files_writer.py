@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException
@@ -19,9 +19,9 @@ class RawFilesWriter(FileWriter):
         self,
         path: str,
         format: str,
-        write_args: Dict[str, Any] = None,
-        credentials: Dict[str, Any] = None,
-        fs_args: Dict[str, Any] = None,
+        write_args: Optional[Dict[str, Any]] = None,
+        credentials: Optional[Dict[str, Any]] = None,
+        fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
         Creates a new RawFilesWriter instance

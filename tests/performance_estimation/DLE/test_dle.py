@@ -2,9 +2,10 @@
 #
 #  License: Apache Software License 2.0
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
+import plotly.graph_objects
 import pytest
 
 from nannyml._typing import ProblemType
@@ -15,12 +16,20 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 from nannyml.performance_estimation.direct_loss_estimation.metrics import MetricFactory
 
 
+class FakeEstimatorResult(AbstractEstimatorResult):
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+        return self
+
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+        return plotly.graph_objects.Figure()
+
+
 class FakeEstimator(AbstractEstimator):
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
-        pass
+        return self
 
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
-        pass
+        return FakeEstimatorResult(pd.DataFrame())
 
 
 @pytest.fixture(scope='module')

@@ -4,7 +4,7 @@
 
 import typing
 from enum import Enum
-from typing import Dict, List, Union  # noqa: TYP001
+from typing import Dict, List, Optional, Union  # noqa: TYP001
 
 if typing.TYPE_CHECKING:
     from typing_extensions import Protocol
@@ -21,7 +21,9 @@ class Result(Protocol):
 
     data: pd.DataFrame
 
-    def filter(self, period: str = None, metrics: List[str] = None, *args, **kwargs) -> pd.DataFrame:
+    def filter(
+        self, period: Optional[str] = None, metrics: Optional[List[str]] = None, *args, **kwargs
+    ) -> pd.DataFrame:
         """"""
 
 

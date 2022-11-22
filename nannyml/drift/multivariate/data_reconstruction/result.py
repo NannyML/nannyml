@@ -14,7 +14,6 @@ import plotly.graph_objects as go
 from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._step_plot import _step_plot
-from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractCalculatorResult):
@@ -36,7 +35,7 @@ class Result(AbstractCalculatorResult):
         self.timestamp_column_name = timestamp_column_name
         self.metrics = ['reconstruction_error']
 
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
             metrics = self.metrics
 
@@ -53,7 +52,6 @@ class Result(AbstractCalculatorResult):
 
         return result
 
-    @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
@@ -124,7 +122,7 @@ class Result(AbstractCalculatorResult):
             metric_column_name='reconstruction_error_value',
             chunk_column_name='chunk_key',
             chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_chunk_index',
+            chunk_index_column_name='chunk_index',
             drift_column_name='reconstruction_error_alert',
             sampling_error_column_name='reconstruction_error_sampling_error',
             lower_threshold_column_name='reconstruction_error_lower_threshold',

@@ -46,10 +46,6 @@ class AbstractCalculatorResult(ABC):
         """
         self.data = results_data.copy(deep=True)
 
-    # def __getattr__(self, attribute):
-    #     """Redirect function calls directly to the inner DataFrame."""
-    #     return getattr(self.data, attribute)
-
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
@@ -59,7 +55,7 @@ class AbstractCalculatorResult(ABC):
         return len(self.data)
 
     @abstractmethod
-    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Plots calculation results."""
         raise NotImplementedError
 
@@ -67,12 +63,17 @@ class AbstractCalculatorResult(ABC):
         if multilevel:
             return self.data
         else:
-            column_names = ['_'.join(col) for col in self.data.columns.values]
+            column_names = [
+                '_'.join(col).replace('chunk_chunk_chunk', 'chunk').replace('chunk_chunk', 'chunk')
+                for col in self.data.columns.values
+            ]
             single_level_data = self.data.copy(deep=True)
             single_level_data.columns = column_names
             return single_level_data
 
-    def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
+    def filter(
+        self, period: str = 'analysis', metrics: Optional[List[str]] = None, *args, **kwargs
+    ) -> AbstractCalculatorResult:
         """Returns result metric data."""
         try:
             return self._filter(period, metrics, *args, **kwargs)
@@ -80,7 +81,7 @@ class AbstractCalculatorResult(ABC):
             raise CalculatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractCalculatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
         raise NotImplementedError
 
 
@@ -89,10 +90,10 @@ class AbstractCalculator(ABC):
 
     def __init__(
         self,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
         timestamp_column_name: Optional[str] = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
@@ -188,12 +189,17 @@ class AbstractEstimatorResult(ABC):
         if multilevel:
             return self.data
         else:
-            column_names = ['_'.join(col) for col in self.data.columns.values]
+            column_names = [
+                '_'.join(col).replace('chunk_chunk_chunk', 'chunk').replace('chunk_chunk', 'chunk')
+                for col in self.data.columns.values
+            ]
             single_level_data = self.data.copy(deep=True)
             single_level_data.columns = column_names
             return single_level_data
 
-    def filter(self, period: str = 'analysis', metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def filter(
+        self, period: str = 'analysis', metrics: Optional[List[str]] = None, *args, **kwargs
+    ) -> AbstractEstimatorResult:
         """Returns result metric data."""
         try:
             return self._filter(period, metrics, *args, **kwargs)
@@ -201,7 +207,7 @@ class AbstractEstimatorResult(ABC):
             raise EstimatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: List[str] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
         raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
@@ -214,11 +220,11 @@ class AbstractEstimator(ABC):
 
     def __init__(
         self,
-        chunk_size: int = None,
-        chunk_number: int = None,
-        chunk_period: str = None,
-        chunker: Chunker = None,
-        timestamp_column_name: str = None,
+        chunk_size: Optional[int] = None,
+        chunk_number: Optional[int] = None,
+        chunk_period: Optional[str] = None,
+        chunker: Optional[Chunker] = None,
+        timestamp_column_name: Optional[str] = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
 

@@ -17,11 +17,27 @@ It can also monitor performance once target data is available.
 Installing NannyML
 ------------------
 
+NannyML depends on [LightGBM](https://github.com/microsoft/LightGBM). This might require you to set install additional
+OS-specific binaries. You can follow the [official installation guide](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html).
+
 From the shell of your python environment type:
 
 .. code-block:: bash
 
     $ pip install nannyml
+
+or
+
+.. code-block:: bash
+
+    $ conda install -c conda-forge nannyml
+
+
+or
+
+.. code-block:: bash
+
+    $ docker -v /local/config/dir/:/config/ run nannyml/nannyml nml run
 
 
 --------------------------

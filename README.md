@@ -69,7 +69,7 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                                                                                    | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                                                                                   | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                                                                             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.6.3]**                                                                                          | New features, bug fixes.                                                               |
+| 💎 **[New in v0.7.0]**                                                                                          | New features, bug fixes.                                                               |
 | 🧑‍💻 **[Contribute]**                                                                                          | How to contribute to the NannyML project and codebase.                                 |
 | <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
@@ -77,7 +77,7 @@ Allowing you to have the following benefits:
 [Performance Estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
 [Key Concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
 [Technical Reference]:https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
-[New in v0.6.3]: https://github.com/NannyML/nannyml/releases/latest/
+[New in v0.7.0]: https://github.com/NannyML/nannyml/releases/latest/
 [Real World Example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
@@ -121,6 +121,10 @@ Because NannyML can estimate performance, it is possible to weed out data drift 
 
 ### Install NannyML
 
+NannyML depends on [LightGBM](https://github.com/microsoft/LightGBM). This might require you to set install additional
+OS-specific binaries. You can follow the [official installation guide](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html).
+
+
 From PyPI:
 
 ```bash
@@ -161,7 +165,6 @@ display(analysis.head())
 # Choose a chunker or set a chunk size
 chunk_size = 5000
 
-# Estimate model performance
 # initialize, specify required data columns, fit estimator and estimate
 estimator = nml.CBPE(
     y_pred_proba='y_pred_proba',
@@ -169,7 +172,7 @@ estimator = nml.CBPE(
     y_true='work_home_actual',
     metrics=['roc_auc'],
     chunk_size=chunk_size,
-    problem_type='classification_binary'
+    problem_type='classification_binary',
 )
 estimator = estimator.fit(reference)
 estimated_performance = estimator.estimate(analysis)
@@ -181,48 +184,46 @@ figure.show()
 # Define feature columns
 feature_column_names = [
     col for col in reference.columns if col not in [
-        'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+        'timestamp', 'period', 'work_home_actual', 'identifier'
     ]]
-
 # Let's initialize the object that will perform the Univariate Drift calculations
-univariate_calculator = nml.UnivariateStatisticalDriftCalculator(
-    feature_column_names=feature_column_names,
-    timestamp_column_name='timestamp',
-    chunk_size=chunk_size
+univariate_calculator = nml.UnivariateDriftCalculator(
+    column_names=feature_column_names,
+    chunk_size=chunk_size,
+    continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+    categorical_methods=['chi2'],
 )
 univariate_calculator = univariate_calculator.fit(reference)
 univariate_results = univariate_calculator.calculate(analysis)
-# Plot drift results for all model inputs
-for feature in univariate_calculator.feature_column_names:
+# Plot drift results for all continuous columns
+for column_name in univariate_calculator.continuous_column_names:
     figure = univariate_results.plot(
-        kind='feature_drift',
-        metric='statistic',
-        feature_column_name=feature,
+        kind='drift',
+        method='jensen_shannon',
+        column_name=column_name,
         plot_reference=True
     )
     figure.show()
 
-# Rank features based on number of alerts
+# Plot drift results for all categorical columns
+for column_name in univariate_calculator.categorical_column_names:
+    figure = univariate_results.plot(
+        kind='drift',
+        method='chi2',
+        column_name=column_name,
+        plot_reference=True
+    )
+    figure.show()
+
 ranker = nml.Ranker.by('alert_count')
-ranked_features = ranker.rank(univariate_results, only_drifting=False)
+ranked_features = ranker.rank(univariate_results, only_drifting = False)
 display(ranked_features)
 
-calc = nml.StatisticalOutputDriftCalculator(
-    y_pred='y_pred',
-    y_pred_proba='y_pred_proba',
-    timestamp_column_name='timestamp',
-    problem_type='classification_binary',
-)
-calc.fit(reference)
-results = calc.calculate(analysis)
-
-figure = results.plot(kind='prediction_drift', plot_reference=True)
-figure.show()
-
-# Let's initialize the object that will detect Multivariate Drift
-rcerror_calculator = nml.DataReconstructionDriftCalculator(column_names=feature_column_names,
-                                                           timestamp_column_name='timestamp',
-                                                           chunk_size=chunk_size).fit(reference_data=reference)
+# Let's initialize the object that will perform Data Reconstruction with PCA
+rcerror_calculator = nml.DataReconstructionDriftCalculator(
+    column_names=feature_column_names,
+    chunk_size=chunk_size
+).fit(reference_data=reference)
 # let's see Reconstruction error statistics for all available data
 rcerror_results = rcerror_calculator.calculate(analysis)
 figure = rcerror_results.plot(kind='drift', plot_reference=True)
@@ -237,8 +238,6 @@ figure.show()
 * Drift detection
   * [Multivariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/multivariate_drift_detection.html)
   - [Univariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/univariate_drift_detection.html)
-  - [Model output drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/drift_detection_for_model_outputs.html)
-  - [Target distribution drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/drift_detection_for_model_targets.html)
 
 # 🦸 Contributing and Community
 
