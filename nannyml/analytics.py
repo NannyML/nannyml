@@ -6,7 +6,7 @@ import time
 import uuid
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import analytics
 
@@ -43,7 +43,7 @@ class UsageTracker(ABC):
     def _logger(self):
         return logging.getLogger(__name__)
 
-    def track(self, usage_event: UsageEvent, metadata: Dict[str, Any] = None):
+    def track(self, usage_event: UsageEvent, metadata: Optional[Dict[str, Any]] = None):
         if "NML_DISABLE_USER_ANALYTICS" in os.environ:
             self._logger.debug(
                 "found NML_DISABLE_USER_ANALYTICS key in environment variables. "
@@ -66,7 +66,7 @@ class SegmentUsageTracker(UsageTracker):
 
     write_key: str
 
-    def __init__(self, write_key: str = None, user_metadata: Dict[str, Any] = None):
+    def __init__(self, write_key: Optional[str] = None, user_metadata: Optional[Dict[str, Any]] = None):
         if write_key is not None:
             self.write_key = write_key
         else:
@@ -90,7 +90,9 @@ class SegmentUsageTracker(UsageTracker):
 DEFAULT_USAGE_TRACKER = SegmentUsageTracker()
 
 
-def track(usage_event: UsageEvent, metadata: Dict[str, Any] = None, tracker: UsageTracker = DEFAULT_USAGE_TRACKER):
+def track(
+    usage_event: UsageEvent, metadata: Optional[Dict[str, Any]] = None, tracker: UsageTracker = DEFAULT_USAGE_TRACKER
+):
     def tracking_decorator(func):
         @functools.wraps(func)
         def tracking_wrapper(*args, **kwargs):

@@ -13,7 +13,7 @@ import uuid
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import analytics as segment_analytics
 from dotenv import load_dotenv
@@ -72,7 +72,7 @@ class UsageLogger(ABC):
     def _logger(self):
         return logging.getLogger(__name__)
 
-    def log(self, usage_event: UsageEvent, metadata: Dict[str, Any] = None):
+    def log(self, usage_event: UsageEvent, metadata: Optional[Dict[str, Any]] = None):
         if "NML_DISABLE_USAGE_LOGGING" in os.environ:
             self._logger.debug(
                 "found NML_DISABLE_USAGE_LOGGING key in environment variables. "
@@ -94,7 +94,7 @@ class SegmentUsageTracker(UsageLogger):
 
     write_key: str
 
-    def __init__(self, write_key: str = None, machine_metadata: Dict[str, Any] = None):
+    def __init__(self, write_key: Optional[str] = None, machine_metadata: Optional[Dict[str, Any]] = None):
         if write_key is not None:
             self.write_key = write_key
         else:
@@ -124,9 +124,9 @@ def get_logger() -> UsageLogger:
 
 def log_usage(
     usage_event: UsageEvent,
-    metadata: Dict[str, Any] = None,
-    metadata_from_self: List[str] = None,
-    metadata_from_kwargs: List[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    metadata_from_self: Optional[List[str]] = None,
+    metadata_from_kwargs: Optional[List[str]] = None,
     logger: UsageLogger = DEFAULT_USAGE_LOGGER,
 ):
     def logging_decorator(func):
