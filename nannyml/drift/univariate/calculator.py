@@ -69,7 +69,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         ...   column_names=column_names,
         ...   timestamp_column_name='timestamp',
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
-        ...   categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm'],
+        ...   categorical_methods=['chi2', 'jensen_shannon', 'l_infinity'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> res = res.filter(period='analysis')

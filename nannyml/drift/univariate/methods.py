@@ -150,7 +150,9 @@ class MethodFactory:
 
         if key not in cls.registry:
             raise InvalidArgumentsException(
-                f"unknown method key '{key}' given. " "Should be one of ['jensen_shannon']."
+                f"unknown method key '{key}' given. "
+                "Should be one of ['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein', 'chi2', "
+                "'jensen_shannon', 'l_infinity']."
             )
 
         if feature_type not in cls.registry[key]:
@@ -371,8 +373,8 @@ class Chi2Statistic(Method):
         return alert
 
 
-@MethodFactory.register(key='infinity_norm', feature_type=FeatureType.CATEGORICAL)
-class InfinityNormDistance(Method):
+@MethodFactory.register(key='l_infinity', feature_type=FeatureType.CATEGORICAL)
+class LInfinityDistance(Method):
     """Calculates the L-Infinity Distance.
 
     An alert will be raised if `distance > 0.1`.
@@ -380,8 +382,8 @@ class InfinityNormDistance(Method):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(
-            display_name='Infinity Norm',
-            column_name='infinity_norm',
+            display_name='L-Infinity distance',
+            column_name='l_infinity',
             lower_threshold_limit=0,
             **kwargs,
         )
@@ -418,7 +420,7 @@ class InfinityNormDistance(Method):
         )
 
 
-@MethodFactory.register(key='wasserstein_distance', feature_type=FeatureType.CONTINUOUS)
+@MethodFactory.register(key='wasserstein', feature_type=FeatureType.CONTINUOUS)
 class WassersteinDistance(Method):
     """Calculates the Wasserstein Distance between two distributions.
 
@@ -428,7 +430,7 @@ class WassersteinDistance(Method):
     def __init__(self, **kwargs) -> None:
         super().__init__(
             display_name='Wasserstein distance',
-            column_name='wasserstein_distance',
+            column_name='wasserstein',
             **kwargs,
         )
 
@@ -441,6 +443,10 @@ class WassersteinDistance(Method):
         if self.chunker is None:
             self.upper_threshold = 1
         else:
+            # TODO: review abstract class => chunker needs timestamp column
+            # Hotfixing by removing/re-adding it
+            chunker_timestamp_col = self.chunker.timestamp_column_name
+            self.chunker.timestamp_column_name = None
             ref_chunk_distances = [
                 self._calculate(
                     chunk.data.values.reshape(
@@ -449,6 +455,7 @@ class WassersteinDistance(Method):
                 )
                 for chunk in self.chunker.split(pd.DataFrame(reference_data))
             ]
+            self.chunker.timestamp_column_name = chunker_timestamp_col
             self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
 
         self.lower_threshold = 0

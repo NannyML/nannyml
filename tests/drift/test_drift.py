@@ -477,18 +477,20 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
         ),
         (
             [],
-            ['infinity_norm'],
+            ['l_infinity'],
         ),
         (
             ['kolmogorov_smirnov'],
             [],
         ),
+        (['wasserstein'], []),
     ],
     ids=[
         'feature_drift_with_ks_and_chi2',
         'feature_drift_with_js_and_js',
-        'feature_drift_with_none_and_infinitynorm',
+        'feature_drift_with_none_and_l_infinity',
         'feature_drift_with_ks_and_none',
+        'feature_drift_with_wasserstein_and_none',
     ],
 )
 def test_calculator_with_diff_methods_raise_no_exceptions(sample_drift_data, cont_methods, cat_methods):  # noqa: D103

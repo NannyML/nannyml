@@ -44,7 +44,7 @@ We need to instantiate it with appropriate parameters:
 * The names of the columns to be evaluated.
 * A list of methods to use on continuous columns. You can chose from :ref:`kolmogorov_smirnov<univ_cont_method_ks>`,
   :ref:`jensen_shannon<univariate-drift-detection-cont-jensen-shannon>` and :ref:`wasserstein<univariate-drift-detection-cont-wasserstein>`.
-* A list of methods to use on categorical columns. You can chose from :ref:`chi2<univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>` and :ref:`infinity_norm<univ_cat_method_l8>`.
+* A list of methods to use on categorical columns. You can chose from :ref:`chi2<univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>` and :ref:`l_infinity<univ_cat_method_l8>`.
 * Optionally, the name of the column containing the observation timestamps.
 * Optionally, a chunking approach or a predifined chunker. If neither is provided, the default chunker creating 10 chunks will be used.
 
@@ -154,6 +154,14 @@ the code below:
 .. image:: /_static/drift-guide-stacked-wfh_prev_workday.svg
 
 .. image:: /_static/drift-guide-stacked-workday.svg
+
+The drift calculator operates on any column. This not only limits it to model features, but allows it to work
+on model scores and predictions as well. You can see the drift plots for the model scores (`y_pred_proba`) and the model
+predictions (`y_pred`) below.
+
+.. image:: /_static/drift-guide-y_pred_proba.svg
+
+.. image:: /_static/drift-guide-y_pred.svg
 
 NannyML can also rank features according to how many alerts they have had for all methods.
 By setting the ``only_drifting`` parameter you can view the ranking of either all model inputs, or just the drifting ones.

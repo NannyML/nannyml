@@ -105,7 +105,7 @@ class Result(AbstractCalculatorResult):
             prediction or target (if provided).
         method: str
             The name of the metric to plot. Allowed values are ``jensen_shannon``, ``kolmogorov_smirnov``,
-            ``chi2``, ``infinity_norm`` and ``wasserstein``.
+            ``chi2``, ``l_infinity`` and ``wasserstein``.
         plot_reference: bool, default=False
             Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
@@ -126,7 +126,7 @@ class Result(AbstractCalculatorResult):
         ...   column_names=column_names,
         ...   timestamp_column_name='timestamp',
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
-        ...   categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm'],
+        ...   categorical_methods=['chi2', 'jensen_shannon', 'l_infinity'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> res = res.filter(period='analysis')

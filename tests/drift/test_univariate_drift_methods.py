@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from nannyml.drift.univariate.methods import InfinityNormDistance, JensenShannonDistance, WassersteinDistance
+from nannyml.drift.univariate.methods import JensenShannonDistance, LInfinityDistance, WassersteinDistance
 
 # ************* JS Tests *************
 
@@ -46,28 +46,28 @@ def test_js_for_categorical():
     assert np.round(distance, 2) == 0.5
 
 
-def test_infinity_norm_for_new_category():
+def test_l_infinity_for_new_category():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
     analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c', 'd'])
-    infnorm = InfinityNormDistance()
+    infnorm = LInfinityDistance()
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.14
 
 
-def test_infinity_norm_for_no_change():
+def test_l_infinity_for_no_change():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
     analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
-    infnorm = InfinityNormDistance()
+    infnorm = LInfinityDistance()
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.0
 
 
-def test_infinity_norm_for_total_change():
+def test_l_infinity_for_total_change():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
     analysis = pd.Series(['b', 'b', 'b', 'b', 'b'])
-    infnorm = InfinityNormDistance()
+    infnorm = LInfinityDistance()
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.67
