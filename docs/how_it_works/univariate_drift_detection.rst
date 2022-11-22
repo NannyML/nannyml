@@ -119,17 +119,20 @@ Methods for Categorical Variables
 Chi-squared Test
 ................
 
-Statistical hypothesis test of independence for categorical data [4]_. Test statistic is a sum of terms calculated
+The chi-squared test is a statistical hypothesis test of independence for categorical data [4]_. Test statistic is a sum of terms calculated
 for each category. The value of the term for a single category is equal to the
 squared difference between expected (reference) frequency and observed (analysis) frequency divided by expected
-(reference) frequency [4]_. In other words, it is relative change of frequency for a category (squared).This makes it
+(reference) frequency [4]_. In other words, it is the relative change of frequency for a category (squared).This makes it
 sensitive to all changes in the distribution, specifically to the ones in low-frequency categories, as the
 expected frequency is in the denominator. It is therefore not recommended for categorical variables with many
 low-frequency classes or high cardinality (large number
 of distinct values) unless the sample size is really large. Otherwise, in both cases false-positive alarms are expected.
 Additionally, the statistic is non-negative and not limited - this makes it sometimes
-difficult to interpret. Still it is a common choice amongst practitioners as it provides pvalue together with the
+difficult to interpret. Still it is a common choice amongst practitioners as it provides p-value together with the
 statistic that helps to better evaluate its result.
+
+Below is a visualization of the chi-squared statistic for a categorical variable with two categories, a and b. The red bars represent the difference between the observed and expected frequencies.
+As mentioned above, in the chi-squared statistic formula, the difference is squared and divided by the expected frequency and the resulting value is then summed over all categories.
 
 .. image:: ../_static/how-it-works-chi2.svg
     :width: 1400pt
