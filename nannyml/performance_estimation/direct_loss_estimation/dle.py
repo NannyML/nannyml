@@ -16,6 +16,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation import DEFAULT_METRICS
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric, MetricFactory
 from nannyml.performance_estimation.direct_loss_estimation.result import Result
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class DLE(AbstractEstimator):
@@ -210,6 +211,7 @@ class DLE(AbstractEstimator):
             f"metrics={[str(m) for m in self.metrics]}]"
         )
 
+    @log_usage(UsageEvent.DLE_ESTIMATOR_FIT, metadata_from_self=['metrics'])
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
@@ -234,6 +236,7 @@ class DLE(AbstractEstimator):
 
         return self
 
+    @log_usage(UsageEvent.DLE_ESTIMATOR_RUN, metadata_from_self=['metrics'])
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')

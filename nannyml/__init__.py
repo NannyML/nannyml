@@ -50,3 +50,4 @@ from .exceptions import ChunkerException, InvalidArgumentsException, MissingMeta
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, DLE
+from .usage_logging import UsageEvent, disable_usage_logging, enable_usage_logging, log_usage

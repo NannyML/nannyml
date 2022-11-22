@@ -10,7 +10,7 @@ their data best or the one they are familiar with. Additionally more than one me
 gain different perspectives on how the distribution of your data is changing.
 
 This page explains which aspects of a distribution change each drift detection method is able to capture,
-what are the important implementation details and in which situations a specific method can be a good choice. 
+what are the important implementation details and in which situations a specific method can be a good choice.
 
 We are grouping the drift detection methods presented according to whether they apply to categorical (discrete) or
 continuous features. When a method is used for both it is mentioned in both places because of implementation differences
@@ -79,7 +79,7 @@ see that the resulting Jensen-Shannon distance is able to differentiate the two 
 
 The implementation splits a continuous feature into bins, calculates the relative frequency
 for each bin from reference and analyzed data and calculates the
-resulting Jensen-Shannon Distance. The binning is done using `Doane's formula`_ from numpy. 
+resulting Jensen-Shannon Distance. The binning is done using `Doane's formula`_ from numpy.
 If a continuous feature has relatively low amount of unique values, meaning that
 unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
 
@@ -101,8 +101,8 @@ distance is the integral of the absolute value of the difference between the two
 .. image:: ../_static/how-it-works-emd.svg
     :width: 1400pt
 
-Mathematically we can express this as follows: For the :math:`i^\text{th}` feature of a dataset :math:`X=(X_1,...,X_i,...,X_n)`, let :math:`\hat{F}_{ref}` and :math:`\hat{F}_{ana}` represent the 
-empirical CDFs of the reference and analysis samples respectively. Further, let :math:`X_i^{ref}` and :math:`X_i^{ana}` represent the reference and analysis samples. Then the 
+Mathematically we can express this as follows: For the :math:`i^\text{th}` feature of a dataset :math:`X=(X_1,...,X_i,...,X_n)`, let :math:`\hat{F}_{ref}` and :math:`\hat{F}_{ana}` represent the
+empirical CDFs of the reference and analysis samples respectively. Further, let :math:`X_i^{ref}` and :math:`X_i^{ana}` represent the reference and analysis samples. Then the
 Wasserstein distance between the two distributions is given by:
 
 .. math::
@@ -119,7 +119,7 @@ Methods for Categorical Variables
 Chi-squared Test
 ................
 
-The `Chi-squared test`_ is a statistical hypothesis test of independence for categorical data. 
+The `Chi-squared test`_ is a statistical hypothesis test of independence for categorical data.
 The test outputs the test statistic, sometimes called chi2 statistic, and an associated p-value.
 
 We can understand the Chi-squared test in the following way. We create a `contingency table`_ from the
@@ -143,7 +143,7 @@ Despite that, the Chi-squared test is a common choice amongst practitioners as i
 statistic that helps to better evaluate its result.
 
 On the image below there is a visualization of the chi-squared statistic for a categorical variable with two
-categories, a and b. You can see the expected values are calculated from both the reference and analysis data. 
+categories, a and b. You can see the expected values are calculated from both the reference and analysis data.
 The red bars represent the difference between the observed and expected frequencies.
 As mentioned above, in the chi-squared statistic formula,
 the difference is squared and divided by the expected frequency and the resulting value is then summed over all categories
