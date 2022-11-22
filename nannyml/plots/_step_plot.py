@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.plots.components.colors import Colors
+from nannyml.plots.colors import Colors
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 

@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.components.colors import Colors
-from nannyml.plots.components.util import is_time_based_x_axis
+from nannyml.plots.colors import Colors
+from nannyml.plots.util import is_time_based_x_axis
 
 
 class Hover:

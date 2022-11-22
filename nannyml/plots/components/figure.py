@@ -9,11 +9,11 @@ import pandas as pd
 import plotly.graph_objs as go
 
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.components.colors import Colors
+from nannyml.plots.colors import Colors
 from nannyml.plots.components.hover import Hover
 from nannyml.plots.components.step_plot import alert as step_plot_alert
 from nannyml.plots.components.step_plot import metric as step_plot_metric
-from nannyml.plots.components.util import add_artificial_endpoint, check_and_convert, is_time_based_x_axis
+from nannyml.plots.util import add_artificial_endpoint, check_and_convert, is_time_based_x_axis
 
 
 class Figure(go.Figure):

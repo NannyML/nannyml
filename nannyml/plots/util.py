@@ -1,4 +1,8 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  #
+#  License: Apache Software License 2.0
+
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
 import copy
@@ -13,7 +17,17 @@ from nannyml.exceptions import InvalidArgumentsException
 def is_time_based_x_axis(
     start_dates: Optional[Union[np.ndarray, pd.Series]], end_dates: Optional[Union[np.ndarray, pd.Series]]
 ) -> bool:
-    return start_dates is not None and end_dates is not None
+    if start_dates is None:
+        return False
+
+    all_start_none = np.all(start_dates is None) if isinstance(start_dates, np.ndarray) else start_dates.isnull().all()
+
+    if end_dates is None:
+        return False
+
+    all_end_none = np.all(end_dates is None) if isinstance(end_dates, np.ndarray) else end_dates.isnull().all()
+
+    return not all_start_none and not all_end_none
 
 
 def add_artificial_endpoint(
@@ -66,7 +80,7 @@ def check_and_convert(
                 _d = _d.to_numpy()
             _data.append(_d)
 
-    if chunk_start_dates is not None and chunk_end_dates is not None:
+    if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
         _start_dates = copy.deepcopy(chunk_start_dates)
         if isinstance(_start_dates, pd.Series):
             _start_dates = _start_dates.to_numpy(dtype=object)

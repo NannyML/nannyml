@@ -12,9 +12,9 @@ from scipy.integrate import cumulative_trapezoid
 from statsmodels import api as sm
 
 from nannyml.chunk import Chunker
-from nannyml.plots.components.colors import Colors
+from nannyml.plots.colors import Colors
 from nannyml.plots.components.hover import Hover, render_x_coordinate
-from nannyml.plots.components.util import ensure_numpy, is_time_based_x_axis
+from nannyml.plots.util import ensure_numpy, is_time_based_x_axis
 
 
 def _get_kde(array, cut=3, clip=(-np.inf, np.inf)):

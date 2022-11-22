@@ -9,7 +9,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import seaborn as sns
 
-from nannyml.plots.components.colors import Colors
+from nannyml.plots.colors import Colors
 
 
 def _create_value_counts_table(

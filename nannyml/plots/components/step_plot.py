@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 from plotly.graph_objects import Figure
 
-from nannyml.plots.components.colors import Colors
+from nannyml.plots.colors import Colors
 from nannyml.plots.components.hover import Hover
-from nannyml.plots.components.util import add_artificial_endpoint, check_and_convert, pairwise
+from nannyml.plots.util import add_artificial_endpoint, check_and_convert, is_time_based_x_axis, pairwise
 
 
 def metric(
@@ -38,6 +38,7 @@ def metric(
         figure.update_xaxes(
             linecolor=Colors.INDIGO_PERSIAN,
             showgrid=False,
+            showticklabels=is_time_based_x_axis(start_dates, end_dates),
             mirror=True,
             zeroline=False,
             matches='x',
@@ -213,6 +214,8 @@ def _add_alert_areas(
 
     if subplot_args is not None:
         kwargs.update(subplot_args)
+
+    del kwargs['showlegend']
 
     for x0, x1 in pairwise(x[alert_indices]):
         figure.add_vrect(x0=x0, x1=x1, fillcolor=color, opacity=alpha, layer='below', line_width=0, **kwargs)

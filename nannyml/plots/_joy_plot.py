@@ -12,7 +12,7 @@ from plotly import graph_objects as go
 from scipy.integrate import cumulative_trapezoid
 from statsmodels import api as sm
 
-from nannyml.plots.components.colors import Colors
+from nannyml.plots.colors import Colors
 
 
 def _get_kde(array, cut=3, clip=(-np.inf, np.inf)):

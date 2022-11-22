@@ -11,9 +11,9 @@ from plotly.graph_objects import Bar, Figure
 
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.components.colors import Colors
+from nannyml.plots.colors import Colors
 from nannyml.plots.components.hover import Hover, render_x_coordinate
-from nannyml.plots.components.util import ensure_numpy, is_time_based_x_axis
+from nannyml.plots.util import ensure_numpy, is_time_based_x_axis
 
 
 def calculate_value_counts(
