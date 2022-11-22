@@ -77,8 +77,8 @@ On the left we see the probability density functions of the samples and the resu
 at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
 see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
 
-NannyML works on data hence the actual implementation splits a continuous feature into
-bins, calculates the relative frequency for each bin from reference and analyzed data and calculates the
+The implementation splits a continuous feature into bins, calculates the relative frequency
+for each bin from reference and analyzed data and calculates the
 resulting Jensen-Shannon Distance. The binning is done using `Doane's formula`_ from numpy.
 If a continuous feature has relatively low amount of unique values, meaning that
 unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
