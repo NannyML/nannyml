@@ -122,16 +122,16 @@ Chi-squared Test
 The `Chi-squared test`_ is a statistical hypothesis test of independence for categorical data. 
 The test outputs the test statistic, sometimes called chi2 statistic, and an associated p-value.
 
-We can understand the Chi-squared test in the following way. We create a `contigency table`_ from the
+We can understand the Chi-squared test in the following way. We create a `contingency table`_ from the
 categories present in the data and the two samples we are comparing. The expected frequencies,
-denoted :math:`m_i`, are calculated from the marginal sums of the contigency table.
-The observed frequencies, denoted :math:`x_i`, are calcualted from the actual
-frequency entries of the contigency table. The test statistic is then given by the formula:
+denoted :math:`m_i`, are calculated from the marginal sums of the contingency table.
+The observed frequencies, denoted :math:`x_i`, are calculated from the actual
+frequency entries of the contingency table. The test statistic is then given by the formula:
 
 .. math::
     \chi^2 = \sum_{i=1}^k \frac{(x_i - m_i)^2}{m_i}
 
-where we sum over all entries in the contigency table.
+where we sum over all entries in the contingency table.
 
 This makes the chi-squared statistic sensitive to all changes in the distribution,
 especially to the ones in low-frequency categories, as the expected frequency is in the denominator.
@@ -220,4 +220,4 @@ We also see that the resulting L-Infinity distance is the relative frequency cha
 .. _`Kullback-Leibler divergence`: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
 .. _`Doane's formula`: https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. _`Wasserstein Distance`: https://en.wikipedia.org/wiki/Wasserstein_metric
-.. _`contigency table`: https://en.wikipedia.org/wiki/Contingency_table
+.. _`contingency table`: https://en.wikipedia.org/wiki/Contingency_table
