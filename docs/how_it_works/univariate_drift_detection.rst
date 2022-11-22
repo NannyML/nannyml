@@ -205,7 +205,6 @@ We see how the relative frequencies of three categories have changed between ref
 We also see that the resulting L-Infinity distance is the relative frequency change in category c.
 
 
-**References**
 
 .. _`Chi-squared test`: https://en.wikipedia.org/wiki/Chi-squared_test
 .. _`Kolmogorov-Smirnov Test`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
