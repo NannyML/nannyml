@@ -5,17 +5,23 @@ Univariate Drift Detection
 
 Univariate Drift Detection looks at each feature individually and checks whether its
 distribution has changed compared to reference data. There are many ways to compare two samples of data and measure
-their *similarity*. NannyML provides several methods so that the users can choose the one that suits
-their data best, the one they are familiar with or just use a couple or even all of them to look at
-distribution change from all the different perspectives. This page explains on which aspect of the distribution change
-each method is focused, what are the important implementation details and in which situations a specific method
-can be a good choice. Methods are grouped
-by the ones applicable to categorical (discrete) and continuous variables. Even if a method can be used for both,
-usually the implementation between categorical and continuous is different so it is mentioned in both places.
+their *similarity*. NannyML provides several drift detection methods so that the users can choose the one that suits
+their data best or the one they are familiar with. Additionally more than one method can be used together to
+gain different perspectives on how the distribution of your data is changing.
+
+This page explains which aspects of a distribution change each drift detection method is able to capture,
+what are the important implementation details and in which situations a specific method can be a good choice. 
+
+We are grouping the drift detection methods presented according to whether they apply to categorical (discrete) or
+continuous features. When a method is used for both it is mentioned in both places because of implementation differences
+between the two types of features.
+
+Lastly let's note that we are always performing two sample tests or comparisons. Probability density functions (PDF) and
+cumulative density functions (CDF) are always estimated from the data samples that are being compared.
 
 .. _univariate-drift-detection-continuous-methods:
 
-Methods for Continuous Variables
+Methods for Continuous Features
 --------------------------------
 
 .. _univ_cont_method_ks:
@@ -23,7 +29,7 @@ Methods for Continuous Variables
 Kolmogorov-Smirnov Test
 .......................
 
-The Kolmogorov-Smirnov test is a two-sample, non-parametric statistical test. It is used to test for the equality of
+The `Kolmogorov-Smirnov Test`_ is a two-sample, non-parametric statistical test. It is used to test for the equality of
 one-dimentional continuous distributions. The test outputs the test statistic, called D-statistic, and an associated p-value.
 The test statistic is the maximum distance of the cululative distribution functions (CDF) of the two samples.
 
@@ -41,25 +47,41 @@ distribution.
 Jensen-Shannon Distance
 ........................
 
-A square root of Jensen-Shannon Divergence [2]_ which measures similarity between two probability distributions. It
-is a distance metric in range 0-1. Unlike KS D-static that looks at maximum difference
-between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
+Jensen-Shannon Distance is a metric that tells us how different two probability distributions are.
+It is based on `Kullback-Leibler divergence`_ but is created in such a way that it is symmetric and ranges between 0 and 1.
+
+`Kullback-Leibler divergence`_ is defined as:
+
+.. math::
+    D_{KL} \left(P || Q \right) = \int_{-\infty}^{\infty}p(x)\ln \left( \frac{p(x)}{q(x)} \right) dx
+
+
+And `Jensen-Shannon Divergence`_ is defined as:
+
+.. math::
+    D_{JS} \left(P || Q \right) = \frac{1}{2} \left[ D_{KL} \left(P \Bigg|\Bigg| \frac{1}{2}(P+Q) \right) + D_{KL} \left(Q \Bigg|\Bigg| \frac{1}{2}(P+Q) \right)\right]
+
+and is a method of measuring the similarity between to probability distributions.
+
+Jensen-Shannon Distance is then defined as the squared root of Jensen-Shannon divrgence and is a proper distance metric.
+Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
 (PDF). This makes it
-more sensitive to changes that may be ignored by KS. See plot below to get the intuition:
+more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
 
 .. image:: ../_static/how-it-works-JS.svg
     :width: 1400pt
 
-For the same reason it is more prone to
-be affected by
-random sampling (noise) effects. When the samples of data are small it may give false-positive alarms.
+In the two rows we see two different changes been induced to the reference dataset, depicted with grey color.
+We can see from the cumulative density functions on the left that the resulting KS distance is the same.
+On the right we see the probability density functions of the samples and the resulting Jensen-Shannon Divergence
+at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
+see that the resulting Jensen-Shannon distance is able to differentitate the two changes.
 
-Since NannyML works on data rather than PDFs, the actual implementation splits continuous variable into
-bins, calculates the relative frequency for each bin from reference and analyzed data and calculates JS Distance [2]_
-. For continuous data
-binning is done using Doane's formula [3]_. If continuous variable has relatively low amount of unique values (i.e.
-unique values are less then 10% of the reference dataset size) each value becomes a bin. This rule holds
-up to 50 unique values. If there are more - Doane's formula is used again.
+NannyML works on data hence the actual implementation splits a continuous feature into
+bins, calculates the relative frequency for each bin from reference and analyzed data and calculates the 
+resulting Jensen-Shannon Distance. The binning is done using `Doane's formula`_ from numpy. 
+If a continuous feature has relatively low amount of unique values, meaning that
+unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
 
 .. _univariate-drift-detection-cont-wasserstein:
 
@@ -117,7 +139,7 @@ statistic that helps to better evaluate its result.
 Jensen-Shannon Distance
 ........................
 
-A square root of Jensen-Shannon Divergence [2]_ which measures similarity between two probability distributions. It
+Jensen-Shannon Distance is the square root of `Jensen-Shannon Divergence`_ which measures similarity between two probability distributions. It
 is a distance metric in range 0-1 which makes it easier to interpret and get familiar with. For
 categorical data, JS distance is calculated based on the relative frequencies of each category in reference and
 analysis data. The intuition is that it measures an *average* of all changes in relative frequencies of categories.
@@ -135,7 +157,7 @@ L-Infinity Distance
 ...................
 
 We are using L-Infinity to measure the similarity of categorical features. L-Infinity, for categorical features, is defined as
-the maximum of the absolute difference between the percentage of each category in the reference and analysis data.
+the maximum of the absolute difference between the relative frequencies of each category in the reference and analysis data.
 You can find more about `L-Infinity at Wikipedia`_. It falls into the range of 0-1 and is easy to interpret as it selects
 the category that had the biggest change in it's relative frequency. This behavior is different compared to Chi Squared test
 where even small changes in low frequency labels can heavily influence the resulting test statistic.
@@ -145,10 +167,12 @@ where even small changes in low frequency labels can heavily influence the resul
 
 **References**
 
-.. [1] https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
-.. [2] https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
-.. [3] https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
+
 .. [4] https://en.wikipedia.org/wiki/Chi-squared_test
 
 
+.. _`Kolmogorov-Smirnov Test`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
+.. _`Jensen-Shannon Divergence`: https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
 .. _`L-Infinity at Wikipedia`: https://en.wikipedia.org/wiki/L-infinity
+.. _`Kullback-Leibler divergence`: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+.. _`Doane's formula`: https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
