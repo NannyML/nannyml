@@ -120,27 +120,34 @@ Chi-squared Test
 ................
 
 The `Chi-squared test`_ is a statistical hypothesis test of independence for categorical data. 
-The test outputs the test statistic, sometimes called called chi2 statistic, and an associated p-value.
-The test statistic is defined as:
+The test outputs the test statistic, sometimes called chi2 statistic, and an associated p-value.
+
+We can understand the Chi-squared test in the following way. We create a `contigency table`_ from the
+categories present in the data and the two samples we are comparing. The expected frequencies,
+denoted :math:`m_i`, are calculated from the marginal sums of the contigency table.
+The observed frequencies, denoted :math:`x_i`, are calcualted from the actual
+frequency entries of the contigency table. The test statistic is then given by the formula:
 
 .. math::
     \chi^2 = \sum_{i=1}^k \frac{(x_i - m_i)^2}{m_i}
 
-We see that the test statistic is a sum of terms calculated for each category.
-The value of each term for a single category is equal to the squared difference between expected frequency,
-depicted as :math:`m_i` and calculated from reference data, and observed frequency,
-depicted as :math:`x_i` and calculated from analysis data, divided by the expected frequency. 
+where we sum over all entries in the contigency table.
 
-This makes the chi-squared statistic sensitive to all changes in the distribution, specifically to the ones in low-frequency categories, as the
-expected frequency is in the denominator. It is therefore not recommended for categorical variables with many
-low-frequency classes or high cardinality, large number
-of distinct values, unless the sample size is really large. Otherwise, in both cases false-positive alarms are expected.
-Additionally, the statistic is non-negative and not limited - this makes it sometimes
-difficult to interpret. Still it is a common choice amongst practitioners as it provides p-value together with the
+This makes the chi-squared statistic sensitive to all changes in the distribution,
+especially to the ones in low-frequency categories, as the expected frequency is in the denominator.
+It is therefore not recommended for categorical features with many low-frequency categories or high cardinality
+features, unless the sample size is really large.
+Otherwise, in both cases false-positive alarms are expected.
+Additionally, the statistic is non-negative and not limited which sometimes makes it difficult to interpret.
+Despite that, the Chi-squared test is a common choice amongst practitioners as it provides p-value together with the
 statistic that helps to better evaluate its result.
 
-Below is a visualization of the chi-squared statistic for a categorical variable with two categories, a and b. The red bars represent the difference between the observed and expected frequencies.
-As mentioned above, in the chi-squared statistic formula, the difference is squared and divided by the expected frequency and the resulting value is then summed over all categories.
+On the image below there is a visualization of the chi-squared statistic for a categorical variable with two
+categories, a and b. You can see the expected values are calculated from both the reference and analysis data. 
+The red bars represent the difference between the observed and expected frequencies.
+As mentioned above, in the chi-squared statistic formula,
+the difference is squared and divided by the expected frequency and the resulting value is then summed over all categories
+for both samples.
 
 .. image:: ../_static/how-it-works-chi2.svg
     :width: 1400pt
@@ -213,3 +220,4 @@ We also see that the resulting L-Infinity distance is the relative frequency cha
 .. _`Kullback-Leibler divergence`: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
 .. _`Doane's formula`: https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
 .. _`Wasserstein Distance`: https://en.wikipedia.org/wiki/Wasserstein_metric
+.. _`contigency table`: https://en.wikipedia.org/wiki/Contingency_table
