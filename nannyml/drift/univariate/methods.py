@@ -482,6 +482,7 @@ class WassersteinDistance(Method):
 
         return alert
 
+
 @MethodFactory.register(key='hellinger_distance', feature_type=FeatureType.CONTINUOUS)
 class HellingerDistance(Method):
     """Calculates the Hellinger Distance between two distributions.
@@ -503,12 +504,12 @@ class HellingerDistance(Method):
 
     def _fit(self, reference_data: pd.Series):
         self._reference = reference_data
-        
+
         return self
 
     def _calculate(self, data: pd.Series):
         len_data = len(data)
-        self._bins = np.histogram_bin_edges(np.concatenate(self._reference, data), bins='doane')
+        self._bins = np.histogram_bin_edges(np.concatenate((self._reference, data)), bins='doane')
         data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
         ref_proba_in_bins = np.histogram(self._reference, bins=self._bins)[0] / len(self._reference)
 
@@ -516,11 +517,12 @@ class HellingerDistance(Method):
         for i in range(len(ref_proba_in_bins)):
             p1 = ref_proba_in_bins[i]
             p2 = data_proba_in_bins[i]
-            bht += np.sqrt(p1 * p2) 
+            bht += np.sqrt(p1 * p2)
 
-        return np.sqrt(1-bht)
+        return np.sqrt(1 - bht)
 
     def _alert(self, data: pd.Series):
         value = self.calculate(data)
         return (self.lower_threshold is not None and value < self.lower_threshold) or (
             self.upper_threshold is not None and value > self.upper_threshold
+        )
