@@ -18,6 +18,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractCalculatorResult):
@@ -74,6 +75,7 @@ class Result(AbstractCalculatorResult):
         result.column_names = [c for c in self.column_names if c in column_names]
         return result
 
+    @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(  # type: ignore
         self,
         method: Union[str, Method],

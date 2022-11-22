@@ -9,6 +9,7 @@ from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io.base import WriterFactory, _get_filepath_str
 from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 @WriterFactory.register('raw_files')
@@ -52,6 +53,7 @@ class RawFilesWriter(FileWriter):
             raise InvalidArgumentsException(f"unknown value for format '{format}', should be one of 'parquet', 'csv'")
         self._data_format = format
 
+    @log_usage(UsageEvent.WRITE_RAW)
     def _write(self, result: Result, **kwargs):
         if 'plots' not in kwargs:
             raise InvalidArgumentsException("missing parameter 'plots'.")

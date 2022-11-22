@@ -16,6 +16,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.drift.univariate.result import Result
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class UnivariateDriftCalculator(AbstractCalculator):
@@ -92,6 +93,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         self.result: Optional[Result] = None
 
+    @log_usage(
+        UsageEvent.UNIVAR_DRIFT_CALC_FIT, metadata_from_self=['continuous_method_names', 'categorical_method_names']
+    )
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateDriftCalculator:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
@@ -120,11 +124,17 @@ class UnivariateDriftCalculator(AbstractCalculator):
             ]
 
         self.result = self._calculate(reference_data)
+
+        assert self.result is not None
+
         self.result.data['chunk', 'chunk', 'period'] = 'reference'
         self.result.reference_data = reference_data.copy()
 
         return self
 
+    @log_usage(
+        UsageEvent.UNIVAR_DRIFT_CALC_FIT, metadata_from_self=['continuous_method_names', 'categorical_method_names']
+    )
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:

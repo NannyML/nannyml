@@ -18,6 +18,7 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
+from nannyml.usage_logging import UsageEvent, log_usage
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
@@ -122,6 +123,7 @@ class PerformanceCalculator(AbstractCalculator):
     def __str__(self):
         return f"PerformanceCalculator[metrics={str(self.metrics)}]"
 
+    @log_usage(UsageEvent.PERFORMANCE_CALC_FIT, metadata_from_self=['metrics', 'problem_type'])
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> PerformanceCalculator:
         """Fits the calculator on the reference data, calibrating it for further use on the full dataset."""
         if reference_data.empty:
@@ -141,11 +143,15 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.previous_reference_data = reference_data
         self.result = self._calculate(reference_data)
+
+        assert self.result is not None
+
         self.result.data[('chunk', 'period')] = 'reference'
         self.result.reference_data = reference_data.copy()
 
         return self
 
+    @log_usage(UsageEvent.PERFORMANCE_CALC_RUN, metadata_from_self=['metrics', 'problem_type'])
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:

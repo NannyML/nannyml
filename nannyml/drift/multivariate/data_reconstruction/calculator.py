@@ -19,6 +19,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction.result import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class DataReconstructionDriftCalculator(AbstractCalculator):
@@ -128,6 +129,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         self.result: Optional[Result] = None
 
+    @log_usage(UsageEvent.MULTIVAR_DRIFT_CALC_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
@@ -185,10 +187,12 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         )
 
         self.result = self._calculate(data=reference_data)
+        assert self.result is not None
         self.result.data[('chunk', 'period')] = 'reference'
 
         return self
 
+    @log_usage(UsageEvent.MULTIVAR_DRIFT_CALC_RUN)
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:

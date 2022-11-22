@@ -16,6 +16,7 @@ from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.plots._step_plot import _step_plot
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractCalculatorResult):
@@ -63,6 +64,7 @@ class Result(AbstractCalculatorResult):
         res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
         return res
 
+    @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',

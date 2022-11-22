@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._step_plot import _step_plot
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractCalculatorResult):
@@ -52,6 +53,7 @@ class Result(AbstractCalculatorResult):
 
         return result
 
+    @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
