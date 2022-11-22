@@ -44,7 +44,7 @@ We need to instantiate it with appropriate parameters:
 * The names of the columns to be evaluated.
 * A list of methods to use on continuous columns. You can chose from :ref:`kolmogorov_smirnov<univ_cont_method_ks>`,
   :ref:`jensen_shannon<univariate-drift-detection-cont-jensen-shannon>` and :ref:`wasserstein<univariate-drift-detection-cont-wasserstein>`.
-* A list of methods to use on categorical columns. You can chose from :ref:`chi2<_univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>` and :ref:`l-infinity<univ_cat_method_l8>`.
+* A list of methods to use on categorical columns. You can chose from :ref:`chi2<univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>` and :ref:`infinity_norm<univ_cat_method_l8>`.
 * Optionally, the name of the column containing the observation timestamps.
 * Optionally, a chunking approach or a predifined chunker. If neither is provided, the default chunker creating 10 chunks will be used.
 
