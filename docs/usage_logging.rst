@@ -104,7 +104,7 @@ tough one, and even more so in the last few years.
 Because we work in open source, the NannyML library doesn't generate any revenue.
 We're depending on external investors to provide us with the resources to continue our work, survive, and maybe even thrive.
 
-We want to verify if NannyML is worth putting all our effort into, and investors want to verify if it is worth
+We want to know what areas of NannyML we should focus on, and investors want to verify if it is worth
 putting their resources into. Aggregate usage analytics provide the actual figures needed to secure funding, as well as motivation.
 
 How usage logging works
@@ -171,8 +171,8 @@ Its value doesn’t matter, as long as the environment variable is present.
     docker run -e NML_DISABLE_USAGE_ANALYTICS=1 nannyml/nannyml
 
 
-Providing a .env file
-######################
+Providing a ``.env`` file
+#########################
 
 NannyML will check for ``.env``  files, allowing you to provide environment variables without dealing with shells.
 Just create a ``.env`` file in the directory of your script and NannyML will pick it up automatically.
