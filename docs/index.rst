@@ -30,6 +30,7 @@ Welcome to NannyML's documentation!
    datasets
    glossary
    cli
+   usage_logging
    API reference <nannyml/modules>
    contributing
 
