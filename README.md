@@ -37,12 +37,12 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/cbpe_v3.gif" alt="animated">
+  <img src="https://github.com/NannyML/nannyml/blob/main/media/estimate-performance-regression.gif?raw=true" alt="animated">
 </p>
 
 
 # 💡 What is NannyML?
-NannyML is an open-source python library that allows you to **estimate post-deployment model performance** (without access to targets), detect data drift, and intelligently link data drift alerts back to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, interactive visualizations, is completely model-agnostic and currently supports all tabular use cases, classification and regression.
+NannyML is an open-source python library that allows you to **estimate post-deployment model performance** (without access to targets), detect data drift, and intelligently link data drift alerts back to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, interactive visualizations, is completely model-agnostic and currently supports all tabular use cases, classification and **regression**.
 
 The core contributors of NannyML have researched and developed multiple novel algorithms for estimating model performance: [confidence-based performance estimation (CBPE)](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe) and [direct loss estimation (DLE)](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#direct-loss-estimation-dle).
 The nansters also invented a new approach to detect [multivariate data drift](https://nannyml.readthedocs.io/en/stable/how_it_works/data_reconstruction.html) using PCA-based data reconstruction.
@@ -88,9 +88,9 @@ Allowing you to have the following benefits:
 
 ### 1. Performance estimation and monitoring
 
-When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html) to **estimate model performance**. This algorithm requires the predicted probabilities of your machine learning model and leverages probability calibration to estimate any traditional binary classification metric (ROC_AUC, Precision, Recall, F1, etc.). Rather than estimating the performance of future model predictions, CBPE estimates the expected model performance of the predictions made at inference time.
+When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html) to **estimate model performance** for classification or NannyML's [DLE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html) for regression. These algorithms provide you with any estimated metric you would like, i.e. ROC AUC or RSME. Rather than estimating the performance of future model predictions, CBPE and DLE estimate the expected model performance of the predictions made at inference time.
 
-<p><img src="docs/_static/tutorial-perf-est-guide-with-ref-roc_auc.svg"></p>
+<p><img src="https://nannyml.readthedocs.io/en/stable/_images/tutorial-performance-calculation-regression-RMSE.svg"></p>
 
 NannyML can also **track the realised performance** of your machine learning model once targets are available.
 
@@ -100,7 +100,7 @@ To detect **multivariate feature drift** NannyML uses [PCA-based data reconstruc
 
 <p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-multivariate.svg"></p>
 
-NannyML utilises statistical tests to detect **univariate feature drift**. The Kolmogorov–Smirnov test is used for continuous features and the 2-sample chi-squared test for categorical features. The results of these tests are tracked over time, properly corrected to counteract multiplicity and overlayed on the temporal feature distributions. (It is also possible to visualise the test-statistics over time, to get a notion of the drift magnitude.)
+NannyML utilises statistical tests to detect **univariate feature drift**. We have just added a bunch of new univariate tests including Jensen-Shannon Distance and L-Infinity Distance, check out the [comprehensive list](https://nannyml.readthedocs.io/en/stable/how_it_works/univariate_drift_detection.html#methods-for-continuous-features). The results of these tests are tracked over time, properly corrected to counteract multiplicity and overlayed on the temporal feature distributions. (It is also possible to visualise the test-statistics over time, to get a notion of the drift magnitude.)
 
 <p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-joyplot-distance_from_office.svg"><img src="docs/_static/drift-guide-stacked-salary_range.svg"></p>
 
