@@ -88,7 +88,7 @@ Allowing you to have the following benefits:
 
 ### 1. Performance estimation and monitoring
 
-When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html) to **estimate model performance** for classification or NannyML's [DLE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html) for regression. These algorithms provide you with any estimated metric you would like, i.e. ROC AUC or RSME. Rather than estimating the performance of future model predictions, CBPE and DLE estimate the expected model performance of the predictions made at inference time.
+When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe) to **estimate model performance** for classification or NannyML's [DLE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#direct-loss-estimation-dle) for regression. These algorithms provide you with any estimated metric you would like, i.e. ROC AUC or RSME. Rather than estimating the performance of future model predictions, CBPE and DLE estimate the expected model performance of the predictions made at inference time.
 
 <p><img src="https://nannyml.readthedocs.io/en/stable/_images/tutorial-performance-calculation-regression-RMSE.svg"></p>
 
