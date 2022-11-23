@@ -156,19 +156,19 @@ Its value doesn’t matter, as long as the environment variable is present.
 .. code-block:: bash
     :caption: Disable usage analytics when running a Python script
 
-    NML_DISABLE_USER_ANALYTICS=1 python my_monitoring_script_with_nannyml.py
+    NML_DISABLE_USAGE_LOGGING=1 python my_monitoring_script_with_nannyml.py
 
 
 .. code-block:: bash
     :caption: Disable usage analytics when using the CLI
 
-    NML_DISABLE_USAGE_ANALYTICS=1 nml -c nann.yml run
+    NML_DISABLE_USAGE_LOGGING=1 nml -c nann.yml run
 
 
 .. code-block:: bash
     :caption: Disable usage analytics when using our Docker container
 
-    docker run -e NML_DISABLE_USAGE_ANALYTICS=1 nannyml/nannyml
+    docker run -e NML_DISABLE_USAGE_LOGGING=1 nannyml/nannyml
 
 
 Providing a ``.env`` file
