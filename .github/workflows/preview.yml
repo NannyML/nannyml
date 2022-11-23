@@ -33,6 +33,7 @@ jobs:
 
       - name: test with tox
         run:
+          echo $NML_DISABLE_USER_ANALYTICS
           tox
         env:
           NML_DISABLE_USER_ANALYTICS: 1
