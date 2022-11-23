@@ -42,7 +42,7 @@ jobs:
         run:
           tox
         env:
-          NML_DISABLE_USER_ANALYTICS: 1
+          NML_DISABLE_USAGE_LOGGING: 1
 
       - name: list files
         run: ls -l .
