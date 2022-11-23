@@ -31,9 +31,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry tox tox-gh-actions
 
-      - name: test with tox
+      - name: check env var
         run:
           echo $NML_DISABLE_USER_ANALYTICS
+        env:
+          NML_DISABLE_USER_ANALYTICS: 1
+
+      - name: test with tox
+        run:
           tox
         env:
           NML_DISABLE_USER_ANALYTICS: 1
