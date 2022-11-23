@@ -40,7 +40,7 @@ jobs:
 
       - name: test with tox
         run:
-          tox
+          NML_DISABLE_USER_ANALYTICS=1 tox
 
       - name: list files
         run: ls -l .
