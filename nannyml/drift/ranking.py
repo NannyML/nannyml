@@ -6,20 +6,54 @@
 
 import abc
 import logging
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Union
 
 import pandas as pd
+from scipy.stats import pearsonr
 
-from nannyml.drift.univariate.result import Result
+from nannyml.drift.univariate.result import Result as UnivariateResults
+from nannyml.performance_estimation.confidence_based.results import Result as CBPEResults
+from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
+from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.exceptions import InvalidArgumentsException
 
 
 class Ranking(abc.ABC):
     """Class that abstracts ranking features by impact on model performance."""
 
+    def fit(
+        self,
+        drift_calculation_result: UnivariateResults,
+        performance_results: Union[
+            CBPEResults, DLEResults, PerformanceCalculationResults
+        ] = None,
+    ) -> pd.DataFrame:
+        """Fits the calculator so it can then ranks drifted features according to their impact.
+
+        Parameters
+        ----------
+        drift_calculation_result : nannyml.drift.model_inputs.univariate.statistical.Result
+            The drift calculation results.
+        performance_results: Performance Estimation or Calculation results. Can be an instance of:
+            nml.performance_estimation.confidence_based.results.Result,
+            nml.performance_estimation.direct_loss_estimation.result.Result,
+            nml.performance_calculation.result.Result
+
+        Returns
+        -------
+        feature_ranking: pd.DataFrame
+            A DataFrame containing at least a feature name and a rank per row.
+
+        """
+        raise NotImplementedError
+    
+
     def rank(
         self,
-        drift_calculation_result: Result,
+        drift_calculation_result: UnivariateResults,
+        performance_results: Union[
+            CBPEResults, DLEResults, PerformanceCalculationResults
+        ] = None,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Ranks the features within a drift calculation according to impact on model performance.
@@ -28,6 +62,10 @@ class Ranking(abc.ABC):
         ----------
         drift_calculation_result : nannyml.drift.model_inputs.univariate.statistical.Result
             The drift calculation results.
+        performance_results: Performance Estimation or Calculation results. Can be an instance of:
+                nml.performance_estimation.confidence_based.results.Result,
+                nml.performance_estimation.direct_loss_estimation.result.Result,
+                nml.performance_calculation.result.Result
         only_drifting : bool
             Omits non-drifting features from the ranking if True.
 
@@ -123,9 +161,30 @@ class AlertCountRanking(Ranking):
 
     ALERT_COLUMN_SUFFIX = '_alert'
 
+    def fit(
+        self,
+        drift_calculation_result: UnivariateResults,
+        performance_results: Union[
+            CBPEResults, DLEResults, PerformanceCalculationResults
+        ] = None,
+    ) -> pd.DataFrame:
+        """Fits the calculator so it can then ranks drifted features according to their impact.
+        Fit not needed for AlertCountRanking.
+
+        Parameters
+        ----------
+        drift_calculation_result : nannyml.drift.model_inputs.univariate.statistical.Result
+            The drift calculation results.
+        performance_results: Performance Estimation or Calculation results. Can be an instance of:
+            nml.performance_estimation.confidence_based.results.Result,
+            nml.performance_estimation.direct_loss_estimation.result.Result,
+            nml.performance_calculation.result.Result
+        """
+        pass
+            
     def rank(
         self,
-        drift_calculation_result: Result,
+        drift_calculation_result: UnivariateResults,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Compares the number of alerts for each feature and ranks them accordingly.
@@ -200,3 +259,78 @@ class AlertCountRanking(Ranking):
         if only_drifting:
             ranking = ranking.loc[ranking['number_of_alerts'] != 0, :]
         return ranking
+
+@Ranker.register('correlation')
+class CorrelationRanking(Ranking):
+    """Ranks features according to the correlation of their drift results and
+    absolute performance change from mean reference performance.
+    """
+
+
+    def fit(
+        self,
+        performance_results: Union[
+            CBPEResults, DLEResults, PerformanceCalculationResults
+        ],
+    ):
+        self.mean_perf_value = performance_results.to_df()['value'].mean()
+
+
+    def rank(
+        self,
+        univariate_results: UnivariateResults,
+        performance_results: Union[
+            CBPEResults, DLEResults, PerformanceCalculationResults
+        ],
+        only_drifting: bool = False,
+
+    ):
+        abs_perf_change = np.abs(
+            performance_results.to_df()['value'].to_numpy() - self.mean_perf_value
+        )
+        
+        #debug:
+        # print(self.mean_perf_value)
+        # print(performance_results.to_df()['value'].to_numpy())
+        # print(abs_perf_change)
+        self.abs_perf_change = abs_perf_change
+
+        features1 = []
+        spearmanr1 = []
+        spearmanr2 = []
+        has_drifted = []
+
+        for ftr in univariate_results.column_names:
+            features1.append(ftr)
+            tmp1 = pearsonr(
+                univariate_results.to_df().loc[:, (ftr, slice(None), 'value')].to_numpy().ravel(),
+                abs_perf_change
+            )
+            spearmanr1.append(
+                tmp1[0]
+            )
+            spearmanr2.append(
+                tmp1[1]
+            )
+            has_drifted.append(
+                ( univariate_results.to_df().loc[:, (ftr, slice(None), 'alert')] == True).any()[0]
+            )
+
+
+        ranked = pd.DataFrame({
+            'feature': features1,
+            'pearsonr_correlation': spearmanr1,
+            'pearsonr_pvalue': spearmanr2,
+            'has_drifted': has_drifted
+        })
+
+        # we want 1st row to be most impactful feature
+        ranked.sort_values('pearsonr_correlation', ascending=False, inplace=True)
+        ranked.reset_index(drop=True, inplace=True)
+        ranked['rank'] = ranked.index
+        ranked
+
+        if only_drifting:
+            ranked = ranked.loc[ranked.has_drifted == True].reset_index(drop=True)
+
+        return ranked

@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from nannyml.datasets import load_synthetic_binary_classification_dataset
-from nannyml.drift.ranking import AlertCountRanking
+from nannyml.drift.ranking import Ranker, AlertCountRanking, CorrelationRanking
 from nannyml.drift.univariate import Result, UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 
@@ -27,6 +27,14 @@ def sample_drift_result() -> Result:  # noqa: D103
     ).fit(reference)
     result = calc.calculate(analysis)
     return result
+
+def test_alertcount_ranker_creation():
+    ranker = Ranker.by('alert_count')
+    assert isinstance(ranker, AlertCountRanking)
+
+def test_correlation_ranker_creation():
+    ranker = Ranker.by('correlation')
+    assert isinstance(ranker, CorrelationRanking)
 
 
 def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(
