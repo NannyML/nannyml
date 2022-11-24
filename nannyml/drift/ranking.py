@@ -8,6 +8,7 @@ import abc
 import logging
 from typing import Any, Callable, Dict, Optional, Union
 
+import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
 
@@ -273,7 +274,28 @@ class CorrelationRanking(Ranking):
             CBPEResults, DLEResults, PerformanceCalculationResults
         ],
     ):
-        self.mean_perf_value = performance_results.to_df()['value'].mean()
+        """
+        Use performance results from the reference period in order to be able to compare drift
+        results with absolute performance changes from the mean performance results during the reference period.
+
+        Parameters
+        ----------
+        performance_results : Performance Estimation or Performance Calculation results filtered to
+            the performance metric we want to compare against drift results. Additionally results need
+            to be filtered to the reference period only.
+            Can be an instance of:
+            nml.performance_estimation.confidence_based.results.Result,
+            nml.performance_estimation.direct_loss_estimation.result.Result,
+            nml.performance_calculation.result.Result
+        """
+
+        # User should filter
+        metrics = performance_results.metrics
+        if len(metrics) > 1:
+            raise ValueError("Only one metric should be present in performance_results used to fit CorrelationRanking.")
+        
+        self.metric = metrics[0]
+        self.mean_perf_value = performance_results.to_df().loc[:, (self.metric.column_name, 'value')].mean()
 
 
     def rank(
@@ -285,14 +307,33 @@ class CorrelationRanking(Ranking):
         only_drifting: bool = False,
 
     ):
-        abs_perf_change = np.abs(
-            performance_results.to_df()['value'].to_numpy() - self.mean_perf_value
-        )
+
+        # Let's do some checks that results objects are appropriate.
+        _univ_index = univariate_results.to_df().loc[:, ('chunk', 'chunk', 'start_index')]
+        _perf_index = performance_results.to_df().loc[:, ('chunk', 'start_index')]
+
+        if not _univ_index.equals(_perf_index):
+            raise ValueError("Drift and Performance results need to be filtered to the same data period.")
         
-        #debug:
-        # print(self.mean_perf_value)
-        # print(performance_results.to_df()['value'].to_numpy())
-        # print(abs_perf_change)
+        if len(univariate_results.categorical_method_names) > 1:
+            raise ValueError("Only one categorical drift method should be present in the univariate results.")
+
+        if len(univariate_results.continuous_method_names) > 1:
+            raise ValueError("Only one continuous drift method should be present in the univariate results.")
+        
+        if not hasattr(self, 'metric'):
+            raise ValueError("CorrelationRanking needs to call fit method before rank.")
+
+        if len(performance_results.metrics) > 1:
+            raise ValueError("Only one metric should be present in performance_results used to rank CorrelationRanking.")
+        
+        metric = performance_results.metrics[0]
+        if not isinstance(metric, type(self.metric)):
+            raise ValueError("Performance results need to be filtered with the same metric for fit and rank methods of Correlation Ranker.")
+
+        abs_perf_change = np.abs(
+            performance_results.to_df().loc[:, (self.metric.column_name, 'value')].to_numpy() - self.mean_perf_value
+        )
         self.abs_perf_change = abs_perf_change
 
         features1 = []
@@ -318,7 +359,7 @@ class CorrelationRanking(Ranking):
 
 
         ranked = pd.DataFrame({
-            'feature': features1,
+            'column_name': features1,
             'pearsonr_correlation': spearmanr1,
             'pearsonr_pvalue': spearmanr2,
             'has_drifted': has_drifted
@@ -327,7 +368,7 @@ class CorrelationRanking(Ranking):
         # we want 1st row to be most impactful feature
         ranked.sort_values('pearsonr_correlation', ascending=False, inplace=True)
         ranked.reset_index(drop=True, inplace=True)
-        ranked['rank'] = ranked.index
+        ranked['rank'] = ranked.index + 1
         ranked
 
         if only_drifting:
