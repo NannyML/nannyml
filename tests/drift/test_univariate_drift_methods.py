@@ -2,20 +2,14 @@
 import numpy as np
 import pandas as pd
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 from nannyml.drift.univariate.methods import JensenShannonDistance, LInfinityDistance, WassersteinDistance
-=======
 from nannyml.drift.univariate.methods import InfinityNormDistance, JensenShannonDistance, WassersteinDistance, HellingerDistance
->>>>>>> 2a4cfa4 (add reference implementation for hellinger)
-=======
 from nannyml.drift.univariate.methods import (
     InfinityNormDistance,
     JensenShannonDistance,
     WassersteinDistance,
     HellingerDistance,
 )
->>>>>>> a01f2a2 (add hellinger distance)
 
 # ************* JS Tests *************
 

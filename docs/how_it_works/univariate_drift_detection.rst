@@ -108,6 +108,35 @@ Wasserstein distance between the two distributions is given by:
 .. math::
     W_1\left(X_i^{ref},X_i^{ana}\right) = \int_\mathbb{R}\left|\hat{F}_{ref}(x)-\hat{F}_{ana}(x)\right|dx
 
+.. _univariate-drift-detection-cont-hellinger:
+
+Hellinger Distance
+........................
+
+The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
+to the same event by both reference and analysis. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
+analysis assigns some positive probability and vice versa. 
+The formula is given by:
+
+.. math::
+    H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\int_{}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
+
+The implementation splits a continuous feature into bins, calculates the relative frequency
+for each bin from reference and analyzed data and calculates the
+resulting Hellinger Distance. The binning is done using `Doane's formula`_ from numpy.
+If a continuous feature has relatively low amount of unique values, meaning that
+unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
+
+This metric is very closely related to the Bhattacharya Coefficient. However we choose the former beceuase it follows the triangle inequality and is 
+a proper distance metric. The relationship between the two can be depicted as follows:
+
+.. math::
+    H^2\left(X_i^{ref},X_i^{ana}\right) = 2(1-BC\left(X_i^{ref},X_i^{ana}\right))
+
+where 
+
+.. math::
+    BC\left(X_i^{ref},X_i^{ana}\right) =  \int_{}\sqrt{{F}_{ref}(x){F}_{ana}(x)}dx
 
 .. _univariate-drift-detection-categorical-methods:
 
@@ -191,6 +220,21 @@ To help our intuition we can look at the image below:
 
 We see how the relative frequencies of three categories have changed between reference and analysis data.
 We also see that the JS Divergence contribution of each change and the resulting JS distance.
+
+.. _univ_cat_method_hellinger:
+
+Hellinger Distance
+........................
+
+The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
+to the same event by both reference and analysis. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
+analysis assigns some positive probability and vice versa. 
+The formula is given by:
+
+For a categorical feature `Hellinger Distance`_ is defined as:
+
+.. math::
+ H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
 
 .. _univ_cat_method_l8:
 
