@@ -110,7 +110,7 @@ def stacked_bar(
             stacked_bar_table[column_name] == category,
         ]
 
-        if is_time_based_x_axis:
+        if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
             x = chunk_start_dates
         else:
             x = data['chunk_index_unified']
@@ -139,7 +139,7 @@ def stacked_bar(
 
     # Shade chunk type
     x0 = chunk_start_dates.min() if is_time_based_x_axis(chunk_start_dates, chunk_end_dates) else chunk_indices.min()
-    x1 = chunk_end_dates.max() if is_time_based_x_axis else chunk_indices.max() + 1
+    x1 = chunk_end_dates.max() if is_time_based_x_axis(chunk_start_dates, chunk_end_dates) else chunk_indices.max() + 1
     figure.add_shape(
         y0=0,
         y1=1.05,
@@ -153,7 +153,9 @@ def stacked_bar(
     ),
     if annotation:
         figure.add_annotation(
-            x=pd.Series(chunk_start_dates).mean() if is_time_based_x_axis else chunk_indices.mean(),
+            x=pd.Series(chunk_start_dates).mean()
+            if is_time_based_x_axis(chunk_start_dates, chunk_end_dates)
+            else chunk_indices.mean(),
             y=1.025,
             text=annotation,
             font=dict(color=color),

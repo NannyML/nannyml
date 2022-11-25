@@ -16,6 +16,7 @@ from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.plots._step_plot import _step_plot
+from nannyml.plots.blueprints.metrics import plot_metric_list
 
 
 class Result(AbstractCalculatorResult):
@@ -130,9 +131,9 @@ class Result(AbstractCalculatorResult):
         >>>     results.plot(metric=metric, plot_reference=True).show()
         """
         if kind == 'performance':
-            if 'metric' not in kwargs:
-                raise InvalidArgumentsException("missing value for parameter 'metric'")
-            return self._plot_performance_metric(plot_reference, kwargs['metric'])
+            return plot_metric_list(
+                self, title='Realized performance', subplot_title_format='Realized <b>{metric_name}</b>'
+            )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 

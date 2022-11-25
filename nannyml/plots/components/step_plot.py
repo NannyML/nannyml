@@ -1,8 +1,4 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
-#  License: Apache Software License 2.0
-
-#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
 from typing import Any, Dict, Optional, Union
@@ -42,7 +38,7 @@ def metric(
             mirror=True,
             zeroline=False,
             matches='x',
-            title=figure.layout.xaxis.title,
+            title=subplot_args.pop('subplot_x_axis_title', figure.layout.xaxis.title),
             row=subplot_args['row'],
             col=subplot_args['col'],
         )
@@ -50,7 +46,7 @@ def metric(
             linecolor=Colors.INDIGO_PERSIAN,
             showgrid=False,
             range=figure.layout.yaxis.range,
-            title=figure.layout.yaxis.title,
+            title=subplot_args.pop('subplot_y_axis_title', figure.layout.yaxis.title),
             mirror=True,
             zeroline=False,
             row=subplot_args['row'],
@@ -172,10 +168,14 @@ def _add_alert_markers(
 
     alert_indices = [idx for idx, alert in enumerate(alerts) if alert]
 
-    x = x[alert_indices]
+    x_alert = x[alert_indices]
     data = data[alert_indices]
 
-    x_mid = [x1 + (x2 - x1) / 2 for x1, x2 in pairwise(x)]
+    x_mid = (
+        [x1 + (x2 - x1) / 2 for x1, x2 in pairwise(x_alert)]
+        if len(alert_indices) != 1
+        else [x_alert[0] + (x[alert_indices[0] + 1] - x_alert[0]) / 2]
+    )
 
     if subplot_args is not None:
         kwargs.update(subplot_args)

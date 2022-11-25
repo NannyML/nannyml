@@ -180,13 +180,13 @@ class Metric(abc.ABC):
 
         # Special case... in case lower threshold equals 0, it should not be shown at all
         if lower_threshold == 0.0:
-            lower_threshold = None
+            lower_threshold = None  # type: ignore
 
         upper_threshold = mean_realised_performance + deviation
         if upper_limit is not None:
             upper_threshold = np.minimum(upper_threshold, upper_limit)
 
-        return lower_threshold, upper_threshold
+        return lower_threshold, upper_threshold  # type: ignore
 
     @abc.abstractmethod
     def realized_performance(self, data: pd.DataFrame) -> float:

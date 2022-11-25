@@ -4,10 +4,8 @@
 
 """Module containing CBPE estimation results and plotting implementations."""
 import copy
-import math
 from typing import List, Optional, Union
 
-import numpy as np
 import pandas as pd
 from plotly import graph_objects as go
 
@@ -16,7 +14,7 @@ from nannyml.base import AbstractEstimatorResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric
-from nannyml.plots import Colors, Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
+from nannyml.plots.blueprints.metrics import plot_metric_list
 
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
@@ -105,226 +103,8 @@ class Result(AbstractEstimatorResult):
         >>> results.plot().show()
         """
         if kind == 'performance':
-            return self._plot_performance_metrics()
+            return plot_metric_list(
+                self, title='Estimated performance <b>(CBPE)</b>', subplot_title_format='Estimated <b>{metric_name}</b>'
+            )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
-
-    def _plot_performance_metrics(self) -> Figure:
-        number_of_columns = min(len(self.metrics), 2)
-
-        fig = Figure(
-            title='CBPE',
-            x_axis_title='Time' if self.timestamp_column_name else 'Chunk',
-            y_axis_title='Estimated metric',
-            legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
-            height=len(self.metrics) * 500 / number_of_columns,
-            subplot_args=dict(
-                cols=number_of_columns,
-                rows=math.ceil(len(self.metrics) / number_of_columns),
-                subplot_titles=[f'Estimated <b>{metric.display_name}</b>' for metric in self.metrics],
-            ),
-        )
-
-        for idx, metric in enumerate(self.metrics):
-            row = (idx // number_of_columns) + 1
-            col = (idx % number_of_columns) + 1
-
-            show_in_legend = row == 1 and col == 1
-
-            reference_results = self.filter(period='reference').to_df()
-            has_reference_results = len(reference_results) > 0
-            analysis_results = self.filter(period='analysis').to_df()
-
-            # region reference metric
-
-            if has_reference_results:
-                hover = Hover(
-                    template='%{period} &nbsp; &nbsp; %{alert}<br />'
-                    'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate}<br />'
-                    f'{metric.display_name}: <b>%{{metric_value}}</b><br />'
-                    'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-                    '<extra></extra>'
-                )
-                hover.add(render_period_string(reference_results[('chunk', 'period')]), name='period')
-                hover.add(render_alert_string(reference_results[(metric.column_name, 'alert')]), name='alert')
-                hover.add(reference_results[('chunk', 'key')], name='chunk_key')
-                hover.add(
-                    render_x_coordinate(
-                        reference_results[('chunk', 'chunk_index')],
-                        reference_results[('chunk', 'start_date')],
-                        reference_results[('chunk', 'end_date')],
-                    ),
-                    name='x_coordinate',
-                )
-                hover.add(np.round(reference_results[(metric.column_name, 'value')], 4), name='metric_value')
-                hover.add(
-                    np.round(reference_results[(metric.column_name, 'sampling_error')] * 3, 4), name='sampling_error'
-                )
-
-                fig.add_metric(
-                    data=reference_results[(metric.column_name, 'value')],
-                    indices=reference_results[('chunk', 'chunk_index')],
-                    start_dates=reference_results[('chunk', 'start_date')],
-                    end_dates=reference_results[('chunk', 'end_date')],
-                    name='Metric reference',
-                    color=Colors.BLUE_SKY_CRAYOLA,
-                    hover=hover,
-                    subplot_args=dict(row=row, col=col),
-                    legendgroup='metric_reference',
-                    showlegend=show_in_legend,
-                    # line_dash='dash',
-                )
-            # endregion
-
-            # region analysis metrics
-
-            hover = Hover(
-                template='%{period} &nbsp; &nbsp; %{alert} <br />'
-                'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-                f'{metric.display_name}: <b>%{{metric_value}}</b><br />'
-                'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-                '<extra></extra>'
-            )
-            hover.add(render_period_string(analysis_results[('chunk', 'period')]), name='period')
-            hover.add(render_alert_string(analysis_results[(metric.column_name, 'alert')]), name='alert')
-            hover.add(analysis_results[('chunk', 'key')], name='chunk_key')
-            hover.add(
-                render_x_coordinate(
-                    analysis_results[('chunk', 'chunk_index')],
-                    analysis_results[('chunk', 'start_date')],
-                    analysis_results[('chunk', 'end_date')],
-                ),
-                name='x_coordinate',
-            )
-            hover.add(np.round(analysis_results[(metric.column_name, 'value')], 4), name='metric_value')
-            hover.add(np.round(analysis_results[(metric.column_name, 'sampling_error')] * 3, 4), name='sampling_error')
-
-            analysis_indices = analysis_results[('chunk', 'chunk_index')]
-            if has_reference_results:
-                analysis_indices += +max(reference_results[('chunk', 'chunk_index')]) + 1
-
-            fig.add_metric(
-                data=analysis_results[(metric.column_name, 'value')],
-                indices=analysis_indices,
-                start_dates=analysis_results[('chunk', 'start_date')],
-                end_dates=analysis_results[('chunk', 'end_date')],
-                name='Metric (analysis)',
-                color=Colors.INDIGO_PERSIAN,
-                hover=hover,
-                subplot_args=dict(row=row, col=col),
-                legendgroup='metric_analysis',
-                showlegend=show_in_legend,
-                # line_dash='dash',
-            )
-            # endregion
-
-            # region alert
-
-            fig.add_alert(
-                data=analysis_results[(metric.column_name, 'value')],
-                alerts=analysis_results[(metric.column_name, 'alert')],
-                indices=analysis_indices,
-                start_dates=analysis_results[('chunk', 'start_date')],
-                end_dates=analysis_results[('chunk', 'end_date')],
-                name='Alert',
-                subplot_args=dict(row=row, col=col),
-                legendgroup='alert',
-                plot_areas=False,
-                showlegend=show_in_legend,
-            )
-
-            # endregion
-
-            # region thresholds
-
-            if has_reference_results:
-                fig.add_threshold(
-                    data=reference_results[(metric.column_name, 'upper_threshold')],
-                    indices=reference_results[('chunk', 'chunk_index')],
-                    start_dates=reference_results[('chunk', 'start_date')],
-                    end_dates=reference_results[('chunk', 'end_date')],
-                    name='Threshold',
-                    with_additional_endpoint=True,
-                    subplot_args=dict(row=row, col=col),
-                    legendgroup='thresh',
-                    showlegend=False,
-                )
-
-                fig.add_threshold(
-                    data=reference_results[(metric.column_name, 'lower_threshold')],
-                    indices=reference_results[('chunk', 'chunk_index')],
-                    start_dates=reference_results[('chunk', 'start_date')],
-                    end_dates=reference_results[('chunk', 'end_date')],
-                    name='Threshold',
-                    with_additional_endpoint=True,
-                    subplot_args=dict(row=row, col=col),
-                    legendgroup='thresh',
-                    showlegend=True,
-                )
-
-            fig.add_threshold(
-                data=analysis_results[(metric.column_name, 'upper_threshold')],
-                indices=analysis_indices,
-                start_dates=analysis_results[('chunk', 'start_date')],
-                end_dates=analysis_results[('chunk', 'end_date')],
-                name='Threshold',
-                with_additional_endpoint=True,
-                subplot_args=dict(row=row, col=col),
-                legendgroup='thresh',
-                showlegend=False,
-            )
-
-            fig.add_threshold(
-                data=analysis_results[(metric.column_name, 'lower_threshold')],
-                indices=analysis_indices,
-                start_dates=analysis_results[('chunk', 'start_date')],
-                end_dates=analysis_results[('chunk', 'end_date')],
-                name='Threshold',
-                with_additional_endpoint=True,
-                subplot_args=dict(row=row, col=col),
-                legendgroup='thresh',
-                showlegend=False,
-            )
-            # endregion
-
-            # region confidence bands
-
-            if has_reference_results:
-                fig.add_confidence_band(
-                    upper_confidence_boundaries=reference_results[(metric.column_name, 'upper_confidence_boundary')],
-                    lower_confidence_boundaries=reference_results[(metric.column_name, 'lower_confidence_boundary')],
-                    indices=reference_results[('chunk', 'chunk_index')],
-                    start_dates=reference_results[('chunk', 'start_date')],
-                    end_dates=reference_results[('chunk', 'end_date')],
-                    name='Sampling error',
-                    color=Colors.BLUE_SKY_CRAYOLA,
-                    with_additional_endpoint=True,
-                    subplot_args=dict(row=row, col=col),
-                    showlegend=show_in_legend,
-                )
-
-            fig.add_confidence_band(
-                upper_confidence_boundaries=analysis_results[(metric.column_name, 'upper_confidence_boundary')],
-                lower_confidence_boundaries=analysis_results[(metric.column_name, 'lower_confidence_boundary')],
-                indices=analysis_indices,
-                start_dates=analysis_results[('chunk', 'start_date')],
-                end_dates=analysis_results[('chunk', 'end_date')],
-                name='Sampling error',
-                color=Colors.INDIGO_PERSIAN,
-                with_additional_endpoint=True,
-                subplot_args=dict(row=row, col=col),
-                showlegend=show_in_legend,
-            )
-            # endregion
-
-            if has_reference_results:
-                fig.add_period_separator(
-                    x=(
-                        self.filter(period='reference').to_df()[('chunk', 'chunk_index')].iloc[-1] + 1
-                        if self.timestamp_column_name is None
-                        else self.filter(period='analysis').to_df()[('chunk', 'start_date')].iloc[0]
-                    ),
-                    subplot_args=dict(row=row, col=col),
-                )
-
-        return fig
