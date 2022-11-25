@@ -26,8 +26,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         self,
         column_names: List[str],
         timestamp_column_name: Optional[str] = None,
-        categorical_methods: Optional[List[str]] = ['jensen_shannon'],
-        continuous_methods: Optional[List[str]] = ['jensen_shannon'],
+        categorical_methods: Optional[List[str]] = None,
+        continuous_methods: Optional[List[str]] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
@@ -82,8 +82,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         )
 
         self.column_names = column_names
-        self.continuous_method_names = continuous_methods
-        self.categorical_method_names = categorical_methods
+        self.continuous_method_names = continuous_methods or ['kolmogorov_smirnov']
+        self.categorical_method_names = categorical_methods or ['chi2']
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
