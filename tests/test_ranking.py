@@ -250,7 +250,7 @@ def test_correlation_ranking_raises_multiple_categorical_drift_metrics(sample_dr
     )
 
     with pytest.raises(
-        ValueError,
+        InvalidArgumentsException,
         match='Only one categorical drift method should be present in the univariate results.'
     ):
         ranking.rank(
@@ -266,7 +266,7 @@ def test_correlation_ranking_raises_multiple_continuous_drift_metrics(sample_dri
     )
 
     with pytest.raises(
-        ValueError,
+        InvalidArgumentsException,
         match='Only one continuous drift method should be present in the univariate results.'
     ):
         ranking.rank(
@@ -281,7 +281,7 @@ def test_correlation_ranking_raises_same_data_period(sample_drift_result, sample
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
     )
     with pytest.raises(
-        ValueError,
+        InvalidArgumentsException,
         match='Drift and Performance results need to be filtered to the same data period.'
     ):
         ranking.rank(
@@ -293,7 +293,7 @@ def test_correlation_ranking_raises_same_data_period(sample_drift_result, sample
 def test_correlation_ranking_fit_raises_multiple_metrics(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanking()
     with pytest.raises(
-        ValueError,
+        InvalidArgumentsException,
         match='Only one metric should be present in performance_results used to fit CorrelationRanking.'
     ):
         ranking.fit(
@@ -307,7 +307,7 @@ def test_correlation_ranking_rank_raises_multiple_metrics(sample_drift_result, s
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
     )
     with pytest.raises(
-        ValueError,
+        InvalidArgumentsException,
         match='Only one metric should be present in performance_results used to rank CorrelationRanking.'
     ):
         ranking.rank(
@@ -322,7 +322,7 @@ def test_correlation_ranking_rank_raises_different_metrics(sample_drift_result, 
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
     )
     with pytest.raises(
-        ValueError,
+        InvalidArgumentsException,
         match='Performance results need to be filtered with the same metric for fit and rank methods of Correlation Ranker.'
     ):
         ranking.rank(
@@ -334,7 +334,7 @@ def test_correlation_ranking_rank_raises_different_metrics(sample_drift_result, 
 def test_correlation_ranking_rank_raises_fit_error(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanking()
     with pytest.raises(
-        ValueError,
+        InvalidArgumentsException,
         match='CorrelationRanking needs to call fit method before rank.'
     ):
         ranking.rank(

@@ -292,7 +292,7 @@ class CorrelationRanking(Ranking):
         # User should filter
         metrics = performance_results.metrics
         if len(metrics) > 1:
-            raise ValueError("Only one metric should be present in performance_results used to fit CorrelationRanking.")
+            raise InvalidArgumentsException("Only one metric should be present in performance_results used to fit CorrelationRanking.")
         
         self.metric = metrics[0]
         self.mean_perf_value = performance_results.to_df().loc[:, (self.metric.column_name, 'value')].mean()
@@ -313,23 +313,23 @@ class CorrelationRanking(Ranking):
         _perf_index = performance_results.to_df().loc[:, ('chunk', 'start_index')]
 
         if not _univ_index.equals(_perf_index):
-            raise ValueError("Drift and Performance results need to be filtered to the same data period.")
+            raise InvalidArgumentsException("Drift and Performance results need to be filtered to the same data period.")
         
         if len(univariate_results.categorical_method_names) > 1:
-            raise ValueError("Only one categorical drift method should be present in the univariate results.")
+            raise InvalidArgumentsException("Only one categorical drift method should be present in the univariate results.")
 
         if len(univariate_results.continuous_method_names) > 1:
-            raise ValueError("Only one continuous drift method should be present in the univariate results.")
+            raise InvalidArgumentsException("Only one continuous drift method should be present in the univariate results.")
         
         if not hasattr(self, 'metric'):
-            raise ValueError("CorrelationRanking needs to call fit method before rank.")
+            raise InvalidArgumentsException("CorrelationRanking needs to call fit method before rank.")
 
         if len(performance_results.metrics) > 1:
-            raise ValueError("Only one metric should be present in performance_results used to rank CorrelationRanking.")
+            raise InvalidArgumentsException("Only one metric should be present in performance_results used to rank CorrelationRanking.")
         
         metric = performance_results.metrics[0]
         if not isinstance(metric, type(self.metric)):
-            raise ValueError("Performance results need to be filtered with the same metric for fit and rank methods of Correlation Ranker.")
+            raise InvalidArgumentsException("Performance results need to be filtered with the same metric for fit and rank methods of Correlation Ranker.")
 
         abs_perf_change = np.abs(
             performance_results.to_df().loc[:, (self.metric.column_name, 'value')].to_numpy() - self.mean_perf_value
