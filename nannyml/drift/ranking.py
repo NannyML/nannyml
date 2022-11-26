@@ -40,11 +40,6 @@ class Ranking(abc.ABC):
             nml.performance_estimation.direct_loss_estimation.result.Result,
             nml.performance_calculation.result.Result
 
-        Returns
-        -------
-        feature_ranking: pd.DataFrame
-            A DataFrame containing at least a feature name and a rank per row.
-
         """
         raise NotImplementedError
     
@@ -169,18 +164,7 @@ class AlertCountRanking(Ranking):
             CBPEResults, DLEResults, PerformanceCalculationResults
         ] = None,
     ) -> pd.DataFrame:
-        """Fits the calculator so it can then ranks drifted features according to their impact.
-        Fit not needed for AlertCountRanking.
 
-        Parameters
-        ----------
-        drift_calculation_result : nannyml.drift.model_inputs.univariate.statistical.Result
-            The drift calculation results.
-        performance_results: Performance Estimation or Calculation results. Can be an instance of:
-            nml.performance_estimation.confidence_based.results.Result,
-            nml.performance_estimation.direct_loss_estimation.result.Result,
-            nml.performance_calculation.result.Result
-        """
         pass
             
     def rank(
