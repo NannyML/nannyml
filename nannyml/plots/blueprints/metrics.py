@@ -1,14 +1,134 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+import copy
 import math
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import Colors, ensure_numpy, is_time_based_x_axis
 from nannyml.plots.components import Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
+
+
+def plot_2d_metric_list(
+    result,
+    title: str,
+    x_axis_time_title: str = 'Time',
+    x_axis_chunk_title: str = 'Chunk',
+    y_axis_title: str = 'Metric',
+    figure_args: Optional[Dict[str, Any]] = None,
+    subplot_title_format: str = '{dimension_1} (<b>{dimension_2.display_name}</b>)',
+    dimension_1_name: str = 'column_name',
+    dimension_2_name: str = 'metric',
+    hover: Optional[Hover] = None,
+) -> Figure:
+    dimension_1 = _try_get_dimension(result, dimension_1_name)
+    dimension_2 = _try_get_dimension(result, dimension_2_name)
+
+    number_of_plots = len(dimension_1) * len(dimension_2)
+    number_of_columns = min(number_of_plots, 2)
+    number_of_rows = math.ceil(number_of_plots / number_of_columns)
+
+    if figure_args is None:
+        figure_args = {}
+
+    figure = Figure(
+        **dict(
+            title=title,
+            x_axis_title=x_axis_time_title if result.timestamp_column_name else x_axis_chunk_title,
+            y_axis_title=y_axis_title,
+            legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
+            height=number_of_plots * 500 / number_of_columns,
+            subplot_args=dict(
+                cols=number_of_columns,
+                rows=number_of_rows,
+                subplot_titles=[
+                    subplot_title_format.format(dimension_1=d1_value, dimension_2=d2_value)
+                    for d1_value in dimension_1
+                    for d2_value in dimension_2
+                ],
+            ),
+            **figure_args,
+        )
+    )
+
+    reference_result: pd.DataFrame = result.filter(period='reference').to_df()
+    analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
+
+    for d1_idx, d1_value in enumerate(dimension_1):
+        for d2_idx, d2_value in enumerate(dimension_2):
+            idx = d1_idx * len(dimension_2) + d2_idx
+            row = (idx // number_of_columns) + 1
+            col = (idx % number_of_columns) + 1
+
+            figure = _plot_metric(
+                figure=figure,
+                row=row,
+                col=col,
+                metric_display_name=d2_value.display_name,
+                reference_metric=reference_result[(d1_value, d2_value.column_name, 'value')],
+                reference_alerts=reference_result.get((d1_value, d2_value.column_name, 'alert'), default=None),
+                reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
+                reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
+                reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
+                reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
+                reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
+                reference_upper_thresholds=reference_result.get(
+                    (d1_value, d2_value.column_name, 'upper_threshold'), default=None
+                ),
+                reference_lower_thresholds=reference_result.get(
+                    (d1_value, d2_value.column_name, 'lower_threshold'), default=None
+                ),
+                reference_upper_confidence_boundary=reference_result.get(
+                    (d1_value, d2_value.column_name, 'upper_confidence_boundary'), default=None
+                ),
+                reference_lower_confidence_boundary=reference_result.get(
+                    (d1_value, d2_value.column_name, 'lower_confidence_boundary'), default=None
+                ),
+                reference_sampling_error=reference_result.get(
+                    (d1_value, d2_value.column_name, 'sampling_error'), default=None
+                ),
+                analysis_metric=analysis_result[(d1_value, d2_value.column_name, 'value')],
+                analysis_alerts=analysis_result.get((d1_value, d2_value.column_name, 'alert'), default=None),
+                analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
+                analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
+                analysis_chunk_indices=analysis_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
+                analysis_chunk_start_dates=analysis_result.get(('chunk', 'chunk', 'start_date'), default=None),
+                analysis_chunk_end_dates=analysis_result.get(('chunk', 'chunk', 'end_date'), default=None),
+                analysis_upper_thresholds=analysis_result.get(
+                    (d1_value, d2_value.column_name, 'upper_threshold'), default=None
+                ),
+                analysis_lower_thresholds=analysis_result.get(
+                    (d1_value, d2_value.column_name, 'lower_threshold'), default=None
+                ),
+                analysis_upper_confidence_boundary=analysis_result.get(
+                    (d1_value, d2_value.column_name, 'upper_confidence_boundary'), default=None
+                ),
+                analysis_lower_confidence_boundary=analysis_result.get(
+                    (d1_value, d2_value.column_name, 'lower_confidence_boundary'), default=None
+                ),
+                analysis_sampling_error=analysis_result.get(
+                    (d1_value, d2_value.column_name, 'sampling_error'), default=None
+                ),
+                hover=hover,
+            )
+
+    return figure
+
+
+def _try_get_dimension(result, dimension_name: str) -> List:
+    try:
+        dimension = getattr(result, dimension_name)
+    except AttributeError as exc:
+        raise InvalidArgumentsException(f'result does not contain an attribute named {dimension_name}: {exc}')
+
+    if not isinstance(dimension, List):
+        raise InvalidArgumentsException(f'attribute {dimension_name} is not an instance of \'List\'')
+
+    return dimension
 
 
 def plot_metric_list(
@@ -19,7 +139,7 @@ def plot_metric_list(
     y_axis_title: str = 'Metric',
     figure_args: Optional[Dict[str, Any]] = None,
     subplot_title_format: str = 'Metric <b>{metric_name}</b>',
-):
+) -> Figure:
     number_of_columns = min(len(result.metrics), 2)
 
     reference_result: pd.DataFrame = result.filter(period='reference').to_df()
@@ -95,6 +215,7 @@ def plot_metric_list(
 def _plot_metric(  # noqa: C901
     figure: Figure,
     metric_display_name: str,
+    analysis_metric: Union[np.ndarray, pd.Series],
     reference_metric: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -107,7 +228,6 @@ def _plot_metric(  # noqa: C901
     reference_upper_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_lower_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_sampling_error: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_metric: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -121,6 +241,7 @@ def _plot_metric(  # noqa: C901
     analysis_sampling_error: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
+    hover: Optional[Hover] = None,
 ) -> Figure:
 
     if figure is None:
@@ -143,23 +264,28 @@ def _plot_metric(  # noqa: C901
     # region reference metric
 
     if has_reference_results:
-        hover = Hover(
-            template='%{period} &nbsp; &nbsp; %{alert} <br />'
-            'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-            f'{metric_display_name}: <b>%{{metric_value}}</b><br />'
-            'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-            '<extra></extra>'
-        )
+        assert reference_metric is not None
+        if hover is None:
+            _hover = Hover(
+                template='%{period} &nbsp; &nbsp; %{alert} <br />'
+                'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+                '%{metric_name}: <b>%{metric_value}</b><br />'
+                'Sampling error range: +/- <b>%{sampling_error}</b><br />'
+            )
+        else:
+            _hover = copy.deepcopy(hover)
+        _hover.add(np.asarray([metric_display_name] * len(reference_metric)), 'metric_name')
+
         if reference_chunk_periods is not None:
-            hover.add(render_period_string(reference_chunk_periods), name='period')
+            _hover.add(render_period_string(reference_chunk_periods), name='period')
 
         if reference_alerts is not None:
-            hover.add(render_alert_string(reference_alerts), name='alert')
+            _hover.add(render_alert_string(reference_alerts), name='alert')
 
         if reference_chunk_keys is not None:
-            hover.add(reference_chunk_keys, name='chunk_key')
+            _hover.add(reference_chunk_keys, name='chunk_key')
 
-        hover.add(
+        _hover.add(
             render_x_coordinate(
                 reference_chunk_indices,
                 reference_chunk_start_dates,
@@ -168,10 +294,10 @@ def _plot_metric(  # noqa: C901
             name='x_coordinate',
         )
 
-        hover.add(np.round(ensure_numpy(reference_metric), 4), name='metric_value')
+        _hover.add(np.round(reference_metric, 4), name='metric_value')
 
         if reference_sampling_error is not None:
-            hover.add(np.round(reference_sampling_error * 3, 4), name='sampling_error')
+            _hover.add(np.round(reference_sampling_error * 3, 4), name='sampling_error')
 
         figure.add_metric(
             data=reference_metric,
@@ -180,7 +306,7 @@ def _plot_metric(  # noqa: C901
             end_dates=reference_chunk_end_dates,
             name='Metric (reference)',
             color=Colors.BLUE_SKY_CRAYOLA,
-            hover=hover,
+            hover=_hover,
             subplot_args=dict(row=row, col=col, subplot_y_axis_title=metric_display_name),
             legendgroup='metric_reference',
             showlegend=show_in_legend,
@@ -189,24 +315,28 @@ def _plot_metric(  # noqa: C901
     # endregion
 
     # region analysis metrics
+    if hover is None:
+        _hover = Hover(
+            template='%{period} &nbsp; &nbsp; %{alert} <br />'
+            'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+            '%{metric_name}: <b>%{metric_value}</b><br />'
+            'Sampling error range: +/- <b>%{sampling_error}</b><br />'
+        )
+    else:
+        _hover = copy.deepcopy(hover)
 
-    hover = Hover(
-        template='%{period} &nbsp; &nbsp; %{alert} <br />'
-        'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-        f'{metric_display_name}: <b>%{{metric_value}}</b><br />'
-        'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-        '<extra></extra>'
-    )
+    _hover.add(np.asarray([metric_display_name] * len(analysis_metric)), 'metric_name')
+
     if analysis_chunk_periods is not None:
-        hover.add(render_period_string(analysis_chunk_periods), name='period')
+        _hover.add(render_period_string(analysis_chunk_periods), name='period')
 
     if analysis_alerts is not None:
-        hover.add(render_alert_string(analysis_alerts), name='alert')
+        _hover.add(render_alert_string(analysis_alerts), name='alert')
 
     if analysis_chunk_keys is not None:
-        hover.add(analysis_chunk_keys, name='chunk_key')
+        _hover.add(analysis_chunk_keys, name='chunk_key')
 
-    hover.add(
+    _hover.add(
         render_x_coordinate(
             analysis_chunk_indices,
             analysis_chunk_start_dates,
@@ -214,10 +344,10 @@ def _plot_metric(  # noqa: C901
         ),
         name='x_coordinate',
     )
-    hover.add(np.round(ensure_numpy(analysis_metric), 4), name='metric_value')
+    _hover.add(np.round(analysis_metric, 4), name='metric_value')
 
     if analysis_sampling_error is not None:
-        hover.add(np.round(analysis_sampling_error * 3, 4), name='sampling_error')
+        _hover.add(np.round(analysis_sampling_error * 3, 4), name='sampling_error')
 
     if has_reference_results:
         assert reference_chunk_indices is not None
@@ -230,7 +360,7 @@ def _plot_metric(  # noqa: C901
         end_dates=analysis_chunk_end_dates,
         name='Metric (analysis)',
         color=Colors.INDIGO_PERSIAN,
-        hover=hover,
+        hover=_hover,
         subplot_args=dict(row=row, col=col, subplot_y_axis_title=metric_display_name),
         legendgroup='metric_analysis',
         showlegend=show_in_legend,

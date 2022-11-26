@@ -43,11 +43,11 @@ class Hover:
         subbed_template = re.sub(
             r"%{(\w+)}",
             lambda m: f'%{{customdata[{self.custom_column_names.index(m.group(1))}]}}'
-            if m.group(1) is not None
+            if m.group(1) is not None  # and m.group(1) in self.custom_column_names
             else '',
             self.template,
         )
-        return subbed_template
+        return subbed_template + '<extra></extra>'
 
     def get_custom_data(self) -> np.ndarray:
         # check if custom data is just a single row

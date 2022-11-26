@@ -166,16 +166,12 @@ def _add_alert_markers(
     if marker_args is None:
         marker_args = {}
 
-    alert_indices = [idx for idx, alert in enumerate(alerts) if alert]
+    # slice off the last (artificially added) endpoint
+    alert_indices = [idx for idx, alert in enumerate(alerts[:-1]) if alert]
 
-    x_alert = x[alert_indices]
     data = data[alert_indices]
 
-    x_mid = (
-        [x1 + (x2 - x1) / 2 for x1, x2 in pairwise(x_alert)]
-        if len(alert_indices) != 1
-        else [x_alert[0] + (x[alert_indices[0] + 1] - x_alert[0]) / 2]
-    )
+    x_mid = [x[alert_index] + (x[alert_index + 1] - x[alert_index]) / 2 for alert_index in alert_indices]
 
     if subplot_args is not None:
         kwargs.update(subplot_args)

@@ -13,11 +13,13 @@ import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult, _column_is_continuous
 from nannyml.chunk import Chunk, Chunker
-from nannyml.drift.univariate.methods import Method, MethodFactory
+from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots._joy_plot import _joy_plot
 from nannyml.plots._stacked_bar_plot import _stacked_bar_plot
 from nannyml.plots._step_plot import _step_plot
+from nannyml.plots.blueprints.metrics import plot_2d_metric_list
+from nannyml.plots.components import Hover
 
 
 class Result(AbstractCalculatorResult):
@@ -43,7 +45,9 @@ class Result(AbstractCalculatorResult):
         self.categorical_column_names = categorical_column_names
         self.timestamp_column_name = timestamp_column_name
         self.categorical_method_names = categorical_method_names
+        self.categorical_methods = [MethodFactory.create(m, FeatureType.CATEGORICAL) for m in categorical_method_names]
         self.continuous_method_names = continuous_method_names
+        self.continuous_methods = [MethodFactory.create(m, FeatureType.CONTINUOUS) for m in continuous_method_names]
         self.chunker = chunker
 
         self.analysis_data = analysis_data
@@ -70,8 +74,12 @@ class Result(AbstractCalculatorResult):
         result = copy.deepcopy(self)
         result.data = data
         result.categorical_method_names = [m for m in self.categorical_method_names if m in methods]
+        result.categorical_methods = [m for m in self.categorical_methods if m.column_name in methods]
         result.continuous_method_names = [m for m in self.continuous_method_names if m in methods]
+        result.continuous_methods = [m for m in self.continuous_methods if m.column_name in methods]
         result.column_names = [c for c in self.column_names if c in column_names]
+        result.categorical_column_names = [c for c in self.categorical_column_names if c in column_names]
+        result.continuous_column_names = [c for c in self.continuous_column_names if c in column_names]
         return result
 
     def plot(  # type: ignore
@@ -138,9 +146,20 @@ class Result(AbstractCalculatorResult):
                 "no value for 'method' given. Please provide the name of a metric to display."
             )
         if kind == 'drift':
-            if column_name is None:
-                raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
-            return self._plot_drift(method, column_name, plot_reference)
+            # if column_name is None:
+            #     raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
+            # return self._plot_drift(method, column_name, plot_reference)
+            return plot_2d_metric_list(
+                self,
+                title='univariate stuff',
+                dimension_1_name='continuous_column_names',
+                dimension_2_name='continuous_methods',
+                hover=Hover(
+                    template='%{period} &nbsp; &nbsp; %{alert} <br />'
+                    'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+                    '%{metric_name}: <b>%{metric_value}</b><br />'
+                ),
+            )
         elif kind == 'distribution':
             if column_name is None:
                 raise InvalidArgumentsException("must specify a feature to plot " "using the 'column_name' parameter")
