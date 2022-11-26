@@ -42,7 +42,6 @@ class Ranking(abc.ABC):
 
         """
         raise NotImplementedError
-    
 
     def rank(
         self,
@@ -73,7 +72,7 @@ class Ranking(abc.ABC):
         """
         raise NotImplementedError
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs): # noqa D102
         return self(**kwargs)
 
 
@@ -157,7 +156,7 @@ class AlertCountRanking(Ranking):
 
     ALERT_COLUMN_SUFFIX = '_alert'
 
-    def fit(
+    def fit( # noqa D102
         self,
         drift_calculation_result: UnivariateResults,
         performance_results: Union[
@@ -166,7 +165,38 @@ class AlertCountRanking(Ranking):
     ) -> pd.DataFrame:
 
         pass
-            
+
+    def _validate_ranking_inputs(  # noqa: D417
+        self,
+        drift_calculation_result: UnivariateResults,
+    ):
+        """Validate Inputs before performing ranking.
+
+        Parameters
+        ----------
+        drift_calculation_result : nannyml.drift.univariate.result.Result
+            The drift calculation results.
+        """
+        if not isinstance(drift_calculation_result, UnivariateResults):
+            raise InvalidArgumentsException(
+                "Univariate Results object required for drift_calculation_result argument."
+            )
+
+        if drift_calculation_result.data.empty:
+            raise InvalidArgumentsException('drift results contain no data to use for ranking')
+
+        if len(drift_calculation_result.categorical_method_names) > 1:
+            raise InvalidArgumentsException(
+                f"Only one categorical drift method should be present in the univariate results."
+                f"\nFound: {drift_calculation_result.categorical_method_names}"
+            )
+
+        if len(drift_calculation_result.continuous_method_names) > 1:
+            raise InvalidArgumentsException(
+                f"Only one continuous drift method should be present in the univariate results."
+                f"\nFound: {drift_calculation_result.continuous_method_names}"
+            )
+
     def rank(
         self,
         drift_calculation_result: UnivariateResults,
@@ -201,7 +231,7 @@ class AlertCountRanking(Ranking):
         >>>
         >>> column_names = [
         >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period',
-        >>>                                                        'y_pred', 'repaid']]
+        >>>                                                        'y_pred', 'repaid', 'identifier']]
         >>>
         >>> calc = nml.UnivariateStatisticalDriftCalculator(column_names=column_names,
         >>>                                                 timestamp_column_name='timestamp')
@@ -214,18 +244,16 @@ class AlertCountRanking(Ranking):
         >>> ranked_features = ranker.rank(results, only_drifting=False)
         >>> display(ranked_features)
                           column_name  number_of_alerts  rank
-        0                  identifier                10     1
-        1        distance_from_office                 5     2
-        2                salary_range                 5     3
-        3  public_transportation_cost                 5     4
-        4            wfh_prev_workday                 5     5
-        5                      tenure                 2     6
-        6         gas_price_per_litre                 0     7
-        7                     workday                 0     8
-        8            work_home_actual                 0     9
+        1        distance_from_office                 5     1
+        2                salary_range                 5     2
+        3  public_transportation_cost                 5     3
+        4            wfh_prev_workday                 5     4
+        5                      tenure                 2     5
+        6         gas_price_per_litre                 0     6
+        7                     workday                 0     7
+        8            work_home_actual                 0     8
         """
-        if drift_calculation_result.data.empty:
-            raise InvalidArgumentsException('drift results contain no data to use for ranking')
+        self._validate_ranking_inputs(drift_calculation_result)
 
         non_chunk = list(set(drift_calculation_result.data.columns.get_level_values(0)) - {'chunk'})
         ranking = (
@@ -245,12 +273,14 @@ class AlertCountRanking(Ranking):
             ranking = ranking.loc[ranking['number_of_alerts'] != 0, :]
         return ranking
 
+
 @Ranker.register('correlation')
 class CorrelationRanking(Ranking):
-    """Ranks features according to the correlation of their drift results and
-    absolute performance change from mean reference performance.
-    """
+    """Ranks features according to drift correlation with performance impact.
 
+    Ranks features according to the correlation of their selected drift results and
+    absolute performance change from mean reference performance on selected metric.
+    """
 
     def fit(
         self,
@@ -258,7 +288,8 @@ class CorrelationRanking(Ranking):
             CBPEResults, DLEResults, PerformanceCalculationResults
         ],
     ):
-        """
+        """Fit Correlation Ranker.
+
         Use performance results from the reference period in order to be able to compare drift
         results with absolute performance changes from the mean performance results during the reference period.
 
@@ -271,18 +302,80 @@ class CorrelationRanking(Ranking):
             nml.performance_estimation.confidence_based.results.Result,
             nml.performance_estimation.direct_loss_estimation.result.Result,
             nml.performance_calculation.result.Result
-        """
 
+        """
         # User should filter
         metrics = performance_results.metrics
         if len(metrics) > 1:
-            raise InvalidArgumentsException("Only one metric should be present in performance_results used to fit CorrelationRanking.")
-        
+            raise InvalidArgumentsException(
+                "Only one metric should be present in performance_results used to fit CorrelationRanking."
+            )
+
         self.metric = metrics[0]
         self.mean_perf_value = performance_results.to_df().loc[:, (self.metric.column_name, 'value')].mean()
 
+    def _validate_ranking_inputs(  # noqa: D417
+        self,
+        univariate_results: UnivariateResults,
+        performance_results: Union[
+            CBPEResults, DLEResults, PerformanceCalculationResults
+        ]
+    ):
+        """Validate Inputs before performing ranking.
 
-    def rank(
+        Parameters
+        ----------
+        univariate_results : nannyml.drift.univariate.result.Result
+            The drift calculation results.
+        performance_results: Performance Estimation or Calculation results. Can be an instance of:
+                nml.performance_estimation.confidence_based.results.Result,
+                nml.performance_estimation.direct_loss_estimation.result.Result,
+                nml.performance_calculation.result.Result
+        """
+        if not isinstance(univariate_results, UnivariateResults):
+            raise InvalidArgumentsException(
+                "Univariate Results object required for univariate_results argument."
+            )
+
+        if not isinstance(performance_results, (CBPEResults, DLEResults, PerformanceCalculationResults)):
+            raise InvalidArgumentsException(
+                "Estimated or Realized Performance results object required for performance_results argument."
+            )
+
+        _univ_index = univariate_results.to_df().loc[:, ('chunk', 'chunk', 'start_index')]
+        _perf_index = performance_results.to_df().loc[:, ('chunk', 'start_index')]
+
+        if not _univ_index.equals(_perf_index):
+            raise InvalidArgumentsException(
+                "Drift and Performance results need to be filtered to the same data period.")
+
+        if len(univariate_results.categorical_method_names) > 1:
+            raise InvalidArgumentsException(
+                f"Only one categorical drift method should be present in the univariate results."
+                f"\nFound: {univariate_results.categorical_method_names}"
+            )
+
+        if len(univariate_results.continuous_method_names) > 1:
+            raise InvalidArgumentsException(
+                f"Only one continuous drift method should be present in the univariate results."
+                f"\nFound: {univariate_results.continuous_method_names}"
+            )
+
+        if not hasattr(self, 'metric'):
+            raise InvalidArgumentsException("CorrelationRanking needs to call fit method before rank.")
+
+        if len(performance_results.metrics) > 1:
+            raise InvalidArgumentsException(
+                "Only one metric should be present in performance_results used to rank CorrelationRanking.")
+
+        metric = performance_results.metrics[0]
+        if not isinstance(metric, type(self.metric)):
+            raise InvalidArgumentsException(
+                "Performance results need to be filtered with the same metric"
+                " for fit and rank methods of Correlation Ranker."
+            )
+
+    def rank(  # noqa: D102
         self,
         univariate_results: UnivariateResults,
         performance_results: Union[
@@ -292,28 +385,7 @@ class CorrelationRanking(Ranking):
 
     ):
 
-        # Let's do some checks that results objects are appropriate.
-        _univ_index = univariate_results.to_df().loc[:, ('chunk', 'chunk', 'start_index')]
-        _perf_index = performance_results.to_df().loc[:, ('chunk', 'start_index')]
-
-        if not _univ_index.equals(_perf_index):
-            raise InvalidArgumentsException("Drift and Performance results need to be filtered to the same data period.")
-        
-        if len(univariate_results.categorical_method_names) > 1:
-            raise InvalidArgumentsException("Only one categorical drift method should be present in the univariate results.")
-
-        if len(univariate_results.continuous_method_names) > 1:
-            raise InvalidArgumentsException("Only one continuous drift method should be present in the univariate results.")
-        
-        if not hasattr(self, 'metric'):
-            raise InvalidArgumentsException("CorrelationRanking needs to call fit method before rank.")
-
-        if len(performance_results.metrics) > 1:
-            raise InvalidArgumentsException("Only one metric should be present in performance_results used to rank CorrelationRanking.")
-        
-        metric = performance_results.metrics[0]
-        if not isinstance(metric, type(self.metric)):
-            raise InvalidArgumentsException("Performance results need to be filtered with the same metric for fit and rank methods of Correlation Ranker.")
+        self._validate_ranking_inputs(univariate_results, performance_results)
 
         abs_perf_change = np.abs(
             performance_results.to_df().loc[:, (self.metric.column_name, 'value')].to_numpy() - self.mean_perf_value
@@ -338,9 +410,8 @@ class CorrelationRanking(Ranking):
                 tmp1[1]
             )
             has_drifted.append(
-                ( univariate_results.to_df().loc[:, (ftr, slice(None), 'alert')] == True).any()[0]
+                (univariate_results.to_df().loc[:, (ftr, slice(None), 'alert')] == True).any()[0]  # noqa: E712
             )
-
 
         ranked = pd.DataFrame({
             'column_name': features1,
@@ -356,6 +427,6 @@ class CorrelationRanking(Ranking):
         ranked
 
         if only_drifting:
-            ranked = ranked.loc[ranked.has_drifted == True].reset_index(drop=True)
+            ranked = ranked.loc[ranked.has_drifted == True].reset_index(drop=True)  # noqa: E712
 
         return ranked

@@ -202,9 +202,42 @@ def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_resul
         ranking.rank(result)
 
 
+def test_alert_count_ranking_raises_invalid_drift_object(sample_realized_perf_result):  # noqa: D103
+    ranking = AlertCountRanking()
+    with pytest.raises(
+        InvalidArgumentsException,
+        match='Univariate Results object required for drift_calculation_result argument.'
+    ):
+        ranking.rank(
+            sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
+        )
+
+
+def test_alert_count_ranking_raises_multiple_categorical_drift_metrics(sample_drift_result):  # noqa: D103
+    ranking = AlertCountRanking()
+    with pytest.raises(
+        InvalidArgumentsException,
+        match='Only one categorical drift method should be present in the univariate results.'
+    ):
+        ranking.rank(
+            sample_drift_result.filter(period='all', methods=['chi2', 'jensen_shannon'])
+        )
+
+
+def test_alert_count_ranking_raises_multiple_continuous_drift_metrics(sample_drift_result):  # noqa: D103
+    ranking = AlertCountRanking()
+    with pytest.raises(
+        InvalidArgumentsException,
+        match='Only one continuous drift method should be present in the univariate results.'
+    ):
+        ranking.rank(
+            sample_drift_result.filter(period='all', methods=['kolmogorov_smirnov', 'jensen_shannon'])
+        )
+
+
 def test_alert_count_ranking_contains_rank_column(sample_drift_result):  # noqa: D103
     ranking = AlertCountRanking()
-    sut = ranking.rank(sample_drift_result)
+    sut = ranking.rank(sample_drift_result.filter(methods=['jensen_shannon']))
     assert 'rank' in sut.columns
 
 
@@ -226,12 +259,6 @@ def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_opt
     assert not any(sut['column_name'] == 'gas_price_per_litre')
 
 
-def test_alert_count_ranking_contains_rank_column(sample_drift_result):  # noqa: D103
-    ranking = AlertCountRanking()
-    sut = ranking.rank(sample_drift_result)
-    assert 'rank' in sut.columns
-
-
 def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanking()
     ranking.fit(
@@ -241,6 +268,36 @@ def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_re
         sample_drift_result.filter(period='all', methods=['jensen_shannon']),
         sample_realized_perf_result.filter(period='all', metrics=['roc_auc']))
     assert 'rank' in sut.columns
+
+
+def test_correlation_ranking_raises_invalid_drift_object(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+    ranking = CorrelationRanking()
+    ranking.fit(
+        performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
+    )
+    with pytest.raises(
+        InvalidArgumentsException,
+        match='Univariate Results object required for univariate_results argument.'
+    ):
+        ranking.rank(
+            sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
+            sample_realized_perf_result.filter(period='all', metrics=['roc_auc'])
+        )
+
+
+def test_correlation_ranking_raises_invalid_perf_object(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+    ranking = CorrelationRanking()
+    ranking.fit(
+        performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
+    )
+    with pytest.raises(
+        InvalidArgumentsException,
+        match='Estimated or Realized Performance results object required for performance_results argument.'
+    ):
+        ranking.rank(
+            sample_drift_result.filter(period='all', methods=['jensen_shannon']),
+            sample_drift_result.filter(period='all', methods=['jensen_shannon'])
+        )
 
 
 def test_correlation_ranking_raises_multiple_categorical_drift_metrics(sample_drift_result, sample_realized_perf_result):  # noqa: D103
