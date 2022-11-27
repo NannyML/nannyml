@@ -113,7 +113,7 @@ Wasserstein distance between the two distributions is given by:
 Hellinger Distance
 ........................
 
-The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
+The Hellinger Distance, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
 to the same event by both reference and analysis. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
 analysis assigns some positive probability and vice versa. 
 The formula is given by:
@@ -226,12 +226,12 @@ We also see that the JS Divergence contribution of each change and the resulting
 Hellinger Distance
 ........................
 
-The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
+The Hellinger Distance, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
 to the same event by both reference and analysis. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
 analysis assigns some positive probability and vice versa. 
 The formula is given by:
 
-For a categorical feature `Hellinger Distance`_ is defined as:
+For a categorical feature Hellinger Distance is defined as:
 
 .. math::
  H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
