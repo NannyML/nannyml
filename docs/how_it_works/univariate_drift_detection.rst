@@ -127,8 +127,9 @@ resulting Hellinger Distance. The binning is done using `Doane's formula`_ from 
 If a continuous feature has relatively low amount of unique values, meaning that
 unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
 
-This metric is very closely related to the Bhattacharya Coefficient. However we choose the former beceuase it follows the triangle inequality and is 
-a proper distance metric. The relationship between the two can be depicted as follows:
+This distance is very closely related to the Bhattacharya Coefficient. However we choose the former because it follows the triangle inequality and is 
+a proper distance metric. Moreover the division by the squared root of 2 ensures that the distance is always between 0 and
+1, which is not the case with the Bhattacharya Coefficient. The relationship between the two can be depicted as follows:
 
 .. math::
     H^2\left(X_i^{ref},X_i^{ana}\right) = 2(1-BC\left(X_i^{ref},X_i^{ana}\right))
