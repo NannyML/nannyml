@@ -82,7 +82,7 @@ def stacked_bar(
     subplot_args: Optional[Dict[str, Any]] = None,
     annotation: Optional[str] = None,
     **kwargs,
-):
+) -> Figure:
     if subplot_args is None:
         subplot_args = {}
 
@@ -132,6 +132,7 @@ def stacked_bar(
                 offset=0,
                 customdata=hover.get_custom_data(),
                 hovertemplate=hover.get_template(),
+                hoverlabel=dict(bgcolor=category_colors_transparent[i], font=dict(color='white')),
                 **kwargs,
             ),
             **subplot_args,
@@ -165,6 +166,8 @@ def stacked_bar(
             **subplot_args,
         )
 
+    return figure
+
 
 def alert(
     figure: Figure,
@@ -177,7 +180,7 @@ def alert(
     subplot_args: Optional[Dict[str, Any]] = None,
     annotation: Optional[str] = None,
     **kwargs,
-):
+) -> Figure:
     if chunk_start_dates is None and chunk_end_dates is None and chunk_indices is None:
         raise InvalidArgumentsException(
             "you must provide either 'chunk_indices' or 'chunk_start_dates' and " "'chunk_end_dates."
@@ -195,3 +198,5 @@ def alert(
     for bars in [bar for bar in figure.data if bar.x[0] == anchor and bar.xaxis == max_x_axis]:
         bars.marker.line.color = marker_line_colors
         bars.marker.line.width = marker_line_widths
+
+    return figure

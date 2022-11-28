@@ -17,10 +17,11 @@ from nannyml.plots.util import is_time_based_x_axis
 
 
 class Hover:
-    def __init__(self, template: str):
+    def __init__(self, template: str, show_extra: bool = False):
         self.template = template
         self.custom_column_names: List[str] = []
         self.custom_data: List[np.ndarray] = []
+        self.show_extra: bool = show_extra
 
     def add(
         self,
@@ -47,7 +48,9 @@ class Hover:
             else '',
             self.template,
         )
-        return subbed_template + '<extra></extra>'
+        if self.show_extra:
+            subbed_template += '<extra></extra>'
+        return subbed_template
 
     def get_custom_data(self) -> np.ndarray:
         # check if custom data is just a single row
