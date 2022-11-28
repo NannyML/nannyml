@@ -45,7 +45,7 @@ def sample_drift_result() -> UnivariateResults:  # noqa: D103
 def sample_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D103
     reference, analysis, analysis_target = load_synthetic_binary_classification_dataset()
     analysis = analysis.merge(analysis_target, on='identifier')
-    
+
     # initialize, fit and calculate realized performance
     realized = PerformanceCalculator(
         y_pred_proba='y_pred_proba',
@@ -81,8 +81,9 @@ def sample_multiclass_realized_perf_result() -> PerformanceCalculationResults:  
     realized_performance = realized.calculate(analysis)
     return realized_performance
 
+
 @pytest.fixture(scope='module')
-def sample_multiclass_estimated_perf_result() -> PerformanceCalculationResults:  # noqa: D103
+def sample_multiclass_estimated_perf_result() -> CBPEResults:  # noqa: D103
     reference, analysis, analysis_target = load_synthetic_multiclass_classification_dataset()
     analysis = analysis.merge(analysis_target, on='identifier')
     # initialize, fit and calculate realized performance
@@ -148,11 +149,13 @@ def sample_regression_drift_result() -> UnivariateResults:  # noqa: D103
 
 
 @pytest.fixture(scope='module')
-def sample_regression_estimated_perf_result() -> PerformanceCalculationResults:  # noqa: D103
+def sample_regression_estimated_perf_result() -> DLEResults:  # noqa: D103
     reference, analysis, _ = load_synthetic_car_price_dataset()
     # initialize, fit and calculate realized performance
     estimated = DLE(
-        feature_column_names=['car_age', 'km_driven', 'price_new', 'accident_count', 'door_count', 'fuel', 'transmission'],
+        feature_column_names=[
+            'car_age', 'km_driven', 'price_new', 'accident_count', 'door_count', 'fuel', 'transmission'
+        ],
         y_pred='y_pred',
         y_true='y_true',
         timestamp_column_name='timestamp',
@@ -182,19 +185,19 @@ def sample_regression_realized_perf_result() -> PerformanceCalculationResults:  
     return realized_performance
 
 
-def test_alertcount_ranker_creation():
+def test_alertcount_ranker_creation():  # noqa: D103
     ranker = Ranker.by('alert_count')
     assert isinstance(ranker, AlertCountRanking)
 
 
-def test_correlation_ranker_creation():
+def test_correlation_ranker_creation():  # noqa: D103
     ranker = Ranker.by('correlation')
     assert isinstance(ranker, CorrelationRanking)
 
 
-def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(
+def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(  # noqa: D103
     sample_drift_result,
-):  # noqa: D103
+):
     ranking = AlertCountRanking()
     result = copy.deepcopy(sample_drift_result).filter(methods=['jensen_shannon'])
     result.data = pd.DataFrame(columns=['f1', 'f2', 'f3', 'f4'])
@@ -270,7 +273,9 @@ def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_re
     assert 'rank' in sut.columns
 
 
-def test_correlation_ranking_raises_invalid_drift_object(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_raises_invalid_drift_object(  # noqa: D103
+    sample_drift_result, sample_realized_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
@@ -300,7 +305,9 @@ def test_correlation_ranking_raises_invalid_perf_object(sample_drift_result, sam
         )
 
 
-def test_correlation_ranking_raises_multiple_categorical_drift_metrics(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_raises_multiple_categorical_drift_metrics(  # noqa: D103
+    sample_drift_result, sample_realized_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
@@ -316,7 +323,9 @@ def test_correlation_ranking_raises_multiple_categorical_drift_metrics(sample_dr
         )
 
 
-def test_correlation_ranking_raises_multiple_continuous_drift_metrics(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_raises_multiple_continuous_drift_metrics(  # noqa: D103
+    sample_drift_result, sample_realized_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
@@ -347,7 +356,9 @@ def test_correlation_ranking_raises_same_data_period(sample_drift_result, sample
         )
 
 
-def test_correlation_ranking_fit_raises_multiple_metrics(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_fit_raises_multiple_metrics(  # noqa: D103
+    sample_drift_result, sample_realized_perf_result
+):
     ranking = CorrelationRanking()
     with pytest.raises(
         InvalidArgumentsException,
@@ -358,7 +369,9 @@ def test_correlation_ranking_fit_raises_multiple_metrics(sample_drift_result, sa
         )
 
 
-def test_correlation_ranking_rank_raises_multiple_metrics(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_rank_raises_multiple_metrics(  # noqa: D103
+    sample_drift_result, sample_realized_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
@@ -373,14 +386,19 @@ def test_correlation_ranking_rank_raises_multiple_metrics(sample_drift_result, s
         )
 
 
-def test_correlation_ranking_rank_raises_different_metrics(sample_drift_result, sample_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_rank_raises_different_metrics(  # noqa: D103
+    sample_drift_result, sample_realized_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
     )
     with pytest.raises(
         InvalidArgumentsException,
-        match='Performance results need to be filtered with the same metric for fit and rank methods of Correlation Ranker.'
+        match=(
+            'Performance results need to be filtered with the same'
+            ' metric for fit and rank methods of Correlation Ranker.'
+        )
     ):
         ranking.rank(
             sample_drift_result.filter(period='all', methods=['jensen_shannon']),
@@ -399,28 +417,6 @@ def test_correlation_ranking_rank_raises_fit_error(sample_drift_result, sample_r
             sample_realized_perf_result.filter(period='all', metrics=['roc_auc'])
         )
 
-def test_correlation_ranking_ranks_as_expected(sample_drift_result, sample_realized_perf_result):  # noqa: D103
-    ranking = CorrelationRanking()
-    ranking.fit(
-        performance_results=sample_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
-    )
-    sut = ranking.rank(
-        sample_drift_result.filter(
-            period='all',
-            methods=['jensen_shannon'],
-            column_names=[
-                'distance_from_office', 'salary_range', 'gas_price_per_litre', 'public_transportation_cost',
-                'wfh_prev_workday', 'workday', 'tenure'
-            ]
-        ),
-        sample_realized_perf_result.filter(period='all', metrics=['roc_auc'])
-    )
-    print(sut)
-    assert sut.loc[sut['rank'] == 1, 'column_name'].values[0] == 'wfh_prev_workday'
-    assert sut.loc[sut['rank'] == 2, 'column_name'].values[0] == 'public_transportation_cost'
-    assert sut.loc[sut['rank'] == 3, 'column_name'].values[0] == 'salary_range'
-    assert sut.loc[sut['rank'] == 4, 'column_name'].values[0] == 'distance_from_office'
-
 
 def test_correlation_ranking_ranks_as_expected(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanking()
@@ -445,7 +441,9 @@ def test_correlation_ranking_ranks_as_expected(sample_drift_result, sample_reali
     assert sut.loc[sut['rank'] == 4, 'column_name'].values[0] == 'distance_from_office'
 
 
-def test_correlation_ranking_contains_rank_column_multiclass_realized(sample_multiclass_drift_result, sample_multiclass_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_contains_rank_column_multiclass_realized(  # noqa: D103
+    sample_multiclass_drift_result, sample_multiclass_realized_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_multiclass_realized_perf_result.filter(period='reference', metrics=['roc_auc'])
@@ -456,7 +454,9 @@ def test_correlation_ranking_contains_rank_column_multiclass_realized(sample_mul
     assert 'rank' in sut.columns
 
 
-def test_correlation_ranking_contains_rank_column_multiclass_estimated(sample_multiclass_drift_result, sample_multiclass_estimated_perf_result):  # noqa: D103
+def test_correlation_ranking_contains_rank_column_multiclass_estimated(  # noqa: D103
+    sample_multiclass_drift_result, sample_multiclass_estimated_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_multiclass_estimated_perf_result.filter(period='reference', metrics=['roc_auc'])
@@ -467,7 +467,9 @@ def test_correlation_ranking_contains_rank_column_multiclass_estimated(sample_mu
     assert 'rank' in sut.columns
 
 
-def test_correlation_ranking_contains_rank_column_regression_realized(sample_regression_drift_result, sample_regression_realized_perf_result):  # noqa: D103
+def test_correlation_ranking_contains_rank_column_regression_realized(  # noqa: D103
+    sample_regression_drift_result, sample_regression_realized_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_regression_realized_perf_result.filter(period='reference', metrics=['rmse'])
@@ -478,7 +480,9 @@ def test_correlation_ranking_contains_rank_column_regression_realized(sample_reg
     assert 'rank' in sut.columns
 
 
-def test_correlation_ranking_contains_rank_column_regression_estimated(sample_regression_drift_result, sample_regression_estimated_perf_result):  # noqa: D103
+def test_correlation_ranking_contains_rank_column_regression_estimated(  # noqa: D103
+    sample_regression_drift_result, sample_regression_estimated_perf_result
+):
     ranking = CorrelationRanking()
     ranking.fit(
         performance_results=sample_regression_estimated_perf_result.filter(period='reference', metrics=['rmse'])
