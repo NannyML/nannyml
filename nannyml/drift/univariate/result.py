@@ -141,22 +141,20 @@ class Result(AbstractCalculatorResult):
             return plot_2d_metric_list(
                 self,
                 items=column_to_method_mapping,
-                title='univariate stuff',
+                title='Univariate drift metrics',
                 hover=Hover(
                     template='%{period} &nbsp; &nbsp; %{alert} <br />'
                     'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-                    '%{metric_name}: <b>%{metric_value}</b><br />'
+                    '%{metric_name}: <b>%{metric_value}</b><b r />'
                 ),
             )
         elif kind == 'distribution':
             return plot_2d_univariate_distributions_list(
                 self,
                 items=column_to_method_mapping,
-                title='Column distributions',
                 reference_data=self.reference_data,
                 analysis_data=self.analysis_data,
                 chunker=self.chunker,
-                subplot_title_format='<b>{column_name}</b> distribution (alerts for <b>{method_name})</b>',
             )
         else:
             raise InvalidArgumentsException(

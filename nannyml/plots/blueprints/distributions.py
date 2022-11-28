@@ -16,6 +16,7 @@ from nannyml.plots.components.joy_plot import alert as joy_alert
 from nannyml.plots.components.joy_plot import calculate_chunk_distributions, joy
 from nannyml.plots.components.stacked_bar_plot import alert as stacked_bar_alert
 from nannyml.plots.components.stacked_bar_plot import calculate_value_counts, stacked_bar
+from nannyml.plots.util import is_time_based_x_axis
 
 
 # Intended to work only with Univariate Drift Result for now...
@@ -25,13 +26,13 @@ def plot_2d_univariate_distributions_list(
     analysis_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
     chunker: Chunker,  # TODO: move distribution calculations to calculator run
     items: List[Tuple[str, Method]],
-    title: Optional[str] = None,
+    title: Optional[str] = 'Column distributions',
     figure: Optional[Figure] = None,
     x_axis_time_title: str = 'Time',
     x_axis_chunk_title: str = 'Chunk',
-    y_axis_title: str = 'Metric',
+    y_axis_title: str = 'Values',
     figure_args: Optional[Dict[str, Any]] = None,
-    subplot_title_format: str = 'Metric <b>{metric_name}</b>',
+    subplot_title_format: str = '<b>{column_name}</b> distribution (alerts for <b>{method_name})</b>',
 ) -> Figure:
     number_of_plots = len(items)
     number_of_columns = min(number_of_plots, 2)
@@ -67,6 +68,10 @@ def plot_2d_univariate_distributions_list(
         row = (idx // number_of_columns) + 1
         col = (idx % number_of_columns) + 1
 
+        reference_chunk_start_dates = reference_result.get(('chunk', 'chunk', 'start_date'), default=None)
+        reference_chunk_end_dates = reference_result.get(('chunk', 'chunk', 'end_date'), default=None)
+        x_axis_is_time_based = is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
+
         if column_name in result.categorical_column_names and method in result.categorical_methods:
             figure = _plot_stacked_bar(
                 figure=figure,
@@ -76,15 +81,17 @@ def plot_2d_univariate_distributions_list(
                 column_name=column_name,
                 metric_display_name=method.display_name,
                 reference_data=reference_data[column_name],
-                reference_data_timestamps=reference_data[result.timestamp_column_name],
+                reference_data_timestamps=reference_data[result.timestamp_column_name]
+                if x_axis_is_time_based
+                else None,
                 reference_alerts=reference_result.get((column_name, method.column_name, 'alert'), default=None),
                 reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
                 reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
                 reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
+                reference_chunk_start_dates=reference_chunk_start_dates,
+                reference_chunk_end_dates=reference_chunk_end_dates,
                 analysis_data=analysis_data[column_name],
-                analysis_data_timestamps=analysis_data[result.timestamp_column_name],
+                analysis_data_timestamps=analysis_data[result.timestamp_column_name] if x_axis_is_time_based else None,
                 analysis_alerts=analysis_result.get((column_name, method.column_name, 'alert'), default=None),
                 analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
                 analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
@@ -100,7 +107,9 @@ def plot_2d_univariate_distributions_list(
                 chunker=chunker,
                 metric_display_name=method.display_name,
                 reference_data=reference_data[column_name],
-                reference_data_timestamps=reference_data[result.timestamp_column_name],
+                reference_data_timestamps=reference_data[result.timestamp_column_name]
+                if x_axis_is_time_based
+                else None,
                 reference_alerts=reference_result.get((column_name, method.column_name, 'alert'), default=None),
                 reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
                 reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
@@ -108,7 +117,7 @@ def plot_2d_univariate_distributions_list(
                 reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
                 reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
                 analysis_data=analysis_data[column_name],
-                analysis_data_timestamps=analysis_data[result.timestamp_column_name],
+                analysis_data_timestamps=analysis_data[result.timestamp_column_name] if x_axis_is_time_based else None,
                 analysis_alerts=analysis_result.get((column_name, method.column_name, 'alert'), default=None),
                 analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
                 analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
@@ -354,6 +363,9 @@ def _plot_joyplot(
             subplot_args=subplot_args,
         )
 
+        assert reference_chunk_indices is not None
+        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
+
     analysis_distributions = calculate_chunk_distributions(  # TODO: move distribution calculations to calculator run
         data=analysis_data,
         chunker=chunker,
@@ -421,8 +433,17 @@ def _plot_stacked_bar(
     if figure is None:
         figure = Figure(title='continuous distribution', x_axis_title='time', y_axis_title='value', height=500)
 
-    figure.update_xaxes(dict(mirror=False, showline=False), overwrite=True, row=row, col=col)
-    figure.update_yaxes(dict(mirror=False, showline=False), overwrite=True, row=row, col=col)
+    figure.update_xaxes(
+        dict(mirror=False, showline=False),
+        overwrite=True,
+        matches='x',
+        title=figure.layout.xaxis.title,
+        row=row,
+        col=col,
+    )
+    figure.update_yaxes(
+        dict(mirror=False, showline=False), overwrite=True, title=figure.layout.yaxis.title, row=row, col=col
+    )
 
     if has_reference_results:
         reference_value_counts = calculate_value_counts(
@@ -446,6 +467,9 @@ def _plot_stacked_bar(
             legendgroup=column_name,
             subplot_args=subplot_args,
         )
+
+        assert reference_chunk_indices is not None
+        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
 
     analysis_value_counts = calculate_value_counts(
         data=analysis_data,

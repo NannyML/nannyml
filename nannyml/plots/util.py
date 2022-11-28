@@ -20,12 +20,12 @@ def is_time_based_x_axis(
     if start_dates is None:
         return False
 
-    all_start_none = np.all(start_dates is None) if isinstance(start_dates, np.ndarray) else start_dates.isnull().all()
+    all_start_none = not np.any(start_dates) if isinstance(start_dates, np.ndarray) else start_dates.isnull().all()
 
     if end_dates is None:
         return False
 
-    all_end_none = np.all(end_dates is None) if isinstance(end_dates, np.ndarray) else end_dates.isnull().all()
+    all_end_none = not np.any(end_dates) if isinstance(end_dates, np.ndarray) else end_dates.isnull().all()
 
     return not all_start_none and not all_end_none
 

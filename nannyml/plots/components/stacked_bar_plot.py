@@ -113,7 +113,7 @@ def stacked_bar(
         if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
             x = chunk_start_dates
         else:
-            x = data['chunk_index_unified']
+            x = chunk_indices
 
         hover = Hover(template="Chunk %{chunk_key}: %{x_coordinate}; (%{value_counts_normalised}, %{value_counts})")
         hover.add(data['chunk_key'], name='chunk_key')
