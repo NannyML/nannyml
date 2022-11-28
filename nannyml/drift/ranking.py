@@ -24,10 +24,9 @@ class Ranking(abc.ABC):
 
     def fit(
         self,
-        drift_calculation_result: UnivariateResults,
         performance_results: Union[
             CBPEResults, DLEResults, PerformanceCalculationResults
-        ] = None,
+        ],
     ) -> pd.DataFrame:
         """Fits the calculator so it can then ranks drifted features according to their impact.
 
@@ -48,7 +47,7 @@ class Ranking(abc.ABC):
         drift_calculation_result: UnivariateResults,
         performance_results: Union[
             CBPEResults, DLEResults, PerformanceCalculationResults
-        ] = None,
+        ],
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Ranks the features within a drift calculation according to impact on model performance.
@@ -158,9 +157,8 @@ class AlertCountRanking(Ranking):
 
     def fit( # noqa D102
         self,
-        drift_calculation_result: UnivariateResults,
         performance_results: Union[
-            CBPEResults, DLEResults, PerformanceCalculationResults
+            CBPEResults, DLEResults, PerformanceCalculationResults, None
         ] = None,
     ) -> pd.DataFrame:
 
@@ -197,7 +195,7 @@ class AlertCountRanking(Ranking):
                 f"\nFound: {drift_calculation_result.continuous_method_names}"
             )
 
-    def rank(
+    def rank(  # type: ignore[override]
         self,
         drift_calculation_result: UnivariateResults,
         only_drifting: bool = False,

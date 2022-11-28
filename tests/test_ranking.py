@@ -87,7 +87,7 @@ def sample_multiclass_estimated_perf_result() -> CBPEResults:  # noqa: D103
     reference, analysis, analysis_target = load_synthetic_multiclass_classification_dataset()
     analysis = analysis.merge(analysis_target, on='identifier')
     # initialize, fit and calculate realized performance
-    estimated = CBPE(
+    estimated = CBPE(  # type: ignore[abstract]
         y_pred_proba={
             'prepaid_card': 'y_pred_proba_prepaid_card',
             'highstreet_card': 'y_pred_proba_highstreet_card',
