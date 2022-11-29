@@ -163,18 +163,6 @@ predictions (`y_pred`) below.
 
 .. image:: /_static/drift-guide-y_pred.svg
 
-NannyML can also rank features according to how many alerts they have had for all methods.
-By setting the ``only_drifting`` parameter you can view the ranking of either all model inputs, or just the drifting ones.
-NannyML provides a dataframe with the resulting ranking of features.
-
-.. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
-    :cells: 18
-
-.. nbtable::
-    :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
-    :cell: 19
-
 Insights
 --------
 
@@ -185,7 +173,5 @@ What Next
 ---------
 
 The :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
-observed changes to Model Performance.
-
-If needed, we can investigate further as to why our population characteristics have
-changed the way they did. This is an ad-hoc investigating that is not covered by NannyML.
+observed changes to Model Performance. The :ref:`ranking<tutorial-ranking>` functionality can help rank drifted features in order to
+suggest which ones to prioritize for further investigation if needed. This would be an ad-hoc investigating that is not covered by NannyML.

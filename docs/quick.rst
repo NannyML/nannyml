@@ -17,8 +17,8 @@ It can also monitor performance once target data is available.
 Installing NannyML
 ------------------
 
-NannyML depends on [LightGBM](https://github.com/microsoft/LightGBM). This might require you to set install additional
-OS-specific binaries. You can follow the [official installation guide](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html).
+NannyML depends on `LightGBM`_. This might require you to set install additional
+OS-specific binaries. You can follow the `official LightGBM installation guide`_.
 
 From the shell of your python environment type:
 
@@ -41,11 +41,11 @@ or
 
 
 --------------------------
-Contents of the quickstart
+Contents of the Quickstart
 --------------------------
 
 
-This quickstart presents core functionalities of NannyML on an example binary classification model
+This Quickstart presents core functionalities of NannyML on an example binary classification model
 that predicts whether an employee will work from home the next day or not. First, the whole code is shown
 so you can jump in and experiment right away if you want.
 
@@ -160,7 +160,8 @@ functionality. See :ref:`data-drift` for more details.
 
 .. image:: ./_static/quick-start-drift-salary_range.svg
 
-When there are a lot of drifted features, NannyML can also rank them by the number of alerts they have raised:
+When there are a lot of drifted features, NannyML can also rank them according to their correlation with a chosen performance metric
+in order to help prioritize further investigations. For more information you can check the :ref:`ranking tutorial<tutorial-ranking>`.
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -180,9 +181,9 @@ see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
 
 .. image:: ./_static/quick-start-drift-multivariate.svg
 
------------------------
+--------
 Insights
------------------------
+--------
 
 With NannyML we were able to estimate performance in the absence of ground truth. The estimation has shown
 potential drop in ROC AUC in the second half of the analysis period. Univariate and multivariate
@@ -192,11 +193,15 @@ Putting everything together, we see that 4 features exhibit data drift from late
 ``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
 This drift is responsible for the potential negative impact in performance that we have observed in this time period.
 
------------------------
+---------
 What next
------------------------
+---------
 
 This could be further investigated by analyzing changes of distributions of the input variables. Check
 :ref:`tutorials<tutorials>` on :ref:`data drift<data-drift>` to find out how to plot distributions with NannyML.
 
 You can now try using NannyML on your own data. Our :ref:`tutorials` are a good place to find out what to do for this.
+
+
+.. _`LightGBM`: https://github.com/microsoft/LightGBM
+.. _`official LightGBM installation guide`: https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html
