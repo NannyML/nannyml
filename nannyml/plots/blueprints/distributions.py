@@ -32,9 +32,11 @@ def plot_2d_univariate_distributions_list(
     y_axis_title: str = 'Values',
     figure_args: Optional[Dict[str, Any]] = None,
     subplot_title_format: str = '<b>{column_name}</b> distribution (alerts for <b>{method_name})</b>',
+    number_of_columns: Optional[int] = None,
 ) -> Figure:
     number_of_plots = len(items)
-    number_of_columns = min(number_of_plots, 2)
+    if number_of_columns is None:
+        number_of_columns = min(number_of_plots, 2)
     number_of_rows = math.ceil(number_of_plots / number_of_columns)
 
     if figure_args is None:
@@ -67,9 +69,9 @@ def plot_2d_univariate_distributions_list(
         row = (idx // number_of_columns) + 1
         col = (idx % number_of_columns) + 1
 
-        reference_chunk_start_dates = reference_result.get(('chunk', 'chunk', 'start_date'), default=None)
-        reference_chunk_end_dates = reference_result.get(('chunk', 'chunk', 'end_date'), default=None)
-        x_axis_is_time_based = is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
+        analysis_chunk_start_dates = analysis_result.get(('chunk', 'chunk', 'start_date'), default=None)
+        analysis_chunk_end_dates = analysis_result.get(('chunk', 'chunk', 'end_date'), default=None)
+        x_axis_is_time_based = is_time_based_x_axis(analysis_chunk_start_dates, analysis_chunk_end_dates)
 
         if column_name in result.categorical_column_names and method in result.categorical_methods:
             figure = _plot_stacked_bar(
@@ -87,16 +89,16 @@ def plot_2d_univariate_distributions_list(
                 reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
                 reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
                 reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                reference_chunk_start_dates=reference_chunk_start_dates,
-                reference_chunk_end_dates=reference_chunk_end_dates,
+                reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
+                reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
                 analysis_data=analysis_data[column_name],
                 analysis_data_timestamps=analysis_data[result.timestamp_column_name] if x_axis_is_time_based else None,
                 analysis_alerts=analysis_result.get((column_name, method.column_name, 'alert'), default=None),
                 analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
                 analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
                 analysis_chunk_indices=analysis_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                analysis_chunk_start_dates=analysis_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                analysis_chunk_end_dates=analysis_result.get(('chunk', 'chunk', 'end_date'), default=None),
+                analysis_chunk_start_dates=analysis_chunk_start_dates,
+                analysis_chunk_end_dates=analysis_chunk_end_dates,
             )
         elif column_name in result.continuous_column_names and method in result.continuous_methods:
             figure = _plot_joyplot(

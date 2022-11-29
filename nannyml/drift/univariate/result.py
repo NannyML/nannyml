@@ -85,6 +85,7 @@ class Result(AbstractCalculatorResult):
     def plot(  # type: ignore
         self,
         kind: str = 'drift',
+        number_of_columns: Optional[int] = None,
         *args,
         **kwargs,
     ) -> Optional[go.Figure]:
@@ -155,6 +156,7 @@ class Result(AbstractCalculatorResult):
                 reference_data=self.reference_data,
                 analysis_data=self.analysis_data,
                 chunker=self.chunker,
+                number_of_columns=number_of_columns,
             )
         else:
             raise InvalidArgumentsException(
