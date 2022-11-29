@@ -803,30 +803,10 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-            },
-        ),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
+        ({}, {'kind': 'drift'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
+        ({}, {'kind': 'distribution'}),
     ],
     ids=[
         'drift_with_timestamp',
@@ -857,30 +837,10 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-            },
-        ),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
+        ({}, {'kind': 'drift'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
+        ({}, {'kind': 'distribution'}),
     ],
     ids=[
         'drift_with_timestamp',
@@ -904,30 +864,10 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-            },
-        ),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
+        ({}, {'kind': 'drift'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
+        ({}, {'kind': 'distribution'}),
     ],
     ids=[
         'drift_with_timestamp',

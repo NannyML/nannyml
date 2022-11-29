@@ -14,8 +14,7 @@ import plotly.graph_objects as go
 from nannyml._typing import ProblemType
 from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
-from nannyml.plots._step_plot import _step_plot
+from nannyml.performance_calculation.metrics.base import Metric
 from nannyml.plots.blueprints.metrics import plot_metric_list
 
 
@@ -68,7 +67,6 @@ class Result(AbstractCalculatorResult):
     def plot(
         self,
         kind: str = 'performance',
-        plot_reference: bool = False,
         *args,
         **kwargs,
     ) -> Optional[go.Figure]:
@@ -84,16 +82,6 @@ class Result(AbstractCalculatorResult):
         ----------
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
-        metric: Union[str, nannyml.performance_calculation.metrics.base.Metric], default=None
-            The name of the metric to plot. Value should be one of:
-            - 'roc_auc'
-            - 'f1'
-            - 'precision'
-            - 'recall'
-            - 'specificity'
-            - 'accuracy'
-        plot_reference: bool, default=False
-            Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
 
         Returns
         -------
@@ -132,73 +120,74 @@ class Result(AbstractCalculatorResult):
         """
         if kind == 'performance':
             return plot_metric_list(
-                self, title='Realized performance', subplot_title_format='Realized <b>{metric_name}</b>'
+                result=self,
+                title='Realized performance',
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
-    def _plot_performance_metric(self, plot_reference: bool, metric: Union[str, Metric]) -> go.Figure:
-        """Renders a line plot of a selected metric of the performance calculation results.
-
-        Chunks are set on a time-based X-axis by using the period containing their observations.
-        Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
-        a vertical separation if the drift results contain multiple periods.
-
-
-        Parameters
-        ----------
-
-        metric: Union[str, nannyml.performance_calculation.metrics.base.Metric]
-                The name of the metric to plot. Value should be one of:
-                - 'roc_auc'
-                - 'f1'
-                - 'precision'
-                - 'recall'
-                - 'sensitivity'
-                - 'specificity'
-                - 'accuracy'
-
-        Returns
-        -------
-        fig: plotly.graph_objects.Figure
-            A ``Figure`` object containing the requested performance estimation plot.
-            Can be saved to disk or shown rendered on screen using ``fig.show()``.
-        """
-        results_data = self.to_df(multilevel=False)
-
-        if isinstance(metric, str):
-            metric = MetricFactory.create(
-                metric, self.problem_type, y_true=self.y_true, y_pred=self.y_pred, y_pred_proba=self.y_pred_proba
-            )
-
-        plot_period_separator = plot_reference
-
-        if not plot_reference:
-            results_data = results_data[results_data['chunk_period'] == 'analysis']
-
-        is_time_based_x_axis = self.timestamp_column_name is not None
-
-        # Plot metric performance
-        fig = _step_plot(
-            table=results_data,
-            metric_column_name=f'{metric.column_name}_value',
-            chunk_column_name='chunk_key',
-            chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_index',
-            drift_column_name=f'{metric.column_name}_alert',
-            drift_legend_label='Degraded performance',
-            hover_labels=['Chunk', metric.display_name, 'Target data'],
-            hover_marker_labels=['Reference', 'No change', 'Change'],
-            lower_threshold_column_name=f'{metric.column_name}_lower_threshold',
-            upper_threshold_column_name=f'{metric.column_name}_upper_threshold',
-            threshold_legend_label='Performance threshold',
-            partial_target_column_name='targets_missing_rate',
-            title=f'Realized performance: {metric.display_name}',
-            y_axis_title='Realized performance',
-            v_line_separating_analysis_period=plot_period_separator,
-            sampling_error_column_name=f'{metric.column_name}_sampling_error',
-            start_date_column_name='chunk_start_date' if is_time_based_x_axis else None,
-            end_date_column_name='chunk_end_date' if is_time_based_x_axis else None,
-        )
-
-        return fig
+    # def _plot_performance_metric(self, plot_reference: bool, metric: Union[str, Metric]) -> go.Figure:
+    #     """Renders a line plot of a selected metric of the performance calculation results.
+    #
+    #     Chunks are set on a time-based X-axis by using the period containing their observations.
+    #     Chunks of different periods (``reference`` and ``analysis``) are represented using different colors and
+    #     a vertical separation if the drift results contain multiple periods.
+    #
+    #
+    #     Parameters
+    #     ----------
+    #
+    #     metric: Union[str, nannyml.performance_calculation.metrics.base.Metric]
+    #             The name of the metric to plot. Value should be one of:
+    #             - 'roc_auc'
+    #             - 'f1'
+    #             - 'precision'
+    #             - 'recall'
+    #             - 'sensitivity'
+    #             - 'specificity'
+    #             - 'accuracy'
+    #
+    #     Returns
+    #     -------
+    #     fig: plotly.graph_objects.Figure
+    #         A ``Figure`` object containing the requested performance estimation plot.
+    #         Can be saved to disk or shown rendered on screen using ``fig.show()``.
+    #     """
+    #     results_data = self.to_df(multilevel=False)
+    #
+    #     if isinstance(metric, str):
+    #         metric = MetricFactory.create(
+    #             metric, self.problem_type, y_true=self.y_true, y_pred=self.y_pred, y_pred_proba=self.y_pred_proba
+    #         )
+    #
+    #     plot_period_separator = plot_reference
+    #
+    #     if not plot_reference:
+    #         results_data = results_data[results_data['chunk_period'] == 'analysis']
+    #
+    #     is_time_based_x_axis = self.timestamp_column_name is not None
+    #
+    #     # Plot metric performance
+    #     fig = _step_plot(
+    #         table=results_data,
+    #         metric_column_name=f'{metric.column_name}_value',
+    #         chunk_column_name='chunk_key',
+    #         chunk_type_column_name='chunk_period',
+    #         chunk_index_column_name='chunk_index',
+    #         drift_column_name=f'{metric.column_name}_alert',
+    #         drift_legend_label='Degraded performance',
+    #         hover_labels=['Chunk', metric.display_name, 'Target data'],
+    #         hover_marker_labels=['Reference', 'No change', 'Change'],
+    #         lower_threshold_column_name=f'{metric.column_name}_lower_threshold',
+    #         upper_threshold_column_name=f'{metric.column_name}_upper_threshold',
+    #         threshold_legend_label='Performance threshold',
+    #         partial_target_column_name='targets_missing_rate',
+    #         title=f'Realized performance: {metric.display_name}',
+    #         y_axis_title='Realized performance',
+    #         v_line_separating_analysis_period=plot_period_separator,
+    #         sampling_error_column_name=f'{metric.column_name}_sampling_error',
+    #         start_date_column_name='chunk_start_date' if is_time_based_x_axis else None,
+    #         end_date_column_name='chunk_end_date' if is_time_based_x_axis else None,
+    #     )
+    #
+    #     return fig

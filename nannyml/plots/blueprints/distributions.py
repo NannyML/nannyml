@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 
 from nannyml.chunk import Chunker
-from nannyml.drift.univariate.methods import Method
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import Colors
 from nannyml.plots.components import Figure, Hover
@@ -25,7 +24,7 @@ def plot_2d_univariate_distributions_list(
     reference_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
     analysis_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
     chunker: Chunker,  # TODO: move distribution calculations to calculator run
-    items: List[Tuple[str, Method]],
+    items: List[Tuple[str, Any]],
     title: Optional[str] = 'Column distributions',
     figure: Optional[Figure] = None,
     x_axis_time_title: str = 'Time',
