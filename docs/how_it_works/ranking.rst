@@ -6,7 +6,7 @@ Ranking
 
 As mentioned in the :ref:`ranking tutorial<tutorial-ranking>` NannyML uses ranking to order columns in
 univariate drift results. The resulting order can be helpful in prioritizing what to further investigate
-to fully address any issues with the model. LEt's deep dive into how ranking options work.
+to fully address any issues with the model. Let's deep dive into how ranking options work.
 
 Alert Count Ranking
 ===================
@@ -40,7 +40,7 @@ We'll use an example from :ref:`Correlation Ranking Tutorial<tutorial-ranking-co
 We see that after initializing a correlation ranker, the next step is to 
 :meth:`~nannyml.drift.ranking.CorrelationRanking.fit` it by providing performance results
 from the reference :term:`period<Data Period>`. From those results the ranker calculates
-the average performance during the reference period. This value is saved at the `mean_perf_value` property of the ranker.
+the average performance during the reference period. This value is saved at the ``mean_perf_value`` property of the ranker.
 The we proceed with the :meth:`~nannyml.drift.ranking.CorrelationRanking.rank` method where we provide
 the chosen univariate drift and performance results. The performance results are preprocessed
 in order to caclulate the absolute difference of observed performance values with the mean performance
@@ -55,7 +55,7 @@ on reference. We can see how this transformation affects the performance values 
 The next step is to calculate the `pearson correlation`_ between the drift results and the calculated
 absolute performance changes. In order to build an intuition about how the pearson correlation ranks
 features this way we can compare the drift values of two features,
-`wfh_prev_workday` and `gas_price_per_litre` with the absolute performance difference
+``wfh_prev_workday`` and ``gas_price_per_litre`` with the absolute performance difference
 as shown in this plot below.
 
 .. nbimport::

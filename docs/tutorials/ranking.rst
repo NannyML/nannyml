@@ -5,7 +5,7 @@ Ranking
 =======
 
 NannyML uses ranking to order columns in univariate drift results. The resulting order can be helpful
-in prioritizing what to further investigate to fully address any issues with the model.
+in prioritizing what to further investigate to fully address any issues with the model being monitored.
 
 There are currently two ranking methods in NannyML, alert count ranking and correlation ranking.
 
@@ -20,11 +20,15 @@ Walkthrough
 ===========
 
 Ranking methods use univariate drift calculation results and performance estimation or realized performance
-results in order to rank features. The univariate drift calculation results need to be created or filtered
-in such a way so that there is only one drift method used for each feature. Similarly the performance estimation
-or realized performance results need to be created or filtered in such a way that only one performance metric
-is present in them.
+results in order to rank features.
 
+.. note::
+    The univariate drift calculation results need to be created or filtered
+    in such a way so that there is only one drift method used for each feature. Similarly the performance estimation
+    or realized performance results need to be created or filtered in such a way that only one performance metric
+    is present in them.
+
+Below we can see in more details how to use each ranking method.
 
 .. _tutorial-ranking-alert:
 
@@ -45,9 +49,10 @@ The first thing we need before using the alert count ranker is to create the uni
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 2
 
-To illustrate the results we filter and display the analysis period results for `distance_from_office` feature.
+To illustrate the results we filter and display the analysis period results for ``distance_from_office`` feature.
 The next step is to instantiate the ranker and instruct it to :meth:`~nannyml.drift.ranking.AlertCountRanking.rank`
-the provided results.
+the provided results. Notice that the univariate results are filtered to ensure they only have one drift method
+per categorical and continuous feature as required.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
@@ -79,7 +84,9 @@ performance results are created below.
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 6
 
-The analysis period estimations are shown. The realized performance results are also created
+The analysis period estimations are shown.
+
+The realized performance results are also created
 since both can be used according to the use case being addressed.
 
 .. nbimport::
@@ -92,11 +99,13 @@ since both can be used according to the use case being addressed.
 
 The analysis period results are shown.
 
-We can now proceed to correlation ranking. Let's correlate drift results with the estimated `roc_auc`.
+We can now proceed to correlation ranking. Let's correlate drift results with the estimated ``roc_auc``.
 A key difference here is that after instantiation, we need to :meth:`~nannyml.drift.ranking.CorrelationRanking.fit`
-the ranker with the related results from the reference period. You can read more about this on the 
+the ranker with the related results from the reference period and only contain the performance metric we want
+the correlation ranker to use. You can read more about why this is needed on the
 :ref:`Correlation Ranking, How it Works<how-ranking-correlation>` page.
-After fitting, we can :meth:`~nannyml.drift.ranking.CorrelationRanking.rank`.
+After fitting, we can :meth:`~nannyml.drift.ranking.CorrelationRanking.rank` providing appropriately
+filtered univariate and performance results.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
@@ -108,7 +117,7 @@ After fitting, we can :meth:`~nannyml.drift.ranking.CorrelationRanking.rank`.
 
 Depending on circumstances it may be appropriate to consider correlation
 of drift results on just the analysis dataset or for different metrics.
-Below we can see the correlation of the same drift results with the `precision`
+Below we can see the correlation of the same drift results with the ``precision``
 results
 
 .. nbimport::

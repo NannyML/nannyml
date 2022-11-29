@@ -160,8 +160,9 @@ functionality. See :ref:`data-drift` for more details.
 
 .. image:: ./_static/quick-start-drift-salary_range.svg
 
-When there are a lot of drifted features, NannyML can also rank them according to their correlation with a chosen performance metric
-in order to help prioritize further investigations. For more information you can check the :ref:`ranking tutorial<tutorial-ranking>`.
+When there are a lot of drifted features, NannyML can also rank them according to their correlation with a chosen
+performance metric's results in order to help prioritize further investigations. For more information you can check the
+:ref:`ranking tutorial<tutorial-ranking>`.
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
