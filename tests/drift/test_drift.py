@@ -388,62 +388,13 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
+            {'kind': 'drift'},
         ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f1', 'method': 'kolmogorov_smirnov'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'f3', 'method': 'chi2'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'f3', 'method': 'chi2'}),
+        ({}, {'kind': 'drift'}),
     ],
     ids=[
-        'continuous_feature_drift_with_timestamp_without_reference',
-        'continuous_feature_drift_without_timestamp_without_reference',
-        'continuous_feature_drift_with_timestamp_with_reference',
-        'continuous_feature_drift_without_timestamp_with_reference',
-        'categorical_feature_drift_with_timestamp_without_reference',
-        'categorical_feature_drift_without_timestamp_without_reference',
-        'categorical_feature_drift_with_timestamp_with_reference',
-        'categorical_feature_drift_without_timestamp_with_reference',
-        'continuous_feature_distribution_with_timestamp_without_reference',
-        'continuous_feature_distribution_without_timestamp_without_reference',
-        'continuous_feature_distribution_with_timestamp_with_reference',
-        'continuous_feature_distribution_without_timestamp_with_reference',
-        'categorical_feature_distribution_with_timestamp_without_reference',
-        'categorical_feature_distribution_without_timestamp_without_reference',
-        'categorical_feature_distribution_with_timestamp_with_reference',
-        'categorical_feature_distribution_without_timestamp_with_reference',
+        'univariate_drift_with_timestamp',
+        'univariate_drift_without_timestamp',
     ],
 )
 def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args):  # noqa: D103

@@ -279,20 +279,6 @@ def test_cbpe_results_plot_raises_invalid_arguments_exception_given_invalid_plot
         estimates.plot(kind="foo", metric='roc_auc')
 
 
-def test_cbpe_results_plot_raises_invalid_arguments_exception_given_no_metric_for_performance_plot(  # noqa: D103
-    estimates,
-):
-    with pytest.raises(InvalidArgumentsException):
-        estimates.plot(kind="performance")
-
-
-def test_cbpe_results_plot_raises_invalid_arguments_exception_given_invalid_metric_for_performance_plot(  # noqa: D103
-    estimates,
-):
-    with pytest.raises(InvalidArgumentsException, match="unknown metric key 'foo'."):
-        estimates.plot(kind="performance", metric="foo")
-
-
 @pytest.mark.parametrize('metric', ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'])
 def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_of_reference_data(  # noqa: D103
     binary_classification_data, metric

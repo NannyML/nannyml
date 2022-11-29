@@ -220,11 +220,6 @@ def test_direct_error_estimation_yields_correct_results_for_metric_with_custom_h
     all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
-def test_result_plot_raises_invalid_args_exception_when_given_no_metric(estimates):
-    with pytest.raises(InvalidArgumentsException):
-        _ = estimates.plot()
-
-
 def test_result_plot_raises_invalid_args_exception_when_given_incorrect_kind(estimates):
     with pytest.raises(InvalidArgumentsException):
         _ = estimates.plot(kind='foo')
@@ -232,7 +227,7 @@ def test_result_plot_raises_invalid_args_exception_when_given_incorrect_kind(est
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
 def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_error_estimator, metric):
-    _metric = MetricFactory.create(
+    _ = MetricFactory.create(
         key=metric,
         problem_type=ProblemType.REGRESSION,
         feature_column_names=direct_error_estimator.feature_column_names,
@@ -245,7 +240,7 @@ def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_
     )
 
     sut = estimates.plot(metric=metric).to_dict()
-    assert _metric.display_name in sut['data'][3]['name']
+    assert 'Metric (analysis)' in sut['data'][3]['name']
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
@@ -263,14 +258,7 @@ def test_result_plot_with_metric_object_returns_plotly_figure(estimates, direct_
     )
 
     sut = estimates.plot(metric=_metric)
-    assert _metric.display_name in sut.to_dict()['data'][3]['name']
-
-
-@pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
-def test_result_plot_contains_no_reference_data_by_default(estimates, metric):
-    sut = estimates.plot(metric=metric)
-    assert len(sut.to_dict()['data'][2]['x']) == 0
-    assert len(sut.to_dict()['data'][2]['y']) == 0
+    assert 'Metric (analysis)' in sut.to_dict()['data'][3]['name']
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])

@@ -807,112 +807,32 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
             {'timestamp_column_name': 'timestamp'},
             {
                 'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
             },
         ),
         (
             {},
             {
                 'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
             },
         ),
         (
             {'timestamp_column_name': 'timestamp'},
             {
                 'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
             },
         ),
         (
             {},
             {
                 'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
             },
         ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'method': 'chi2', 'column_name': 'y_pred'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'method': 'chi2', 'column_name': 'y_pred'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'method': 'chi2', 'column_name': 'y_pred'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'method': 'chi2', 'column_name': 'y_pred'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'}),
     ],
     ids=[
-        'score_drift_with_timestamp_without_reference',
-        'score_drift_without_timestamp_without_reference',
-        'score_drift_with_timestamp_with_reference',
-        'score_drift_without_timestamp_with_reference',
-        'score_distribution_with_timestamp_without_reference',
-        'score_distribution_without_timestamp_without_reference',
-        'score_distribution_with_timestamp_with_reference',
-        'score_distribution_without_timestamp_with_reference',
-        'prediction_drift_with_timestamp_without_reference',
-        'prediction_drift_without_timestamp_without_reference',
-        'prediction_drift_with_timestamp_with_reference',
-        'prediction_drift_without_timestamp_with_reference',
-        'prediction_distribution_with_timestamp_without_reference',
-        'prediction_distribution_without_timestamp_without_reference',
-        'prediction_distribution_with_timestamp_with_reference',
-        'prediction_distribution_without_timestamp_with_reference',
+        'drift_with_timestamp',
+        'drift_without_timestamp',
+        'distribution_with_timestamp',
+        'distribution_without_timestamp',
     ],
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
@@ -941,112 +861,32 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
             {'timestamp_column_name': 'timestamp'},
             {
                 'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
             },
         ),
         (
             {},
             {
                 'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
             },
         ),
         (
             {'timestamp_column_name': 'timestamp'},
             {
                 'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
             },
         ),
         (
             {},
             {
                 'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
             },
         ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'kolmogorov_smirnov',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'chi2'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'chi2'}),
     ],
     ids=[
-        'score_drift_with_timestamp_without_reference',
-        'score_drift_without_timestamp_without_reference',
-        'score_drift_with_timestamp_with_reference',
-        'score_drift_without_timestamp_with_reference',
-        'score_distribution_with_timestamp_without_reference',
-        'score_distribution_without_timestamp_without_reference',
-        'score_distribution_with_timestamp_with_reference',
-        'score_distribution_without_timestamp_with_reference',
-        'prediction_drift_with_timestamp_without_reference',
-        'prediction_drift_without_timestamp_without_reference',
-        'prediction_drift_with_timestamp_with_reference',
-        'prediction_drift_without_timestamp_with_reference',
-        'prediction_distribution_with_timestamp_without_reference',
-        'prediction_distribution_without_timestamp_without_reference',
-        'prediction_distribution_with_timestamp_with_reference',
-        'prediction_distribution_without_timestamp_with_reference',
+        'drift_with_timestamp',
+        'drift_without_timestamp',
+        'distribution_with_timestamp',
+        'distribution_without_timestamp',
     ],
 )
 def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
@@ -1066,43 +906,34 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+            {
+                'kind': 'drift',
+            },
         ),
         (
             {},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+            {
+                'kind': 'drift',
+            },
         ),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+            {
+                'kind': 'distribution',
+            },
         ),
         (
             {},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
+            {
+                'kind': 'distribution',
+            },
         ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
-        ),
-        (
-            {},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'kolmogorov_smirnov'}),
     ],
     ids=[
-        'prediction_drift_with_timestamp_without_reference',
-        'prediction_drift_without_timestamp_without_reference',
-        'prediction_drift_with_timestamp_with_reference',
-        'prediction_drift_without_timestamp_with_reference',
-        'prediction_distribution_with_timestamp_without_reference',
-        'prediction_distribution_without_timestamp_without_reference',
-        'prediction_distribution_with_timestamp_with_reference',
-        'prediction_distribution_without_timestamp_with_reference',
+        'drift_with_timestamp',
+        'drift_without_timestamp',
+        'distribution_with_timestamp',
+        'distribution_without_timestamp',
     ],
 )
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
