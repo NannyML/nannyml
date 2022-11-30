@@ -50,7 +50,7 @@ Jensen-Shannon Distance
 Jensen-Shannon Distance is a metric that tells us how different two probability distributions are.
 It is based on `Kullback-Leibler divergence`_ but is created in such a way that it is symmetric and ranges between 0 and 1.
 
-For a continuous feature `Kullback-Leibler divergence`_ between two distributions :math:`P,Q` is defined as:
+Between two distributions :math:`P,Q` of a continuous feature `Kullback-Leibler divergence`_  is defined as:
 
 .. math::
     D_{KL} \left(P || Q \right) = \int_{-\infty}^{\infty}p(x)\ln \left( \frac{p(x)}{q(x)} \right) dx
@@ -161,12 +161,13 @@ Jensen-Shannon Distance
 Jensen-Shannon Distance is a metric that tells us how different two probability distributions are.
 It is based on `Kullback-Leibler divergence`_ but is created in such a way that it is symmetric and ranges between 0 and 1.
 
-For a categorical feature `Kullback-Leibler divergence`_ is defined as:
+Between two distributions :math:`P,Q` of a categorical feature `Kullback-Leibler divergence`_  is defined as:
 
 .. math::
     D_{KL} \left(P || Q \right) = \sum_{x \in X} P(x)\ln \left( \frac{P(x)}{Q(x)} \right)
 
 
+where :math:`p(x)` and :math:`q(x)` are the probability mass functions of the distributions :math:`P,Q` respectively.
 And `Jensen-Shannon Divergence`_ is defined as:
 
 .. math::
