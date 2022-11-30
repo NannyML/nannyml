@@ -211,7 +211,7 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.02262682803313815,
                         0.17026751513773614,
                         0.3002723421679077,
-                        0.30312187233953375
+                        0.30312187233953375,
                     ],
                 }
             ),
@@ -226,7 +226,7 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.02262682803313815,
                         0.17026751513773614,
                         0.3002723421679077,
-                        0.30312187233953375
+                        0.30312187233953375,
                     ],
                 }
             ),
@@ -266,7 +266,7 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.2999743688973674,
                         0.30153461857691105,
                         0.3007077108612849,
-                        0.3062384802693972
+                        0.3062384802693972,
                     ],
                 }
             ),
@@ -287,8 +287,7 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         '[48000:53999]',
                         '[54000:59999]',
                     ],
-                    'y_pred_js': 
-                    [
+                    'y_pred_js': [
                         0.02148204835360641,
                         0.028425356316305078,
                         0.027977096337132364,
@@ -298,7 +297,7 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
                         0.2999743688973674,
                         0.30153461857691105,
                         0.3007077108612849,
-                        0.3062384802693972
+                        0.3062384802693972,
                     ],
                 }
             ),
@@ -323,9 +322,7 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis)
-    sut = results.filter(period='analysis').to_df()[
-        [('chunk', 'chunk', 'key'), ('y_pred', 'jensen_shannon', 'value')]
-    ]
+    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_pred', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'y_pred_js']
     pd.testing.assert_frame_equal(expected, sut)
 
@@ -343,14 +340,14 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.008204513261276816,
                         0.01201314663099034,
                         0.020600738990536042,
-                        0.02289785288459782
+                        0.02289785288459782,
                     ],
                     'y_pred_proba_js': [
                         0.017838328289590907,
                         0.0216236580673744,
                         0.11776323012621548,
                         0.21603251976958054,
-                        0.20989914993787034
+                        0.20989914993787034,
                     ],
                 }
             ),
@@ -365,14 +362,14 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.008204513261276816,
                         0.01201314663099034,
                         0.020600738990536042,
-                        0.02289785288459782
+                        0.02289785288459782,
                     ],
                     'y_pred_proba_js': [
                         0.017838328289590907,
                         0.0216236580673744,
                         0.11776323012621548,
                         0.21603251976958054,
-                        0.20989914993787034
+                        0.20989914993787034,
                     ],
                 }
             ),
@@ -387,14 +384,14 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.008204513261276816,
                         0.01201314663099034,
                         0.020600738990536042,
-                        0.02289785288459782
+                        0.02289785288459782,
                     ],
                     'y_pred_proba_js': [
                         0.017838328289590907,
                         0.0216236580673744,
                         0.11776323012621548,
                         0.21603251976958054,
-                        0.20989914993787034
+                        0.20989914993787034,
                     ],
                 }
             ),
@@ -409,14 +406,14 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.008204513261276816,
                         0.01201314663099034,
                         0.020600738990536042,
-                        0.02289785288459782
+                        0.02289785288459782,
                     ],
                     'y_pred_proba_js': [
                         0.017838328289590907,
                         0.0216236580673744,
                         0.11776323012621548,
                         0.21603251976958054,
-                        0.20989914993787034
+                        0.20989914993787034,
                     ],
                 }
             ),
@@ -431,14 +428,14 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.008185333575238572,
                         0.014972720080954184,
                         0.02197914784258864,
-                        0.08972122347893575
+                        0.08972122347893575,
                     ],
                     'y_pred_proba_js': [
                         0.03018463007070682,
                         0.017165049842576295,
                         0.14821598653099316,
                         0.21422298797745046,
-                        0.7103098878216826
+                        0.7103098878216826,
                     ],
                 }
             ),
@@ -469,7 +466,7 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.021366368083352273,
                         0.019835182506606944,
                         0.01235311384948347,
-                        0.03345763283697706
+                        0.03345763283697706,
                     ],
                     'y_pred_proba_js': [
                         0.02893294372076363,
@@ -481,7 +478,7 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.2088146101476805,
                         0.2242815673339107,
                         0.20535156077297334,
-                        0.2155386644722171
+                        0.2155386644722171,
                     ],
                 }
             ),
@@ -512,7 +509,7 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.021366368083352273,
                         0.019835182506606944,
                         0.01235311384948347,
-                        0.03345763283697706
+                        0.03345763283697706,
                     ],
                     'y_pred_proba_js': [
                         0.02893294372076363,
@@ -524,7 +521,7 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
                         0.2088146101476805,
                         0.2242815673339107,
                         0.20535156077297334,
-                        0.2155386644722171
+                        0.2155386644722171,
                     ],
                 }
             ),
@@ -579,7 +576,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.01061470567791271,
                         0.06896200120725922,
                         0.07372094889140536,
-                        0.06907938357567352
+                        0.06907938357567352,
                     ],
                     'y_pred_proba_upmarket_card_js': [
                         0.01729876493794587,
@@ -587,7 +584,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.02498051961222243,
                         0.2475564938196511,
                         0.24270961682918593,
-                        0.24013533794242778
+                        0.24013533794242778,
                     ],
                 }
             ),
@@ -610,7 +607,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.01061470567791271,
                         0.06896200120725922,
                         0.07372094889140536,
-                        0.06907938357567352
+                        0.06907938357567352,
                     ],
                     'y_pred_proba_upmarket_card_js': [
                         0.01729876493794587,
@@ -618,7 +615,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.02498051961222243,
                         0.2475564938196511,
                         0.24270961682918593,
-                        0.24013533794242778
+                        0.24013533794242778,
                     ],
                 }
             ),
@@ -640,7 +637,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.01626463052861827,
                         0.11865364992201723,
                         0.244427368381236,
-                        0.24001077864818152
+                        0.24001077864818152,
                     ],
                 }
             ),
@@ -655,14 +652,14 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.0042187688895671885,
                         0.03624679901959667,
                         0.07365924818646127,
-                        0.0702292628381398
+                        0.0702292628381398,
                     ],
                     'y_pred_proba_upmarket_card_js': [
                         0.015334058221434002,
                         0.01626463052861827,
                         0.11865364992201723,
                         0.244427368381236,
-                        0.24001077864818152
+                        0.24001077864818152,
                     ],
                 }
             ),
@@ -703,7 +700,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.07073524484367058,
                         0.07662165735865509,
                         0.06702709466498659,
-                        0.07349217375412115
+                        0.07349217375412115,
                     ],
                     'y_pred_proba_upmarket_card_js': [
                         0.027071177000638293,
@@ -715,7 +712,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.24354495017280245,
                         0.24616321361387417,
                         0.24265783377877748,
-                        0.23900066322004415
+                        0.23900066322004415,
                     ],
                 }
             ),
@@ -746,7 +743,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.07073524484367058,
                         0.07662165735865509,
                         0.06702709466498659,
-                        0.07349217375412115
+                        0.07349217375412115,
                     ],
                     'y_pred_proba_upmarket_card_js': [
                         0.027071177000638293,
@@ -758,7 +755,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
                         0.24354495017280245,
                         0.24616321361387417,
                         0.24265783377877748,
-                        0.23900066322004415
+                        0.23900066322004415,
                     ],
                 }
             ),

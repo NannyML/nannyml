@@ -176,7 +176,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
                         0.024666539218128822,
                         0.2495460952719345,
                         0.2537200630548825,
-                        0.2604930968064078
+                        0.2604930968064078,
                     ],
                 }
             ),
@@ -199,7 +199,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
                         0.024666539218128822,
                         0.2495460952719345,
                         0.2537200630548825,
-                        0.2604930968064078
+                        0.2604930968064078,
                     ],
                 }
             ),
@@ -214,7 +214,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
                         0.02385711109368465,
                         0.1359047751415131,
                         0.25493613387717934,
-                        0.25899939331886124
+                        0.25899939331886124,
                     ],
                 }
             ),
@@ -229,7 +229,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
                         0.02385711109368465,
                         0.1359047751415131,
                         0.25493613387717934,
-                        0.25899939331886124
+                        0.25899939331886124,
                     ],
                 }
             ),
@@ -269,7 +269,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
                         0.25447077258328393,
                         0.2560733890621882,
                         0.2592139965526459,
-                        0.2597909547888234
+                        0.2597909547888234,
                     ],
                 }
             ),
@@ -300,7 +300,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
                         0.25447077258328393,
                         0.2560733890621882,
                         0.2592139965526459,
-                        0.2597909547888234
+                        0.2597909547888234,
                     ],
                 }
             ),
@@ -323,9 +323,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis.join(analysis_targets))
-    sut = results.filter(period='analysis').to_df()[
-        [('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]
-    ]
+    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'statistical_target_drift']
     pd.testing.assert_frame_equal(expected, sut)
 
@@ -343,7 +341,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         0.007202604870580528,
                         0.0012060373619027277,
                         0.002734826305568785,
-                        0.0038389670681924274
+                        0.0038389670681924274,
                     ],
                 }
             ),
@@ -358,7 +356,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         0.007202604870580528,
                         0.0012060373619027277,
                         0.002734826305568785,
-                        0.0038389670681924274
+                        0.0038389670681924274,
                     ],
                 }
             ),
@@ -373,7 +371,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         0.007202604870580528,
                         0.0012060373619027277,
                         0.002734826305568785,
-                        0.0038389670681924274
+                        0.0038389670681924274,
                     ],
                 }
             ),
@@ -388,7 +386,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         0.007202604870580528,
                         0.0012060373619027277,
                         0.002734826305568785,
-                        0.0038389670681924274
+                        0.0038389670681924274,
                     ],
                 }
             ),
@@ -403,7 +401,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         0.006911912044357547,
                         0.0021698147637991376,
                         0.0029091172643770785,
-                        0.08507929435324538
+                        0.08507929435324538,
                     ],
                 }
             ),
@@ -434,7 +432,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         0.004603383709406135,
                         0.0008663083254600605,
                         0.002700867424723671,
-                        0.010379513761252155
+                        0.010379513761252155,
                     ],
                 }
             ),
@@ -465,7 +463,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
                         0.004603383709406135,
                         0.0008663083254600605,
                         0.002700867424723671,
-                        0.010379513761252155
+                        0.010379513761252155,
                     ],
                 }
             ),
@@ -490,7 +488,9 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
         **calculator_opts,
     ).fit(reference)
     results = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
-    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('work_home_actual', 'jensen_shannon', 'value')]]
+    sut = results.filter(period='analysis').to_df()[
+        [('chunk', 'chunk', 'key'), ('work_home_actual', 'jensen_shannon', 'value')]
+    ]
     sut.columns = ['key', 'statistical_target_drift']
     pd.testing.assert_frame_equal(expected, sut)
 
@@ -516,7 +516,7 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
                         0.005229199578465021,
                         0.020204229160376244,
                         0.019581827343873603,
-                        0.022630272418250677
+                        0.022630272418250677,
                     ],
                 }
             ),
@@ -539,7 +539,7 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
                         0.005229199578465021,
                         0.020204229160376244,
                         0.019581827343873603,
-                        0.022630272418250677
+                        0.022630272418250677,
                     ],
                 }
             ),
@@ -554,7 +554,7 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
                         0.0064669042170913986,
                         0.015029368002268359,
                         0.019796501732703135,
-                        0.021265582906514667
+                        0.021265582906514667,
                     ],
                 }
             ),
@@ -569,7 +569,7 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
                         0.0064669042170913986,
                         0.015029368002268359,
                         0.019796501732703135,
-                        0.021265582906514667
+                        0.021265582906514667,
                     ],
                 }
             ),
@@ -606,7 +606,7 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
                         0.014131730114252177,
                         0.02578136410091765,
                         0.021744805155907727,
-                        0.020791075713502798
+                        0.020791075713502798,
                     ],
                 }
             ),
@@ -637,7 +637,7 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
                         0.014131730114252177,
                         0.02578136410091765,
                         0.021744805155907727,
-                        0.020791075713502798
+                        0.020791075713502798,
                     ],
                 }
             ),
@@ -726,14 +726,40 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
+            {
+                'kind': 'distribution',
+                'plot_reference': False,
+                'column_name': 'work_home_actual',
+                'method': 'jensen_shannon',
+            },
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}),
+        (
+            {},
+            {
+                'kind': 'distribution',
+                'plot_reference': False,
+                'column_name': 'work_home_actual',
+                'method': 'jensen_shannon',
+            },
+        ),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
+            {
+                'kind': 'distribution',
+                'plot_reference': True,
+                'column_name': 'work_home_actual',
+                'method': 'jensen_shannon',
+            },
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}),
+        (
+            {},
+            {
+                'kind': 'distribution',
+                'plot_reference': True,
+                'column_name': 'work_home_actual',
+                'method': 'jensen_shannon',
+            },
+        ),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
