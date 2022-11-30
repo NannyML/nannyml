@@ -2,14 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from nannyml.drift.univariate.methods import JensenShannonDistance, LInfinityDistance, WassersteinDistance
-from nannyml.drift.univariate.methods import InfinityNormDistance, JensenShannonDistance, WassersteinDistance, HellingerDistance
-from nannyml.drift.univariate.methods import (
-    InfinityNormDistance,
-    JensenShannonDistance,
-    WassersteinDistance,
-    HellingerDistance,
-)
+from nannyml.drift.univariate.methods import JensenShannonDistance, LInfinityDistance, WassersteinDistance, HellingerDistance,
 
 # ************* JS Tests *************
 
@@ -137,4 +130,4 @@ def test_hellinger_both_continuous_analysis_with_small_drift():
     analysis = pd.Series(np.random.normal(-2, 1, 10_000))
     hell_dist = HellingerDistance().fit(reference).calculate(analysis)
     hell_dist = np.round(hell_dist, 2)
-    assert hell_dist == 0.62
+    assert hell_dist == 0.63

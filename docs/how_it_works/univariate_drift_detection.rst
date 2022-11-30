@@ -113,17 +113,18 @@ Wasserstein distance between the two distributions is given by:
 Hellinger Distance
 ........................
 
-The Hellinger Distance, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
-to the same event by both reference and analysis. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
-analysis assigns some positive probability and vice versa. 
-The formula is given by:
+The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two probability distributions. It measures the overlap between the probabilities assigned 
+to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
+the analysis sample assigns some positive probability and vice versa. 
+The formula is given by: 
 
 .. math::
     H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\int_{}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
 
-The implementation splits a continuous feature into bins, calculates the relative frequency
-for each bin from reference and analyzed data and calculates the
-resulting Hellinger Distance. The binning is done using `Doane's formula`_ from numpy.
+In order to Calculate Hellinger Distance NannyML splits a continuous feature into bins based on the reference data. The relative frequency
+for each bin from reference and the samples of analysis data is calculated to generate the
+resulting Hellinger Distance. If there's new data in the analysis sample that does not fall into the range of the bin edges that were calculated based on reference, another bin 
+is created that fits all that data. An additional bin is also created in reference and its probability/relative frequency is set to 0. The binning is done using `Doane's formula`_ from numpy.
 If a continuous feature has relatively low amount of unique values, meaning that
 unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
 
@@ -227,15 +228,21 @@ We also see that the JS Divergence contribution of each change and the resulting
 Hellinger Distance
 ........................
 
-The Hellinger Distance, is a distance metric used to quantify the similarity between two distributions. It measures the overlap between the probabilities assigned 
-to the same event by both reference and analysis. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
-analysis assigns some positive probability and vice versa. 
-The formula is given by:
+The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two probability distributions. It measures the overlap between the probabilities assigned 
+to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
+the analysis sample assigns some positive probability and vice versa. 
 
 For a categorical feature Hellinger Distance is defined as:
 
 .. math::
  H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
+
+where :math:`{F}_{ref}` and :math:`{F}_{ana}` refer to the Probability Mass Functions of the reference and analysis samples respectively. 
+
+In order to Calculate Hellinger Distance for categorical data, NannyML splits a categorical feature into bins where each bin corresponds to a unique label in the reference data. The relative frequency
+for each bin from reference and the samples of analysis data is calculated to generate the
+resulting Hellinger Distance. If there's any unseen category that does not already exist in the calculated bins, another bin is created 
+that fits all the new data. An additional bin is also created in reference and its probability/relative frequency is set to 0. 
 
 .. _univ_cat_method_l8:
 
@@ -261,6 +268,7 @@ We also see that the resulting L-Infinity distance is the relative frequency cha
 .. _`Chi-squared test`: https://en.wikipedia.org/wiki/Chi-squared_test
 .. _`Kolmogorov-Smirnov Test`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
 .. _`Jensen-Shannon Divergence`: https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
+.. _`Hellinger Distance`: https://en.wikipedia.org/wiki/Hellinger_distance
 .. _`L-Infinity at Wikipedia`: https://en.wikipedia.org/wiki/L-infinity
 .. _`Kullback-Leibler divergence`: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
 .. _`Doane's formula`: https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html
