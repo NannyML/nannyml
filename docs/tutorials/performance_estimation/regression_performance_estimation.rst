@@ -140,9 +140,7 @@ The plots can be created with the following code:
     :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 8
 
-.. image:: ../../_static/tutorial-perf-est-regression-RMSE.svg
-
-.. image:: ../../_static/tutorial-perf-est-regression-RMSLE.svg
+.. image:: ../../_static/tutorial-perf-est-regression.svg
 
 
 Insights

@@ -131,12 +131,12 @@ In the sample data this is the ``timestamp`` column.
     This column is optional. When a timestamp column is not provided, plots will no longer make use of a time based x-axis
     but will use the index of the chunks instead. The following plots illustrate this:
 
-    .. figure:: /_static/drift-guide-salary_range.svg
+    .. figure:: /_static/tutorials/data-requirements-time-based-x-axis.svg
 
         Plot using a time based X-axis
 
 
-    .. figure:: /_static/quick-start-drift-salary_range.svg
+    .. figure:: /_static/tutorials/data-requirements-index-based-x-axis.svg
 
         Plot using an index based X-axis
 

@@ -34,9 +34,11 @@ def plot_2d_univariate_distributions_list(
     subplot_title_format: str = '<b>{column_name}</b> distribution (alerts for <b>{method_name})</b>',
     number_of_columns: Optional[int] = None,
 ) -> Figure:
+    if len(items) == 0:
+        raise InvalidArgumentsException("tried plotting distributions but received zero plotting items.")
     number_of_plots = len(items)
     if number_of_columns is None:
-        number_of_columns = min(number_of_plots, 2)
+        number_of_columns = min(number_of_plots, 1)
     number_of_rows = math.ceil(number_of_plots / number_of_columns)
 
     if figure_args is None:

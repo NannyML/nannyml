@@ -120,10 +120,7 @@ interactive plots, though only static views are included here).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 6
 
-
-.. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-roc_auc.svg
-
-.. image:: ../../_static/tutorial-perf-est-mc-guide-analysis-f1.svg
+.. image:: ../../_static/tutorial-perf-est-mc-guide-analysis.svg
 
 To get a better context let's additionally plot estimation of performance on analysis data together with calculated
 performance on reference period (where the target was available).
@@ -141,9 +138,7 @@ performance on reference period (where the target was available).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
     :cells: 8
 
-.. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-roc_auc.svg
-
-.. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref-f1.svg
+.. image:: ../../_static/tutorial-perf-est-mc-guide-with-ref.svg
 
 
 Insights

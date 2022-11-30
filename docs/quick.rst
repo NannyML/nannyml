@@ -146,19 +146,9 @@ functionality. See :ref:`data-drift` for more details.
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 7
 
-.. image:: ./_static/quick-start-drift-distance_from_office.svg
+.. image:: ./_static/quick-start-drift-continuous.svg
 
-.. image:: ./_static/quick-start-drift-gas_price_per_litre.svg
-
-.. image:: ./_static/quick-start-drift-tenure.svg
-
-.. image:: ./_static/quick-start-drift-wfh_prev_workday.svg
-
-.. image:: ./_static/quick-start-drift-workday.svg
-
-.. image:: ./_static/quick-start-drift-public_transportation_cost.svg
-
-.. image:: ./_static/quick-start-drift-salary_range.svg
+.. image:: ./_static/quick-start-drift-categorical.svg
 
 When there are a lot of drifted features, NannyML can also rank them by the number of alerts they have raised:
 

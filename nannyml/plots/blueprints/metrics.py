@@ -23,9 +23,15 @@ def plot_2d_metric_list(
     figure_args: Optional[Dict[str, Any]] = None,
     subplot_title_format: str = '{column_name} (<b>{method_name}</b>)',
     hover: Optional[Hover] = None,
+    number_of_columns: Optional[int] = None,
 ) -> Figure:
+
+    if len(items) == 0:
+        raise InvalidArgumentsException("tried plotting distributions but received zero plotting items.")
+
     number_of_plots = len(items)
-    number_of_columns = min(number_of_plots, 2)
+    if number_of_columns is None:
+        number_of_columns = min(number_of_plots, 1)
     number_of_rows = math.ceil(number_of_plots / number_of_columns)
 
     if figure_args is None:
@@ -132,8 +138,10 @@ def plot_metric_list(
     y_axis_title: str = 'Metric',
     figure_args: Optional[Dict[str, Any]] = None,
     subplot_title_format: str = '<b>{metric_name}</b>',
+    number_of_columns: Optional[int] = None,
 ) -> Figure:
-    number_of_columns = min(len(result.metrics), 2)
+    if number_of_columns is None:
+        number_of_columns = min(len(result.metrics), 1)
 
     reference_result: pd.DataFrame = result.filter(period='reference').to_df()
     analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
@@ -509,7 +517,7 @@ def _plot_metric(  # noqa: C901
                 indices=reference_chunk_indices,
                 start_dates=reference_chunk_start_dates,
                 end_dates=reference_chunk_end_dates,
-                name='Sampling error',
+                name='Sampling error (reference)',
                 color=Colors.BLUE_SKY_CRAYOLA,
                 with_additional_endpoint=True,
                 subplot_args=dict(row=row, col=col),
@@ -523,7 +531,7 @@ def _plot_metric(  # noqa: C901
             indices=analysis_chunk_indices,
             start_dates=analysis_chunk_start_dates,
             end_dates=analysis_chunk_end_dates,
-            name='Sampling error',
+            name='Sampling error (analysis)',
             color=Colors.INDIGO_PERSIAN,
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),

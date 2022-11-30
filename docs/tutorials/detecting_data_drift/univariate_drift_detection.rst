@@ -98,14 +98,8 @@ We'll first plot the ``jensen_shannon`` method results for each continuous colum
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 10
 
-.. image:: /_static/drift-guide-distance_from_office.svg
-
-.. image:: /_static/drift-guide-gas_price_per_litre.svg
-
 .. _univariate_drift_detection_tenure:
-.. image:: /_static/drift-guide-tenure.svg
-
-.. image:: /_static/drift-guide-public_transportation_cost.svg
+.. image:: /_static/drift-guide-continuous.svg
 
 We then plot the ``chi2`` results for each categorical column:
 
@@ -113,11 +107,7 @@ We then plot the ``chi2`` results for each categorical column:
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 12
 
-.. image:: /_static/drift-guide-wfh_prev_workday.svg
-
-.. image:: /_static/drift-guide-workday.svg
-
-.. image:: /_static/drift-guide-salary_range.svg
+.. image:: /_static/drift-guide-categorical.svg
 
 
 NannyML also shows details about the distributions of continuous and categorical variables.
@@ -130,13 +120,7 @@ We can create joyplots for the model's continuous variables as following:
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 14
 
-.. image:: /_static/drift-guide-joyplot-distance_from_office.svg
-
-.. image:: /_static/drift-guide-joyplot-gas_price_per_litre.svg
-
-.. image:: /_static/drift-guide-joyplot-public_transportation_cost.svg
-
-.. image:: /_static/drift-guide-joyplot-tenure.svg
+.. image:: /_static/drift-guide-joyplot-continuous.svg
 
 For categorical variables NannyML plots stacked bar charts to show the variable's distribution for each chunk.
 If a variable has more than 5 categories, the top 4 are displayed and the rest are grouped together to make
@@ -147,11 +131,7 @@ the code below:
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 16
 
-.. image:: /_static/drift-guide-stacked-salary_range.svg
-
-.. image:: /_static/drift-guide-stacked-wfh_prev_workday.svg
-
-.. image:: /_static/drift-guide-stacked-workday.svg
+.. image:: /_static/drift-guide-categorical.svg
 
 NannyML can also rank features according to how many alerts they have had for all methods.
 By setting the ``only_drifting`` parameter you can view the ranking of either all model inputs, or just the drifting ones.
