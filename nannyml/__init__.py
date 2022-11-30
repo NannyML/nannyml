@@ -47,13 +47,7 @@ from .datasets import (
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
-from .drift import (
-    AlertCountRanker,
-    CorrelationRanker,
-    DataReconstructionDriftCalculator,
-    Ranker,
-    UnivariateDriftCalculator,
-)
+from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator

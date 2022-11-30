@@ -251,7 +251,6 @@ def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_opt
 def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -268,7 +267,6 @@ def test_correlation_ranking_raises_invalid_drift_object(  # noqa: D103
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -286,7 +284,6 @@ def test_correlation_ranking_raises_invalid_drift_object(  # noqa: D103
 def test_correlation_ranking_raises_invalid_perf_object(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -306,7 +303,6 @@ def test_correlation_ranking_raises_multiple_categorical_drift_metrics(  # noqa:
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -327,7 +323,6 @@ def test_correlation_ranking_raises_multiple_continuous_drift_metrics(  # noqa: 
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -345,7 +340,6 @@ def test_correlation_ranking_raises_multiple_continuous_drift_metrics(  # noqa: 
 def test_correlation_ranking_raises_same_data_period(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -368,7 +362,6 @@ def test_correlation_ranking_fit_raises_multiple_metrics(  # noqa: D103
         # match='Only one metric should be present in performance_results used to fit CorrelationRanker.'
     ):
         ranking.fit(
-            reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
             reference_performance_calculation_result=sample_realized_perf_result.filter(
                 period='reference', metrics=['roc_auc', 'f1']
             ),
@@ -380,14 +373,13 @@ def test_correlation_ranking_rank_raises_multiple_metrics(  # noqa: D103
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
     )
     with pytest.raises(
         InvalidArgumentsException,
-        match='Only one metric should be present in performance_results used to rank CorrelationRanker.',
+        # match='Only one metric should be present in performance_results used to rank CorrelationRanker.',
     ):
         ranking.rank(
             sample_drift_result.filter(period='all', methods=['jensen_shannon']),
@@ -400,7 +392,6 @@ def test_correlation_ranking_rank_raises_different_metrics(  # noqa: D103
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -430,7 +421,6 @@ def test_correlation_ranking_rank_raises_fit_error(sample_drift_result, sample_r
 def test_correlation_ranking_ranks_as_expected(sample_drift_result, sample_realized_perf_result):  # noqa: D103
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_drift_result.filter(period='reference', metrics=['roc_auc']),
         reference_performance_calculation_result=sample_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -463,9 +453,6 @@ def test_correlation_ranking_contains_rank_column_multiclass_realized(  # noqa: 
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_multiclass_drift_result.filter(
-            period='reference', metrics=['roc_auc']
-        ),
         reference_performance_calculation_result=sample_multiclass_realized_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -482,9 +469,6 @@ def test_correlation_ranking_contains_rank_column_multiclass_estimated(  # noqa:
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_multiclass_drift_result.filter(
-            period='reference', metrics=['roc_auc']
-        ),
         reference_performance_calculation_result=sample_multiclass_estimated_perf_result.filter(
             period='reference', metrics=['roc_auc']
         ),
@@ -501,9 +485,6 @@ def test_correlation_ranking_contains_rank_column_regression_realized(  # noqa: 
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_regression_drift_result.filter(
-            period='reference', metrics=['jensen_shannon']
-        ),
         reference_performance_calculation_result=sample_regression_realized_perf_result.filter(
             period='reference', metrics=['rmse']
         ),
@@ -520,9 +501,6 @@ def test_correlation_ranking_contains_rank_column_regression_estimated(  # noqa:
 ):
     ranking = CorrelationRanker()
     ranking.fit(
-        reference_drift_calculation_result=sample_regression_drift_result.filter(
-            period='reference', metrics=['jensen_shannon']
-        ),
         reference_performance_calculation_result=sample_regression_estimated_perf_result.filter(
             period='reference', metrics=['rmse']
         ),

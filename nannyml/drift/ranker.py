@@ -5,7 +5,6 @@
 """Module containing ways to rank drifting features."""
 from __future__ import annotations
 
-import abc
 from typing import Optional, Union
 
 import numpy as np
@@ -17,62 +16,6 @@ from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResults
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
-
-
-class Ranker(abc.ABC):
-    """Class that abstracts ranking features by impact on model performance."""
-
-    def __init__(
-        self,
-    ) -> None:
-        """Creates a new Ranker."""
-        self._is_fitted: bool = False
-
-    def fit(
-        self,
-        reference_drift_calculation_result: UnivariateResults,
-        reference_performance_calculation_result: Optional[
-            Union[CBPEResults, DLEResults, PerformanceCalculationResults]
-        ] = None,
-    ) -> Ranker:
-        """Fits the Ranker, so it can then rank drifted features according to their impact.
-
-        Parameters
-        ----------
-        reference_drift_calculation_result : nannyml.drift.univariate.Result
-            The result of a univariate drift calculation on reference data.
-        reference_performance_calculation_result
-            The performance metric for reference we wish to compare to the drift calculation results
-
-        """
-        self._is_fitted = True
-        return self
-
-    def rank(
-        self,
-        drift_calculation_result: UnivariateResults,
-        performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
-        only_drifting: bool = False,
-    ) -> pd.DataFrame:
-        """Ranks the individual features within a univariate drift calculation according to a ranking criterium.
-
-        Parameters
-        ----------
-        drift_calculation_result : nannyml.driQft.univariate.Result
-            The result of a univariate drift calculation.
-        performance_calculation_result
-            The performance metric we wish to compare to the drift calculation results
-        only_drifting : bool
-            Omits non-drifting features from the ranking if True.
-
-        Returns
-        -------
-        ranking: pd.DataFrame
-            A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
-            second-highest rank is 2, etc.)
-
-        """
-        raise NotImplementedError
 
 
 def _validate_drift_result(drift_calculation_result: UnivariateResults):
@@ -111,35 +54,18 @@ def _validate_performance_result(performance_results: Union[CBPEResults, DLEResu
             "Estimated or Realized Performance results object required for performance_results argument."
         )
 
-    # _univ_index = univariate_results.to_df().loc[:, ('chunk', 'chunk', 'start_index')]
-    # _perf_index = performance_results.to_df().loc[:, ('chunk', 'start_index')]
-    #
-    # if not _univ_index.equals(_perf_index):
-    #     raise InvalidArgumentsException(
-    #         "Drift and Performance results need to be filtered to the same data period.")
-
     if len(performance_results.metrics) != 1:
         raise InvalidArgumentsException(
             "Just one metric should be present in performance_results used to rank CorrelationRanker."
         )
 
 
-class AlertCountRanker(Ranker):
+class AlertCountRanker:
     """Ranks features by the number of drift 'alerts' they've caused."""
-
-    def fit(
-        self,
-        reference_drift_calculation_result: UnivariateResults,
-        reference_performance_calculation_result: Optional[
-            Union[CBPEResults, DLEResults, PerformanceCalculationResults]
-        ] = None,
-    ) -> Ranker:
-        return self
 
     def rank(
         self,
         drift_calculation_result: UnivariateResults,
-        performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Compares the number of alerts for each feature and ranks them accordingly.
@@ -148,8 +74,6 @@ class AlertCountRanker(Ranker):
         ----------
         drift_calculation_result : nannyml.driQft.univariate.Result
             The result of a univariate drift calculation.
-        performance_calculation_result
-            The performance metric we wish to compare to the drift calculation results
         only_drifting : bool, default=False
             Omits features without alerts from the ranking results.
 
@@ -215,7 +139,7 @@ class AlertCountRanker(Ranker):
         return ranking
 
 
-class CorrelationRanker(Ranker):
+class CorrelationRanker:
     """Ranks features according to drift correlation with performance impact.
 
     Ranks the features according to the correlation of their selected drift results and
@@ -230,15 +154,14 @@ class CorrelationRanker(Ranker):
         self.mean_reference_performance: Optional[float] = None
         self.absolute_performance_change: Optional[float] = None
 
+        self._is_fitted: bool = False
+
     def fit(
         self,
-        reference_drift_calculation_result: UnivariateResults,
         reference_performance_calculation_result: Optional[
             Union[CBPEResults, DLEResults, PerformanceCalculationResults]
         ] = None,
-    ) -> Ranker:
-        super().fit(reference_drift_calculation_result, reference_performance_calculation_result)
-
+    ) -> CorrelationRanker:
         if reference_performance_calculation_result is None:
             raise InvalidArgumentsException("reference performance calculation results can not be None.")
         _validate_performance_result(reference_performance_calculation_result)
@@ -248,6 +171,7 @@ class CorrelationRanker(Ranker):
         self.mean_reference_performance = (
             reference_performance_calculation_result.to_df().loc[:, (self.metric.column_name, 'value')].mean()
         )
+        self._is_fitted = True
         return self
 
     def rank(
