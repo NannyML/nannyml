@@ -51,7 +51,7 @@ class AbstractCalculatorResult(ABC):
         return logging.getLogger(__name__)
 
     # TODO: define more specific interface (add common arguments)
-    def __len__(self):
+    def __len__(self):  # noqa: D105
         return len(self.data)
 
     @abstractmethod
@@ -60,6 +60,7 @@ class AbstractCalculatorResult(ABC):
         raise NotImplementedError
 
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
+        """Export results do pandas dataframe."""
         if multilevel:
             return self.data
         else:
@@ -72,9 +73,11 @@ class AbstractCalculatorResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[List[str]] = None, *args, **kwargs
+        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> AbstractCalculatorResult:
-        """Returns result metric data."""
+        """Returns filtered result metric data."""
+        if isinstance(metrics, str):
+            metrics = [metrics]
         try:
             return self._filter(period, metrics, *args, **kwargs)
         except Exception as exc:
@@ -109,8 +112,10 @@ class AbstractCalculator(ABC):
         chunk_period: str
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker
+        chunker: Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+        timestamp_column_name: str
+            The column name of the column containing timestamp information.
         """
         self.chunker = ChunkerFactory.get_chunker(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
@@ -186,6 +191,7 @@ class AbstractEstimatorResult(ABC):
         return logging.getLogger(__name__)
 
     def to_df(self, multilevel: bool = True):
+        """Export results do pandas dataframe."""
         if multilevel:
             return self.data
         else:
@@ -198,9 +204,11 @@ class AbstractEstimatorResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[List[str]] = None, *args, **kwargs
+        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> AbstractEstimatorResult:
         """Returns result metric data."""
+        if isinstance(metrics, str):
+            metrics = [metrics]
         try:
             return self._filter(period, metrics, *args, **kwargs)
         except Exception as exc:
@@ -241,6 +249,8 @@ class AbstractEstimator(ABC):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+        timestamp_column_name: str
+            The column name of the column containing timestamp information.
         """
         self.chunker = ChunkerFactory.get_chunker(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
@@ -253,7 +263,7 @@ class AbstractEstimator(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return self.__class__.__name__
 
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
