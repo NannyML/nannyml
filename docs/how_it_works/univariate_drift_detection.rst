@@ -235,7 +235,7 @@ the analysis sample assigns some positive probability and vice versa.
 For a categorical feature Hellinger Distance is defined as:
 
 .. math::
- H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
+ H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2\right]^{1/2}
 
 where :math:`{F}_{ref}` and :math:`{F}_{ana}` refer to the Probability Mass Functions of the reference and analysis samples respectively. 
 
