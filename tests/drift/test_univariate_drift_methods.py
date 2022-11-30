@@ -2,7 +2,12 @@
 import numpy as np
 import pandas as pd
 
-from nannyml.drift.univariate.methods import JensenShannonDistance, LInfinityDistance, WassersteinDistance, HellingerDistance,
+from nannyml.drift.univariate.methods import (
+    HellingerDistance,
+    JensenShannonDistance,
+    LInfinityDistance,
+    WassersteinDistance,
+)
 
 # ************* JS Tests *************
 

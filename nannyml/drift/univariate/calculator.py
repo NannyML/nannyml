@@ -42,10 +42,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
             A drift score will be calculated for each entry in this list.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        categorical_methods: List[str], default=None
+        categorical_methods: List[str], default=['chi2', 'l_infinity']
             A list of method names that will be performed on categorical columns.
             When not given all available methods supporting categorical columns will be used.
-        continuous_methods: List[str], default=None
+        continuous_methods: List[str], default=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein', 'hellinger']
             A list of method names that will be performed on continuous columns.
             When not given all available methods supporting continuous columns will be used.
         chunk_size: int

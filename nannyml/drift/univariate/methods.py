@@ -152,7 +152,7 @@ class MethodFactory:
             raise InvalidArgumentsException(
                 f"unknown method key '{key}' given. "
                 "Should be one of ['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein', 'chi2', "
-                "'jensen_shannon', 'l_infinity']."
+                "'jensen_shannon', 'l_infinity', 'hellinger']."
             )
 
         if feature_type not in cls.registry[key]:
@@ -483,17 +483,14 @@ class WassersteinDistance(Method):
         return alert
 
 
-@MethodFactory.register(key='hellinger_distance', feature_type=FeatureType.CONTINUOUS)
+@MethodFactory.register(key='hellinger', feature_type=FeatureType.CONTINUOUS)
 class HellingerDistance(Method):
-    """Calculates the Hellinger Distance between two distributions.
-
-    An alert will be raised for a Chunk if .
-    """
+    """Calculates the Hellinger Distance between two distributions."""
 
     def __init__(self, **kwargs) -> None:
         super().__init__(
             display_name='Hellinger distance',
-            column_name='hellinger_distance',
+            column_name='hellinger',
             **kwargs,
         )
 
