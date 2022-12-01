@@ -2,7 +2,12 @@
 import numpy as np
 import pandas as pd
 
-from nannyml.drift.univariate.methods import JensenShannonDistance, LInfinityDistance, WassersteinDistance
+from nannyml.drift.univariate.methods import (
+    HellingerDistance,
+    JensenShannonDistance,
+    LInfinityDistance,
+    WassersteinDistance,
+)
 
 # ************* JS Tests *************
 
@@ -101,3 +106,33 @@ def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
     wass_dist = WassersteinDistance().fit(reference).calculate(analysis)
     wass_dist = np.round(wass_dist, 2)
     assert wass_dist == 3.99
+
+
+# ************* Hellinger Tests *************
+
+
+def test_hellinger_complete_overlap():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10_000))
+    analysis = reference
+    hell_dist = HellingerDistance().fit(reference).calculate(analysis)
+    hell_dist = np.round(hell_dist, 2)
+    assert hell_dist == 0
+
+
+def test_hellinger_no_overlap():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10_000))
+    analysis = pd.Series(np.random.normal(7, 1, 10_000))
+    hell_dist = HellingerDistance().fit(reference).calculate(analysis)
+    hell_dist = np.round(hell_dist, 2)
+    assert hell_dist == 1
+
+
+def test_hellinger_both_continuous_analysis_with_small_drift():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10_000))
+    analysis = pd.Series(np.random.normal(-2, 1, 10_000))
+    hell_dist = HellingerDistance().fit(reference).calculate(analysis)
+    hell_dist = np.round(hell_dist, 2)
+    assert hell_dist == 0.63

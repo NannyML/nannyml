@@ -109,6 +109,37 @@ Wasserstein distance between the two distributions is given by:
 .. math::
     W_1\left(X_i^{ref},X_i^{ana}\right) = \int_\mathbb{R}\left|\hat{F}_{ref}(x)-\hat{F}_{ana}(x)\right|dx
 
+.. _univariate-drift-detection-cont-hellinger:
+
+Hellinger Distance
+........................
+
+The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two probability distributions. It measures the overlap between the probabilities assigned 
+to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
+the analysis sample assigns some positive probability and vice versa. 
+The formula is given by: 
+
+.. math::
+    H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\int_{}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
+
+In order to Calculate Hellinger Distance NannyML splits a continuous feature into bins based on the reference data. The relative frequency
+for each bin from reference and the samples of analysis data is calculated to generate the
+resulting Hellinger Distance. If there's new data in the analysis sample that does not fall into the range of the bin edges that were calculated based on reference, another bin 
+is created that fits all that data. An additional bin is also created in reference and its probability/relative frequency is set to 0. The binning is done using `Doane's formula`_ from numpy.
+If a continuous feature has relatively low amount of unique values, meaning that
+unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
+
+This distance is very closely related to the Bhattacharya Coefficient. However we choose the former because it follows the triangle inequality and is 
+a proper distance metric. Moreover the division by the squared root of 2 ensures that the distance is always between 0 and
+1, which is not the case with the Bhattacharya Coefficient. The relationship between the two can be depicted as follows:
+
+.. math::
+    H^2\left(X_i^{ref},X_i^{ana}\right) = 2(1-BC\left(X_i^{ref},X_i^{ana}\right))
+
+where 
+
+.. math::
+    BC\left(X_i^{ref},X_i^{ana}\right) =  \int_{}\sqrt{{F}_{ref}(x){F}_{ana}(x)}dx
 
 .. _univariate-drift-detection-categorical-methods:
 
@@ -194,6 +225,27 @@ To help our intuition we can look at the image below:
 We see how the relative frequencies of three categories have changed between reference and analysis data.
 We also see that the JS Divergence contribution of each change and the resulting JS distance.
 
+.. _univ_cat_method_hellinger:
+
+Hellinger Distance
+........................
+
+The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two probability distributions. It measures the overlap between the probabilities assigned 
+to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which 
+the analysis sample assigns some positive probability and vice versa. 
+
+For a categorical feature Hellinger Distance is defined as:
+
+.. math::
+ H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2\right]^{1/2}
+
+where :math:`{F}_{ref}` and :math:`{F}_{ana}` refer to the Probability Mass Functions of the reference and analysis samples respectively. 
+
+In order to Calculate Hellinger Distance for categorical data, NannyML splits a categorical feature into bins where each bin corresponds to a unique label in the reference data. The relative frequency
+for each bin from reference and the samples of analysis data is calculated to generate the
+resulting Hellinger Distance. If there's any unseen category that does not already exist in the calculated bins, another bin is created 
+that fits all the new data. An additional bin is also created in reference and its probability/relative frequency is set to 0. 
+
 .. _univ_cat_method_l8:
 
 L-Infinity Distance
@@ -218,6 +270,7 @@ We also see that the resulting L-Infinity distance is the relative frequency cha
 .. _`Chi-squared test`: https://en.wikipedia.org/wiki/Chi-squared_test
 .. _`Kolmogorov-Smirnov Test`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
 .. _`Jensen-Shannon Divergence`: https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence
+.. _`Hellinger Distance`: https://en.wikipedia.org/wiki/Hellinger_distance
 .. _`L-Infinity at Wikipedia`: https://en.wikipedia.org/wiki/L-infinity
 .. _`Kullback-Leibler divergence`: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
 .. _`Doane's formula`: https://numpy.org/doc/stable/reference/generated/numpy.histogram_bin_edges.html

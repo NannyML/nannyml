@@ -44,10 +44,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
             The name of the column containing the timestamp of the model prediction.
         categorical_methods: List[str], default=['jensen_shannon']
             A list of method names that will be performed on categorical columns.
-            When not given all available methods supporting categorical columns will be used.
         continuous_methods: List[str], default=['jensen_shannon']
             A list of method names that will be performed on continuous columns.
-            When not given all available methods supporting continuous columns will be used.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
