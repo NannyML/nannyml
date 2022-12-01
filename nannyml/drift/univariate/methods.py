@@ -486,6 +486,7 @@ class WassersteinDistance(Method):
 
 
 @MethodFactory.register(key='hellinger', feature_type=FeatureType.CONTINUOUS)
+@MethodFactory.register(key='hellinger', feature_type=FeatureType.CATEGORICAL)
 class HellingerDistance(Method):
     """Calculates the Hellinger Distance between two distributions."""
 
