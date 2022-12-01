@@ -62,12 +62,22 @@ And `Jensen-Shannon Divergence`_ is defined as:
 .. math::
     D_{JS} \left(P || Q \right) = \frac{1}{2} \left[ D_{KL} \left(P \Bigg|\Bigg| \frac{1}{2}(P+Q) \right) + D_{KL} \left(Q \Bigg|\Bigg| \frac{1}{2}(P+Q) \right)\right]
 
-and is a method of measuring the similarity between two probability distributions.
+and is a method of measuring the similarity between two probability distributions. Jensen-Shannon Distance is
+the squared root of Jensen-Shannon divergence and is a proper distance metric.
 
-Jensen-Shannon Distance is then defined as the squared root of Jensen-Shannon divergence and is a proper distance metric.
+As mentioned, NannyML calculates drift performing two sample set comparisons. One sample is usually the whole reference data
+while the other comes from the data of the chunk we are calculating drift for. In order to calculate Jensen-Shannon
+Distance NannyML splits a continuous feature into bins using information from the reference sample.
+The binning is done using `Doane's formula`_ from numpy.
+If a continuous feature has relatively low amount of unique values, meaning that
+unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
+If the any data from the chunk sample are outside those ranges a new bin created for them.
+The new bins relative frequency for the reference sample is set to 0.
+The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
+used to calculate the Jensen-Shannon Distance.
+
 Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
-(PDF). This makes it
-more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
+(PDF). This makes it more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
 
 .. image:: ../_static/how-it-works-js.svg
     :width: 1400pt
@@ -78,11 +88,6 @@ On the left we see the probability density functions of the samples and the resu
 at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
 see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
 
-In order to calculate Jensen-Shannon Distance NannyML splits a continuous feature into bins, calculates the relative
-frequency for each bin from reference and analyzed data and calculates the
-resulting Jensen-Shannon Distance. The binning is done using `Doane's formula`_ from numpy.
-If a continuous feature has relatively low amount of unique values, meaning that
-unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
 
 .. _univariate-drift-detection-cont-wasserstein:
 
@@ -102,12 +107,18 @@ distance is the integral of the absolute value of the difference between the two
 .. image:: ../_static/how-it-works-emd.svg
     :width: 1400pt
 
-Mathematically we can express this as follows: For the :math:`i^\text{th}` feature of a dataset :math:`X=(X_1,...,X_i,...,X_n)`, let :math:`\hat{F}_{ref}` and :math:`\hat{F}_{ana}` represent the
-empirical CDFs of the reference and analysis samples respectively. Further, let :math:`X_i^{ref}` and :math:`X_i^{ana}` represent the reference and analysis samples. Then the
+Mathematically we can express this as follows: For the :math:`i^\text{th}` feature of a dataset
+:math:`X=(X_1,...,X_i,...,X_n)`, let :math:`\hat{F}_{P}` and :math:`\hat{F}_{Q}` represent the
+empirical CDFs of the two samples we are comparing. Further, let :math:`X_i^{P}` and :math:`X_i^{Q}`
+represent those two samples. Then the
 Wasserstein distance between the two distributions is given by:
 
 .. math::
-    W_1\left(X_i^{ref},X_i^{ana}\right) = \int_\mathbb{R}\left|\hat{F}_{ref}(x)-\hat{F}_{ana}(x)\right|dx
+    W_1\left(X_i^{P},X_i^{Q}\right) = \int_\mathbb{R}\left|\hat{F}_{P}(x)-\hat{F}_{Q}(x)\right|dx
+
+As mentioned, NannyML calculates drift performing two sample set comparisons. One sample is usually the whole reference data
+while the other comes from the data of the chunk we are calculating drift for. Hence we can view :math:`P,Q` as
+the reference sample and the chunk sample.
 
 .. _univariate-drift-detection-cont-hellinger:
 
@@ -117,29 +128,35 @@ Hellinger Distance
 The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two probability distributions. It measures the overlap between the probabilities assigned
 to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which
 the analysis sample assigns some positive probability and vice versa.
-The formula is given by:
+Between two distributions :math:`P,Q` of a continuous feature Hellinger is defined as:
 
 .. math::
-    H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\int_{}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2dx\right]^{1/2}
+    H\left(P,Q\right) = \frac{1}{\sqrt{2}}\left[\int_{}\left(\sqrt{p(x)}-\sqrt{q(x)}\right)^2dx\right]^{1/2}
 
-In order to Calculate Hellinger Distance NannyML splits a continuous feature into bins based on the reference data. The relative frequency
-for each bin from reference and the samples of analysis data is calculated to generate the
-resulting Hellinger Distance. If there's new data in the analysis sample that does not fall into the range of the bin edges that were calculated based on reference, another bin
-is created that fits all that data. An additional bin is also created in reference and its probability/relative frequency is set to 0. The binning is done using `Doane's formula`_ from numpy.
+where :math:`p(x)` and :math:`q(x)` are the probability density functions of the distributions :math:`P,Q` respectively.
+
+As mentioned, NannyML calculates drift performing two sample set comparisons. One sample is usually the whole reference data
+while the other comes from the data of the chunk we are calculating drift for. In order to calculate Hellinger
+Distance NannyML splits a continuous feature into bins using information from the reference sample.
+The binning is done using `Doane's formula`_ from numpy.
 If a continuous feature has relatively low amount of unique values, meaning that
 unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
+If the any data from the chunk sample are outside those ranges a new bin created for them.
+The new bins' relative frequency for the reference sample is set to 0.
+The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
+used to calculate the Hellinger Distance.
 
 This distance is very closely related to the Bhattacharya Coefficient. However we choose the former because it follows the triangle inequality and is
 a proper distance metric. Moreover the division by the squared root of 2 ensures that the distance is always between 0 and
 1, which is not the case with the Bhattacharya Coefficient. The relationship between the two can be depicted as follows:
 
 .. math::
-    H^2\left(X_i^{ref},X_i^{ana}\right) = 2(1-BC\left(X_i^{ref},X_i^{ana}\right))
+    H^2\left(P,Q\right) = 2(1-BC\left(P,Q\right))
 
 where
 
 .. math::
-    BC\left(X_i^{ref},X_i^{ana}\right) =  \int_{}\sqrt{{F}_{ref}(x){F}_{ana}(x)}dx
+    BC\left(P,Q\right) =  \int \sqrt{p(x)q(x)}dx
 
 .. _univariate-drift-detection-categorical-methods:
 
@@ -205,14 +222,22 @@ And `Jensen-Shannon Divergence`_ is defined as:
     D_{JS} \left(P || Q \right) = \frac{1}{2} \left[ D_{KL} \left(P \Bigg|\Bigg| \frac{1}{2}(P+Q) \right) + D_{KL} \left(Q \Bigg|\Bigg| \frac{1}{2}(P+Q) \right)\right]
 
 and is a method of measuring the similarity between two probability distributions.
+**Jensen-Shannon Distance** is then defined as the squared root of Jensen-Shannon divergence and is a proper distance
+metric.
 
-Jensen-Shannon Distance is then defined as the squared root of Jensen-Shannon divergence and is a proper distance metric.
-As we see for
-categorical data, JS distance is calculated based on the relative frequencies of each category in reference and
-analysis data. The intuition is that it measures an *average* of all changes in relative frequencies of categories.
-Frequencies are compared by dividing one by another, therefore JS distance, just like Chi-squared statistic,
-is sensitive to changes in less frequent classes. This means that an absolute change of 1 percentage point for less
-frequent class will have stronger
+As mentioned, NannyML calculates drift performing two sample set comparisons. One sample is usually the whole reference data
+while the other comes from the data of the chunk we are calculating drift for. When calculating JS
+Distance for categorical data NannyML uses the reference data to split the data into bins with each categorical
+value corresponding to a bin in the reference sample.
+If the any data from the chunk sample have different unique values a new bin created for them.
+The new bins relative frequency for the reference sample is set to 0.
+The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
+used to calculate the Hellinger Distance.
+
+The intuition behind Jensen-Shannon is that it measures an *average* of all changes in relative
+frequencies of categories. Frequencies are compared by dividing one by another, therefore JS distance, just like
+Chi-squared statistic, is sensitive to changes in less frequent classes. This means that an absolute change of
+1 percentage point for less frequent class will have stronger
 contribution to the final JS distance value than the same change in more frequent class. For this reason it
 may not be the best choice for categorical variables with many low-frequency classes or high cardinality.
 
@@ -220,7 +245,6 @@ To help our intuition we can look at the image below:
 
 .. image:: ../_static/how-it-works-cat_js.svg
     :width: 1400pt
-
 
 We see how the relative frequencies of three categories have changed between reference and analysis data.
 We also see that the JS Divergence contribution of each change and the resulting JS distance.
@@ -230,21 +254,27 @@ We also see that the JS Divergence contribution of each change and the resulting
 Hellinger Distance
 ..................
 
-The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two probability distributions. It measures the overlap between the probabilities assigned
-to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which
+The `Hellinger Distance`_, is a distance metric used to quantify the similarity between two probability distributions.
+It measures the overlap between the probabilities assigned
+to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved
+when reference assigns zero probability to each event to which
 the analysis sample assigns some positive probability and vice versa.
 
-For a categorical feature Hellinger Distance is defined as:
+Between two distributions :math:`P,Q` of a categorical feature Hellinger Distance is defined as:
 
 .. math::
- H\left(X_i^{ref},X_i^{ana}\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{{F}_{ref}(x)}-\sqrt{{F}_{ana}(x)}\right)^2\right]^{1/2}
+ H\left(P,Q\right) = \frac{1}{\sqrt{2}}\left[\sum_{x \in X}\left(\sqrt{p(x)}-\sqrt{q(x)}\right)^2\right]^{1/2}
 
-where :math:`{F}_{ref}` and :math:`{F}_{ana}` refer to the Probability Mass Functions of the reference and analysis samples respectively.
+where :math:`p(x)` and :math:`q(x)` are the probability mass functions of the distributions :math:`P,Q` respectively.
 
-In order to Calculate Hellinger Distance for categorical data, NannyML splits a categorical feature into bins where each bin corresponds to a unique label in the reference data. The relative frequency
-for each bin from reference and the samples of analysis data is calculated to generate the
-resulting Hellinger Distance. If there's any unseen category that does not already exist in the calculated bins, another bin is created
-that fits all the new data. An additional bin is also created in reference and its probability/relative frequency is set to 0.
+As mentioned, NannyML calculates drift performing two sample set comparisons. One sample is usually the whole reference data
+while the other comes from the data of the chunk we are calculating drift for. When calculating Hellinger
+Distance for categorical data NannyML uses the reference data to split the data into bins with each categorical
+value corresponding to a bin in the reference sample.
+If the any data from the chunk sample have different unique values a new bin created for them.
+The new bins relative frequency for the reference sample is set to 0.
+The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
+used to calculate the Hellinger Distance.
 
 .. _univ_cat_method_l8:
 
