@@ -42,12 +42,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
             A drift score will be calculated for each entry in this list.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        categorical_methods: List[str], default=['chi2', 'l_infinity']
+        categorical_methods: List[str], default=['jensen_shannon']
             A list of method names that will be performed on categorical columns.
-            When not given all available methods supporting categorical columns will be used.
-        continuous_methods: List[str], default=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein', 'hellinger']
+        continuous_methods: List[str], default=['jensen_shannon']
             A list of method names that will be performed on continuous columns.
-            When not given all available methods supporting continuous columns will be used.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -82,8 +80,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         )
 
         self.column_names = column_names
-        self.continuous_method_names = continuous_methods or ['kolmogorov_smirnov']
-        self.categorical_method_names = categorical_methods or ['chi2']
+        self.continuous_method_names = continuous_methods or ['jensen_shannon']
+        self.categorical_method_names = categorical_methods or ['jensen_shannon']
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 

@@ -50,12 +50,13 @@ Jensen-Shannon Distance
 Jensen-Shannon Distance is a metric that tells us how different two probability distributions are.
 It is based on `Kullback-Leibler divergence`_ but is created in such a way that it is symmetric and ranges between 0 and 1.
 
-For a continuous feature `Kullback-Leibler divergence`_ is defined as:
+Between two distributions :math:`P,Q` of a continuous feature `Kullback-Leibler divergence`_  is defined as:
 
 .. math::
     D_{KL} \left(P || Q \right) = \int_{-\infty}^{\infty}p(x)\ln \left( \frac{p(x)}{q(x)} \right) dx
 
 
+where :math:`p(x)` and :math:`q(x)` are the probability density functions of the distributions :math:`P,Q` respectively.
 And `Jensen-Shannon Divergence`_ is defined as:
 
 .. math::
@@ -77,8 +78,8 @@ On the left we see the probability density functions of the samples and the resu
 at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
 see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
 
-The implementation splits a continuous feature into bins, calculates the relative frequency
-for each bin from reference and analyzed data and calculates the
+In order to calculate Jensen-Shannon Distance NannyML splits a continuous feature into bins, calculates the relative
+frequency for each bin from reference and analyzed data and calculates the
 resulting Jensen-Shannon Distance. The binning is done using `Doane's formula`_ from numpy.
 If a continuous feature has relatively low amount of unique values, meaning that
 unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
@@ -191,12 +192,13 @@ Jensen-Shannon Distance
 Jensen-Shannon Distance is a metric that tells us how different two probability distributions are.
 It is based on `Kullback-Leibler divergence`_ but is created in such a way that it is symmetric and ranges between 0 and 1.
 
-For a categorical feature `Kullback-Leibler divergence`_ is defined as:
+Between two distributions :math:`P,Q` of a categorical feature `Kullback-Leibler divergence`_  is defined as:
 
 .. math::
     D_{KL} \left(P || Q \right) = \sum_{x \in X} P(x)\ln \left( \frac{P(x)}{Q(x)} \right)
 
 
+where :math:`p(x)` and :math:`q(x)` are the probability mass functions of the distributions :math:`P,Q` respectively.
 And `Jensen-Shannon Divergence`_ is defined as:
 
 .. math::
