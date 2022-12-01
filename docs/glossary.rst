@@ -202,6 +202,12 @@ Glossary
         Those scores take values outside the `[0,1]` range that is allowed for probabilities. The higher the score
         the more likely the positive outcome should be.
 
+    Ranking
+        NannyML uses ranking to order columns in univariate drift results. The resulting order can be helpful
+        in prioritizing what to further investigate if needed.
+        More information can be found in the ranking :ref:`tutorial<tutorial-ranking>` and
+        :ref:`how it works<how-ranking>` pages.
+
     Realized Performance
         The actual performance of the monitored model once :term:`Targets<Target>` become available.
         The term is used to differentiate between :term:`Estimated Performance` and actual results.
