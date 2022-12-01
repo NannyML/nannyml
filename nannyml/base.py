@@ -76,10 +76,8 @@ class AbstractCalculatorResult(ABC):
         self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> AbstractCalculatorResult:
         """Returns filtered result metric data."""
-        if not isinstance(metrics, (str, list)):
-            raise InvalidArgumentsException(
-                "metrics value provided is not a valid metric or list of metrics"
-            )
+        if metrics and not isinstance(metrics, (str, list)):
+            raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
         if isinstance(metrics, str):
             metrics = [metrics]
         try:
@@ -211,10 +209,8 @@ class AbstractEstimatorResult(ABC):
         self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> AbstractEstimatorResult:
         """Returns result metric data."""
-        if not isinstance(metrics, (str, list)):
-            raise InvalidArgumentsException(
-                "metrics value provided is not a valid metric or list of metrics"
-            )
+        if metrics and not isinstance(metrics, (str, list)):
+            raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
         if isinstance(metrics, str):
             metrics = [metrics]
         try:
