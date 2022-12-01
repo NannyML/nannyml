@@ -15,6 +15,7 @@ from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.exceptions import InvalidArgumentsException
 
+
 @pytest.fixture
 def sample_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
@@ -76,13 +77,10 @@ def test_base_estimator_uses_default_chunker_when_no_chunker_specified():  # noq
     simple_estimator = SimpleEstimator()
     assert isinstance(simple_estimator.chunker, DefaultChunker)
 
+
 def test_base_estimator_result_filter_input_validation():  # noqa: D103
-    simple_results = SimpleEstimatorResult(
-        results_data=pd.DataFrame(),
-        calculator=SimpleEstimator()
-    )
+    simple_results = SimpleEstimatorResult(results_data=pd.DataFrame(), calculator=SimpleEstimator())
     with pytest.raises(
-        InvalidArgumentsException,
-        match='metrics value provided is not a valid metric or list of metrics'
+        InvalidArgumentsException, match='metrics value provided is not a valid metric or list of metrics'
     ):
         simple_results.filter(metrics=1)
