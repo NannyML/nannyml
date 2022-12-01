@@ -105,17 +105,7 @@ The results can be plotted for visual inspection.
     :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 8
 
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-accuracy.svg
-
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-f1.svg
-
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-precision.svg
-
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-roc_auc.svg
-
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-recall.svg
-
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-specificity.svg
+.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary.svg
 
 
 Insights

@@ -106,10 +106,7 @@ The results can be plotted for visual inspection:
     :path: ./example_notebooks/Tutorial - Realized Performance - Multiclass Classification.ipynb
     :cells: 8
 
-
-.. image:: /_static/tutorials/performance_calculation/multiclass/tutorial-performance-calculation-multiclass-f1.svg
-
-.. image:: /_static/tutorials/performance_calculation/multiclass/tutorial-performance-calculation-multiclass-roc_auc.svg
+.. image:: /_static/tutorials/performance_calculation/multiclass/tutorial-performance-calculation-multiclass.svg
 
 
 Insights

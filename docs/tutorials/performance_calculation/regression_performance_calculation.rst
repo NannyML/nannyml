@@ -105,17 +105,7 @@ The results can be plotted for visual inspection:
     :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
     :cells: 8
 
-.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MAE.svg
-
-.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MAPE.svg
-
-.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MSE.svg
-
-.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-MSLE.svg
-
-.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-RMSE.svg
-
-.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-RMSLE.svg
+.. image:: /_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression.svg
 
 
 Insights

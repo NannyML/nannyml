@@ -117,10 +117,7 @@ distributions for the analysis period.
     :path: ./example_notebooks/Examples California Housing.ipynb
     :cells: 15
 
-
-.. image:: ../_static/example_california_performance_distribution_Longitude.svg
-
-.. image:: ../_static/example_california_performance_distribution_Latitude.svg
+.. image:: ../_static/example_california_performance_distribution.svg
 
 Indeed, we can see the distributions of these variables are completely different in each
 chunk. This was expected, as the original dataset has observations from

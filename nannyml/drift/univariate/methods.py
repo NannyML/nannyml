@@ -294,6 +294,7 @@ class KolmogorovSmirnovStatistic(Method):
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
             upper_threshold_limit=1,
+            lower_threshold=None,  # setting this to `None` so we don't plot the threshold (p-value based)
             **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None
@@ -335,6 +336,7 @@ class Chi2Statistic(Method):
             display_name='Chi2 statistic',
             column_name='chi2',
             upper_threshold_limit=1.0,
+            lower_threshold=None,  # setting this to `None` so we don't plot the threshold (p-value based)
             **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None

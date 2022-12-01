@@ -126,10 +126,7 @@ interactive plots, though only static views are included here).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 6
 
-
-.. image:: ../../_static/tutorial-perf-est-guide-analysis-roc_auc.svg
-
-.. image:: ../../_static/tutorial-perf-est-guide-analysis-f1.svg
+.. image:: ../../_static/tutorial-perf-est-guide-analysis.svg
 
 
 To get a better context let's also plot estimation of performance on analysis data together with calculated
@@ -147,10 +144,7 @@ performance on the reference period (where the target was available).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 8
 
-
-.. image:: ../../_static/tutorial-perf-est-guide-with-ref-roc_auc.svg
-
-.. image:: ../../_static/tutorial-perf-est-guide-with-ref-f1.svg
+.. image:: ../../_static/tutorial-perf-est-guide-with-ref.svg
 
 
 Insights

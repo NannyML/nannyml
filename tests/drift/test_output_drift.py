@@ -800,116 +800,16 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba_upmarket_card',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'method': 'jensen_shannon', 'column_name': 'y_pred'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'method': 'jensen_shannon', 'column_name': 'y_pred'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'method': 'jensen_shannon', 'column_name': 'y_pred'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'method': 'jensen_shannon', 'column_name': 'y_pred'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
+        ({}, {'kind': 'drift'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
+        ({}, {'kind': 'distribution'}),
     ],
     ids=[
-        'score_drift_with_timestamp_without_reference',
-        'score_drift_without_timestamp_without_reference',
-        'score_drift_with_timestamp_with_reference',
-        'score_drift_without_timestamp_with_reference',
-        'score_distribution_with_timestamp_without_reference',
-        'score_distribution_without_timestamp_without_reference',
-        'score_distribution_with_timestamp_with_reference',
-        'score_distribution_without_timestamp_with_reference',
-        'prediction_drift_with_timestamp_without_reference',
-        'prediction_drift_without_timestamp_without_reference',
-        'prediction_drift_with_timestamp_with_reference',
-        'prediction_drift_without_timestamp_with_reference',
-        'prediction_distribution_with_timestamp_without_reference',
-        'prediction_distribution_without_timestamp_without_reference',
-        'prediction_distribution_with_timestamp_with_reference',
-        'prediction_distribution_without_timestamp_with_reference',
+        'drift_with_timestamp',
+        'drift_without_timestamp',
+        'distribution_with_timestamp',
+        'distribution_without_timestamp',
     ],
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
@@ -934,116 +834,16 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'drift',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-                'plot_reference': False,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {},
-            {
-                'kind': 'distribution',
-                'plot_reference': True,
-                'column_name': 'y_pred_proba',
-                'method': 'jensen_shannon',
-            },
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'}),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
+        ({}, {'kind': 'drift'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
+        ({}, {'kind': 'distribution'}),
     ],
     ids=[
-        'score_drift_with_timestamp_without_reference',
-        'score_drift_without_timestamp_without_reference',
-        'score_drift_with_timestamp_with_reference',
-        'score_drift_without_timestamp_with_reference',
-        'score_distribution_with_timestamp_without_reference',
-        'score_distribution_without_timestamp_without_reference',
-        'score_distribution_with_timestamp_with_reference',
-        'score_distribution_without_timestamp_with_reference',
-        'prediction_drift_with_timestamp_without_reference',
-        'prediction_drift_without_timestamp_without_reference',
-        'prediction_drift_with_timestamp_with_reference',
-        'prediction_drift_without_timestamp_with_reference',
-        'prediction_distribution_with_timestamp_without_reference',
-        'prediction_distribution_without_timestamp_without_reference',
-        'prediction_distribution_with_timestamp_with_reference',
-        'prediction_distribution_without_timestamp_with_reference',
+        'drift_with_timestamp',
+        'drift_without_timestamp',
+        'distribution_with_timestamp',
+        'distribution_without_timestamp',
     ],
 )
 def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
@@ -1061,45 +861,16 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        (
-            {},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        (
-            {},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        (
-            {},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        (
-            {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'},
-        ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_pred', 'method': 'jensen_shannon'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
+        ({}, {'kind': 'drift'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
+        ({}, {'kind': 'distribution'}),
     ],
     ids=[
-        'prediction_drift_with_timestamp_without_reference',
-        'prediction_drift_without_timestamp_without_reference',
-        'prediction_drift_with_timestamp_with_reference',
-        'prediction_drift_without_timestamp_with_reference',
-        'prediction_distribution_with_timestamp_without_reference',
-        'prediction_distribution_without_timestamp_without_reference',
-        'prediction_distribution_with_timestamp_with_reference',
-        'prediction_distribution_without_timestamp_with_reference',
+        'drift_with_timestamp',
+        'drift_without_timestamp',
+        'distribution_with_timestamp',
+        'distribution_without_timestamp',
     ],
 )
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103

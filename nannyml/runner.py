@@ -134,20 +134,7 @@ def _run_statistical_univariate_feature_drift_calculator(
         if isinstance(writer, RawFilesWriter):
             if console:
                 console.log('generating result plots')
-            plots = {
-                f'{kind}_{column_name}': results.plot(kind=kind, method=method, column_name=column_name)
-                for column_name in results.continuous_column_names
-                for method in results.continuous_method_names
-                for kind in ['drift', 'distribution']
-            }
-            plots.update(
-                {
-                    f'{kind}_{column_name}': results.plot(kind=kind, method=method, column_name=column_name)
-                    for column_name in results.categorical_column_names
-                    for method in results.categorical_method_names
-                    for kind in ['drift', 'distribution']
-                }
-            )
+            plots = {f'{kind}': results.plot(kind=kind) for kind in ['drift', 'distribution']}
     except Exception as exc:
         msg = f"Failed to run statistical univariate feature drift calculator: {exc}"
         if console:
@@ -262,11 +249,7 @@ def _run_realized_performance_calculator(
         if isinstance(writer, RawFilesWriter):
             if console:
                 console.log('generating result plots')
-            plots = {
-                f'realized_{metric}': results.plot(kind, metric=metric)
-                for kind in ['performance']
-                for metric in metrics
-            }
+            plots = {f'{kind}': results.plot(kind) for kind in ['performance']}
     except Exception as exc:
         msg = f"Failed to run realized performance calculator: {exc}"
         if console:
@@ -327,11 +310,7 @@ def _run_cbpe_performance_estimation(
         if isinstance(writer, RawFilesWriter):
             if console:
                 console.log('generating result plots')
-            plots = {
-                f'estimated_{metric}': results.plot(kind, metric=metric)
-                for kind in ['performance']
-                for metric in metrics
-            }
+            plots = {f'{kind}': results.plot(kind) for kind in ['performance']}
 
     except Exception as exc:
         msg = f"Failed to run CBPE performance estimator: {exc}"
@@ -390,11 +369,7 @@ def _run_dee_performance_estimation(
         if isinstance(writer, RawFilesWriter):
             if console:
                 console.log('generating result plots')
-            plots = {
-                f'estimated_{metric}': results.plot(kind, metric=metric)
-                for kind in ['performance']
-                for metric in DEFAULT_METRICS
-            }
+            plots = {f'{kind}': results.plot(kind) for kind in ['performance']}
     except Exception as exc:
         msg = f"Failed to run DLE performance estimator: {exc}"
         if console:

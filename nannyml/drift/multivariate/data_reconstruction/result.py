@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots._step_plot import _step_plot
+from nannyml.plots.blueprints.metrics import plot_metric
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -107,37 +107,11 @@ class Result(AbstractCalculatorResult):
         >>> fig.show()
         """
         if kind == 'drift':
-            return self._plot_drift(self.to_df(multilevel=False), plot_reference)
+            return plot_metric(
+                self,
+                title='Multivariate drift (PCA reconstruction error)',
+                metric_display_name='Data reconstruction drift',
+                metric_column_name='reconstruction_error',
+            )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['drift'].")
-
-    def _plot_drift(self, data: pd.DataFrame, plot_reference: bool) -> go.Figure:
-        plot_period_separator = plot_reference
-
-        if not plot_reference:
-            data = data.loc[data['chunk_period'] == 'analysis', :]
-
-        is_time_based_x_axis = self.timestamp_column_name is not None
-
-        fig = _step_plot(
-            table=data,
-            metric_column_name='reconstruction_error_value',
-            chunk_column_name='chunk_key',
-            chunk_type_column_name='chunk_period',
-            chunk_index_column_name='chunk_index',
-            drift_column_name='reconstruction_error_alert',
-            sampling_error_column_name='reconstruction_error_sampling_error',
-            lower_threshold_column_name='reconstruction_error_lower_threshold',
-            upper_threshold_column_name='reconstruction_error_upper_threshold',
-            hover_labels=['Chunk', 'Reconstruction error', 'Target data'],
-            title='Data Reconstruction Drift',
-            y_axis_title='Reconstruction Error',
-            v_line_separating_analysis_period=plot_period_separator,
-            lower_confidence_column_name='reconstruction_error_lower_confidence_boundary',
-            upper_confidence_column_name='reconstruction_error_upper_confidence_boundary',
-            plot_confidence_for_reference=True,
-            start_date_column_name='chunk_start_date' if is_time_based_x_axis else None,
-            end_date_column_name='chunk_end_date' if is_time_based_x_axis else None,
-        )
-
-        return fig
