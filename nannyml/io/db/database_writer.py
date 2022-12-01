@@ -7,6 +7,7 @@ from nannyml.exceptions import WriterException
 from nannyml.io.base import Writer, WriterFactory
 from nannyml.io.db.entities import Model, Run
 from nannyml.io.db.mappers import MapperFactory
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 @WriterFactory.register('database')  # registration name matches property used in configuration file
@@ -69,6 +70,7 @@ class DatabaseWriter(Writer):
         except Exception as exc:
             raise WriterException(f"could not create DatabaseWriter: {exc}")
 
+    @log_usage(UsageEvent.WRITE_DB)
     def _write(self, result: Result, **kwargs):
         mapper = MapperFactory.create(result)
 

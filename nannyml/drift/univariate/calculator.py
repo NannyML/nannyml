@@ -16,6 +16,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.drift.univariate.result import Result
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class UnivariateDriftCalculator(AbstractCalculator):
@@ -41,12 +42,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
             A drift score will be calculated for each entry in this list.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        categorical_methods: List[str], default=None
+        categorical_methods: List[str], default=['jensen_shannon']
             A list of method names that will be performed on categorical columns.
-            When not given all available methods supporting categorical columns will be used.
-        continuous_methods: List[str], default=None
+        continuous_methods: List[str], default=['jensen_shannon']
             A list of method names that will be performed on continuous columns.
-            When not given all available methods supporting continuous columns will be used.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -68,7 +67,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         ...   column_names=column_names,
         ...   timestamp_column_name='timestamp',
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
-        ...   categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm'],
+        ...   categorical_methods=['chi2', 'jensen_shannon', 'l_infinity'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> res = res.filter(period='analysis')
@@ -81,8 +80,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         )
 
         self.column_names = column_names
-        self.continuous_method_names = continuous_methods or ['kolmogorov_smirnov']
-        self.categorical_method_names = categorical_methods or ['chi2']
+        self.continuous_method_names = continuous_methods or ['jensen_shannon']
+        self.categorical_method_names = categorical_methods or ['jensen_shannon']
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
@@ -92,6 +91,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         self.result: Optional[Result] = None
 
+    @log_usage(
+        UsageEvent.UNIVAR_DRIFT_CALC_FIT, metadata_from_self=['continuous_method_names', 'categorical_method_names']
+    )
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> UnivariateDriftCalculator:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
@@ -120,11 +122,17 @@ class UnivariateDriftCalculator(AbstractCalculator):
             ]
 
         self.result = self._calculate(reference_data)
+
+        assert self.result is not None
+
         self.result.data['chunk', 'chunk', 'period'] = 'reference'
         self.result.reference_data = reference_data.copy()
 
         return self
 
+    @log_usage(
+        UsageEvent.UNIVAR_DRIFT_CALC_FIT, metadata_from_self=['continuous_method_names', 'categorical_method_names']
+    )
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:

@@ -9,6 +9,7 @@ from nannyml.base import AbstractEstimatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric
 from nannyml.plots.blueprints.metrics import plot_metric_list
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractEstimatorResult):
@@ -55,6 +56,7 @@ class Result(AbstractEstimatorResult):
 
         return res
 
+    @log_usage(UsageEvent.DLE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',

@@ -150,7 +150,9 @@ class MethodFactory:
 
         if key not in cls.registry:
             raise InvalidArgumentsException(
-                f"unknown method key '{key}' given. " "Should be one of ['jensen_shannon']."
+                f"unknown method key '{key}' given. "
+                "Should be one of ['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein', 'chi2', "
+                "'jensen_shannon', 'l_infinity', 'hellinger']."
             )
 
         if feature_type not in cls.registry[key]:
@@ -373,8 +375,8 @@ class Chi2Statistic(Method):
         return alert
 
 
-@MethodFactory.register(key='infinity_norm', feature_type=FeatureType.CATEGORICAL)
-class InfinityNormDistance(Method):
+@MethodFactory.register(key='l_infinity', feature_type=FeatureType.CATEGORICAL)
+class LInfinityDistance(Method):
     """Calculates the L-Infinity Distance.
 
     An alert will be raised if `distance > 0.1`.
@@ -382,8 +384,8 @@ class InfinityNormDistance(Method):
 
     def __init__(self, **kwargs) -> None:
         super().__init__(
-            display_name='Infinity Norm',
-            column_name='infinity_norm',
+            display_name='L-Infinity distance',
+            column_name='l_infinity',
             lower_threshold_limit=0,
             **kwargs,
         )
@@ -420,7 +422,7 @@ class InfinityNormDistance(Method):
         )
 
 
-@MethodFactory.register(key='wasserstein_distance', feature_type=FeatureType.CONTINUOUS)
+@MethodFactory.register(key='wasserstein', feature_type=FeatureType.CONTINUOUS)
 class WassersteinDistance(Method):
     """Calculates the Wasserstein Distance between two distributions.
 
@@ -430,7 +432,7 @@ class WassersteinDistance(Method):
     def __init__(self, **kwargs) -> None:
         super().__init__(
             display_name='Wasserstein distance',
-            column_name='wasserstein_distance',
+            column_name='wasserstein',
             **kwargs,
         )
 
@@ -443,6 +445,10 @@ class WassersteinDistance(Method):
         if self.chunker is None:
             self.upper_threshold = 1
         else:
+            # TODO: review abstract class => chunker needs timestamp column
+            # Hotfixing by removing/re-adding it
+            chunker_timestamp_col = self.chunker.timestamp_column_name
+            self.chunker.timestamp_column_name = None
             ref_chunk_distances = [
                 self._calculate(
                     chunk.data.values.reshape(
@@ -451,6 +457,7 @@ class WassersteinDistance(Method):
                 )
                 for chunk in self.chunker.split(pd.DataFrame(reference_data))
             ]
+            self.chunker.timestamp_column_name = chunker_timestamp_col
             self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
 
         self.lower_threshold = 0
@@ -476,3 +483,77 @@ class WassersteinDistance(Method):
         alert = value < self.lower_threshold or value > self.upper_threshold
 
         return alert
+
+
+@MethodFactory.register(key='hellinger', feature_type=FeatureType.CONTINUOUS)
+class HellingerDistance(Method):
+    """Calculates the Hellinger Distance between two distributions."""
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(
+            display_name='Hellinger distance',
+            column_name='hellinger',
+            **kwargs,
+        )
+
+        self.upper_threshold = 0.1
+
+        self._treat_as_type: str
+        self._bins: np.ndarray
+        self._reference_proba_in_bins: np.ndarray
+
+    def _fit(self, reference_data: pd.Series):
+        if _column_is_categorical(reference_data):
+            treat_as_type = 'cat'
+        else:
+            n_unique_values = len(np.unique(reference_data))
+            len_reference = len(reference_data)
+            if n_unique_values > 50 or n_unique_values / len_reference > 0.1:
+                treat_as_type = 'cont'
+            else:
+                treat_as_type = 'cat'
+
+        if treat_as_type == 'cont':
+            bins = np.histogram_bin_edges(reference_data, bins='doane')
+            reference_proba_in_bins = np.histogram(reference_data, bins=bins)[0] / len_reference
+            self._bins = bins
+            self._reference_proba_in_bins = reference_proba_in_bins
+        else:
+            reference_unique, reference_counts = np.unique(reference_data, return_counts=True)
+            reference_proba_per_unique = reference_counts / len(reference_data)
+            self._bins = reference_unique
+            self._reference_proba_in_bins = reference_proba_per_unique
+
+        self._treat_as_type = treat_as_type
+
+        return self
+
+    def _calculate(self, data: pd.Series):
+        reference_proba_in_bins = copy(self._reference_proba_in_bins)
+        if self._treat_as_type == 'cont':
+            len_data = len(data)
+            data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
+
+        else:
+            data_unique, data_counts = np.unique(data, return_counts=True)
+            data_counts_dic = dict(zip(data_unique, data_counts))
+            data_count_on_ref_bins = [data_counts_dic[key] if key in data_counts_dic else 0 for key in self._bins]
+            data_proba_in_bins = np.array(data_count_on_ref_bins) / len(data)
+
+        leftover = 1 - np.sum(data_proba_in_bins)
+        if leftover > 0:
+            data_proba_in_bins = np.append(data_proba_in_bins, leftover)
+            reference_proba_in_bins = np.append(reference_proba_in_bins, 0)
+
+        distance = np.sqrt(np.sum((np.sqrt(reference_proba_in_bins) - np.sqrt(data_proba_in_bins)) ** 2)) / np.sqrt(2)
+        self._p_value = None
+
+        del reference_proba_in_bins
+
+        return distance
+
+    def _alert(self, data: pd.Series):
+        value = self.calculate(data)
+        return (self.lower_threshold is not None and value < self.lower_threshold) or (
+            self.upper_threshold is not None and value > self.upper_threshold
+        )

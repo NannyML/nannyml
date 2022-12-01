@@ -16,6 +16,7 @@ from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
 from nannyml.plots.blueprints.metrics import plot_metric_list
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractCalculatorResult):
@@ -64,6 +65,7 @@ class Result(AbstractCalculatorResult):
 
         return res
 
+    @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',

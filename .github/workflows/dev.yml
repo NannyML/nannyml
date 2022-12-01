@@ -41,6 +41,8 @@ jobs:
       - name: test with tox
         run:
           tox
+        env:
+          NML_DISABLE_USAGE_LOGGING: 1
 
       - name: list files
         run: ls -l .

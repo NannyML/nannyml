@@ -32,9 +32,11 @@ __email__ = 'niels@nannyml.com'
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 
 import logging
+
+from dotenv import load_dotenv
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
@@ -45,11 +47,12 @@ from .datasets import (
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
-from .drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
-from .drift.ranking import AlertCountRanking, Ranker, Ranking
-from .drift.univariate import UnivariateDriftCalculator
+from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, DLE
-from .plots import calculate_chunk_distributions
+from .usage_logging import UsageEvent, disable_usage_logging, enable_usage_logging, log_usage
+
+# read any .env files to import environment variables
+load_dotenv()

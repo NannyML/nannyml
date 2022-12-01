@@ -18,6 +18,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.distributions import plot_2d_univariate_distributions_list
 from nannyml.plots.blueprints.metrics import plot_2d_metric_list
 from nannyml.plots.components import Hover
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(AbstractCalculatorResult):
@@ -82,6 +83,7 @@ class Result(AbstractCalculatorResult):
         result.methods = result.categorical_methods + result.continuous_methods
         return result
 
+    @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(  # type: ignore
         self,
         kind: str = 'drift',
@@ -122,7 +124,7 @@ class Result(AbstractCalculatorResult):
         ...   column_names=column_names,
         ...   timestamp_column_name='timestamp',
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
-        ...   categorical_methods=['chi2', 'jensen_shannon', 'infinity_norm'],
+        ...   categorical_methods=['chi2', 'jensen_shannon', 'l_infinity'],
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> res = res.filter(period='analysis')

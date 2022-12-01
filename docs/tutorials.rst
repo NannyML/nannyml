@@ -12,6 +12,7 @@ Tutorials
     tutorials/performance_calculation
     tutorials/compare_estimated_and_realized_performance
     tutorials/detecting_data_drift
+    tutorials/ranking
     tutorials/working_with_results
     tutorials/adjusting_plots
     tutorials/chunking

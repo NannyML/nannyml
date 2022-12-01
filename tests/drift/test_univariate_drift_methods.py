@@ -2,7 +2,12 @@
 import numpy as np
 import pandas as pd
 
-from nannyml.drift.univariate.methods import InfinityNormDistance, JensenShannonDistance, WassersteinDistance
+from nannyml.drift.univariate.methods import (
+    HellingerDistance,
+    JensenShannonDistance,
+    LInfinityDistance,
+    WassersteinDistance,
+)
 
 # ************* JS Tests *************
 
@@ -46,28 +51,28 @@ def test_js_for_categorical():
     assert np.round(distance, 2) == 0.5
 
 
-def test_infinity_norm_for_new_category():
+def test_l_infinity_for_new_category():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
     analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c', 'd'])
-    infnorm = InfinityNormDistance()
+    infnorm = LInfinityDistance()
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.14
 
 
-def test_infinity_norm_for_no_change():
+def test_l_infinity_for_no_change():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
     analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
-    infnorm = InfinityNormDistance()
+    infnorm = LInfinityDistance()
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.0
 
 
-def test_infinity_norm_for_total_change():
+def test_l_infinity_for_total_change():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'])
     analysis = pd.Series(['b', 'b', 'b', 'b', 'b'])
-    infnorm = InfinityNormDistance()
+    infnorm = LInfinityDistance()
     infnorm.fit(reference)
     distance = infnorm.calculate(analysis)
     assert np.round(distance, 2) == 0.67
@@ -101,3 +106,33 @@ def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
     wass_dist = WassersteinDistance().fit(reference).calculate(analysis)
     wass_dist = np.round(wass_dist, 2)
     assert wass_dist == 3.99
+
+
+# ************* Hellinger Tests *************
+
+
+def test_hellinger_complete_overlap():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10_000))
+    analysis = reference
+    hell_dist = HellingerDistance().fit(reference).calculate(analysis)
+    hell_dist = np.round(hell_dist, 2)
+    assert hell_dist == 0
+
+
+def test_hellinger_no_overlap():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10_000))
+    analysis = pd.Series(np.random.normal(7, 1, 10_000))
+    hell_dist = HellingerDistance().fit(reference).calculate(analysis)
+    hell_dist = np.round(hell_dist, 2)
+    assert hell_dist == 1
+
+
+def test_hellinger_both_continuous_analysis_with_small_drift():
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 10_000))
+    analysis = pd.Series(np.random.normal(-2, 1, 10_000))
+    hell_dist = HellingerDistance().fit(reference).calculate(analysis)
+    hell_dist = np.round(hell_dist, 2)
+    assert hell_dist == 0.63

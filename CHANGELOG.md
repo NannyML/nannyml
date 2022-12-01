@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2022-11-22
+
+### Changed
+
+- Updated `mypy` to a new version, immediately resulting in some new checks that failed.
+
+### Added
+
+- Added new univariate drift methods. The [`Wasserstein distance`](https://nannyml.readthedocs.io/en/latest/how_it_works/univariate_drift_detection.html#wasserstein-distance) for continuous variables,
+  and the [`L-Infinity distance`](https://nannyml.readthedocs.io/en/main/how_it_works/univariate_drift_detection.html#l-infinity-distance) for categorical variables.
+- Added usage logging to our key functions. Check out the [docs](https://nannyml.readthedocs.io/en/latest/usage_logging.html#providing-a-env-file) to find out more on what, why, how, and how to
+  disable it if you want to.
+
+### Fixed
+
+- Fixed and updated various parts of the docs, reported at warp speed! Thanks [@NeoKish](https://github.com/NeoKish)!
+- Fixed `mypy` issues concerning 'implicit optionals'.
+
 ## [0.7.0] - 2022-11-07
 
 ### Changed

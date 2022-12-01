@@ -15,6 +15,7 @@ from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.plots.blueprints.metrics import plot_metric_list
+from nannyml.usage_logging import UsageEvent, log_usage
 
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
@@ -58,6 +59,7 @@ class Result(AbstractEstimatorResult):
 
         return res
 
+    @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',

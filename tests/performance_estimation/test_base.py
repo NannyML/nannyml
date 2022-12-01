@@ -13,6 +13,7 @@ from nannyml.base import AbstractEstimator, AbstractEstimatorResult
 from nannyml.chunk import CountBasedChunker  # , _minimum_chunk_size
 from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.datasets import load_synthetic_binary_classification_dataset
+from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture
@@ -75,3 +76,11 @@ def test_base_estimator_uses_period_based_chunker_when_given_chunk_period():  # 
 def test_base_estimator_uses_default_chunker_when_no_chunker_specified():  # noqa: D103
     simple_estimator = SimpleEstimator()
     assert isinstance(simple_estimator.chunker, DefaultChunker)
+
+
+def test_base_estimator_result_filter_input_validation():  # noqa: D103
+    simple_results = SimpleEstimatorResult(results_data=pd.DataFrame(), calculator=SimpleEstimator())
+    with pytest.raises(
+        InvalidArgumentsException, match='metrics value provided is not a valid metric or list of metrics'
+    ):
+        simple_results.filter(metrics=1)

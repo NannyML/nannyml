@@ -17,6 +17,7 @@ from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class CBPE(AbstractEstimator):
@@ -165,6 +166,7 @@ class CBPE(AbstractEstimator):
         return result
 
     @abstractmethod
+    @log_usage(UsageEvent.CBPE_ESTIMATOR_FIT, metadata_from_self=['metrics', 'problem_type'])
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         """Fits the drift calculator using a set of reference data.
 
@@ -190,6 +192,7 @@ class CBPE(AbstractEstimator):
         pass
 
     @abstractmethod
+    @log_usage(UsageEvent.CBPE_ESTIMATOR_RUN, metadata_from_self=['metrics', 'problem_type'])
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set.
 
