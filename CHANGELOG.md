@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+## [0.8.1] - 2022-12-01
+
+### Changed
+
+- Thorough refactor of the `nannyml.drift.ranker` module. The abstract base class and factory have been dropped in favor
+  of a more flexible approach.
+- Thorough refactor of our Plotly-based plotting modules. These have been rewritten from scratch to make them more
+  modular and composable. This will allow us to deliver more powerful and meaningful visualizations faster.
+
+### Added
+
+- Added a new univariate drift method. The [`Hellinger distance`](https://nannyml.readthedocs.io/en/v0.8.1/how_it_works/univariate_drift_detection.html#hellinger-distance), used for continuous variables.
+- Added an [extensive write-up]() on when to use which univariate drift method.
+- Added a new way to rank the results of univariate drift calculation. The `CorrelationRanker` ranks columns based on
+  the correlation between the drift value and the change in realized or estimated performance. Read all about it in the
+  [ranking documentation](https://nannyml.readthedocs.io/en/v0.8.1/how_it_works/ranking.html)
+
+### Fixed
+
+- Disabled usage logging for or GitHub workflows
+- Allow passing a single string to the `metrics` parameter of the `result.filter()` function, as per special request.
+
 ## [0.8.0] - 2022-11-22
 
 ### Changed
