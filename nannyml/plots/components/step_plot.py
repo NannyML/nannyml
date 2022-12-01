@@ -136,7 +136,8 @@ def _add_metric_markers(
     if subplot_args is not None:
         kwargs.update(subplot_args)
 
-    del kwargs['showlegend']
+    if 'showlegend' in kwargs:
+        del kwargs['showlegend']
 
     figure.add_scatter(
         name=name,
@@ -211,7 +212,8 @@ def _add_alert_areas(
     if subplot_args is not None:
         kwargs.update(subplot_args)
 
-    del kwargs['showlegend']
+    if 'showlegend' in kwargs:
+        del kwargs['showlegend']
 
     for x0, x1 in pairwise(x[alert_indices]):
         figure.add_vrect(x0=x0, x1=x1, fillcolor=color, opacity=alpha, layer='below', line_width=0, **kwargs)
