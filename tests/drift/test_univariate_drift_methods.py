@@ -137,6 +137,7 @@ def test_hellinger_both_continuous_analysis_with_small_drift():
     hell_dist = np.round(hell_dist, 2)
     assert hell_dist == 0.63
 
+
 def test_hellinger_for_quasi_continuous():
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000))
@@ -144,7 +145,7 @@ def test_hellinger_for_quasi_continuous():
     hell_dist = HellingerDistance()
     hell_dist.fit(reference)
     distance = hell_dist.calculate(analysis)
-    assert np.round(distance, 2) == 0.73
+    assert np.round(distance, 2) == 0.72
 
 
 def test_hellinger_for_categorical():
