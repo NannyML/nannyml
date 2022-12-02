@@ -90,7 +90,7 @@ class UsageLogger(ABC):
 
 
 class SegmentUsageTracker(UsageLogger):
-    SEGMENT_WRITE_KEY = 'lIVZJNAdj2ZaMzAHHnFWP76g7CuwmzGz'
+    SEGMENT_WRITE_KEY = 'lIVZJNAdj2ZaMzAHHnFWP76g7CuwmzGz' # Should this key appear to the public? It look like a sensitive information available to anyone.
 
     write_key: str
 
