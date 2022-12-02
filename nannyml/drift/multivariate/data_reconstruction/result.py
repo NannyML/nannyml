@@ -43,7 +43,7 @@ class Result(AbstractCalculatorResult):
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
 
         if period != 'all':
-            data = data.loc[data[('chunk', 'chunk', 'period')] == period, :]
+            data = data.loc[data[('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
         result = copy.deepcopy(self)
