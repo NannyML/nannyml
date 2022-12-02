@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from plotly.graph_objects import Figure
@@ -60,8 +60,6 @@ class Result(AbstractEstimatorResult):
     def plot(
         self,
         kind: str = 'performance',
-        metric: Optional[Union[str, Metric]] = None,
-        plot_reference: bool = False,
         *args,
         **kwargs,
     ) -> Figure:

@@ -52,7 +52,7 @@ class Result(AbstractCalculatorResult):
         return result
 
     @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
-    def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
+    def plot(self, kind: str = 'drift', *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
         The different plot kinds that are available:
