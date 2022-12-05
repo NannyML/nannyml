@@ -170,6 +170,24 @@ Since Wasserstein distance is sensitive to extreme values, the variance of the m
 with the scale parameter.
 Jensen-Shannon distance, the Kolmogorov-Smirnov statistic, and the Hellinger distance are much more stable.
 
+
+Experiment 3
+************
+In this experiment, we demonstrate a case where Wasserstein distance behaves differently from the Jensen-Shannon
+distance and Hellinger distance.
+
+.. image:: ../_static/univariate-comparison/fool_emd.svg
+    :width: 1400pt
+
+In this example, the reference and analysis distribution are both mixtures of normal distributions with two modes.
+Distribution shift is introduced in a way that the overall *distance* as measured by Wasserstein between the reference
+and analysis
+remains the same, but the amount of
+overlap changes. The distance stays the same because, in the case visualized on the first row, one mode of the analysis distribution moves a significant distance. In the
+second case, which is visualized in row 2, each mode moves half of that distance. The Kolmogorov-Smirnov statistic and the Wasserstein distance treat both cases
+the same while Hellinger and Jensen-Shannon distances spot the difference.
+
+
 Comparison of Methods for Categorical Variables
 -----------------------------------------------
 
