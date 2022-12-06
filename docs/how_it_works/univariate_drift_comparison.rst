@@ -2,13 +2,14 @@ Choosing Univariate Drift Detection Methods
 ===========================================
 
 The data experiments presented in this page show how the Univariate Drift Detection methods available in NannyML
-respond to data distribution shifts of selected type and magnitude. The main purpose is to build an intuition and
-help to chose the right method given the type (categorical vs. continuous) and distribution of the variable that we want
+respond to data distribution shifts of chosen type and magnitude. The main purpose is to build an intuition and
+help to select the right method given the type (categorical vs. continuous) and distribution of the variable that we
+want
 to monitor. Some of
 the
 distribution shifts introduced are extreme and thus not very likely to happen in a real life scenarios. But again -
-we are trying to build and intuition here and part of it is - for example -  to show how big of a shift needs to
-happen so that we see a selected distance metric reaching its upper limit etc. In all the experiments described below
+we are trying to build an intuition here and part of it is - for example -  to show how big of a shift needs to
+happen so that we see a selected distance metric reaching its upper limit. In all the experiments described below
 we compare two samples of data - one of which we call a *reference* sample and the other an *analysis* sample.
 
 
@@ -33,8 +34,9 @@ of trials for each value of the mean of the analysis data set was 20.
 .. image:: ../_static/univariate-comparison/shifting_mean.svg
     :width: 1400pt
 
-The results illustrate that Wasserstein distance changes proportionally to the mean shift. Jensen-Shannon Distance and
-the Kolmogorov-Smirnov Statistic are both relatively
+The results illustrate that Wasserstein distance changes proportionally to the mean shift. Jensen-Shannon Distance
+(JS) and
+the Kolmogorov-Smirnov (KS) Statistic are both relatively
 more sensitive to smaller shifts compared to bigger shifts. This means that a shift in the mean of the analysis data set from 0 to 0.1 will cause a bigger change than a change from 5.0 to 5.1.
 Hellinger Distance, on the other hand, displays behavior resembling a sigmoid function; Hellinger Distance is not as sensitive to small and large changes to the mean of the analysis data set
 compared to shifts of medium size.
@@ -48,17 +50,17 @@ reference and analysis data sets was again 1000 observations and the experiment 
 .. image:: ../_static/univariate-comparison/shifting_std.svg
     :width: 1400pt
 
-In this case, Wasserstein distance again changes proportionally to the change in standard deviation. Jensen-Shannon
-distance, the Kolmogorov-Smirnov D-statistic, and the Hellinger distance exhibit high sensitivity, even
-to small changes. However, the Hellinger distance has a slightly *softer* start than the Jensen-Shannon distance and
-the Kolmogorov-Smirnov statistic. In this experiment, the main difference between the Jensen-Shannon distance,
-the Kolmogorov-Smirnov statistic, and Hellinger distance is that the stability of the measures (illustrated by the
-confidence intervals) differs, with Jensen-Shannon distance exhibiting the highest relative stability of the three.
+In this case, Wasserstein distance again changes proportionally to the change in standard deviation. JS
+distance, the KS D-statistic, and the Hellinger distance exhibit high sensitivity, even
+to small changes. However, the Hellinger distance has a slightly *softer* start than the JS distance and
+the JS statistic. In this experiment, the main difference between the JS distance,
+the JS statistic, and Hellinger distance is that the stability of the measures (illustrated by the
+confidence intervals) differs, with JS distance exhibiting the highest relative stability of the three.
 
 
 Tradeoffs of The Kolmogorov-Smirnov Statistic
 .............................................
-The Kolmogorov-Smirnov D-statistic is simply the maximum distance
+The JS D-statistic is simply the maximum distance
 between the empirical cumulative density functions (ECDFs) of the two analyzed samples. This can lead to cases where
 drift
 occurring
@@ -72,10 +74,10 @@ both the left mode and the right mode of the analysis distribution shift.
 .. image:: ../_static/univariate-comparison/fool_ks.svg
     :width: 1400pt
 
-Looking at columns 1 and 2 that show respectively Jensen-Shannon distance and Hellinger distance, we see that their
+Looking at columns 1 and 2 that show respectively JS distance and Hellinger distance, we see that their
 value increases as they both compare *similarity* of Empirical Probability Density Functions (EPDFs). **In the
 third column,
-which visualizes the Kolmogorov-Smirnov statistic, we see that the largest difference between the analysis ECDF and the
+which visualizes the JS statistic, we see that the largest difference between the analysis ECDF and the
 reference ECDF remains the same, which makes KS D-statistic insensitive for this type of shift.** The fourth column
 shows Wasserstein distance which looks at the area between the reference ECDF and analysis ECDF hence it catches the
 shift and its value increases.
@@ -85,10 +87,10 @@ Tradeoffs of Jensen-Shannon Distance and Hellinger Distance
 
 Experiment 1
 ************
-Both Jensen-Shannon Distance and Hellinger Distance are in a sense related to the *amount of overlap* between
+Both JS Distance and Hellinger Distance are in a sense related to the *amount of overlap* between
 probability
 distributions.
-This means that in cases where the *amount of overlap* stays the same but drift increases, neither the Jensen-Shannon
+This means that in cases where the *amount of overlap* stays the same but drift increases, neither the JS
 distance nor
 the Hellinger distance will detect the change. Such cases are very
 rare in practice, but they can occur - for example when two distributions are disjoint to begin with and then move
@@ -107,7 +109,7 @@ the
 second case, this could
 mean that either the left mode shifted over to the right of what was initially the right mode of the analysis or both the left mode and the
 right mode of analysis shifted to the right. In either case, this subjectively seems like *more drift*, and neither
-Jensen-Shannon distance nor
+JS distance nor
 Hellinger distance catches this, but Wasserstein distance does. This is because Wasserstein distance *measures* the
 amount
 of *work* required to transform one distribution into the other. In this context, *work* can be thought of
@@ -115,15 +117,15 @@ as the amount of probability density multiplied by the distance it has to *trave
 
 Experiment 2
 ************
-Since Jensen-Shannon distance and Hellinger distance are related to the *overlap* between distributions, if the
+Since JS distance and Hellinger distance are related to the *overlap* between distributions, if the
 distributions are completely *disjoint*,
-then both measures will be maxed out at 1. So, if the distributions begin disjoint and get even further apart, Jensen-Shannon distance and Hellinger will not increase.
+then both measures will be maxed out at 1. So, if the distributions begin disjoint and get even further apart, JS distance and Hellinger will not increase.
 On the other hand, since Wasserstein Distance quantifies the distance between distributions, the measure will increase.
 
 .. image:: ../_static/univariate-comparison/disjoint_only_emd.svg
     :width: 1400pt
 
-In this experiment, we double the distance between the reference and analysis, and we see that Jensen-Shannon distance, the Kolmogorov-Smirnov statistic,
+In this experiment, we double the distance between the reference and analysis, and we see that JS distance, the JS statistic,
 and Hellinger distance remain at 1 (their max value), while Wasserstein distance increases proportionally to the distance that the distribution has moved.
 This example is more of an edge case, but disjoint distributions can arise in real-world scenarios. For example, when training generative adversarial networks,
 this issue can arise, and a common remedy is using a loss function based on Wasserstein Distance.
@@ -160,7 +162,7 @@ density function (PDF) in the range :math:`[-10,10]` is visualized below.
 
 Notably, the general shape of the Cauchy distribution resembles the normal distribution, but there is much more density in the tails.
 When increasing the scale parameter, the Cauchy distribution spreads out, and the tails become even denser. The behavior of Wasserstein
-distance, Jensen-Shannon distance, Hellinger distance, and the Kolmogorov-Smirnov statistic when the reference sample is drawn from
+distance, JS distance, Hellinger distance, and the JS statistic when the reference sample is drawn from
 :math:`\mathcal{N}(0,1)` and the analysis is drawn from :math:`\text{Cauchy}(0,\Gamma)` where :math:`\Gamma = \{0.5, 0.6,...,3\}` is shown below:
 
 .. image:: ../_static/univariate-comparison/cauchy_empirical.svg
@@ -168,7 +170,25 @@ distance, Jensen-Shannon distance, Hellinger distance, and the Kolmogorov-Smirno
 
 Since Wasserstein distance is sensitive to extreme values, the variance of the measure is high and increases together
 with the scale parameter.
-Jensen-Shannon distance, the Kolmogorov-Smirnov statistic, and the Hellinger distance are much more stable.
+JS distance, the JS statistic, and the Hellinger distance are much more stable.
+
+
+Experiment 3
+************
+In this experiment, we demonstrate a case where Wasserstein distance behaves differently from the JS
+distance and Hellinger distance.
+
+.. image:: ../_static/univariate-comparison/fool_emd.svg
+    :width: 1400pt
+
+In this example, the reference and analysis distribution are both mixtures of normal distributions with two modes.
+Distribution shift is introduced in a way that the overall *distance* as measured by Wasserstein between the reference
+and analysis
+remains the same, but the amount of
+overlap changes. The distance stays the same because, in the case visualized on the first row, one mode of the analysis distribution moves a significant distance. In the
+second case, which is visualized in row 2, each mode moves half of that distance. The JS statistic and the Wasserstein distance treat both cases
+the same while Hellinger and JS distances spot the difference.
+
 
 Comparison of Methods for Categorical Variables
 -----------------------------------------------
@@ -179,7 +199,7 @@ Sensitivity to Sample Size of Different Drift Measures
 Generally, we would like methods that return the same value for the same magnitude of drift, regardless of the sample
 size of
 either the reference or
-analysis set. Jensen-Shannon distance, Hellinger distance, and L-Infinity distance all exhibit this property, while the Chi-Squared statistic does not. In
+analysis set. JS distance, Hellinger distance, and L-Infinity distance all exhibit this property, while the Chi-Squared statistic does not. In
 cases where the chunks in your analysis may be different sizes, as can be the case when using period-based chunking, we suggest considering this behavior
 before you use the chi-squared statistic.
 
@@ -245,7 +265,7 @@ In this way, we can see the impact that sample size has on each of the drift mea
 .. image:: ../_static/univariate-comparison/binomial_and_sample_size.svg
     :width: 1400pt
 
-Shift as measured by Jensen-Shannon distance, Hellinger distance, and L-infinity distance decreases as the analysis
+Shift as measured by JS distance, Hellinger distance, and L-infinity distance decreases as the analysis
 sample increases in size and thus better represents the distribution. On the other hand, the chi-squared statistic on
 average remains the same. This behaviour may be considered beneficial in some cases. Notice also the stability of each
 of
@@ -261,14 +281,14 @@ drew a sample of 1000 points again from the same distribution :math:`\text{Binom
 data set (so not actual
 data distribution shift).
 We then calculated
-the difference between the reference data and analysis data as measured by Jensen-Shannon distance, Hellinger
+the difference between the reference data and analysis data as measured by JS distance, Hellinger
 distance,
 L-infinity distance, and the Chi-squared statistic. The results are shown below:
 
 .. image:: ../_static/univariate-comparison/binom_and_num_cats.svg
     :width: 1400pt
 
-We see an increase in the Jensen-Shannon distance, Hellinger distance, and the chi-squared statistic as the number of categories
+We see an increase in the JS distance, Hellinger distance, and the chi-squared statistic as the number of categories
 increases because the small differences in the frequencies in each category due to sampling effects are summed up. Thus, the more
 terms in the sum, the higher the value. On the other hand, L-infinity distance does not increase because it only looks at the largest
 change in frequency of all the categories. For intuition, a visualization of the Hellinger distance and the L-infinity distance is shown
@@ -285,7 +305,7 @@ Comparison of Drift Methods on Data Sets with Many Categories
 
 In cases with many categories, it can be difficult to significant shift if it only occurs in a few categories. This is
 because some methods
-(like Jensen-Shannon distance, Hellinger distance, and the chi-squared statistic) sum a transformation of the difference between
+(like JS distance, Hellinger distance, and the chi-squared statistic) sum a transformation of the difference between
 the relative frequency of each category. Sampling effects can cause small differences in the frequency of each category, but when summed
 together, these small differences can hide important changes that occur in only a few categories. L-infinity distance
 only looks at the
@@ -308,7 +328,7 @@ sample and the analysis sample with severe drift in one category, as seen below:
     :width: 1400pt
 
 We see that the sampling effects (the small differences in the frequencies of each category) hide the significant shift
-when using Jensen-Shannon distance,
+when using JS distance,
 Hellinger distance. On the other hand, L-infinity shows a
 significant difference between the two.
 
