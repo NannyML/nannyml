@@ -104,7 +104,7 @@ def _add_metric_line(
         line_args = {}
 
     if subplot_args is not None:
-        kwargs.update(subplot_args)
+        kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
     figure.add_scatter(
         name=name,
@@ -134,7 +134,7 @@ def _add_metric_markers(
     x_mid = [x1 + (x2 - x1) / 2 for x1, x2 in pairwise(x)]
 
     if subplot_args is not None:
-        kwargs.update(subplot_args)
+        kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
     if 'showlegend' in kwargs:
         del kwargs['showlegend']
@@ -175,7 +175,7 @@ def _add_alert_markers(
     x_mid = [x[alert_index] + (x[alert_index + 1] - x[alert_index]) / 2 for alert_index in alert_indices]
 
     if subplot_args is not None:
-        kwargs.update(subplot_args)
+        kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
     figure.add_scatter(
         name=name,

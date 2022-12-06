@@ -101,7 +101,7 @@ class Figure(go.Figure):
         self, x, color=Colors.BLUE_SKY_CRAYOLA, subplot_args: Optional[Dict[str, Any]] = None, **kwargs
     ):
         if subplot_args is not None:
-            kwargs.update(subplot_args)
+            kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
         self.add_vline(x=x, line=dict(color=color, width=1, dash='dash'), layer='below', **kwargs)
 

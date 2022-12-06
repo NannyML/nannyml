@@ -1,6 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+from __future__ import annotations
 
 import typing
 from enum import Enum
@@ -21,9 +22,10 @@ class Result(Protocol):
 
     data: pd.DataFrame
 
-    def filter(
-        self, period: Optional[str] = None, metrics: Optional[List[str]] = None, *args, **kwargs
-    ) -> pd.DataFrame:
+    def filter(self, period: Optional[str] = None, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+        """"""
+
+    def to_df(self, multilevel: bool = True) -> pd.DataFrame:
         """"""
 
 

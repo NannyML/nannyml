@@ -6,7 +6,6 @@
 import copy
 from typing import List, Optional, Union
 
-import numpy as np
 import pandas as pd
 from plotly import graph_objects as go
 
@@ -16,9 +15,9 @@ from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction import Result as MultivariateResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric
-from nannyml.plots import Colors, is_time_based_x_axis
+from nannyml.plots import Figure
+from nannyml.plots.blueprints.comparisons import plot_compare_performance_to_drift
 from nannyml.plots.blueprints.metrics import plot_metric_list
-from nannyml.plots.components import Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
 from nannyml.usage_logging import UsageEvent, log_usage
 
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
@@ -132,257 +131,11 @@ class ResultMultivariateComparison:
         self.performance_metric = self.performance_result.metrics[0]
 
     def plot(self) -> Figure:
-        reference_performance_result = self.performance_result.filter(period='reference').to_df()
-        analysis_performance_result = self.performance_result.filter(period='analysis').to_df()
-
-        reference_multivariate_result = self.multivariate_result.filter(period='reference').to_df()
-        analysis_multivariate_result = self.multivariate_result.filter(period='analysis').to_df()
-
-        reference_chunk_indices = reference_performance_result[('chunk', 'chunk_index')]
-        reference_chunk_start_dates = reference_performance_result[('chunk', 'start_date')]
-        reference_chunk_end_dates = reference_performance_result[('chunk', 'end_date')]
-        reference_chunk_periods = reference_performance_result[('chunk', 'period')]
-        reference_chunk_keys = reference_performance_result[('chunk', 'key')]
-        reference_performance_metric = reference_performance_result[(self.performance_metric.column_name, 'value')]
-        reference_multivariate_metric = reference_multivariate_result[('reconstruction_error', 'value')]
-
-        analysis_chunk_indices = analysis_performance_result[('chunk', 'chunk_index')]
-        analysis_chunk_start_dates = analysis_performance_result[('chunk', 'start_date')]
-        analysis_chunk_end_dates = analysis_performance_result[('chunk', 'end_date')]
-        analysis_chunk_periods = analysis_performance_result[('chunk', 'period')]
-        analysis_chunk_keys = analysis_performance_result[('chunk', 'key')]
-        analysis_performance_metric = analysis_performance_result[(self.performance_metric.column_name, 'value')]
-        analysis_multivariate_metric = analysis_multivariate_result[('reconstruction_error', 'value')]
-
-        analysis_performance_alerts = analysis_performance_result[(self.performance_metric.column_name, 'alert')]
-        analysis_multivariate_alerts = analysis_multivariate_result[('reconstruction_error', 'alert')]
-
-        figure = Figure(
-            title='CBPE',
-            x_axis_title='Time'
-            if is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-            else 'Chunk',
-            y_axis_title='Estimated metric',
-            legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
-            height=500,
-            yaxis2=dict(
-                title="Reconstruction error",
-                anchor="x",
-                overlaying="y",
-                side="right",
-            ),
+        return plot_compare_performance_to_drift(
+            performance_result=self.performance_result,
+            drift_result=self.multivariate_result,
+            performance_metric_display_name=self.performance_metric.display_name,
+            performance_metric_column_name=self.performance_metric.column_name,
+            drift_metric_display_name='Reconstruction error',
+            drift_metric_column_name='reconstruction_error',
         )
-
-        has_reference_results = reference_chunk_indices is not None and len(reference_chunk_indices) > 0
-
-        if has_reference_results:
-            # region reference performance metric
-
-            hover = Hover(
-                template='%{period}<br />'
-                'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-                '%{metric_name}: <b>%{metric_value}</b><br />',
-                # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-                show_extra=True,
-            )
-            hover.add(
-                np.asarray([self.performance_metric.display_name] * len(analysis_performance_metric)), 'metric_name'
-            )
-
-            if reference_chunk_periods is not None:
-                hover.add(render_period_string(reference_chunk_periods), name='period')
-
-            if reference_chunk_keys is not None:
-                hover.add(reference_chunk_keys, name='chunk_key')
-
-            hover.add(
-                render_x_coordinate(
-                    reference_chunk_indices,
-                    reference_chunk_start_dates,
-                    reference_chunk_end_dates,
-                ),
-                name='x_coordinate',
-            )
-            hover.add(np.round(reference_performance_metric, 4), name='metric_value')
-
-            figure.add_metric(
-                data=reference_performance_metric,
-                indices=reference_chunk_indices,
-                start_dates=reference_chunk_start_dates,
-                end_dates=reference_chunk_end_dates,
-                name=f'Estimated {self.performance_metric.display_name} (reference)',
-                color=Colors.INDIGO_PERSIAN.transparent(alpha=0.5),
-                hover=hover,
-                line_dash='dash',
-                yaxis='y1',
-            )
-
-            # endregion
-
-            # region reference drift metric
-
-            hover = Hover(
-                template='%{period}<br />'
-                'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-                '%{metric_name}: <b>%{metric_value}</b><br />',
-                # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-                show_extra=True,
-            )
-            hover.add(np.asarray(["Reconstruction error"] * len(reference_performance_metric)), 'metric_name')
-
-            if reference_chunk_periods is not None:
-                hover.add(render_period_string(reference_chunk_periods), name='period')
-
-            if reference_chunk_keys is not None:
-                hover.add(reference_chunk_keys, name='chunk_key')
-
-            hover.add(
-                render_x_coordinate(
-                    reference_chunk_indices,
-                    reference_chunk_start_dates,
-                    reference_chunk_end_dates,
-                ),
-                name='x_coordinate',
-            )
-            hover.add(np.round(reference_multivariate_metric, 4), name='metric_value')
-
-            figure.add_metric(
-                data=reference_multivariate_metric,
-                indices=reference_chunk_indices,
-                start_dates=reference_chunk_start_dates,
-                end_dates=reference_chunk_end_dates,
-                name='Reconstruction error (reference)',
-                color=Colors.BLUE_SKY_CRAYOLA.transparent(alpha=0.5),
-                yaxis='y2',
-                hover=hover,
-                # line_dash='dash',
-            )
-
-            figure.add_period_separator(
-                x=(
-                    reference_chunk_indices[-1] + 1
-                    if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-                    else analysis_chunk_start_dates[0]  # type: ignore
-                )
-            )
-            # endregion
-
-        # region analysis performance metric
-
-        hover = Hover(
-            template='%{period} &nbsp; &nbsp; %{alert} <br />'
-            'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-            '%{metric_name}: <b>%{metric_value}</b><br />',
-            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-            show_extra=True,
-        )
-        hover.add(np.asarray([self.performance_metric.display_name] * len(analysis_performance_metric)), 'metric_name')
-
-        if analysis_chunk_periods is not None:
-            hover.add(render_period_string(analysis_chunk_periods), name='period')
-
-        if analysis_performance_alerts is not None:
-            hover.add(render_alert_string(analysis_performance_alerts), name='alert')
-
-        if analysis_chunk_keys is not None:
-            hover.add(analysis_chunk_keys, name='chunk_key')
-
-        hover.add(
-            render_x_coordinate(
-                analysis_chunk_indices,
-                analysis_chunk_start_dates,
-                analysis_chunk_end_dates,
-            ),
-            name='x_coordinate',
-        )
-        hover.add(np.round(analysis_performance_metric, 4), name='metric_value')
-
-        figure.add_metric(
-            data=analysis_performance_metric,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
-            name=f'Estimated {self.performance_metric.display_name} (analysis)',
-            color=Colors.INDIGO_PERSIAN,
-            hover=hover,
-            line_dash='dash',
-            yaxis='y1',
-        )
-
-        # endregion
-
-        # region analysis multivariate drift metric
-
-        hover = Hover(
-            template='%{period} &nbsp; &nbsp; %{alert} <br />'
-            'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-            '%{metric_name}: <b>%{metric_value}</b><br />',
-            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-            show_extra=True,
-        )
-        hover.add(np.asarray(["Reconstruction error"] * len(analysis_performance_metric)), 'metric_name')
-
-        if analysis_chunk_periods is not None:
-            hover.add(render_period_string(analysis_chunk_periods), name='period')
-
-        if analysis_performance_alerts is not None:
-            hover.add(render_alert_string(analysis_performance_alerts), name='alert')
-
-        if analysis_chunk_keys is not None:
-            hover.add(analysis_chunk_keys, name='chunk_key')
-
-        hover.add(
-            render_x_coordinate(
-                analysis_chunk_indices,
-                analysis_chunk_start_dates,
-                analysis_chunk_end_dates,
-            ),
-            name='x_coordinate',
-        )
-        hover.add(np.round(analysis_multivariate_metric, 4), name='metric_value')
-
-        figure.add_metric(
-            data=analysis_multivariate_metric,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
-            name='Reconstruction error (analysis)',
-            color=Colors.BLUE_SKY_CRAYOLA,
-            yaxis='y2',
-            hover=hover,
-        )
-
-        # endregion
-
-        # region alerts
-        if analysis_performance_alerts is not None:
-            figure.add_alert(
-                data=analysis_performance_metric,
-                alerts=analysis_performance_alerts,
-                indices=analysis_chunk_indices,
-                start_dates=analysis_chunk_start_dates,
-                end_dates=analysis_chunk_end_dates,
-                name='Alert',
-                legendgroup='alert',
-                plot_areas=False,
-                showlegend=False,
-                yaxis='y1',
-            )
-
-        if analysis_multivariate_alerts is not None:
-            figure.add_alert(
-                data=analysis_multivariate_metric,
-                alerts=analysis_multivariate_alerts,
-                indices=analysis_chunk_indices,
-                start_dates=analysis_chunk_start_dates,
-                end_dates=analysis_chunk_end_dates,
-                name='Alert',
-                legendgroup='alert',
-                plot_areas=False,
-                showlegend=True,
-                yaxis='y2',
-            )
-
-        # endregion
-
-        return figure
