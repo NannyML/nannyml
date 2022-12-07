@@ -1,7 +1,7 @@
 Choosing Univariate Drift Detection Methods
 ===========================================
 
-The data experiments presented in this page show how the Univariate Drift Detection methods available in NannyML
+The data experiments presented in this page show how the univariate drift detection methods available in NannyML
 respond to data distribution shifts of selected type and magnitude. The main purpose is to build an intuition and
 help to chose the right method given the type (categorical vs. continuous) and distribution of the variable that we want
 to monitor. Some of
@@ -18,17 +18,16 @@ Comparison of Methods for Continuous Variables
 Shifting the Mean of the Analysis Data Set
 ..........................................
 In this experiment, we show how each method responds as the mean of the analysis data set moves further away from the mean of the reference data set.
-To demonstrate this, the reference data set was sampled from :math:`\mathcal{N}(0,1)`, and the analysis data set was sampled from :math:`\mathcal{N}(M,1)`
-where :math:`M = \{0,0.1,0.2,...,7\}`.
+To demonstrate this, the reference data set was sampled from :math:`\mathcal{N}(0,1)`, and the analysis data set was sampled from :math:`\mathcal{N}(\mu,1)` for 
+each value of :math:`\mu` in :math:`\{0,0.1,0.2,...,7\}`. So, there is one reference sample and 71 analysis samples and each of the analysis 
+samples is compared to the reference sample.
 
 We show the confidence intervals for empirical experiments like this one to demonstrate the stability of each method in comparison to the others. The confidence intervals depend
-on the  sizes of the reference and analysis samples. These were kept the same for each method within the experiments to
-ensure that
-the
-results are comparable.
+on the  sizes of the reference and analysis samples. These were kept the same for each method within the experiments to ensure that
+the results are comparable.
 
 In this experiment, the sample size of both the reference and analysis datasets was 1000 observations, and the number
-of trials for each value of the mean of the analysis data set was 20.
+of trials for each value of the mean of the analysis data set was 100.
 
 .. image:: ../_static/univariate-comparison/shifting_mean.svg
     :width: 1400pt
@@ -37,13 +36,24 @@ The results illustrate that Wasserstein distance changes proportionally to the m
 the Kolmogorov-Smirnov Statistic are both relatively
 more sensitive to smaller shifts compared to bigger shifts. This means that a shift in the mean of the analysis data set from 0 to 0.1 will cause a bigger change than a change from 5.0 to 5.1.
 Hellinger Distance, on the other hand, displays behavior resembling a sigmoid function; Hellinger Distance is not as sensitive to small and large changes to the mean of the analysis data set
-compared to shifts of medium size.
+compared to shifts of medium size. Also, in this case, all of the methods are relatively stable and thus the confidence intervals are very small.
+
+Now lets take a closer look at the behaviour of the methods for smaller, more realistic shifts. Below we show data from the experiment above, but we
+truncate the domain to :math:`[0,1]`.
+
+.. image:: ../_static/univariate-comparison/shifting_mean_0_to_1.svg
+    :width: 1400pt
+
+We observe that the Wasserstein distance, Jensen-Shannon distance, and the Kolmogorov-Smirnov statistic all appear to increase roughly linearly with the mean shift.
+The Hellinger distance, on the other hand, increases more slowly to begin with and thus is slightly less sensitive to smaller shifts.
 
 Shifting the Standard Deviation of the Analysis Data Set
 ........................................................
 In this experiment, we show how each method responds as the standard deviation of the analysis set increases. The reference data set was sampled from :math:`\mathcal{N}(0, 1)` and the analysis data set
-was sampled from :math:`\mathcal{N}(0, \Sigma)` where :math:`\Sigma = \{1, 1.1, 1.2,...,10\}`. The size of both the
-reference and analysis data sets was again 1000 observations and the experiment consisted of 20 trials.
+was sampled from :math:`\mathcal{N}(0, \sigma)` for each :math:`\sigma` in :math:`\{1, 1.1, 1.2,...,10\}`. 
+So, there is one reference sample and 91 analysis samples.
+The size of both the
+reference and analysis data sets was again 1000 observations and the experiment consisted of 100 trials.
 
 .. image:: ../_static/univariate-comparison/shifting_std.svg
     :width: 1400pt
@@ -53,15 +63,22 @@ distance, the Kolmogorov-Smirnov D-statistic, and the Hellinger distance exhibit
 to small changes. However, the Hellinger distance has a slightly *softer* start than the Jensen-Shannon distance and
 the Kolmogorov-Smirnov statistic. In this experiment, the main difference between the Jensen-Shannon distance,
 the Kolmogorov-Smirnov statistic, and Hellinger distance is that the stability of the measures (illustrated by the
-confidence intervals) differs, with Jensen-Shannon distance exhibiting the highest relative stability of the three.
+confidence intervals) differs, with Jensen-Shannon distance and the Kolmogorov-Smirnov statistic exhibiting the highest relative stability of the three.
 
+We can now take a look at the behavior of the methods for smaller, more realistic shifts. Below we show data from the experiment above, but we
+truncate the domain to :math:`[1,2]`.
+
+.. image:: ../_static/univariate-comparison/shifting_std_1_to_2.svg
+    :width: 1400pt
+
+Each method appears to increase roughly linearly with the increase in standard deviation. 
+The Hellinger distance, however, increases more slowly to begin with before taking on more linear behavior.
 
 Tradeoffs of The Kolmogorov-Smirnov Statistic
 .............................................
 The Kolmogorov-Smirnov D-statistic is simply the maximum distance
 between the empirical cumulative density functions (ECDFs) of the two analyzed samples. This can lead to cases where
-drift
-occurring
+drift occurring
 in one region
 of the analysis distribution *hides* drift occurring in other areas. The visualization below shows an example of such
 situation.
@@ -247,9 +264,7 @@ In this way, we can see the impact that sample size has on each of the drift mea
 
 Shift as measured by Jensen-Shannon distance, Hellinger distance, and L-infinity distance decreases as the analysis
 sample increases in size and thus better represents the distribution. On the other hand, the chi-squared statistic on
-average remains the same. This behaviour may be considered beneficial in some cases. Notice also the stability of each
-of
-the measures.
+average remains the same. This behaviour may be considered beneficial in some cases.
 
 Effect of the Number of Categories on Different Drift Measures
 ..............................................................
@@ -295,7 +310,9 @@ Here we show an experiment that highlights this behavior. There are three import
 sample with no real drift (i.e. the sample is drawn from the same distribution), and an analysis set with severe drift in only one category. The
 reference and analysis set without drift were drawn from the uniform distribution with 200 categories. The analysis set with severe drift was
 constructed by drawing a sample from the uniform distribution with 200 categories, then adding more occurrences of the 100th category. The sample
-size of each of the three sets was 7000 points. A visualization of the empirical probability mass function can be seen below.
+size of each of the three sets was 7000 points. A visualization of the empirical probability mass function can be seen below. On the left, we see the reference data distribution
+(the blue bars) and the analysis data distribution without drift (the purple bars).
+On the right, we see the reference distribution (the blue bars) and the analysis distribution with severe drift in the 100th category (the red bars).
 
 .. image:: ../_static/univariate-comparison/uniform.svg
     :width: 1400pt
