@@ -170,9 +170,9 @@ Experiment 2
 In this experiment, we further exemplify the sensitivity of Wasserstein Distance to extreme values. To do so, we compare a normal distribution to a
 Cauchy distribution. The Cauchy distribution has no analytically derivable moments, and generating samples from a random variable distributed
 according to the Cauchy distribution will result in a data set with much of its density in a small range but with fat tails. The probability
-density function (PDF) in the range :math:`[-10,10]` is visualized below.
+density functions (PDFs) of :math:`\mathcal{N}(0,1)`, :math:`\text{Cauchy}(0, 0.5)` and :math:`\text{Cauchy}(0, 3)` in the range :math:`[-10,10]` are visualized below.
 
-.. image:: ../_static/univariate-comparison/outlier.svg
+.. image:: ../_static/univariate-comparison/cauchy_pdf.svg
     :width: 1400pt
 
 Notably, the general shape of the Cauchy distribution resembles the normal distribution, but there is much more density in the tails.
