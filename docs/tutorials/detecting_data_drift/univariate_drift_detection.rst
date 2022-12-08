@@ -133,7 +133,7 @@ the code below:
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 16
 
-.. image:: /_static/drift-guide-categorical.svg
+.. image:: /_static/drift-guide-stacked-categorical.svg
 
 The drift calculator operates on any column. This not only limits it to model features, but allows it to work
 on model scores and predictions as well. You can see the drift plots for the model scores (`y_pred_proba`) and the model
