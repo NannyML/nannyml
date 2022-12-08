@@ -178,7 +178,7 @@ estimator = estimator.fit(reference)
 estimated_performance = estimator.estimate(analysis)
 
 # Show results
-figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
+figure = estimated_performance.plot()
 figure.show()
 
 # Define feature columns
@@ -191,32 +191,31 @@ univariate_calculator = nml.UnivariateDriftCalculator(
     column_names=feature_column_names,
     chunk_size=chunk_size,
     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
-    categorical_methods=['chi2'],
+    categorical_methods=['chi2', 'jensen_shannon'],
 )
 univariate_calculator = univariate_calculator.fit(reference)
 univariate_results = univariate_calculator.calculate(analysis)
 # Plot drift results for all continuous columns
-for column_name in univariate_calculator.continuous_column_names:
-    figure = univariate_results.plot(
-        kind='drift',
-        method='jensen_shannon',
-        column_name=column_name,
-        plot_reference=True
-    )
-    figure.show()
+figure = univariate_results.filter(
+    column_names=univariate_results.continuous_column_names, 
+    methods=['jensen_shannon']).plot(kind='drift')
+figure.show()
 
 # Plot drift results for all categorical columns
-for column_name in univariate_calculator.categorical_column_names:
-    figure = univariate_results.plot(
-        kind='drift',
-        method='chi2',
-        column_name=column_name,
-        plot_reference=True
-    )
-    figure.show()
+figure = univariate_results.filter(
+    column_names=univariate_results.categorical_column_names, 
+    methods=['chi2']).plot(kind='drift')
+figure.show()
 
-ranker = nml.Ranker.by('alert_count')
-ranked_features = ranker.rank(univariate_results, only_drifting = False)
+ranker = nml.CorrelationRanker()
+# ranker fits on one metric and reference period data only
+ranker.fit(
+    estimated_performance.filter(period='reference', metrics=['roc_auc']))
+# ranker ranks on one drift method and one performance metric
+ranked_features = ranker.rank(
+    univariate_results.filter(methods=['jensen_shannon']),
+    estimated_performance.filter(metrics=['roc_auc']),
+    only_drifting = False)
 display(ranked_features)
 
 # Let's initialize the object that will perform Data Reconstruction with PCA
@@ -226,7 +225,7 @@ rcerror_calculator = nml.DataReconstructionDriftCalculator(
 ).fit(reference_data=reference)
 # let's see Reconstruction error statistics for all available data
 rcerror_results = rcerror_calculator.calculate(analysis)
-figure = rcerror_results.plot(kind='drift', plot_reference=True)
+figure = rcerror_results.plot()
 figure.show()
 ```
 
