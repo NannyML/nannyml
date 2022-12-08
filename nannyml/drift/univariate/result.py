@@ -87,7 +87,6 @@ class Result(AbstractCalculatorResult):
     def plot(  # type: ignore
         self,
         kind: str = 'drift',
-        number_of_columns: Optional[int] = None,
         *args,
         **kwargs,
     ) -> Optional[go.Figure]:
@@ -148,7 +147,8 @@ class Result(AbstractCalculatorResult):
                 hover=Hover(
                     template='%{period} &nbsp; &nbsp; %{alert} <br />'
                     'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-                    '%{metric_name}: <b>%{metric_value}</b><b r />'
+                    '%{metric_name}: <b>%{metric_value}</b><b r />',
+                    show_extra=True,
                 ),
             )
         elif kind == 'distribution':
@@ -158,7 +158,6 @@ class Result(AbstractCalculatorResult):
                 reference_data=self.reference_data,
                 analysis_data=self.analysis_data,
                 chunker=self.chunker,
-                number_of_columns=number_of_columns,
             )
         else:
             raise InvalidArgumentsException(

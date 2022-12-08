@@ -60,6 +60,12 @@ class UsageEvent(str, Enum):
     DLE_ESTIMATOR_RUN = "DLE estimator run"
     DLE_PLOT = "DLE estimator plot"
 
+    # Ranking
+
+    RANKER_ALERT_COUNT_RUN = "Run ranker using alert count"
+    RANKER_CORRELATION_FIT = "Fit ranker using correlation with performance"
+    RANKER_CORRELATION_RUN = "Run ranker using correlation with performance"
+
     CLI_RUN = "CLI run"
 
     WRITE_RAW = "Exported results with RawFilesWriter"
