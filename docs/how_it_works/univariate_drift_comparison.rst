@@ -79,7 +79,7 @@ The Hellinger distance, however, increases more slowly to begin with before taki
 
 Tradeoffs of The Kolmogorov-Smirnov Statistic
 .............................................
-The JS D-statistic is simply the maximum distance
+The KS D-statistic is simply the maximum distance
 between the empirical cumulative density functions (ECDFs) of the two analyzed samples. This can lead to cases where
 drift occurring
 in one region
@@ -105,15 +105,10 @@ Tradeoffs of Jensen-Shannon Distance and Hellinger Distance
 
 Experiment 1
 ************
-Both JS Distance and Hellinger Distance are in a sense related to the *amount of overlap* between
-probability
-distributions.
+Both JS Distance and Hellinger Distance are in a sense related to the *amount of overlap* between probability distributions.
 This means that in cases where the *amount of overlap* stays the same but drift increases, neither the JS
-distance nor
-the Hellinger distance will detect the change. Such cases are very
-rare in practice, but they can occur - for example when two distributions are disjoint to begin with and then move
-further away
-from one another.
+distance nor the Hellinger distance will detect the change. Such cases are very
+rare in practice, but they can occur.
 An example of this is shown below:
 
 .. image:: ../_static/univariate-comparison/fool_js_ks_hellinger.svg
@@ -188,7 +183,7 @@ distance, JS distance, Hellinger distance, and the JS statistic when the referen
 
 Since Wasserstein distance is sensitive to extreme values, the variance of the measure is high and increases together
 with the scale parameter.
-JS distance, the JS statistic, and the Hellinger distance are much more stable.
+JS distance, the KS statistic, and the Hellinger distance are much more stable.
 
 
 Experiment 3
