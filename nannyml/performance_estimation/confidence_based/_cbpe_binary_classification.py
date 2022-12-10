@@ -30,6 +30,7 @@ class _BinaryClassificationCBPE(CBPE):
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
         calibration: Optional[str] = None,
+        calibration_bin_count: Optional[Union[int, str]] = None,
         calibrator: Optional[Calibrator] = None,
     ):
         """Creates a new CBPE performance estimator."""
@@ -45,6 +46,7 @@ class _BinaryClassificationCBPE(CBPE):
             chunk_period=chunk_period,
             chunker=chunker,
             calibration=calibration,
+            calibration_bin_count=calibration_bin_count,
             calibrator=calibrator,
         )
 
@@ -81,6 +83,7 @@ class _BinaryClassificationCBPE(CBPE):
             y_true=aligned_reference_data[self.y_true],
             y_pred_proba=aligned_reference_data[self.y_pred_proba],
             calibrator=self.calibrator,
+            bin_count=self.calibration_bin_count,
         )
 
         if self.needs_calibration:

@@ -5,7 +5,7 @@
 
 """Calibrating model scores into probabilities."""
 import abc
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -149,59 +149,54 @@ class NoopCalibrator(Calibrator):
         return np.asarray(y_pred_proba)
 
 
-def _get_bin_index_edges(vector_length: int, bin_count: int) -> List[Tuple[int, int]]:
-    """Generates edges of bins for specified vector length and number of bins required.
+def _get_bin_edges(vector: np.ndarray, bin_count: Union[int, str]) -> np.ndarray:
+    """Generates edges of bins for specified vector and number of bins required.
 
     Parameters
     ----------
-    vector_length : int
-        The length of the vector that will be binned using bins.
-    bin_count : int
-        Number of bins and bin edges that will be generated.
+    vector : np.ndarray
+        The vector that will be binned using bins.
+    bin_count : Union[int, str]
+        If int, number of bins that will be generated.
+        If str, it should be one of the methods to calculate the optimal bin width available in numpy.histogram:
+        ``['auto', 'fd', 'doane', 'scott', 'stone', 'rice', 'sturges', 'sqrt']``
 
     Returns
     -------
-    bin_index_edges : list of tuples with bin edges (indexes)
+    bin_edges : list of bin edges
         See the example below for best intuition.
 
     Examples
     --------
     >>> get_bin_edge_indexes(20, 4)
-    [(0, 5), (5, 10), (10, 15), (15, 20)]
+    [0, 4.75, 9.5, 14.25, 19.00000001]
 
     """
-    if vector_length <= 2 * bin_count:
-        bin_count = vector_length // 2
-        if bin_count < 2:  # pragma: no branch
-            raise InvalidArgumentsException(
-                "cannot split into minimum of 2 bins. Current sample size "
-                f"is {vector_length}, please increase sample size. "
-            )
+    if isinstance(bin_count, int) and (bin_count <= 0):
+        raise InvalidArgumentsException("`bin_count` must be positive, when an integer")
 
-    bin_width = vector_length // bin_count
-    bin_edges = np.asarray(range(0, vector_length + 1, bin_width))
-    bin_edges[-1] = vector_length
-    bin_index_left = bin_edges[:-1]
-    bin_index_right = bin_edges[1:]
-    bin_index_edges = [(x, y) for x, y in zip(bin_index_left, bin_index_right)]
-    return bin_index_edges
+    bin_edges = np.histogram_bin_edges(vector, bin_count)
+    # Add an epsilon to the last bin edge to make the final bin right-edge inclusive
+    bin_edges[-1] += 1e-8
+
+    if (len(bin_edges) == 2) or (len(np.unique(np.digitize(vector, bin_edges, 'right'))) < 2):  # pragma: no branch
+        raise InvalidArgumentsException(
+            "cannot split into minimum of 2 bins. Current number of bins "
+            f"is {len(bin_edges)}, please increase number of bins or sample size. "
+        )
+
+    return bin_edges
 
 
-def _calculate_expected_calibration_error(
-    y_true: np.ndarray, y_pred_proba: np.ndarray, bin_index_edges: List[Tuple[int, int]]
-) -> Any:
+def _calculate_expected_calibration_error(y_true: np.ndarray, y_pred_proba: np.ndarray, bin_edges: List[float]) -> Any:
     terms = []
 
     y_pred_proba, y_true = np.asarray(y_pred_proba), np.asarray(y_true)
+    bins_proba = np.digitize(y_pred_proba, bin_edges, 'right')
 
-    # sort both y_pred_proba and y_true, just to make sure
-    sort_index = y_pred_proba.argsort()
-    y_pred_proba = y_pred_proba[sort_index]
-    y_true = y_true[sort_index]
-
-    for left_edge, right_edge in bin_index_edges:
-        bin_proba = y_pred_proba[left_edge:right_edge]
-        bin_true = y_true[left_edge:right_edge]
+    for bin in np.unique(bins_proba):
+        bin_proba = y_pred_proba[np.where(bins_proba == bin)]
+        bin_true = y_true[np.where(bins_proba == bin)]
         mean_bin_proba = np.mean(bin_proba)
         mean_bin_true = np.mean(bin_true)
         weight = len(bin_proba) / len(y_pred_proba)
@@ -212,7 +207,11 @@ def _calculate_expected_calibration_error(
 
 
 def needs_calibration(
-    y_true: np.ndarray, y_pred_proba: np.ndarray, calibrator: Calibrator, bin_count: int = 10, split_count: int = 10
+    y_true: np.ndarray,
+    y_pred_proba: np.ndarray,
+    calibrator: Calibrator,
+    bin_count: Union[int, str] = 10,
+    split_count: int = 10,
 ) -> bool:
     """Returns whether a series of prediction scores benefits from additional calibration or not.
 
@@ -230,8 +229,10 @@ def needs_calibration(
         Series with reference binary targets - ``0`` or ``1``. Shape ``(n,)``.
     y_pred_proba : np.array
         Series or DataFrame of continuous reference scores/probabilities. Has to be the same shape as ``y_true``.
-    bin_count : int
-        Desired amount of bins to calculate ECE on.
+    bin_count : Union[int, str]
+        If int, desired amount of bins to calculate ECE on.
+        If str, it should be one of the methods to calculate the optimal bin width available in numpy.histogram:
+        ``['auto', 'fd', 'doane', 'scott', 'stone', 'rice', 'sturges', 'sqrt']``
     split_count : int
         Desired number of splits to make, i.e. number of times to evaluate calibration.
 
@@ -300,12 +301,10 @@ def needs_calibration(
     vec_y_pred_proba_test = np.concatenate(list_y_pred_proba_test)
     vec_calibrated_y_pred_proba_test = np.concatenate(list_calibrated_y_pred_proba_test)
 
-    bin_index_edges = _get_bin_index_edges(len(vec_y_pred_proba_test), bin_count)
-    ece_before_calibration = _calculate_expected_calibration_error(
-        vec_y_true_test, vec_y_pred_proba_test, bin_index_edges
-    )
+    bin_edges = _get_bin_edges(vec_y_pred_proba_test, bin_count)
+    ece_before_calibration = _calculate_expected_calibration_error(vec_y_true_test, vec_y_pred_proba_test, bin_edges)
     ece_after_calibration = _calculate_expected_calibration_error(
-        vec_y_true_test, vec_calibrated_y_pred_proba_test, bin_index_edges
+        vec_y_true_test, vec_calibrated_y_pred_proba_test, bin_edges
     )
 
     return ece_before_calibration > ece_after_calibration

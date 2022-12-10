@@ -33,6 +33,7 @@ class _MulticlassClassificationCBPE(CBPE):
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
         calibration: Optional[str] = None,
+        calibration_bin_count: Optional[Union[int, str]] = None,
         calibrator: Optional[Calibrator] = None,
     ):
         """Creates a new CBPE performance estimator."""
@@ -48,6 +49,7 @@ class _MulticlassClassificationCBPE(CBPE):
             chunk_period=chunk_period,
             chunker=chunker,
             calibration=calibration,
+            calibration_bin_count=calibration_bin_count,
             calibrator=calibrator,
         )
 
@@ -80,7 +82,9 @@ class _MulticlassClassificationCBPE(CBPE):
         for metric in self.metrics:
             metric.fit(reference_data)
 
-        self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator)
+        self._calibrators = _fit_calibrators(
+            reference_data, self.y_true, self.y_pred_proba, self.calibrator, self.calibration_bin_count
+        )
 
         self.result = self._estimate(reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
@@ -177,13 +181,17 @@ def _get_class_splits(
 
 
 def _fit_calibrators(
-    reference_data: pd.DataFrame, y_true_col: str, y_pred_proba_col: Dict[str, str], calibrator: Calibrator
+    reference_data: pd.DataFrame,
+    y_true_col: str,
+    y_pred_proba_col: Dict[str, str],
+    calibrator: Calibrator,
+    calibration_bin_count: Union[int, str],
 ) -> Dict[str, Calibrator]:
     fitted_calibrators = {}
     noop_calibrator = NoopCalibrator()
 
     for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true_col, y_pred_proba_col):
-        if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
+        if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator, calibration_bin_count):
             calibrator = noop_calibrator
 
         calibrator.fit(y_pred_proba, y_true)

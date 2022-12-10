@@ -51,6 +51,7 @@ class CBPE(AbstractEstimator):
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
         calibration: Optional[str] = None,
+        calibration_bin_count: Optional[Union[int, str]] = None,
         calibrator: Optional[Calibrator] = None,
     ):
         """Initializes a new CBPE performance estimator.
@@ -84,6 +85,10 @@ class CBPE(AbstractEstimator):
         calibration: str, default='isotonic'
             Determines which calibration will be applied to the model predictions. Defaults to ``isotonic``, currently
             the only supported value.
+        calibration_bin_count: Union[str, int], default=None
+            If specified and int, desired amount of bins to compute the Expected Calibration Error.
+            If str, it should be one of the methods to calculate the optimal bin width
+            available in numpy.histogram: ['auto', 'fd', 'doane', 'scott', 'stone', 'rice', 'sturges', 'sqrt']
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
@@ -150,6 +155,10 @@ class CBPE(AbstractEstimator):
         self._confidence_deviations: Dict[str, float] = {}
         self._alert_thresholds: Dict[str, Tuple[float, float]] = {}
         self.needs_calibration: bool = False
+
+        if calibration_bin_count is None:
+            calibration_bin_count = 10
+        self.calibration_bin_count = calibration_bin_count
 
         if calibrator is None:
             calibrator = CalibratorFactory.create(calibration)
