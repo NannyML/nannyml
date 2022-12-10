@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import copy
+from collections import namedtuple
 from typing import List, Optional
 
 import pandas as pd
@@ -15,6 +16,8 @@ from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.metrics import plot_metric
 from nannyml.usage_logging import UsageEvent, log_usage
+
+Metric = namedtuple("Metric", "display_name column_name")
 
 
 class Result(AbstractCalculatorResult):
@@ -34,11 +37,11 @@ class Result(AbstractCalculatorResult):
         self.categorical_column_names = categorical_column_names
         self.continuous_column_names = continuous_column_names
         self.timestamp_column_name = timestamp_column_name
-        self.metrics = ['reconstruction_error']
+        self.metrics = [Metric('Reconstruction error', 'reconstruction_error')]
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
-            metrics = self.metrics
+            metrics = [metric.column_name for metric in self.metrics]
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
 

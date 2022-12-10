@@ -20,13 +20,27 @@ from nannyml.exceptions import InvalidArgumentsException
 class Result(Protocol):
     """The data that was calculated or estimated."""
 
-    data: pd.DataFrame
+    chunk_keys: pd.Series
+    chunk_periods: pd.Series
+    chunk_indices: pd.Series
+    chunk_start_dates: pd.Series
+    chunk_end_dates: pd.Series
 
-    def filter(self, period: Optional[str] = None, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def filter(
+        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+    ) -> Result:
         """"""
 
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
         """"""
+
+
+class Metric(Protocol):
+    """Represents any kind of metric (or method) that can be calculated or estimated."""
+
+    display_name: str
+
+    column_name: str
 
 
 class Calculator(Protocol):

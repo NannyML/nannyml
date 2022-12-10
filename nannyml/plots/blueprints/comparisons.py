@@ -2,12 +2,12 @@
 #
 #  License: Apache Software License 2.0
 import math
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from nannyml._typing import Result
+from nannyml._typing import Metric, Result
 from nannyml.base import AbstractCalculatorResult, AbstractEstimatorResult
 from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
 from nannyml.exceptions import InvalidArgumentsException
@@ -92,13 +92,14 @@ def plot_compare_performance_to_drift(
 def plot_2d_compare_step_to_step(
     result_1: Result,
     result_2: Result,
-    title: str,
-    items: List[Tuple[Any, Any]],
+    items: List[Tuple[Metric, Metric]],
+    plot_title: str,
     x_axis_time_title: str = 'Time',
     x_axis_chunk_title: str = 'Chunk',
     y_axis_title: str = 'Comparison',
+    subplot_titles: Optional[List[str]] = None,
     number_of_columns: Optional[int] = None,
-    subplot_title_format='{metric_1} vs. {metric_2}',
+    hover: Optional[Hover] = None,
 ) -> Figure:
     if len(items) == 0:
         raise InvalidArgumentsException("tried plotting comparisons but received zero plotting items.")
@@ -133,7 +134,7 @@ def plot_2d_compare_step_to_step(
         else x_axis_chunk_title
     )
     figure = Figure(
-        title,
+        plot_title,
         x_axis_title,
         y_axis_title,
         legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
@@ -141,14 +142,13 @@ def plot_2d_compare_step_to_step(
     )
 
     subplot_specs = [[{"secondary_y": True} for _ in range(number_of_columns)] for _ in range(number_of_rows)]
+    if subplot_titles is None:
+        subplot_titles = [f'{metric_1.display_name} vs. {metric_2.display_name}' for metric_1, metric_2 in items]
     figure.set_subplots(
         rows=number_of_rows,
         cols=number_of_columns,
         specs=subplot_specs,
-        subplot_titles=[
-            subplot_title_format.format(metric_1=metric_1.display_name, metric_2=metric_2)
-            for metric_1, metric_2 in items
-        ],
+        subplot_titles=subplot_titles,
     )
     figure.update_xaxes(
         title=x_axis_title,
@@ -174,20 +174,20 @@ def plot_2d_compare_step_to_step(
 
     # endregion
 
-    suffixes = [str(i + 1) for i in range(2 * len(items))]
-
     for idx, (metric_1, metric_2) in enumerate(items):
         reference_metric_1 = reference_result_1[(metric_1.column_name, 'value')]
-        reference_metric_2 = reference_result_2[(metric_2, 'value')]
+        reference_metric_2 = reference_result_2[(metric_2.column_name, 'value')]
         analysis_metric_1 = analysis_result_1[(metric_1.column_name, 'value')]
-        analysis_metric_2 = analysis_result_2[(metric_2, 'value')]
+        analysis_metric_2 = analysis_result_2[(metric_2.column_name, 'value')]
         analysis_metric_1_alerts = analysis_result_1[(metric_1.column_name, 'alert')]
-        analysis_metric_2_alerts = analysis_result_2[(metric_2, 'alert')]
+        analysis_metric_2_alerts = analysis_result_2[(metric_2.column_name, 'alert')]
+
+        x_axis, y_axis, y_axis_2 = _get_subplot_axes_names(idx, y_axis_per_subplot=2)
 
         figure = _plot_compare_step_to_step(
             figure=figure,
             metric_1_display_name=metric_1.display_name,
-            metric_2_display_name=metric_2,
+            metric_2_display_name=metric_2.display_name,
             analysis_metric_1=analysis_metric_1,
             analysis_metric_2=analysis_metric_2,
             reference_chunk_keys=reference_chunk_keys,
@@ -204,13 +204,17 @@ def plot_2d_compare_step_to_step(
             analysis_chunk_end_dates=analysis_chunk_end_dates,
             analysis_metric_1_alerts=analysis_metric_1_alerts,
             analysis_metric_2_alerts=analysis_metric_2_alerts,
-            hover=None,
-            xaxis=f'x{suffixes[idx]}',
-            yaxis=f'y{suffixes[2 * idx]}',
-            yaxis2=f'y{suffixes[2 * idx + 1]}',
+            hover=hover,
+            xaxis=x_axis,
+            yaxis=y_axis,
+            yaxis2=y_axis_2,
         )
 
     return figure
+
+
+def _get_subplot_axes_names(index: int, y_axis_per_subplot: int = 2) -> Tuple:
+    return tuple([f'x{index + 1}'] + [f'y{2 * index + 1 + a}' for a in range(y_axis_per_subplot)])
 
 
 def _plot_compare_step_to_step(
@@ -233,7 +237,6 @@ def _plot_compare_step_to_step(
     analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_metric_1_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_metric_2_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    subplot_title_format='{metric_1} vs. {metric_2}',
     hover: Optional[Hover] = None,
     xaxis: Optional[str] = 'x',
     yaxis: Optional[str] = 'y',

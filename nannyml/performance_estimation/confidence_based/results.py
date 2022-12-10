@@ -12,11 +12,12 @@ from plotly import graph_objects as go
 from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractEstimatorResult
 from nannyml.chunk import Chunker
-from nannyml.drift.multivariate.data_reconstruction import Result as MultivariateResult
+from nannyml.drift.multivariate.data_reconstruction import Result as MultivariateDriftResult
+from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.plots import Figure
-from nannyml.plots.blueprints.comparisons import plot_compare_performance_to_drift
+from nannyml.plots.blueprints.comparisons import plot_2d_compare_step_to_step
 from nannyml.plots.blueprints.metrics import plot_metric_list
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -114,28 +115,42 @@ class Result(AbstractEstimatorResult):
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
-    def compare(self, result: Union[MultivariateResult]):
-        if isinstance(result, MultivariateResult):
-            return ResultMultivariateComparison(performance_result=self, multivariate_result=result)
+    def compare(self, result: Union[MultivariateDriftResult, UnivariateDriftResult]):
+        if isinstance(result, MultivariateDriftResult):
+            return ResultMultivariateComparison(performance_result=self, multivariate_drift_result=result)
+        elif isinstance(result, UnivariateDriftResult):
+            return ResultUnivariateComparison(performance_result=self, univariate_drift_result=result)
 
 
 class ResultMultivariateComparison:
-    def __init__(self, performance_result: Result, multivariate_result: MultivariateResult):
+    def __init__(self, performance_result: Result, multivariate_drift_result: MultivariateDriftResult):
         self.performance_result = performance_result
-        self.multivariate_result = multivariate_result
-        if len(self.performance_result.metrics) != 1:
-            raise InvalidArgumentsException(
-                f"performance result contains {len(performance_result.metrics)} metrics. "
-                "Please use the 'filter' method to keep just one."
-            )
-        self.performance_metric = self.performance_result.metrics[0]
+        self.multivariate_drift_result = multivariate_drift_result
 
     def plot(self) -> Figure:
-        return plot_compare_performance_to_drift(
-            performance_result=self.performance_result,
-            drift_result=self.multivariate_result,
-            performance_metric_display_name=self.performance_metric.display_name,
-            performance_metric_column_name=self.performance_metric.column_name,
-            drift_metric_display_name='Reconstruction error',
-            drift_metric_column_name='reconstruction_error',
+        items = [
+            (performance_metric, drift_metric)
+            for performance_metric in self.performance_result.metrics
+            for drift_metric in self.multivariate_drift_result.metrics
+        ]
+        return plot_2d_compare_step_to_step(
+            result_1=self.performance_result,
+            result_2=self.multivariate_drift_result,
+            plot_title='Estimated performance vs. multivariate drift',
+            items=items,
+        )
+
+
+class ResultUnivariateComparison:
+    def __init__(self, performance_result: Result, univariate_drift_result: UnivariateDriftResult):
+        self.performance_result = performance_result
+        self.univariate_drift_result = univariate_drift_result
+
+    def plot(self) -> Figure:
+        items = [(performance_metric,) for performance_metric in self.performance_result.metrics]
+        return plot_2d_compare_step_to_step(
+            result_1=self.performance_result,
+            result_2=self.univariate_drift_result,
+            items=items,
+            plot_title='Estimated performance vs. univariate drift',
         )
