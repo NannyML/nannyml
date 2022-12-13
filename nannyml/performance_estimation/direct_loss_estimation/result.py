@@ -4,15 +4,16 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 from plotly.graph_objects import Figure
 
-from nannyml import Chunker
-from nannyml.base import AbstractEstimatorResult
+from nannyml._typing import Result as ResultType
+from nannyml.base import Abstract1DResult
+from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric
 from nannyml.plots.blueprints.metrics import plot_metric_list
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(AbstractEstimatorResult):
+class Result(Abstract1DResult):
     def __init__(
         self,
         results_data: pd.DataFrame,
@@ -40,7 +41,11 @@ class Result(AbstractEstimatorResult):
         self.hyperparameter_tuning_config = (hyperparameter_tuning_config,)
         self.hyperparameters = hyperparameters
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    @property
+    def values(self) -> List[pd.Series]:
+        return [self.data[metric.column_name] for metric in self.metrics]
+
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 

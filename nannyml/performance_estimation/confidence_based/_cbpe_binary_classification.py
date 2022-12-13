@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 from nannyml._typing import ModelOutputsType, ProblemType
+from nannyml._typing import Result as ResultType
 from nannyml.base import _list_missing
 from nannyml.calibration import Calibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
@@ -58,7 +59,7 @@ class _BinaryClassificationCBPE(CBPE):
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
 
-        self.result: Optional[Result] = None
+        self.result: Optional[ResultType] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         """Fits the drift calculator using a set of reference data."""
@@ -90,11 +91,11 @@ class _BinaryClassificationCBPE(CBPE):
             )
 
         self.result = self._estimate(reference_data)
-        self.result.data[('chunk', 'period')] = 'reference'
+        self.result.to_df()[('chunk', 'period')] = 'reference'
 
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> ResultType:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')

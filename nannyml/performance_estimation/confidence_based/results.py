@@ -10,7 +10,8 @@ import pandas as pd
 from plotly import graph_objects as go
 
 from nannyml._typing import ModelOutputsType, ProblemType
-from nannyml.base import AbstractEstimatorResult
+from nannyml._typing import Result as ResultType
+from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction import Result as MultivariateDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
@@ -24,7 +25,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
 
-class Result(AbstractEstimatorResult):
+class Result(Abstract1DResult):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
     def __init__(
@@ -48,7 +49,7 @@ class Result(AbstractEstimatorResult):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
@@ -62,6 +63,10 @@ class Result(AbstractEstimatorResult):
         res.metrics = [m for m in self.metrics if m.column_name in metrics]
 
         return res
+
+    @property
+    def values(self) -> List[pd.Series]:
+        return [self.data[metric.column_name] for metric in self.metrics]
 
     @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])
     def plot(

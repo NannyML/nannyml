@@ -11,7 +11,8 @@ from typing import List, Optional
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.base import AbstractCalculatorResult
+from nannyml._typing import Result as ResultType
+from nannyml.base import Abstract2DResult
 from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
@@ -21,7 +22,7 @@ from nannyml.plots.components import Hover
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(AbstractCalculatorResult):
+class Result(Abstract2DResult):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(
@@ -53,7 +54,7 @@ class Result(AbstractCalculatorResult):
         self.analysis_data = analysis_data
         self.reference_data = reference_data
 
-    def _filter(self, period: str, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
         if 'column_names' in kwargs:
             column_names = kwargs['column_names']
         else:

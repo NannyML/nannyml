@@ -8,7 +8,9 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import label_binarize
 
-from nannyml._typing import ModelOutputsType, ProblemType, model_output_column_names
+from nannyml._typing import ModelOutputsType, ProblemType
+from nannyml._typing import Result as ResultType
+from nannyml._typing import model_output_column_names
 from nannyml.base import _list_missing
 from nannyml.calibration import Calibrator, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
@@ -63,7 +65,7 @@ class _MulticlassClassificationCBPE(CBPE):
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
 
-        self.result: Optional[Result] = None
+        self.result: Optional[ResultType] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         if reference_data.empty:
@@ -86,7 +88,7 @@ class _MulticlassClassificationCBPE(CBPE):
         self.result.data[('chunk', 'period')] = 'reference'
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> ResultType:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 

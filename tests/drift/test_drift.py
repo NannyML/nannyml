@@ -10,7 +10,8 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml.base import AbstractCalculator, AbstractCalculatorResult
+from nannyml._typing import Result
+from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
@@ -114,15 +115,19 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     return data
 
 
-class SimpleDriftResult(AbstractCalculatorResult):
+class SimpleDriftResult(Abstract1DResult):
     """Dummy DriftResult implementation."""
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Fake plot."""
         return plotly.graph_objects.Figure()
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return self
+
+    @property
+    def values(self) -> List[pd.Series]:
+        return []
 
 
 class SimpleDriftCalculator(AbstractCalculator):
@@ -131,7 +136,7 @@ class SimpleDriftCalculator(AbstractCalculator):
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):  # noqa: D102
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> SimpleDriftResult:  # noqa: D102
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:  # noqa: D102
         return SimpleDriftResult(results_data=data, calculator=self)
 
 

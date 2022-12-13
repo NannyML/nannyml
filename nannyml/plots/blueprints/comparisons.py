@@ -7,8 +7,8 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from nannyml._typing import Metric, Result
-from nannyml.base import AbstractCalculatorResult, AbstractEstimatorResult
+from nannyml._typing import Result
+from nannyml.base import AbstractEstimatorResult, AbstractResult
 from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import Colors
@@ -17,7 +17,7 @@ from nannyml.plots.util import ensure_numpy, is_time_based_x_axis
 
 
 def plot_compare_performance_to_drift(
-    performance_result: Union[AbstractCalculatorResult, AbstractEstimatorResult],
+    performance_result: Union[AbstractResult, AbstractEstimatorResult],
     drift_result: Union[DataReconstructionDriftResult],
     performance_metric_display_name: str,
     drift_metric_display_name: str,
@@ -92,7 +92,8 @@ def plot_compare_performance_to_drift(
 def plot_2d_compare_step_to_step(
     result_1: Result,
     result_2: Result,
-    items: List[Tuple[Metric, Metric]],
+    items: List,
+    # items: List[Tuple[Metric, Metric]],
     plot_title: str,
     x_axis_time_title: str = 'Time',
     x_axis_chunk_title: str = 'Chunk',

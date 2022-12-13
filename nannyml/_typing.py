@@ -15,16 +15,37 @@ else:
 import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.plots import Figure
 
 
 class Result(Protocol):
     """The data that was calculated or estimated."""
 
-    chunk_keys: pd.Series
-    chunk_periods: pd.Series
-    chunk_indices: pd.Series
-    chunk_start_dates: pd.Series
-    chunk_end_dates: pd.Series
+    data: pd.DataFrame
+
+    @property
+    def empty(self) -> bool:
+        ...
+
+    @property
+    def chunk_keys(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_start_dates(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_end_dates(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_indices(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_periods(self) -> pd.Series:
+        ...
 
     def filter(
         self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
@@ -34,29 +55,31 @@ class Result(Protocol):
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
         """"""
 
+    def plot(self, *args, **kwargs) -> Figure:
+        ...
+
 
 class Metric(Protocol):
     """Represents any kind of metric (or method) that can be calculated or estimated."""
 
     display_name: str
-
     column_name: str
 
 
 class Calculator(Protocol):
     """Calculator base class."""
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
         """Fits the calculator on reference data."""
 
-    def calculate(self, data: pd.DataFrame, *args, **kwargs):
+    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Perform a calculation based on analysis data."""
 
 
 class Estimator(Protocol):
     """Estimator base class."""
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
         """Fits the estimator on reference data."""
 
     def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:

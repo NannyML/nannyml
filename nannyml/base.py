@@ -7,12 +7,13 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
+from nannyml._typing import Calculator, Estimator, Result
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
@@ -23,7 +24,7 @@ from nannyml.exceptions import (
 )
 
 
-class AbstractCalculatorResult(ABC):
+class AbstractResult(ABC):
     """Contains the results of a calculation and provides plotting functionality.
 
     The result of the :meth:`~nannyml.base.AbstractCalculator.calculate` method of a
@@ -50,6 +51,10 @@ class AbstractCalculatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    @property
+    def empty(self) -> bool:
+        return self.data is None or self.data.empty
+
     # TODO: define more specific interface (add common arguments)
     def __len__(self):  # noqa: D105
         return len(self.data)
@@ -60,7 +65,7 @@ class AbstractCalculatorResult(ABC):
         raise NotImplementedError
 
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
-        """Export results do pandas dataframe."""
+        """Export results to pandas dataframe."""
         if multilevel:
             return self.data
         else:
@@ -74,7 +79,7 @@ class AbstractCalculatorResult(ABC):
 
     def filter(
         self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> AbstractCalculatorResult:
+    ) -> Result:
         """Returns filtered result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
             raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
@@ -86,8 +91,57 @@ class AbstractCalculatorResult(ABC):
             raise CalculatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         raise NotImplementedError
+
+
+class Abstract1DResult(AbstractResult, ABC):
+    @property
+    def chunk_keys(self) -> pd.Series:
+        return self.data[('chunk', 'key')]
+
+    @property
+    def chunk_start_dates(self) -> pd.Series:
+        return self.data[('chunk', 'start_date')]
+
+    @property
+    def chunk_end_dates(self) -> pd.Series:
+        return self.data[('chunk', 'end_date')]
+
+    @property
+    def chunk_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk_index')]
+
+    @property
+    def chunk_periods(self) -> pd.Series:
+        return self.data[('chunk', 'period')]
+
+    @property
+    @abstractmethod
+    def values(self) -> List[pd.Series]:
+        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the 'values' method")
+
+
+class Abstract2DResult(AbstractResult, ABC):
+    @property
+    def chunk_keys(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'key')]
+
+    @property
+    def chunk_start_dates(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'start_date')]
+
+    @property
+    def chunk_end_dates(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'end_date')]
+
+    @property
+    def chunk_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'chunk_index')]
+
+    @property
+    def chunk_periods(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'period')]
 
 
 class AbstractCalculator(ABC):
@@ -125,13 +179,13 @@ class AbstractCalculator(ABC):
 
         self.timestamp_column_name = timestamp_column_name
 
-        self.result: Optional[AbstractCalculatorResult] = None
+        self.result: Optional[Result] = None
 
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractCalculator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
         """Trains the calculator using reference data."""
         try:
             self._logger.debug(f"fitting {str(self)}")
@@ -143,7 +197,7 @@ class AbstractCalculator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Performs a calculation on the provided data."""
         try:
             self._logger.debug(f"calculating {str(self)}")
@@ -157,11 +211,11 @@ class AbstractCalculator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractCalculator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
@@ -191,6 +245,10 @@ class AbstractEstimatorResult(ABC):
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
+
+    @property
+    def empty(self) -> bool:
+        return self.data is None or self.data.empty
 
     def to_df(self, multilevel: bool = True):
         """Export results do pandas dataframe."""
@@ -261,7 +319,7 @@ class AbstractEstimator(ABC):
         )
         self.timestamp_column_name = timestamp_column_name
 
-        self.result: Optional[AbstractEstimatorResult] = None
+        self.result: Optional[Result] = None
 
     @property
     def _logger(self) -> logging.Logger:
@@ -270,7 +328,7 @@ class AbstractEstimator(ABC):
     def __str__(self):  # noqa: D105
         return self.__class__.__name__
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
         """Trains the calculator using reference data."""
         try:
             self._logger.info(f"fitting {str(self)}")
@@ -283,7 +341,7 @@ class AbstractEstimator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Performs a calculation on the provided data."""
         try:
             self._logger.info(f"estimating {str(self)}")
@@ -297,11 +355,11 @@ class AbstractEstimator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 

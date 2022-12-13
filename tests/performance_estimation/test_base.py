@@ -9,7 +9,8 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import pytest
 
-from nannyml.base import AbstractEstimator, AbstractEstimatorResult
+from nannyml._typing import Result
+from nannyml.base import Abstract1DResult, AbstractEstimator
 from nannyml.chunk import CountBasedChunker  # , _minimum_chunk_size
 from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.datasets import load_synthetic_binary_classification_dataset
@@ -27,19 +28,19 @@ def simple_estimator() -> AbstractEstimator:  # noqa: D103
     return SimpleEstimator(chunk_size=5000)
 
 
-class SimpleEstimatorResult(AbstractEstimatorResult):
+class SimpleEstimatorResult(Abstract1DResult):
     def __init__(self, results_data, calculator):
         super().__init__(results_data)
         self.calculator = calculator
 
     @property
-    def estimator_name(self) -> str:
-        return 'simple_estimator'
+    def values(self) -> List[pd.Series]:
+        return []
 
     def plot(self):
         pass
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return SimpleEstimatorResult(self.data, self.calculator)
 
 
@@ -47,7 +48,7 @@ class SimpleEstimator(AbstractEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):  # noqa: D102
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> SimpleEstimatorResult:  # noqa: D102
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:  # noqa: D102
         chunks = self.chunker.split(data)
         return SimpleEstimatorResult(
             results_data=pd.DataFrame(columns=data.columns).assign(key=[chunk.key for chunk in chunks]),

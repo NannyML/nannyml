@@ -12,14 +12,15 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml._typing import ProblemType
-from nannyml.base import AbstractCalculatorResult
+from nannyml._typing import Result as ResultType
+from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
 from nannyml.plots.blueprints.metrics import plot_metric_list
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(AbstractCalculatorResult):
+class Result(Abstract1DResult):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     def __init__(
@@ -48,7 +49,7 @@ class Result(AbstractCalculatorResult):
         self.reference_data = reference_data
         self.analysis_data = analysis_data
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
@@ -64,6 +65,10 @@ class Result(AbstractCalculatorResult):
         res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
 
         return res
+
+    @property
+    def values(self) -> List[pd.Series]:
+        return [self.data[metric.column_name] for metric in self.metrics]
 
     @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(
