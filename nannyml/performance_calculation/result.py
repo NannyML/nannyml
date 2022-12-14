@@ -68,7 +68,7 @@ class Result(Abstract1DResult):
 
     @property
     def values(self) -> List[pd.Series]:
-        return [self.data[metric.column_name] for metric in self.metrics]
+        return [self.data[(metric.column_name, 'value')] for metric in self.metrics]
 
     @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(

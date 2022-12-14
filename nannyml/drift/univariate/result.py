@@ -84,6 +84,20 @@ class Result(Abstract2DResult):
         result.methods = result.categorical_methods + result.continuous_methods
         return result
 
+    @property
+    def values(self) -> List[pd.Series]:
+        continuous_values = [
+            self.data[(column, method.column_name, 'value')]
+            for column in sorted(self.continuous_column_names)
+            for method in sorted(self.continuous_methods, key=lambda m: m.column_name)
+        ]
+        categorical_values = [
+            self.data[(column, method.column_name, 'value')]
+            for column in sorted(self.categorical_column_names)
+            for method in sorted(self.categorical_methods, key=lambda m: m.column_name)
+        ]
+        return continuous_values + categorical_values
+
     @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(  # type: ignore
         self,

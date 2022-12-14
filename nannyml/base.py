@@ -143,6 +143,11 @@ class Abstract2DResult(AbstractResult, ABC):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'period')]
 
+    @property
+    @abstractmethod
+    def values(self) -> List[pd.Series]:
+        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the 'values' method")
+
 
 class AbstractCalculator(ABC):
     """Base class for drift calculation."""

@@ -47,6 +47,10 @@ class Result(Protocol):
     def chunk_periods(self) -> pd.Series:
         ...
 
+    @property
+    def values(self) -> List[pd.Series]:
+        ...
+
     def filter(
         self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> Result:

@@ -110,22 +110,22 @@ def plot_2d_compare_step_to_step(
         number_of_columns = min(number_of_plots, 1)
     number_of_rows = math.ceil(number_of_plots / number_of_columns)
 
-    reference_result_1: pd.DataFrame = result_1.filter(period='reference').to_df()
-    analysis_result_1: pd.DataFrame = result_1.filter(period='analysis').to_df()
-    reference_result_2: pd.DataFrame = result_2.filter(period='reference').to_df()
-    analysis_result_2: pd.DataFrame = result_2.filter(period='analysis').to_df()
+    reference_result_1: Result = result_1.filter(period='reference')
+    analysis_result_1: Result = result_1.filter(period='analysis')
+    reference_result_2: Result = result_2.filter(period='reference')
+    analysis_result_2: Result = result_2.filter(period='analysis')
 
-    reference_chunk_indices = reference_result_1[('chunk', 'chunk_index')]
-    reference_chunk_start_dates = reference_result_1[('chunk', 'start_date')]
-    reference_chunk_end_dates = reference_result_1[('chunk', 'end_date')]
-    reference_chunk_periods = reference_result_1[('chunk', 'period')]
-    reference_chunk_keys = reference_result_1[('chunk', 'key')]
+    reference_chunk_indices = reference_result_1.chunk_indices
+    reference_chunk_start_dates = reference_result_1.chunk_start_dates
+    reference_chunk_end_dates = reference_result_1.chunk_end_dates
+    reference_chunk_periods = reference_result_1.chunk_periods
+    reference_chunk_keys = reference_result_1.chunk_keys
 
-    analysis_chunk_indices = analysis_result_1[('chunk', 'chunk_index')]
-    analysis_chunk_start_dates = analysis_result_1[('chunk', 'start_date')]
-    analysis_chunk_end_dates = analysis_result_1[('chunk', 'end_date')]
-    analysis_chunk_periods = analysis_result_1[('chunk', 'period')]
-    analysis_chunk_keys = analysis_result_1[('chunk', 'key')]
+    analysis_chunk_indices = analysis_result_1.chunk_indices
+    analysis_chunk_start_dates = analysis_result_1.chunk_start_dates
+    analysis_chunk_end_dates = analysis_result_1.chunk_end_dates
+    analysis_chunk_periods = analysis_result_1.chunk_periods
+    analysis_chunk_keys = analysis_result_1.chunk_keys
 
     # region setup axes
 
@@ -176,12 +176,12 @@ def plot_2d_compare_step_to_step(
     # endregion
 
     for idx, (metric_1, metric_2) in enumerate(items):
-        reference_metric_1 = reference_result_1[(metric_1.column_name, 'value')]
-        reference_metric_2 = reference_result_2[(metric_2.column_name, 'value')]
-        analysis_metric_1 = analysis_result_1[(metric_1.column_name, 'value')]
-        analysis_metric_2 = analysis_result_2[(metric_2.column_name, 'value')]
-        analysis_metric_1_alerts = analysis_result_1[(metric_1.column_name, 'alert')]
-        analysis_metric_2_alerts = analysis_result_2[(metric_2.column_name, 'alert')]
+        reference_metric_1 = reference_result_1.to_df()[(metric_1.column_name, 'value')]
+        reference_metric_2 = reference_result_2.to_df()[(metric_2.column_name, 'value')]
+        analysis_metric_1 = analysis_result_1.to_df()[(metric_1.column_name, 'value')]
+        analysis_metric_2 = analysis_result_2.to_df()[(metric_2.column_name, 'value')]
+        analysis_metric_1_alerts = analysis_result_1.to_df()[(metric_1.column_name, 'alert')]
+        analysis_metric_2_alerts = analysis_result_2.to_df()[(metric_2.column_name, 'alert')]
 
         x_axis, y_axis, y_axis_2 = _get_subplot_axes_names(idx, y_axis_per_subplot=2)
 
