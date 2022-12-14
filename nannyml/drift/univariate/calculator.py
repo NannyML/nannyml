@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from pandas import MultiIndex
@@ -24,10 +24,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        column_names: List[str],
+        column_names: Union[str, List[str]],
         timestamp_column_name: Optional[str] = None,
-        categorical_methods: Optional[List[str]] = None,
-        continuous_methods: Optional[List[str]] = None,
+        categorical_methods: Optional[Union[str, List[str]]] = None,
+        continuous_methods: Optional[Union[str, List[str]]] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
@@ -37,15 +37,15 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         Parameters
         ----------
-        column_names: List[str]
-            A list containing the names of features in the provided data set.
+        column_names: Union[str, List[str]]
+            A string or list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        categorical_methods: List[str], default=['jensen_shannon']
-            A list of method names that will be performed on categorical columns.
-        continuous_methods: List[str], default=['jensen_shannon']
-            A list of method names that will be performed on continuous columns.
+        categorical_methods: Union[str, List[str]], default=['jensen_shannon']
+            A method name or list of method names that will be performed on categorical columns.
+        continuous_methods: Union[str, List[str]], default=['jensen_shannon']
+            A a method name list of method names that will be performed on continuous columns.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -78,10 +78,19 @@ class UnivariateDriftCalculator(AbstractCalculator):
         super(UnivariateDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
-
+        if isinstance(column_names, str):
+            column_names = [column_names]
         self.column_names = column_names
+
+        if continuous_methods and isinstance(continuous_methods, str):
+            continuous_methods = [continuous_methods]
+        assert isinstance(continuous_methods, List)
         self.continuous_method_names = continuous_methods or ['jensen_shannon']
-        self.categorical_method_names = categorical_methods or ['jensen_shannon']
+
+        if categorical_methods and isinstance(categorical_methods, str):
+            categorical_methods = [categorical_methods]
+        assert isinstance(categorical_methods, List)
+        self.categorical_method_names: List[str] = categorical_methods or ['jensen_shannon']
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
