@@ -40,7 +40,7 @@ class CBPE(AbstractEstimator):
 
     def __init__(
         self,
-        metrics: List[str],
+        metrics: Union[str, List[str]],
         y_pred: str,
         y_pred_proba: ModelOutputsType,
         y_true: str,
@@ -68,8 +68,8 @@ class CBPE(AbstractEstimator):
             The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
-        metrics: List[str]
-            A list of metrics to calculate.
+        metrics: Union[str, List[str]]
+            A metric or list of metrics to calculate.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -134,6 +134,8 @@ class CBPE(AbstractEstimator):
         else:
             self.problem_type = problem_type
 
+        if isinstance(metrics, str):
+            metrics = [metrics]
         self.metrics = [
             MetricFactory.create(
                 metric,

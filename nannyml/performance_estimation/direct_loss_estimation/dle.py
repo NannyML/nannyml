@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from pandas import MultiIndex
@@ -48,7 +48,7 @@ class DLE(AbstractEstimator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        metrics: Optional[List[str]] = None,
+        metrics: Optional[Union[str, List[str]]] = None,
         hyperparameters: Optional[Dict[str, Any]] = None,
         tune_hyperparameters: bool = False,
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = None,
@@ -77,7 +77,7 @@ class DLE(AbstractEstimator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
-        metrics : List[str], default = ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle']
+        metrics : Optional[Union[str, List[str]]], default = ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle']
             A list of metrics to calculate. When not provided it will default to include all currently supported
             metrics.
         hyperparameters : Dict[str, Any], default = None
@@ -185,6 +185,8 @@ class DLE(AbstractEstimator):
 
         if metrics is None:
             metrics = DEFAULT_METRICS
+        elif isinstance(metrics, str):
+            metrics = [metrics]
         self.metrics: List[Metric] = [
             MetricFactory.create(
                 metric,

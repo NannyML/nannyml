@@ -73,6 +73,19 @@ def test_calculator_init_should_set_metrics(performance_calculator):  # noqa: D1
     assert sut[1] == BinaryClassificationF1(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
 
 
+@pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
+def test_performance_calculator_create_with_single_or_list_of_metrics(metrics, expected):
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        y_true='y_true',
+        metrics=metrics,
+        problem_type='classification_binary',
+    )
+    assert [metric.column_name for metric in calc.metrics] == expected
+
+
 def test_calculator_fit_should_raise_invalid_args_exception_when_no_target_data_present(data):  # noqa: D103, F821
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
