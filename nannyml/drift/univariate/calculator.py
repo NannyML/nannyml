@@ -82,15 +82,19 @@ class UnivariateDriftCalculator(AbstractCalculator):
             column_names = [column_names]
         self.column_names = column_names
 
-        if continuous_methods and isinstance(continuous_methods, str):
+        if not continuous_methods:
+            continuous_methods = ['jensen_shannon']
+        elif isinstance(continuous_methods, str):
             continuous_methods = [continuous_methods]
-        assert isinstance(continuous_methods, List)
-        self.continuous_method_names = continuous_methods or ['jensen_shannon']
+        assert isinstance(continuous_methods, list)
+        self.continuous_method_names = continuous_methods
 
-        if categorical_methods and isinstance(categorical_methods, str):
+        if not categorical_methods:
+            categorical_methods = ['jensen_shannon']
+        elif isinstance(categorical_methods, str):
             categorical_methods = [categorical_methods]
-        assert isinstance(categorical_methods, List)
-        self.categorical_method_names: List[str] = categorical_methods or ['jensen_shannon']
+        assert isinstance(categorical_methods, list)
+        self.categorical_method_names: List[str] = categorical_methods
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
