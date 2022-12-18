@@ -5,9 +5,7 @@ Choosing Univariate Drift Detection Methods
 The data experiments presented in this page show how the Univariate Drift Detection methods available in NannyML
 respond to data distribution shifts of chosen type and magnitude. The main purpose is to build an intuition and
 help to select the right method given the type (categorical vs. continuous) and distribution of the variable that we
-want
-to monitor. Some of
-the
+want to monitor. Some of the
 distribution shifts introduced are extreme and thus not very likely to happen in a real life scenarios. But again -
 we are trying to build an intuition here and part of it is - for example -  to show how big of a shift needs to
 happen so that we see a selected distance metric reaching its upper limit. In all the experiments described below
@@ -24,12 +22,10 @@ To demonstrate this, the reference data set was sampled from :math:`\mathcal{N}(
 each value of :math:`\mu` in :math:`\{0,0.1,0.2,...,7\}`. So, there is one reference sample and 71 analysis samples and each of the analysis 
 samples is compared to the reference sample.
 
-We show the confidence intervals for empirical experiments like this one to demonstrate the stability of each method in comparison to the others. The confidence intervals depend
-on the  sizes of the reference and analysis samples. These were kept the same for each method within the experiments to ensure that
-the results are comparable.
+We show +/- 3 standard deviations of the mean of the analysis data set for each method to illustrate the stability of each method.
 
 In this experiment, the sample size of both the reference and analysis datasets was 1000 observations, and the number
-of trials for each value of the mean of the analysis data set was 100.
+of trials for each value of the mean of the analysis data set was 500.
 
 .. image:: ../_static/univariate-comparison/shifting_mean.svg
     :width: 1400pt
@@ -56,7 +52,7 @@ In this experiment, we show how each method responds as the standard deviation o
 was sampled from :math:`\mathcal{N}(0, \sigma)` for each :math:`\sigma` in :math:`\{1, 1.1, 1.2,...,10\}`. 
 So, there is one reference sample and 91 analysis samples.
 The size of both the
-reference and analysis data sets was again 1000 observations and the experiment consisted of 100 trials.
+reference and analysis data sets was again 1000 observations and the experiment consisted of 500 trials.
 
 .. image:: ../_static/univariate-comparison/shifting_std.svg
     :width: 1400pt
@@ -65,8 +61,8 @@ In this case, Wasserstein distance again changes proportionally to the change in
 distance, the Kolmogorov-Smirnov D-statistic, and the Hellinger distance exhibit high sensitivity, even
 to small changes. However, the Hellinger distance has a slightly *softer* start than the Jensen-Shannon distance and
 the Kolmogorov-Smirnov statistic. In this experiment, the main difference between the Jensen-Shannon distance,
-the Kolmogorov-Smirnov statistic, and Hellinger distance is that the stability of the measures (illustrated by the
-confidence intervals) differs, with Jensen-Shannon distance and the Kolmogorov-Smirnov statistic exhibiting the highest relative stability of the three.
+the Kolmogorov-Smirnov statistic, and Hellinger distance is that the stability of the measures (illustrated by the bands showing the standard deviation) differs, with Jensen-Shannon distance exhibiting the highest relative stability of the three, followed by
+the Kolmogorov-Smirnov statistic and Hellinger disntance in turn.
 
 We can now take a look at the behavior of the methods for smaller, more realistic shifts. Below we show data from the experiment above, but we
 truncate the domain to :math:`[1,2]`.
@@ -278,7 +274,7 @@ In this way, we can see the impact that sample size has on each of the drift mea
 .. image:: ../_static/univariate-comparison/binomial_and_sample_size.svg
     :width: 1400pt
 
-Shift as measured by JS distance, Hellinger distance, and L-infinity distance decreases as the analysis
+Shift as measured by Jensen-Shannon distance, Hellinger distance, and L-infinity distance decreases as the analysis
 sample increases in size and thus better represents the distribution. On the other hand, the chi-squared statistic on
 average remains the same. This behaviour may be considered beneficial in some cases.
 
