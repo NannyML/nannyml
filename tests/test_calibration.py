@@ -7,7 +7,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.calibration import IsotonicCalibrator, _get_bin_edges, needs_calibration
+from nannyml.calibration import (
+    IsotonicCalibrator,
+    _get_bin_edges,
+    _calculate_expected_calibration_error,
+    needs_calibration,
+)
 from nannyml.exceptions import InvalidArgumentsException
 
 
@@ -17,7 +22,7 @@ def test_get_bin_edges_raises_invalid_arguments_exception_when_given_too_few_sam
         _ = _get_bin_edges(vector, bin_count)
 
 
-@pytest.mark.parametrize('vector,bin_count', [(np.arange(0, 10), 'not-a-valid-method')])
+@pytest.mark.parametrize('vector,bin_count', [(np.arange(0, 10), 'foo')])
 def test_get_bin_edges_raises_invalid_arguments_exception_when_given_wrong_calibration_method(  # noqa: D103
     vector, bin_count
 ):
@@ -49,6 +54,33 @@ def test_get_bin_edges_works_correctly(vector, bin_count, edges):  # noqa: D103
 
     assert len(sut) == len(edges)
     assert sorted(sut) == sorted(edges)
+
+
+@pytest.mark.parametrize(
+    'y_true,y_pred_proba,bin_edges,calibration_error',
+    [
+        (
+            np.concatenate([np.ones(5), np.zeros(5)]),
+            np.concatenate([np.ones(5), np.zeros(5)]),
+            [0, 0.25, 0.5, 0.75, 1.00000001],
+            0,
+        ),
+        (np.concatenate([np.ones(5), np.zeros(5)]), np.repeat(0, 10), [0, 0.25, 0.5, 0.75, 1.00000001], 0.5),
+        (np.concatenate([np.ones(5), np.zeros(5)]), np.repeat(0.5, 10), [0, 0.25, 0.5, 0.75, 1.00000001], 0),
+        (
+            np.array([1, 0, 1, 1, 0, 0, 1, 0, 0, 1]),
+            np.array([0.1, 0.2, 0.45, 0.1, 0.4, 0.98, 0.24, 0.2, 0.39, 0.4]),
+            [0, 0.25, 0.5, 0.75, 1.00000001],
+            0.35,
+        ),
+    ],
+)
+def test_calculate_expected_calibration_error_works_correctly(
+    y_true, y_pred_proba, bin_edges, calibration_error
+):  # noqa: D103
+    sut = _calculate_expected_calibration_error(y_true, y_pred_proba, bin_edges)
+
+    assert sut == calibration_error
 
 
 def test_needs_calibration_returns_false_when_calibration_does_not_always_improves_ece():  # noqa: D103

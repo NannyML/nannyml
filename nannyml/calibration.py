@@ -269,6 +269,9 @@ def needs_calibration(
             'Please ensure reference predicted probabilities do not contain NaN values.'
         )
 
+    if isinstance(bin_count, str) and (bin_count not in np.lib.histograms._hist_bin_selectors):
+        raise InvalidArgumentsException(f'unknown method `{bin_count}` for bin_count given.')
+
     # Reset indices to deal with subsetting vs. index results from stratified shuffle split
     # y_pred_proba = y_pred_proba.reset_index(drop=True)
     # y_true = y_true.reset_index(drop=True)

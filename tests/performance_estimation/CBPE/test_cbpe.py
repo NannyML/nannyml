@@ -89,6 +89,49 @@ def test_cbpe_will_not_calibrate_scores_when_not_needed(binary_classification_da
     assert sut.needs_calibration is False
 
 
+def test_cbpe_defaults_to_10_when_none_calibration_bin_count():  # noqa: D103
+    sut = CBPE(
+        timestamp_column_name='timestamp',
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+        calibration_bin_count=None,
+    )
+
+    assert sut.calibration_bin_count == 10
+
+
+def test_cbpe_uses_custom_calibration_bin_count_when_provided():  # noqa: D103
+    sut = CBPE(
+        timestamp_column_name='timestamp',
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+        calibration_bin_count='fd',
+    )
+
+    assert sut.calibration_bin_count == 'fd'
+
+
+def test_cbpe_raises_when_given_invalid_calibration_bin_count(binary_classification_data):  # noqa: D103
+    ref_df = binary_classification_data[0]
+    sut = CBPE(
+        timestamp_column_name='timestamp',
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+        calibration_bin_count='foo',
+    )
+    with pytest.raises(InvalidArgumentsException, match="unknown method `foo` for bin_count given."):
+        sut.fit(ref_df)
+
+
 def test_cbpe_will_not_fail_on_work_from_home_sample(binary_classification_data):  # noqa: D103
     reference, analysis = binary_classification_data
     try:
