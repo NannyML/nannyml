@@ -13,9 +13,8 @@ from nannyml._typing import Result
 from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.performance_calculation.result import Result as RealizedPerformanceResult
-
-# from nannyml.performance_estimation.confidence_based.results import Result as CBPEResult
-# from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResult
+from nannyml.performance_estimation.confidence_based.results import Result as CBPEResult
+from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResult
 
 
 class SlackNotificationHandler:
@@ -61,6 +60,12 @@ class BlocksBuilder:
             self._blocks += _univariate_drift_result_blocks(result, only_alerts)
         elif isinstance(result, DataReconstructionDriftResult):
             self._blocks += _multivariate_drift_result_blocks(result, only_alerts)
+        elif isinstance(result, RealizedPerformanceResult):
+            self._blocks += _realized_performance_result_blocks(result, only_alerts)
+        elif isinstance(result, CBPEResult):
+            self._blocks += _estimated_performance_cbpe_result_blocks(result, only_alerts)
+        elif isinstance(result, DLEResult):
+            self._blocks += _estimated_performance_dle_result_blocks(result, only_alerts)
         return self
 
     def build(self) -> List[Dict[str, Any]]:
@@ -118,4 +123,78 @@ def _multivariate_drift_result_blocks(result: DataReconstructionDriftResult, onl
 
 
 def _realized_performance_result_blocks(result: RealizedPerformanceResult, only_alerts: bool) -> List[Dict[str, Any]]:
-    pass
+    blocks: List[Dict[str, Any]] = []
+    df = result.filter(period='analysis').to_df()
+
+    metrics_with_alerts = set()
+    for metric in result.metrics:
+        has_alerts = df.get((metric.column_name, 'alert')).any()
+        if has_alerts:
+            metrics_with_alerts.add(metric.display_name)
+    icon = ':white_check_mark:' if len(metrics_with_alerts) == 0 else ':warning:'
+    blocks.append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"{icon} *Realized Performance* "
+                + (f"- {len(metrics_with_alerts)} metrics unacceptable" if len(metrics_with_alerts) > 0 else ''),
+            },
+        }
+    )
+    drifting_metrics_str = '\n'.join([f'• {m}' for m in metrics_with_alerts])
+    if len(metrics_with_alerts) > 0:
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": drifting_metrics_str}})
+    return blocks
+
+
+def _estimated_performance_cbpe_result_blocks(result: CBPEResult, only_alerts: bool) -> List[Dict[str, Any]]:
+    blocks: List[Dict[str, Any]] = []
+    df = result.filter(period='analysis').to_df()
+
+    metrics_with_alerts = set()
+    for metric in result.metrics:
+        has_alerts = df.get((metric.column_name, 'alert')).any()
+        if has_alerts:
+            metrics_with_alerts.add(metric.display_name)
+    icon = ':white_check_mark:' if len(metrics_with_alerts) == 0 else ':warning:'
+    blocks.append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"{icon} *Estimated Performance (CBPE)* "
+                + (f"- {len(metrics_with_alerts)} metrics unacceptable" if len(metrics_with_alerts) > 0 else ''),
+            },
+        }
+    )
+    drifting_metrics_str = '\n'.join([f'• {m}' for m in metrics_with_alerts])
+    if len(metrics_with_alerts) > 0:
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": drifting_metrics_str}})
+    return blocks
+
+
+def _estimated_performance_dle_result_blocks(result: DLEResult, only_alerts: bool) -> List[Dict[str, Any]]:
+    blocks: List[Dict[str, Any]] = []
+    df = result.filter(period='analysis').to_df()
+
+    metrics_with_alerts = set()
+    for metric in result.metrics:
+        has_alerts = df.get((metric.column_name, 'alert')).any()
+        if has_alerts:
+            metrics_with_alerts.add(metric.display_name)
+    icon = ':white_check_mark:' if len(metrics_with_alerts) == 0 else ':warning:'
+    blocks.append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"{icon} *Estimated Performance (DLE)* "
+                + (f"- {len(metrics_with_alerts)} metrics unacceptable" if len(metrics_with_alerts) > 0 else ''),
+            },
+        }
+    )
+    drifting_metrics_str = '\n'.join([f'• {m}' for m in metrics_with_alerts])
+    if len(metrics_with_alerts) > 0:
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": drifting_metrics_str}})
+    return blocks
