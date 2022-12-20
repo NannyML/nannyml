@@ -113,7 +113,7 @@ def _multivariate_drift_result_blocks(result: DataReconstructionDriftResult, onl
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"{icon} *Multivariate Drift* " + "- 1 metric unacceptable" if has_alerts else '',
+                "text": f"{icon} *Multivariate Drift* " + ("- 1 metric unacceptable" if has_alerts else ''),
             },
         }
     )
