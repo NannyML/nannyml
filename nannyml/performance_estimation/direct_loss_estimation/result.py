@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 from plotly.graph_objects import Figure
 
-from nannyml import Chunker
 from nannyml.base import AbstractEstimatorResult
+from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric
 from nannyml.plots.blueprints.metrics import plot_metric_list
