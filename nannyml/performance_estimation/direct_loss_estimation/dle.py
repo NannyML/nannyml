@@ -222,7 +222,7 @@ class DLE(AbstractEstimator):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
 
         _, categorical_feature_columns = _split_features_by_type(reference_data, self.feature_column_names)
-        if len(categorical_feature_columns) > 0:
+        if categorical_feature_columns:
             reference_data[categorical_feature_columns] = self._categorical_imputer.fit_transform(
                 reference_data[categorical_feature_columns]
             )
@@ -246,7 +246,7 @@ class DLE(AbstractEstimator):
         _list_missing([self.y_pred], list(data.columns))
 
         _, categorical_feature_columns = _split_features_by_type(data, self.feature_column_names)
-        if len(categorical_feature_columns) > 0:
+        if categorical_feature_columns:
             data[categorical_feature_columns] = self._categorical_imputer.transform(data[categorical_feature_columns])
             data[categorical_feature_columns] = data[categorical_feature_columns].apply(
                 lambda x: self._categorical_encoders[x.name].transform(x)

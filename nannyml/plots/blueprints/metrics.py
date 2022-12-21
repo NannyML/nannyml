@@ -26,7 +26,7 @@ def plot_2d_metric_list(
     number_of_columns: Optional[int] = None,
 ) -> Figure:
 
-    if len(items) == 0:
+    if not items:
         raise InvalidArgumentsException("tried plotting distributions but received zero plotting items.")
 
     number_of_plots = len(items)

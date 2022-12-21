@@ -340,7 +340,7 @@ def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFra
         dataset_columns = dataset_columns.columns
 
     missing = [col for col in columns_to_find if col not in dataset_columns]
-    if len(missing) > 0:
+    if missing:
         raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")
 
 
