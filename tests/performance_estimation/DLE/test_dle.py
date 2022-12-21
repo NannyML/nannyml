@@ -8,7 +8,7 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml._typing import ProblemType, Result
+from nannyml._typing import Key, ProblemType, Result
 from nannyml.base import Abstract1DResult, AbstractEstimator
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.exceptions import InvalidArgumentsException
@@ -20,12 +20,11 @@ class FakeEstimatorResult(Abstract1DResult):
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return self
 
+    def keys(self) -> List[Key]:
+        return []
+
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         return plotly.graph_objects.Figure()
-
-    @property
-    def values(self) -> List[pd.Series]:
-        return []
 
 
 class FakeEstimator(AbstractEstimator):

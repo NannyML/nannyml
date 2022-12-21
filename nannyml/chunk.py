@@ -237,6 +237,10 @@ class ChunkerFactory:
                 chunk_number=chunk_number, timestamp_column_name=timestamp_column_name  # type: ignore
             )
         elif chunk_period:
+            if timestamp_column_name is None:
+                raise InvalidArgumentsException(
+                    "you must provide the 'timestamp_column_name' " "when using period based chunking"
+                )
             return PeriodBasedChunker(offset=chunk_period, timestamp_column_name=timestamp_column_name)  # type: ignore
         else:
             return DefaultChunker(timestamp_column_name=timestamp_column_name)  # type: ignore

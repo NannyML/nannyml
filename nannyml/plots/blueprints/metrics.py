@@ -3,36 +3,33 @@
 #  License: Apache Software License 2.0
 import copy
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml._typing import Key, Result
 from nannyml.plots import Colors, ensure_numpy, is_time_based_x_axis
 from nannyml.plots.components import Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
 
 
-def plot_2d_metric_list(
-    result,
+def plot_metrics(
+    result: Result,
     title: str,
-    items: List[Tuple[str, Any]],
     x_axis_time_title: str = 'Time',
     x_axis_chunk_title: str = 'Chunk',
     y_axis_title: str = 'Metric',
     figure_args: Optional[Dict[str, Any]] = None,
-    subplot_title_format: str = '{column_name} (<b>{method_name}</b>)',
+    subplot_title_format: str = '<b>{display_names}</b>',
+    subplot_y_axis_title_format: str = '<b>{display_names}</b>',
+    number_of_columns: Optional[int] = None,
     hover: Optional[Hover] = None,
-    number_of_columns: Optional[int] = None,
 ) -> Figure:
-
-    if len(items) == 0:
-        raise InvalidArgumentsException("tried plotting distributions but received zero plotting items.")
-
-    number_of_plots = len(items)
     if number_of_columns is None:
-        number_of_columns = min(number_of_plots, 1)
-    number_of_rows = math.ceil(number_of_plots / number_of_columns)
+        number_of_columns = min(len(result.keys()), 1)
+
+    reference_result = result.filter(period='reference')
+    analysis_result = result.filter(period='analysis')
 
     if figure_args is None:
         figure_args = {}
@@ -40,26 +37,22 @@ def plot_2d_metric_list(
     figure = Figure(
         **dict(
             title=title,
-            x_axis_title=x_axis_time_title if result.timestamp_column_name else x_axis_chunk_title,
+            x_axis_title=x_axis_time_title
+            if is_time_based_x_axis(result.chunk_start_dates, result.chunk_end_dates)
+            else x_axis_chunk_title,
             y_axis_title=y_axis_title,
             legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
-            height=number_of_plots * 500 / number_of_columns,
+            height=len(result.keys()) * 500 / number_of_columns,
             subplot_args=dict(
                 cols=number_of_columns,
-                rows=number_of_rows,
-                subplot_titles=[
-                    subplot_title_format.format(column_name=column_name, method_name=method_name.display_name)
-                    for column_name, method_name in items
-                ],
+                rows=math.ceil(len(result.keys()) / number_of_columns),
+                subplot_titles=[subplot_title_format.format(display_names=key.display_names) for key in result.keys()],
             ),
             **figure_args,
         )
     )
 
-    reference_result: pd.DataFrame = result.filter(period='reference').to_df()
-    analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
-
-    for idx, (column_name, method) in enumerate(items):
+    for idx, key in enumerate(result.keys()):
         row = (idx // number_of_columns) + 1
         col = (idx % number_of_columns) + 1
 
@@ -67,154 +60,48 @@ def plot_2d_metric_list(
             figure=figure,
             row=row,
             col=col,
-            metric_display_name=method.display_name,
-            reference_metric=reference_result[(column_name, method.column_name, 'value')],
-            reference_alerts=reference_result.get((column_name, method.column_name, 'alert'), default=None),
-            reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
-            reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
-            reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-            reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
-            reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
-            reference_upper_thresholds=reference_result.get(
-                (column_name, method.column_name, 'upper_threshold'), default=None
-            ),
-            reference_lower_thresholds=reference_result.get(
-                (column_name, method.column_name, 'lower_threshold'), default=None
-            ),
-            reference_upper_confidence_boundary=reference_result.get(
-                (column_name, method.column_name, 'upper_confidence_boundary'), default=None
-            ),
-            reference_lower_confidence_boundary=reference_result.get(
-                (column_name, method.column_name, 'lower_confidence_boundary'), default=None
-            ),
-            reference_sampling_error=reference_result.get(
-                (column_name, method.column_name, 'sampling_error'), default=None
-            ),
-            analysis_metric=analysis_result[(column_name, method.column_name, 'value')],
-            analysis_alerts=analysis_result.get((column_name, method.column_name, 'alert'), default=None),
-            analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
-            analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
-            analysis_chunk_indices=analysis_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-            analysis_chunk_start_dates=analysis_result.get(('chunk', 'chunk', 'start_date'), default=None),
-            analysis_chunk_end_dates=analysis_result.get(('chunk', 'chunk', 'end_date'), default=None),
-            analysis_upper_thresholds=analysis_result.get(
-                (column_name, method.column_name, 'upper_threshold'), default=None
-            ),
-            analysis_lower_thresholds=analysis_result.get(
-                (column_name, method.column_name, 'lower_threshold'), default=None
-            ),
-            analysis_upper_confidence_boundary=analysis_result.get(
-                (column_name, method.column_name, 'upper_confidence_boundary'), default=None
-            ),
-            analysis_lower_confidence_boundary=analysis_result.get(
-                (column_name, method.column_name, 'lower_confidence_boundary'), default=None
-            ),
-            analysis_sampling_error=analysis_result.get(
-                (column_name, method.column_name, 'sampling_error'), default=None
-            ),
+            metric_display_name=subplot_title_format.format(display_names=key.display_names),
+            reference_metric=reference_result.values(key),
+            reference_alerts=reference_result.alerts(key),
+            reference_chunk_keys=reference_result.chunk_keys,
+            reference_chunk_periods=reference_result.chunk_periods,
+            reference_chunk_indices=reference_result.chunk_indices,
+            reference_chunk_start_dates=reference_result.chunk_start_dates,
+            reference_chunk_end_dates=reference_result.chunk_end_dates,
+            reference_upper_thresholds=reference_result.upper_thresholds(key),
+            reference_lower_thresholds=reference_result.lower_thresholds(key),
+            # reference_upper_confidence_boundary=reference_result.to_df().get(
+            #     (column_name, 'upper_confidence_boundary'), default=None
+            # ),
+            # reference_lower_confidence_boundary=reference_result.get(
+            #     (metric.column_name, 'lower_confidence_boundary'), default=None
+            # ),
+            reference_sampling_error=reference_result.sampling_error(key),
+            analysis_metric=analysis_result.values(key),
+            analysis_alerts=analysis_result.alerts(key),
+            analysis_chunk_keys=analysis_result.chunk_keys,
+            analysis_chunk_periods=analysis_result.chunk_periods,
+            analysis_chunk_indices=analysis_result.chunk_indices,
+            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
+            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
+            analysis_upper_thresholds=analysis_result.upper_thresholds(key),
+            analysis_lower_thresholds=analysis_result.lower_thresholds(key),
+            # analysis_upper_confidence_boundary=analysis_result.get(
+            #     (metric.column_name, 'upper_confidence_boundary'), default=None
+            # ),
+            # analysis_lower_confidence_boundary=analysis_result.get(
+            #     (metric.column_name, 'lower_confidence_boundary'), default=None
+            # ),
+            analysis_sampling_error=analysis_result.sampling_error(key),
             hover=hover,
-        )
-
-    return figure
-
-
-def _try_get_dimension(result, dimension_name: str) -> List:
-    try:
-        dimension = getattr(result, dimension_name)
-    except AttributeError as exc:
-        raise InvalidArgumentsException(f'result does not contain an attribute named {dimension_name}: {exc}')
-
-    if not isinstance(dimension, List):
-        raise InvalidArgumentsException(f'attribute {dimension_name} is not an instance of \'List\'')
-
-    return dimension
-
-
-def plot_metric_list(
-    result,
-    title: str,
-    x_axis_time_title: str = 'Time',
-    x_axis_chunk_title: str = 'Chunk',
-    y_axis_title: str = 'Metric',
-    figure_args: Optional[Dict[str, Any]] = None,
-    subplot_title_format: str = '<b>{metric_name}</b>',
-    number_of_columns: Optional[int] = None,
-) -> Figure:
-    if number_of_columns is None:
-        number_of_columns = min(len(result.metrics), 1)
-
-    reference_result: pd.DataFrame = result.filter(period='reference').to_df()
-    analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
-
-    if figure_args is None:
-        figure_args = {}
-
-    figure = Figure(
-        **dict(
-            title=title,
-            x_axis_title=x_axis_time_title if result.timestamp_column_name else x_axis_chunk_title,
-            y_axis_title=y_axis_title,
-            legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
-            height=len(result.metrics) * 500 / number_of_columns,
-            subplot_args=dict(
-                cols=number_of_columns,
-                rows=math.ceil(len(result.metrics) / number_of_columns),
-                subplot_titles=[
-                    subplot_title_format.format(metric_name=metric.display_name) for metric in result.metrics
-                ],
-            ),
-            **figure_args,
-        )
-    )
-
-    for idx, metric in enumerate(result.metrics):
-        row = (idx // number_of_columns) + 1
-        col = (idx % number_of_columns) + 1
-
-        figure = _plot_metric(
-            figure=figure,
-            row=row,
-            col=col,
-            metric_display_name=metric.display_name,
-            reference_metric=reference_result[(metric.column_name, 'value')],
-            reference_alerts=reference_result.get((metric.column_name, 'alert'), default=None),
-            reference_chunk_keys=reference_result.get(('chunk', 'key'), default=None),
-            reference_chunk_periods=reference_result.get(('chunk', 'period'), default=None),
-            reference_chunk_indices=reference_result.get(('chunk', 'chunk_index'), default=None),
-            reference_chunk_start_dates=reference_result.get(('chunk', 'start_date'), default=None),
-            reference_chunk_end_dates=reference_result.get(('chunk', 'end_date'), default=None),
-            reference_upper_thresholds=reference_result.get((metric.column_name, 'upper_threshold'), default=None),
-            reference_lower_thresholds=reference_result.get((metric.column_name, 'lower_threshold'), default=None),
-            reference_upper_confidence_boundary=reference_result.get(
-                (metric.column_name, 'upper_confidence_boundary'), default=None
-            ),
-            reference_lower_confidence_boundary=reference_result.get(
-                (metric.column_name, 'lower_confidence_boundary'), default=None
-            ),
-            reference_sampling_error=reference_result.get((metric.column_name, 'sampling_error'), default=None),
-            analysis_metric=analysis_result[(metric.column_name, 'value')],
-            analysis_alerts=analysis_result.get((metric.column_name, 'alert'), default=None),
-            analysis_chunk_keys=analysis_result.get(('chunk', 'key'), default=None),
-            analysis_chunk_periods=analysis_result.get(('chunk', 'period'), default=None),
-            analysis_chunk_indices=analysis_result.get(('chunk', 'chunk_index'), default=None),
-            analysis_chunk_start_dates=analysis_result.get(('chunk', 'start_date'), default=None),
-            analysis_chunk_end_dates=analysis_result.get(('chunk', 'end_date'), default=None),
-            analysis_upper_thresholds=analysis_result.get((metric.column_name, 'upper_threshold'), default=None),
-            analysis_lower_thresholds=analysis_result.get((metric.column_name, 'lower_threshold'), default=None),
-            analysis_upper_confidence_boundary=analysis_result.get(
-                (metric.column_name, 'upper_confidence_boundary'), default=None
-            ),
-            analysis_lower_confidence_boundary=analysis_result.get(
-                (metric.column_name, 'lower_confidence_boundary'), default=None
-            ),
-            analysis_sampling_error=analysis_result.get((metric.column_name, 'sampling_error'), default=None),
+            subplot_y_axis_title=subplot_y_axis_title_format.format(display_names=key.display_names),
         )
 
     return figure
 
 
 def plot_metric(
-    result,
+    result: Result,
     title: str,
     metric_display_name: str,
     metric_column_name: str,
@@ -223,8 +110,8 @@ def plot_metric(
     y_axis_title: str = 'Metric',
     figure_args: Optional[Dict[str, Any]] = None,
 ) -> Figure:
-    reference_result: pd.DataFrame = result.filter(period='reference').to_df()
-    analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
+    reference_result = result.filter(period='reference')
+    analysis_result = result.filter(period='analysis')
 
     if figure_args is None:
         figure_args = {}
@@ -232,48 +119,52 @@ def plot_metric(
     figure = Figure(
         **dict(
             title=title,
-            x_axis_title=x_axis_time_title if result.timestamp_column_name else x_axis_chunk_title,
+            x_axis_title=x_axis_time_title
+            if is_time_based_x_axis(reference_result.chunk_start_dates, reference_result.chunk_end_dates)
+            else x_axis_chunk_title,
             y_axis_title=y_axis_title,
             legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
             **figure_args,
         )
     )
 
+    key = Key(properties=(metric_column_name,), display_names=(metric_display_name,))
+
     figure = _plot_metric(
         figure=figure,
         metric_display_name=metric_display_name,
-        reference_metric=reference_result[(metric_column_name, 'value')],
-        reference_alerts=reference_result.get((metric_column_name, 'alert'), default=None),
-        reference_chunk_keys=reference_result.get(('chunk', 'key'), default=None),
-        reference_chunk_periods=reference_result.get(('chunk', 'period'), default=None),
-        reference_chunk_indices=reference_result.get(('chunk', 'chunk_index'), default=None),
-        reference_chunk_start_dates=reference_result.get(('chunk', 'start_date'), default=None),
-        reference_chunk_end_dates=reference_result.get(('chunk', 'end_date'), default=None),
-        reference_upper_thresholds=reference_result.get((metric_column_name, 'upper_threshold'), default=None),
-        reference_lower_thresholds=reference_result.get((metric_column_name, 'lower_threshold'), default=None),
-        reference_upper_confidence_boundary=reference_result.get(
-            ('reconstruction_error', 'upper_confidence_boundary'), default=None
-        ),
-        reference_lower_confidence_boundary=reference_result.get(
-            ('reconstruction_error', 'lower_confidence_boundary'), default=None
-        ),
-        reference_sampling_error=reference_result.get((metric_column_name, 'sampling_error'), default=None),
-        analysis_metric=analysis_result[(metric_column_name, 'value')],
-        analysis_alerts=analysis_result.get((metric_column_name, 'alert'), default=None),
-        analysis_chunk_keys=analysis_result.get(('chunk', 'key'), default=None),
-        analysis_chunk_periods=analysis_result.get(('chunk', 'period'), default=None),
-        analysis_chunk_indices=analysis_result.get(('chunk', 'chunk_index'), default=None),
-        analysis_chunk_start_dates=analysis_result.get(('chunk', 'start_date'), default=None),
-        analysis_chunk_end_dates=analysis_result.get(('chunk', 'end_date'), default=None),
-        analysis_upper_thresholds=analysis_result.get((metric_column_name, 'upper_threshold'), default=None),
-        analysis_lower_thresholds=analysis_result.get((metric_column_name, 'lower_threshold'), default=None),
-        analysis_upper_confidence_boundary=analysis_result.get(
-            (metric_column_name, 'upper_confidence_boundary'), default=None
-        ),
-        analysis_lower_confidence_boundary=analysis_result.get(
-            (metric_column_name, 'lower_confidence_boundary'), default=None
-        ),
-        analysis_sampling_error=analysis_result.get((metric_column_name, 'sampling_error'), default=None),
+        reference_metric=reference_result.values(key),
+        reference_alerts=reference_result.alerts(key),
+        reference_chunk_keys=reference_result.chunk_keys,
+        reference_chunk_periods=reference_result.chunk_periods,
+        reference_chunk_indices=reference_result.chunk_indices,
+        reference_chunk_start_dates=reference_result.chunk_start_dates,
+        reference_chunk_end_dates=reference_result.chunk_end_dates,
+        reference_upper_thresholds=reference_result.upper_thresholds(key),
+        reference_lower_thresholds=reference_result.lower_thresholds(key),
+        # reference_upper_confidence_boundary=reference_result.to_df().get(
+        #     ('reconstruction_error', 'upper_confidence_boundary'), default=None
+        # ),
+        # reference_lower_confidence_boundary=reference_result.to_df().get(
+        #     ('reconstruction_error', 'lower_confidence_boundary'), default=None
+        # ),
+        reference_sampling_error=reference_result.sampling_error(key),
+        analysis_metric=analysis_result.values(key),
+        analysis_alerts=analysis_result.alerts(key),
+        analysis_chunk_keys=analysis_result.chunk_keys,
+        analysis_chunk_periods=analysis_result.chunk_periods,
+        analysis_chunk_indices=analysis_result.chunk_indices,
+        analysis_chunk_start_dates=analysis_result.chunk_start_dates,
+        analysis_chunk_end_dates=analysis_result.chunk_end_dates,
+        analysis_upper_thresholds=analysis_result.upper_thresholds(key),
+        analysis_lower_thresholds=analysis_result.lower_thresholds(key),
+        # analysis_upper_confidence_boundary=analysis_result.to_df().get(
+        #     (metric_column_name, 'upper_confidence_boundary'), default=None
+        # ),
+        # analysis_lower_confidence_boundary=analysis_result.to_df().get(
+        #     (metric_column_name, 'lower_confidence_boundary'), default=None
+        # ),
+        analysis_sampling_error=analysis_result.sampling_error(key),
     )
 
     return figure
@@ -309,6 +200,7 @@ def _plot_metric(  # noqa: C901
     row: Optional[int] = None,
     col: Optional[int] = None,
     hover: Optional[Hover] = None,
+    subplot_y_axis_title: Optional[str] = None,
 ) -> Figure:
 
     if figure is None:
@@ -374,7 +266,8 @@ def _plot_metric(  # noqa: C901
             name='Metric (reference)',
             color=Colors.BLUE_SKY_CRAYOLA,
             hover=_hover,
-            subplot_args=dict(row=row, col=col, subplot_y_axis_title=metric_display_name),
+            # subplot_args=dict(row=row, col=col, subplot_y_axis_title=metric_display_name),
+            subplot_args=dict(row=row, col=col, subplot_y_axis_title=subplot_y_axis_title or metric_display_name),
             legendgroup='metric_reference',
             showlegend=show_in_legend,
             # line_dash='dash',
@@ -428,7 +321,7 @@ def _plot_metric(  # noqa: C901
         name='Metric (analysis)',
         color=Colors.INDIGO_PERSIAN,
         hover=_hover,
-        subplot_args=dict(row=row, col=col, subplot_y_axis_title=metric_display_name),
+        subplot_args=dict(row=row, col=col, subplot_y_axis_title=subplot_y_axis_title or metric_display_name),
         legendgroup='metric_analysis',
         showlegend=show_in_legend,
         # line_dash='dash',

@@ -10,7 +10,7 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml._typing import Result
+from nannyml._typing import Key, Result
 from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.univariate import UnivariateDriftCalculator
@@ -122,12 +122,11 @@ class SimpleDriftResult(Abstract1DResult):
         """Fake plot."""
         return plotly.graph_objects.Figure()
 
+    def keys(self) -> List[Key]:
+        return []
+
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return self
-
-    @property
-    def values(self) -> List[pd.Series]:
-        return []
 
 
 class SimpleDriftCalculator(AbstractCalculator):

@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
-from nannyml._typing import Calculator, Estimator, Result
+from nannyml._typing import Calculator, Estimator, Key, Result
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
@@ -92,7 +92,29 @@ class AbstractResult(ABC):
 
     @abstractmethod
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
-        raise NotImplementedError
+        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_filter' method")
+
+    @abstractmethod
+    def keys(self) -> List[Key]:
+        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the 'items' method")
+
+    def values(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='value')
+
+    def alerts(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='alert')
+
+    def upper_thresholds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='upper_threshold')
+
+    def lower_thresholds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='lower_threshold')
+
+    def sampling_error(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='sampling_error')
+
+    def _get_property_for_key(self, key: Key, property_name: str) -> Optional[pd.Series]:
+        return self.data.get(key.properties + (property_name,), default=None)
 
 
 class Abstract1DResult(AbstractResult, ABC):
@@ -116,11 +138,6 @@ class Abstract1DResult(AbstractResult, ABC):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
-    @property
-    @abstractmethod
-    def values(self) -> List[pd.Series]:
-        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the 'values' method")
-
 
 class Abstract2DResult(AbstractResult, ABC):
     @property
@@ -142,11 +159,6 @@ class Abstract2DResult(AbstractResult, ABC):
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'period')]
-
-    @property
-    @abstractmethod
-    def values(self) -> List[pd.Series]:
-        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the 'values' method")
 
 
 class AbstractCalculator(ABC):

@@ -12,6 +12,7 @@ from typing import List, Optional
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml._typing import Key
 from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.metrics import plot_metric
@@ -39,6 +40,9 @@ class Result(Abstract1DResult):
         self.timestamp_column_name = timestamp_column_name
         self.metrics = [Metric(display_name='Reconstruction error', column_name='reconstruction_error')]
 
+    def keys(self) -> List[Key]:
+        return [Key(properties=('reconstruction_error',), display_names=('Reconstruction error',))]
+
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
@@ -55,10 +59,6 @@ class Result(Abstract1DResult):
         result.data = data
 
         return result
-
-    @property
-    def values(self) -> List[pd.Series]:
-        return [self.data[('reconstruction_error', 'value')]]
 
     @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:

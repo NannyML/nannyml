@@ -11,13 +11,14 @@ from typing import List, Optional
 import pandas as pd
 import plotly.graph_objects as go
 
+from nannyml._typing import Key
 from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract2DResult
 from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.blueprints.distributions import plot_2d_univariate_distributions_list
-from nannyml.plots.blueprints.metrics import plot_2d_metric_list
+from nannyml.plots.blueprints.distributions import plot_distributions
+from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.plots.components import Hover
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -84,19 +85,31 @@ class Result(Abstract2DResult):
         result.methods = result.categorical_methods + result.continuous_methods
         return result
 
-    @property
-    def values(self) -> List[pd.Series]:
+    def _get_result_property(self, property_name: str) -> List[pd.Series]:
         continuous_values = [
-            self.data[(column, method.column_name, 'value')]
+            self.data[(column, method.column_name, property_name)]
             for column in sorted(self.continuous_column_names)
             for method in sorted(self.continuous_methods, key=lambda m: m.column_name)
         ]
         categorical_values = [
-            self.data[(column, method.column_name, 'value')]
+            self.data[(column, method.column_name, property_name)]
             for column in sorted(self.categorical_column_names)
             for method in sorted(self.categorical_methods, key=lambda m: m.column_name)
         ]
         return continuous_values + categorical_values
+
+    def keys(self) -> List[Key]:
+        continuous_keys = [
+            Key(properties=(column, method.column_name), display_names=(column, method.display_name))
+            for column in sorted(self.continuous_column_names)
+            for method in sorted(self.continuous_methods, key=lambda m: m.column_name)
+        ]
+        categorical_keys = [
+            Key(properties=(column, method.column_name), display_names=(column, method.display_name))
+            for column in sorted(self.categorical_column_names)
+            for method in sorted(self.categorical_methods, key=lambda m: m.column_name)
+        ]
+        return continuous_keys + categorical_keys
 
     @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(  # type: ignore
@@ -148,28 +161,21 @@ class Result(Abstract2DResult):
         ...    res.plot(kind='drift', column_name=column_name, method=method).show()
 
         """
-        column_to_method_mapping = [
-            (column_name, method)
-            for column_name in self.categorical_column_names
-            for method in self.categorical_methods
-        ] + [
-            (column_name, method) for column_name in self.continuous_column_names for method in self.continuous_methods
-        ]
         if kind == 'drift':
-            return plot_2d_metric_list(
+            return plot_metrics(
                 self,
-                items=column_to_method_mapping,
                 title='Univariate drift metrics',
                 hover=Hover(
                     template='%{period} &nbsp; &nbsp; %{alert} <br />'
                     'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
                     '%{metric_name}: <b>%{metric_value}</b><b r />'
                 ),
+                subplot_title_format='{display_names[1]} for <b>{display_names[0]}</b>',
+                subplot_y_axis_title_format='{display_names[1]}',
             )
         elif kind == 'distribution':
-            return plot_2d_univariate_distributions_list(
+            return plot_distributions(
                 self,
-                items=column_to_method_mapping,
                 reference_data=self.reference_data,
                 analysis_data=self.analysis_data,
                 chunker=self.chunker,

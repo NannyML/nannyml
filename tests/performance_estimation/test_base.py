@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import pytest
 
-from nannyml._typing import Result
+from nannyml._typing import Key, Result
 from nannyml.base import Abstract1DResult, AbstractEstimator
 from nannyml.chunk import CountBasedChunker  # , _minimum_chunk_size
 from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker
@@ -33,8 +33,7 @@ class SimpleEstimatorResult(Abstract1DResult):
         super().__init__(results_data)
         self.calculator = calculator
 
-    @property
-    def values(self) -> List[pd.Series]:
+    def keys(self) -> List[Key]:
         return []
 
     def plot(self):

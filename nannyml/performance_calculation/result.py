@@ -11,12 +11,12 @@ from typing import Dict, List, Optional, Union
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import ProblemType
+from nannyml._typing import Key, ProblemType
 from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
-from nannyml.plots.blueprints.metrics import plot_metric_list
+from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -66,9 +66,8 @@ class Result(Abstract1DResult):
 
         return res
 
-    @property
-    def values(self) -> List[pd.Series]:
-        return [self.data[(metric.column_name, 'value')] for metric in self.metrics]
+    def keys(self) -> List[Key]:
+        return [Key(properties=(metric.column_name,), display_names=(metric.display_name,)) for metric in self.metrics]
 
     @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(
@@ -126,7 +125,7 @@ class Result(Abstract1DResult):
         >>>     results.plot(metric=metric, plot_reference=True).show()
         """
         if kind == 'performance':
-            return plot_metric_list(
+            return plot_metrics(
                 result=self,
                 title='Realized performance',
             )

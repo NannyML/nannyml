@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import typing
+from collections import namedtuple
 from enum import Enum
 from typing import Dict, List, Optional, Union  # noqa: TYP001
 
@@ -16,6 +17,8 @@ import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import Figure
+
+Key = namedtuple('Key', 'properties display_names')
 
 
 class Result(Protocol):
@@ -47,17 +50,31 @@ class Result(Protocol):
     def chunk_periods(self) -> pd.Series:
         ...
 
-    @property
-    def values(self) -> List[pd.Series]:
+    def keys(self) -> List[Key]:
+        ...
+
+    def values(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def alerts(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def upper_thresholds(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def lower_thresholds(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def sampling_error(self, key: Key) -> Optional[pd.Series]:
         ...
 
     def filter(
         self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> Result:
-        """"""
+        ...
 
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
-        """"""
+        ...
 
     def plot(self, *args, **kwargs) -> Figure:
         ...

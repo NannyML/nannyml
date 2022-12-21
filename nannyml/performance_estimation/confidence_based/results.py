@@ -9,7 +9,7 @@ from typing import List, Optional, Union
 import pandas as pd
 from plotly import graph_objects as go
 
-from nannyml._typing import ModelOutputsType, ProblemType
+from nannyml._typing import Key, ModelOutputsType, ProblemType
 from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
@@ -19,7 +19,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.plots import Figure
 from nannyml.plots.blueprints.comparisons import plot_2d_compare_step_to_step
-from nannyml.plots.blueprints.metrics import plot_metric_list
+from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
@@ -64,9 +64,8 @@ class Result(Abstract1DResult):
 
         return res
 
-    @property
-    def values(self) -> List[pd.Series]:
-        return [self.data[(metric.column_name, 'value')] for metric in self.metrics]
+    def keys(self) -> List[Key]:
+        return [Key(properties=(metric.column_name,), display_names=(metric.display_name,)) for metric in self.metrics]
 
     @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
@@ -114,8 +113,10 @@ class Result(Abstract1DResult):
         >>> results.plot().show()
         """
         if kind == 'performance':
-            return plot_metric_list(
-                self, title='Estimated performance <b>(CBPE)</b>', subplot_title_format='Estimated <b>{metric_name}</b>'
+            return plot_metrics(
+                self,
+                title='Estimated performance <b>(CBPE)</b>',
+                subplot_title_format='Estimated <b>{display_names[0]}</b>',
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
