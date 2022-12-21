@@ -41,16 +41,17 @@ class AlertHandlerFactory:
             raise InvalidArgumentsException(f"cannot create handler given a '{type(key)}'" "Please provide a string")
 
         if key not in cls.registry:
-            raise InvalidArgumentsException(f"unknown metric key '{key}' given. " "Should be one of [].")
+            raise InvalidArgumentsException(f"unknown metric key '{key}' given. " "Should be one of ['slack'].")
 
         handler_class = cls.registry[key]
-        return handler_class.__init__(**kwargs)  # type: ignore
+        return handler_class(**kwargs)  # type: ignore
 
     @classmethod
     def register(cls, key: str) -> Callable:
         def inner_wrapper(wrapped_class: AlertHandler) -> AlertHandler:
             if key in cls.registry:
-                cls.registry[key] = wrapped_class
+                cls._logger().warning(f"an AlertHandler was already registered for key {key} and will be replaced.")
+            cls.registry[key] = wrapped_class
             return wrapped_class
 
         return inner_wrapper

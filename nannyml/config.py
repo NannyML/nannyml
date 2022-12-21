@@ -82,12 +82,22 @@ class SchedulingConfig(BaseModel):
     cron: Optional[CronSchedulingConfig]
 
 
+class SlackNotificationHandlerConfig(BaseModel):
+    enabled: bool = True
+    webhook_url: str
+
+
+class AlertHandlerConfig(BaseModel):
+    slack: Optional[SlackNotificationHandlerConfig]
+
+
 class Config(BaseModel):
     input: InputConfig
     output: WriterConfig
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
     scheduling: Optional[SchedulingConfig]
+    alerting: Optional[AlertHandlerConfig]
 
     problem_type: str
     ignore_errors: Optional[bool]

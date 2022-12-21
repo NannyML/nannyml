@@ -10,13 +10,14 @@
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from rich.console import Console
 from rich.progress import Progress
 
-from nannyml._typing import ProblemType
+from nannyml._typing import ProblemType, Result
+from nannyml.alerts import AlertHandler
 from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
@@ -36,11 +37,12 @@ def run(
     problem_type: ProblemType,
     chunker: Chunker,
     writer: Writer,
+    alert_handlers: List[AlertHandler] = [],
     ignore_errors: bool = True,
     run_in_console: bool = False,
 ):
     with Progress() as progress:
-        _run_statistical_univariate_feature_drift_calculator(
+        univariate_drift_results = _run_statistical_univariate_feature_drift_calculator(
             reference_data,
             analysis_data,
             column_mapping,
@@ -51,11 +53,11 @@ def run(
             console=progress.console,
         )
 
-        _run_data_reconstruction_multivariate_feature_drift_calculator(
+        multivariate_drift_results = _run_data_reconstruction_multivariate_feature_drift_calculator(
             reference_data, analysis_data, column_mapping, chunker, writer, ignore_errors, console=progress.console
         )
 
-        _run_realized_performance_calculator(
+        realized_performance_results = _run_realized_performance_calculator(
             reference_data,
             analysis_data,
             column_mapping,
@@ -66,7 +68,7 @@ def run(
             console=progress.console,
         )
 
-        _run_cbpe_performance_estimation(
+        cbpe_results = _run_cbpe_performance_estimation(
             reference_data,
             analysis_data,
             column_mapping,
@@ -77,7 +79,7 @@ def run(
             console=progress.console,
         )
 
-        _run_dee_performance_estimation(
+        dle_results = _run_dle_performance_estimation(
             reference_data,
             analysis_data,
             column_mapping,
@@ -93,6 +95,21 @@ def run(
             progress.console.rule()
             progress.console.log(f"view results in {Path(writer.filepath)}")
 
+        for alert_handler in alert_handlers:
+            progress.console.log(f"handling alerts using the {alert_handler.__class__.__name__}")
+            results_to_handle = [
+                r
+                for r in [
+                    univariate_drift_results,
+                    multivariate_drift_results,
+                    realized_performance_results,
+                    cbpe_results,
+                    dle_results,
+                ]
+                if r is not None
+            ]
+            alert_handler.handle(results_to_handle)
+
 
 def _run_statistical_univariate_feature_drift_calculator(
     reference_data: pd.DataFrame,
@@ -103,7 +120,7 @@ def _run_statistical_univariate_feature_drift_calculator(
     writer: Writer,
     ignore_errors: bool,
     console: Optional[Console] = None,
-):
+) -> Optional[Result]:
     if console:
         console.rule('[cyan]UnivariateStatisticalDriftCalculator[/]')
     try:
@@ -142,13 +159,15 @@ def _run_statistical_univariate_feature_drift_calculator(
         else:
             _logger.error(msg)
         if ignore_errors:
-            return
+            return None
         else:
             sys.exit(1)
 
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='statistical_univariate_feature_drift')
+
+    return results
 
 
 def _run_data_reconstruction_multivariate_feature_drift_calculator(
@@ -159,7 +178,7 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
     writer: Writer,
     ignore_errors: bool,
     console: Optional[Console] = None,
-):
+) -> Optional[Result]:
     if console:
         console.rule('[cyan]DataReconstructionDriftCalculator[/]')
     try:
@@ -187,13 +206,15 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
         else:
             _logger.error(msg)
         if ignore_errors:
-            return
+            return None
         else:
             sys.exit(1)
 
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='data_reconstruction_multivariate_feature_drift')
+
+    return results
 
 
 def _run_realized_performance_calculator(
@@ -205,7 +226,7 @@ def _run_realized_performance_calculator(
     writer: Writer,
     ignore_errors: bool,
     console: Optional[Console] = None,
-):
+) -> Optional[Result]:
     if console:
         console.rule('[cyan]PerformanceCalculator[/]')
 
@@ -220,7 +241,7 @@ def _run_realized_performance_calculator(
                 "Skipping realized performance calculation.",
                 style='yellow',
             )
-        return
+        return None
 
     metrics = []
     if problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
@@ -257,13 +278,15 @@ def _run_realized_performance_calculator(
         else:
             _logger.error(msg)
         if ignore_errors:
-            return
+            return None
         else:
             sys.exit(1)
 
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='realized_performance')
+
+    return results
 
 
 def _run_cbpe_performance_estimation(
@@ -275,7 +298,7 @@ def _run_cbpe_performance_estimation(
     writer: Writer,
     ignore_errors: bool,
     console: Optional[Console] = None,
-):
+) -> Optional[Result]:
     if console:
         console.rule('[cyan]Confidence Base Performance Estimator[/]')
 
@@ -286,7 +309,7 @@ def _run_cbpe_performance_estimation(
                 f"CBPE does not support '{problem_type.name}' problems. Skipping CBPE estimation.",
                 style='yellow',
             )
-        return
+        return None
 
     metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
@@ -319,7 +342,7 @@ def _run_cbpe_performance_estimation(
         else:
             _logger.error(msg)
         if ignore_errors:
-            return
+            return None
         else:
             sys.exit(1)
 
@@ -327,8 +350,10 @@ def _run_cbpe_performance_estimation(
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='confidence_based_performance_estimator')
 
+    return results
 
-def _run_dee_performance_estimation(
+
+def _run_dle_performance_estimation(
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
@@ -337,7 +362,7 @@ def _run_dee_performance_estimation(
     writer: Writer,
     ignore_errors: bool,
     console: Optional[Console] = None,
-):
+) -> Optional[Result]:
     if console:
         console.rule('[cyan]Direct Loss Estimator[/]')
 
@@ -348,7 +373,7 @@ def _run_dee_performance_estimation(
                 f"DLE does not support '{problem_type.name}' problems. Skipping DLE estimation.",
                 style='yellow',
             )
-        return
+        return None
 
     try:
         if console:
@@ -377,10 +402,12 @@ def _run_dee_performance_estimation(
         else:
             _logger.error(msg)
         if ignore_errors:
-            return
+            return None
         else:
             sys.exit(1)
 
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='direct_error_estimator')
+
+    return results

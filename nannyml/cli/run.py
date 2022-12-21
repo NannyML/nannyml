@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 import datetime
 import warnings
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import click  # type: ignore
 import jinja2  # type: ignore
@@ -13,6 +13,7 @@ from rich.console import Console
 
 from nannyml import runner
 from nannyml._typing import ProblemType
+from nannyml.alerts import AlertHandler, AlertHandlerFactory
 from nannyml.chunk import ChunkerFactory, DefaultChunker
 from nannyml.cli.cli import cli
 from nannyml.config import Config
@@ -102,6 +103,14 @@ def run(ctx, ignore_errors: bool):
 
         problem_type = ProblemType.parse(config.problem_type)
 
+        alert_handlers: List[AlertHandler] = []
+        if config.alerting:
+            for w, kwargs in vars(config.alerting).items():
+                if kwargs:
+                    kwargs = dict(kwargs)
+                    if kwargs.pop('enabled'):
+                        alert_handlers.append(AlertHandlerFactory.create(w, **kwargs))
+
         runner.run(
             reference_data=reference,
             analysis_data=analysis,
@@ -109,6 +118,7 @@ def run(ctx, ignore_errors: bool):
             problem_type=problem_type,
             chunker=chunker,
             writer=writer,
+            alert_handlers=alert_handlers,
             run_in_console=True,
             ignore_errors=_ignore_errors,
         )

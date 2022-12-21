@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Union
 from slack_sdk import WebhookClient
 
 from nannyml._typing import Result
+from nannyml.alerts import AlertHandlerFactory
 from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.performance_calculation.result import Result as RealizedPerformanceResult
@@ -17,6 +18,7 @@ from nannyml.performance_estimation.confidence_based.results import Result as CB
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResult
 
 
+@AlertHandlerFactory.register('slack')
 class SlackNotificationHandler:
     def __init__(self, webhook_url: str):
         self.webhook_url = webhook_url
