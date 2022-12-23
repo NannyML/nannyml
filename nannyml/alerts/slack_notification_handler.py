@@ -13,6 +13,7 @@ from nannyml._typing import Result
 from nannyml.alerts import AlertHandlerFactory
 from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
+from nannyml.exceptions import AlertHandlerException, InvalidArgumentsException
 from nannyml.performance_calculation.result import Result as RealizedPerformanceResult
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResult
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResult
@@ -34,7 +35,17 @@ class SlackNotificationHandler:
         for result in results:
             self._builder.add_result(result, only_alerts).add_divider()
 
-        self._client.send(blocks=self._builder.build())
+        try:
+            response = self._client.send(blocks=self._builder.build())
+        except Exception as exc:
+            raise AlertHandlerException(f"an unexpected exception occurred upon calling Slack: {exc}")
+
+        if response.status_code != 200:
+            if response.status_code == 404 and response.body == 'no_team':
+                raise InvalidArgumentsException(f"invalid webhook_url {self.webhook_url}")
+            raise AlertHandlerException(f"Slack returned status code '{response.status_code}': '{response.body}'")
+
+        return
 
 
 class BlocksBuilder:

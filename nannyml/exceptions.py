@@ -47,3 +47,7 @@ class ReaderException(BaseException):
 
 class IOException(BaseException):
     """An exception indicating something went wrong during IO."""
+
+
+class AlertHandlerException(BaseException):
+    """An exception indicating something went wrong during alert handling."""

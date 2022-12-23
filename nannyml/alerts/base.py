@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 import logging
 import typing
+import warnings
 from enum import Enum
 from typing import Callable, Dict, List, Union
 
@@ -40,8 +41,11 @@ class AlertHandlerFactory:
         if not isinstance(key, str):
             raise InvalidArgumentsException(f"cannot create handler given a '{type(key)}'" "Please provide a string")
 
+        available_keys = ', '.join(map(lambda k: f"'{k}'", cls.registry.keys()))
         if key not in cls.registry:
-            raise InvalidArgumentsException(f"unknown metric key '{key}' given. " "Should be one of ['slack'].")
+            raise InvalidArgumentsException(
+                f"unknown metric key '{key}' given. " f"Should be one of [{available_keys}]."
+            )
 
         handler_class = cls.registry[key]
         return handler_class(**kwargs)  # type: ignore
@@ -50,7 +54,9 @@ class AlertHandlerFactory:
     def register(cls, key: str) -> Callable:
         def inner_wrapper(wrapped_class: AlertHandler) -> AlertHandler:
             if key in cls.registry:
-                cls._logger().warning(f"an AlertHandler was already registered for key {key} and will be replaced.")
+                msg = f"an AlertHandler was already registered for key {key} and will be replaced."
+                warnings.warn(msg, UserWarning)
+                cls._logger().warning(msg)
             cls.registry[key] = wrapped_class
             return wrapped_class
 
