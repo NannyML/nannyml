@@ -322,7 +322,7 @@ class SizeBasedChunker(Chunker):
 
     >>> from nannyml.chunk import SizeBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = SizeBasedChunker(chunk_size=2000, drop_incomplete = True)
+    >>> chunker = SizeBasedChunker(chunk_size=2000, incomplete='drop')
     >>> chunks = chunker.split(data=df)
 
     """
