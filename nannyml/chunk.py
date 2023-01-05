@@ -420,7 +420,7 @@ class CountBasedChunker(Chunker):
     --------
     >>> from nannyml.chunk import CountBasedChunker
     >>> df = pd.read_parquet('/path/to/my/data.pq')
-    >>> chunker = CountBasedChunker(chunk_count=100)
+    >>> chunker = CountBasedChunker(chunk_number=100)
     >>> chunks = chunker.split(data=df)
 
     """
