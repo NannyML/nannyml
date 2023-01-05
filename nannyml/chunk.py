@@ -459,15 +459,15 @@ class CountBasedChunker(Chunker):
         # TODO wording
         if not isinstance(chunk_number, int):
             raise InvalidArgumentsException(
-                f"given chunk_count is of type {type(chunk_number)} but should be an int."
+                f"given chunk_number is of type {type(chunk_number)} but should be an int."
                 f"Please provide an integer as a chunk count"
             )
 
         # TODO wording
         if chunk_number <= 0:
             raise InvalidArgumentsException(
-                f"given chunk_count {chunk_number} is less then or equal to zero."
-                f"The chunk count should always be larger then zero"
+                f"given chunk_number {chunk_number} is less then or equal to zero."
+                f"The chunk number should always be larger then zero"
             )
 
         self.chunk_number = chunk_number
