@@ -3,4 +3,4 @@
 #  License: Apache Software License 2.0
 
 from .base import AlertHandler, AlertHandlerFactory, AlertType
-from .slack_notification_handler import SlackNotificationHandler
+from .slack_notification_handler import BlocksBuilder, SlackNotificationHandler

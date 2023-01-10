@@ -369,6 +369,13 @@ There are currently two ways of scheduling in NannyML.
       cron:
         crontab: "*/5 * * * *" # every 5 minutes, so on 00:05, 00:10, 00:15, ...
 
+.. _configuration_file_alert_handling:
+
+Alert handling section
+*****************************
+
+# TODO: add stuff!!!!
+
 
 Standalone parameters section
 *****************************

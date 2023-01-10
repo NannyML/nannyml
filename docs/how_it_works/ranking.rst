@@ -37,7 +37,7 @@ We'll use an example from :ref:`Correlation Ranking Tutorial<tutorial-ranking-co
     :cell: 2
 
 
-We see that after initializing a correlation ranker, the next step is to 
+We see that after initializing a correlation ranker, the next step is to
 :meth:`~nannyml.drift.ranking.CorrelationRanking.fit` it by providing performance results
 from the reference :term:`period<Data Period>`. From those results the ranker calculates
 the average performance during the reference period. This value is saved at the ``mean_perf_value`` property of the ranker.

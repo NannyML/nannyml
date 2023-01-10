@@ -49,7 +49,7 @@ class SlackNotificationHandler:
 
 
 class BlocksBuilder:
-    def __init__(self):
+    def __init__(self) -> None:
         self._blocks: List[Dict[str, Any]] = []
 
     def add_header(self) -> BlocksBuilder:
@@ -131,7 +131,7 @@ def _multivariate_drift_result_blocks(result: DataReconstructionDriftResult, onl
         }
     )
     if has_alerts:
-        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": '• Reconstruction error'}})
+        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": '• Reconstruction Error'}})
     return blocks
 
 

@@ -5,6 +5,7 @@
 """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 from __future__ import annotations
 
+import collections
 import copy
 from typing import List, Optional
 
@@ -15,6 +16,8 @@ from nannyml.base import AbstractCalculatorResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.metrics import plot_metric
 from nannyml.usage_logging import UsageEvent, log_usage
+
+Metric = collections.namedtuple('Metric', 'column_name display_name')
 
 
 class Result(AbstractCalculatorResult):
@@ -34,11 +37,11 @@ class Result(AbstractCalculatorResult):
         self.categorical_column_names = categorical_column_names
         self.continuous_column_names = continuous_column_names
         self.timestamp_column_name = timestamp_column_name
-        self.metrics = ['reconstruction_error']
+        self.metrics = [Metric(column_name='reconstruction_error', display_name='Reconstruction Error')]
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
-            metrics = self.metrics
+            metrics = [m.column_name for m in self.metrics]
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
 

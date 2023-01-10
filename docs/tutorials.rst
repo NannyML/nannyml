@@ -16,3 +16,4 @@ Tutorials
     tutorials/working_with_results
     tutorials/adjusting_plots
     tutorials/chunking
+    tutorials/alert_handling

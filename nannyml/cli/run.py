@@ -37,7 +37,7 @@ def run(ctx, ignore_errors: bool):
 
     console = Console()
 
-    def actually_run_it():
+    def actually_run_it() -> None:
         # deal with parameter preference: prefer command line above config file
         _ignore_errors = _get_ignore_errors(ignore_errors, config)
 

@@ -197,13 +197,13 @@ univariate_calculator = univariate_calculator.fit(reference)
 univariate_results = univariate_calculator.calculate(analysis)
 # Plot drift results for all continuous columns
 figure = univariate_results.filter(
-    column_names=univariate_results.continuous_column_names, 
+    column_names=univariate_results.continuous_column_names,
     methods=['jensen_shannon']).plot(kind='drift')
 figure.show()
 
 # Plot drift results for all categorical columns
 figure = univariate_results.filter(
-    column_names=univariate_results.categorical_column_names, 
+    column_names=univariate_results.categorical_column_names,
     methods=['chi2']).plot(kind='drift')
 figure.show()
 
