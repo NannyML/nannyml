@@ -80,8 +80,16 @@ class Result(Abstract2DResult):
         result.continuous_method_names = [m for m in self.continuous_method_names if m in methods]
         result.continuous_methods = [m for m in self.continuous_methods if m.column_name in methods]
         result.column_names = [c for c in self.column_names if c in column_names]
-        result.categorical_column_names = [c for c in self.categorical_column_names if c in column_names]
-        result.continuous_column_names = [c for c in self.continuous_column_names if c in column_names]
+        result.categorical_column_names = [
+            c
+            for c in self.categorical_column_names
+            if (isinstance(column_names, List) and c in column_names) or c == column_names
+        ]
+        result.continuous_column_names = [
+            c
+            for c in self.continuous_column_names
+            if (isinstance(column_names, List) and c in column_names) or c == column_names
+        ]
         result.methods = result.categorical_methods + result.continuous_methods
         return result
 
@@ -115,7 +123,6 @@ class Result(Abstract2DResult):
     def plot(  # type: ignore
         self,
         kind: str = 'drift',
-        number_of_columns: Optional[int] = None,
         *args,
         **kwargs,
     ) -> Optional[go.Figure]:
@@ -179,7 +186,6 @@ class Result(Abstract2DResult):
                 reference_data=self.reference_data,
                 analysis_data=self.analysis_data,
                 chunker=self.chunker,
-                number_of_columns=number_of_columns,
             )
         else:
             raise InvalidArgumentsException(

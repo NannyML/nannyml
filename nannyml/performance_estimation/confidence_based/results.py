@@ -121,7 +121,7 @@ class Result(Abstract1DResult):
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
-    def compare(self, result: Union[MultivariateDriftResult, UnivariateDriftResult]):
+    def compare(self, result: ResultType):
         if isinstance(result, MultivariateDriftResult):
             return ResultMultivariateComparison(performance_result=self, multivariate_drift_result=result)
         elif isinstance(result, UnivariateDriftResult):
@@ -134,16 +134,10 @@ class ResultMultivariateComparison:
         self.multivariate_drift_result = multivariate_drift_result
 
     def plot(self) -> Figure:
-        items = [
-            (performance_metric, drift_metric)
-            for performance_metric in self.performance_result.metrics
-            for drift_metric in self.multivariate_drift_result.metrics
-        ]
         return plot_2d_compare_step_to_step(
             result_1=self.performance_result,
             result_2=self.multivariate_drift_result,
             plot_title='Estimated performance vs. multivariate drift',
-            items=items,
         )
 
 
@@ -153,10 +147,8 @@ class ResultUnivariateComparison:
         self.univariate_drift_result = univariate_drift_result
 
     def plot(self) -> Figure:
-        items = [(performance_metric,) for performance_metric in self.performance_result.metrics]
         return plot_2d_compare_step_to_step(
             result_1=self.performance_result,
             result_2=self.univariate_drift_result,
-            items=items,
             plot_title='Estimated performance vs. univariate drift',
         )

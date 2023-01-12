@@ -435,6 +435,6 @@ def _raise_exception_for_negative_values(column: pd.Series):
         negative_item_indices = np.where(column.values < 0)
         raise InvalidArgumentsException(
             f"target values '{column.name}' contain negative values.\n"
-            f"\tLog-based metrics are not supported for negative target values.\n"
+            "\tLog-based metrics are not supported for negative target values.\n"
             f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
         )

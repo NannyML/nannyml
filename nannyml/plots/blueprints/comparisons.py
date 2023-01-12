@@ -1,6 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+import itertools
 import math
 from typing import List, Optional, Tuple, Union
 
@@ -10,7 +11,6 @@ import pandas as pd
 from nannyml._typing import Result
 from nannyml.base import AbstractEstimatorResult, AbstractResult
 from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
-from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import Colors
 from nannyml.plots.components import Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
 from nannyml.plots.util import ensure_numpy, is_time_based_x_axis
@@ -92,8 +92,6 @@ def plot_compare_performance_to_drift(
 def plot_2d_compare_step_to_step(
     result_1: Result,
     result_2: Result,
-    items: List,
-    # items: List[Tuple[Metric, Metric]],
     plot_title: str,
     x_axis_time_title: str = 'Time',
     x_axis_chunk_title: str = 'Chunk',
@@ -102,8 +100,9 @@ def plot_2d_compare_step_to_step(
     number_of_columns: Optional[int] = None,
     hover: Optional[Hover] = None,
 ) -> Figure:
-    if len(items) == 0:
-        raise InvalidArgumentsException("tried plotting comparisons but received zero plotting items.")
+
+    # validate if both result keysets are compatible for plotting
+    items = list(itertools.product(result_1.keys(), result_2.keys()))
 
     number_of_plots = len(items)
     if number_of_columns is None:
@@ -144,7 +143,10 @@ def plot_2d_compare_step_to_step(
 
     subplot_specs = [[{"secondary_y": True} for _ in range(number_of_columns)] for _ in range(number_of_rows)]
     if subplot_titles is None:
-        subplot_titles = [f'{metric_1.display_name} vs. {metric_2.display_name}' for metric_1, metric_2 in items]
+        subplot_titles = [
+            f'{render_display_name(key_1.display_names)} vs. {render_display_name(key_2.display_names)}'
+            for key_1, key_2 in items
+        ]
     figure.set_subplots(
         rows=number_of_rows,
         cols=number_of_columns,
@@ -175,20 +177,22 @@ def plot_2d_compare_step_to_step(
 
     # endregion
 
-    for idx, (metric_1, metric_2) in enumerate(items):
-        reference_metric_1 = reference_result_1.to_df()[(metric_1.column_name, 'value')]
-        reference_metric_2 = reference_result_2.to_df()[(metric_2.column_name, 'value')]
-        analysis_metric_1 = analysis_result_1.to_df()[(metric_1.column_name, 'value')]
-        analysis_metric_2 = analysis_result_2.to_df()[(metric_2.column_name, 'value')]
-        analysis_metric_1_alerts = analysis_result_1.to_df()[(metric_1.column_name, 'alert')]
-        analysis_metric_2_alerts = analysis_result_2.to_df()[(metric_2.column_name, 'alert')]
+    for idx, (key_1, key_2) in enumerate(items):
+        reference_metric_1 = reference_result_1.values(key_1)
+        reference_metric_2 = reference_result_2.values(key_2)
+        analysis_metric_1 = analysis_result_1.values(key_1)
+        analysis_metric_2 = analysis_result_2.values(key_2)
+        analysis_metric_1_alerts = analysis_result_1.alerts(key_1)
+        analysis_metric_2_alerts = analysis_result_2.alerts(key_2)
 
         x_axis, y_axis, y_axis_2 = _get_subplot_axes_names(idx, y_axis_per_subplot=2)
+        _set_y_axis_title(figure, y_axis, render_metric_display_name(key_1.display_names))
+        _set_y_axis_title(figure, y_axis_2, render_metric_display_name(key_2.display_names))
 
         figure = _plot_compare_step_to_step(
             figure=figure,
-            metric_1_display_name=metric_1.display_name,
-            metric_2_display_name=metric_2.display_name,
+            metric_1_display_name=key_1.display_names,
+            metric_2_display_name=key_2.display_names,
             analysis_metric_1=analysis_metric_1,
             analysis_metric_2=analysis_metric_2,
             reference_chunk_keys=reference_chunk_keys,
@@ -218,10 +222,15 @@ def _get_subplot_axes_names(index: int, y_axis_per_subplot: int = 2) -> Tuple:
     return tuple([f'x{index + 1}'] + [f'y{2 * index + 1 + a}' for a in range(y_axis_per_subplot)])
 
 
+def _set_y_axis_title(figure: Figure, y_axis_name: str, title: str):
+    y_name = y_axis_name[0] + 'axis' + y_axis_name[1 : len(y_axis_name)]
+    figure.layout.__getattr__(y_name).title = title
+
+
 def _plot_compare_step_to_step(
     figure: Figure,
-    metric_1_display_name: str,
-    metric_2_display_name: str,
+    metric_1_display_name: Union[str, Tuple],
+    metric_2_display_name: Union[str, Tuple],
     analysis_metric_1: Union[np.ndarray, pd.Series],
     analysis_metric_2: Union[np.ndarray, pd.Series],
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -243,25 +252,32 @@ def _plot_compare_step_to_step(
     yaxis: Optional[str] = 'y',
     yaxis2: Optional[str] = 'y2',
 ) -> Figure:
+    _metric_1_display_name = render_display_name(metric_1_display_name)
+    _metric_2_display_name = render_display_name(metric_2_display_name)
 
     if figure is None:
         figure = Figure(
-            title=f'{metric_1_display_name} versus {metric_2_display_name}',
+            title=f'{_metric_1_display_name} versus {_metric_2_display_name}',
             x_axis_title='Time'
             if is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
             else 'Chunk',
-            y_axis_title=f'{metric_1_display_name}',
+            y_axis_title=f'{_metric_1_display_name}',
             legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
             height=500,
             yaxis2=dict(
-                title=f"{metric_2_display_name}",
+                title=f"{_metric_2_display_name}",
                 anchor="x",
                 overlaying="y",
                 side="right",
             ),
         )
 
-    has_reference_results = reference_chunk_indices is not None and len(reference_chunk_indices) > 0
+    has_reference_results = (
+        reference_metric_1 is not None
+        and len(reference_metric_1) > 0
+        and reference_metric_2 is not None
+        and len(reference_metric_2) > 0
+    )
     if has_reference_results and not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates):
         analysis_chunk_indices = analysis_chunk_indices + max(reference_chunk_indices) + 1  # type: ignore[arg-type]
 
@@ -278,7 +294,8 @@ def _plot_compare_step_to_step(
             show_extra=True,
         )
 
-        _hover.add(np.asarray([metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
+        assert reference_metric_1 is not None
+        _hover.add(np.asarray([_metric_1_display_name] * len(reference_metric_1)), 'metric_name')
 
         if reference_chunk_periods is not None:
             _hover.add(render_period_string(reference_chunk_periods), name='period')
@@ -318,11 +335,13 @@ def _plot_compare_step_to_step(
             template='%{period}<br />'
             'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
             '%{metric_name}: <b>%{metric_value}</b><br />',
-            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
+            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />˚'
             show_extra=True,
         )
+
+        assert reference_metric_2 is not None
         _hover.add(
-            np.asarray(["Reconstruction error"] * len(reference_metric_1)), 'metric_name'  # type: ignore[arg-type]
+            np.asarray([render_metric_display_name(metric_2_display_name)] * len(reference_metric_2)), 'metric_name'
         )
 
         if reference_chunk_periods is not None:
@@ -373,7 +392,7 @@ def _plot_compare_step_to_step(
         # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
         show_extra=True,
     )
-    _hover.add(np.asarray([metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
+    _hover.add(np.asarray([_metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
 
     if analysis_chunk_periods is not None:
         _hover.add(render_period_string(analysis_chunk_periods), name='period')
@@ -418,13 +437,13 @@ def _plot_compare_step_to_step(
         # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
         show_extra=True,
     )
-    _hover.add(np.asarray(["Reconstruction error"] * len(analysis_metric_1)), 'metric_name')
+    _hover.add(np.asarray([render_metric_display_name(metric_2_display_name)] * len(analysis_metric_2)), 'metric_name')
 
     if analysis_chunk_periods is not None:
         _hover.add(render_period_string(analysis_chunk_periods), name='period')
 
-    if analysis_metric_1_alerts is not None:
-        _hover.add(render_alert_string(analysis_metric_1_alerts), name='alert')
+    if analysis_metric_2_alerts is not None:
+        _hover.add(render_alert_string(analysis_metric_2_alerts), name='alert')
 
     if analysis_chunk_keys is not None:
         _hover.add(analysis_chunk_keys, name='chunk_key')
@@ -489,3 +508,25 @@ def _plot_compare_step_to_step(
     # endregion
 
     return figure
+
+
+def render_display_name(metric_display_name: Union[str, Tuple]):
+    if not isinstance(metric_display_name, str):
+        if len(metric_display_name) == 1:
+            return f'<b>{metric_display_name[0]}</b>'
+        elif len(metric_display_name) == 2:
+            return f'<b>{metric_display_name[1]}</b> ({metric_display_name[0]})'
+        else:
+            return ', '.join(metric_display_name)
+    else:
+        return metric_display_name
+
+
+def render_metric_display_name(metric_display_name: Union[str, Tuple]):
+    if not isinstance(metric_display_name, str):
+        if len(metric_display_name) == 1:
+            return f'<b>{metric_display_name[0]}</b>'
+        elif len(metric_display_name) == 2:
+            return f'<b>{metric_display_name[1]}</b>'
+    else:
+        return f'<b>{metric_display_name}</b>'
