@@ -413,6 +413,22 @@ def test_data_reconstruction_drift_calculator_raises_type_error_when_missing_fea
         )
 
 
+# See https://github.com/NannyML/nannyml/issues/179
+def test_data_reconstruction_drift_lower_threshold_smaller_than_upper_threshold(sample_drift_data):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    calc = DataReconstructionDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+    ).fit(ref_data)
+    results = calc.calculate(data=sample_drift_data)
+
+    results_df = results.to_df()
+    assert all(
+        results_df.loc[:, ('reconstruction_error', 'lower_threshold')]
+        <= results_df.loc[:, ('reconstruction_error', 'upper_threshold')]
+    )
+
+
 def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 

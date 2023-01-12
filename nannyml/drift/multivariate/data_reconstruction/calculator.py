@@ -232,8 +232,8 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         )
         res['upper_confidence_bound'] = res['reconstruction_error'] + SAMPLING_ERROR_RANGE * res['sampling_error']
         res['lower_confidence_bound'] = res['reconstruction_error'] - SAMPLING_ERROR_RANGE * res['sampling_error']
-        res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
+        res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
 
         multilevel_index = _create_multilevel_index()
