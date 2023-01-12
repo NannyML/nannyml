@@ -180,7 +180,7 @@ def _build_scheduling_trigger_args(config: Config) -> Dict[str, Any]:
     if config.scheduling.cron:
         return {'trigger': CronTrigger.from_crontab(config.scheduling.cron.crontab)}
     elif config.scheduling.interval:
-        if len(config.scheduling.interval.dict()) == 0:
+        if not config.scheduling.interval.dict():
             raise InvalidArgumentsException(
                 "found no values for the 'scheduling.interval' section. " "Provide at least one interval value."
             )
