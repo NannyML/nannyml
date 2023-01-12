@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Callable, Dict, List, Union
 
 from nannyml._typing import Result
+from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
 
 if typing.TYPE_CHECKING:
@@ -61,3 +62,30 @@ class AlertHandlerFactory:
             return wrapped_class
 
         return inner_wrapper
+
+
+def get_column_names_with_alerts(result: UnivariateDriftResult) -> List[str]:
+    df = result.filter(period='analysis').to_df()
+
+    columns_with_alerts = set()
+    for column_name in result.column_names:
+        alert_cols = df.loc[:, (column_name, slice(None), 'alert')].columns
+        for col in alert_cols:
+            has_alerts = df.get(col).any()
+            if has_alerts:
+                columns_with_alerts.add(column_name)
+
+    return list(columns_with_alerts)
+
+
+def get_metrics_with_alerts(result: Result) -> List[str]:
+    df = result.filter(period='analysis').to_df()
+
+    metrics_with_alerts = set()
+    if hasattr(result, 'metrics'):
+        for metric in result.metrics:
+            has_alerts = df.get((metric.column_name, 'alert')).any()
+            if has_alerts:
+                metrics_with_alerts.add(metric.display_name)
+
+    return list(metrics_with_alerts)

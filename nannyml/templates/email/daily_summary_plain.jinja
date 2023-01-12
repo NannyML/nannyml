@@ -1,0 +1,77 @@
+NannyML daily summary for {{ date_of_today }}
+=============================================
+
+{% if 'nannyml.performance_calculation.result.Result' in alerts -%}
+{% set item = alerts['nannyml.performance_calculation.result.Result'] %}
+{% if item.has_alerts %}⚠{% else %}✅{% endif %} Realized performance
+---------------------------------------------
+
+{% if item.has_alerts %}
+{{ item.alert_count }} metrics drifting
+
+{% for column in item.alerting_items %}
+* {{ column }}
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+{% if 'nannyml.performance_estimation.confidence_based.results.Result' in alerts -%}
+{% set item = alerts['nannyml.performance_estimation.confidence_based.results.Result'] %}
+{% if item.has_alerts %}⚠{% else %}✅{% endif %} Estimated performance (CBPE)
+---------------------------------------------
+
+{% if item.has_alerts %}
+{{ item.alert_count }} metrics drifting
+
+{% for column in item.alerting_items %}
+* {{ column }}
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+{% if 'nannyml.performance_estimation.direct_loss_estimation.result.Result' in alerts -%}
+{% set item = alerts['nannyml.performance_estimation.direct_loss_estimation.result.Result'] %}
+{% if item.has_alerts %}⚠{% else %}✅{% endif %} Estimated performance (DLE)
+---------------------------------------------
+
+{% if item.has_alerts %}
+{{ item.alert_count }} metrics drifting
+
+{% for column in item.alerting_items %}
+* {{ column }}
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+{% if 'nannyml.drift.multivariate.data_reconstruction.result.Result' in alerts -%}
+{% set item = alerts['nannyml.drift.multivariate.data_reconstruction.result.Result'] %}
+{% if item.has_alerts %}⚠{% else %}✅{% endif %} Multivariate drift
+---------------------------------------------
+
+{% if item.has_alerts %}
+{{ item.alert_count }} metric drifting
+
+{% for column in item.alerting_items %}
+* {{ column }}
+{% endfor %}
+{% endif %}
+
+{% endif %}
+
+{% if 'nannyml.drift.univariate.result.Result' in alerts -%}
+{% set item = alerts['nannyml.drift.univariate.result.Result'] %}
+{% if item.has_alerts %}⚠{% else %}✅{% endif %} Univariate drift
+---------------------------------------------
+
+{% if item.has_alerts %}
+{{ item.alert_count }} columns drifting
+
+{% for column in item.alerting_items %}
+* {{ column }}
+{% endfor %}
+{% endif %}
+
+{% endif %}

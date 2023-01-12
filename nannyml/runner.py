@@ -100,11 +100,11 @@ def run(
             results_to_handle = [
                 r
                 for r in [
-                    univariate_drift_results,
-                    multivariate_drift_results,
                     realized_performance_results,
                     cbpe_results,
                     dle_results,
+                    univariate_drift_results,
+                    multivariate_drift_results,
                 ]
                 if r is not None
             ]

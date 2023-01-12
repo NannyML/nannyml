@@ -87,8 +87,18 @@ class SlackNotificationHandlerConfig(BaseModel):
     webhook_url: str
 
 
+class EmailNotificationHandlerConfig(BaseModel):
+    enabled: bool = True
+    smtp_server_address: str
+    smtp_server_port: int
+    smtp_from_address: str
+    smtp_password: str
+    smtp_to_addresses: List[str]
+
+
 class AlertHandlerConfig(BaseModel):
     slack: Optional[SlackNotificationHandlerConfig]
+    email: Optional[EmailNotificationHandlerConfig]
 
 
 class Config(BaseModel):

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>NannyML daily summary</title>
+</head>
+<body>
+    <div id="content">
+        <div class="title">
+            <h1>NannyML daily summary for {{ date_of_today }}</h1>
+        </div>
+        {% if 'nannyml.performance_calculation.result.Result' in alerts -%}
+        <hr />
+        {% set item = alerts['nannyml.performance_calculation.result.Result'] %}
+        <div id="realized-performance" class="result-container">
+            <h2>{% if item.has_alerts %}⚠{% else %}✅{% endif %} Realized performance</h2>
+            {% if item.has_alerts %}
+            <h3>{{ item.alert_count }} metric drifting</h3>
+            <ul>
+            {% for metric in item.alerting_items %}
+                <li>{{ metric }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if 'nannyml.performance_estimation.confidence_based.results.Result' in alerts -%}
+        <hr />
+        {% set item = alerts['nannyml.performance_estimation.confidence_based.results.Result'] %}
+        <div id="estimated-performance-cbpe" class="result-container">
+            <h2>{% if item.has_alerts %}⚠{% else %}✅{% endif %} Estimated performance (CBPE)</h2>
+            {% if item.has_alerts %}
+            <h3>{{ item.alert_count }} metric drifting</h3>
+            <ul>
+            {% for metric in item.alerting_items %}
+                <li>{{ metric }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if 'nannyml.performance_estimation.direct_loss_estimation.result.Result' in alerts -%}
+        <hr />
+        {% set item = alerts['nannyml.performance_estimation.direct_loss_estimation.result.Result'] %}
+        <div id="estimated-performance-dle" class="result-container">
+            <h2>{% if item.has_alerts %}⚠{% else %}✅{% endif %} Estimated performance (DLE)</h2>
+            {% if item.has_alerts %}
+            <h3>{{ item.alert_count }} metric drifting</h3>
+            <ul>
+            {% for metric in item.alerting_items %}
+                <li>{{ metric }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if 'nannyml.drift.multivariate.data_reconstruction.result.Result' in alerts -%}
+        <hr />
+        {% set item = alerts['nannyml.drift.multivariate.data_reconstruction.result.Result'] %}
+        <div id="multivariate-drift" class="result-container">
+            <h2>{% if item.has_alerts %}⚠{% else %}✅{% endif %} Multivariate drift</h2>
+            {% if item.has_alerts %}
+            <h3>{{ item.alert_count }} metric drifting</h3>
+            <ul>
+            {% for metric in item.alerting_items %}
+                <li>{{ metric }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if 'nannyml.drift.univariate.result.Result' in alerts -%}
+        {% set item = alerts['nannyml.drift.univariate.result.Result'] %}
+        <div id="univariate-drift" class="result-container">
+            <h2>{% if item.has_alerts %}⚠{% else %}✅{% endif %} Univariate drift</h2>
+            {% if item.has_alerts %}
+            <h3>{{ item.alert_count }} columns drifting</h3>
+            <ul>
+            {% for column in item.alerting_items %}
+                <li>{{ column }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

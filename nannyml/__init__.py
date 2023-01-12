@@ -38,7 +38,7 @@ import logging
 
 from dotenv import load_dotenv
 
-from .alerts import AlertHandler, AlertHandlerFactory, AlertType, SlackNotificationHandler
+from .alerts import AlertHandler, AlertHandlerFactory, AlertType, EmailNotificationHandler, SlackNotificationHandler
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from .datasets import (

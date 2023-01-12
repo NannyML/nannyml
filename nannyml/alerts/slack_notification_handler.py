@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Union
 from slack_sdk import WebhookClient
 
 from nannyml._typing import Result
-from nannyml.alerts import AlertHandlerFactory
+from nannyml.alerts import AlertHandlerFactory, get_column_names_with_alerts, get_metrics_with_alerts
 from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import AlertHandlerException, InvalidArgumentsException
@@ -88,15 +88,7 @@ class BlocksBuilder:
 def _univariate_drift_result_blocks(result: UnivariateDriftResult, only_alerts: bool) -> List[Dict[str, Any]]:
     blocks: List[Dict[str, Any]] = []
 
-    df = result.filter(period='analysis').to_df()
-
-    columns_with_alerts = set()
-    for column_name in result.column_names:
-        alert_cols = df.loc[:, (column_name, slice(None), 'alert')].columns
-        for col in alert_cols:
-            has_alerts = df.get(col).any()
-            if has_alerts:
-                columns_with_alerts.add(column_name)
+    columns_with_alerts = get_column_names_with_alerts(result)
 
     icon = ':white_check_mark:' if len(columns_with_alerts) == 0 else ':warning:'
     blocks.append(
@@ -137,13 +129,8 @@ def _multivariate_drift_result_blocks(result: DataReconstructionDriftResult, onl
 
 def _realized_performance_result_blocks(result: RealizedPerformanceResult, only_alerts: bool) -> List[Dict[str, Any]]:
     blocks: List[Dict[str, Any]] = []
-    df = result.filter(period='analysis').to_df()
+    metrics_with_alerts = get_metrics_with_alerts(result)
 
-    metrics_with_alerts = set()
-    for metric in result.metrics:
-        has_alerts = df.get((metric.column_name, 'alert')).any()
-        if has_alerts:
-            metrics_with_alerts.add(metric.display_name)
     icon = ':white_check_mark:' if len(metrics_with_alerts) == 0 else ':warning:'
     blocks.append(
         {
@@ -163,13 +150,8 @@ def _realized_performance_result_blocks(result: RealizedPerformanceResult, only_
 
 def _estimated_performance_cbpe_result_blocks(result: CBPEResult, only_alerts: bool) -> List[Dict[str, Any]]:
     blocks: List[Dict[str, Any]] = []
-    df = result.filter(period='analysis').to_df()
+    metrics_with_alerts = get_metrics_with_alerts(result)
 
-    metrics_with_alerts = set()
-    for metric in result.metrics:
-        has_alerts = df.get((metric.column_name, 'alert')).any()
-        if has_alerts:
-            metrics_with_alerts.add(metric.display_name)
     icon = ':white_check_mark:' if len(metrics_with_alerts) == 0 else ':warning:'
     blocks.append(
         {
@@ -189,13 +171,8 @@ def _estimated_performance_cbpe_result_blocks(result: CBPEResult, only_alerts: b
 
 def _estimated_performance_dle_result_blocks(result: DLEResult, only_alerts: bool) -> List[Dict[str, Any]]:
     blocks: List[Dict[str, Any]] = []
-    df = result.filter(period='analysis').to_df()
+    metrics_with_alerts = get_metrics_with_alerts(result)
 
-    metrics_with_alerts = set()
-    for metric in result.metrics:
-        has_alerts = df.get((metric.column_name, 'alert')).any()
-        if has_alerts:
-            metrics_with_alerts.add(metric.display_name)
     icon = ':white_check_mark:' if len(metrics_with_alerts) == 0 else ':warning:'
     blocks.append(
         {

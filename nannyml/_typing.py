@@ -21,9 +21,7 @@ class Result(Protocol):
 
     data: pd.DataFrame
 
-    def filter(
-        self, period: Optional[str] = None, metrics: Optional[List[str]] = None, *args, **kwargs
-    ) -> pd.DataFrame:
+    def filter(self, period: str, metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs) -> pd.DataFrame:
         """"""
 
 
