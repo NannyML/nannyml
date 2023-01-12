@@ -430,8 +430,9 @@ for the :ref:`dataset-synthetic-binary`. All data is read and written to the loc
         path: data/synthetic_sample_analysis.csv
 
     output:
-      path: out/
-      format: parquet
+      raw_files:
+        path: out/
+        format: parquet
 
     column_mapping:
       features:
@@ -484,12 +485,13 @@ The results are written to another S3 bucket, also using a templated path.
             aws_secret_access_key: 'DATA_SECRET_ACCESS_KEY'
 
     output:
-      path: s3://nml-results/{{year}}/{{month}}/{{day}}
-      format: parquet
-      credentials:  # different credentials
-          client_kwargs:
-            aws_access_key_id: 'RESULTS_ACCESS_KEY_ID'
-            aws_secret_access_key: 'RESULTS_SECRET_ACCESS_KEY'
+      raw_files:
+        path: s3://nml-results/{{year}}/{{month}}/{{day}}
+        format: parquet
+        credentials:  # different credentials
+            client_kwargs:
+              aws_access_key_id: 'RESULTS_ACCESS_KEY_ID'
+              aws_secret_access_key: 'RESULTS_SECRET_ACCESS_KEY'
 
     chunker:
       chunk_size: 5000
