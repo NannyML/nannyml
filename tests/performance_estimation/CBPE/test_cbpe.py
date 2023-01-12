@@ -55,6 +55,19 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
     return estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
 
 
+@pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
+def test_cbpe_create_with_single_or_list_of_metrics(metrics, expected):
+    sut = CBPE(
+        timestamp_column_name='timestamp',
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=metrics,
+        problem_type='classification_binary',
+    )
+    assert [metric.column_name for metric in sut.metrics] == expected
+
+
 def test_cbpe_will_calibrate_scores_when_needed(binary_classification_data):  # noqa: D103
     ref_df = binary_classification_data[0]
 

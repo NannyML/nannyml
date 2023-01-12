@@ -4,7 +4,7 @@
 
 """Module containing CBPE estimation results and plotting implementations."""
 import copy
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import pandas as pd
 from plotly import graph_objects as go
@@ -71,8 +71,6 @@ class Result(Abstract1DResult):
     def plot(
         self,
         kind: str = 'performance',
-        metric: Optional[Union[str, Metric]] = None,
-        plot_reference: bool = False,
         *args,
         **kwargs,
     ) -> go.Figure:

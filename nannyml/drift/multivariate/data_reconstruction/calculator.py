@@ -143,11 +143,11 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         # TODO: We duplicate the reference data 3 times, here. Improve to something more memory efficient?
         imputed_reference_data = reference_data.copy(deep=True)
-        if len(self.categorical_column_names) > 0:
+        if self.categorical_column_names:
             imputed_reference_data[self.categorical_column_names] = self._imputer_categorical.fit_transform(
                 imputed_reference_data[self.categorical_column_names]
             )
-        if len(self.continuous_column_names) > 0:
+        if self.continuous_column_names:
             imputed_reference_data[self.continuous_column_names] = self._imputer_continuous.fit_transform(
                 imputed_reference_data[self.continuous_column_names]
             )
@@ -232,8 +232,8 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         )
         res['upper_confidence_bound'] = res['reconstruction_error'] + SAMPLING_ERROR_RANGE * res['sampling_error']
         res['lower_confidence_bound'] = res['reconstruction_error'] - SAMPLING_ERROR_RANGE * res['sampling_error']
-        res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
+        res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
         res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
 
         multilevel_index = _create_multilevel_index()
@@ -323,9 +323,9 @@ def _calculate_reconstruction_error_for_data(
     data = data.copy(deep=True).reset_index(drop=True)
 
     # Impute missing values
-    if len(categorical_column_names) > 0:
+    if categorical_column_names:
         data[categorical_column_names] = imputer_categorical.transform(data[categorical_column_names])
-    if len(continuous_column_names) > 0:
+    if continuous_column_names:
         data[continuous_column_names] = imputer_continuous.transform(data[continuous_column_names])
 
     data[column_names] = encoder.transform(data[column_names])

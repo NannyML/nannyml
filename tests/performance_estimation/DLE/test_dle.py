@@ -133,6 +133,22 @@ def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DLE
     return direct_error_estimator.estimate(analysis)
 
 
+@pytest.mark.parametrize(
+    'metrics, expected',
+    [('mae', ['mae']), (['mae', 'mape'], ['mae', 'mape']), (None, ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle'])],
+)
+def test_dle_create_with_single_or_list_of_metrics(regression_feature_columns, metrics, expected):
+    sut = DLE(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_true='y_true',
+        feature_column_names=regression_feature_columns,
+        chunk_size=5000,
+        metrics=metrics,
+    )
+    assert [metric.column_name for metric in sut.metrics] == expected
+
+
 def test_direct_error_estimator_does_not_tune_hyperparameters_by_default(regression_feature_columns):
     sut = DLE(
         timestamp_column_name='timestamp',

@@ -164,6 +164,49 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(sa
     assert isinstance(calc.chunker, DefaultChunker)
 
 
+@pytest.mark.parametrize('column_names, expected', [('f1', ['f1']), (['f1', 'f2'], ['f1', 'f2'])])
+def test_univariate_drift_calculator_create_with_single_or_list_of_column_names(column_names, expected):
+    calc = UnivariateDriftCalculator(
+        column_names=column_names,
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+    )
+    assert calc.column_names == expected
+
+
+@pytest.mark.parametrize(
+    'continuous_methods, expected',
+    [
+        ('wasserstein', ['wasserstein']),
+        (['wasserstein', 'jensen_shannon'], ['wasserstein', 'jensen_shannon']),
+        (None, ['jensen_shannon']),
+    ],
+)
+def test_univariate_drift_calculator_create_with_single_or_list_of_continuous_methods(continuous_methods, expected):
+    calc = UnivariateDriftCalculator(
+        column_names=['f1'],
+        timestamp_column_name='timestamp',
+        continuous_methods=continuous_methods,
+        categorical_methods=['chi2'],
+    )
+    assert calc.continuous_method_names == expected
+
+
+@pytest.mark.parametrize(
+    'categorical_methods, expected',
+    [('chi2', ['chi2']), (['chi2', 'jensen_shannon'], ['chi2', 'jensen_shannon']), (None, ['jensen_shannon'])],
+)
+def test_univariate_drift_calculator_create_with_single_or_list_of_categorical_methods(categorical_methods, expected):
+    calc = UnivariateDriftCalculator(
+        column_names=['f1'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=categorical_methods,
+    )
+    assert calc.categorical_method_names == expected
+
+
 @pytest.mark.parametrize(
     'chunker',
     [
@@ -439,7 +482,7 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
             [],
         ),
         (['wasserstein'], []),
-        (['hellinger'], []),
+        (['hellinger'], ['hellinger']),
     ],
     ids=[
         'feature_drift_with_ks_and_chi2',
@@ -447,7 +490,7 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
         'feature_drift_with_none_and_l_infinity',
         'feature_drift_with_ks_and_none',
         'feature_drift_with_wasserstein_and_none',
-        'feature_drift_with_hellinger_and_none',
+        'feature_drift_with_hellinger_and_hellinger',
     ],
 )
 def test_calculator_with_diff_methods_raise_no_exceptions(sample_drift_data, cont_methods, cat_methods):  # noqa: D103

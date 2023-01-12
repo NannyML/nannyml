@@ -16,6 +16,7 @@ from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResults
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 def _validate_drift_result(drift_calculation_result: UnivariateResults):
@@ -63,6 +64,7 @@ def _validate_performance_result(performance_results: Union[CBPEResults, DLEResu
 class AlertCountRanker:
     """Ranks features by the number of drift 'alerts' they've caused."""
 
+    @log_usage(UsageEvent.RANKER_ALERT_COUNT_RUN)
     def rank(
         self,
         drift_calculation_result: UnivariateResults,
@@ -156,6 +158,7 @@ class CorrelationRanker:
 
         self._is_fitted: bool = False
 
+    @log_usage(UsageEvent.RANKER_CORRELATION_FIT)
     def fit(
         self,
         reference_performance_calculation_result: Optional[
@@ -174,6 +177,7 @@ class CorrelationRanker:
         self._is_fitted = True
         return self
 
+    @log_usage(UsageEvent.RANKER_CORRELATION_RUN)
     def rank(
         self,
         drift_calculation_result: UnivariateResults,

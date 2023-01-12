@@ -69,7 +69,7 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                                                                                    | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                                                                                   | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                                                                             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.8.0]**                                                                                          | New features, bug fixes.                                                               |
+| 💎 **[New in v0.8.1]**                                                                                          | New features, bug fixes.                                                               |
 | 🧑‍💻 **[Contribute]**                                                                                          | How to contribute to the NannyML project and codebase.                                 |
 | <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
@@ -77,7 +77,7 @@ Allowing you to have the following benefits:
 [Performance Estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
 [Key Concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
 [Technical Reference]:https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
-[New in v0.8.0]: https://github.com/NannyML/nannyml/releases/latest/
+[New in v0.8.1]: https://github.com/NannyML/nannyml/releases/latest/
 [Real World Example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
@@ -90,7 +90,7 @@ Allowing you to have the following benefits:
 
 When the actual outcome of your deployed prediction models is delayed, or even when post-deployment target labels are completely absent, you can use NannyML's [CBPE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe) to **estimate model performance** for classification or NannyML's [DLE-algorithm](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#direct-loss-estimation-dle) for regression. These algorithms provide you with any estimated metric you would like, i.e. ROC AUC or RSME. Rather than estimating the performance of future model predictions, CBPE and DLE estimate the expected model performance of the predictions made at inference time.
 
-<p><img src="https://nannyml.readthedocs.io/en/stable/_images/tutorial-performance-calculation-regression-RMSE.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/tutorials/performance_calculation/regression/tutorial-performance-calculation-regression-RMSE.svg"></p>
 
 NannyML can also **track the realised performance** of your machine learning model once targets are available.
 
@@ -106,11 +106,11 @@ NannyML utilises statistical tests to detect **univariate feature drift**. We ha
 
 NannyML uses the same statistical tests to detected **model output drift**.
 
-<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/quick-start-score-drift.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-y_pred.svg"></p>
 
-**Target distribution drift** is monitored by calculating the mean occurrence of positive events in combination with the 2-sample chi-squared test. Bear in mind that this operation requires the presence of actuals.
+**Target distribution drift** can also be monitored using the same statistical tests. Bear in mind that this operation requires the presence of actuals.
 
-<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/target_distribution_metric.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-work_home_actual.svg"></p>
 
 ### 3. Intelligent alerting
 
@@ -178,7 +178,7 @@ estimator = estimator.fit(reference)
 estimated_performance = estimator.estimate(analysis)
 
 # Show results
-figure = estimated_performance.plot(kind='performance', metric='roc_auc', plot_reference=True)
+figure = estimated_performance.plot()
 figure.show()
 
 # Define feature columns
@@ -191,32 +191,31 @@ univariate_calculator = nml.UnivariateDriftCalculator(
     column_names=feature_column_names,
     chunk_size=chunk_size,
     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
-    categorical_methods=['chi2'],
+    categorical_methods=['chi2', 'jensen_shannon'],
 )
 univariate_calculator = univariate_calculator.fit(reference)
 univariate_results = univariate_calculator.calculate(analysis)
 # Plot drift results for all continuous columns
-for column_name in univariate_calculator.continuous_column_names:
-    figure = univariate_results.plot(
-        kind='drift',
-        method='jensen_shannon',
-        column_name=column_name,
-        plot_reference=True
-    )
-    figure.show()
+figure = univariate_results.filter(
+    column_names=univariate_results.continuous_column_names, 
+    methods=['jensen_shannon']).plot(kind='drift')
+figure.show()
 
 # Plot drift results for all categorical columns
-for column_name in univariate_calculator.categorical_column_names:
-    figure = univariate_results.plot(
-        kind='drift',
-        method='chi2',
-        column_name=column_name,
-        plot_reference=True
-    )
-    figure.show()
+figure = univariate_results.filter(
+    column_names=univariate_results.categorical_column_names, 
+    methods=['chi2']).plot(kind='drift')
+figure.show()
 
-ranker = nml.Ranker.by('alert_count')
-ranked_features = ranker.rank(univariate_results, only_drifting = False)
+ranker = nml.CorrelationRanker()
+# ranker fits on one metric and reference period data only
+ranker.fit(
+    estimated_performance.filter(period='reference', metrics=['roc_auc']))
+# ranker ranks on one drift method and one performance metric
+ranked_features = ranker.rank(
+    univariate_results.filter(methods=['jensen_shannon']),
+    estimated_performance.filter(metrics=['roc_auc']),
+    only_drifting = False)
 display(ranked_features)
 
 # Let's initialize the object that will perform Data Reconstruction with PCA
@@ -226,7 +225,7 @@ rcerror_calculator = nml.DataReconstructionDriftCalculator(
 ).fit(reference_data=reference)
 # let's see Reconstruction error statistics for all available data
 rcerror_results = rcerror_calculator.calculate(analysis)
-figure = rcerror_results.plot(kind='drift', plot_reference=True)
+figure = rcerror_results.plot()
 figure.show()
 ```
 

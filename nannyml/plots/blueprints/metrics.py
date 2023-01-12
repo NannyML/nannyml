@@ -229,7 +229,8 @@ def _plot_metric(  # noqa: C901
                 template='%{period} &nbsp; &nbsp; %{alert} <br />'
                 'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
                 '%{metric_name}: <b>%{metric_value}</b><br />'
-                'Sampling error range: +/- <b>%{sampling_error}</b><br />'
+                'Confidence band: +/- <b>%{sampling_error}</b><br />',
+                show_extra=True,
             )
         else:
             _hover = copy.deepcopy(hover)
@@ -280,7 +281,8 @@ def _plot_metric(  # noqa: C901
             template='%{period} &nbsp; &nbsp; %{alert} <br />'
             'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
             '%{metric_name}: <b>%{metric_value}</b><br />'
-            'Sampling error range: +/- <b>%{sampling_error}</b><br />'
+            'Confidence band: +/- <b>%{sampling_error}</b><br />',
+            show_extra=True,
         )
     else:
         _hover = copy.deepcopy(hover)

@@ -49,10 +49,8 @@ class Result(Abstract1DResult):
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
 
-        if period == 'all':
-            data = data.loc[:, :]
-        else:
-            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+        if period != 'all':
+            data = data.loc[data[('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
         result = copy.deepcopy(self)
@@ -61,7 +59,7 @@ class Result(Abstract1DResult):
         return result
 
     @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
-    def plot(self, kind: str = 'drift', plot_reference: bool = False, *args, **kwargs) -> Optional[go.Figure]:
+    def plot(self, kind: str = 'drift', *args, **kwargs) -> Optional[go.Figure]:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
         The different plot kinds that are available:

@@ -20,7 +20,7 @@ from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 class _BinaryClassificationCBPE(CBPE):
     def __init__(
         self,
-        metrics: List[str],
+        metrics: Union[str, List[str]],
         y_pred: str,
         y_pred_proba: ModelOutputsType,
         y_true: str,
