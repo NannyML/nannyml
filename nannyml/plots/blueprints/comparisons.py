@@ -9,90 +9,15 @@ import numpy as np
 import pandas as pd
 
 from nannyml._typing import Result
-from nannyml.base import AbstractEstimatorResult, AbstractResult
-from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
 from nannyml.plots import Colors
 from nannyml.plots.components import Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
 from nannyml.plots.util import ensure_numpy, is_time_based_x_axis
 
 
-def plot_compare_performance_to_drift(
-    performance_result: Union[AbstractResult, AbstractEstimatorResult],
-    drift_result: Union[DataReconstructionDriftResult],
-    performance_metric_display_name: str,
-    drift_metric_display_name: str,
-    performance_metric_column_name: str,
-    drift_metric_column_name: str,
-) -> Figure:
-    reference_performance_result = performance_result.filter(period='reference').to_df()
-    analysis_performance_result = performance_result.filter(period='analysis').to_df()
-
-    reference_drift_result = drift_result.filter(period='reference').to_df()
-    analysis_drift_result = drift_result.filter(period='analysis').to_df()
-
-    reference_chunk_indices = reference_performance_result[('chunk', 'chunk_index')]
-    reference_chunk_start_dates = reference_performance_result[('chunk', 'start_date')]
-    reference_chunk_end_dates = reference_performance_result[('chunk', 'end_date')]
-    reference_chunk_periods = reference_performance_result[('chunk', 'period')]
-    reference_chunk_keys = reference_performance_result[('chunk', 'key')]
-    reference_performance_metric = reference_performance_result[(performance_metric_column_name, 'value')]
-    reference_drift_metric = reference_drift_result[('reconstruction_error', 'value')]
-
-    analysis_chunk_indices = analysis_performance_result[('chunk', 'chunk_index')]
-    analysis_chunk_start_dates = analysis_performance_result[('chunk', 'start_date')]
-    analysis_chunk_end_dates = analysis_performance_result[('chunk', 'end_date')]
-    analysis_chunk_periods = analysis_performance_result[('chunk', 'period')]
-    analysis_chunk_keys = analysis_performance_result[('chunk', 'key')]
-    analysis_performance_metric = analysis_performance_result[(performance_metric_column_name, 'value')]
-    analysis_drift_metric = analysis_drift_result[(drift_metric_column_name, 'value')]
-
-    analysis_performance_alerts = analysis_performance_result[(performance_metric_column_name, 'alert')]
-    analysis_drift_alerts = analysis_drift_result[(drift_metric_column_name, 'alert')]
-
-    figure = Figure(
-        title='CBPE',
-        x_axis_title='Time'
-        if is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-        else 'Chunk',
-        y_axis_title='Estimated metric',
-        legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
-        height=500,
-        yaxis2=dict(
-            title="Reconstruction error",
-            anchor="x",
-            overlaying="y",
-            side="right",
-        ),
-    )
-
-    return _plot_compare_step_to_step(
-        figure=figure,
-        metric_1_display_name=performance_metric_display_name,
-        metric_2_display_name=drift_metric_display_name,
-        analysis_metric_1=analysis_performance_metric,
-        analysis_metric_2=analysis_drift_metric,
-        reference_chunk_keys=reference_chunk_keys,
-        reference_chunk_periods=reference_chunk_periods,
-        reference_chunk_indices=reference_chunk_indices,
-        reference_chunk_start_dates=reference_chunk_start_dates,
-        reference_chunk_end_dates=reference_chunk_end_dates,
-        reference_metric_1=reference_performance_metric,
-        reference_metric_2=reference_drift_metric,
-        analysis_chunk_keys=analysis_chunk_keys,
-        analysis_chunk_periods=analysis_chunk_periods,
-        analysis_chunk_indices=analysis_chunk_indices,
-        analysis_chunk_start_dates=analysis_chunk_start_dates,
-        analysis_chunk_end_dates=analysis_chunk_end_dates,
-        analysis_metric_1_alerts=analysis_performance_alerts,
-        analysis_metric_2_alerts=analysis_drift_alerts,
-        hover=None,
-    )
-
-
 def plot_2d_compare_step_to_step(
     result_1: Result,
     result_2: Result,
-    plot_title: str,
+    plot_title: Optional[str] = None,
     x_axis_time_title: str = 'Time',
     x_axis_chunk_title: str = 'Chunk',
     y_axis_title: str = 'Comparison',
@@ -134,7 +59,7 @@ def plot_2d_compare_step_to_step(
         else x_axis_chunk_title
     )
     figure = Figure(
-        plot_title,
+        plot_title or '',
         x_axis_title,
         y_axis_title,
         legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
@@ -318,7 +243,7 @@ def _plot_compare_step_to_step(
             indices=reference_chunk_indices,
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
-            name='Estimated performance (reference)',
+            name=f'{_metric_1_display_name} (reference)',
             color=Colors.INDIGO_PERSIAN.transparent(alpha=0.5),
             hover=_hover,
             line_dash='dash',
@@ -365,7 +290,7 @@ def _plot_compare_step_to_step(
             indices=reference_chunk_indices,
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
-            name='Reconstruction error (reference)',
+            name=f'{_metric_2_display_name} (reference)',
             color=Colors.BLUE_SKY_CRAYOLA.transparent(alpha=0.5),
             xaxis=xaxis,
             yaxis=yaxis2,
@@ -418,7 +343,7 @@ def _plot_compare_step_to_step(
         indices=analysis_chunk_indices,
         start_dates=analysis_chunk_start_dates,
         end_dates=analysis_chunk_end_dates,
-        name='Estimated performance (analysis)',
+        name=f'{_metric_1_display_name} (analysis)',
         color=Colors.INDIGO_PERSIAN,
         hover=_hover,
         line_dash='dash',
@@ -463,7 +388,7 @@ def _plot_compare_step_to_step(
         indices=analysis_chunk_indices,
         start_dates=analysis_chunk_start_dates,
         end_dates=analysis_chunk_end_dates,
-        name='Reconstruction error (analysis)',
+        name=f'{_metric_2_display_name} (analysis)',
         color=Colors.BLUE_SKY_CRAYOLA,
         xaxis=xaxis,
         yaxis=yaxis2,

@@ -798,21 +798,29 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
 
 
 @pytest.mark.parametrize(
-    'calc_args, plot_args',
+    'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
-        ({}, {'kind': 'drift'}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
-        ({}, {'kind': 'distribution'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
+        ({}, {'kind': 'drift'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'analysis'),
+        ({}, {'kind': 'distribution'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
+        ({}, {'kind': 'drift'}, 'all'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'all'),
+        ({}, {'kind': 'distribution'}, 'all'),
     ],
     ids=[
-        'drift_with_timestamp',
-        'drift_without_timestamp',
-        'distribution_with_timestamp',
-        'distribution_without_timestamp',
+        'drift_with_timestamp_without_reference',
+        'drift_without_timestamp_without_reference',
+        'distribution_with_timestamp_without_reference',
+        'distribution_without_timestamp_without_reference',
+        'drift_with_timestamp_with_reference',
+        'drift_without_timestamp_with_reference',
+        'distribution_with_timestamp_with_reference',
+        'distribution_without_timestamp_with_reference',
     ],
 )
-def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[
@@ -823,7 +831,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         ],
         **calc_args,
     ).fit(reference)
-    sut = calc.calculate(analysis)
+    sut = calc.calculate(analysis).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -832,25 +840,33 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 
 
 @pytest.mark.parametrize(
-    'calc_args, plot_args',
+    'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
-        ({}, {'kind': 'drift'}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
-        ({}, {'kind': 'distribution'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
+        ({}, {'kind': 'drift'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'analysis'),
+        ({}, {'kind': 'distribution'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
+        ({}, {'kind': 'drift'}, 'all'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'all'),
+        ({}, {'kind': 'distribution'}, 'all'),
     ],
     ids=[
-        'drift_with_timestamp',
-        'drift_without_timestamp',
-        'distribution_with_timestamp',
-        'distribution_without_timestamp',
+        'drift_with_timestamp_without_reference',
+        'drift_without_timestamp_without_reference',
+        'distribution_with_timestamp_without_reference',
+        'distribution_without_timestamp_without_reference',
+        'drift_with_timestamp_with_reference',
+        'drift_without_timestamp_with_reference',
+        'distribution_with_timestamp_with_reference',
+        'distribution_without_timestamp_with_reference',
     ],
 )
-def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, _ = load_synthetic_binary_classification_dataset()
     reference['y_pred'] = reference['y_pred'].astype("category")
     calc = UnivariateDriftCalculator(column_names=['y_pred', 'y_pred_proba'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis)
+    sut = calc.calculate(analysis).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -859,24 +875,32 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 
 
 @pytest.mark.parametrize(
-    'calc_args, plot_args',
+    'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
-        ({}, {'kind': 'drift'}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}),
-        ({}, {'kind': 'distribution'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
+        ({}, {'kind': 'drift'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'analysis'),
+        ({}, {'kind': 'distribution'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
+        ({}, {'kind': 'drift'}, 'all'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'all'),
+        ({}, {'kind': 'distribution'}, 'all'),
     ],
     ids=[
-        'drift_with_timestamp',
-        'drift_without_timestamp',
-        'distribution_with_timestamp',
-        'distribution_without_timestamp',
+        'drift_with_timestamp_without_reference',
+        'drift_without_timestamp_without_reference',
+        'distribution_with_timestamp_without_reference',
+        'distribution_without_timestamp_without_reference',
+        'drift_with_timestamp_with_reference',
+        'drift_without_timestamp_with_reference',
+        'distribution_with_timestamp_with_reference',
+        'distribution_without_timestamp_with_reference',
     ],
 )
-def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, _ = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_pred'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis)
+    sut = calc.calculate(analysis).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)

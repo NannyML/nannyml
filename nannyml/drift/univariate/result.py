@@ -17,9 +17,10 @@ from nannyml.base import Abstract2DResult
 from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.plots.blueprints.comparisons import plot_2d_compare_step_to_step
 from nannyml.plots.blueprints.distributions import plot_distributions
 from nannyml.plots.blueprints.metrics import plot_metrics
-from nannyml.plots.components import Hover
+from nannyml.plots.components import Figure, Hover
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -192,3 +193,20 @@ class Result(Abstract2DResult):
             raise InvalidArgumentsException(
                 f"unknown plot kind '{kind}'. " f"Please provide on of: ['drift', 'distribution']."
             )
+
+    def compare(self, result: ResultType) -> 'ResultComparison':
+        return ResultComparison(result=self, other=result)
+
+
+class ResultComparison:
+    def __init__(self, result: ResultType, other: ResultType, title: Optional[str] = None):
+        self.result = result
+        self.other = other
+        self.title = title
+
+    def plot(self) -> Figure:
+        return plot_2d_compare_step_to_step(
+            result_1=self.result,
+            result_2=self.other,
+            plot_title=self.title,
+        )

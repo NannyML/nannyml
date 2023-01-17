@@ -68,7 +68,7 @@ def test_base_estimator_uses_count_based_chunker_when_given_chunk_number():  # n
 
 
 def test_base_estimator_uses_period_based_chunker_when_given_chunk_period():  # noqa: D103
-    simple_estimator = SimpleEstimator(chunk_period='W')
+    simple_estimator = SimpleEstimator(chunk_period='W', timestamp_column_name='timestamp')
     assert isinstance(simple_estimator.chunker, PeriodBasedChunker)
     assert simple_estimator.chunker.offset == 'W'
 

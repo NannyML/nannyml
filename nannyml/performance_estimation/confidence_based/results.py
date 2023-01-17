@@ -16,6 +16,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction import Result as MultivariateDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_calculation import Result as RealizedPerformanceResult
 from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.plots import Figure
 from nannyml.plots.blueprints.comparisons import plot_2d_compare_step_to_step
@@ -65,7 +66,10 @@ class Result(Abstract1DResult):
         return res
 
     def keys(self) -> List[Key]:
-        return [Key(properties=(metric.column_name,), display_names=(metric.display_name,)) for metric in self.metrics]
+        return [
+            Key(properties=(metric.column_name,), display_names=(f'estimated {metric.display_name}',))
+            for metric in self.metrics
+        ]
 
     @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
@@ -119,34 +123,27 @@ class Result(Abstract1DResult):
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
-    def compare(self, result: ResultType):
+    def compare(self, result: ResultType) -> 'ResultComparison':
+        title: str = ''
         if isinstance(result, MultivariateDriftResult):
-            return ResultMultivariateComparison(performance_result=self, multivariate_drift_result=result)
+            title = 'Estimated performance vs. multivariate drift'
         elif isinstance(result, UnivariateDriftResult):
-            return ResultUnivariateComparison(performance_result=self, univariate_drift_result=result)
+            title = 'Estimated performance vs. univariate drift'
+        elif isinstance(result, RealizedPerformanceResult):
+            title = 'Estimated performance vs. realized performance'
+
+        return ResultComparison(result=self, other=result, title=title)
 
 
-class ResultMultivariateComparison:
-    def __init__(self, performance_result: Result, multivariate_drift_result: MultivariateDriftResult):
-        self.performance_result = performance_result
-        self.multivariate_drift_result = multivariate_drift_result
-
-    def plot(self) -> Figure:
-        return plot_2d_compare_step_to_step(
-            result_1=self.performance_result,
-            result_2=self.multivariate_drift_result,
-            plot_title='Estimated performance vs. multivariate drift',
-        )
-
-
-class ResultUnivariateComparison:
-    def __init__(self, performance_result: Result, univariate_drift_result: UnivariateDriftResult):
-        self.performance_result = performance_result
-        self.univariate_drift_result = univariate_drift_result
+class ResultComparison:
+    def __init__(self, result: ResultType, other: ResultType, title: Optional[str] = None):
+        self.result = result
+        self.other = other
+        self.title = title
 
     def plot(self) -> Figure:
         return plot_2d_compare_step_to_step(
-            result_1=self.performance_result,
-            result_2=self.univariate_drift_result,
-            plot_title='Estimated performance vs. univariate drift',
+            result_1=self.result,
+            result_2=self.other,
+            plot_title=self.title,
         )

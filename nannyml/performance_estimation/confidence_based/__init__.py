@@ -5,3 +5,4 @@
 """Package containing the Confidence Based Performance Estimator (CBPE)."""
 
 from .cbpe import CBPE
+from .results import Result
