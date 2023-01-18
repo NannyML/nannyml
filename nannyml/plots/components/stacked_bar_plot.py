@@ -33,7 +33,7 @@ def calculate_value_counts(
 
     data = data.astype("category")
     cat_str = [str(value) for value in data.cat.categories.values]
-    data.cat.categories = cat_str
+    data = data.cat.rename_categories(cat_str)
     data = data.cat.add_categories([missing_category_label, 'Other'])
     data = data.fillna(missing_category_label)
 
@@ -42,10 +42,14 @@ def calculate_value_counts(
         if data.nunique() > max_number_of_categories + 1:
             data.loc[~data.isin(top_categories)] = 'Other'
 
+    data = data.cat.remove_unused_categories()
+
     categories_ordered = data.value_counts().index.tolist()
     categorical_data = pd.Categorical(data, categories_ordered)
 
     # TODO: deal with None timestamps
+    if isinstance(timestamps, pd.Series):
+        timestamps = timestamps.reset_index()
     data_with_chunk_keys = pd.concat(
         [
             chunk.data.assign(chunk_key=chunk.key, chunk_index=chunk.chunk_index)

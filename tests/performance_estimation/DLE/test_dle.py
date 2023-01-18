@@ -65,7 +65,8 @@ def estimates(regression_data, direct_error_estimator):
     analysis = analysis[~(analysis['y_pred'] < 0)]
 
     direct_error_estimator.fit(reference)
-    return direct_error_estimator.estimate(analysis)
+    estimates = direct_error_estimator.estimate(analysis)
+    return estimates
 
 
 @pytest.fixture(scope='module')
