@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from nannyml._typing import Result
-from nannyml.io.base import WriterFactory, _get_filepath_str
+from nannyml.io.base import WriterFactory, get_filepath_str
 from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -46,6 +46,6 @@ class PickleFileWriter(FileWriter):
     @log_usage(UsageEvent.WRITE_PICKLE)
     def _write(self, result: Result, **kwargs):
         file_name = f'{result.__module__}.pkl'
-        write_path = Path(_get_filepath_str(self.filepath, self._protocol)) / file_name
+        write_path = Path(get_filepath_str(self.filepath, self._protocol)) / file_name
         bytez = pickle.dumps(result)
         _write_bytes_to_filesystem(bytez, write_path, self._fs)

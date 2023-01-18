@@ -47,3 +47,7 @@ class ReaderException(BaseException):
 
 class IOException(BaseException):
     """An exception indicating something went wrong during IO."""
+
+
+class CalculatorStoreLoadException(BaseException):
+    """An exception indicating something went wrong whilst trying to load a calculator from a store."""
