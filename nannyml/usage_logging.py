@@ -161,10 +161,14 @@ def log_usage(
                 # report if an exception occurred
                 md.update({'exception_occurred': False})
                 if runtime_exception is not None:
+                    if hasattr(runtime_exception, '__module__'):
+                        exception_type = f'{runtime_exception.__module__}.{type(runtime_exception).__name__}'
+                    else:
+                        exception_type = type(runtime_exception).__name__
                     md.update(
                         {
                             'exception_occurred': True,
-                            'exception_type': f'{runtime_exception.__module__}.{type(runtime_exception).__name__}',
+                            'exception_type': exception_type,
                         }
                     )
 
