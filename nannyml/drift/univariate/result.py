@@ -6,9 +6,13 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from typing import List, Optional
 
-import pandas as pd
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import pandas as pd
+
 import plotly.graph_objects as go
 
 from nannyml.base import AbstractCalculatorResult
