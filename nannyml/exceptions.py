@@ -49,5 +49,13 @@ class IOException(BaseException):
     """An exception indicating something went wrong during IO."""
 
 
-class CalculatorStoreLoadException(BaseException):
-    """An exception indicating something went wrong whilst trying to load a calculator from a store."""
+class StoreException(BaseException):
+    """An exception indicating something went wrong whilst using a store."""
+
+
+class SerializeException(BaseException):
+    """An exception occurring when serialization some object went wrong."""
+
+
+class DeserializeException(BaseException):
+    """An exception occurring when deserialization some object went wrong."""

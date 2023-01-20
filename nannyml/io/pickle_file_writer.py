@@ -20,6 +20,7 @@ class PickleFileWriter(FileWriter):
         path: str,
         credentials: Optional[Dict[str, Any]] = None,
         fs_args: Optional[Dict[str, Any]] = None,
+        write_args: Optional[Dict[str, Any]] = None,
     ):
         """
 
