@@ -356,7 +356,7 @@ def _run_cbpe_performance_estimation(
         if store:  # we have a store defined, let's try to load the fitted calculator from there
             if console:
                 console.log('loading estimator from store')
-            estimator = store.load(path=estimator_path, as_type=UnivariateDriftCalculator)
+            estimator = store.load(path=estimator_path, as_type=CBPE)
 
         if not estimator:  # no store or no fitted calculator was in the store
             metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
@@ -434,7 +434,7 @@ def _run_dle_performance_estimation(
         if store:  # we have a store defined, let's try to load the fitted calculator from there
             if console:
                 console.log('loading estimator from store')
-            estimator = store.load(path=estimator_path, as_type=UnivariateDriftCalculator)
+            estimator = store.load(path=estimator_path, as_type=DLE)
 
         if not estimator:  # no store or no fitted calculator was in the store
             if console:
