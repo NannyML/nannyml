@@ -13,7 +13,7 @@ from typing import Callable, Dict, Optional
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
-from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
+from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance, kstwo
 
 from nannyml.base import _column_is_categorical
 from nannyml.chunk import Chunker
@@ -301,19 +301,45 @@ class KolmogorovSmirnovStatistic(Method):
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
+        self._reference_size: int 
+        self._qts: np.ndarray
+        self._ref_rel_freqs: np.ndarray = None 
+        self._fit = False 
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
-        self._reference_data = reference_data
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int = None) -> Method:
+        if len(reference_data)<=10_000:
+            self._reference_data = reference_data
+        else:
+            if bins is None:
+                bins = len(self._reference_data)//500
+            quantile_range = np.arange(0, 1+1/bins, 1/bins)
+            quantile_edges = np.quantile(reference_data, quantile_range)
+            reference_proba_in_qts, self._qts = np.histogram(reference_data, quantile_edges)
+            ref_rel_freqs= reference_proba_in_qts/len(reference_data)
+            self._ref_rel_freqs = np.cumsum(ref_rel_freqs)
+        self._reference_size = len(reference_data)
+        self._fit = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if self._reference_data is None:
+        if not self._fit:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-
-        stat, p_value = ks_2samp(self._reference_data, data)
-        self._p_value = p_value
+        if self._reference_size < 10_000:
+            m, n = self._reference_size, len(data)
+            m, n = sorted([float(m), float(n)], reverse=True)
+            en = m * n / (m + n)
+            chunk_proba_in_qts, _ = np.histogram(data, self._qts)
+            chunk_rel_freqs = chunk_proba_in_qts/len(data)
+            rel_freq_lower_than_edges = len(data[data<self._qts[0]])/len(data)
+            chunk_rel_freqs = rel_freq_lower_than_edges + np.cumsum(chunk_rel_freqs)
+            stat = np.max(abs(self._ref_rel_freqs - chunk_rel_freqs))
+            prob = kstwo.sf(stat, np.round(en))
+            self._p_value = np.clip(prob, 0, 1)
+        else:
+            stat, self._p_value = ks_2samp(self._reference_data, data)
+            
         return stat
 
     def _alert(self, data: pd.Series):
@@ -341,22 +367,24 @@ class Chi2Statistic(Method):
             lower_threshold=None,  # setting this to `None` so we don't plot the threshold (p-value based)
             **kwargs,
         )
-        self._reference_data: Optional[pd.Series] = None
+        self._reference_data_vcs: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
+        self._fit = False
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
-        self._reference_data = reference_data
+        self._reference_data_vcs = reference_data.value_counts()
+        self._fit = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if self._reference_data is None:
+        if not self._fit:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
 
         stat, p_value, _, _ = chi2_contingency(
             pd.concat(
-                [self._reference_data.value_counts(), data.value_counts()],  # type: ignore
+                [self._reference_data.vcs, data.value_counts()],  # type: ignore
                 axis=1,
             ).fillna(0)
         )
@@ -441,8 +469,9 @@ class WassersteinDistance(Method):
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int = 10_000) -> Method:
         self._reference_data = reference_data
+
 
         if self.chunker is None:
             self.upper_threshold = 1
@@ -468,10 +497,6 @@ class WassersteinDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-
-        # reshape data to be a 1d array
-        # data = data.values.reshape(-1,)
-
         distance = wasserstein_distance(self._reference_data, data)
         self._p_value = None
 
