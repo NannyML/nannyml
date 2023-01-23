@@ -160,7 +160,13 @@ class CBPE(AbstractEstimator):
 
         if calibrator is None:
             calibrator = CalibratorFactory.create(calibration)
+
+        # Used in binary cases
+        # TODO: unify this with multiclass case (or remove from public interface)
         self.calibrator = calibrator
+
+        # Used in multiclass cases
+        self._calibrators: Dict[str, Calibrator] = {}
 
         self.result: Optional[Result] = None
 

@@ -1,12 +1,9 @@
-# #  Author:   Niels Nuyttens  <niels@nannyml.com>
-# #
-# #  License: Apache Software License 2.0
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
-# """Used as an access point to start using NannyML in its most simple form."""
-# import logging
-# import sys
-# from typing import List
-#
+#  License: Apache Software License 2.0
+
+"""Used as an access point to start using NannyML in its most simple form."""
+
 import logging
 import sys
 from pathlib import Path
@@ -131,7 +128,8 @@ def _run_statistical_univariate_feature_drift_calculator(
 
         if not calc:  # no store or no fitted calculator was in the store
             if console:
-                console.log('fitting on reference data')
+                console.log('no fitted calculator found in store')
+                console.log('fitting new calculator on reference data')
             if problem_type == ProblemType.CLASSIFICATION_BINARY:
                 y_pred_proba_column_names = [column_mapping['y_pred_proba']]
             elif problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
@@ -203,9 +201,9 @@ def _run_data_reconstruction_multivariate_feature_drift_calculator(
             calc = store.load(path=calc_path, as_type=DataReconstructionDriftCalculator)
 
         if not calc:  # no store or no fitted calculator was in the store
-
             if console:
-                console.log('fitting on reference data')
+                console.log('no fitted calculator found in store')
+                console.log('fitting new calculator on reference data')
             calc = DataReconstructionDriftCalculator(
                 column_names=column_mapping['features'],
                 timestamp_column_name=column_mapping.get('timestamp', None),
@@ -285,7 +283,8 @@ def _run_realized_performance_calculator(  # noqa: C901
                 metrics = DEFAULT_METRICS
 
             if console:
-                console.log('fitting on reference data')
+                console.log('no fitted calculator found in store')
+                console.log('fitting new calculator on reference data')
             calc = PerformanceCalculator(
                 y_true=column_mapping['y_true'],
                 y_pred=column_mapping['y_pred'],
@@ -362,7 +361,8 @@ def _run_cbpe_performance_estimation(
             metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
 
             if console:
-                console.log('fitting on reference data')
+                console.log('no fitted estimator found in store')
+                console.log('fitting new estimator on reference data')
             estimator = CBPE(  # type: ignore
                 y_true=column_mapping['y_true'],
                 y_pred=column_mapping['y_pred'],
@@ -438,7 +438,8 @@ def _run_dle_performance_estimation(
 
         if not estimator:  # no store or no fitted calculator was in the store
             if console:
-                console.log('fitting on reference data')
+                console.log('no fitted estimator found in store')
+                console.log('fitting new estimator on reference data')
             estimator = DLE(  # type: ignore
                 feature_column_names=column_mapping['features'],
                 y_true=column_mapping['y_true'],
@@ -475,4 +476,4 @@ def _run_dle_performance_estimation(
 
     if console:
         console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='direct_error_estimator')
+    writer.write(result=results, plots=plots, calculator_name='direct_loss_estimator')

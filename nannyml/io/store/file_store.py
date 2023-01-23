@@ -58,5 +58,5 @@ class FilesystemStore(Store):
                 return calc
         except FileNotFoundError:
             p = f'{self._protocol}://{self.root_path}/{path}'
-            self._logger.warning(f'could not find file in location "{p}", returning "None"')
+            self._logger.info(f'could not find file in store location "{p}", returning "None"')
             return None
