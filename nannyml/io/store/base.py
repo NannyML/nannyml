@@ -10,6 +10,19 @@ from nannyml.exceptions import StoreException
 
 
 class Store(ABC):
+    """The abstract class that serves as a base for concrete implementations.
+
+    The Store is used to persist and retrieve Python objects at runtime.
+
+    One example use case is storing calculators and estimators after fitting them to reference data, a potentially
+    compute intensive operation. When the calculators and estimators are then used on analysis data repeatedly, they
+    can be simply retrieved from the store, eliminating the need for repeated fitting.
+
+    This abstract base class does not restrict in any way how the storage mechanism should work.
+
+    The only implementation currently is the :class:`nannyml.io.store.file_store.FilesystemStore`.
+    """
+
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
@@ -18,6 +31,20 @@ class Store(ABC):
         return f'{self.__module__}.{self.__class__.__name__}'
 
     def store(self, obj, **store_args):
+        """Stores an object into the store, pass along any keyword argument to control this behavior.
+
+        Parameters
+        ----------
+        obj : object
+            The object to be stored
+        store_args : Dict[str, Any]
+            Additional arguments passed to the subclass `store` implementation
+
+        Raises
+        ------
+        StoreException: occurs when an unexpected exception occurs during the store call.
+
+        """
         try:
             self._logger.info(f'storing object "{obj}" to store "{self}"')
             return self._store(obj, **store_args)
@@ -26,9 +53,26 @@ class Store(ABC):
 
     @abstractmethod
     def _store(self, obj, **store_args):
+        """The method to be implemented by any implementing Store subclass."""
         ...
 
     def load(self, as_type: Optional[type] = None, **load_args):
+        """Loads an object from the store, pass along any keyword argument to control this behavior.
+
+        Parameters
+        ----------
+        as_type : Optional[type]
+            When provided the `load` method will check if the loaded object is an instance of `as_type`. If it is not
+            a StoreException will be raised.
+            The object will be returned unchecked when the `as_type` parameter is not provided.
+        load_args : Dict[str, Any]
+            Additional arguments passed to the subclass `store` implementation
+
+        Returns
+        -------
+        obj: object
+
+        """
         try:
             self._logger.info(f'loading object from store "{self}"')
             obj = self._load(**load_args)

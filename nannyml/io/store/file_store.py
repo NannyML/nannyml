@@ -13,14 +13,86 @@ from nannyml.io.store.serializers import JoblibPickleSerializer, Serializer
 
 
 class FilesystemStore(Store):
+    """A Store implementation that uses a local or remote file system for persistence.
+
+    Any object is first serialized using an instance of the `Serializer` class. The resulting bytes are then written
+    onto a file system.
+
+    The `FilesystemStore` uses `fsspec` under the covers, allowing it to support a wide range of local and remote
+    filesystems. These include (but are not limited to) S3, Google Cloud Storage and Azure Blob Storage.
+    In order to these remote filesystems, additional credentials can be passed along.
+
+    Examples
+    ---------
+    Using S3 as a backing filesystem.
+    See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html to learn more about the
+    required access key id and secret access key credentials.
+
+    >>> store = FilesystemStore(
+    ...     root_path='s3://my-bucket-name/some/path',
+    ...     credentials={
+    ...         'client_kwargs': {
+    ...            'aws_access_key_id': '<ACCESS_KEY_ID>'
+    ...            'aws_secret_access_key': '<SECRET_ACCESS_KEY>'
+    ...         }
+    ...     }
+    ... )
+
+    Using Google Cloud Storage (GCS) as a backing filesystem.
+    See https://cloud.google.com/iam/docs/creating-managing-service-account-keys to learn more about the required
+    service account key credentials.
+
+    >>> store = FilesystemStore(
+    ...     root_path='gs://my-bucket-name/some/path',
+    ...     credentials={'token': 'service-account-access-key.json'}
+    ... )
+
+    Using Azure Blob Storage as a backing filesystem.
+    See https://github.com/fsspec/adlfs#setting-credentials to learn more about the required credentials.
+
+    >>> store = FilesystemStore(
+    ...     root_path='abfs://my-container-name/some/path',
+    ...     credentials={'account_name': '<ACCOUNT_NAME>', 'account_key': '<ACCOUNT_KEY>'}
+    ... )
+
+    Performing basic operations.
+    An optional path parameter can be set to control what subdirectories and file name should be used when storing.
+    When none is given the object will be stored in the configured store root path using an automatically generated
+    name.
+
+    >>> store = FilesystemStore(root_path='/tmp/nml-cache')  # creating the store
+    >>> store.store(calc, path='example/calc.pkl')  # storing the object
+    >>> store.load(path='example/calc.pkl')  # returns the object without any checks
+    >>> # returns the object if it is a UnivariateDriftCalculator, raises a StoreException otherwise
+    >>> store.load(path='example/calc.pkl', as_type='UnivariateDriftCalculator')
+    >>> store.load(path='i_dont_exist.pkl')  # raises a StoreException
+
+    """
+
     def __init__(
         self,
         root_path: str,
-        store_args: Optional[Dict[str, Any]] = None,
         credentials: Optional[Dict[str, Any]] = None,
         fs_args: Optional[Dict[str, Any]] = None,
         serializer: Serializer = JoblibPickleSerializer(),
     ):
+        """Creates a new FilesystemStore instance.
+
+        Parameters
+        ----------
+        root_path : str
+            The root directory where all storage operations will originate.
+        credentials : Optional[Dict[str, Any]], default=None
+            Optional dictionary of credential information passed along to `fsspec`. Exact contents depend on the type
+            of backing filesystem used.
+        fs_args : Optional[Dict[str, Any]], default=None
+            Optional dictionary of initialization parameters passed along when creating an internal `fsspec.filesystem`
+            instance.
+        serializer : Serializer, default=JoblibPickleSerializer()
+            An optional `Serializer` instance that will be used to convert an object into a byte representation and
+            the other way around. The default uses the `JoblibPickleSerializer`, which internally relies on `joblib`
+            and it's pickling functionality.
+        """
         super().__init__()
 
         _fs_args = deepcopy(fs_args) or {}
@@ -34,8 +106,6 @@ class FilesystemStore(Store):
         self.root_path = path
         self._storage_options = {**_credentials, **_fs_args}
         self._fs = fsspec.filesystem(self._protocol, **self._storage_options)
-
-        self._store_args = store_args or {}  # type: Dict[str, Any]
 
         self._serializer = serializer
 

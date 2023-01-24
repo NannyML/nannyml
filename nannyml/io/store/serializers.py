@@ -12,6 +12,8 @@ from nannyml.exceptions import SerializeException
 
 
 class Serializer(ABC):
+    """Abstract class for converting objects into bytes and the other way around."""
+
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
@@ -20,6 +22,27 @@ class Serializer(ABC):
         return f'{self.__module__}.{self.__class__.__name__}'
 
     def serialize(self, obj, *args, **kwargs) -> bytes:
+        """Convert an object into `bytes`.
+
+        Parameters
+        ----------
+        obj : object
+            The object to be converted.
+        args : List[Any]
+            Any arguments used to control the serialization.
+        kwargs : Dict[str, Any]
+            Any keyword arguments used to control the serialization.
+
+        Returns
+        -------
+        bytez: bytes
+            The byte representation of the given object
+
+        Raises
+        ------
+        SerializeException: when an unexpected exception occurs during serialization.
+
+        """
         try:
             self._logger.debug(f'serializing object {obj}')
             return self._serialize(obj, args, kwargs)
@@ -31,6 +54,23 @@ class Serializer(ABC):
         ...
 
     def deserialize(self, bytez: bytes, *args, **kwargs) -> object:
+        """Convert bytes back into an object
+
+        Parameters
+        ----------
+        bytez : bytes
+            The bytes to convert into an object
+        args : List[Any]
+            Any arguments used to control the deserialization.
+        kwargs : Dict[str, Any]
+            Any keyword arguments used to control the deserialization.
+
+        Returns
+        -------
+        obj: object
+            The object that was in the byte representation.
+
+        """
         try:
             self._logger.debug('deserializing bytes')
             return self._deserialize(bytez, args, kwargs)
@@ -43,6 +83,17 @@ class Serializer(ABC):
 
 
 class PickleSerializer(Serializer):
+    """A serializer based on the standard `pickle` library.
+
+    Examples
+    --------
+
+    >>> ser = PickleSerializer()
+    >>> b = ser.serialize(obj=calc)
+    >>> loaded_calc = ser.deserialize(bytez=b)
+
+    """
+
     def _serialize(self, obj, *args, **kwargs) -> bytes:
         return pickle.dumps(obj)
 
@@ -51,6 +102,17 @@ class PickleSerializer(Serializer):
 
 
 class JoblibPickleSerializer(Serializer):
+    """A serializer based on the `joblib` pickling library.
+
+    Examples
+    --------
+
+    >>> ser = JoblibPickleSerializer()
+    >>> b = ser.serialize(obj=calc)
+    >>> loaded_calc = ser.deserialize(bytez=b)
+
+    """
+
     def _serialize(self, obj, *args, **kwargs) -> bytes:
         b = BytesIO()
         joblib.dump(obj, b)
