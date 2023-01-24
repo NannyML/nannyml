@@ -22,7 +22,7 @@ from nannyml.io.raw_files_writer import RawFilesWriter
 from nannyml.io.store import Store
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.direct_loss_estimation import DEFAULT_METRICS, DLE
+from nannyml.performance_estimation.direct_loss_estimation.dle import DEFAULT_METRICS, DLE
 
 _logger = logging.getLogger(__name__)
 
