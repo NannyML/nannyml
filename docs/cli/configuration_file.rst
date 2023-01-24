@@ -352,7 +352,7 @@ This snippet shows how use S3 with credentials:
         credentials:
           client_kwargs:
             aws_access_key_id: '<ACCESS_KEY_ID>'
-            aws_secret_access_key: '<SECRET_ACCESS_KEY'
+            aws_secret_access_key: '<SECRET_ACCESS_KEY>'
 
 
 Chunker section
