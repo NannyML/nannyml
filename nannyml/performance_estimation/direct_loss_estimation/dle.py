@@ -203,9 +203,7 @@ class DLE(AbstractEstimator):
         ]
 
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
-        self._categorical_encoders: defaultdict = defaultdict(
-            lambda: OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
-        )
+        self._categorical_encoders: defaultdict = defaultdict(_default_encoder)
 
         self.result: Optional[Result] = None
 
@@ -353,3 +351,7 @@ def _create_multilevel_index(metric_names: List[str]):
     tuples = chunk_tuples + reconstruction_tuples
 
     return MultiIndex.from_tuples(tuples)
+
+
+def _default_encoder():
+    return OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)

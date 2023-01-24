@@ -13,6 +13,7 @@ from nannyml.datasets import (
     load_synthetic_multiclass_classification_dataset,
 )
 from nannyml.io import DatabaseWriter, RawFilesWriter
+from nannyml.io.store import FilesystemStore
 from nannyml.runner import run
 
 
@@ -45,6 +46,7 @@ def test_runner_executes_for_binary_classification_without_exceptions(timestamp_
                 problem_type=ProblemType.CLASSIFICATION_BINARY,
                 chunker=DefaultChunker(timestamp_column_name=timestamp_column_name),
                 writer=RawFilesWriter(path=tmpdir, format='parquet'),
+                store=FilesystemStore(root_path=f'{tmpdir}/cache'),
                 run_in_console=False,
                 ignore_errors=False,
             )
@@ -85,6 +87,7 @@ def test_runner_executes_for_multiclass_classification_without_exceptions(timest
                 problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
                 chunker=DefaultChunker(timestamp_column_name=timestamp_column_name),
                 writer=RawFilesWriter(path=tmpdir, format='parquet'),
+                store=FilesystemStore(root_path=f'{tmpdir}/cache'),
                 run_in_console=False,
                 ignore_errors=False,
             )
@@ -120,6 +123,7 @@ def test_runner_executes_for_regression_without_exceptions(timestamp_column_name
                 problem_type=ProblemType.REGRESSION,
                 chunker=DefaultChunker(timestamp_column_name=timestamp_column_name),
                 writer=RawFilesWriter(path=tmpdir, format='parquet'),
+                store=FilesystemStore(root_path=f'{tmpdir}/cache'),
                 run_in_console=False,
                 ignore_errors=False,
             )
@@ -133,30 +137,32 @@ def test_runner_executes_for_binary_classification_with_database_writer_without_
     analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
 
     try:
-        run(
-            reference_data=reference,
-            analysis_data=analysis_with_targets,
-            column_mapping={
-                'features': [
-                    'distance_from_office',
-                    'salary_range',
-                    'gas_price_per_litre',
-                    'public_transportation_cost',
-                    'wfh_prev_workday',
-                    'workday',
-                    'tenure',
-                ],
-                'y_pred': 'y_pred',
-                'y_pred_proba': 'y_pred_proba',
-                'y_true': 'work_home_actual',
-                'timestamp': 'timestamp',
-            },
-            problem_type=ProblemType.CLASSIFICATION_BINARY,
-            chunker=DefaultChunker(timestamp_column_name='timestamp'),
-            writer=DatabaseWriter(connection_string='sqlite:///', model_name='test'),
-            run_in_console=False,
-            ignore_errors=False,
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run(
+                reference_data=reference,
+                analysis_data=analysis_with_targets,
+                column_mapping={
+                    'features': [
+                        'distance_from_office',
+                        'salary_range',
+                        'gas_price_per_litre',
+                        'public_transportation_cost',
+                        'wfh_prev_workday',
+                        'workday',
+                        'tenure',
+                    ],
+                    'y_pred': 'y_pred',
+                    'y_pred_proba': 'y_pred_proba',
+                    'y_true': 'work_home_actual',
+                    'timestamp': 'timestamp',
+                },
+                problem_type=ProblemType.CLASSIFICATION_BINARY,
+                chunker=DefaultChunker(timestamp_column_name='timestamp'),
+                writer=DatabaseWriter(connection_string='sqlite:///', model_name='test'),
+                store=FilesystemStore(root_path=f'{tmpdir}/cache'),
+                run_in_console=False,
+                ignore_errors=False,
+            )
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
@@ -167,34 +173,36 @@ def test_runner_executes_for_multiclass_classification_with_database_writer_with
     analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
 
     try:
-        run(
-            reference_data=reference,
-            analysis_data=analysis_with_targets,
-            column_mapping={
-                'features': [
-                    'acq_channel',
-                    'app_behavioral_score',
-                    'requested_credit_limit',
-                    'app_channel',
-                    'credit_bureau_score',
-                    'stated_income',
-                    'is_customer',
-                ],
-                'y_pred': 'y_pred',
-                'y_pred_proba': {
-                    'prepaid_card': 'y_pred_proba_prepaid_card',
-                    'highstreet_card': 'y_pred_proba_highstreet_card',
-                    'upmarket_card': 'y_pred_proba_upmarket_card',
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run(
+                reference_data=reference,
+                analysis_data=analysis_with_targets,
+                column_mapping={
+                    'features': [
+                        'acq_channel',
+                        'app_behavioral_score',
+                        'requested_credit_limit',
+                        'app_channel',
+                        'credit_bureau_score',
+                        'stated_income',
+                        'is_customer',
+                    ],
+                    'y_pred': 'y_pred',
+                    'y_pred_proba': {
+                        'prepaid_card': 'y_pred_proba_prepaid_card',
+                        'highstreet_card': 'y_pred_proba_highstreet_card',
+                        'upmarket_card': 'y_pred_proba_upmarket_card',
+                    },
+                    'y_true': 'y_true',
+                    'timestamp': 'timestamp',
                 },
-                'y_true': 'y_true',
-                'timestamp': 'timestamp',
-            },
-            problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
-            chunker=DefaultChunker(timestamp_column_name='timestamp'),
-            writer=DatabaseWriter(connection_string='sqlite:///', model_name='test'),
-            run_in_console=False,
-            ignore_errors=False,
-        )
+                problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
+                chunker=DefaultChunker(timestamp_column_name='timestamp'),
+                writer=DatabaseWriter(connection_string='sqlite:///', model_name='test'),
+                store=FilesystemStore(root_path=f'{tmpdir}/cache'),
+                run_in_console=False,
+                ignore_errors=False,
+            )
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
@@ -205,28 +213,30 @@ def test_runner_executes_for_regression_with_database_writer_without_exceptions(
     analysis_with_targets = analysis.join(analysis_targets)
 
     try:
-        run(
-            reference_data=reference,
-            analysis_data=analysis_with_targets,
-            column_mapping={
-                'features': [
-                    'car_age',
-                    'km_driven',
-                    'price_new',
-                    'accident_count',
-                    'door_count',
-                    'transmission',
-                    'fuel',
-                ],
-                'y_pred': 'y_pred',
-                'y_true': 'y_true',
-                'timestamp': 'timestamp',
-            },
-            problem_type=ProblemType.REGRESSION,
-            chunker=DefaultChunker(timestamp_column_name='timestamp'),
-            writer=DatabaseWriter(connection_string='sqlite:///', model_name='test'),
-            run_in_console=False,
-            ignore_errors=False,
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            run(
+                reference_data=reference,
+                analysis_data=analysis_with_targets,
+                column_mapping={
+                    'features': [
+                        'car_age',
+                        'km_driven',
+                        'price_new',
+                        'accident_count',
+                        'door_count',
+                        'transmission',
+                        'fuel',
+                    ],
+                    'y_pred': 'y_pred',
+                    'y_true': 'y_true',
+                    'timestamp': 'timestamp',
+                },
+                problem_type=ProblemType.REGRESSION,
+                chunker=DefaultChunker(timestamp_column_name='timestamp'),
+                writer=DatabaseWriter(connection_string='sqlite:///', model_name='test'),
+                store=FilesystemStore(root_path=f'{tmpdir}/cache'),
+                run_in_console=False,
+                ignore_errors=False,
+            )
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")

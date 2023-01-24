@@ -275,6 +275,8 @@ class PeriodBasedChunker(Chunker):
         offset: a frequency string representing a pandas.tseries.offsets.DateOffset
             The offset determines how the time-based grouping will occur. A list of possible values
             is to be found at https://pandas.pydata.org/docs/user_guide/timeseries.html#offset-aliases.
+        drop: bool, default=False
+            Drops the timestamp column from the chunk data if True.
 
         Returns
         -------

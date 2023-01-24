@@ -57,20 +57,22 @@ class Method(abc.ABC):
 
         self.chunker: Optional[Chunker] = chunker
 
-    def fit(self, reference_data: pd.Series) -> Method:
+    def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         """Fits a Method on reference data.
 
         Parameters
         ----------
         reference_data: pd.DataFrame
             The reference data used for fitting a Method. Must have target data available.
+        timestamps: Optional[pd.Series], default=None
+            A series containing the reference data Timestamps
 
         """
-        self._fit(reference_data)
+        self._fit(reference_data, timestamps)
 
         return self
 
-    def _fit(self, reference_data: pd.Series) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _fit method"
         )
@@ -225,7 +227,7 @@ class JensenShannonDistance(Method):
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
 
-    def _fit(self, reference_data: pd.Series):
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
@@ -300,7 +302,7 @@ class KolmogorovSmirnovStatistic(Method):
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
 
-    def _fit(self, reference_data: pd.Series) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         self._reference_data = reference_data
         return self
 
@@ -342,7 +344,7 @@ class Chi2Statistic(Method):
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
 
-    def _fit(self, reference_data: pd.Series) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         self._reference_data = reference_data
         return self
 
@@ -393,7 +395,7 @@ class LInfinityDistance(Method):
         self.upper_threshold = 0.1
         self._reference_proba: Optional[dict] = None
 
-    def _fit(self, reference_data: pd.Series) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         ref_labels = reference_data.unique()
         self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
         return self
@@ -439,25 +441,22 @@ class WassersteinDistance(Method):
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
 
-    def _fit(self, reference_data: pd.Series) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         self._reference_data = reference_data
 
         if self.chunker is None:
             self.upper_threshold = 1
         else:
-            # TODO: review abstract class => chunker needs timestamp column
-            # Hotfixing by removing/re-adding it
-            chunker_timestamp_col = self.chunker.timestamp_column_name
-            self.chunker.timestamp_column_name = None
+            # when a timestamp column is known we have to include it for chunking
+            if timestamps is not None:
+                data = pd.concat([reference_data, timestamps], axis=1)
+            else:
+                data = reference_data.to_frame()
+
             ref_chunk_distances = [
-                self._calculate(
-                    chunk.data.values.reshape(
-                        -1,
-                    )
-                )
-                for chunk in self.chunker.split(pd.DataFrame(reference_data))
+                self._calculate(chunk.data[reference_data.name].values.reshape(-1))
+                for chunk in self.chunker.split(data)
             ]
-            self.chunker.timestamp_column_name = chunker_timestamp_col
             self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
 
         self.lower_threshold = 0
@@ -503,7 +502,7 @@ class HellingerDistance(Method):
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
 
-    def _fit(self, reference_data: pd.Series):
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
