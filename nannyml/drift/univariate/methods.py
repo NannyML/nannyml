@@ -13,7 +13,7 @@ from typing import Callable, Dict, Optional
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
-from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance, kstwo
+from scipy.stats import chi2_contingency, ks_2samp, kstwo, wasserstein_distance
 
 from nannyml.base import _column_is_categorical
 from nannyml.chunk import Chunker
@@ -301,45 +301,44 @@ class KolmogorovSmirnovStatistic(Method):
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
-        self._reference_size: int 
+        self._reference_size: float
         self._qts: np.ndarray
-        self._ref_rel_freqs: np.ndarray = None 
-        self._fit = False 
+        self._ref_rel_freqs: np.ndarray = None
+        self._fitted = False
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int = None) -> Method:
-        if len(reference_data)<=10_000:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int | None = None) -> Method:
+        if len(reference_data) < 10_000:
             self._reference_data = reference_data
         else:
             if bins is None:
-                bins = len(self._reference_data)//500
-            quantile_range = np.arange(0, 1+1/bins, 1/bins)
+                bins = len(reference_data) // 500
+            quantile_range = np.arange(0, 1 + 1 / bins, 1 / bins)
             quantile_edges = np.quantile(reference_data, quantile_range)
             reference_proba_in_qts, self._qts = np.histogram(reference_data, quantile_edges)
-            ref_rel_freqs= reference_proba_in_qts/len(reference_data)
+            ref_rel_freqs = reference_proba_in_qts / len(reference_data)
             self._ref_rel_freqs = np.cumsum(ref_rel_freqs)
         self._reference_size = len(reference_data)
-        self._fit = True
+        self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if not self._fit:
+        if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        if self._reference_size < 10_000:
-            m, n = self._reference_size, len(data)
-            m, n = sorted([float(m), float(n)], reverse=True)
+        if self._reference_size >= 10_000:
+            m, n = sorted([float(self._reference_size), float(len(data))], reverse=True)
             en = m * n / (m + n)
             chunk_proba_in_qts, _ = np.histogram(data, self._qts)
-            chunk_rel_freqs = chunk_proba_in_qts/len(data)
-            rel_freq_lower_than_edges = len(data[data<self._qts[0]])/len(data)
+            chunk_rel_freqs = chunk_proba_in_qts / len(data)
+            rel_freq_lower_than_edges = len(data[data < self._qts[0]]) / len(data)
             chunk_rel_freqs = rel_freq_lower_than_edges + np.cumsum(chunk_rel_freqs)
             stat = np.max(abs(self._ref_rel_freqs - chunk_rel_freqs))
             prob = kstwo.sf(stat, np.round(en))
             self._p_value = np.clip(prob, 0, 1)
         else:
             stat, self._p_value = ks_2samp(self._reference_data, data)
-            
+
         return stat
 
     def _alert(self, data: pd.Series):
@@ -369,15 +368,15 @@ class Chi2Statistic(Method):
         )
         self._reference_data_vcs: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
-        self._fit = False
+        self._fitted = False
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         self._reference_data_vcs = reference_data.value_counts()
-        self._fit = True
+        self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if not self._fit:
+        if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
@@ -468,10 +467,22 @@ class WassersteinDistance(Method):
 
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
+        self._reference_size: float
+        self._bin_width: float
+        self._bin_edges: np.ndarray = None
+        self._ref_rel_freqs: np.ndarray = None
+        self._fitted = False
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int = 10_000) -> Method:
-        self._reference_data = reference_data
-
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int | None = None) -> Method:
+        if len(reference_data) < 10_000:
+            self._reference_data = reference_data
+        else:
+            if bins is None:
+                bins = len(reference_data) // 500
+            reference_proba_in_bins, self._bin_edges = np.histogram(reference_data, bins=bins)
+            ref_rel_freqs = reference_proba_in_bins / len(reference_data)
+            self._ref_rel_freqs = np.cumsum(ref_rel_freqs)
+            self._bin_width = self._bin_edges[1] - self._bin_edges[0]
 
         if self.chunker is None:
             self.upper_threshold = 1
@@ -489,16 +500,56 @@ class WassersteinDistance(Method):
             self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
 
         self.lower_threshold = 0
-
+        self._reference_size = len(reference_data)
+        self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if self._reference_data is None:
+        if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        distance = wasserstein_distance(self._reference_data, data)
-        self._p_value = None
+        if self._reference_size >= 10_000:
+            min_chunk = np.min(data)
+
+            if min_chunk < self._bin_edges[0]:
+                extra_bins_left = (min_chunk - self._bin_edges[0]) / self._bin_width
+                extra_bins_left = np.ceil(extra_bins_left)
+            else:
+                extra_bins_left = 0
+
+            max_chunk = np.max(data)
+
+            if max_chunk > self._bin_edges[-1]:
+                extra_bins_right = (max_chunk - self._bin_edges[-1]) / self._bin_width
+                extra_bins_right = np.ceil(extra_bins_right)
+            else:
+                extra_bins_right = 0
+
+            left_edges_to_prepand = np.arange(
+                min_chunk - self._bin_width, self._bin_edges[0] - self._bin_width, self._bin_width
+            )
+            right_edges_to_append = np.arange(
+                self._bin_edges[-1] + self._bin_width, max_chunk + self._bin_width, self._bin_width
+            )
+
+            updated_edges = np.concatenate([left_edges_to_prepand, self._bin_edges, right_edges_to_append])
+            updated_ref_binned_pdf = np.concatenate(
+                [np.zeros(len(left_edges_to_prepand)), self._ref_rel_freqs, np.zeros(len(right_edges_to_append))]
+            )
+
+            chunk_histogram, _ = np.histogram(data, bins=updated_edges)
+
+            chunk_binned_pdf = chunk_histogram / len(data)
+
+            ref_binned_cdf = np.cumsum(updated_ref_binned_pdf)
+            chunk_binned_cdf = np.cumsum(chunk_binned_pdf)
+
+            distance = np.sum(np.abs(ref_binned_cdf - chunk_binned_cdf) * self._bin_width)
+            self._p_value = None
+        else:
+            distance = wasserstein_distance(self._reference_data, data)
+            self._p_value = None
 
         return distance
 

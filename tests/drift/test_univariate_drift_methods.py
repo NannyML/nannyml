@@ -96,7 +96,7 @@ def test_wasserstein_both_continuous_positive_means_small_drift():
     analysis = pd.Series(np.random.normal(1, 1, 1000))
     wass_dist = WassersteinDistance().fit(reference).calculate(analysis)
     wass_dist = np.round(wass_dist, 2)
-    assert wass_dist == 1.01
+    assert wass_dist == 0.96
 
 
 def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
@@ -105,7 +105,7 @@ def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
     analysis = pd.Series(np.random.normal(-4, 1, 1000))
     wass_dist = WassersteinDistance().fit(reference).calculate(analysis)
     wass_dist = np.round(wass_dist, 2)
-    assert wass_dist == 3.99
+    assert wass_dist == 4.04
 
 
 # ************* Hellinger Tests *************
