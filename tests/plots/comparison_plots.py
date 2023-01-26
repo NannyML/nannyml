@@ -26,7 +26,9 @@ def data_reconstruction_results(chunker) -> DataReconstructionResult:
     ref, ana, _ = load_synthetic_binary_classification_dataset()
     column_names = [col for col in ref.columns if col not in ['identifier', 'work_home_actual', 'timestamp']]
     calc = DataReconstructionDriftCalculator(column_names=column_names, chunker=chunker).fit(ref)
-    return calc.calculate(ana)
+    result = calc.calculate(ana)
+    assert isinstance(result, DataReconstructionResult)
+    return result
 
 
 @pytest.fixture(scope='module')
@@ -34,7 +36,9 @@ def univariate_drift_results(chunker) -> UnivariateDriftResult:
     ref, ana, _ = load_synthetic_binary_classification_dataset()
     column_names = [col for col in ref.columns if col not in ['identifier', 'work_home_actual', 'timestamp']]
     calc = UnivariateDriftCalculator(column_names=column_names, chunker=chunker).fit(ref)
-    return calc.calculate(ana)
+    result = calc.calculate(ana)
+    assert isinstance(result, UnivariateDriftResult)
+    return result
 
 
 @pytest.fixture(scope='module')
@@ -48,7 +52,9 @@ def realized_performance_results(chunker) -> RealizedPerformanceResult:
         problem_type='classification',
         chunker=chunker,
     ).fit(ref)
-    return calc.calculate(ana.merge(tgt), on='identifier')
+    result = calc.calculate(ana.merge(tgt), on='identifier')
+    assert isinstance(result, RealizedPerformanceResult)
+    return result
 
 
 @pytest.fixture(scope='module')
@@ -62,7 +68,9 @@ def cbpe_results(chunker) -> CBPEResult:
         problem_type='classification',
         chunker=chunker,
     ).fit(ref)
-    return est.estimate(ana)
+    result = est.estimate(ana)
+    assert isinstance(result, CBPEResult)
+    return result
 
 
 @pytest.mark.parametrize(
