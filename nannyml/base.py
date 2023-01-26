@@ -110,6 +110,12 @@ class AbstractResult(ABC):
     def lower_thresholds(self, key: Key) -> Optional[pd.Series]:
         return self._get_property_for_key(key, property_name='lower_threshold')
 
+    def upper_confidence_bounds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='upper_confidence_boundary')
+
+    def lower_confidence_bounds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='lower_confidence_boundary')
+
     def sampling_error(self, key: Key) -> Optional[pd.Series]:
         return self._get_property_for_key(key, property_name='sampling_error')
 

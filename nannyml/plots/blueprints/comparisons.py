@@ -105,10 +105,18 @@ def plot_2d_compare_step_to_step(
     for idx, (key_1, key_2) in enumerate(items):
         reference_metric_1 = reference_result_1.values(key_1)
         reference_metric_2 = reference_result_2.values(key_2)
+        reference_metric_1_upper_confidence_bounds = reference_result_1.upper_confidence_bounds(key_1)
+        reference_metric_1_lower_confidence_bounds = reference_result_1.lower_confidence_bounds(key_1)
+        reference_metric_2_upper_confidence_bounds = reference_result_2.upper_confidence_bounds(key_2)
+        reference_metric_2_lower_confidence_bounds = reference_result_2.lower_confidence_bounds(key_2)
         analysis_metric_1 = analysis_result_1.values(key_1)
         analysis_metric_2 = analysis_result_2.values(key_2)
         analysis_metric_1_alerts = analysis_result_1.alerts(key_1)
         analysis_metric_2_alerts = analysis_result_2.alerts(key_2)
+        analysis_metric_1_upper_confidence_bounds = analysis_result_1.upper_confidence_bounds(key_1)
+        analysis_metric_1_lower_confidence_bounds = analysis_result_1.lower_confidence_bounds(key_1)
+        analysis_metric_2_upper_confidence_bounds = analysis_result_2.upper_confidence_bounds(key_2)
+        analysis_metric_2_lower_confidence_bounds = analysis_result_2.lower_confidence_bounds(key_2)
 
         x_axis, y_axis, y_axis_2 = _get_subplot_axes_names(idx, y_axis_per_subplot=2)
         _set_y_axis_title(figure, y_axis, render_metric_display_name(key_1.display_names))
@@ -127,6 +135,10 @@ def plot_2d_compare_step_to_step(
             reference_chunk_end_dates=reference_chunk_end_dates,
             reference_metric_1=reference_metric_1,
             reference_metric_2=reference_metric_2,
+            reference_metric_1_upper_confidence_bounds=reference_metric_1_upper_confidence_bounds,
+            reference_metric_1_lower_confidence_bounds=reference_metric_1_lower_confidence_bounds,
+            reference_metric_2_upper_confidence_bounds=reference_metric_2_upper_confidence_bounds,
+            reference_metric_2_lower_confidence_bounds=reference_metric_2_lower_confidence_bounds,
             analysis_chunk_keys=analysis_chunk_keys,
             analysis_chunk_periods=analysis_chunk_periods,
             analysis_chunk_indices=analysis_chunk_indices,
@@ -134,6 +146,10 @@ def plot_2d_compare_step_to_step(
             analysis_chunk_end_dates=analysis_chunk_end_dates,
             analysis_metric_1_alerts=analysis_metric_1_alerts,
             analysis_metric_2_alerts=analysis_metric_2_alerts,
+            analysis_metric_1_upper_confidence_bounds=analysis_metric_1_upper_confidence_bounds,
+            analysis_metric_1_lower_confidence_bounds=analysis_metric_1_lower_confidence_bounds,
+            analysis_metric_2_upper_confidence_bounds=analysis_metric_2_upper_confidence_bounds,
+            analysis_metric_2_lower_confidence_bounds=analysis_metric_2_lower_confidence_bounds,
             hover=hover,
             xaxis=x_axis,
             yaxis=y_axis,
@@ -152,7 +168,7 @@ def _set_y_axis_title(figure: Figure, y_axis_name: str, title: str):
     figure.layout.__getattr__(y_name).title = title
 
 
-def _plot_compare_step_to_step(
+def _plot_compare_step_to_step(  # noqa: C901
     figure: Figure,
     metric_1_display_name: Union[str, Tuple],
     metric_2_display_name: Union[str, Tuple],
@@ -165,6 +181,10 @@ def _plot_compare_step_to_step(
     reference_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_1: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_2: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_1_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_2_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -172,6 +192,10 @@ def _plot_compare_step_to_step(
     analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_metric_1_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_metric_2_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    analysis_metric_1_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    analysis_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    analysis_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    analysis_metric_2_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     hover: Optional[Hover] = None,
     xaxis: Optional[str] = 'x',
     yaxis: Optional[str] = 'y',
@@ -208,8 +232,10 @@ def _plot_compare_step_to_step(
 
     show_in_legend = xaxis == 'x1' and yaxis == 'y1'
 
+    confidence_band_in_legend = True
+
     if has_reference_results:
-        # region reference performance metric
+        # region reference metric 1
 
         _hover = hover or Hover(
             template='%{period}<br />'
@@ -252,9 +278,27 @@ def _plot_compare_step_to_step(
             showlegend=show_in_legend,
         )
 
+        if (
+            reference_metric_1_upper_confidence_bounds is not None
+            and reference_metric_1_lower_confidence_bounds is not None
+        ):
+            figure.add_confidence_band(
+                upper_confidence_boundaries=reference_metric_1_upper_confidence_bounds,
+                lower_confidence_boundaries=reference_metric_1_lower_confidence_bounds,
+                indices=reference_chunk_indices,
+                start_dates=reference_chunk_start_dates,
+                end_dates=reference_chunk_end_dates,
+                name='Confidence band',
+                xaxis=xaxis,
+                yaxis=yaxis,
+                showlegend=show_in_legend and confidence_band_in_legend,
+                with_additional_endpoint=True,
+            )
+            confidence_band_in_legend = False
+
         # endregion
 
-        # region reference drift metric
+        # region reference metric 2
 
         _hover = hover or Hover(
             template='%{period}<br />'
@@ -299,6 +343,24 @@ def _plot_compare_step_to_step(
             # line_dash='dash',
         )
 
+        if (
+            reference_metric_2_upper_confidence_bounds is not None
+            and reference_metric_2_lower_confidence_bounds is not None
+        ):
+            figure.add_confidence_band(
+                upper_confidence_boundaries=reference_metric_2_upper_confidence_bounds,
+                lower_confidence_boundaries=reference_metric_2_lower_confidence_bounds,
+                indices=reference_chunk_indices,
+                start_dates=reference_chunk_start_dates,
+                end_dates=reference_chunk_end_dates,
+                name='Confidence band',
+                xaxis=xaxis,
+                yaxis=yaxis2,
+                showlegend=show_in_legend and confidence_band_in_legend,
+                with_additional_endpoint=True,
+            )
+            confidence_band_in_legend = False
+
         figure.add_period_separator(
             x=(
                 ensure_numpy(reference_chunk_indices)[0][-1] + 1
@@ -308,7 +370,7 @@ def _plot_compare_step_to_step(
         )
         # endregion
 
-    # region analysis performance metric
+    # region analysis metric 1
 
     _hover = hover or Hover(
         template='%{period} &nbsp; &nbsp; %{alert} <br />'
@@ -352,9 +414,24 @@ def _plot_compare_step_to_step(
         showlegend=show_in_legend,
     )
 
+    if analysis_metric_1_upper_confidence_bounds is not None and analysis_metric_1_lower_confidence_bounds is not None:
+        figure.add_confidence_band(
+            upper_confidence_boundaries=analysis_metric_1_upper_confidence_bounds,
+            lower_confidence_boundaries=analysis_metric_1_lower_confidence_bounds,
+            indices=analysis_chunk_indices,
+            start_dates=analysis_chunk_start_dates,
+            end_dates=analysis_chunk_end_dates,
+            name='Confidence band',
+            xaxis=xaxis,
+            yaxis=yaxis,
+            showlegend=show_in_legend and confidence_band_in_legend,
+            with_additional_endpoint=True,
+        )
+        confidence_band_in_legend = False
+
     # endregion
 
-    # region analysis multivariate drift metric
+    # region analysis metric 2
     _hover = hover or Hover(
         template='%{period} &nbsp; &nbsp; %{alert} <br />'
         'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
@@ -395,6 +472,21 @@ def _plot_compare_step_to_step(
         hover=_hover,
         showlegend=show_in_legend,
     )
+
+    if analysis_metric_2_upper_confidence_bounds is not None and analysis_metric_2_lower_confidence_bounds is not None:
+        figure.add_confidence_band(
+            upper_confidence_boundaries=analysis_metric_2_upper_confidence_bounds,
+            lower_confidence_boundaries=analysis_metric_2_lower_confidence_bounds,
+            indices=analysis_chunk_indices,
+            start_dates=analysis_chunk_start_dates,
+            end_dates=analysis_chunk_end_dates,
+            name='Confidence band',
+            xaxis=xaxis,
+            yaxis=yaxis2,
+            showlegend=show_in_legend and confidence_band_in_legend,
+            with_additional_endpoint=True,
+        )
+        confidence_band_in_legend = False
 
     # endregion
 

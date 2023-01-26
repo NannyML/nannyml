@@ -164,7 +164,7 @@ class Figure(go.Figure):
         if with_additional_endpoint:
             x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
 
-        show_in_legend = True
+        show_in_legend = kwargs.get('showlegend', True)
         if subplot_args is None:
             subplot_args = {}
         else:
