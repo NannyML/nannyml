@@ -127,7 +127,7 @@ def _get_protocol_and_path(filepath: str) -> Tuple[str, str]:
     return protocol, path
 
 
-def _get_filepath_str(path: str, protocol: str) -> str:
+def get_filepath_str(path: str, protocol: str) -> str:
     if protocol in HTTP_PROTOCOLS:
         path = "".join((protocol, "://", path))
     return path

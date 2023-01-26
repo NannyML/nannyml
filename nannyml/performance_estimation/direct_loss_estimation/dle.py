@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 from pandas import MultiIndex
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder
 
 from nannyml._typing import ProblemType
 from nannyml._typing import Result as ResultType
@@ -204,7 +204,7 @@ class DLE(AbstractEstimator):
         ]
 
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
-        self._categorical_encoders: defaultdict = defaultdict(LabelEncoder)
+        self._categorical_encoders: defaultdict = defaultdict(_default_encoder)
 
         self.result: Optional[ResultType] = None
 
@@ -223,13 +223,14 @@ class DLE(AbstractEstimator):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
 
         _, categorical_feature_columns = _split_features_by_type(reference_data, self.feature_column_names)
-        if categorical_feature_columns:
-            reference_data[categorical_feature_columns] = self._categorical_imputer.fit_transform(
-                reference_data[categorical_feature_columns]
+        for categorical_feature_column in categorical_feature_columns:
+            reference_data[categorical_feature_column] = reference_data[categorical_feature_column].astype("object")
+            reference_data[categorical_feature_column] = self._categorical_imputer.fit_transform(
+                reference_data[categorical_feature_column].values.reshape(-1, 1)
             )
-            reference_data[categorical_feature_columns] = reference_data[categorical_feature_columns].apply(
-                lambda x: self._categorical_encoders[x.name].fit_transform(x)
-            )
+            reference_data[categorical_feature_column] = self._categorical_encoders[
+                categorical_feature_column
+            ].fit_transform(reference_data[categorical_feature_column].values.reshape(-1, 1))
 
         for metric in self.metrics:
             metric.fit(reference_data)
@@ -247,10 +248,13 @@ class DLE(AbstractEstimator):
         _list_missing([self.y_pred], list(data.columns))
 
         _, categorical_feature_columns = _split_features_by_type(data, self.feature_column_names)
-        if categorical_feature_columns:
-            data[categorical_feature_columns] = self._categorical_imputer.transform(data[categorical_feature_columns])
-            data[categorical_feature_columns] = data[categorical_feature_columns].apply(
-                lambda x: self._categorical_encoders[x.name].transform(x)
+        for categorical_feature_column in categorical_feature_columns:
+            data[categorical_feature_column] = data[categorical_feature_column].astype("object")
+            data[categorical_feature_column] = self._categorical_imputer.transform(
+                data[categorical_feature_column].values.reshape(-1, 1)
+            )
+            data[categorical_feature_column] = self._categorical_encoders[categorical_feature_column].transform(
+                data[categorical_feature_column].values.reshape(-1, 1)
             )
 
         chunks = self.chunker.split(data)
@@ -348,3 +352,7 @@ def _create_multilevel_index(metric_names: List[str]):
     tuples = chunk_tuples + reconstruction_tuples
 
     return MultiIndex.from_tuples(tuples)
+
+
+def _default_encoder():
+    return OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)

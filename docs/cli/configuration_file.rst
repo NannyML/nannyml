@@ -322,6 +322,39 @@ This snippet shows how to setup the column mapping for the :ref:`dataset-synthet
         upmarket_card: y_pred_proba_upmarket_card
       y_true: y_true
 
+.. _cli_configuration_store:
+
+Store section
+*****************
+
+This section lets you set up a :class:`~nannyml.io.store.file_store.FilesystemStore` for caching purposes.
+
+When a :class:`~nannyml.io.store.file_store.FilesystemStore` is configured it will be used to store and load fitted
+calculators during the run. NannyML will use the store to try to load pre-fitted calculators. If none can be found
+a new calculator will be created, fitted and persisted using the store.
+The next time NannyML is run using the same configuration file it will find the stored calculator and use it subsequently.
+
+This snippet shows how to setup the store in configuration using the local filesystem:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: /out/nml-cache/calculators
+
+This snippet shows how use S3 with credentials:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: s3://my-bucket/nml/cache/
+        credentials:
+          client_kwargs:
+            aws_access_key_id: '<ACCESS_KEY_ID>'
+            aws_secret_access_key: '<SECRET_ACCESS_KEY>'
+
+
 Chunker section
 *****************
 

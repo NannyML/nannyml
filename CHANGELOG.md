@@ -6,6 +6,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.8.2] - 2023-01-24
+
+### Changed
+
+- Log Ranker usage logging
+- Remove some redundant parameters in `plot()` function calls for data reconstruction results, univariate drift results,
+  CBPE results and DLE results.
+- Support "single metric/column" arguments in addition to lists in class creation [(#165)](https://github.com/NannyML/nannyml/issues/165)
+- Fix incorrect 'None' checks when dealing with defaults in univariate drift calculator
+- Multiple updates and corrections to the docs (thanks [@nikml](https://github.com/nikml)!), including:
+  - Updating univariate drift tutorial
+  - Updating README
+  - Update PCA: How it works
+  - Fix incorrect plots
+  - Fix quickstart [(#171)](https://github.com/NannyML/nannyml/issues/171)
+- Update chunker docstrings to match parameter names, thanks [@mrggementiza](https://github.com/jrggementiza)!
+- Make sequence 'None' checks more readable, thanks [@mrggementiza](https://github.com/jrggementiza)!
+- Ensure error handling in usage logging does not cause errors...
+- Start using `OrdinalEncoder` instead of `LabelEncorder` in DLE. This allows us to deal with "unseen" values in the
+  analysis period.
+
+### Added
+
+- Added a Store to provide persistence for objects. Main use case for now is storing fitted calculators to be reused
+  later without needing to fit on reference again. Current store implementation uses a local or remote filesystem as a
+  persistence layer. Check out the documentation on [persisting calculators](https://nannyml.readthedocs.io/en/latest/tutorials/persisting_calculators.html).
+
+### Fixed
+
+- Fix incorrect interpretation of `y_pred` column as continuous values for the included sample binary classification data.
+  Converting the column explicitly to "category" data type for now, update of the dataset to follow soon.
+  [(#171)](https://github.com/NannyML/nannyml/issues/171)
+- Fix broken image link in README, thanks [@mrggementiza](https://github.com/jrggementiza)!
+- Fix missing key in the CLI section on raw files output, thanks [@CoffiDev](https://github.com/CoffiDev)!
+- Fix upper and lower thresholds for data reconstruction being swapped [(#179)](https://github.com/NannyML/nannyml/issues/179)
+- Fix stacked bar chart plots (missing bars + too many categories shown)
+
+
 ## [0.8.1] - 2022-12-01
 
 ### Changed

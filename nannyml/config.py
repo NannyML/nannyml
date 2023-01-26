@@ -82,12 +82,21 @@ class SchedulingConfig(BaseModel):
     cron: Optional[CronSchedulingConfig]
 
 
+class FileStoreConfig(BaseModel):
+    path: str
+
+
+class StoreConfig(BaseModel):
+    file: Optional[FileStoreConfig]
+
+
 class Config(BaseModel):
     input: InputConfig
     output: WriterConfig
     column_mapping: ColumnMapping
     chunker: Optional[ChunkerConfig]
     scheduling: Optional[SchedulingConfig]
+    store: Optional[StoreConfig]
 
     problem_type: str
     ignore_errors: Optional[bool]

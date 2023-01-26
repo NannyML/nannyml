@@ -121,7 +121,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         for column_name in self.continuous_column_names:
             self._column_to_models_mapping[column_name] += [
                 MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, chunker=self.chunker).fit(
-                    reference_data[column_name]
+                    reference_data=reference_data[column_name],
+                    timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
                 )
                 for method in self.continuous_method_names
             ]
@@ -129,7 +130,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         for column_name in self.categorical_column_names:
             self._column_to_models_mapping[column_name] += [
                 MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL, chunker=self.chunker).fit(
-                    reference_data[column_name]
+                    reference_data=reference_data[column_name],
+                    timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
                 )
                 for method in self.categorical_method_names
             ]

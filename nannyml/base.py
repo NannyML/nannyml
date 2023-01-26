@@ -348,8 +348,8 @@ class AbstractEstimator(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def __str__(self):  # noqa: D105
-        return self.__class__.__name__
+    def __str__(self):
+        return f'{self.__module__}.{self.__class__.__name__}'
 
     def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
         """Trains the calculator using reference data."""
