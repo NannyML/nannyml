@@ -58,7 +58,7 @@ def no_timestamp_metrics(regression_data) -> pd.DataFrame:
         problem_type='regression',
     ).fit(reference)
     results = performance_calculator.calculate(analysis.join(regression_data[2])).filter(period='analysis')
-    return results.data
+    return results.to_df()
 
 
 @pytest.mark.parametrize(

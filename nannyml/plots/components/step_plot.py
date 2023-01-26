@@ -104,7 +104,7 @@ def _add_metric_line(
         line_args = {}
 
     if subplot_args is not None:
-        kwargs.update(subplot_args)
+        kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
     figure.add_scatter(
         name=name,
@@ -134,9 +134,10 @@ def _add_metric_markers(
     x_mid = [x1 + (x2 - x1) / 2 for x1, x2 in pairwise(x)]
 
     if subplot_args is not None:
-        kwargs.update(subplot_args)
+        kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
-    del kwargs['showlegend']
+    if 'showlegend' in kwargs:
+        del kwargs['showlegend']
 
     figure.add_scatter(
         name=name,
@@ -174,7 +175,7 @@ def _add_alert_markers(
     x_mid = [x[alert_index] + (x[alert_index + 1] - x[alert_index]) / 2 for alert_index in alert_indices]
 
     if subplot_args is not None:
-        kwargs.update(subplot_args)
+        kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
     figure.add_scatter(
         name=name,
@@ -211,7 +212,8 @@ def _add_alert_areas(
     if subplot_args is not None:
         kwargs.update(subplot_args)
 
-    del kwargs['showlegend']
+    if 'showlegend' in kwargs:
+        del kwargs['showlegend']
 
     for x0, x1 in pairwise(x[alert_indices]):
         figure.add_vrect(x0=x0, x1=x1, fillcolor=color, opacity=alpha, layer='below', line_width=0, **kwargs)

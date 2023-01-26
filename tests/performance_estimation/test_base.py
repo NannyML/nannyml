@@ -9,7 +9,8 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import pytest
 
-from nannyml.base import AbstractEstimator, AbstractEstimatorResult
+from nannyml._typing import Key, Result
+from nannyml.base import Abstract1DResult, AbstractEstimator
 from nannyml.chunk import CountBasedChunker  # , _minimum_chunk_size
 from nannyml.chunk import DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.datasets import load_synthetic_binary_classification_dataset
@@ -27,19 +28,18 @@ def simple_estimator() -> AbstractEstimator:  # noqa: D103
     return SimpleEstimator(chunk_size=5000)
 
 
-class SimpleEstimatorResult(AbstractEstimatorResult):
+class SimpleEstimatorResult(Abstract1DResult):
     def __init__(self, results_data, calculator):
         super().__init__(results_data)
         self.calculator = calculator
 
-    @property
-    def estimator_name(self) -> str:
-        return 'simple_estimator'
+    def keys(self) -> List[Key]:
+        return []
 
     def plot(self):
         pass
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return SimpleEstimatorResult(self.data, self.calculator)
 
 
@@ -47,7 +47,7 @@ class SimpleEstimator(AbstractEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):  # noqa: D102
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> SimpleEstimatorResult:  # noqa: D102
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:  # noqa: D102
         chunks = self.chunker.split(data)
         return SimpleEstimatorResult(
             results_data=pd.DataFrame(columns=data.columns).assign(key=[chunk.key for chunk in chunks]),
@@ -68,7 +68,7 @@ def test_base_estimator_uses_count_based_chunker_when_given_chunk_number():  # n
 
 
 def test_base_estimator_uses_period_based_chunker_when_given_chunk_period():  # noqa: D103
-    simple_estimator = SimpleEstimator(chunk_period='W')
+    simple_estimator = SimpleEstimator(chunk_period='W', timestamp_column_name='timestamp')
     assert isinstance(simple_estimator.chunker, PeriodBasedChunker)
     assert simple_estimator.chunker.offset == 'W'
 

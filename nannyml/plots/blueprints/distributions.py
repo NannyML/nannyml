@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 import math
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -19,24 +19,25 @@ from nannyml.plots.util import is_time_based_x_axis
 
 
 # Intended to work only with Univariate Drift Result for now...
-def plot_2d_univariate_distributions_list(
+def plot_distributions(
     result,
     reference_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
     analysis_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
     chunker: Chunker,  # TODO: move distribution calculations to calculator run
-    items: List[Tuple[str, Any]],
     title: Optional[str] = 'Column distributions',
     figure: Optional[Figure] = None,
     x_axis_time_title: str = 'Time',
     x_axis_chunk_title: str = 'Chunk',
     y_axis_title: str = 'Values',
     figure_args: Optional[Dict[str, Any]] = None,
-    subplot_title_format: str = '<b>{column_name}</b> distribution (alerts for <b>{method_name})</b>',
+    subplot_title_format: str = '<b>{display_names[0]}</b> distribution (alerts for <b>{display_names[1]})</b>',
     number_of_columns: Optional[int] = None,
 ) -> Figure:
-    if not items:
-        raise InvalidArgumentsException("tried plotting distributions but received zero plotting items.")
-    number_of_plots = len(items)
+    from nannyml.drift.univariate import Result
+
+    assert isinstance(result, Result)
+
+    number_of_plots = len(result.keys())
     if number_of_columns is None:
         number_of_columns = min(number_of_plots, 1)
     number_of_rows = math.ceil(number_of_plots / number_of_columns)
@@ -48,7 +49,9 @@ def plot_2d_univariate_distributions_list(
         figure = Figure(
             **dict(
                 title=title,
-                x_axis_title=x_axis_time_title if result.timestamp_column_name else x_axis_chunk_title,
+                x_axis_title=x_axis_time_title
+                if is_time_based_x_axis(result.chunk_start_dates, result.chunk_end_dates)
+                else x_axis_chunk_title,
                 y_axis_title=y_axis_title,
                 legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
                 height=number_of_plots * 500 / number_of_columns,
@@ -56,77 +59,78 @@ def plot_2d_univariate_distributions_list(
                     cols=number_of_columns,
                     rows=number_of_rows,
                     subplot_titles=[
-                        subplot_title_format.format(column_name=column_name, method_name=method.display_name)
-                        for column_name, method in items
+                        subplot_title_format.format(display_names=key.display_names) for key in result.keys()
                     ],
                 ),
                 **figure_args,
             )
         )
 
-    reference_result: pd.DataFrame = result.filter(period='reference').to_df()
-    analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
+    reference_result = result.filter(period='reference')
+    analysis_result = result.filter(period='analysis')
 
-    for idx, (column_name, method) in enumerate(items):
+    for idx, key in enumerate(result.keys()):
         row = (idx // number_of_columns) + 1
         col = (idx % number_of_columns) + 1
 
-        analysis_chunk_start_dates = analysis_result.get(('chunk', 'chunk', 'start_date'), default=None)
-        analysis_chunk_end_dates = analysis_result.get(('chunk', 'chunk', 'end_date'), default=None)
+        column_name, method = key.properties
+
+        analysis_chunk_start_dates = analysis_result.chunk_start_dates
+        analysis_chunk_end_dates = analysis_result.chunk_end_dates
         x_axis_is_time_based = is_time_based_x_axis(analysis_chunk_start_dates, analysis_chunk_end_dates)
 
-        if column_name in result.categorical_column_names and method in result.categorical_methods:
+        if column_name in result.categorical_column_names and method in result.categorical_method_names:
             figure = _plot_stacked_bar(
                 figure=figure,
                 row=row,
                 col=col,
                 chunker=chunker,
                 column_name=column_name,
-                metric_display_name=method.display_name,
+                metric_display_name=method,
                 reference_data=reference_data[column_name],
                 reference_data_timestamps=reference_data[result.timestamp_column_name]
                 if x_axis_is_time_based
                 else None,
-                reference_alerts=reference_result.get((column_name, method.column_name, 'alert'), default=None),
-                reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
-                reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
-                reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
+                reference_alerts=reference_result.alerts(key),
+                reference_chunk_keys=reference_result.chunk_keys,
+                reference_chunk_periods=reference_result.chunk_periods,
+                reference_chunk_indices=reference_result.chunk_indices,
+                reference_chunk_start_dates=reference_result.chunk_start_dates,
+                reference_chunk_end_dates=reference_result.chunk_end_dates,
                 analysis_data=analysis_data[column_name],
                 analysis_data_timestamps=analysis_data[result.timestamp_column_name] if x_axis_is_time_based else None,
-                analysis_alerts=analysis_result.get((column_name, method.column_name, 'alert'), default=None),
-                analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
-                analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
-                analysis_chunk_indices=analysis_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
+                analysis_alerts=analysis_result.alerts(key),
+                analysis_chunk_keys=analysis_result.chunk_keys,
+                analysis_chunk_periods=analysis_result.chunk_periods,
+                analysis_chunk_indices=analysis_result.chunk_indices,
                 analysis_chunk_start_dates=analysis_chunk_start_dates,
                 analysis_chunk_end_dates=analysis_chunk_end_dates,
             )
-        elif column_name in result.continuous_column_names and method in result.continuous_methods:
+        elif column_name in result.continuous_column_names and method in result.continuous_method_names:
             figure = _plot_joyplot(
                 figure=figure,
                 row=row,
                 col=col,
                 chunker=chunker,
-                metric_display_name=method.display_name,
+                metric_display_name=method,
                 reference_data=reference_data[column_name],
                 reference_data_timestamps=reference_data[result.timestamp_column_name]
                 if x_axis_is_time_based
                 else None,
-                reference_alerts=reference_result.get((column_name, method.column_name, 'alert'), default=None),
-                reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
-                reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
-                reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
+                reference_alerts=reference_result.alerts(key),
+                reference_chunk_keys=reference_result.chunk_keys,
+                reference_chunk_periods=reference_result.chunk_periods,
+                reference_chunk_indices=reference_result.chunk_indices,
+                reference_chunk_start_dates=reference_result.chunk_start_dates,
+                reference_chunk_end_dates=reference_result.chunk_end_dates,
                 analysis_data=analysis_data[column_name],
                 analysis_data_timestamps=analysis_data[result.timestamp_column_name] if x_axis_is_time_based else None,
-                analysis_alerts=analysis_result.get((column_name, method.column_name, 'alert'), default=None),
-                analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
-                analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
-                analysis_chunk_indices=analysis_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                analysis_chunk_start_dates=analysis_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                analysis_chunk_end_dates=analysis_result.get(('chunk', 'chunk', 'end_date'), default=None),
+                analysis_alerts=analysis_result.alerts(key),
+                analysis_chunk_keys=analysis_result.chunk_keys,
+                analysis_chunk_periods=analysis_result.chunk_periods,
+                analysis_chunk_indices=analysis_result.chunk_indices,
+                analysis_chunk_start_dates=analysis_chunk_start_dates,
+                analysis_chunk_end_dates=analysis_chunk_end_dates,
             )
         else:
             raise InvalidArgumentsException(
@@ -134,185 +138,6 @@ def plot_2d_univariate_distributions_list(
                 f"the continuous or categorical columns lists."
             )
     return figure
-
-
-def plot_2d_continuous_distribution_list(
-    result,
-    reference_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
-    analysis_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
-    chunker: Chunker,  # TODO: move distribution calculations to calculator run
-    title: Optional[str] = None,
-    figure: Optional[Figure] = None,
-    x_axis_time_title: str = 'Time',
-    x_axis_chunk_title: str = 'Chunk',
-    y_axis_title: str = 'Metric',
-    figure_args: Optional[Dict[str, Any]] = None,
-    subplot_title_format: str = 'Metric <b>{metric_name}</b>',
-    dimension_1_name: str = 'column_name',
-    dimension_2_name: str = 'metric',
-) -> Figure:
-    dimension_1 = _try_get_dimension(result, dimension_1_name)
-    dimension_2 = _try_get_dimension(result, dimension_2_name)
-
-    number_of_plots = len(dimension_1) * len(dimension_2)
-    number_of_columns = min(number_of_plots, 2)
-    number_of_rows = math.ceil(number_of_plots / number_of_columns)
-
-    if figure_args is None:
-        figure_args = {}
-
-    if figure is None:
-        figure = Figure(
-            **dict(
-                title=title,
-                x_axis_title=x_axis_time_title if result.timestamp_column_name else x_axis_chunk_title,
-                y_axis_title=y_axis_title,
-                legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
-                height=number_of_plots * 500 / number_of_columns,
-                subplot_args=dict(
-                    cols=number_of_columns,
-                    rows=number_of_rows,
-                    subplot_titles=[
-                        subplot_title_format.format(dimension_1=d1_value, dimension_2=d2_value)
-                        for d1_value in dimension_1
-                        for d2_value in dimension_2
-                    ],
-                ),
-                **figure_args,
-            )
-        )
-
-    reference_result: pd.DataFrame = result.filter(period='reference').to_df()
-    analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
-
-    for d1_idx, d1_value in enumerate(dimension_1):
-        for d2_idx, d2_value in enumerate(dimension_2):
-            idx = d1_idx * len(dimension_2) + d2_idx
-            row = (idx // number_of_columns) + 1
-            col = (idx % number_of_columns) + 1
-
-            figure = _plot_joyplot(
-                figure=figure,
-                row=row,
-                col=col,
-                chunker=chunker,
-                metric_display_name=d2_value.display_name,
-                reference_data=reference_data[d1_value],
-                reference_data_timestamps=reference_data[result.timestamp_column_name],
-                reference_alerts=reference_result.get((d1_value, d2_value.column_name, 'alert'), default=None),
-                reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
-                reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
-                reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
-                analysis_data=analysis_data[d1_value],
-                analysis_data_timestamps=analysis_data[result.timestamp_column_name],
-                analysis_alerts=analysis_result.get((d1_value, d2_value.column_name, 'alert'), default=None),
-                analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
-                analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
-                analysis_chunk_indices=analysis_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                analysis_chunk_start_dates=analysis_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                analysis_chunk_end_dates=analysis_result.get(('chunk', 'chunk', 'end_date'), default=None),
-            )
-
-    return figure
-
-
-def plot_2d_categorical_distribution_list(
-    result,
-    reference_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
-    analysis_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
-    chunker: Chunker,  # TODO: move distribution calculations to calculator run
-    title: Optional[str] = None,
-    figure: Optional[Figure] = None,
-    x_axis_time_title: str = 'Time',
-    x_axis_chunk_title: str = 'Chunk',
-    y_axis_title: str = 'Metric',
-    figure_args: Optional[Dict[str, Any]] = None,
-    subplot_title_format: str = 'Metric <b>{metric_name}</b>',
-    dimension_1_name: str = 'column_name',
-    dimension_2_name: str = 'metric',
-) -> Figure:
-    dimension_1 = _try_get_dimension(result, dimension_1_name)
-    dimension_2 = _try_get_dimension(result, dimension_2_name)
-
-    number_of_plots = len(dimension_1) * len(dimension_2)
-    number_of_columns = min(number_of_plots, 2)
-    number_of_rows = math.ceil(number_of_plots / number_of_columns)
-
-    if figure_args is None:
-        figure_args = {}
-
-    if figure is None:
-        figure = Figure(
-            **dict(
-                title=title,
-                x_axis_title=x_axis_time_title if result.timestamp_column_name else x_axis_chunk_title,
-                y_axis_title=y_axis_title,
-                legend=dict(traceorder="grouped", itemclick=False, itemdoubleclick=False),
-                height=number_of_plots * 500 / number_of_columns,
-                subplot_args=dict(
-                    cols=number_of_columns,
-                    rows=number_of_rows,
-                    subplot_titles=[
-                        subplot_title_format.format(dimension_1=d1_value, dimension_2=d2_value)
-                        for d1_value in dimension_1
-                        for d2_value in dimension_2
-                    ],
-                ),
-                **figure_args,
-            )
-        )
-    else:
-        figure.set_subplots(rows=6 + number_of_rows, cols=number_of_columns)
-
-    reference_result: pd.DataFrame = result.filter(period='reference').to_df()
-    analysis_result: pd.DataFrame = result.filter(period='analysis').to_df()
-
-    for d1_idx, d1_value in enumerate(dimension_1):
-        for d2_idx, d2_value in enumerate(dimension_2):
-            idx = d1_idx * len(dimension_2) + d2_idx + 6 * 2
-            row = (idx // number_of_columns) + 1
-            col = (idx % number_of_columns) + 1
-
-            figure = _plot_stacked_bar(
-                figure=figure,
-                row=row,
-                col=col,
-                chunker=chunker,
-                column_name=d1_value,
-                metric_display_name=d2_value.display_name,
-                reference_data=reference_data[d1_value],
-                reference_data_timestamps=reference_data[result.timestamp_column_name],
-                reference_alerts=reference_result.get((d1_value, d2_value.column_name, 'alert'), default=None),
-                reference_chunk_keys=reference_result.get(('chunk', 'chunk', 'key'), default=None),
-                reference_chunk_periods=reference_result.get(('chunk', 'chunk', 'period'), default=None),
-                reference_chunk_indices=reference_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                reference_chunk_start_dates=reference_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                reference_chunk_end_dates=reference_result.get(('chunk', 'chunk', 'end_date'), default=None),
-                analysis_data=analysis_data[d1_value],
-                analysis_data_timestamps=analysis_data[result.timestamp_column_name],
-                analysis_alerts=analysis_result.get((d1_value, d2_value.column_name, 'alert'), default=None),
-                analysis_chunk_keys=analysis_result.get(('chunk', 'chunk', 'key'), default=None),
-                analysis_chunk_periods=analysis_result.get(('chunk', 'chunk', 'period'), default=None),
-                analysis_chunk_indices=analysis_result.get(('chunk', 'chunk', 'chunk_index'), default=None),
-                analysis_chunk_start_dates=analysis_result.get(('chunk', 'chunk', 'start_date'), default=None),
-                analysis_chunk_end_dates=analysis_result.get(('chunk', 'chunk', 'end_date'), default=None),
-            )
-
-    return figure
-
-
-def _try_get_dimension(result, dimension_name: str) -> List:
-    try:
-        dimension = getattr(result, dimension_name)
-    except AttributeError as exc:
-        raise InvalidArgumentsException(f'result does not contain an attribute named {dimension_name}: {exc}')
-
-    if not isinstance(dimension, List):
-        raise InvalidArgumentsException(f'attribute {dimension_name} is not an instance of \'List\'')
-
-    return dimension
 
 
 def _plot_joyplot(

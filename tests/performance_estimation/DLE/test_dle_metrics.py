@@ -7,16 +7,20 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml.base import AbstractEstimator, AbstractEstimatorResult
+from nannyml._typing import Key, Result
+from nannyml.base import Abstract1DResult, AbstractEstimator
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.performance_estimation.direct_loss_estimation import DLE
 
 
-class FakeEstimatorResult(AbstractEstimatorResult):
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+class FakeEstimatorResult(Abstract1DResult):
+    def keys(self) -> List[Key]:
+        return []
+
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return self
 
-    def plot(self, *args, **kwargs) -> Optional[plotly.graph_objects.Figure]:
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         return plotly.graph_objects.Figure()
 
 
@@ -24,7 +28,7 @@ class FakeEstimator(AbstractEstimator):
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         return FakeEstimatorResult(results_data=pd.DataFrame())
 
 
