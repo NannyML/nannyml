@@ -3,7 +3,7 @@
 #  License: Apache Software License 2.0
 import itertools
 import math
-from typing import List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -455,3 +455,39 @@ def render_metric_display_name(metric_display_name: Union[str, Tuple]):
             return f'<b>{metric_display_name[1]}</b>'
     else:
         return f'<b>{metric_display_name}</b>'
+
+
+class ResultCompareMixin:
+    def compare(self, other: Result):
+        return ResultComparison(self, other, title=self._get_title(other))  # type: ignore
+
+    def _get_title(self, other: Result):
+        from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
+        from nannyml.drift.univariate import Result as UnivariateDriftResult
+        from nannyml.performance_calculation import Result as RealizedPerformanceResult
+        from nannyml.performance_estimation.confidence_based import Result as CBPEResult
+        from nannyml.performance_estimation.direct_loss_estimation import Result as DLEResult
+
+        _result_title_names: Dict[type, Any] = {
+            UnivariateDriftResult: "Univariate drift",
+            DataReconstructionDriftResult: "Multivariate drift",
+            RealizedPerformanceResult: "Realized performance",
+            CBPEResult: "Estimated performance (CBPE)",
+            DLEResult: "Estimated performance (DLE)",
+        }
+
+        return f"<b>{_result_title_names[type(self)]}</b> vs. <b>{_result_title_names[type(other)]}</b>"
+
+
+class ResultComparison:
+    def __init__(self, result: Result, other: Result, title: Optional[str] = None):
+        self.result = result
+        self.other = other
+        self.title = title
+
+    def plot(self) -> Figure:
+        return plot_2d_compare_step_to_step(
+            result_1=self.result,
+            result_2=self.other,
+            plot_title=self.title,
+        )

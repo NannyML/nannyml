@@ -8,17 +8,14 @@ from nannyml._typing import Key
 from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
-from nannyml.drift.multivariate.data_reconstruction import Result as MultivariateDriftResult
-from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation import Result as RealizedPerformanceResult
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric
-from nannyml.plots.blueprints.comparisons import plot_2d_compare_step_to_step
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult):
+class Result(Abstract1DResult, ResultCompareMixin):
     def __init__(
         self,
         results_data: pd.DataFrame,
@@ -83,28 +80,3 @@ class Result(Abstract1DResult):
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
-
-    def compare(self, result: ResultType):
-        title: str = ''
-        if isinstance(result, MultivariateDriftResult):
-            title = 'Estimated performance vs. multivariate drift'
-        elif isinstance(result, UnivariateDriftResult):
-            title = 'Estimated performance vs. univariate drift'
-        elif isinstance(result, RealizedPerformanceResult):
-            title = 'Estimated performance vs. realized performance'
-
-        return ResultComparison(result=self, other=result, title=title)
-
-
-class ResultComparison:
-    def __init__(self, result: ResultType, other: ResultType, title: Optional[str] = None):
-        self.result = result
-        self.other = other
-        self.title = title
-
-    def plot(self) -> Figure:
-        return plot_2d_compare_step_to_step(
-            result_1=self.result,
-            result_2=self.other,
-            plot_title=self.title,
-        )

@@ -13,18 +13,16 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml._typing import Key
-from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.blueprints.comparisons import plot_2d_compare_step_to_step
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metric
-from nannyml.plots.components import Figure
 from nannyml.usage_logging import UsageEvent, log_usage
 
 Metric = namedtuple("Metric", "display_name column_name")
 
 
-class Result(Abstract1DResult):
+class Result(Abstract1DResult, ResultCompareMixin):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
     def __init__(
@@ -123,20 +121,3 @@ class Result(Abstract1DResult):
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['drift'].")
-
-    def compare(self, result: ResultType):
-        return ResultComparison(result=self, other=result)
-
-
-class ResultComparison:
-    def __init__(self, result: ResultType, other: ResultType, title: Optional[str] = None):
-        self.result = result
-        self.other = other
-        self.title = title
-
-    def plot(self) -> Figure:
-        return plot_2d_compare_step_to_step(
-            result_1=self.result,
-            result_2=self.other,
-            plot_title=self.title,
-        )

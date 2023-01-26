@@ -14,17 +14,14 @@ import plotly.graph_objects as go
 from nannyml._typing import Key, ProblemType
 from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
-from nannyml.drift.multivariate.data_reconstruction import Result as MultivariateDriftResult
-from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
-from nannyml.plots.blueprints.comparisons import plot_2d_compare_step_to_step
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
-from nannyml.plots.components import Figure
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult):
+class Result(Abstract1DResult, ResultCompareMixin):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     def __init__(
@@ -138,20 +135,3 @@ class Result(Abstract1DResult):
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
-
-    def compare(self, result: Union[MultivariateDriftResult, UnivariateDriftResult]):
-        return ResultComparison(result=self, other=result)
-
-
-class ResultComparison:
-    def __init__(self, result: ResultType, other: ResultType, title: Optional[str] = None):
-        self.result = result
-        self.other = other
-        self.title = title
-
-    def plot(self) -> Figure:
-        return plot_2d_compare_step_to_step(
-            result_1=self.result,
-            result_2=self.other,
-            plot_title=self.title,
-        )
