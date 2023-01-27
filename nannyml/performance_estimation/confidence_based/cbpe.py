@@ -56,6 +56,7 @@ class CBPE(AbstractEstimator):
         chunker: Optional[Chunker] = None,
         calibration: Optional[str] = None,
         calibrator: Optional[Calibrator] = None,
+        normalize_confusion_matrix: Optional[str] = None,
     ):
         """Initializes a new CBPE performance estimator.
 
@@ -132,6 +133,13 @@ class CBPE(AbstractEstimator):
                 "no metrics provided. Please provide a non-empty list of metrics."
                 f"Supported values are {SUPPORTED_METRIC_VALUES}."
             )
+        
+        valid_normalizations = [None, 'all', 'pred', 'true']
+        if normalize_confusion_matrix not in valid_normalizations:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' given was '{normalize_confusion_matrix}'. "
+                f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
+            )
 
         if isinstance(problem_type, str):
             self.problem_type = ProblemType.parse(problem_type)
@@ -149,6 +157,7 @@ class CBPE(AbstractEstimator):
                 y_true=self.y_true,
                 timestamp_column_name=self.timestamp_column_name,
                 chunker=self.chunker,
+                normalize_confusion_matrix=normalize_confusion_matrix,
             )
             for metric in metrics
         ]
@@ -297,25 +306,34 @@ class CBPE(AbstractEstimator):
         return self.result
 
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
-        estimates: Dict[str, Any] = {}
+
+        chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
-            estimated_metric = metric.estimate(chunk.data)
-            sampling_error = metric.sampling_error(chunk.data)
-            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
-            estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
-            estimates[f'estimated_{metric.column_name}'] = estimated_metric
-            estimates[f'upper_confidence_{metric.column_name}'] = min(
-                self.confidence_upper_bound, estimated_metric + SAMPLING_ERROR_RANGE * sampling_error
-            )
-            estimates[f'lower_confidence_{metric.column_name}'] = max(
-                self.confidence_lower_bound, estimated_metric - SAMPLING_ERROR_RANGE * sampling_error
-            )
-            estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
-            estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
-            estimates[f'alert_{metric.column_name}'] = (
-                estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
-            )
-        return estimates
+            chunk_record = metric.get_chunk_record(chunk.data)
+            # add the chunk record to the chunk_records dict
+            chunk_records.update(chunk_record)
+        return chunk_records
+
+
+        # estimates: Dict[str, Any] = {}
+        # for metric in self.metrics:
+        #     estimated_metric = metric.estimate(chunk.data) # type: float
+        #     sampling_error = metric.sampling_error(chunk.data)
+        #     estimates[f'sampling_error_{metric.column_name}'] = sampling_error
+        #     estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
+        #     estimates[f'estimated_{metric.column_name}'] = estimated_metric
+        #     estimates[f'upper_confidence_{metric.column_name}'] = min(
+        #         self.confidence_upper_bound, estimated_metric + SAMPLING_ERROR_RANGE * sampling_error
+        #     )
+        #     estimates[f'lower_confidence_{metric.column_name}'] = max(
+        #         self.confidence_lower_bound, estimated_metric - SAMPLING_ERROR_RANGE * sampling_error
+        #     )
+        #     estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
+        #     estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
+        #     estimates[f'alert_{metric.column_name}'] = (
+        #         estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
+        #     )
+        # return estimates
 
     def _fit_binary(self, reference_data: pd.DataFrame) -> CBPE:
         if reference_data.empty:

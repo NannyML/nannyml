@@ -15,7 +15,7 @@ The second function will be called during calculation or estimation. It takes th
 combines them with the size of the (analysis) data to give an estimate for the sampling error.
 """
 
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -309,3 +309,398 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
     """
     (reference_std,) = sampling_error_components
     return reference_std / np.sqrt(len(data))
+
+def true_positive_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
+) -> Tuple:
+    """
+    Estimate sampling error for the true positive rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    Returns
+    -------
+    (std, relevant_proportion, norm_type): Tuple[float, float, str]
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_tp = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    obs_level_fn = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    obs_level_fp = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    num_tp = np.sum(obs_level_tp)
+    num_fn = np.sum(obs_level_fn)
+    num_fp = np.sum(obs_level_fp)
+
+    if normalize_confusion_matrix is None:
+        std = np.std(obs_level_tp)
+
+        relevant_proportion = 1
+
+        norm_type = None
+
+    elif normalize_confusion_matrix == "all":
+
+        std = np.std(obs_level_tp)
+
+        relevant_proportion = 1
+
+        norm_type = "all"
+
+    elif normalize_confusion_matrix == "true":
+
+        number_of_real_positives = num_fn + num_tp
+        proportion_of_real_positives = number_of_real_positives / len(y_true_reference)
+
+        obs_level_tp = np.concatenate([np.ones(num_tp), np.zeros(number_of_real_positives - num_tp)])
+
+        std = np.std(obs_level_tp)
+
+        relevant_proportion = proportion_of_real_positives
+
+        norm_type = "true"
+
+    elif normalize_confusion_matrix == "pred":
+
+        number_of_pred_positives = num_fp + num_tp
+        proportion_of_pred_positives = number_of_pred_positives / len(y_true_reference)
+
+        obs_level_tp = np.concatenate([np.ones(num_tp), np.zeros(number_of_pred_positives - num_tp)])
+
+        std = np.std(obs_level_tp)
+
+        relevant_proportion = proportion_of_pred_positives
+
+        norm_type = "pred"
+
+    return (std, relevant_proportion, norm_type)
+
+
+def true_positive_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the true positive rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    (reference_std, relevant_proportion, norm_type) = sampling_error_components
+
+    if norm_type is None:
+        tp_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+
+    elif norm_type == "all":
+
+        tp_standard_error = reference_std / np.sqrt(len(data))
+
+    elif norm_type == "true" or norm_type == "pred":
+
+        tp_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    return tp_standard_error
+
+
+def true_negative_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
+) -> Tuple:
+    """
+    Estimate sampling error for the true negative rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    Returns
+    -------
+    (std, relevant_proportion, norm_type): Tuple[float, float, str]
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_tn = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    obs_level_fn = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    obs_level_fp = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    num_tn = np.sum(obs_level_tn)
+    num_fn = np.sum(obs_level_fn)
+    num_fp = np.sum(obs_level_fp)
+
+    if normalize_confusion_matrix is None:
+        std = np.std(obs_level_tn)
+
+        relevant_proportion = 1
+
+        norm_type = None
+
+    elif normalize_confusion_matrix == "all":
+
+        std = np.std(obs_level_tn)
+
+        relevant_proportion = 1 
+
+        norm_type = "all"
+
+    elif normalize_confusion_matrix == "true":
+
+        number_of_real_negatives = num_fp + num_tn
+        proportion_of_real_negatives = number_of_real_negatives / len(y_true_reference)
+
+        obs_level_tn = np.concatenate([np.ones(num_tn), np.zeros(number_of_real_negatives - num_tn)])
+
+        std = np.std(obs_level_tn)
+
+        relevant_proportion = proportion_of_real_negatives
+
+        norm_type = "true"
+
+    elif normalize_confusion_matrix == "pred":
+
+        number_of_pred_negatives = num_fn + num_tn
+        proportion_of_pred_negatives = number_of_pred_negatives / len(y_true_reference)
+
+        obs_level_tn = np.concatenate([np.ones(num_tn), np.zeros(number_of_pred_negatives - num_tn)])
+
+        std = np.std(obs_level_tn)
+
+        relevant_proportion = proportion_of_pred_negatives
+
+        norm_type = "pred"
+
+    return (std, relevant_proportion, norm_type)
+
+
+def true_negative_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the true negative rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    (reference_std, relevant_proportion, norm_type) = sampling_error_components
+
+    if norm_type is None:
+        tn_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+
+    elif norm_type == "all":
+
+        tn_standard_error = reference_std / np.sqrt(len(data))
+
+    elif norm_type == "true" or norm_type == "pred":
+
+        tn_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    return tn_standard_error
+
+
+def false_positive_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
+) -> Tuple:
+    """
+    Estimate sampling error for the false positive rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    Returns
+    -------
+    (std, relevant_proportion, norm_type): Tuple[float, float, str]
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_tp = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    obs_level_tn = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    obs_level_fp = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    num_tp = np.sum(obs_level_tp)
+    num_tn = np.sum(obs_level_tn)
+    num_fp = np.sum(obs_level_fp)
+
+    if normalize_confusion_matrix is None:
+        std = np.std(obs_level_fp)
+
+        relevant_proportion = 1
+
+        norm_type = None
+
+    elif normalize_confusion_matrix == "all":
+
+        std = np.std(obs_level_fp)
+
+        relevant_proportion = 1 
+
+        norm_type = "all"
+
+    elif normalize_confusion_matrix == "true":
+
+        number_of_real_negatives = num_fp + num_tn
+        proportion_of_real_negatives = number_of_real_negatives / len(y_true_reference)
+
+        obs_level_fp = np.concatenate([np.ones(num_fp), np.zeros(number_of_real_negatives - num_fp)])
+
+        std = np.std(obs_level_fp)
+
+        relevant_proportion = proportion_of_real_negatives
+
+        norm_type = "true"
+
+    elif normalize_confusion_matrix == "pred":
+
+        number_of_pred_positives = num_fp + num_tp
+        proportion_of_pred_positives = number_of_pred_positives / len(y_true_reference)
+
+        obs_level_fp = np.concatenate([np.ones(num_fp), np.zeros(number_of_pred_positives - num_fp)])
+
+        std = np.std(obs_level_fp)
+
+        relevant_proportion = proportion_of_pred_positives
+
+        norm_type = "pred"
+
+    return (std, relevant_proportion, norm_type)
+
+
+def false_positive_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the false positive rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    (reference_std, relevant_proportion, norm_type) = sampling_error_components
+
+    if norm_type is None:
+        fp_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+
+    elif norm_type == "all":
+
+        fp_standard_error = reference_std / np.sqrt(len(data))
+
+    elif norm_type == "true" or norm_type == "pred":
+
+        fp_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    return fp_standard_error
+
+
+def false_negative_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
+) -> Tuple:
+    """
+    Estimate sampling error for the false negative rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    Returns
+    -------
+    (std, relevant_proportion, norm_type): Tuple[float, float, str]
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_tp = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    obs_level_tn = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    obs_level_fn = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    num_tp = np.sum(obs_level_tp)
+    num_tn = np.sum(obs_level_tn)
+    num_fn = np.sum(obs_level_fn)
+
+    if normalize_confusion_matrix is None:
+        std = np.std(obs_level_fn)
+
+        relevant_proportion = 1
+
+        norm_type = None
+
+    elif normalize_confusion_matrix == "all":
+
+        std = np.std(obs_level_fn)
+
+        relevant_proportion = 1  # Could be None, None
+
+        norm_type = "all"
+
+    elif normalize_confusion_matrix == "true":
+
+        number_of_real_positives = num_fn + num_tp
+        proportion_of_real_positives = number_of_real_positives / len(y_true_reference)
+
+        obs_level_fn = np.concatenate([np.ones(num_fn), np.zeros(number_of_real_positives - num_fn)])
+
+        std = np.std(obs_level_fn)
+
+        relevant_proportion = proportion_of_real_positives
+
+        norm_type = "true"
+
+    elif normalize_confusion_matrix == "pred":
+
+        number_of_pred_negatives = num_fn + num_tn
+        proportion_of_pred_negatives = number_of_pred_negatives / len(y_true_reference)
+
+        obs_level_fn = np.concatenate([np.ones(num_fn), np.zeros(number_of_pred_negatives - num_fn)])
+
+        std = np.std(obs_level_fn)
+
+        relevant_proportion = proportion_of_pred_negatives
+
+        norm_type = "pred"
+
+    return (std, relevant_proportion, norm_type)
+
+
+def false_negative_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the false positive rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    (reference_std, relevant_proportion, norm_type) = sampling_error_components
+
+    if norm_type is None:
+        fn_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+
+    elif norm_type == "all":
+
+        fn_standard_error = reference_std / np.sqrt(len(data))
+
+    elif norm_type == "true" or norm_type == "pred":
+
+        fn_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    return fn_standard_error

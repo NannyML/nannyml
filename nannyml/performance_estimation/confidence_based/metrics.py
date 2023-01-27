@@ -1,6 +1,17 @@
 import abc
 import logging
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
+
+from ...sampling_error.binary_classification import (
+    true_positive_sampling_error,
+    true_positive_sampling_error_components,
+    true_negative_sampling_error,
+    true_negative_sampling_error_components,
+    false_positive_sampling_error,
+    false_positive_sampling_error_components,
+    false_negative_sampling_error,
+    false_negative_sampling_error_components,
+)
 
 import numpy as np
 import pandas as pd
@@ -35,6 +46,7 @@ class Metric(abc.ABC):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         """Creates a new Metric instance.
 
@@ -106,6 +118,10 @@ class Metric(abc.ABC):
             prediction scores/probabilities (depending on the metric to be calculated).
         """
         return self._estimate(data)
+    
+    # def get_chunk_records(self, data: pd.DataFrame):
+    #     pass
+    #     #put general logic here (not for cm) similar to that found in cbpe
 
     @abc.abstractmethod
     def _estimate(self, data: pd.DataFrame):
@@ -249,6 +265,7 @@ class BinaryClassificationAUROC(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='ROC AUC',
@@ -320,6 +337,7 @@ class BinaryClassificationF1(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='F1',
@@ -376,6 +394,7 @@ class BinaryClassificationPrecision(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Precision',
@@ -432,6 +451,7 @@ class BinaryClassificationRecall(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Recall',
@@ -487,6 +507,7 @@ class BinaryClassificationSpecificity(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Specificity',
@@ -543,6 +564,7 @@ class BinaryClassificationAccuracy(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Accuracy',
@@ -583,6 +605,140 @@ class BinaryClassificationAccuracy(Metric):
             return np.NaN
 
         return accuracy_score(y_true=y_true, y_pred=y_pred)
+    
+@MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
+class BinaryClassificationConfusionMatrix(Metric):
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        timestamp_column_name: Optional[str] = None,
+        normalize_confusion_matrix: Union[str, None] = None,
+    ):
+        super().__init__(
+            display_name='Confusion Matrix',
+            column_name='confusion_matrix',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+        )
+
+        self.normalize_confusion_matrix = normalize_confusion_matrix
+
+    def fit(self, reference_data: pd.DataFrame): # override the superclass fit method
+        """Fits a Metric on reference data.
+        Parameters
+        ----------
+        reference_data: pd.DataFrame
+            The reference data used for fitting. Must have target data available.
+        """
+        # Calculate alert thresholds
+        reference_chunks = self.chunker.split(
+            reference_data,
+        )
+        # self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
+
+        self.true_positive_lower_threshold, self.true_positive_upper_threshold = self._true_positive_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        self.true_negative_lower_threshold, self.true_negative_upper_threshold = self._true_negative_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        self.false_positive_lower_threshold, self.false_positive_upper_threshold = self._false_positive_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        self.false_negative_lower_threshold, self.false_negative_upper_threshold = self._false_negative_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+
+        # Calculate confidence bands
+        self.true_positive_confidence_deviation = self._true_positive_confidence_deviation(reference_chunks)
+        self.true_negative_confidence_deviation = self._true_negative_confidence_deviation(reference_chunks)
+        self.false_positive_confidence_deviation = self._false_positive_confidence_deviation(reference_chunks)
+        self.false_negative_confidence_deviation = self._false_negative_confidence_deviation(reference_chunks)
+
+        # Delegate to confusion matrix subclass
+        self._fit(reference_data) # could probably put _fit functionality here since overide fit method
+
+        return
+    
+    def _true_positive_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
+                           lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]:
+        pass
+    def _true_negative_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
+                            lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]: 
+        pass
+    def _false_positive_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
+                            lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]: 
+        pass
+    def _false_negative_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
+                            lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]: 
+        pass
+
+    def _true_positive_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
+        return np.std([self.get_true_positive_estimate(chunk.data) for chunk in reference_chunks])
+    def _true_negative_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
+        return np.std([self.get_true_negative_estimate(chunk.data) for chunk in reference_chunks])
+    def _false_positive_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
+        return np.std([self.get_false_positive_estimate(chunk.data) for chunk in reference_chunks])
+    def _false_negative_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
+        return np.std([self.get_false_negative_estimate(chunk.data) for chunk in reference_chunks])
+        
+
+    def _fit(self, reference_data: pd.DataFrame):
+        self._true_pos_sampling_error_components = true_positive_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._true_neg_sampling_error_components = true_negative_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._false_pos_sampling_error_components = false_positive_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._false_neg_sampling_error_components = false_negative_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict: #Basically the estimate function
+
+        chunk_record = {}
+
+        true_pos_info = get_true_pos_info(chunk_data)
+        chunk_record.update(true_pos_info)
+
+        true_neg_info = get_true_neg_info(chunk_data)
+        chunk_record.update(true_neg_info)
+
+        false_pos_info = get_false_pos_info(chunk_data)
+        chunk_record.update(false_pos_info)
+
+        false_neg_info = get_false_neg_info(chunk_data)
+        chunk_record.update(false_neg_info)
+
+        return chunk_record
+    
+    def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        true_pos_info = {}
+        
+        estimated_true_positives = get_true_positive_estimate(chunk_data)
+        
+        sampling_error_true_positives = true_positive_sampling_error(self._true_positive_sampling_error_components)
+
+        true_pos_info['estimated_true_positive'] = estimated_true_positives
+        true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
+        true_pos_info['realized_true_positive'] = get_true_positive_realized_performance(chunk_data)
+        true_pos_info['upper_confidence_t']
+
+
+
+
+
+
+
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
