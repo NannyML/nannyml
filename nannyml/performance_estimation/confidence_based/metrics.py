@@ -13,6 +13,8 @@ from ...sampling_error.binary_classification import (
     false_negative_sampling_error_components,
 )
 
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
@@ -72,6 +74,9 @@ class Metric(abc.ABC):
         self.confidence_deviation: Optional[float] = None
 
         self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
+
+        self.confidence_upper_bound = 1
+        self.confidence_lower_bound = 0
 
     def __str__(self):
         return self.display_name
@@ -724,14 +729,21 @@ class BinaryClassificationConfusionMatrix(Metric):
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
         true_pos_info = {}
         
-        estimated_true_positives = get_true_positive_estimate(chunk_data)
+        estimated_true_positives = get_true_positive_estimate(chunk_data) # need normalization
         
-        sampling_error_true_positives = true_positive_sampling_error(self._true_positive_sampling_error_components)
+        sampling_error_true_positives = true_positive_sampling_error(self._true_positive_sampling_error_components) # need normalization
 
         true_pos_info['estimated_true_positive'] = estimated_true_positives
         true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
         true_pos_info['realized_true_positive'] = get_true_positive_realized_performance(chunk_data)
-        true_pos_info['upper_confidence_t']
+
+        if self.normalize_confusion_matrix is None:
+            true_pos_info['upper_confidence_true_positive'] = estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives
+            true_pos_info['lower_confidence_true_positive'] = estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
+        else:
+            true_pos_info['upper_confidence_true_positive'] = min(self.confidence_upper_bound, estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives)
+
+            )
 
 
 
