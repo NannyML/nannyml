@@ -860,6 +860,107 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
+    def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
+        y_pred_proba = chunk_data[self.y_pred_proba]
+        y_pred = chunk_data[self.y_pred]
+
+        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
+        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
+        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+
+        if self.normalization is None:
+            normalized_est_tp_ratio = est_tp_ratio * len(y_pred)
+
+        elif self.normalization == 'all':
+            normalized_est_tp_ratio = est_tp_ratio
+
+        elif self.normalization == 'true':
+            normalizer = 1 / (est_tp_ratio + est_fn_ratio)
+            normalized_est_tp_ratio = est_tp_ratio * normalizer
+
+        elif self.normalization == 'predicted':
+            normalizer = 1 / (est_tp_ratio + est_fp_ratio)
+            normalized_est_tp_ratio = est_tp_ratio * normalizer
+
+        return normalized_est_tp_ratio
+
+    def get_true_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
+        y_pred_proba = chunk_data[self.y_pred_proba]
+        y_pred = chunk_data[self.y_pred]
+
+        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
+        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
+        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+
+        # check if estimate_args contains normalization argument
+        if self.normalization is None:
+            normalized_est_tn_ratio = est_tn_ratio * len(y_pred)
+
+        elif self.normalization == 'all':
+            normalized_est_tn_ratio = est_tn_ratio
+
+        elif self.normalization == 'true':
+            normalizer = 1 / (est_tn_ratio + est_fp_ratio)
+            normalized_est_tn_ratio = est_tn_ratio * normalizer
+
+        elif self.normalization == 'predicted':
+            normalizer = 1 / (est_tn_ratio + est_fn_ratio)
+            normalized_est_tn_ratio = est_tn_ratio * normalizer
+
+        return normalized_est_tn_ratio
+
+    def get_false_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
+        y_pred_proba = chunk_data[self.y_pred_proba]
+        y_pred = chunk_data[self.y_pred]
+
+        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
+        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
+        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
+
+        # check if estimate_args contains normalization argument
+        if self.normalization is None:
+            normalized_est_fp_ratio = est_fp_ratio * len(y_pred)
+
+        elif self.normalization == 'all':
+            normalized_est_fp_ratio = est_fp_ratio
+
+        elif self.normalization == 'true':
+            normalizer = 1 / (est_tn_ratio + est_fp_ratio)
+            normalized_est_fp_ratio = est_fp_ratio * normalizer
+
+        elif self.normalization == 'predicted':
+            normalizer = 1 / (est_tp_ratio + est_fp_ratio)
+            normalized_est_fp_ratio = est_fp_ratio * normalizer
+
+        return normalized_est_fp_ratio
+
+    def get_false_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
+        y_pred_proba = chunk_data[self.y_pred_proba]
+        y_pred = chunk_data[self.y_pred]
+
+        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
+        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
+        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
+
+        # check if estimate_args contains normalization argument
+        if self.normalization is None:
+            normalized_est_fn_ratio = est_fn_ratio * len(y_pred)
+
+        elif self.normalization == 'all':
+            normalized_est_fn_ratio = est_fn_ratio
+
+        elif self.normalization == 'true':
+            normalizer = 1 / (est_tp_ratio + est_fn_ratio)
+            normalized_est_fn_ratio = est_fn_ratio * normalizer
+
+        elif self.normalization == 'predicted':
+            normalizer = 1 / (est_tn_ratio + est_fn_ratio)
+            normalized_est_fn_ratio = est_fn_ratio * normalizer
+
+        return normalized_est_fn_ratio
+
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:  # Basically the estimate function
 
         chunk_record = {}
@@ -949,6 +1050,78 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
 
         return true_neg_info
+
+    def get_false_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        false_pos_info = {}
+
+        estimated_false_positives = get_false_positive_estimate(chunk_data)
+
+        sampling_error_false_positives = false_positive_sampling_error(self._false_positive_sampling_error_components)
+
+        false_pos_info['estimated_false_positive'] = estimated_false_positives
+        false_pos_info['sampling_error_false_positive'] = sampling_error_false_positives
+        false_pos_info['realized_false_positive'] = self._false_positive_realized_performance(chunk_data)
+
+        if self.normalize_confusion_matrix is None:
+            false_pos_info['upper_confidence_false_positive'] = (
+                estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives
+            )
+        else:
+            false_pos_info['upper_confidence_false_positive'] = min(
+                self.confidence_upper_bound,
+                estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
+            )
+
+        false_pos_info['lower_confidence_false_positive'] = max(
+            self.confidence_lower_bound,
+            estimated_false_positives - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
+        )
+
+        false_pos_info['upper_threshold_false_positive'] = self.false_positive_upper_threshold
+        false_pos_info['lower_threshold_false_positive'] = self.false_positive_lower_threshold
+
+        false_pos_info['alert_false_positive'] = (
+            estimated_false_positives > self.false_positive_upper_threshold
+            or estimated_false_positives < self.false_positive_lower_threshold
+        )
+
+        return false_pos_info
+
+    def get_false_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        false_neg_info = {}
+
+        estimated_false_negatives = get_false_negative_estimate(chunk_data)
+
+        sampling_error_false_negatives = false_negative_sampling_error(self._false_negative_sampling_error_components)
+
+        false_neg_info['estimated_false_negative'] = estimated_false_negatives
+        false_neg_info['sampling_error_false_negative'] = sampling_error_false_negatives
+        false_neg_info['realized_false_negative'] = self._false_negative_realized_performance(chunk_data)
+
+        if self.normalize_confusion_matrix is None:
+            false_neg_info['upper_confidence_false_negative'] = (
+                estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives
+            )
+        else:
+            false_neg_info['upper_confidence_false_negative'] = min(
+                self.confidence_upper_bound,
+                estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
+            )
+
+        false_neg_info['lower_confidence_false_negative'] = max(
+            self.confidence_lower_bound,
+            estimated_false_negatives - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
+        )
+
+        false_neg_info['upper_threshold_false_negative'] = self.false_negative_upper_threshold
+        false_neg_info['lower_threshold_false_negative'] = self.false_negative_lower_threshold
+
+        false_neg_info['alert_false_negative'] = (
+            estimated_false_negatives > self.false_negative_upper_threshold
+            or estimated_false_negatives < self.false_negative_lower_threshold
+        )
+
+        return false_neg_info
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
