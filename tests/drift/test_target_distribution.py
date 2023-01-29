@@ -666,28 +666,32 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
 
 
 @pytest.mark.parametrize(
-    'calc_args, plot_args',
+    'calc_args, plot_args, period',
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'analysis',
         ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'}),
+        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'all',
         ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'}),
+        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'all'),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'analysis',
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'}),
+        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'all',
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'}),
+        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'all'),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
@@ -700,10 +704,10 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
         'target_distribution_without_timestamp_with_reference',
     ],
 )
-def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier')).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -712,53 +716,55 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 
 
 @pytest.mark.parametrize(
-    'calc_args, plot_args',
+    'calc_args, plot_args, period',
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
+            {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
+            'analysis',
         ),
-        ({}, {'kind': 'drift', 'plot_reference': False, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}),
+        ({}, {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}, 'analysis'),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
+            {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
+            'all',
         ),
-        ({}, {'kind': 'drift', 'plot_reference': True, 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}),
+        ({}, {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}, 'all'),
         (
             {'timestamp_column_name': 'timestamp'},
             {
                 'kind': 'distribution',
-                'plot_reference': False,
                 'column_name': 'work_home_actual',
                 'method': 'jensen_shannon',
             },
+            'analysis',
         ),
         (
             {},
             {
                 'kind': 'distribution',
-                'plot_reference': False,
                 'column_name': 'work_home_actual',
                 'method': 'jensen_shannon',
             },
+            'analysis',
         ),
         (
             {'timestamp_column_name': 'timestamp'},
             {
                 'kind': 'distribution',
-                'plot_reference': True,
                 'column_name': 'work_home_actual',
                 'method': 'jensen_shannon',
             },
+            'all',
         ),
         (
             {},
             {
                 'kind': 'distribution',
-                'plot_reference': True,
                 'column_name': 'work_home_actual',
                 'method': 'jensen_shannon',
             },
+            'all',
         ),
     ],
     ids=[
@@ -772,12 +778,12 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         'target_distribution_without_timestamp_with_reference',
     ],
 )
-def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
     reference['work_home_actual'] = reference['work_home_actual'].astype('category')
     analysis_targets['work_home_actual'] = analysis_targets['work_home_actual'].astype('category')
     calc = UnivariateDriftCalculator(column_names=['work_home_actual'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier')).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -786,37 +792,32 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 
 
 @pytest.mark.parametrize(
-    'calc_args, plot_args',
+    'calc_args, plot_args, period',
     [
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'analysis',
         ),
-        (
-            {},
-            {'kind': 'drift', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'},
-        ),
+        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'all',
         ),
-        (
-            {},
-            {'kind': 'drift', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'},
-        ),
+        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'all'),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'analysis',
         ),
-        (
-            {},
-            {'kind': 'distribution', 'plot_reference': False, 'column_name': 'y_true', 'method': 'jensen_shannon'},
-        ),
+        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
         (
             {'timestamp_column_name': 'timestamp'},
-            {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
+            'all',
         ),
-        ({}, {'kind': 'distribution', 'plot_reference': True, 'column_name': 'y_true', 'method': 'jensen_shannon'}),
+        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'all'),
     ],
     ids=[
         'target_drift_with_timestamp_without_reference',
@@ -829,10 +830,10 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         'target_distribution_without_timestamp_with_reference',
     ],
 )
-def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
+def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.join(analysis_targets))
+    sut = calc.calculate(analysis.join(analysis_targets)).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)

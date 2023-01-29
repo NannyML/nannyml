@@ -9,6 +9,8 @@
 """Module containing NannyML-style color options."""
 from enum import Enum
 
+import matplotlib
+
 
 class Colors(str, Enum):
     """Color presets for plotting."""
@@ -21,3 +23,6 @@ class Colors(str, Enum):
     GRAY_DARK = "#666666"
     GRAY = "#E4E4E4"
     LIGHT_GRAY = "#F5F5F5"
+
+    def transparent(self, alpha: float = 0.2) -> str:
+        return 'rgba{}'.format(matplotlib.colors.to_rgba(matplotlib.colors.to_rgb(self.value), alpha))

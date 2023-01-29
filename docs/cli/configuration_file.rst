@@ -334,6 +334,8 @@ calculators during the run. NannyML will use the store to try to load pre-fitted
 a new calculator will be created, fitted and persisted using the store.
 The next time NannyML is run using the same configuration file it will find the stored calculator and use it subsequently.
 
+Check out the :ref:`tutorial on storing and loading calculators<storing_and_loading_calculators>` to learn more.
+
 This snippet shows how to setup the store in configuration using the local filesystem:
 
 .. code-block:: yaml
@@ -342,7 +344,7 @@ This snippet shows how to setup the store in configuration using the local files
       file:
         path: /out/nml-cache/calculators
 
-This snippet shows how use S3 with credentials:
+This snippet shows how use S3:
 
 .. code-block:: yaml
 
@@ -353,6 +355,27 @@ This snippet shows how use S3 with credentials:
           client_kwargs:
             aws_access_key_id: '<ACCESS_KEY_ID>'
             aws_secret_access_key: '<SECRET_ACCESS_KEY>'
+
+This snippet shows how to use Google Cloud Storage:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: gs://my-bucket/nml/cache/
+        credentials:
+            token: service-account-access-key.json
+
+This snippet shows how to use Azure Blob Storage:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: abfs://my-bucket/nml/cache/
+        credentials:
+            account_name: '<ACCOUNT_NAME>'
+            account_key: '<ACCOUNT_KEY>'
 
 
 Chunker section

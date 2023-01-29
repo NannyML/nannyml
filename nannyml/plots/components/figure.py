@@ -97,13 +97,11 @@ class Figure(go.Figure):
                 **kwargs,
             )
 
-    def add_period_separator(
-        self, x, color=Colors.BLUE_SKY_CRAYOLA, subplot_args: Optional[Dict[str, Any]] = None, **kwargs
-    ):
+    def add_period_separator(self, x, color=Colors.GRAY_DARK, subplot_args: Optional[Dict[str, Any]] = None, **kwargs):
         if subplot_args is not None:
-            kwargs.update(subplot_args)
+            kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
-        self.add_vline(x=x, line=dict(color=color, width=1, dash='dash'), layer='below', **kwargs)
+        self.add_vline(x=x, line=dict(color=color, width=1), layer='below', **kwargs)
 
     def add_threshold(
         self,
@@ -166,7 +164,7 @@ class Figure(go.Figure):
         if with_additional_endpoint:
             x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
 
-        show_in_legend = True
+        show_in_legend = kwargs.get('showlegend', True)
         if subplot_args is None:
             subplot_args = {}
         else:

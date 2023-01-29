@@ -10,10 +10,13 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml.base import AbstractCalculator, AbstractCalculatorResult
+from nannyml._typing import Key, Result
+from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import CBPE
 
 
 @pytest.fixture
@@ -114,14 +117,17 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     return data
 
 
-class SimpleDriftResult(AbstractCalculatorResult):
+class SimpleDriftResult(Abstract1DResult):
     """Dummy DriftResult implementation."""
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Fake plot."""
         return plotly.graph_objects.Figure()
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
+    def keys(self) -> List[Key]:
+        return []
+
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return self
 
 
@@ -131,7 +137,7 @@ class SimpleDriftCalculator(AbstractCalculator):
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):  # noqa: D102
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> SimpleDriftResult:  # noqa: D102
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:  # noqa: D102
         return SimpleDriftResult(results_data=data, calculator=self)
 
 
@@ -150,7 +156,7 @@ def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(
 
 
 def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period(sample_drift_data):  # noqa: D103
-    calc = SimpleDriftCalculator(chunk_period='W')
+    calc = SimpleDriftCalculator(chunk_period='W', timestamp_column_name='timestamp')
     assert isinstance(calc.chunker, PeriodBasedChunker)
     assert calc.chunker.offset == 'W'
 
@@ -534,3 +540,47 @@ def test_repeat_calculation_results_return_only_latest_calculation_results(sampl
     assert len(res2) == 1
     assert res2.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[2].start_datetime
     assert res2.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[2].end_datetime
+
+
+def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    result = calc.calculate(ana_data)
+
+    calc2 = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        timestamp_column_name='timestamp',
+    ).fit(ref_data)
+    result2 = calc2.calculate(ana_data)
+
+    try:
+        _ = result.compare(result2).plot()
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    result = calc.calculate(ana_data)
+
+    calc2 = CBPE(
+        timestamp_column_name='timestamp',
+        y_pred_proba='y_pred_proba',
+        y_pred='output',
+        y_true='actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    ).fit(ref_data)
+    result2 = calc2.estimate(ana_data)
+
+    try:
+        _ = result.compare(result2).plot()
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

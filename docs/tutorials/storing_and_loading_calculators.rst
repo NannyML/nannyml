@@ -1,18 +1,27 @@
-.. _persisting_calculators:
+.. _storing_and_loading_calculators:
 
 ======================================
-Persisting calculators
+Storing and loading calculators
 ======================================
 
 Fitting a calculator or estimator is only required when the reference data for a monitored model changes.
-To avoid unnecessary calculations and speed up (repeating) runs of NannyML, you can persist the fitted calculators
-to a :class:`~nannyml.io.store.base.Store`. We currently support persisting objects to a local or remote filesystem
-such as S3, Google Cloud Storage buckets or Azure Blob Storage.
+To avoid unnecessary calculations and speed up (repeating) runs of NannyML, you can store the fitted calculators
+to a :class:`~nannyml.io.store.base.Store`.
+
+.. note::
+
+    We currently support persisting objects to a local or remote filesystem such as S3,
+    Google Cloud Storage buckets or Azure Blob Storage. You can find some :ref:`examples<storing_calculators_remote_examples>` in the walkthrough.
+
+.. note::
+
+    For more information on how to use this functionality with the CLI or container, check the
+    :ref:`configuration file documentation<cli_configuration_store>`.
 
 Just the code
 --------------
 
-Creating the calculator and fitting it on reference. Persist the fitted calculator to local disk.
+Create the calculator and fit it on reference. Store the fitted calculator to local disk.
 
 .. code-block:: python
 
@@ -32,7 +41,7 @@ Creating the calculator and fitting it on reference. Persist the fitted calculat
     store.store(calc, path='example/calc.pkl')
 
 
-In a new session load the persisted calculator and use it.
+In a new session load the stored calculator and use it.
 
 .. code-block:: python
 
@@ -65,7 +74,7 @@ to the reference data.
     calc.fit(reference_df)
 
 In this snippet we'll set up the :class:`~nannyml.io.store.file_store.FilesystemStore`. It is a class responsible for
-persisting objects to a filesystem and retrieving it back.
+storing objects on a filesystem and retrieving it back.
 We'll first illustrate creating a store using the local filesystem. The `root_path` parameter configures the directory
 on the filesystem that will be used as the root of our store. Additional directories and files can be created when
 actually storing objects.
@@ -76,6 +85,8 @@ We'll now provide a directory on the local filesystem.
 
     store = nml.io.store.FilesystemStore(root_path='/opt/nml/cache')
 
+
+.. _storing_calculators_remote_examples:
 
 Because we're using the `fsspec <https://filesystem-spec.readthedocs.io/en/latest/>`_ library under the covers we also
 support a lot of remote filesystems out of the box.
@@ -115,7 +126,7 @@ to learn more about the required credentials.
         credentials={'account_name': '<ACCOUNT_NAME>', 'account_key': '<ACCOUNT_KEY>'}
     )
 
-The next step is using the :class:`~nannyml.io.store.file_store.FilesystemStore` to persist our fitted calculator.
+The next step is using the :class:`~nannyml.io.store.file_store.FilesystemStore` to store our fitted calculator.
 To do this we can provide an optional `path` string parameter. It allows us to set a custom subdirectory and file name.
 If no `path` is provided a file will be created using a standard name within the root directory of the store.
 
@@ -124,7 +135,7 @@ If no `path` is provided a file will be created using a standard name within the
         store.store(calc, path='example/calc.pkl')
 
 This concludes the first part: storing the fitted calculator. When running NannyML in a new session to perform
-calculations on analysis data (e.g. repeated on a daily basis) we can retrieve the pre-fitted calculator from the store.
+calculations on analysis data (e.g. repeated on a daily basis) we can load the pre-fitted calculator from the store.
 First we define the analysis data and declare the store:
 
 .. code-block:: python
@@ -132,7 +143,7 @@ First we define the analysis data and declare the store:
     _, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
     store = nml.io.store.FilesystemStore(root_path='/tmp/nml-cache')
 
-Now we'll use the store to retrieve the pre-fitted calculator from disk. By providing the optional `as_type` parameter
+Now we'll use the store to load the pre-fitted calculator from disk. By providing the optional `as_type` parameter
 we can have the store check the type of the loaded object before returning it. If it is not an instance of `as_type` the
 :meth:`~nannyml.io.store.file_store.FilesystemStore.load` method will raise a :class:`~nannyml.exceptions.StoreException`.
 

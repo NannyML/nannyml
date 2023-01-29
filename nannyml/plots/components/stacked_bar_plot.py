@@ -190,7 +190,7 @@ def alert(
             "you must provide either 'chunk_indices' or 'chunk_start_dates' and " "'chunk_end_dates."
         )
 
-    prv_color = figure.data[0].marker.line.color
+    prv_color = figure.data[0].marker.line.color or figure.data[0].line.color
     marker_line_colors = [color if val else prv_color for val in list(alerts)]
     marker_line_widths = [2 if val else 0 for val in list(alerts)]
 

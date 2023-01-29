@@ -64,7 +64,7 @@ def realized_performance_metrics(multiclass_data) -> pd.DataFrame:
     results = performance_calculator.calculate(multiclass_data[1].merge(multiclass_data[2], on='identifier')).filter(
         period='analysis'
     )
-    return results.data
+    return results.to_df()
 
 
 @pytest.fixture(scope='module')
