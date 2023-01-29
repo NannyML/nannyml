@@ -38,6 +38,7 @@ def sample_drift_result() -> UnivariateResults:  # noqa: D103
         chunk_size=5000,
     ).fit(reference)
     result = calc.calculate(analysis)
+    assert isinstance(result, UnivariateResults)
     return result
 
 
@@ -58,6 +59,7 @@ def sample_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D10
     )
     realized.fit(reference)
     realized_performance = realized.calculate(analysis)
+    assert isinstance(realized_performance, PerformanceCalculationResults)
     return realized_performance
 
 
@@ -81,6 +83,7 @@ def sample_multiclass_realized_perf_result() -> PerformanceCalculationResults:  
     )
     realized.fit(reference)
     realized_performance = realized.calculate(analysis)
+    assert isinstance(realized_performance, PerformanceCalculationResults)
     return realized_performance
 
 
@@ -104,6 +107,7 @@ def sample_multiclass_estimated_perf_result() -> CBPEResults:  # noqa: D103
     )
     estimated.fit(reference)
     estimated_performance = estimated.estimate(analysis)
+    assert isinstance(estimated_performance, CBPEResults)
     return estimated_performance
 
 
@@ -126,6 +130,7 @@ def sample_multiclass_drift_result() -> UnivariateResults:  # noqa: D103
         chunk_size=6000,
     ).fit(reference)
     result = calc.calculate(analysis)
+    assert isinstance(result, UnivariateResults)
     return result
 
 
@@ -140,6 +145,7 @@ def sample_regression_drift_result() -> UnivariateResults:  # noqa: D103
         chunk_size=6000,
     ).fit(reference)
     result = calc.calculate(analysis)
+    assert isinstance(result, UnivariateResults)
     return result
 
 
@@ -166,6 +172,7 @@ def sample_regression_estimated_perf_result() -> DLEResults:  # noqa: D103
     )
     estimated.fit(reference)
     estimated_performance = estimated.estimate(analysis)
+    assert isinstance(estimated_performance, DLEResults)
     return estimated_performance
 
 
@@ -184,6 +191,7 @@ def sample_regression_realized_perf_result() -> PerformanceCalculationResults:  
     )
     calc.fit(reference)
     realized_performance = calc.calculate(analysis)
+    assert isinstance(realized_performance, PerformanceCalculationResults)
     return realized_performance
 
 

@@ -9,18 +9,20 @@ from typing import List, Optional
 import pandas as pd
 from plotly import graph_objects as go
 
-from nannyml._typing import ModelOutputsType, ProblemType
-from nannyml.base import AbstractEstimatorResult
+from nannyml._typing import Key, ModelOutputsType, ProblemType
+from nannyml._typing import Result as ResultType
+from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import Metric
-from nannyml.plots.blueprints.metrics import plot_metric_list
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
+from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix']
 
 
-class Result(AbstractEstimatorResult):
+class Result(Abstract1DResult, ResultCompareMixin):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
     def __init__(
@@ -44,7 +46,7 @@ class Result(AbstractEstimatorResult):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
@@ -58,6 +60,12 @@ class Result(AbstractEstimatorResult):
         res.metrics = [m for m in self.metrics if m.column_name in metrics]
 
         return res
+
+    def keys(self) -> List[Key]:
+        return [
+            Key(properties=(metric.column_name,), display_names=(f'estimated {metric.display_name}',))
+            for metric in self.metrics
+        ]
 
     @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
@@ -103,8 +111,10 @@ class Result(AbstractEstimatorResult):
         >>> results.plot().show()
         """
         if kind == 'performance':
-            return plot_metric_list(
-                self, title='Estimated performance <b>(CBPE)</b>', subplot_title_format='Estimated <b>{metric_name}</b>'
+            return plot_metrics(
+                self,
+                title='Estimated performance <b>(CBPE)</b>',
+                subplot_title_format='Estimated <b>{display_names[0]}</b>',
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")

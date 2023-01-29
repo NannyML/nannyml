@@ -6,18 +6,23 @@
 from __future__ import annotations
 
 import copy
+from collections import namedtuple
 from typing import List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.base import AbstractCalculatorResult
+from nannyml._typing import Key
+from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metric
 from nannyml.usage_logging import UsageEvent, log_usage
 
+Metric = namedtuple("Metric", "display_name column_name")
 
-class Result(AbstractCalculatorResult):
+
+class Result(Abstract1DResult, ResultCompareMixin):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
     def __init__(
@@ -34,11 +39,14 @@ class Result(AbstractCalculatorResult):
         self.categorical_column_names = categorical_column_names
         self.continuous_column_names = continuous_column_names
         self.timestamp_column_name = timestamp_column_name
-        self.metrics = ['reconstruction_error']
+        self.metrics = [Metric(display_name='Reconstruction error', column_name='reconstruction_error')]
+
+    def keys(self) -> List[Key]:
+        return [Key(properties=('reconstruction_error',), display_names=('Reconstruction error',))]
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         if metrics is None:
-            metrics = self.metrics
+            metrics = [metric.column_name for metric in self.metrics]
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
 

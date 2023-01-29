@@ -10,6 +10,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder
 
 from nannyml._typing import ProblemType
+from nannyml._typing import Result as ResultType
 from nannyml.base import AbstractEstimator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -205,7 +206,7 @@ class DLE(AbstractEstimator):
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
         self._categorical_encoders: defaultdict = defaultdict(_default_encoder)
 
-        self.result: Optional[Result] = None
+        self.result: Optional[ResultType] = None
 
     def __str__(self):
         return (
@@ -240,7 +241,7 @@ class DLE(AbstractEstimator):
         return self
 
     @log_usage(UsageEvent.DLE_ESTIMATOR_RUN, metadata_from_self=['metrics'])
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> ResultType:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 

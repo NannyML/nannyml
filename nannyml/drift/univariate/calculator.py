@@ -146,7 +146,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         return self
 
     @log_usage(
-        UsageEvent.UNIVAR_DRIFT_CALC_FIT, metadata_from_self=['continuous_method_names', 'categorical_method_names']
+        UsageEvent.UNIVAR_DRIFT_CALC_RUN, metadata_from_self=['continuous_method_names', 'categorical_method_names']
     )
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""
