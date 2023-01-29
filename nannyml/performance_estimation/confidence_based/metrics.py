@@ -123,7 +123,7 @@ class Metric(abc.ABC):
             prediction scores/probabilities (depending on the metric to be calculated).
         """
         return self._estimate(data)
-    
+
     # def get_chunk_records(self, data: pd.DataFrame):
     #     pass
     #     #put general logic here (not for cm) similar to that found in cbpe
@@ -610,7 +610,8 @@ class BinaryClassificationAccuracy(Metric):
             return np.NaN
 
         return accuracy_score(y_true=y_true, y_pred=y_pred)
-    
+
+
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationConfusionMatrix(Metric):
     def __init__(
@@ -634,7 +635,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         self.normalize_confusion_matrix = normalize_confusion_matrix
 
-    def fit(self, reference_data: pd.DataFrame): # override the superclass fit method
+    def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
         """Fits a Metric on reference data.
         Parameters
         ----------
@@ -647,10 +648,20 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         # self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
 
-        self.true_positive_lower_threshold, self.true_positive_upper_threshold = self._true_positive_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
-        self.true_negative_lower_threshold, self.true_negative_upper_threshold = self._true_negative_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
-        self.false_positive_lower_threshold, self.false_positive_upper_threshold = self._false_positive_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
-        self.false_negative_lower_threshold, self.false_negative_upper_threshold = self._false_negative_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        self.true_positive_lower_threshold, self.true_positive_upper_threshold = self._true_positive_alert_thresholds(
+            reference_chunks, std_num=3, lower_limit=0, upper_limit=1
+        )
+        self.true_negative_lower_threshold, self.true_negative_upper_threshold = self._true_negative_alert_thresholds(
+            reference_chunks, std_num=3, lower_limit=0, upper_limit=1
+        )
+        (
+            self.false_positive_lower_threshold,
+            self.false_positive_upper_threshold,
+        ) = self._false_positive_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        (
+            self.false_negative_lower_threshold,
+            self.false_negative_upper_threshold,
+        ) = self._false_negative_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
 
         # Calculate confidence bands
         self.true_positive_confidence_deviation = self._true_positive_confidence_deviation(reference_chunks)
@@ -659,32 +670,173 @@ class BinaryClassificationConfusionMatrix(Metric):
         self.false_negative_confidence_deviation = self._false_negative_confidence_deviation(reference_chunks)
 
         # Delegate to confusion matrix subclass
-        self._fit(reference_data) # could probably put _fit functionality here since overide fit method
+        self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
 
         return
-    
-    def _true_positive_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
-                           lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]:
-        pass
-    def _true_negative_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
-                            lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]: 
-        pass
-    def _false_positive_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
-                            lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]: 
-        pass
-    def _false_negative_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3,
-                            lower_limit: int = 0, upper_limit: int = 1) -> Tuple[float, float]: 
-        pass
+
+    def _true_positive_alert_thresholds(
+        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+    ) -> Tuple[float, float]:
+        true_positive_realized_chunk_performance = [
+            self._true_negative_realized_performance(chunk.data) for chunk in reference_chunks
+        ]
+        deviation = np.std(true_positive_realized_chunk_performance) * std_num
+        true_positive_mean_realized_performance = np.mean(true_positive_realized_chunk_performance)
+
+        if self.normalize_confusion_matrix is None:
+            true_positive_upper_threshold = true_positive_mean_realized_performance + deviation
+        else:
+            true_positive_upper_threshold = np.maximum(upper_limit, true_positive_mean_realized_performance + deviation)
+
+        true_positive_lower_threshold = np.minimum(lower_limit, true_positive_mean_realized_performance - deviation)
+
+        return true_positive_lower_threshold, true_positive_upper_threshold
+
+    def _true_negative_alert_thresholds(
+        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+    ) -> Tuple[float, float]:
+        true_negative_realized_chunk_performance = [
+            self._true_negative_realized_performance(chunk.data) for chunk in reference_chunks
+        ]
+        deviation = np.std(true_negative_realized_chunk_performance) * std_num
+        true_negative_mean_realized_performance = np.mean(true_negative_realized_chunk_performance)
+
+        if self.normalize_confusion_matrix is None:
+            true_negative_upper_threshold = true_negative_mean_realized_performance + deviation
+        else:
+            true_negative_upper_threshold = np.maximum(upper_limit, true_negative_mean_realized_performance + deviation)
+
+        true_negative_lower_threshold = np.minimum(lower_limit, true_negative_mean_realized_performance - deviation)
+
+        return true_negative_lower_threshold, true_negative_upper_threshold
+
+    def _false_positive_alert_thresholds(
+        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+    ) -> Tuple[float, float]:
+        false_positive_realized_chunk_performance = [
+            self._false_positive_realized_performance(chunk.data) for chunk in reference_chunks
+        ]
+        deviation = np.std(false_positive_realized_chunk_performance) * std_num
+        false_positive_mean_realized_performance = np.mean(false_positive_realized_chunk_performance)
+
+        if self.normalize_confusion_matrix is None:
+            false_positive_upper_threshold = false_positive_mean_realized_performance + deviation
+        else:
+            false_positive_upper_threshold = np.maximum(
+                upper_limit, false_positive_mean_realized_performance + deviation
+            )
+
+        false_positive_lower_threshold = np.minimum(lower_limit, false_positive_mean_realized_performance - deviation)
+
+        return false_positive_lower_threshold, false_positive_upper_threshold
+
+    def _false_negative_alert_thresholds(
+        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+    ) -> Tuple[float, float]:
+        false_negative_realized_chunk_performance = [
+            self._false_negative_realized_performance(chunk.data) for chunk in reference_chunks
+        ]
+        deviation = np.std(false_negative_realized_chunk_performance) * std_num
+        false_negative_mean_realized_performance = np.mean(false_negative_realized_chunk_performance)
+
+        if self.normalize_confusion_matrix is None:
+            false_negative_upper_threshold = false_negative_mean_realized_performance + deviation
+        else:
+            false_negative_upper_threshold = np.maximum(
+                upper_limit, false_negative_mean_realized_performance + deviation
+            )
+
+        false_negative_lower_threshold = np.minimum(lower_limit, false_negative_mean_realized_performance - deviation)
+
+        return false_negative_lower_threshold, false_negative_upper_threshold
+
+    def _true_positive_realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+
+        if y_true is None:
+            return np.NaN
+
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+
+        if self.normalize_confusion_matrix is None:
+            return num_tp
+        elif self.normalize_confusion_matrix == 'true':
+            return num_tp / (num_tp + num_fn)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_tp / (num_tp + num_fp)
+        else:  # normalization is 'all'
+            return num_tp / len(y_true)
+
+    def _true_negative_realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+
+        if y_true is None:
+            return np.NaN
+
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+
+        if self.normalize_confusion_matrix is None:
+            return num_tn
+        elif self.normalize_confusion_matrix == 'true':
+            return num_tn / (num_tn + num_fp)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_tn / (num_tn + num_fn)
+        else:
+            return num_tn / len(y_true)
+
+    def _false_positive_realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+
+        if y_true is None:
+            return np.NaN
+
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+
+        if self.normalize_confusion_matrix is None:
+            return num_fp
+        elif self.normalize_confusion_matrix == 'true':
+            return num_fp / (num_fp + num_tn)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_fp / (num_fp + num_tp)
+        else:
+            return num_fp / len(y_true)
+
+    def _false_negative_realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+
+        if y_true is None:
+            return np.NaN
+
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+
+        if self.normalize_confusion_matrix is None:
+            return num_fn
+        elif self.normalize_confusion_matrix == 'true':
+            return num_fn / (num_fn + num_tp)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_fn / (num_fn + num_tn)
+        else:
+            return num_fn / len(y_true)
 
     def _true_positive_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
         return np.std([self.get_true_positive_estimate(chunk.data) for chunk in reference_chunks])
+
     def _true_negative_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
         return np.std([self.get_true_negative_estimate(chunk.data) for chunk in reference_chunks])
+
     def _false_positive_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
         return np.std([self.get_false_positive_estimate(chunk.data) for chunk in reference_chunks])
+
     def _false_negative_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
         return np.std([self.get_false_negative_estimate(chunk.data) for chunk in reference_chunks])
-        
 
     def _fit(self, reference_data: pd.DataFrame):
         self._true_pos_sampling_error_components = true_positive_sampling_error_components(
@@ -708,7 +860,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
-    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict: #Basically the estimate function
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:  # Basically the estimate function
 
         chunk_record = {}
 
@@ -725,32 +877,78 @@ class BinaryClassificationConfusionMatrix(Metric):
         chunk_record.update(false_neg_info)
 
         return chunk_record
-    
+
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
         true_pos_info = {}
-        
-        estimated_true_positives = get_true_positive_estimate(chunk_data) # need normalization
-        
-        sampling_error_true_positives = true_positive_sampling_error(self._true_positive_sampling_error_components) # need normalization
+
+        estimated_true_positives = get_true_positive_estimate(chunk_data)  # need normalization
+
+        sampling_error_true_positives = true_positive_sampling_error(
+            self._true_positive_sampling_error_components
+        )  # need normalization
 
         true_pos_info['estimated_true_positive'] = estimated_true_positives
         true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
-        true_pos_info['realized_true_positive'] = get_true_positive_realized_performance(chunk_data)
+        true_pos_info['realized_true_positive'] = self._true_positive_realized_performance(chunk_data)
 
         if self.normalize_confusion_matrix is None:
-            true_pos_info['upper_confidence_true_positive'] = estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives
-            true_pos_info['lower_confidence_true_positive'] = estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
+            true_pos_info['upper_confidence_true_positive'] = (
+                estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives
+            )
         else:
-            true_pos_info['upper_confidence_true_positive'] = min(self.confidence_upper_bound, estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives)
-
+            true_pos_info['upper_confidence_true_positive'] = min(
+                self.confidence_upper_bound,
+                estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
             )
 
+        true_pos_info['lower_confidence_true_positive'] = max(
+            self.confidence_lower_bound, estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
+        )
 
+        true_pos_info['upper_threshold_true_positive'] = self.true_positive_upper_threshold
+        true_pos_info['lower_threshold_true_positive'] = self.true_positive_lower_threshold
 
+        true_pos_info['alert_true_positive'] = (
+            estimated_true_positives > self.true_positive_upper_threshold
+            or estimated_true_positives < self.true_positive_lower_threshold
+        )
 
+        return true_pos_info
 
+    def get_true_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        true_neg_info = {}
 
+        estimated_true_negatives = get_true_negative_estimate(chunk_data)
 
+        sampling_error_true_negatives = true_negative_sampling_error(self._true_negative_sampling_error_components)
+
+        true_neg_info['estimated_true_negative'] = estimated_true_negatives
+        true_neg_info['sampling_error_true_negative'] = sampling_error_true_negatives
+        true_neg_info['realized_true_negative'] = self._true_negative_realized_performance(chunk_data)
+
+        if self.normalize_confusion_matrix is None:
+            true_neg_info['upper_confidence_true_negative'] = (
+                estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives
+            )
+        else:
+            true_neg_info['upper_confidence_true_negative'] = min(
+                self.confidence_upper_bound,
+                estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
+            )
+
+        true_neg_info['lower_confidence_true_negative'] = max(
+            self.confidence_lower_bound, estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
+        )
+
+        true_neg_info['upper_threshold_true_negative'] = self.true_negative_upper_threshold
+        true_neg_info['lower_threshold_true_negative'] = self.true_negative_lower_threshold
+
+        true_neg_info['alert_true_negative'] = (
+            estimated_true_negatives > self.true_negative_upper_threshold
+            or estimated_true_negatives < self.true_negative_lower_threshold
+        )
+
+        return true_neg_info
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
