@@ -133,7 +133,7 @@ class CBPE(AbstractEstimator):
                 "no metrics provided. Please provide a non-empty list of metrics."
                 f"Supported values are {SUPPORTED_METRIC_VALUES}."
             )
-        
+
         valid_normalizations = [None, 'all', 'pred', 'true']
         if normalize_confusion_matrix not in valid_normalizations:
             raise InvalidArgumentsException(
@@ -285,7 +285,15 @@ class CBPE(AbstractEstimator):
             ]
         )
 
-        multilevel_index = _create_multilevel_index(metric_names=[m.column_name for m in self.metrics])
+        metric_names = []
+        for metric in self.metrics:
+            if hasattr(metric, 'components'):
+                metric_names.extend(metric.components)
+            else:
+                metric_names.append(metric.column_name)
+
+        multilevel_index = _create_multilevel_index(metric_names=metric_names)
+
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
 
@@ -306,14 +314,12 @@ class CBPE(AbstractEstimator):
         return self.result
 
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
-
         chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
             chunk_record = metric.get_chunk_record(chunk.data)
             # add the chunk record to the chunk_records dict
             chunk_records.update(chunk_record)
         return chunk_records
-
 
         # estimates: Dict[str, Any] = {}
         # for metric in self.metrics:
@@ -393,7 +399,7 @@ class CBPE(AbstractEstimator):
         return self
 
 
-def _create_multilevel_index(metric_names: List[str]):
+def _create_multilevel_index(metric_names: List[str]) -> MultiIndex:
     chunk_column_names = [
         'key',
         'chunk_index',
@@ -403,16 +409,18 @@ def _create_multilevel_index(metric_names: List[str]):
         'end_date',
         'period',
     ]
+
     method_column_names = [
+        'value',
         'sampling_error',
         'realized',
-        'value',
         'upper_confidence_boundary',
         'lower_confidence_boundary',
         'upper_threshold',
         'lower_threshold',
         'alert',
     ]
+
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
     reconstruction_tuples = [
         (metric_name, column_name) for metric_name in metric_names for column_name in method_column_names

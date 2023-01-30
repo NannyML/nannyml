@@ -635,6 +635,8 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         self.normalize_confusion_matrix = normalize_confusion_matrix
 
+        self.components = ["true_positive", "true_negative", "false_positive", "false_negative"]
+
     def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
         """Fits a Metric on reference data.
         Parameters
@@ -646,7 +648,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         reference_chunks = self.chunker.split(
             reference_data,
         )
-        # self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
 
         self.true_positive_lower_threshold, self.true_positive_upper_threshold = self._true_positive_alert_thresholds(
             reference_chunks, std_num=3, lower_limit=0, upper_limit=1
@@ -839,22 +840,22 @@ class BinaryClassificationConfusionMatrix(Metric):
         return np.std([self.get_false_negative_estimate(chunk.data) for chunk in reference_chunks])
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._true_pos_sampling_error_components = true_positive_sampling_error_components(
+        self._true_positive_sampling_error_components = true_positive_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
-        self._true_neg_sampling_error_components = true_negative_sampling_error_components(
+        self._true_negative_sampling_error_components = true_negative_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
-        self._false_pos_sampling_error_components = false_positive_sampling_error_components(
+        self._false_positive_sampling_error_components = false_positive_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
-        self._false_neg_sampling_error_components = false_negative_sampling_error_components(
+        self._false_negative_sampling_error_components = false_negative_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
             normalize_confusion_matrix=self.normalize_confusion_matrix,
@@ -868,17 +869,17 @@ class BinaryClassificationConfusionMatrix(Metric):
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
         est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
 
-        if self.normalization is None:
+        if self.normalize_confusion_matrix is None:
             normalized_est_tp_ratio = est_tp_ratio * len(y_pred)
 
-        elif self.normalization == 'all':
+        elif self.normalize_confusion_matrix == 'all':
             normalized_est_tp_ratio = est_tp_ratio
 
-        elif self.normalization == 'true':
+        elif self.normalize_confusion_matrix == 'true':
             normalizer = 1 / (est_tp_ratio + est_fn_ratio)
             normalized_est_tp_ratio = est_tp_ratio * normalizer
 
-        elif self.normalization == 'predicted':
+        elif self.normalize_confusion_matrix == 'pred':
             normalizer = 1 / (est_tp_ratio + est_fp_ratio)
             normalized_est_tp_ratio = est_tp_ratio * normalizer
 
@@ -892,18 +893,17 @@ class BinaryClassificationConfusionMatrix(Metric):
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
         est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
 
-        # check if estimate_args contains normalization argument
-        if self.normalization is None:
+        if self.normalize_confusion_matrix is None:
             normalized_est_tn_ratio = est_tn_ratio * len(y_pred)
 
-        elif self.normalization == 'all':
+        elif self.normalize_confusion_matrix == 'all':
             normalized_est_tn_ratio = est_tn_ratio
 
-        elif self.normalization == 'true':
+        elif self.normalize_confusion_matrix == 'true':
             normalizer = 1 / (est_tn_ratio + est_fp_ratio)
             normalized_est_tn_ratio = est_tn_ratio * normalizer
 
-        elif self.normalization == 'predicted':
+        elif self.normalize_confusion_matrix == 'pred':
             normalizer = 1 / (est_tn_ratio + est_fn_ratio)
             normalized_est_tn_ratio = est_tn_ratio * normalizer
 
@@ -918,18 +918,17 @@ class BinaryClassificationConfusionMatrix(Metric):
         est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
         est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
 
-        # check if estimate_args contains normalization argument
-        if self.normalization is None:
+        if self.normalize_confusion_matrix is None:
             normalized_est_fp_ratio = est_fp_ratio * len(y_pred)
 
-        elif self.normalization == 'all':
+        elif self.normalize_confusion_matrix == 'all':
             normalized_est_fp_ratio = est_fp_ratio
 
-        elif self.normalization == 'true':
+        elif self.normalize_confusion_matrix == 'true':
             normalizer = 1 / (est_tn_ratio + est_fp_ratio)
             normalized_est_fp_ratio = est_fp_ratio * normalizer
 
-        elif self.normalization == 'predicted':
+        elif self.normalize_confusion_matrix == 'pred':
             normalizer = 1 / (est_tp_ratio + est_fp_ratio)
             normalized_est_fp_ratio = est_fp_ratio * normalizer
 
@@ -944,18 +943,17 @@ class BinaryClassificationConfusionMatrix(Metric):
         est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
         est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
 
-        # check if estimate_args contains normalization argument
-        if self.normalization is None:
+        if self.normalize_confusion_matrix is None:
             normalized_est_fn_ratio = est_fn_ratio * len(y_pred)
 
-        elif self.normalization == 'all':
+        elif self.normalize_confusion_matrix == 'all':
             normalized_est_fn_ratio = est_fn_ratio
 
-        elif self.normalization == 'true':
+        elif self.normalize_confusion_matrix == 'true':
             normalizer = 1 / (est_tp_ratio + est_fn_ratio)
             normalized_est_fn_ratio = est_fn_ratio * normalizer
 
-        elif self.normalization == 'predicted':
+        elif self.normalize_confusion_matrix == 'pred':
             normalizer = 1 / (est_tn_ratio + est_fn_ratio)
             normalized_est_fn_ratio = est_fn_ratio * normalizer
 
@@ -965,16 +963,16 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         chunk_record = {}
 
-        true_pos_info = get_true_pos_info(chunk_data)
+        true_pos_info = self.get_true_pos_info(chunk_data)
         chunk_record.update(true_pos_info)
 
-        true_neg_info = get_true_neg_info(chunk_data)
+        true_neg_info = self.get_true_neg_info(chunk_data)
         chunk_record.update(true_neg_info)
 
-        false_pos_info = get_false_pos_info(chunk_data)
+        false_pos_info = self.get_false_pos_info(chunk_data)
         chunk_record.update(false_pos_info)
 
-        false_neg_info = get_false_neg_info(chunk_data)
+        false_neg_info = self.get_false_neg_info(chunk_data)
         chunk_record.update(false_neg_info)
 
         return chunk_record
@@ -982,11 +980,11 @@ class BinaryClassificationConfusionMatrix(Metric):
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
         true_pos_info = {}
 
-        estimated_true_positives = get_true_positive_estimate(chunk_data)  # need normalization
+        estimated_true_positives = self.get_true_positive_estimate(chunk_data)
 
         sampling_error_true_positives = true_positive_sampling_error(
-            self._true_positive_sampling_error_components
-        )  # need normalization
+            self._true_positive_sampling_error_components, chunk_data
+        )
 
         true_pos_info['estimated_true_positive'] = estimated_true_positives
         true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
@@ -1019,9 +1017,11 @@ class BinaryClassificationConfusionMatrix(Metric):
     def get_true_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
         true_neg_info = {}
 
-        estimated_true_negatives = get_true_negative_estimate(chunk_data)
+        estimated_true_negatives = self.get_true_negative_estimate(chunk_data)
 
-        sampling_error_true_negatives = true_negative_sampling_error(self._true_negative_sampling_error_components)
+        sampling_error_true_negatives = true_negative_sampling_error(
+            self._true_negative_sampling_error_components, chunk_data
+        )
 
         true_neg_info['estimated_true_negative'] = estimated_true_negatives
         true_neg_info['sampling_error_true_negative'] = sampling_error_true_negatives
@@ -1054,9 +1054,11 @@ class BinaryClassificationConfusionMatrix(Metric):
     def get_false_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
         false_pos_info = {}
 
-        estimated_false_positives = get_false_positive_estimate(chunk_data)
+        estimated_false_positives = self.get_false_positive_estimate(chunk_data)
 
-        sampling_error_false_positives = false_positive_sampling_error(self._false_positive_sampling_error_components)
+        sampling_error_false_positives = false_positive_sampling_error(
+            self._false_positive_sampling_error_components, chunk_data
+        )
 
         false_pos_info['estimated_false_positive'] = estimated_false_positives
         false_pos_info['sampling_error_false_positive'] = sampling_error_false_positives
@@ -1090,9 +1092,11 @@ class BinaryClassificationConfusionMatrix(Metric):
     def get_false_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
         false_neg_info = {}
 
-        estimated_false_negatives = get_false_negative_estimate(chunk_data)
+        estimated_false_negatives = self.get_false_negative_estimate(chunk_data)
 
-        sampling_error_false_negatives = false_negative_sampling_error(self._false_negative_sampling_error_components)
+        sampling_error_false_negatives = false_negative_sampling_error(
+            self._false_negative_sampling_error_components, chunk_data
+        )
 
         false_neg_info['estimated_false_negative'] = estimated_false_negatives
         false_neg_info['sampling_error_false_negative'] = sampling_error_false_negatives
@@ -1122,6 +1126,15 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
 
         return false_neg_info
+
+    def _estimate(self, data: pd.DataFrame):
+        pass
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        pass
+
+    def realized_performance(self, data: pd.DataFrame) -> float:
+        pass
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
