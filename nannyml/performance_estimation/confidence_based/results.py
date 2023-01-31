@@ -47,8 +47,23 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.chunker = chunker
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
+
         if metrics is None:
-            metrics = [metric.column_name for metric in self.metrics]
+            expanded_metrics = []
+            for metric in self.metrics:
+                if hasattr(metric, 'components'):
+                    expanded_metrics.extend(metric.components)
+                else:
+                    expanded_metrics.append(metric.column_name)
+            metrics = expanded_metrics
+        else:
+            expanded_metrics = []
+            for metric in metrics:
+                if hasattr(metric, 'components'):
+                    expanded_metrics.extend(metric.components)
+                else:
+                    expanded_metrics.append(metric)
+            metrics = expanded_metrics
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
         if period != 'all':
