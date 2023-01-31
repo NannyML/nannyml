@@ -307,6 +307,34 @@ class BinaryClassificationAUROC(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.auroc_sampling_error(self._sampling_error_components, data)
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+
+        chunk_record = {}
+
+        estimated_roc_auc = self._estimate(chunk_data)
+
+        sampling_error_roc_auc = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_roc_auc'] = estimated_roc_auc
+        chunk_record['sampling_error_roc_auc'] = sampling_error_roc_auc
+        chunk_record['realized_roc_auc'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_roc_auc'] = min(
+            self.confidence_upper_bound, estimated_roc_auc + SAMPLING_ERROR_RANGE * sampling_error_roc_auc
+        )
+        chunk_record['lower_confidence_roc_auc'] = max(
+            self.confidence_lower_bound, estimated_roc_auc - SAMPLING_ERROR_RANGE * sampling_error_roc_auc
+        )
+
+        chunk_record['upper_threshold_roc_auc'] = self.upper_threshold
+        chunk_record['lower_threshold_roc_auc'] = self.lower_threshold
+
+        chunk_record['alert_roc_auc'] = (
+            estimated_roc_auc > self.upper_threshold or estimated_roc_auc < self.lower_threshold
+        )
+
+        return chunk_record
+
 
 def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
     thresholds = np.sort(y_pred_proba)
@@ -380,6 +408,32 @@ class BinaryClassificationF1(Metric):
 
         return f1_score(y_true=y_true, y_pred=y_pred)
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+
+        chunk_record = {}
+
+        estimated_f1 = self._estimate(chunk_data)
+
+        sampling_error_f1 = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_f1'] = estimated_f1
+        chunk_record['sampling_error_f1'] = sampling_error_f1
+        chunk_record['realized_f1'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_f1'] = min(
+            self.confidence_upper_bound, estimated_f1 + SAMPLING_ERROR_RANGE * sampling_error_f1
+        )
+        chunk_record['lower_confidence_f1'] = max(
+            self.confidence_lower_bound, estimated_f1 - SAMPLING_ERROR_RANGE * sampling_error_f1
+        )
+
+        chunk_record['upper_threshold_f1'] = self.upper_threshold
+        chunk_record['lower_threshold_f1'] = self.lower_threshold
+
+        chunk_record['alert_f1'] = estimated_f1 > self.upper_threshold or estimated_f1 < self.lower_threshold
+
+        return chunk_record
+
 
 def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
     tp = np.where(y_pred == 1, y_pred_proba, 0)
@@ -438,6 +492,33 @@ class BinaryClassificationPrecision(Metric):
 
         return precision_score(y_true=y_true, y_pred=y_pred)
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_precision = self._estimate(chunk_data)
+
+        sampling_error_precision = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_precision'] = estimated_precision
+        chunk_record['sampling_error_precision'] = sampling_error_precision
+        chunk_record['realized_precision'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_precision'] = min(
+            self.confidence_upper_bound, estimated_precision + SAMPLING_ERROR_RANGE * sampling_error_precision
+        )
+        chunk_record['lower_confidence_precision'] = max(
+            self.confidence_lower_bound, estimated_precision - SAMPLING_ERROR_RANGE * sampling_error_precision
+        )
+
+        chunk_record['upper_threshold_precision'] = self.upper_threshold
+        chunk_record['lower_threshold_precision'] = self.lower_threshold
+
+        chunk_record['alert_precision'] = (
+            estimated_precision > self.upper_threshold or estimated_precision < self.lower_threshold
+        )
+
+        return chunk_record
+
 
 def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
     tp = np.where(y_pred == 1, y_pred_proba, 0)
@@ -493,6 +574,33 @@ class BinaryClassificationRecall(Metric):
             return np.NaN
 
         return recall_score(y_true=y_true, y_pred=y_pred)
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_recall = self._estimate(chunk_data)
+
+        sampling_error_recall = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_recall'] = estimated_recall
+        chunk_record['sampling_error_recall'] = sampling_error_recall
+        chunk_record['realized_recall'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_recall'] = min(
+            self.confidence_upper_bound, estimated_recall + SAMPLING_ERROR_RANGE * sampling_error_recall
+        )
+        chunk_record['lower_confidence_recall'] = max(
+            self.confidence_lower_bound, estimated_recall - SAMPLING_ERROR_RANGE * sampling_error_recall
+        )
+
+        chunk_record['upper_threshold_recall'] = self.upper_threshold
+        chunk_record['lower_threshold_recall'] = self.lower_threshold
+
+        chunk_record['alert_recall'] = (
+            estimated_recall > self.upper_threshold or estimated_recall < self.lower_threshold
+        )
+
+        return chunk_record
 
 
 def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
@@ -550,6 +658,33 @@ class BinaryClassificationSpecificity(Metric):
 
         conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
         return conf_matrix[1, 1] / (conf_matrix[1, 0] + conf_matrix[1, 1])
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_specificity = self._estimate(chunk_data)
+
+        sampling_error_specificity = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_specificity'] = estimated_specificity
+        chunk_record['sampling_error_specificity'] = sampling_error_specificity
+        chunk_record['realized_specificity'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_specificity'] = min(
+            self.confidence_upper_bound, estimated_specificity + SAMPLING_ERROR_RANGE * sampling_error_specificity
+        )
+        chunk_record['lower_confidence_specificity'] = max(
+            self.confidence_lower_bound, estimated_specificity - SAMPLING_ERROR_RANGE * sampling_error_specificity
+        )
+
+        chunk_record['upper_threshold_specificity'] = self.upper_threshold
+        chunk_record['lower_threshold_specificity'] = self.lower_threshold
+
+        chunk_record['alert_specificity'] = (
+            estimated_specificity > self.upper_threshold or estimated_specificity < self.lower_threshold
+        )
+
+        return chunk_record
 
 
 def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
@@ -610,6 +745,33 @@ class BinaryClassificationAccuracy(Metric):
             return np.NaN
 
         return accuracy_score(y_true=y_true, y_pred=y_pred)
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_accuracy = self._estimate(chunk_data)
+
+        sampling_error_accuracy = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_accuracy'] = estimated_accuracy
+        chunk_record['sampling_error_accuracy'] = sampling_error_accuracy
+        chunk_record['realized_accuracy'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_accuracy'] = min(
+            self.confidence_upper_bound, estimated_accuracy + SAMPLING_ERROR_RANGE * sampling_error_accuracy
+        )
+        chunk_record['lower_confidence_accuracy'] = max(
+            self.confidence_lower_bound, estimated_accuracy - SAMPLING_ERROR_RANGE * sampling_error_accuracy
+        )
+
+        chunk_record['upper_threshold_accuracy'] = self.upper_threshold
+        chunk_record['lower_threshold_accuracy'] = self.lower_threshold
+
+        chunk_record['alert_accuracy'] = (
+            estimated_accuracy > self.upper_threshold or estimated_accuracy < self.lower_threshold
+        )
+
+        return chunk_record
 
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
@@ -674,6 +836,28 @@ class BinaryClassificationConfusionMatrix(Metric):
         self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
 
         return
+
+    def _fit(self, reference_data: pd.DataFrame):
+        self._true_positive_sampling_error_components = true_positive_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._true_negative_sampling_error_components = true_negative_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._false_positive_sampling_error_components = false_positive_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._false_negative_sampling_error_components = false_negative_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
 
     def _true_positive_alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
@@ -839,28 +1023,6 @@ class BinaryClassificationConfusionMatrix(Metric):
     def _false_negative_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
         return np.std([self.get_false_negative_estimate(chunk.data) for chunk in reference_chunks])
 
-    def _fit(self, reference_data: pd.DataFrame):
-        self._true_positive_sampling_error_components = true_positive_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
-        )
-        self._true_negative_sampling_error_components = true_negative_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
-        )
-        self._false_positive_sampling_error_components = false_positive_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
-        )
-        self._false_negative_sampling_error_components = false_negative_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
-        )
-
     def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
@@ -958,24 +1120,6 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalized_est_fn_ratio = est_fn_ratio * normalizer
 
         return normalized_est_fn_ratio
-
-    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:  # Basically the estimate function
-
-        chunk_record = {}
-
-        true_pos_info = self.get_true_pos_info(chunk_data)
-        chunk_record.update(true_pos_info)
-
-        true_neg_info = self.get_true_neg_info(chunk_data)
-        chunk_record.update(true_neg_info)
-
-        false_pos_info = self.get_false_pos_info(chunk_data)
-        chunk_record.update(false_pos_info)
-
-        false_neg_info = self.get_false_neg_info(chunk_data)
-        chunk_record.update(false_neg_info)
-
-        return chunk_record
 
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
         true_pos_info = {}
@@ -1127,6 +1271,23 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         return false_neg_info
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        true_pos_info = self.get_true_pos_info(chunk_data)
+        chunk_record.update(true_pos_info)
+
+        true_neg_info = self.get_true_neg_info(chunk_data)
+        chunk_record.update(true_neg_info)
+
+        false_pos_info = self.get_false_pos_info(chunk_data)
+        chunk_record.update(false_pos_info)
+
+        false_neg_info = self.get_false_neg_info(chunk_data)
+        chunk_record.update(false_neg_info)
+
+        return chunk_record
+
     def _estimate(self, data: pd.DataFrame):
         pass
 
@@ -1174,6 +1335,7 @@ class MulticlassClassificationAUROC(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='ROC AUC',
@@ -1217,7 +1379,33 @@ class MulticlassClassificationAUROC(Metric):
 
         return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
 
+        estimated_roc_auc = self._estimate(chunk_data)
+
+        sampling_error_roc_auc = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_roc_auc'] = estimated_roc_auc
+        chunk_record['sampling_error_roc_auc'] = sampling_error_roc_auc
+        chunk_record['realized_roc_auc'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_roc_auc'] = min(
+            self.confidence_upper_bound, estimated_roc_auc + SAMPLING_ERROR_RANGE * sampling_error_roc_auc
+        )
+        chunk_record['lower_confidence_roc_auc'] = max(
+            self.confidence_lower_bound, estimated_roc_auc - SAMPLING_ERROR_RANGE * sampling_error_roc_auc
+        )
+
+        chunk_record['upper_threshold_roc_auc'] = self.upper_threshold
+        chunk_record['lower_threshold_roc_auc'] = self.lower_threshold
+
+        chunk_record['alert_roc_auc'] = (
+            estimated_roc_auc > self.upper_threshold or estimated_roc_auc < self.lower_threshold
+        )
+
+        return chunk_record
+        
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
     def __init__(
@@ -1227,6 +1415,7 @@ class MulticlassClassificationF1(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='F1',
@@ -1271,6 +1460,31 @@ class MulticlassClassificationF1(Metric):
 
         return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_f1 = self._estimate(chunk_data)
+
+        sampling_error_f1 = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_f1'] = estimated_f1
+        chunk_record['sampling_error_f1'] = sampling_error_f1
+        chunk_record['realized_f1'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_f1'] = min(
+            self.confidence_upper_bound, estimated_f1 + SAMPLING_ERROR_RANGE * sampling_error_f1
+        )
+        chunk_record['lower_confidence_f1'] = max(
+            self.confidence_lower_bound, estimated_f1 - SAMPLING_ERROR_RANGE * sampling_error_f1
+        )
+
+        chunk_record['upper_threshold_f1'] = self.upper_threshold
+        chunk_record['lower_threshold_f1'] = self.lower_threshold
+
+        chunk_record['alert_f1'] = estimated_f1 > self.upper_threshold or estimated_f1 < self.lower_threshold
+
+        return chunk_record
+
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(Metric):
@@ -1281,6 +1495,7 @@ class MulticlassClassificationPrecision(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Precision',
@@ -1325,6 +1540,35 @@ class MulticlassClassificationPrecision(Metric):
 
         return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_precision = self._estimate(chunk_data)
+
+        sampling_error_precision = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_precision'] = estimated_precision
+        chunk_record['sampling_error_precision'] = sampling_error_precision
+        chunk_record['realized_precision'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_precision'] = min(
+            self.confidence_upper_bound,
+            estimated_precision + SAMPLING_ERROR_RANGE * sampling_error_precision,
+        )
+        chunk_record['lower_confidence_precision'] = max(
+            self.confidence_lower_bound,
+            estimated_precision - SAMPLING_ERROR_RANGE * sampling_error_precision,
+        )
+
+        chunk_record['upper_threshold_precision'] = self.upper_threshold
+        chunk_record['lower_threshold_precision'] = self.lower_threshold
+
+        chunk_record['alert_precision'] = (
+            estimated_precision > self.upper_threshold or estimated_precision < self.lower_threshold
+        )
+
+        return chunk_record
+
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(Metric):
@@ -1335,6 +1579,7 @@ class MulticlassClassificationRecall(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Recall',
@@ -1379,6 +1624,35 @@ class MulticlassClassificationRecall(Metric):
 
         return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_recall = self._estimate(chunk_data)
+
+        sampling_error_recall = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_recall'] = estimated_recall
+        chunk_record['sampling_error_recall'] = sampling_error_recall
+        chunk_record['realized_recall'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_recall'] = min(
+            self.confidence_upper_bound,
+            estimated_recall + SAMPLING_ERROR_RANGE * sampling_error_recall,
+        )
+        chunk_record['lower_confidence_recall'] = max(
+            self.confidence_lower_bound,
+            estimated_recall - SAMPLING_ERROR_RANGE * sampling_error_recall,
+        )
+
+        chunk_record['upper_threshold_recall'] = self.upper_threshold
+        chunk_record['lower_threshold_recall'] = self.lower_threshold
+
+        chunk_record['alert_recall'] = (
+            estimated_recall > self.upper_threshold or estimated_recall < self.lower_threshold
+        )
+
+        return chunk_record
+
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(Metric):
@@ -1389,6 +1663,7 @@ class MulticlassClassificationSpecificity(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Specificity',
@@ -1437,6 +1712,35 @@ class MulticlassClassificationSpecificity(Metric):
         class_wise_specificity = tn_sum / (tn_sum + fp_sum)
         return np.mean(class_wise_specificity)  # type: ignore
 
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_specificity = self._estimate(chunk_data)
+
+        sampling_error_specificity = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_specificity'] = estimated_specificity
+        chunk_record['sampling_error_specificity'] = sampling_error_specificity
+        chunk_record['realized_specificity'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_specificity'] = min(
+            self.confidence_upper_bound,
+            estimated_specificity + SAMPLING_ERROR_RANGE * sampling_error_specificity,
+        )
+        chunk_record['lower_confidence_specificity'] = max(
+            self.confidence_lower_bound,
+            estimated_specificity - SAMPLING_ERROR_RANGE * sampling_error_specificity,
+        )
+
+        chunk_record['upper_threshold_specificity'] = self.upper_threshold
+        chunk_record['lower_threshold_specificity'] = self.lower_threshold
+
+        chunk_record['alert_specificity'] = (
+            estimated_specificity > self.upper_threshold or estimated_specificity < self.lower_threshold
+        )
+
+        return chunk_record
+
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(Metric):
@@ -1447,6 +1751,7 @@ class MulticlassClassificationAccuracy(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             display_name='Accuracy',
@@ -1488,3 +1793,32 @@ class MulticlassClassificationAccuracy(Metric):
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         return accuracy_score(y_true, y_pred)
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        estimated_accuracy = self._estimate(chunk_data)
+
+        sampling_error_accuracy = self._sampling_error(chunk_data)
+
+        chunk_record['estimated_accuracy'] = estimated_accuracy
+        chunk_record['sampling_error_accuracy'] = sampling_error_accuracy
+        chunk_record['realized_accuracy'] = self.realized_performance(chunk_data)
+
+        chunk_record['upper_confidence_accuracy'] = min(
+            self.confidence_upper_bound,
+            estimated_accuracy + SAMPLING_ERROR_RANGE * sampling_error_accuracy,
+        )
+        chunk_record['lower_confidence_accuracy'] = max(
+            self.confidence_lower_bound,
+            estimated_accuracy - SAMPLING_ERROR_RANGE * sampling_error_accuracy,
+        )
+
+        chunk_record['upper_threshold_accuracy'] = self.upper_threshold
+        chunk_record['lower_threshold_accuracy'] = self.lower_threshold
+
+        chunk_record['alert_accuracy'] = (
+            estimated_accuracy > self.upper_threshold or estimated_accuracy < self.lower_threshold
+        )
+
+        return chunk_record
