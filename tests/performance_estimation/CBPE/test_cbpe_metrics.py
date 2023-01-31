@@ -363,8 +363,8 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
     result = cbpe.estimate(ana_df)
     sut = result.filter(period='analysis').to_df()[
         [('chunk', 'key')] + [(m.column_name, 'value') for m in result.metrics]
-    ]
-    sut.columns = [
+    ] # Need to change
+    sut.columns = [ # need to add other metrics
         'key',
         'estimated_roc_auc',
         'estimated_f1',
