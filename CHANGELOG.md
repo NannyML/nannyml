@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.8.3] - 2023-01-31
+
+### Added
+
+- Added some extra semantic methods on results for easy property access. No dealing with multilevel indexes required.
+- Added functionality to compare results and plot that comparison. Early release version.
+
+### Fixed
+
+- Pinned Sphinx version to 4.5.0 in the [documentation requirements](docs/requirements.txt).
+  Version selector, copy toggle buttons and some styling were broken on RTD due to unintended usage of Sphinx 6 which
+  treats jQuery in a different way.
 
 ## [0.8.2] - 2023-01-24
 
