@@ -91,9 +91,9 @@ class Result(Abstract1DResult, ResultCompareMixin):
                         valid_metric = True
                         expanded_metrics.append(metric_str)
                 if not valid_metric:
-                    # check if metric is from confusion matrix
-                    
-                    raise InvalidArgumentsException(f'{metric_str} was not given in CBPE initialization.')
+                    raise InvalidArgumentsException(
+                        f'Please initialize the CBPE estimator with the appropriate metric to use {metric_str}'
+                    )
 
             metrics = list(set(expanded_metrics))  # remove duplicates
 
