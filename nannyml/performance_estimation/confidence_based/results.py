@@ -19,7 +19,19 @@ from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
-SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix']
+SUPPORTED_METRIC_VALUES = [
+    'roc_auc',
+    'f1',
+    'precision',
+    'recall',
+    'specificity',
+    'accuracy',
+    'confusion_matrix',
+    'true_positive',
+    'true_negative',
+    'false_positive',
+    'false_negative',
+]
 
 
 class Result(Abstract1DResult, ResultCompareMixin):
@@ -56,14 +68,34 @@ class Result(Abstract1DResult, ResultCompareMixin):
                 else:
                     expanded_metrics.append(metric.column_name)
             metrics = expanded_metrics
+
         else:
             expanded_metrics = []
-            for metric in metrics:
-                if hasattr(metric, 'components'):
-                    expanded_metrics.extend(metric.components)
-                else:
-                    expanded_metrics.append(metric)
-            metrics = expanded_metrics
+
+            for metric_str in metrics:
+
+                if metric_str not in SUPPORTED_METRIC_VALUES:
+                    raise InvalidArgumentsException(
+                        f'Invalid metric {metric_str}. Please choose from {SUPPORTED_METRIC_VALUES}'
+                    )
+
+                valid_metric = False
+                for metric in self.metrics:
+                    if metric.column_name == metric_str:
+                        valid_metric = True
+                        if hasattr(metric, 'components'):
+                            expanded_metrics.extend(metric.components)
+                        else:
+                            expanded_metrics.append(metric.column_name)
+                    elif (hasattr(metric, 'components')) and (metric_str in metric.components):
+                        valid_metric = True
+                        expanded_metrics.append(metric_str)
+                if not valid_metric:
+                    # check if metric is from confusion matrix
+                    
+                    raise InvalidArgumentsException(f'{metric_str} was not given in CBPE initialization.')
+
+            metrics = list(set(expanded_metrics))  # remove duplicates
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
         if period != 'all':
