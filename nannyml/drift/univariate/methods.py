@@ -483,6 +483,10 @@ class WassersteinDistance(Method):
             self._ref_rel_freqs = reference_proba_in_bins / len(reference_data)
             self._bin_width = self._bin_edges[1] - self._bin_edges[0]
 
+        self._fitted = True
+        self.lower_threshold = 0
+        self._reference_size = len(reference_data)
+
         if self.chunker is None:
             self.upper_threshold = 1
         else:
@@ -498,9 +502,6 @@ class WassersteinDistance(Method):
             ]
             self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
 
-        self.lower_threshold = 0
-        self._reference_size = len(reference_data)
-        self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
