@@ -480,8 +480,7 @@ class WassersteinDistance(Method):
             if bins is None:
                 bins = len(reference_data) // 500
             reference_proba_in_bins, self._bin_edges = np.histogram(reference_data, bins=bins)
-            ref_rel_freqs = reference_proba_in_bins / len(reference_data)
-            self._ref_rel_freqs = np.cumsum(ref_rel_freqs)
+            self._ref_rel_freqs = reference_proba_in_bins / len(reference_data)
             self._bin_width = self._bin_edges[1] - self._bin_edges[0]
 
         if self.chunker is None:
