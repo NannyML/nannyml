@@ -383,7 +383,7 @@ class Chi2Statistic(Method):
 
         stat, p_value, _, _ = chi2_contingency(
             pd.concat(
-                [self._reference_data.vcs, data.value_counts()],  # type: ignore
+                [self._reference_data_vcs, data.value_counts()],  # type: ignore
                 axis=1,
             ).fillna(0)
         )
