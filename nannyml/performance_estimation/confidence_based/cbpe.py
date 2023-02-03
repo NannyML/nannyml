@@ -321,26 +321,6 @@ class CBPE(AbstractEstimator):
             chunk_records.update(chunk_record)
         return chunk_records
 
-        # estimates: Dict[str, Any] = {}
-        # for metric in self.metrics:
-        #     estimated_metric = metric.estimate(chunk.data) # type: float
-        #     sampling_error = metric.sampling_error(chunk.data)
-        #     estimates[f'sampling_error_{metric.column_name}'] = sampling_error
-        #     estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
-        #     estimates[f'estimated_{metric.column_name}'] = estimated_metric
-        #     estimates[f'upper_confidence_{metric.column_name}'] = min(
-        #         self.confidence_upper_bound, estimated_metric + SAMPLING_ERROR_RANGE * sampling_error
-        #     )
-        #     estimates[f'lower_confidence_{metric.column_name}'] = max(
-        #         self.confidence_lower_bound, estimated_metric - SAMPLING_ERROR_RANGE * sampling_error
-        #     )
-        #     estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
-        #     estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
-        #     estimates[f'alert_{metric.column_name}'] = (
-        #         estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
-        #     )
-        # return estimates
-
     def _fit_binary(self, reference_data: pd.DataFrame) -> CBPE:
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')

@@ -320,8 +320,13 @@ def reduce_confidence_bounds(monkeypatch, estimator, results):
 
     new_lower_bound = min_confidence + 0.001
     new_upper_bound = max_confidence - 0.001
-    monkeypatch.setattr(estimator, 'confidence_lower_bound', new_lower_bound)
-    monkeypatch.setattr(estimator, 'confidence_upper_bound', new_upper_bound)
+
+    for metric in estimator.metrics:
+        monkeypatch.setattr(metric, 'confidence_lower_bound', new_lower_bound)
+        monkeypatch.setattr(metric, 'confidence_upper_bound', new_upper_bound)
+
+    # monkeypatch.setattr(estimator, 'confidence_lower_bound', new_lower_bound)
+    # monkeypatch.setattr(estimator, 'confidence_upper_bound', new_upper_bound)
 
     return estimator, new_lower_bound, new_upper_bound
 

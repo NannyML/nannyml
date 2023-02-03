@@ -2082,13 +2082,15 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         y_pred='y_pred',
         y_true='work_home_actual',
         problem_type='classification_binary',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix'],
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
 
     column_names = [x.column_name for x in result.metrics if not hasattr(x, 'components')]
-    column_names.extend([x.components for x in result.metrics if hasattr(x, 'components')])
+    for metric in result.metrics:
+        if hasattr(metric, 'components'):
+            column_names.extend(metric.components)
 
     sut = result.filter(period='analysis').to_df()[
         [('chunk', 'key')] + [(c, 'value') for c in column_names]

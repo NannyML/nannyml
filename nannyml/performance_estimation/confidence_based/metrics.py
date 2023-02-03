@@ -203,15 +203,15 @@ class Metric(abc.ABC):
 
         chunk_record[f'estimated_{self.column_name}'] = estimated_metric_value
 
-        chunk_record[f'realized_{self.column_name}'] = self.realized_performance(chunk_data)
-
         chunk_record[f'sampling_error_{self.column_name}'] = metric_estimate_sampling_error
 
-        chunk_record[f'upper_confidence_{self.column_name}'] = min(
+        chunk_record[f'realized_{self.column_name}'] = self.realized_performance(chunk_data)
+
+        chunk_record[f'upper_confidence_boundary_{self.column_name}'] = min(
             self.confidence_upper_bound, estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error
         )
 
-        chunk_record[f'lower_confidence_{self.column_name}'] = max(
+        chunk_record[f'lower_confidence_boundary_{self.column_name}'] = max(
             self.confidence_lower_bound, estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error
         )
 
@@ -987,16 +987,16 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_pos_info['realized_true_positive'] = self._true_positive_realized_performance(chunk_data)
 
         if self.normalize_confusion_matrix is None:
-            true_pos_info['upper_confidence_true_positive'] = (
+            true_pos_info['upper_confidence_boundary_true_positive'] = (
                 estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives
             )
         else:
-            true_pos_info['upper_confidence_true_positive'] = min(
+            true_pos_info['upper_confidence_boundary_true_positive'] = min(
                 self.confidence_upper_bound,
                 estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
             )
 
-        true_pos_info['lower_confidence_true_positive'] = max(
+        true_pos_info['lower_confidence_boundary_true_positive'] = max(
             self.confidence_lower_bound, estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
         )
 
@@ -1024,16 +1024,16 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_neg_info['realized_true_negative'] = self._true_negative_realized_performance(chunk_data)
 
         if self.normalize_confusion_matrix is None:
-            true_neg_info['upper_confidence_true_negative'] = (
+            true_neg_info['upper_confidence_boundary_true_negative'] = (
                 estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives
             )
         else:
-            true_neg_info['upper_confidence_true_negative'] = min(
+            true_neg_info['upper_confidence_boundary_true_negative'] = min(
                 self.confidence_upper_bound,
                 estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
             )
 
-        true_neg_info['lower_confidence_true_negative'] = max(
+        true_neg_info['lower_confidence_boundary_true_negative'] = max(
             self.confidence_lower_bound, estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
         )
 
@@ -1061,16 +1061,16 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_pos_info['realized_false_positive'] = self._false_positive_realized_performance(chunk_data)
 
         if self.normalize_confusion_matrix is None:
-            false_pos_info['upper_confidence_false_positive'] = (
+            false_pos_info['upper_confidence_boundary_false_positive'] = (
                 estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives
             )
         else:
-            false_pos_info['upper_confidence_false_positive'] = min(
+            false_pos_info['upper_confidence_boundary_false_positive'] = min(
                 self.confidence_upper_bound,
                 estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
             )
 
-        false_pos_info['lower_confidence_false_positive'] = max(
+        false_pos_info['lower_confidence_boundary_false_positive'] = max(
             self.confidence_lower_bound,
             estimated_false_positives - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
         )
@@ -1099,16 +1099,16 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info['realized_false_negative'] = self._false_negative_realized_performance(chunk_data)
 
         if self.normalize_confusion_matrix is None:
-            false_neg_info['upper_confidence_false_negative'] = (
+            false_neg_info['upper_confidence_boundary_false_negative'] = (
                 estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives
             )
         else:
-            false_neg_info['upper_confidence_false_negative'] = min(
+            false_neg_info['upper_confidence_boundary_false_negative'] = min(
                 self.confidence_upper_bound,
                 estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
             )
 
-        false_neg_info['lower_confidence_false_negative'] = max(
+        false_neg_info['lower_confidence_boundary_false_negative'] = max(
             self.confidence_lower_bound,
             estimated_false_negatives - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
         )
