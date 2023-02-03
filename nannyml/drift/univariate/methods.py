@@ -306,8 +306,10 @@ class KolmogorovSmirnovStatistic(Method):
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
 
-    def _fit(self, reference_data: pd.Series, bins: int = None) -> Method:
-        if len(reference_data)<=10_000:
+    def _fit(
+        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
+    ) -> Method:
+        if len(reference_data) <= 10_000:
             self._reference_data = reference_data
         else:
             if bins is None:
@@ -473,7 +475,9 @@ class WassersteinDistance(Method):
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int | None = None) -> Method:
+    def _fit(
+        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int | None = None
+    ) -> Method:
         if len(reference_data) < 10_000:
             self._reference_data = reference_data
         else:
