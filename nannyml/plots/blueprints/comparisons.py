@@ -25,7 +25,6 @@ def plot_2d_compare_step_to_step(
     number_of_columns: Optional[int] = None,
     hover: Optional[Hover] = None,
 ) -> Figure:
-
     # validate if both result keysets are compatible for plotting
     items = list(itertools.product(result_1.keys(), result_2.keys()))
 

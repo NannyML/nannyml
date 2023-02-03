@@ -202,7 +202,6 @@ def _plot_metric(  # noqa: C901
     hover: Optional[Hover] = None,
     subplot_y_axis_title: Optional[str] = None,
 ) -> Figure:
-
     if figure is None:
         figure = Figure(
             title='CBPE',

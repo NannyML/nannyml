@@ -59,7 +59,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.chunker = chunker
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
-
         if metrics is None:
             expanded_metrics = []
             for metric in self.metrics:
@@ -73,7 +72,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
             expanded_metrics = []
 
             for metric_str in metrics:
-
                 if metric_str not in SUPPORTED_METRIC_VALUES:
                     raise InvalidArgumentsException(
                         f'Invalid metric {metric_str}. Please choose from {SUPPORTED_METRIC_VALUES}'

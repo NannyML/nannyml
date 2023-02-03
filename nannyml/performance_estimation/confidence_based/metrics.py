@@ -2,19 +2,6 @@ import abc
 import logging
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from ...sampling_error.binary_classification import (
-    true_positive_sampling_error,
-    true_positive_sampling_error_components,
-    true_negative_sampling_error,
-    true_negative_sampling_error_components,
-    false_positive_sampling_error,
-    false_positive_sampling_error_components,
-    false_negative_sampling_error,
-    false_negative_sampling_error_components,
-)
-
-from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
@@ -34,6 +21,18 @@ import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+
+from ...sampling_error.binary_classification import (
+    false_negative_sampling_error,
+    false_negative_sampling_error_components,
+    false_positive_sampling_error,
+    false_positive_sampling_error_components,
+    true_negative_sampling_error,
+    true_negative_sampling_error_components,
+    true_positive_sampling_error,
+    true_positive_sampling_error_components,
+)
 
 
 class Metric(abc.ABC):
@@ -308,7 +307,6 @@ class BinaryClassificationAUROC(Metric):
         return bse.auroc_sampling_error(self._sampling_error_components, data)
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
-
         chunk_record = {}
 
         estimated_roc_auc = self._estimate(chunk_data)
@@ -409,7 +407,6 @@ class BinaryClassificationF1(Metric):
         return f1_score(y_true=y_true, y_pred=y_pred)
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
-
         chunk_record = {}
 
         estimated_f1 = self._estimate(chunk_data)
@@ -1405,7 +1402,8 @@ class MulticlassClassificationAUROC(Metric):
         )
 
         return chunk_record
-        
+
+
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
     def __init__(

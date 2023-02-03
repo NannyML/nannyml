@@ -310,6 +310,7 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
     (reference_std,) = sampling_error_components
     return reference_std / np.sqrt(len(data))
 
+
 def true_positive_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
 ) -> Tuple:
@@ -346,7 +347,6 @@ def true_positive_sampling_error_components(
         norm_type = None
 
     elif normalize_confusion_matrix == "all":
-
         std = np.std(obs_level_tp)
 
         relevant_proportion = 1
@@ -354,7 +354,6 @@ def true_positive_sampling_error_components(
         norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
-
         number_of_real_positives = num_fn + num_tp
         proportion_of_real_positives = number_of_real_positives / len(y_true_reference)
 
@@ -367,7 +366,6 @@ def true_positive_sampling_error_components(
         norm_type = "true"
 
     elif normalize_confusion_matrix == "pred":
-
         number_of_pred_positives = num_fp + num_tp
         proportion_of_pred_positives = number_of_pred_positives / len(y_true_reference)
 
@@ -396,14 +394,12 @@ def true_positive_sampling_error(sampling_error_components: Tuple, data) -> floa
     (reference_std, relevant_proportion, norm_type) = sampling_error_components
 
     if norm_type is None:
-        tp_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+        tp_standard_error = (reference_std / np.sqrt(len(data))) * len(data)
 
     elif norm_type == "all":
-
         tp_standard_error = reference_std / np.sqrt(len(data))
 
     elif norm_type == "true" or norm_type == "pred":
-
         tp_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
 
     return tp_standard_error
@@ -445,15 +441,13 @@ def true_negative_sampling_error_components(
         norm_type = None
 
     elif normalize_confusion_matrix == "all":
-
         std = np.std(obs_level_tn)
 
-        relevant_proportion = 1 
+        relevant_proportion = 1
 
         norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
-
         number_of_real_negatives = num_fp + num_tn
         proportion_of_real_negatives = number_of_real_negatives / len(y_true_reference)
 
@@ -466,7 +460,6 @@ def true_negative_sampling_error_components(
         norm_type = "true"
 
     elif normalize_confusion_matrix == "pred":
-
         number_of_pred_negatives = num_fn + num_tn
         proportion_of_pred_negatives = number_of_pred_negatives / len(y_true_reference)
 
@@ -495,14 +488,12 @@ def true_negative_sampling_error(sampling_error_components: Tuple, data) -> floa
     (reference_std, relevant_proportion, norm_type) = sampling_error_components
 
     if norm_type is None:
-        tn_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+        tn_standard_error = (reference_std / np.sqrt(len(data))) * len(data)
 
     elif norm_type == "all":
-
         tn_standard_error = reference_std / np.sqrt(len(data))
 
     elif norm_type == "true" or norm_type == "pred":
-
         tn_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
 
     return tn_standard_error
@@ -544,15 +535,13 @@ def false_positive_sampling_error_components(
         norm_type = None
 
     elif normalize_confusion_matrix == "all":
-
         std = np.std(obs_level_fp)
 
-        relevant_proportion = 1 
+        relevant_proportion = 1
 
         norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
-
         number_of_real_negatives = num_fp + num_tn
         proportion_of_real_negatives = number_of_real_negatives / len(y_true_reference)
 
@@ -565,7 +554,6 @@ def false_positive_sampling_error_components(
         norm_type = "true"
 
     elif normalize_confusion_matrix == "pred":
-
         number_of_pred_positives = num_fp + num_tp
         proportion_of_pred_positives = number_of_pred_positives / len(y_true_reference)
 
@@ -594,14 +582,12 @@ def false_positive_sampling_error(sampling_error_components: Tuple, data) -> flo
     (reference_std, relevant_proportion, norm_type) = sampling_error_components
 
     if norm_type is None:
-        fp_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+        fp_standard_error = (reference_std / np.sqrt(len(data))) * len(data)
 
     elif norm_type == "all":
-
         fp_standard_error = reference_std / np.sqrt(len(data))
 
     elif norm_type == "true" or norm_type == "pred":
-
         fp_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
 
     return fp_standard_error
@@ -643,7 +629,6 @@ def false_negative_sampling_error_components(
         norm_type = None
 
     elif normalize_confusion_matrix == "all":
-
         std = np.std(obs_level_fn)
 
         relevant_proportion = 1  # Could be None, None
@@ -651,7 +636,6 @@ def false_negative_sampling_error_components(
         norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
-
         number_of_real_positives = num_fn + num_tp
         proportion_of_real_positives = number_of_real_positives / len(y_true_reference)
 
@@ -664,7 +648,6 @@ def false_negative_sampling_error_components(
         norm_type = "true"
 
     elif normalize_confusion_matrix == "pred":
-
         number_of_pred_negatives = num_fn + num_tn
         proportion_of_pred_negatives = number_of_pred_negatives / len(y_true_reference)
 
@@ -693,14 +676,12 @@ def false_negative_sampling_error(sampling_error_components: Tuple, data) -> flo
     (reference_std, relevant_proportion, norm_type) = sampling_error_components
 
     if norm_type is None:
-        fn_standard_error = (reference_std/ np.sqrt(len(data))) * len(data)
+        fn_standard_error = (reference_std / np.sqrt(len(data))) * len(data)
 
     elif norm_type == "all":
-
         fn_standard_error = reference_std / np.sqrt(len(data))
 
     elif norm_type == "true" or norm_type == "pred":
-
         fn_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
 
     return fn_standard_error
