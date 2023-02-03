@@ -2045,13 +2045,34 @@ from nannyml.performance_estimation.confidence_based import CBPE
         ),
     ],
     ids=[
-        'size_based_without_timestamp',
-        'size_based_with_timestamp',
-        'count_based_without_timestamp',
-        'count_based_with_timestamp',
-        'period_based_with_timestamp',
-        'default_without_timestamp',
-        'default_with_timestamp',
+        'size_based_without_timestamp_normalization_none',
+        'size_based_without_timestamp_normalization_all',
+        'size_based_without_timestamp_normalization_true',
+        'size_based_without_timestamp_normalization_pred',
+        'sized_based_with_timestamp_normalization_none',
+        'sized_based_with_timestamp_normalization_all',
+        'sized_based_with_timestamp_normalization_true',
+        'sized_based_with_timestamp_normalization_pred',
+        'count_based_without_timestamp_normalization_none',
+        'count_based_without_timestamp_normalization_all',
+        'count_based_without_timestamp_normalization_true',
+        'count_based_without_timestamp_normalization_pred',
+        'count_based_with_timestamp_normalization_none',
+        'count_based_with_timestamp_normalization_all',
+        'count_based_with_timestamp_normalization_true',
+        'count_based_with_timestamp_normalization_pred',
+        'period_based_with_timestamp_normalization_none',
+        'period_based_with_timestamp_normalization_all',
+        'period_based_with_timestamp_normalization_true',
+        'period_based_with_timestamp_normalization_pred',
+        'default_without_timestamp_normalization_none',
+        'default_without_timestamp_normalization_all',
+        'default_without_timestamp_normalization_true',
+        'default_without_timestamp_normalization_pred',
+        'default_with_timestamp_normalization_none',
+        'default_with_timestamp_normalization_all',
+        'default_with_timestamp_normalization_true',
+        'default_with_timestamp_normalization_pred',
     ],
 )
 def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expected):
@@ -2065,10 +2086,14 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
+
+    column_names = [x.column_name for x in result.metrics if not hasattr(x, 'components')]
+    column_names.extend([x.components for x in result.metrics if hasattr(x, 'components')])
+
     sut = result.filter(period='analysis').to_df()[
-        [('chunk', 'key')] + [(m.column_name, 'value') for m in result.metrics]
+        [('chunk', 'key')] + [(c, 'value') for c in column_names]
     ]  # Need to change
-    sut.columns = [  # need to add other metrics
+    sut.columns = [
         'key',
         'estimated_roc_auc',
         'estimated_f1',
