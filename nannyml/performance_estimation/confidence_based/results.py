@@ -63,7 +63,10 @@ class Result(Abstract1DResult, ResultCompareMixin):
 
     def keys(self) -> List[Key]:
         return [
-            Key(properties=(metric.column_name,), display_names=(f'estimated {metric.display_name}', metric,))
+            Key(
+                properties=(metric.column_name,),
+                display_names=(f'estimated {metric.display_name}', metric.display_name,)
+            )
             for metric in self.metrics
         ]
 
