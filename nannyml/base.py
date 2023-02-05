@@ -177,6 +177,7 @@ class AbstractCalculator(ABC):
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
         timestamp_column_name: Optional[str] = None,
+        calculation_method: Optional[str] = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
 
@@ -201,6 +202,8 @@ class AbstractCalculator(ABC):
         )
 
         self.timestamp_column_name = timestamp_column_name
+
+        self.calculation_method = calculation_method
 
         self.result: Optional[Result] = None
 
@@ -318,6 +321,7 @@ class AbstractEstimator(ABC):
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
         timestamp_column_name: Optional[str] = None,
+        calculation_method: Optional[str] = None,
     ):
         """Creates a new instance of an abstract DriftCalculator.
 
@@ -341,6 +345,8 @@ class AbstractEstimator(ABC):
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
         self.timestamp_column_name = timestamp_column_name
+
+        self.calculation_method = calculation_method
 
         self.result: Optional[Result] = None
 

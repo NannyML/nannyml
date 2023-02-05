@@ -28,6 +28,7 @@ class Method(abc.ABC):
         display_name: str,
         column_name: str,
         chunker: Optional[Chunker] = None,
+        calculation_method: Optional[str] = None,
         upper_threshold: Optional[float] = None,
         lower_threshold: Optional[float] = None,
         upper_threshold_limit: Optional[float] = None,
@@ -54,7 +55,7 @@ class Method(abc.ABC):
         self.lower_threshold: Optional[float] = lower_threshold
         self.lower_threshold_limit: Optional[float] = lower_threshold_limit
         self.upper_threshold_limit: Optional[float] = upper_threshold_limit
-
+        self.calculation_method: Optional[str] = calculation_method
         self.chunker: Optional[Chunker] = chunker
 
     def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
@@ -306,8 +307,10 @@ class KolmogorovSmirnovStatistic(Method):
         self._ref_rel_freqs: np.ndarray = None
         self._fitted = False
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int | None = None) -> Method:
-        if len(reference_data) < 10_000:
+    def _fit(
+        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
+    ) -> Method:
+        if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
             if bins is None:
@@ -326,7 +329,9 @@ class KolmogorovSmirnovStatistic(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        if self._reference_size >= 10_000:
+        if (
+            self.calculation_method == 'auto' and self._reference_size >= 10_000
+        ) or self.calculation_method == 'estimated':
             m, n = sorted([float(self._reference_size), float(len(data))], reverse=True)
             en = m * n / (m + n)
             chunk_proba_in_qts, _ = np.histogram(data, self._qts)
@@ -473,8 +478,10 @@ class WassersteinDistance(Method):
         self._ref_rel_freqs: np.ndarray = None
         self._fitted = False
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: int | None = None) -> Method:
-        if len(reference_data) < 10_000:
+    def _fit(
+        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
+    ) -> Method:
+        if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
             if bins is None:
@@ -509,7 +516,9 @@ class WassersteinDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        if self._reference_size >= 10_000:
+        if (
+            self.calculation_method == 'auto' and self._reference_size >= 10_000
+        ) or self.calculation_method == 'estimated':
             min_chunk = np.min(data)
 
             if min_chunk < self._bin_edges[0]:
