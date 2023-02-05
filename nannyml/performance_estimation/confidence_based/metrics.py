@@ -929,7 +929,6 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
         est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
 
         if self.normalize_confusion_matrix is None:
@@ -953,7 +952,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_pred = chunk_data[self.y_pred]
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
         est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
         est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
 

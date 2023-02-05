@@ -20,7 +20,6 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
-from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
