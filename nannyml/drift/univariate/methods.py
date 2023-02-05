@@ -304,7 +304,7 @@ class KolmogorovSmirnovStatistic(Method):
         self._p_value: Optional[float] = None
         self._reference_size: float
         self._qts: np.ndarray
-        self._ref_rel_freqs: np.ndarray = None
+        self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
 
     def _fit(
@@ -474,8 +474,8 @@ class WassersteinDistance(Method):
         self._p_value: Optional[float] = None
         self._reference_size: float
         self._bin_width: float
-        self._bin_edges: np.ndarray = None
-        self._ref_rel_freqs: np.ndarray = None
+        self._bin_edges: Optional[np.ndarray] = None
+        self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
 
     def _fit(
@@ -521,6 +521,7 @@ class WassersteinDistance(Method):
         ) or self.calculation_method == 'estimated':
             min_chunk = np.min(data)
 
+            assert self._bin_edges is not None
             if min_chunk < self._bin_edges[0]:
                 extra_bins_left = (min_chunk - self._bin_edges[0]) / self._bin_width
                 extra_bins_left = np.ceil(extra_bins_left)

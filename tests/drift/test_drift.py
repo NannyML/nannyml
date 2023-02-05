@@ -301,13 +301,16 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
         (
             {'chunk_size': 5000},
             [0.004000, 0.003800, 0.009800, 0.239922],
+            [0.004000, 0.003800, 0.009800, 0.239922],
         ),
         (
             {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
             [0.004000, 0.003800, 0.009800, 0.239922],
+            [0.004000, 0.003800, 0.009800, 0.239922],
         ),
         (
             {'chunk_number': 5},
+            [0.007937, 0.006597, 0.010069, 0.062946, 0.250198],
             [0.007937, 0.006597, 0.010069, 0.062946, 0.250198],
         ),
         (
@@ -376,6 +379,9 @@ def test_univariate_statistical_drift_calculator_works_with_chunker(
         calculation_method='estimated',
         **calculator_opts,
     ).fit(ref_data)
+    result = calc.calculate(data=sample_drift_data).filter(period='analysis').data
+    sut = result[('f1', 'kolmogorov_smirnov', 'value')].to_list()
+    assert all(np.round(sut, 6) == expected)
     result = calc.calculate(data=sample_drift_data).filter(period='analysis').data
     sut = result[('f1', 'kolmogorov_smirnov', 'value')].to_list()
     assert all(np.round(sut, 6) == expected)
