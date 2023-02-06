@@ -63,7 +63,10 @@ class Result(Abstract1DResult, ResultCompareMixin):
 
     def keys(self) -> List[Key]:
         return [
-            Key(properties=(metric.column_name,), display_names=(f'estimated {metric.display_name}',))
+            Key(
+                properties=(metric.column_name,),
+                display_names=(f'estimated {metric.display_name}', metric.display_name,)
+            )
             for metric in self.metrics
         ]
 
@@ -114,7 +117,8 @@ class Result(Abstract1DResult, ResultCompareMixin):
             return plot_metrics(
                 self,
                 title='Estimated performance <b>(CBPE)</b>',
-                subplot_title_format='Estimated <b>{display_names[0]}</b>',
+                subplot_title_format='Estimated <b>{display_names[1]}</b>',
+                subplot_y_axis_title_format='{display_names[1]}'
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
