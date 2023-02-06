@@ -51,17 +51,20 @@ estimator with a list of metrics, and an optional
 can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
 
-The list of metrics specifies which performance metrics of the monitored model will be estimated.
-The following metrics are currently supported:
+.. note::
+  The list of metrics specifies which performance metrics of the monitored model will be estimated.
+  The following metrics are currently supported:
 
-- ``roc_auc`` - one-vs-the-rest, macro-averaged
-- ``f1`` - macro-averaged
-- ``precision`` - macro-averaged
-- ``recall`` - macro-averaged
-- ``specificity`` - macro-averaged
-- ``accuracy``
-
-
+  * ``roc_auc``
+  * ``f1``
+  * ``precision``
+  * ``recall``
+  * ``specificity``
+  * ``accuracy``
+  * ``confusion_matrix``
+      * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
+      
+      
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 3

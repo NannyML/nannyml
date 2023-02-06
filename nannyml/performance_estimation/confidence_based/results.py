@@ -59,6 +59,15 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.chunker = chunker
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
+        """Filter the results based on the specified period and metrics.
+
+        This function begins by expanding the metrics to all the metrics that were specified or if no metrics were
+        specified, all the metrics that were used to calculate the results. Since some metrics have multiple components,
+        we expand these to their individual components. For example, the ``confusion_matrix`` metric has four components:
+        ``true_positive``, ``true_negative``, ``false_positive``, and ``false_negative``.  Specifying ``confusion_matrix``
+        or, for example, ``true_positive`` are both valid. We then filter the results based on the specified period
+        and metrics.
+        """
         if metrics is None:
             expanded_metrics = []
             for metric in self.metrics:
