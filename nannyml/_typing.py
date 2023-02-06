@@ -75,7 +75,7 @@ class Result(Protocol):
         ...
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> Result:
         ...
 

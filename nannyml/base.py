@@ -78,7 +78,7 @@ class AbstractResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> Result:
         """Returns filtered result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
@@ -287,7 +287,7 @@ class AbstractEstimatorResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> AbstractEstimatorResult:
         """Returns result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
