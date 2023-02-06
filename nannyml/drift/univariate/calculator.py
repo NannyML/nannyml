@@ -85,7 +85,6 @@ class UnivariateDriftCalculator(AbstractCalculator):
             chunk_period,
             chunker,
             timestamp_column_name,
-            calculation_method,
         )
         if isinstance(column_names, str):
             column_names = [column_names]
