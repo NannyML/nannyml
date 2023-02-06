@@ -1,4 +1,4 @@
-.. _dataset-synthetic-binary:
+.. _dataset-synthetic-binary-car-loan:
 
 =======================================
 Synthetic Binary Classification Dataset - Car Loan
