@@ -104,6 +104,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         assert isinstance(categorical_methods, list)
         self.categorical_method_names: List[str] = categorical_methods
 
+        self.calculation_method: Optional[str] = None
+
         if not calculation_method and any(elem in ['kolmogorov_smirnov', 'wasserstein'] for elem in continuous_methods):
             self.calculation_method = 'auto'
         else:
