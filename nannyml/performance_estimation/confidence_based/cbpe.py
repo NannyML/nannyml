@@ -95,11 +95,12 @@ class CBPE(AbstractEstimator):
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.
         normalize_confusion_matrix: str, default=None
-            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and 'predicted'. If
-            None, the confusion matrix will not be normalized and the counts for each cell of the matrix will be returned.
-            If 'all', the confusion matrix will be normalized by the total number of observations. If 'true', the confusion
-            matrix will be normalized by the total number of observations for each true class. If 'predicted', the confusion
-            matrix will be normalized by the total number of observations for each predicted class.
+            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
+            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
+            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
+            of observations. If 'true', the confusion matrix will be normalized by the total number of
+            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
+            total number of observations for each predicted class.
 
         Examples
         --------
