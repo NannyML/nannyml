@@ -279,7 +279,7 @@ def test_cbpe_runs_for_all_metrics(binary_classification_data, metric):  # noqa:
             y_true='work_home_actual',
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
-            metrics=['roc_auc'],
+            metrics=[metric],
             problem_type='classification_binary',
         ).fit(reference)
         _ = estimator.estimate(pd.concat([reference, analysis]))
