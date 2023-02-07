@@ -15,7 +15,7 @@ import pandas as pd
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2_contingency, ks_2samp, kstwo, wasserstein_distance
 
-from nannyml.base import _column_is_categorical
+from nannyml.base import _column_is_categorical, _remove_missing_data
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 
@@ -310,10 +310,7 @@ class KolmogorovSmirnovStatistic(Method):
     def _fit(
         self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
     ) -> Method:
-        if isinstance(reference_data, pd.Series):
-            reference_data = reference_data.dropna().reset_index(drop=True)
-        else:
-            reference_data = reference_data[~np.isnan(reference_data)]
+        reference_data = _remove_missing_data(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
@@ -329,10 +326,7 @@ class KolmogorovSmirnovStatistic(Method):
         return self
 
     def _calculate(self, data: pd.Series):
-        if isinstance(data, pd.Series):
-            data = data.dropna().reset_index(drop=True)
-        else:
-            data = data[~np.isnan(data)]
+        data = _remove_missing_data(data)
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
@@ -384,19 +378,13 @@ class Chi2Statistic(Method):
         self._fitted = False
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
-        if isinstance(reference_data, pd.Series):
-            reference_data = reference_data.dropna().reset_index(drop=True)
-        else:
-            reference_data = reference_data[~np.isnan(reference_data)]
+        reference_data = _remove_missing_data(reference_data)
         self._reference_data_vcs = reference_data.value_counts()
         self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if isinstance(data, pd.Series):
-            data = data.dropna().reset_index(drop=True)
-        else:
-            data = data[~np.isnan(data)]
+        data = _remove_missing_data(data)
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
@@ -444,10 +432,7 @@ class LInfinityDistance(Method):
         self._reference_proba: Optional[dict] = None
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
-        if isinstance(reference_data, pd.Series):
-            reference_data = reference_data.dropna().reset_index(drop=True)
-        else:
-            reference_data = reference_data[~np.isnan(reference_data)]
+        reference_data = _remove_missing_data(reference_data)
         ref_labels = reference_data.unique()
         self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
         return self
@@ -457,10 +442,7 @@ class LInfinityDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        if isinstance(data, pd.Series):
-            data = data.dropna().reset_index(drop=True)
-        else:
-            data = data[~np.isnan(data)]
+        data = _remove_missing_data(data)
         data_labels = data.unique()
         data_ratios = {label: (data == label).sum() / len(data) for label in data_labels}
 
@@ -504,10 +486,7 @@ class WassersteinDistance(Method):
     def _fit(
         self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
     ) -> Method:
-        if isinstance(reference_data, pd.Series):
-            reference_data = reference_data.dropna().reset_index(drop=True)
-        else:
-            reference_data = reference_data[~np.isnan(reference_data)]
+        reference_data = _remove_missing_data(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
@@ -543,10 +522,7 @@ class WassersteinDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        if isinstance(data, pd.Series):
-            data = data.dropna().reset_index(drop=True)
-        else:
-            data = data[~np.isnan(data)]
+        data = _remove_missing_data(data)
         if (
             self.calculation_method == 'auto' and self._reference_size >= 10_000
         ) or self.calculation_method == 'estimated':
@@ -620,10 +596,7 @@ class HellingerDistance(Method):
         self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
-        if isinstance(reference_data, pd.Series):
-            reference_data = reference_data.dropna().reset_index(drop=True)
-        else:
-            reference_data = reference_data[~np.isnan(reference_data)]
+        reference_data = _remove_missing_data(reference_data)
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
@@ -650,10 +623,7 @@ class HellingerDistance(Method):
         return self
 
     def _calculate(self, data: pd.Series):
-        if isinstance(data, pd.Series):
-            data = data.dropna().reset_index(drop=True)
-        else:
-            data = data[~np.isnan(data)]
+        data = _remove_missing_data(data)
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
         if self._treat_as_type == 'cont':
             len_data = len(data)

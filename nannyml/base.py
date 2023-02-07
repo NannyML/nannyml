@@ -342,7 +342,6 @@ class AbstractEstimator(ABC):
         )
         self.timestamp_column_name = timestamp_column_name
 
-
         self.result: Optional[Result] = None
 
     @property
@@ -397,6 +396,14 @@ def _split_features_by_type(data: pd.DataFrame, feature_column_names: List[str])
 
 def _column_is_categorical(column: pd.Series) -> bool:
     return column.dtype in ['object', 'string', 'category', 'bool']
+
+
+def _remove_missing_data(column: pd.Series):
+    if isinstance(column, pd.Series):
+        column = column.dropna().reset_index(drop=True)
+    else:
+        column = column[~np.isnan(column)]
+    return column
 
 
 def _column_is_continuous(column: pd.Series) -> bool:
