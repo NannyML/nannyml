@@ -165,4 +165,4 @@ You can learn more about Direct Error Estimation and its limitations in the
 
 
 .. _LGBMRegressor defaults: https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html
-.. _configuration options: https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects
+.. _configuration options: https://microsoft.github.io/FLAML/docs/reference/automl/automl/#automl-objects
