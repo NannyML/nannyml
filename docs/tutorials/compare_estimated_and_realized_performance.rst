@@ -4,74 +4,58 @@
 Comparing Estimated and Realized Performance
 ============================================
 
-
-
 When the :term:`targets<Target>` become available, the quality of estimations provided by NannyML can be evaluated.
 The synthetic datasets provided with the library contain targets for analysis period.
-It consists of ``identifier``, which allows to match it with
-``analysis`` data, and the target for the monitored model - ``work_home_actual``. See:
 
-.. code-block:: python
+The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
+not used during :ref:`performance estimation.<performance-estimation>`. But it is required to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.
 
-    >>> import nannyml as nml
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> analysis_target.head(3)
-
-
-+----+--------------+--------------------+
-|    |   identifier |   work_home_actual |
-+====+==============+====================+
-|  0 |        50000 |                  1 |
-+----+--------------+--------------------+
-|  1 |        50001 |                  1 |
-+----+--------------+--------------------+
-|  2 |        50002 |                  1 |
-+----+--------------+--------------------+
+The analysis target values are joined on the analysis frame by their index. Your dataset may already contain the ``target`` column, so you may skip this join.
 
 The beginning of the code below is similar to the one in :ref:`tutorial on
-performance estimation with binary classification data<performance-estimation-binary-just-the-code>`.
+performance calculation with binary classification data<binary-performance-calculation>`.
 
 Estimation results for ``reference`` and ``analysis`` are combined with realized and plot the two on the same graph.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cells: 1
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-    >>> from sklearn.metrics import roc_auc_score
-    >>> import matplotlib.pyplot as plt
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cell: 2
 
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+... New estimator instance
 
-    >>> estimator = nml.CBPE(
-    ...     y_pred_proba='y_pred_proba',
-    ...     y_pred='y_pred',
-    ...     y_true='work_home_actual',
-    ...     timestamp_column_name='timestamp',
-    ...     metrics=['roc_auc', 'f1'],
-    ...     chunk_size=5000
-    >>> )
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cells: 3
 
-    >>> estimator.fit(reference)
+... Fit with reference dataset, estimate analysis dataset and filter only the analysis periods
 
-    >>> results = estimator.estimate(pd.concat([reference, analysis], ignore_index=True))
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cells: 4
 
-    >>> analysis_full = pd.merge(analysis, analysis_target, on = 'identifier')
-    >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
-    >>> target_col = 'work_home_actual'
-    >>> pred_score_col = 'y_pred_proba'
-    >>> actual_performance = []
-    >>> for idx in results.data.index:
-    ...     start_index, end_index = results.data.loc[idx, 'start_index'], results.data.loc[idx, 'end_index']
-    ...     sub = df_all.loc[start_index:end_index]
-    ...     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    ...     results.data.loc[idx, 'actual_roc_auc'] = actual_perf
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cell: 5
 
+... Compute actual roc auc
 
-    >>> results.data[['estimated_roc_auc', 'actual_roc_auc']].plot()
-    >>> plt.xlabel('chunk')
-    >>> plt.ylabel('ROC AUC')
-    >>> plt.show()
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cells: 6
+
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cell: 7
+
+... Plot the Estimated and Actual values to compare them
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
+    :cells: 8
 
 
-.. image:: /_static/guide-performance_estimation_tmp.svg
+.. image:: /_static/tutorials/estimated_and_realized_performance/tutorial-binary-car-loan-roc-auc-estimated-and-actual.svg

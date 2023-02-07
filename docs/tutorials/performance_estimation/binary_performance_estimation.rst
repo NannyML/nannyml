@@ -133,7 +133,7 @@ interactive plots, though only static views are included here).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 6
 
-.. image:: ../../_static/tutorial-perf-est-guide-binary-class-analysis.svg
+.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis.svg
 
 
 To get a better context let's also plot estimation of performance on analysis data together with calculated
@@ -151,7 +151,7 @@ performance on the reference period (where the target was available).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 8
 
-.. image:: ../../_static/tutorial-perf-est-guide-with-ref-binary-class-analysis.svg
+.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
 
 
 Insights
