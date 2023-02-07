@@ -318,3 +318,21 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_dle_result_filter_should_preserve_data_with_default_args(estimates):
+    filtered_result = estimates.filter()
+    assert filtered_result.data.equals(estimates.data)
+
+
+def test_dle_result_filter_metrics(estimates):
+    filtered_result = estimates.filter(metrics=["mae"])
+    columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != "chunk"))
+    assert columns == ("mae",)
+    assert filtered_result.data.shape[0] == estimates.data.shape[0]
+
+
+def test_dle_result_filter_period(estimates):
+    ref_period = estimates.data.loc[estimates.data.loc[:, ("chunk", "period")] == "reference", :]
+    filtered_result = estimates.filter(period="reference")
+    assert filtered_result.data.equals(ref_period)

@@ -373,6 +373,24 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
 
+def test_cpbe_result_filter_should_preserve_data_with_default_args(estimates):
+    filtered_result = estimates.filter()
+    assert filtered_result.data.equals(estimates.data)
+
+
+def test_cpbe_result_filter_metrics(estimates):
+    filtered_result = estimates.filter(metrics=["roc_auc"])
+    columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != "chunk"))
+    assert columns == ("roc_auc",)
+    assert filtered_result.data.shape[0] == estimates.data.shape[0]
+
+
+def test_cpbe_result_filter_period(estimates):
+    ref_period = estimates.data.loc[estimates.data.loc[:, ("chunk", "period")] == "reference", :]
+    filtered_result = estimates.filter(period="reference")
+    assert filtered_result.data.equals(ref_period)
+
+
 @pytest.mark.parametrize(
     'metric, sampling_error',
     [
