@@ -288,6 +288,7 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
         timestamp_column_name='timestamp',
         continuous_methods=['kolmogorov_smirnov'],
         categorical_methods=['chi2'],
+        calculation_method='exact',
     ).fit(ref_data)
     results = calc.calculate(data=analysis_data)
 
@@ -299,58 +300,58 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
     [
         (
             {'chunk_size': 5000},
-            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.24206810631229236],
+            [0.004000, 0.003800, 0.009800, 0.239922],
         ),
         (
             {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
-            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.24206810631229236],
+            [0.004000, 0.003800, 0.009800, 0.239922],
         ),
         (
             {'chunk_number': 5},
-            [0.008829365079365048, 0.007886904761904734, 0.015178571428571375, 0.06502976190476184, 0.2535218253968254],
+            [0.007937, 0.006597, 0.010069, 0.062946, 0.250198],
         ),
         (
             {'chunk_number': 5, 'timestamp_column_name': 'timestamp'},
-            [0.008829365079365048, 0.007886904761904734, 0.015178571428571375, 0.06502976190476184, 0.2535218253968254],
+            [0.007937, 0.006597, 0.010069, 0.062946, 0.250198],
         ),
         (
             {'chunk_period': 'M', 'timestamp_column_name': 'timestamp'},
             [
-                0.007646520146520119,
-                0.008035714285714257,
-                0.009456605222734282,
-                0.09057539682539684,
-                0.25612599206349207,
+                0.005609,
+                0.006418,
+                0.007034,
+                0.088657,
+                0.253356,
             ],
         ),
         (
             {},
             [
-                0.011011904761904723,
-                0.01736111111111116,
-                0.015773809523809523,
-                0.011011904761904723,
-                0.016865079365079305,
-                0.01468253968253963,
-                0.018650793650793696,
-                0.11398809523809528,
-                0.25496031746031744,
-                0.2530753968253968,
+                0.006845,
+                0.015774,
+                0.014286,
+                0.008234,
+                0.013889,
+                0.010417,
+                0.016766,
+                0.110813,
+                0.249306,
+                0.251190,
             ],
         ),
         (
             {'timestamp_column_name': 'timestamp'},
             [
-                0.011011904761904723,
-                0.01736111111111116,
-                0.015773809523809523,
-                0.011011904761904723,
-                0.016865079365079305,
-                0.01468253968253963,
-                0.018650793650793696,
-                0.11398809523809528,
-                0.25496031746031744,
-                0.2530753968253968,
+                0.006845,
+                0.015774,
+                0.014286,
+                0.008234,
+                0.013889,
+                0.010417,
+                0.016766,
+                0.110813,
+                0.249306,
+                0.251190,
             ],
         ),
     ],
@@ -372,11 +373,12 @@ def test_univariate_statistical_drift_calculator_works_with_chunker(
         column_names=['f1', 'f2', 'f3', 'f4'],
         continuous_methods=['kolmogorov_smirnov'],
         categorical_methods=['chi2'],
+        calculation_method='estimated',
         **calculator_opts,
     ).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
-
-    assert all(sut[('f1', 'kolmogorov_smirnov', 'value')] == expected)
+    result = calc.calculate(data=sample_drift_data).filter(period='analysis').data
+    sut = result[('f1', 'kolmogorov_smirnov', 'value')].to_list()
+    assert all(np.round(sut, 6) == expected)
 
 
 def test_statistical_drift_calculator_raises_type_error_when_features_missing():  # noqa: D103
@@ -554,6 +556,7 @@ def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sampl
         continuous_methods=['kolmogorov_smirnov'],
         categorical_methods=['chi2'],
         timestamp_column_name='timestamp',
+        calculation_method='auto',
     ).fit(ref_data)
     result2 = calc2.calculate(ana_data)
 
