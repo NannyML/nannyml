@@ -134,12 +134,8 @@ def plot_metric(
         reference_chunk_end_dates=reference_result.chunk_end_dates,
         reference_upper_thresholds=reference_result.upper_thresholds(key),
         reference_lower_thresholds=reference_result.lower_thresholds(key),
-        # reference_upper_confidence_boundary=reference_result.to_df().get(
-        #     ('reconstruction_error', 'upper_confidence_boundary'), default=None
-        # ),
-        # reference_lower_confidence_boundary=reference_result.to_df().get(
-        #     ('reconstruction_error', 'lower_confidence_boundary'), default=None
-        # ),
+        reference_upper_confidence_boundary=reference_result.upper_confidence_bounds(key),
+        reference_lower_confidence_boundary=reference_result.lower_confidence_bounds(key),
         reference_sampling_error=reference_result.sampling_error(key),
         analysis_metric=analysis_result.values(key),
         analysis_alerts=analysis_result.alerts(key),
@@ -150,12 +146,8 @@ def plot_metric(
         analysis_chunk_end_dates=analysis_result.chunk_end_dates,
         analysis_upper_thresholds=analysis_result.upper_thresholds(key),
         analysis_lower_thresholds=analysis_result.lower_thresholds(key),
-        # analysis_upper_confidence_boundary=analysis_result.to_df().get(
-        #     (metric_column_name, 'upper_confidence_boundary'), default=None
-        # ),
-        # analysis_lower_confidence_boundary=analysis_result.to_df().get(
-        #     (metric_column_name, 'lower_confidence_boundary'), default=None
-        # ),
+        analysis_upper_confidence_boundary=analysis_result.upper_confidence_bounds(key),
+        analysis_lower_confidence_boundary=analysis_result.lower_confidence_bounds(key),
         analysis_sampling_error=analysis_result.sampling_error(key),
     )
 
