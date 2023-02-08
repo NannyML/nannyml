@@ -382,7 +382,6 @@ def test_univariate_statistical_drift_calculator_works_with_chunker(
 
 
 def test_statistical_drift_calculator_raises_type_error_when_features_missing():  # noqa: D103
-
     with pytest.raises(TypeError, match='column_names'):
         UnivariateDriftCalculator(timestamp_column_name='timestamp')
 

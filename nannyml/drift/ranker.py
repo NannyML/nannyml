@@ -171,8 +171,16 @@ class CorrelationRanker:
 
         self.metric = reference_performance_calculation_result.metrics[0]  # type: ignore
         assert self.metric is not None
+
+        # TODO: this will fail for estimated confusion matrix
+        metric_column_name = (
+            self.metric.name
+            if isinstance(reference_performance_calculation_result, CBPEResults)
+            else self.metric.column_name
+        )
+
         self.mean_reference_performance = (
-            reference_performance_calculation_result.to_df().loc[:, (self.metric.column_name, 'value')].mean()
+            reference_performance_calculation_result.to_df().loc[:, (metric_column_name, 'value')].mean()
         )
         self._is_fitted = True
         return self
@@ -202,9 +210,14 @@ class CorrelationRanker:
                 "Drift and Performance results need to be filtered to the same data period."
             )
 
+        # TODO: this will fail for estimated confusion matrix
+        metric_column_name = (
+            self.metric.name if isinstance(performance_calculation_result, CBPEResults) else self.metric.column_name
+        )
+
         # Start ranking calculations
         abs_perf_change = np.abs(
-            performance_calculation_result.to_df().loc[:, (self.metric.column_name, 'value')].to_numpy()
+            performance_calculation_result.to_df().loc[:, (metric_column_name, 'value')].to_numpy()
             - self.mean_reference_performance
         )
 
