@@ -166,6 +166,18 @@ class Abstract1DResult(AbstractResult, ABC):
 
 
 class Abstract2DResult(AbstractResult, ABC):
+    def __init__(
+        self,
+        results_data: pd.DataFrame,
+        metrics: Sequence[Metric] = (),
+        column_names: List[str] = [],
+        *args,
+        **kwargs
+    ):
+        super().__init__(results_data)
+        self.metrics = metrics
+        self.column_names = column_names
+
     @property
     def chunk_keys(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'key')]
@@ -185,6 +197,31 @@ class Abstract2DResult(AbstractResult, ABC):
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'period')]
+
+    def _filter(
+        self,
+        period: str,
+        metrics: Optional[List[str]] = None,
+        column_names: Optional[List[str]] = None,
+        *args,
+        **kwargs
+    ) -> Result:
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
+        if column_names is None:
+            column_names = self.column_names
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, metrics)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        res.column_names = [c for c in self.column_names if c in column_names]
+        return res
 
 
 class AbstractCalculator(ABC):
