@@ -637,7 +637,7 @@ def test_unvariate_drift_result_filter_metrics(univariate_drift_result):
     assert metrics == ('chi2',)
     assert filtered_result.data.shape[0] == univariate_drift_result.data.shape[0]
 
-    assert filtered_result.continuous_column_names == ['f1', 'f2']
+    assert filtered_result.continuous_column_names == []
     assert filtered_result.categorical_column_names == ['f3', 'f4']
     assert filtered_result.continuous_method_names == []
     assert filtered_result.categorical_method_names == ['chi2']
@@ -655,10 +655,10 @@ def test_unvariate_drift_result_filter_column_names(univariate_drift_result):
     assert filtered_result.continuous_column_names == ['f1', 'f2']
     assert filtered_result.categorical_column_names == []
     assert filtered_result.continuous_method_names == ['kolmogorov_smirnov']
-    assert filtered_result.categorical_method_names == ['chi2']
+    assert filtered_result.categorical_method_names == []
     assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov']
-    assert [m.column_name for m in filtered_result.categorical_methods] == ['chi2']
-    assert sorted(m.column_name for m in filtered_result.methods) == sorted(('chi2', 'kolmogorov_smirnov'))
+    assert [m.column_name for m in filtered_result.categorical_methods] == []
+    assert sorted(m.column_name for m in filtered_result.methods) == ['kolmogorov_smirnov']
 
 
 def test_univariate_drift_result_filter_period(univariate_drift_result):

@@ -45,7 +45,7 @@ class Result(Abstract2DResult, ResultCompareMixin):
     ):
         categorical_methods = [MethodFactory.create(m, FeatureType.CATEGORICAL) for m in categorical_method_names]
         continuous_methods = [MethodFactory.create(m, FeatureType.CONTINUOUS) for m in continuous_method_names]
-        methods = categorical_methods + continuous_methods
+        methods = continuous_methods + categorical_methods
         # Passing on methods as metrics to base class, as they're essentially a more specialised form of metrics
         # satisfying the same contract
         super().__init__(results_data, methods, column_names)
@@ -78,12 +78,31 @@ class Result(Abstract2DResult, ResultCompareMixin):
         # TODO: Use TypeVar with generic self instead of cast
         result = cast(Result, super()._filter(period, methods, column_names))
         method_names = [m.column_name for m in result.methods]
-        result.categorical_method_names = [m for m in self.categorical_method_names if m in method_names]
-        result.categorical_methods = [m for m in self.categorical_methods if m.column_name in method_names]
-        result.continuous_method_names = [m for m in self.continuous_method_names if m in method_names]
-        result.continuous_methods = [m for m in self.continuous_methods if m.column_name in method_names]
-        result.categorical_column_names = [c for c in self.categorical_column_names if c in result.column_names]
-        result.continuous_column_names = [c for c in self.continuous_column_names if c in result.column_names]
+
+        # The `column_names` and `methods` filters can impact each other. Handled conditionally here
+        if any(c in result.column_names for c in result.categorical_column_names):
+            result.categorical_method_names = [m for m in self.categorical_method_names if m in method_names]
+            result.categorical_methods = [m for m in self.categorical_methods if m.column_name in method_names]
+        else:
+            result.categorical_method_names = []
+            result.categorical_methods = []
+        if any(c in result.column_names for c in result.continuous_column_names):
+            result.continuous_method_names = [m for m in self.continuous_method_names if m in method_names]
+            result.continuous_methods = [m for m in self.continuous_methods if m.column_name in method_names]
+        else:
+            result.continuous_method_names = []
+            result.continuous_methods = []
+        if result.categorical_methods:
+            result.categorical_column_names = [c for c in self.categorical_column_names if c in result.column_names]
+        else:
+            result.categorical_column_names = []
+        if result.continuous_methods:
+            result.continuous_column_names = [c for c in self.continuous_column_names if c in result.column_names]
+        else:
+            result.continuous_column_names = []
+        result.metrics = result.continuous_methods + result.categorical_methods
+        result.column_names = result.continuous_column_names + result.categorical_column_names
+
         return result
 
     def _get_result_property(self, property_name: str) -> List[pd.Series]:
