@@ -70,62 +70,63 @@ class Result(Abstract1DResult, ResultCompareMixin):
         specified period and metrics.
         """
         if metrics is None:
-            expanded_metrics = []
-            for metric in self.metrics:
-                if hasattr(metric, 'components'):
-                    expanded_metrics.extend(metric.components)
-                else:
-                    expanded_metrics.append(metric.column_name)
-            metrics = expanded_metrics
-
+            filtered_metrics = self.metrics
         else:
-            expanded_metrics = []
-
-            for metric_str in metrics:
-                if metric_str not in SUPPORTED_METRIC_VALUES:
+            filtered_metrics = []
+            for name in metrics:
+                if name not in SUPPORTED_METRIC_VALUES:
                     raise InvalidArgumentsException(
-                        f'Invalid metric {metric_str}. Please choose from {SUPPORTED_METRIC_VALUES}'
+                        f"invalid metric '{name}'. Please choose from {SUPPORTED_METRIC_VALUES}"
                     )
 
-                valid_metric = False
-                for metric in self.metrics:
-                    if metric.column_name == metric_str:
-                        valid_metric = True
-                        if hasattr(metric, 'components'):
-                            expanded_metrics.extend(metric.components)
-                        else:
-                            expanded_metrics.append(metric.column_name)
-                    elif (hasattr(metric, 'components')) and (metric_str in metric.components):
-                        valid_metric = True
-                        expanded_metrics.append(metric_str)
-                if not valid_metric:
-                    raise InvalidArgumentsException(
-                        f'Please initialize the CBPE estimator with the appropriate metric to use {metric_str}'
-                    )
+                m = self._get_metric_by_name(name)
 
-            metrics = list(set(expanded_metrics))  # remove duplicates
+                if m:
+                    filtered_metrics.append(m)
+                else:
+                    raise InvalidArgumentsException(f"no '{name}' in result, did you calculate it?")
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
+        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
         if period != 'all':
             data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
         res = copy.deepcopy(self)
         res.data = data
-        res.metrics = [m for m in self.metrics if m.column_name in metrics]
+        res.metrics = filtered_metrics
 
         return res
+
+    def _get_metric_by_name(self, name: str) -> Optional[Metric]:
+        for metric in self.metrics:
+            # If we match the metric by name, return the metric
+            # E.g. matching the name 'confusion_matrix'
+            if name == metric.name:
+                return metric
+            # If we match one of the metric component names
+            # E.g. matching the name 'true_positive' with the confusion matrix metric
+            elif name in metric.column_names:
+                # Only retain the component whose column name was given to filter on
+                res = copy.deepcopy(metric)
+                res.components = list(filter(lambda c: c[1] == name, metric.components))
+                return res
+            else:
+                continue
+        return None
 
     def keys(self) -> List[Key]:
         return [
             Key(
-                properties=(metric.column_name,),
+                properties=(component[1],),
                 display_names=(
-                    f'estimated {metric.display_name}',
-                    metric.display_name,
+                    f'estimated {component[0]}',
+                    component[0],
                 ),
             )
             for metric in self.metrics
+            for component in metric.components
         ]
 
     @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])

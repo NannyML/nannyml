@@ -291,14 +291,8 @@ class CBPE(AbstractEstimator):
             ]
         )
 
-        metric_names = []
-        for metric in self.metrics:
-            if hasattr(metric, 'components'):
-                metric_names.extend(metric.components)
-            else:
-                metric_names.append(metric.column_name)
-
-        multilevel_index = _create_multilevel_index(metric_names=metric_names)
+        metric_column_names = [name for metric in self.metrics for name in metric.column_names]
+        multilevel_index = _create_multilevel_index(metric_names=metric_column_names)
 
         res.columns = multilevel_index
         res = res.reset_index(drop=True)

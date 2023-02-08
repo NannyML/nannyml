@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -29,12 +29,12 @@ class Metric(abc.ABC):
 
     def __init__(
         self,
-        display_name: str,
-        column_name: str,
+        name: str,
         y_pred_proba: ModelOutputsType,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        components: List[Tuple[str, str]],
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -42,14 +42,10 @@ class Metric(abc.ABC):
 
         Parameters
         ----------
-        display_name : str
-            The name of the metric. Used to display in plots. If not given this name will be derived from the
-            ``calculation_function``.
-        column_name: str
+        name: str
             The name used to indicate the metric in columns of a DataFrame.
         """
-        self.display_name = display_name
-        self.column_name = column_name
+        self.name = name
 
         self.y_pred_proba = y_pred_proba
         self.y_pred = y_pred
@@ -65,6 +61,17 @@ class Metric(abc.ABC):
 
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
+
+        # A list of (display_name, column_name) tuples
+        self.components: List[Tuple[str, str]] = components
+
+    @property
+    def display_names(self):
+        return [c[0] for c in self.components]
+
+    @property
+    def column_names(self):
+        return [c[1] for c in self.components]
 
     def __str__(self):
         return self.display_name
@@ -101,39 +108,11 @@ class Metric(abc.ABC):
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _fit method"
         )
 
-    def estimate(self, data: pd.DataFrame):
-        """Calculates performance metrics on data.
-
-        Parameters
-        ----------
-        data: pd.DataFrame
-            The data to estimate performance metrics for. Requires presence of either the predicted labels or
-            prediction scores/probabilities (depending on the metric to be calculated).
-        """
-        return self._estimate(data)
-
     @abc.abstractmethod
     def _estimate(self, data: pd.DataFrame):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _estimate method"
         )
-
-    def sampling_error(self, data: pd.DataFrame):
-        """Calculates the sampling error with respect to the reference data for a given chunk of data.
-
-        Parameters
-        ----------
-        data: pd.DataFrame
-            The data to calculate the sampling error on, with respect to the reference data.
-
-        Returns
-        -------
-
-        sampling_error: float
-            The expected sampling error.
-
-        """
-        return self._sampling_error(data)
 
     @abc.abstractmethod
     def _sampling_error(self, data: pd.DataFrame) -> float:
@@ -147,7 +126,7 @@ class Metric(abc.ABC):
     def _alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
     ) -> Tuple[float, float]:
-        realized_chunk_performance = [self.realized_performance(chunk.data) for chunk in reference_chunks]
+        realized_chunk_performance = [self._realized_performance(chunk.data) for chunk in reference_chunks]
         deviation = np.std(realized_chunk_performance) * std_num
         mean_realised_performance = np.mean(realized_chunk_performance)
         lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
@@ -156,14 +135,13 @@ class Metric(abc.ABC):
         return lower_threshold, upper_threshold
 
     @abc.abstractmethod
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the realized_performance method"
         )
 
     def __eq__(self, other):
-        """Establishes equality by comparing all properties."""
-        return self.display_name == other.display_name and self.column_name == other.column_name
+        return self.components == other.components
 
     def _common_cleaning(
         self, data: pd.DataFrame, y_pred_proba_column_name: Optional[str] = None
@@ -195,30 +173,37 @@ class Metric(abc.ABC):
         return y_pred_proba, y_pred, y_true
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        if len(self.components) > 1:
+            raise NotImplementedError(
+                "cannot use default 'get_chunk_record' implementation when a metric has multiple components."
+            )
+
+        column_name = self.components[0][1]
+
         chunk_record = {}
 
         estimated_metric_value = self._estimate(chunk_data)
 
         metric_estimate_sampling_error = self._sampling_error(chunk_data)
 
-        chunk_record[f'estimated_{self.column_name}'] = estimated_metric_value
+        chunk_record[f'estimated_{column_name}'] = estimated_metric_value
 
-        chunk_record[f'sampling_error_{self.column_name}'] = metric_estimate_sampling_error
+        chunk_record[f'sampling_error_{column_name}'] = metric_estimate_sampling_error
 
-        chunk_record[f'realized_{self.column_name}'] = self.realized_performance(chunk_data)
+        chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
 
-        chunk_record[f'upper_confidence_boundary_{self.column_name}'] = min(
+        chunk_record[f'upper_confidence_boundary_{column_name}'] = min(
             self.confidence_upper_bound, estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error
         )
 
-        chunk_record[f'lower_confidence_boundary_{self.column_name}'] = max(
+        chunk_record[f'lower_confidence_boundary_{column_name}'] = max(
             self.confidence_lower_bound, estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error
         )
 
-        chunk_record[f'upper_threshold_{self.column_name}'] = self.upper_threshold
-        chunk_record[f'lower_threshold_{self.column_name}'] = self.lower_threshold
+        chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold
+        chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold
 
-        chunk_record[f'alert_{self.column_name}'] = (
+        chunk_record[f'alert_{column_name}'] = (
             estimated_metric_value > self.upper_threshold or estimated_metric_value < self.lower_threshold
         )
 
@@ -287,13 +272,13 @@ class BinaryClassificationAUROC(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='ROC AUC',
-            column_name='roc_auc',
+            name='roc_auc',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('ROC AUC', 'roc_auc')],
         )
 
         # sampling error
@@ -310,7 +295,7 @@ class BinaryClassificationAUROC(Metric):
 
         return estimate_roc_auc(y_pred_proba)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         y_pred_proba, _, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -359,13 +344,13 @@ class BinaryClassificationF1(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='F1',
-            column_name='f1',
+            name='f1',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('F1', 'f1')],
         )
 
         # sampling error
@@ -386,7 +371,7 @@ class BinaryClassificationF1(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.f1_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -416,13 +401,13 @@ class BinaryClassificationPrecision(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Precision',
-            column_name='precision',
+            name='precision',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Precision', 'precision')],
         )
 
         # sampling error
@@ -444,7 +429,7 @@ class BinaryClassificationPrecision(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.precision_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -473,13 +458,13 @@ class BinaryClassificationRecall(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Recall',
-            column_name='recall',
+            name='recall',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Recall', 'recall')],
         )
 
         # sampling error
@@ -500,7 +485,7 @@ class BinaryClassificationRecall(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.recall_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -529,13 +514,13 @@ class BinaryClassificationSpecificity(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Specificity',
-            column_name='specificity',
+            name='specificity',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Specificity', 'specificity')],
         )
 
         # sampling error
@@ -556,7 +541,7 @@ class BinaryClassificationSpecificity(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.specificity_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -586,13 +571,13 @@ class BinaryClassificationAccuracy(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Accuracy',
-            column_name='accuracy',
+            name='accuracy',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Accuracy', 'accuracy')],
         )
 
         # sampling error
@@ -617,7 +602,7 @@ class BinaryClassificationAccuracy(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.accuracy_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -635,21 +620,36 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_true: str,
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
-        normalize_confusion_matrix: Union[str, None] = None,
+        normalize_confusion_matrix: Optional[str] = None,
     ):
         super().__init__(
-            display_name='Confusion Matrix',
-            column_name='confusion_matrix',
+            name='confusion_matrix',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[
+                ('True Positive', 'true_positive'),
+                ('True Negative', 'true_negative'),
+                ('False Positive', 'false_positive'),
+                ('False Negative', 'false_negative'),
+            ],
         )
 
-        self.normalize_confusion_matrix = normalize_confusion_matrix
+        self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
 
-        self.components = ["true_positive", "true_negative", "false_positive", "false_negative"]
+        self.true_positive_lower_threshold: float = 0
+        self.true_positive_upper_threshold: float = 1
+        self.true_negative_lower_threshold: float = 0
+        self.true_negative_upper_threshold: float = 1
+
+        self.true_positive_confidence_deviation: float = 0
+        self.true_negative_confidence_deviation: float = 0
+        self.false_positive_confidence_deviation: float = 0
+        self.false_negative_confidence_deviation: float = 0
+
+        # self.components = ["true_positive", "true_negative", "false_positive", "false_negative"]
 
     def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
         """Fits a Metric on reference data.
@@ -1144,7 +1144,7 @@ class BinaryClassificationConfusionMatrix(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return 0.0
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         return 0.0
 
 
@@ -1188,13 +1188,13 @@ class MulticlassClassificationAUROC(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='ROC AUC',
-            column_name='roc_auc',
+            name='roc_auc',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('ROC AUC', 'roc_auc')],
         )
 
         # sampling error
@@ -1220,7 +1220,7 @@ class MulticlassClassificationAUROC(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.auroc_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
@@ -1242,13 +1242,13 @@ class MulticlassClassificationF1(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='F1',
-            column_name='f1',
+            name='f1',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('F1', 'f1')],
         )
 
         # sampling error:
@@ -1275,7 +1275,7 @@ class MulticlassClassificationF1(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.f1_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
@@ -1297,13 +1297,13 @@ class MulticlassClassificationPrecision(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Precision',
-            column_name='precision',
+            name='precision',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Precision', 'precision')],
         )
 
         # sampling error
@@ -1330,7 +1330,7 @@ class MulticlassClassificationPrecision(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.precision_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
@@ -1352,13 +1352,13 @@ class MulticlassClassificationRecall(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Recall',
-            column_name='recall',
+            name='recall',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Recall', 'recall')],
         )
 
         # sampling error
@@ -1385,7 +1385,7 @@ class MulticlassClassificationRecall(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.recall_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
@@ -1407,13 +1407,13 @@ class MulticlassClassificationSpecificity(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Specificity',
-            column_name='specificity',
+            name='specificity',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Specificity', 'specificity')],
         )
 
         # sampling error
@@ -1440,7 +1440,7 @@ class MulticlassClassificationSpecificity(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.specificity_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 
@@ -1466,13 +1466,13 @@ class MulticlassClassificationAccuracy(Metric):
         **kwargs,
     ):
         super().__init__(
-            display_name='Accuracy',
-            column_name='accuracy',
+            name='accuracy',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            components=[('Accuracy', 'accuracy')],
         )
 
         # sampling error
@@ -1497,7 +1497,7 @@ class MulticlassClassificationAccuracy(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.accuracy_sampling_error(self._sampling_error_components, data)
 
-    def realized_performance(self, data: pd.DataFrame) -> float:
+    def _realized_performance(self, data: pd.DataFrame) -> float:
         if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
 

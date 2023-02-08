@@ -2087,13 +2087,9 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
 
-    column_names = [x.column_name for x in result.metrics if not hasattr(x, 'components')]
-    for metric in result.metrics:
-        if hasattr(metric, 'components'):
-            column_names.extend(metric.components)
-
+    metric_column_names = [name for metric in result.metrics for name in metric.column_names]
     sut = result.filter(period='analysis').to_df()[
-        [('chunk', 'key')] + [(c, 'value') for c in column_names]
+        [('chunk', 'key')] + [(c, 'value') for c in metric_column_names]
     ]  # Need to change
     sut.columns = [
         'key',
@@ -2443,9 +2439,7 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
-    sut = result.filter(period='analysis').to_df()[
-        [('chunk', 'key')] + [(m.column_name, 'value') for m in result.metrics]
-    ]
+    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + [(m.name, 'value') for m in result.metrics]]
     sut.columns = [
         'key',
         'estimated_roc_auc',
