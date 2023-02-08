@@ -573,3 +573,25 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):
+    reference, analysis = binary_classification_data
+
+    sut = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+    )
+    sut.fit(reference)
+    result1 = sut.estimate(analysis)
+    result2 = sut.estimate(analysis)
+
+    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
+    # modified on subsequent estimates.
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
