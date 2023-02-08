@@ -1,11 +1,9 @@
-import copy
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from plotly.graph_objects import Figure
 
 from nannyml._typing import Key
-from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -29,9 +27,8 @@ class Result(Abstract1DResult, ResultCompareMixin):
         hyperparameters: Optional[Dict[str, Any]],
         timestamp_column_name: Optional[str] = None,
     ):
-        super().__init__(results_data)
+        super().__init__(results_data, metrics)
 
-        self.metrics = metrics
         self.feature_column_names = feature_column_names
         self.y_pred = y_pred
         self.y_true = y_true
@@ -42,22 +39,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.tune_hyperparameters = tune_hyperparameters
         self.hyperparameter_tuning_config = (hyperparameter_tuning_config,)
         self.hyperparameters = hyperparameters
-
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
-        if metrics is None:
-            metrics = [metric.column_name for metric in self.metrics]
-
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
-
-        if period != 'all':
-            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-        res = copy.deepcopy(self)
-        res.data = data
-        res.metrics = [m for m in self.metrics if m.column_name in metrics]
-
-        return res
 
     def keys(self) -> List[Key]:
         return [

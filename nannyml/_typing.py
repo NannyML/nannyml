@@ -89,8 +89,13 @@ class Result(Protocol):
 class Metric(Protocol):
     """Represents any kind of metric (or method) that can be calculated or estimated."""
 
-    display_name: str
-    column_name: str
+    @property
+    def display_name(self) -> str:
+        ...
+
+    @property
+    def column_name(self) -> str:
+        ...
 
 
 class Calculator(Protocol):

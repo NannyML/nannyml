@@ -5,14 +5,12 @@
 """Contains the results of the realized performance calculation and provides plotting functionality."""
 from __future__ import annotations
 
-import copy
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml._typing import Key, ProblemType
-from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
@@ -37,7 +35,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         analysis_data: Optional[pd.DataFrame] = None,
     ):
         """Creates a new Result instance."""
-        super().__init__(results_data)
+        super().__init__(results_data, metrics)
 
         self.problem_type = problem_type
 
@@ -45,27 +43,9 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.y_pred_proba = y_pred_proba
         self.y_pred = y_pred
         self.timestamp_column_name = timestamp_column_name
-        self.metrics = metrics
 
         self.reference_data = reference_data
         self.analysis_data = analysis_data
-
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
-        if metrics is None:
-            metrics = [metric.column_name for metric in self.metrics]
-
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
-
-        if period != 'all':
-            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-
-        res = copy.deepcopy(self)
-        res.data = data
-        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
-
-        return res
 
     def keys(self) -> List[Key]:
         return [
