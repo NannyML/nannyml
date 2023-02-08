@@ -32,6 +32,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
+        calculation_method: Optional[str] = None,
     ):
         """Creates a new UnivariateDriftCalculator instance.
 
@@ -57,6 +58,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+        calculation_method : str
+            The `calculation_method` used to measure the distance/statistic based on whether the exact or
+            the estimated reference data is used.
 
         Examples
         --------
@@ -76,7 +80,11 @@ class UnivariateDriftCalculator(AbstractCalculator):
         ...    res.plot(kind='drift', column_name=column_name, method=method).show()
         """
         super(UnivariateDriftCalculator, self).__init__(
-            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+            chunk_size,
+            chunk_number,
+            chunk_period,
+            chunker,
+            timestamp_column_name,
         )
         if isinstance(column_names, str):
             column_names = [column_names]
@@ -95,6 +103,13 @@ class UnivariateDriftCalculator(AbstractCalculator):
             categorical_methods = [categorical_methods]
         assert isinstance(categorical_methods, list)
         self.categorical_method_names: List[str] = categorical_methods
+
+        self.calculation_method: Optional[str] = None
+
+        if not calculation_method and any(elem in ['kolmogorov_smirnov', 'wasserstein'] for elem in continuous_methods):
+            self.calculation_method = 'auto'
+        else:
+            self.calculation_method = calculation_method
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
@@ -120,7 +135,12 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         for column_name in self.continuous_column_names:
             self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, chunker=self.chunker).fit(
+                MethodFactory.create(
+                    key=method,
+                    feature_type=FeatureType.CONTINUOUS,
+                    chunker=self.chunker,
+                    calculation_method=self.calculation_method,
+                ).fit(
                     reference_data=reference_data[column_name],
                     timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
                 )
