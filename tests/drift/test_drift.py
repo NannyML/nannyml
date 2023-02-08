@@ -123,8 +123,8 @@ def univariate_drift_result(sample_drift_data) -> Result:
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         timestamp_column_name='timestamp',
-        continuous_methods=['kolmogorov_smirnov'],
-        categorical_methods=['chi2'],
+        continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        categorical_methods=['chi2', 'jensen_shannon'],
     ).fit(ref_data)
     return calc.calculate(data=sample_drift_data)
 
@@ -598,30 +598,24 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_univariate_drift_result_extension_attributes_should_be_in_place(sample_drift_data):
-    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    calc = UnivariateDriftCalculator(
-        column_names=['f1', 'f2', 'f3', 'f4'],
-        timestamp_column_name='timestamp',
-        continuous_methods=['kolmogorov_smirnov'],
-        categorical_methods=['chi2'],
-    ).fit(ref_data)
-    result = calc.calculate(data=sample_drift_data)
-
+def test_univariate_drift_result_extension_attributes_should_be_in_place(univariate_drift_result):
     # Data model is set up so f1, f2 are continuous and f3, f4 are categorical
-    assert result.continuous_column_names == ['f1', 'f2']
-    assert result.categorical_column_names == ['f3', 'f4']
-    assert result.timestamp_column_name == 'timestamp'
-    assert result.continuous_method_names == ['kolmogorov_smirnov']
-    assert result.categorical_method_names == ['chi2']
-    assert [m.column_name for m in result.continuous_methods] == ['kolmogorov_smirnov']
-    assert [m.column_name for m in result.categorical_methods] == ['chi2']
-    assert sorted(m.column_name for m in result.methods) == sorted(('chi2', 'kolmogorov_smirnov'))
+    assert univariate_drift_result.continuous_column_names == ['f1', 'f2']
+    assert univariate_drift_result.categorical_column_names == ['f3', 'f4']
+    assert univariate_drift_result.timestamp_column_name == 'timestamp'
+    assert univariate_drift_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert univariate_drift_result.categorical_method_names == ['chi2', 'jensen_shannon']
+    assert [m.column_name for m in univariate_drift_result.continuous_methods] == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert [m.column_name for m in univariate_drift_result.categorical_methods] == ['chi2', 'jensen_shannon']
+    assert (
+        sorted(m.column_name for m in univariate_drift_result.methods) ==
+        sorted(('chi2', 'kolmogorov_smirnov', 'jensen_shannon', 'jensen_shannon'))
+    )
 
 
 def test_univariate_drift_result_filter_should_preserve_data_with_default_args(univariate_drift_result):
     filtered_result = univariate_drift_result.filter()
-    assert filtered_result.data.equals(univariate_drift_result.data)
+    pd.testing.assert_frame_equal(filtered_result.data, univariate_drift_result.data, check_like=True)
     assert filtered_result.continuous_column_names == univariate_drift_result.continuous_column_names
     assert filtered_result.categorical_column_names == univariate_drift_result.categorical_column_names
     assert filtered_result.timestamp_column_name == univariate_drift_result.timestamp_column_name
@@ -654,23 +648,27 @@ def test_unvariate_drift_result_filter_column_names(univariate_drift_result):
 
     assert filtered_result.continuous_column_names == ['f1', 'f2']
     assert filtered_result.categorical_column_names == []
-    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov']
+    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
     assert filtered_result.categorical_method_names == []
-    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov']
+    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov', 'jensen_shannon']
     assert [m.column_name for m in filtered_result.categorical_methods] == []
-    assert sorted(m.column_name for m in filtered_result.methods) == ['kolmogorov_smirnov']
+    assert sorted(m.column_name for m in filtered_result.methods) == sorted(('kolmogorov_smirnov', 'jensen_shannon'))
 
 
 def test_univariate_drift_result_filter_period(univariate_drift_result):
     filtered_result = univariate_drift_result.filter(period='reference')
-    assert filtered_result.data.equals(univariate_drift_result.data.loc[
+    ref_period = univariate_drift_result.data.loc[
         univariate_drift_result.data.loc[:, ('chunk', 'chunk', 'period')] == 'reference', :
-    ])
+    ]
+    pd.testing.assert_frame_equal(filtered_result.data, ref_period, check_like=True)
 
     assert filtered_result.continuous_column_names == ['f1', 'f2']
     assert filtered_result.categorical_column_names == ['f3', 'f4']
-    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov']
-    assert filtered_result.categorical_method_names == ['chi2']
-    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov']
-    assert [m.column_name for m in filtered_result.categorical_methods] == ['chi2']
-    assert sorted(m.column_name for m in filtered_result.methods) == sorted(('chi2', 'kolmogorov_smirnov'))
+    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert filtered_result.categorical_method_names == ['chi2', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.categorical_methods] == ['chi2', 'jensen_shannon']
+    assert (
+        sorted(m.column_name for m in filtered_result.methods) ==
+        sorted(('chi2', 'kolmogorov_smirnov', 'jensen_shannon', 'jensen_shannon'))
+    )
