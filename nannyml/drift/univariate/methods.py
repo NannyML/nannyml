@@ -28,7 +28,7 @@ class Method(abc.ABC):
         display_name: str,
         column_name: str,
         chunker: Optional[Chunker] = None,
-        calculation_method: Optional[str] = None,
+        method_estimation: Optional[Dict[str, any]] = None,
         upper_threshold: Optional[float] = None,
         lower_threshold: Optional[float] = None,
         upper_threshold_limit: Optional[float] = None,
@@ -55,7 +55,6 @@ class Method(abc.ABC):
         self.lower_threshold: Optional[float] = lower_threshold
         self.lower_threshold_limit: Optional[float] = lower_threshold_limit
         self.upper_threshold_limit: Optional[float] = upper_threshold_limit
-        self.calculation_method: Optional[str] = calculation_method
         self.chunker: Optional[Chunker] = chunker
 
     def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
@@ -297,8 +296,8 @@ class KolmogorovSmirnovStatistic(Method):
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
             upper_threshold_limit=1,
-            lower_threshold=None,  # setting this to `None` so we don't plot the threshold (p-value based)
-            **kwargs,
+            lower_threshold=None,
+            **kwargs,  # setting this to `None` so we don't plot the threshold (p-value based)
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
@@ -306,18 +305,20 @@ class KolmogorovSmirnovStatistic(Method):
         self._qts: np.ndarray
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
+        if (not kwargs) or not (kwargs['method_estimation']) or (self.column_name not in kwargs['method_estimation']):
+            self.calculation_method = 'auto'
+            self.n_bins = 10_000
+        else:
+            self.calculation_method = kwargs['method_estimation'].get('calculation_method', 'auto')
+            self.n_bins = kwargs['method_estimation'].get('n_bins', 10_000)
 
-    def _fit(
-        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
-    ) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
-            if bins is None:
-                bins = len(reference_data) // 500
-            quantile_range = np.arange(0, 1 + 1 / bins, 1 / bins)
-            quantile_edges = np.quantile(reference_data, quantile_range)
-            reference_proba_in_qts, self._qts = np.histogram(reference_data, quantile_edges)
+            quantile_range = np.linspace(np.min(reference_data), np.max(reference_data), self.n_bins + 1)
+            # quantile_edges = np.quantile(reference_data, quantile_range)
+            reference_proba_in_qts, self._qts = np.histogram(reference_data, quantile_range)
             ref_rel_freqs = reference_proba_in_qts / len(reference_data)
             self._ref_rel_freqs = np.cumsum(ref_rel_freqs)
         self._reference_size = len(reference_data)
@@ -477,16 +478,18 @@ class WassersteinDistance(Method):
         self._bin_edges: Optional[np.ndarray] = None
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
+        if (not kwargs) or not (kwargs['method_estimation']) or (self.column_name not in kwargs['method_estimation']):
+            self.calculation_method = 'auto'
+            self.n_bins = 10_000
+        else:
+            self.calculation_method = kwargs['method_estimation'].get('calculation_method', 'auto')
+            self.n_bins = kwargs['method_estimation'].get('n_bins', 10_000)
 
-    def _fit(
-        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
-    ) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
-            if bins is None:
-                bins = len(reference_data) // 500
-            reference_proba_in_bins, self._bin_edges = np.histogram(reference_data, bins=bins)
+            reference_proba_in_bins, self._bin_edges = np.histogram(reference_data, bins=self.n_bins)
             self._ref_rel_freqs = reference_proba_in_bins / len(reference_data)
             self._bin_width = self._bin_edges[1] - self._bin_edges[0]
 

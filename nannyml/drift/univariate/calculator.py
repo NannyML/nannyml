@@ -32,7 +32,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        calculation_method: Optional[str] = None,
+        method_estimation: Optional[dict[str, any]] = None,
     ):
         """Creates a new UnivariateDriftCalculator instance.
 
@@ -104,12 +104,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
         assert isinstance(categorical_methods, list)
         self.categorical_method_names: List[str] = categorical_methods
 
-        self.calculation_method: Optional[str] = None
+        self.method_estimation: Optional[Dict[str, any]] = method_estimation
 
-        if not calculation_method and any(elem in ['kolmogorov_smirnov', 'wasserstein'] for elem in continuous_methods):
-            self.calculation_method = 'auto'
-        else:
-            self.calculation_method = calculation_method
+        # set to default values within the method function in methods.py
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
@@ -139,13 +136,14 @@ class UnivariateDriftCalculator(AbstractCalculator):
                     key=method,
                     feature_type=FeatureType.CONTINUOUS,
                     chunker=self.chunker,
-                    calculation_method=self.calculation_method,
+                    method_estimation=self.method_estimation,
                 ).fit(
                     reference_data=reference_data[column_name],
                     timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
                 )
                 for method in self.continuous_method_names
             ]
+        print('161', self._column_to_models_mapping)
 
         for column_name in self.categorical_column_names:
             self._column_to_models_mapping[column_name] += [
