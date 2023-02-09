@@ -318,3 +318,20 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_dle_returns_distinct_but_consistent_results_when_reused(regression_data, direct_error_estimator):
+    reference, analysis = regression_data
+
+    # Get rid of negative values for log based metrics
+    reference = reference[~(reference['y_pred'] < 0)]
+    analysis = analysis[~(analysis['y_pred'] < 0)]
+
+    direct_error_estimator.fit(reference)
+    estimate1 = direct_error_estimator.estimate(analysis)
+    estimate2 = direct_error_estimator.estimate(analysis)
+
+    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
+    # modified on subsequent estimates.
+    assert estimate1 is not estimate2
+    pd.testing.assert_frame_equal(estimate1.to_df(), estimate2.to_df())

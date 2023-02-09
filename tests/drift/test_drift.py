@@ -569,7 +569,13 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
-    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        timestamp_column_name='timestamp',
+        calculation_method='auto',
+    ).fit(ref_data)
     result = calc.calculate(ana_data)
 
     calc2 = CBPE(
@@ -586,3 +592,19 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
         _ = result.compare(result2).plot()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_univariate_drift_calculator_returns_distinct_but_consistent_results_when_reused(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    sut = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+    )
+    sut.fit(ref_data)
+    result1 = sut.calculate(data=sample_drift_data)
+    result2 = sut.calculate(data=sample_drift_data)
+
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())

@@ -504,3 +504,25 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
 
     assert (metric, 'sampling_error') in sut.columns
     assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
+
+
+def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):
+    reference, analysis = binary_classification_data
+
+    sut = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+    )
+    sut.fit(reference)
+    result1 = sut.estimate(analysis)
+    result2 = sut.estimate(analysis)
+
+    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
+    # modified on subsequent estimates.
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())

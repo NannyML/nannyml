@@ -38,7 +38,7 @@ def performance_calculator() -> PerformanceCalculator:
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
         y_pred='y_pred',
-        y_true='y_true',
+        y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
         problem_type='classification_binary',
     )
@@ -256,3 +256,17 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_calculator_returns_distinct_but_consistent_results_when_reused(data, performance_calculator):
+    reference, analysis, target = data
+
+    data = analysis.merge(target, on='identifier')
+    performance_calculator.fit(reference)
+    result1 = performance_calculator.calculate(data)
+    result2 = performance_calculator.calculate(data)
+
+    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
+    # modified on subsequent estimates.
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
