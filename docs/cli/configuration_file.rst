@@ -283,23 +283,23 @@ This section is responsible for teaching NannyML about your specific model: what
 You do this by providing a column mapping that associates a NannyML specific meaning to your input data.
 For more information on this, check out the :ref:`data_requirements` documentation.
 
-The following snippet lists the column mapping for the :ref:`dataset-synthetic-binary`.
+The following snippet lists the column mapping for the :ref:`dataset-synthetic-binary-car-loan`.
 
 .. code-block:: yaml
 
     column_mapping:
       features:
-        - distance_from_office
+        - car_value
         - salary_range
-        - gas_price_per_litre
-        - public_transportation_cost
-        - wfh_prev_workday
-        - workday
+        - debt_to_income_ratio
+        - loan_length
+        - repaid_loan_on_prev_car
+        - size_of_downpayment
         - tenure
       timestamp: timestamp
       y_pred: y_pred
       y_pred_proba: y_pred_proba
-      y_true: work_home_actual
+      y_true: repaid
 
 This snippet shows how to setup the column mapping for the :ref:`dataset-synthetic-multiclass`.
 
@@ -441,7 +441,7 @@ NannyML uses this information to better understand the provided model inputs and
 
 .. code-block:: yaml
 
-    ignore_errors: True  # continue execution of a calculator/estimator fails
+    ignore_errors: True  # continue execution if a calculator/estimator fails
 
 
 Templating paths
@@ -474,7 +474,9 @@ Examples
 --------------------------------------------
 
 The following example contains the configuration required to run the ``nml`` CLI
-for the :ref:`dataset-synthetic-binary`. All data is read and written to the local filesystem.
+for the :ref:`dataset-synthetic-binary-car-loan`.
+
+All data is read and written to the local filesystem.
 
 .. code-block:: yaml
 
@@ -492,12 +494,12 @@ for the :ref:`dataset-synthetic-binary`. All data is read and written to the loc
 
     column_mapping:
       features:
-        - distance_from_office
+        - car_value
         - salary_range
-        - gas_price_per_litre
-        - public_transportation_cost
-        - wfh_prev_workday
-        - workday
+        - debt_to_income_ratio
+        - loan_length
+        - repaid_loan_on_prev_car
+        - size_of_downpayment
         - tenure
       timestamp: timestamp
       y_pred: y_pred
@@ -510,6 +512,7 @@ for the :ref:`dataset-synthetic-binary`. All data is read and written to the loc
 
 
 The following example contains the configuration used to run the ``nml`` CLI on the :ref:`dataset-synthetic-multiclass`.
+
 Input data is read from one S3 bucket using templated paths.
 Targets have been provided separately - they are not present in the analysis data.
 The results are written to another S3 bucket, also using a templated path.
@@ -575,7 +578,9 @@ The results are written to another S3 bucket, also using a templated path.
 
 
 The following example contains the configuration required to run the ``nml`` CLI
-for the :ref:`dataset-synthetic-binary`. The data is read from the local filesystem but written to an external database.
+for the :ref:`dataset-synthetic-regression`.
+
+The data is read from the local filesystem but written to an external database.
 
 .. code-block:: yaml
 
