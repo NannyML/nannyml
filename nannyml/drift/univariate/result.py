@@ -131,12 +131,12 @@ class Result(Abstract2DResult, ResultCompareMixin):
         return continuous_keys + categorical_keys
 
     @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
-    def plot(  # type: ignore
+    def plot(
         self,
         kind: str = 'drift',
         *args,
         **kwargs,
-    ) -> Optional[go.Figure]:
+    ) -> go.Figure:
         """Renders plots for metrics returned by the univariate distance drift calculator.
 
         For any feature you can render the statistic value or p-values as a step plot, or create a distribution plot.

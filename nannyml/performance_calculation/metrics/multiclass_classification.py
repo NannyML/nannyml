@@ -56,6 +56,8 @@ class MulticlassClassificationAUROC(Metric):
             lower_threshold_limit=0,
             upper_threshold_limit=1,
         )
+        # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
+        self.y_pred_proba: Dict[str, str]
 
         # sampling error
         self._sampling_error_components: List[Tuple] = []
@@ -67,9 +69,9 @@ class MulticlassClassificationAUROC(Metric):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
 
         # sampling error
-        classes = class_labels(self.y_pred_proba)  # type: ignore
+        classes = class_labels(self.y_pred_proba)
         binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore
+        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]
 
         self._sampling_error_components = auroc_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba

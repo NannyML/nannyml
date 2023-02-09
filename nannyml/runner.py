@@ -363,7 +363,7 @@ def _run_cbpe_performance_estimation(
             if console:
                 console.log('no fitted estimator found in store')
                 console.log('fitting new estimator on reference data')
-            estimator = CBPE(  # type: ignore
+            estimator = CBPE(
                 y_true=column_mapping['y_true'],
                 y_pred=column_mapping['y_pred'],
                 y_pred_proba=column_mapping['y_pred_proba'],
@@ -440,7 +440,7 @@ def _run_dle_performance_estimation(
             if console:
                 console.log('no fitted estimator found in store')
                 console.log('fitting new estimator on reference data')
-            estimator = DLE(  # type: ignore
+            estimator = DLE(
                 feature_column_names=column_mapping['features'],
                 y_true=column_mapping['y_true'],
                 y_pred=column_mapping['y_pred'],

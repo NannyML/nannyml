@@ -10,7 +10,7 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml._typing import Key, Result
+from nannyml._typing import Key, Result, Self
 from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
@@ -139,7 +139,7 @@ class SimpleDriftResult(Abstract1DResult):
     def keys(self) -> List[Key]:
         return []
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         return self
 
 

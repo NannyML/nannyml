@@ -11,7 +11,6 @@ import pandas as pd
 from plotly import graph_objects as go
 
 from nannyml._typing import Key, ModelOutputsType, ProblemType
-from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -51,6 +50,9 @@ class Result(Abstract1DResult, ResultCompareMixin):
     ):
         super().__init__(results_data, metrics)
 
+        # Be more specific about the metric type than the base class
+        self.metrics: List[Metric]
+
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
         self.y_true = y_true
@@ -86,7 +88,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
                 else:
                     raise InvalidArgumentsException(f"no '{name}' in result, did you calculate it?")
 
-        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]  # type: ignore
+        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
         if period != 'all':

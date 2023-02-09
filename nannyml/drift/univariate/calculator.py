@@ -227,7 +227,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
             #       Dropping the intermediate '_filter' and directly returning the correct 'Result' class works OK
             #       but this causes us to lose the "common behavior" in the top level 'filter' method when overriding.
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
-            self.result = self.result.filter(period='reference')  # type: ignore
+            self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
             self.result.analysis_data = data.copy()
 

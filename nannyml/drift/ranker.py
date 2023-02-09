@@ -11,11 +11,13 @@ import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
 
+from nannyml._typing import Metric
 from nannyml.drift.univariate.result import Result as UnivariateResults
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResults
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
+from nannyml.performance_estimation.confidence_based.metrics import Metric as CBPEMetric
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -152,7 +154,7 @@ class CorrelationRanker:
         """Creates a new CorrelationRanker instance."""
         super().__init__()
 
-        self.metric = None
+        self.metric: Metric
         self.mean_reference_performance: Optional[float] = None
         self.absolute_performance_change: Optional[float] = None
 
@@ -170,13 +172,12 @@ class CorrelationRanker:
         _validate_performance_result(reference_performance_calculation_result)
 
         # we're expecting to have filtered inputs, so we should only have a single input.
-        self.metric = reference_performance_calculation_result.metrics[0]  # type: ignore
-        assert self.metric is not None
+        self.metric = reference_performance_calculation_result.metrics[0]
 
         # TODO: this will fail for estimated confusion matrix
         metric_column_name = (
             self.metric.name
-            if isinstance(reference_performance_calculation_result, CBPEResults)
+            if isinstance(self.metric, CBPEMetric)
             else self.metric.column_name
         )
 
@@ -213,7 +214,7 @@ class CorrelationRanker:
 
         # TODO: this will fail for estimated confusion matrix
         metric_column_name = (
-            self.metric.name if isinstance(performance_calculation_result, CBPEResults) else self.metric.column_name
+            self.metric.name if isinstance(self.metric, CBPEMetric) else self.metric.column_name
         )
 
         # Start ranking calculations

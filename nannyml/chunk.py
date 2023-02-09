@@ -231,19 +231,19 @@ class ChunkerFactory:
         if chunker is not None:
             return chunker
         if chunk_size:
-            return SizeBasedChunker(chunk_size=chunk_size, timestamp_column_name=timestamp_column_name)  # type: ignore
+            return SizeBasedChunker(chunk_size=chunk_size, timestamp_column_name=timestamp_column_name)
         elif chunk_number:
             return CountBasedChunker(
-                chunk_number=chunk_number, timestamp_column_name=timestamp_column_name  # type: ignore
+                chunk_number=chunk_number, timestamp_column_name=timestamp_column_name
             )
         elif chunk_period:
             if timestamp_column_name is None:
                 raise InvalidArgumentsException(
                     "you must provide the 'timestamp_column_name' " "when using period based chunking"
                 )
-            return PeriodBasedChunker(offset=chunk_period, timestamp_column_name=timestamp_column_name)  # type: ignore
+            return PeriodBasedChunker(offset=chunk_period, timestamp_column_name=timestamp_column_name)
         else:
-            return DefaultChunker(timestamp_column_name=timestamp_column_name)  # type: ignore
+            return DefaultChunker(timestamp_column_name=timestamp_column_name)
 
 
 class PeriodBasedChunker(Chunker):

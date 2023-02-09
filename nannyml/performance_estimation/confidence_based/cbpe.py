@@ -309,7 +309,7 @@ class CBPE(AbstractEstimator):
                 problem_type=self.problem_type,
             )
         else:
-            self.result = self.result.filter(period='reference')  # type: ignore
+            self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result

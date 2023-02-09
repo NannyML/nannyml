@@ -14,6 +14,11 @@ if typing.TYPE_CHECKING:
 else:
     Protocol = object
 
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec, TypeGuard  # noqa: F401
+else:
+    from typing_extensions import ParamSpec, TypeGuard  # noqa: F401
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:

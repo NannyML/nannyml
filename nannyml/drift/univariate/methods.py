@@ -8,7 +8,7 @@ import logging
 from copy import copy
 from enum import Enum
 from logging import Logger
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -132,7 +132,7 @@ class FeatureType(str, Enum):
 class MethodFactory:
     """A factory class that produces Method instances given a 'key' string and a 'feature_type' it supports."""
 
-    registry: Dict[str, Dict[FeatureType, Method]] = {}
+    registry: Dict[str, Dict[FeatureType, Type[Method]]] = {}
 
     @classmethod
     def _logger(cls) -> Logger:
@@ -165,7 +165,7 @@ class MethodFactory:
             kwargs = {}
 
         method_class = cls.registry[key][feature_type]
-        return method_class(**kwargs)  # type: ignore
+        return method_class(**kwargs)
 
     @classmethod
     def register(cls, key: str, feature_type: FeatureType) -> Callable:
@@ -192,7 +192,7 @@ class MethodFactory:
         ...   pass
         """
 
-        def inner_wrapper(wrapped_class: Method) -> Method:
+        def inner_wrapper(wrapped_class: Type[Method]) -> Type[Method]:
             if key not in cls.registry:
                 cls.registry[key] = {feature_type: wrapped_class}
             else:
@@ -371,7 +371,7 @@ class Chi2Statistic(Method):
             lower_threshold=None,  # setting this to `None` so we don't plot the threshold (p-value based)
             **kwargs,
         )
-        self._reference_data_vcs: Optional[pd.Series] = None
+        self._reference_data_vcs: pd.Series
         self._p_value: Optional[float] = None
         self._fitted = False
 
@@ -386,27 +386,25 @@ class Chi2Statistic(Method):
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
 
-        stat, p_value, _, _ = chi2_contingency(
-            pd.concat(
-                [self._reference_data_vcs, data.value_counts()],  # type: ignore
-                axis=1,
-            ).fillna(0)
-        )
-        self._p_value = p_value
+        stat, self._p_value = self._calc_chi2(data)
         return stat
 
     def _alert(self, data: pd.Series):
         if self._p_value is None:
-            _, self._p_value, _, _ = chi2_contingency(
-                pd.concat(
-                    [self._reference_data.value_counts(), data.value_counts()],  # type: ignore
-                    axis=1,
-                ).fillna(0)
-            )
+            _, self._p_value = self._calc_chi2(data)
 
         alert = self._p_value < 0.05
         self._p_value = None
         return alert
+
+    def _calc_chi2(self, data: pd.Series):
+        stat, p_value, _, _ = chi2_contingency(
+            pd.concat(
+                [self._reference_data_vcs, data.value_counts()],
+                axis=1,
+            ).fillna(0)
+        )
+        return stat, p_value
 
 
 @MethodFactory.register(key='l_infinity', feature_type=FeatureType.CATEGORICAL)

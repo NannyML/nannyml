@@ -114,7 +114,7 @@ class PerformanceCalculator(AbstractCalculator):
             metrics = [metrics]
         self.metrics: List[Metric] = [
             MetricFactory.create(m, self.problem_type, y_true=y_true, y_pred=y_pred, y_pred_proba=y_pred_proba)
-            for m in metrics  # type: ignore
+            for m in metrics
         ]
 
         self.previous_reference_data: Optional[pd.DataFrame] = None
@@ -209,7 +209,7 @@ class PerformanceCalculator(AbstractCalculator):
                 problem_type=self.problem_type,
             )
         else:
-            self.result = self.result.filter(period='reference')  # type: ignore
+            self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
             self.result.analysis_data = data.copy()
 
