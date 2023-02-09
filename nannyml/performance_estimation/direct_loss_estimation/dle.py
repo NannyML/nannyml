@@ -293,6 +293,7 @@ class DLE(AbstractEstimator):
                 hyperparameters=self.hyperparameters,
             )
         else:
+            self.result = self.result.filter(period='reference')  # type: ignore
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result

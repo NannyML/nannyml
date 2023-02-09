@@ -276,4 +276,4 @@ Glossary
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2_contingency.html
 .. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_analysis
 .. _`Wikipedia Standard Error page`: https://en.wikipedia.org/wiki/Standard_error
-.. _`loss function`: https://en.wikipedia.org/wiki/Loss_function`
+.. _`loss function`: https://en.wikipedia.org/wiki/Loss_function

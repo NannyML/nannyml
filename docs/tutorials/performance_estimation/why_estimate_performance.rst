@@ -1,6 +1,6 @@
-.. _why-perform-performance-estimation:
+.. _why-estimate-performance:
 
-Why Perform Performance Estimation
+Why Estimate Performance
 ============================================
 
 NannyML allows estimating the performance of ML models when :term:`targets<Target>` are absent.
