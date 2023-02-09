@@ -15,7 +15,6 @@ with warnings.catch_warnings():
 import plotly.graph_objects as go
 
 from nannyml._typing import Key
-from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract2DResult
 from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
@@ -74,7 +73,7 @@ class Result(Abstract2DResult, ResultCompareMixin):
         methods: Optional[List[str]] = None,
         *args,
         **kwargs
-    ) -> ResultType:
+    ) -> Result:
         # TODO: Use TypeVar with generic self instead of cast
         result = cast(Result, super()._filter(period, methods, column_names))
         method_names = [m.column_name for m in result.methods]

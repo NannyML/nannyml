@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Module containing CBPE estimation results and plotting implementations."""
+from __future__ import annotations
 import copy
 from typing import List, Optional, cast
 
@@ -57,7 +58,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         """Filter the results based on the specified period and metrics.
 
         This function begins by expanding the metrics to all the metrics that were specified

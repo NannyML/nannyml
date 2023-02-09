@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
-from nannyml._typing import Calculator, Estimator, Key, Metric, Result
+from nannyml._typing import Key, Metric, Result, Self
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
@@ -80,7 +80,7 @@ class AbstractResult(ABC):
 
     def filter(
         self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> Result:
+    ) -> Self:
         """Returns filtered result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
             raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
@@ -92,7 +92,7 @@ class AbstractResult(ABC):
             raise CalculatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_filter' method")
 
     @abstractmethod
@@ -149,7 +149,7 @@ class Abstract1DResult(AbstractResult, ABC):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
@@ -205,7 +205,7 @@ class Abstract2DResult(AbstractResult, ABC):
         column_names: Optional[List[str]] = None,
         *args,
         **kwargs
-    ) -> Result:
+    ) -> Self:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
         if column_names is None:
@@ -265,7 +265,7 @@ class AbstractCalculator(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         """Trains the calculator using reference data."""
         try:
             self._logger.debug(f"fitting {str(self)}")
@@ -291,7 +291,7 @@ class AbstractCalculator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
@@ -345,7 +345,7 @@ class AbstractEstimatorResult(ABC):
 
     def filter(
         self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> AbstractEstimatorResult:
+    ) -> Self:
         """Returns result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
             raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
@@ -357,7 +357,7 @@ class AbstractEstimatorResult(ABC):
             raise EstimatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
@@ -408,7 +408,7 @@ class AbstractEstimator(ABC):
     def __str__(self):
         return f'{self.__module__}.{self.__class__.__name__}'
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         """Trains the calculator using reference data."""
         try:
             self._logger.info(f"fitting {str(self)}")
@@ -435,7 +435,7 @@ class AbstractEstimator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
