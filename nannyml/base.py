@@ -5,15 +5,16 @@
 """Module containing base classes for drift calculation."""
 from __future__ import annotations
 
+import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
-from nannyml._typing import Calculator, Estimator, Key, Result
+from nannyml._typing import Calculator, Estimator, Key, Metric, Result
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
@@ -78,7 +79,7 @@ class AbstractResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> Result:
         """Returns filtered result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
@@ -124,6 +125,10 @@ class AbstractResult(ABC):
 
 
 class Abstract1DResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, metrics: Sequence[Metric] = (), *args, **kwargs):
+        super().__init__(results_data)
+        self.metrics = metrics
+
     @property
     def chunk_keys(self) -> pd.Series:
         return self.data[('chunk', 'key')]
@@ -144,8 +149,35 @@ class Abstract1DResult(AbstractResult, ABC):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        return res
+
 
 class Abstract2DResult(AbstractResult, ABC):
+    def __init__(
+        self,
+        results_data: pd.DataFrame,
+        metrics: Sequence[Metric] = (),
+        column_names: List[str] = [],
+        *args,
+        **kwargs
+    ):
+        super().__init__(results_data)
+        self.metrics = metrics
+        self.column_names = column_names
+
     @property
     def chunk_keys(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'key')]
@@ -165,6 +197,31 @@ class Abstract2DResult(AbstractResult, ABC):
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'period')]
+
+    def _filter(
+        self,
+        period: str,
+        metrics: Optional[List[str]] = None,
+        column_names: Optional[List[str]] = None,
+        *args,
+        **kwargs
+    ) -> Result:
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
+        if column_names is None:
+            column_names = self.column_names
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, metrics)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        res.column_names = [c for c in self.column_names if c in column_names]
+        return res
 
 
 class AbstractCalculator(ABC):
@@ -287,7 +344,7 @@ class AbstractEstimatorResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> AbstractEstimatorResult:
         """Returns result metric data."""
         if metrics and not isinstance(metrics, (str, list)):

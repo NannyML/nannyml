@@ -4,7 +4,7 @@
 
 """Module containing CBPE estimation results and plotting implementations."""
 import copy
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import pandas as pd
 from plotly import graph_objects as go
@@ -48,9 +48,8 @@ class Result(Abstract1DResult, ResultCompareMixin):
         problem_type: ProblemType,
         timestamp_column_name: Optional[str] = None,
     ):
-        super().__init__(results_data)
+        super().__init__(results_data, metrics)
 
-        self.metrics = metrics
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
         self.y_true = y_true
@@ -82,11 +81,11 @@ class Result(Abstract1DResult, ResultCompareMixin):
                 m = self._get_metric_by_name(name)
 
                 if m:
-                    filtered_metrics.append(m)
+                    filtered_metrics = filtered_metrics + [m]
                 else:
                     raise InvalidArgumentsException(f"no '{name}' in result, did you calculate it?")
 
-        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
+        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]  # type: ignore
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
         if period != 'all':
@@ -101,6 +100,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
 
     def _get_metric_by_name(self, name: str) -> Optional[Metric]:
         for metric in self.metrics:
+            assert isinstance(metric, Metric)
             # If we match the metric by name, return the metric
             # E.g. matching the name 'confusion_matrix'
             if name == metric.name:
@@ -126,7 +126,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
                 ),
             )
             for metric in self.metrics
-            for component in metric.components
+            for component in cast(Metric, metric).components
         ]
 
     @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])

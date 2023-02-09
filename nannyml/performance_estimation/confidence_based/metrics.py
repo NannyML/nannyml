@@ -66,6 +66,14 @@ class Metric(abc.ABC):
         self.components: List[Tuple[str, str]] = components
 
     @property
+    def display_name(self) -> str:
+        return self.name
+
+    @property
+    def column_name(self) -> str:
+        return self.components[0][0]
+
+    @property
     def display_names(self):
         return [c[0] for c in self.components]
 

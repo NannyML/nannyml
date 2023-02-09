@@ -19,7 +19,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
@@ -115,6 +115,18 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     data.loc[data.id.isin(nan_pick2), 'f4'] = np.NaN
     data.drop(columns=['id'], inplace=True)
     return data
+
+
+@pytest.fixture(scope="module")
+def univariate_drift_result(sample_drift_data) -> Result:
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        categorical_methods=['chi2', 'jensen_shannon'],
+    ).fit(ref_data)
+    return calc.calculate(data=sample_drift_data)
 
 
 class SimpleDriftResult(Abstract1DResult):
@@ -433,6 +445,105 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     assert 'f4' not in sut
 
 
+# See https://github.com/NannyML/nannyml/issues/192
+def test_univariate_drift_calculator_returns_distinct_but_consistent_results_when_reused(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    sut = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+    )
+    sut.fit(ref_data)
+    result1 = sut.calculate(data=sample_drift_data)
+    result2 = sut.calculate(data=sample_drift_data)
+
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_univariate_drift_result_extension_attributes_should_be_in_place(univariate_drift_result):
+    # Data model is set up so f1, f2 are continuous and f3, f4 are categorical
+    assert univariate_drift_result.continuous_column_names == ['f1', 'f2']
+    assert univariate_drift_result.categorical_column_names == ['f3', 'f4']
+    assert univariate_drift_result.timestamp_column_name == 'timestamp'
+    assert univariate_drift_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert univariate_drift_result.categorical_method_names == ['chi2', 'jensen_shannon']
+    assert [m.column_name for m in univariate_drift_result.continuous_methods] == [
+        'kolmogorov_smirnov',
+        'jensen_shannon',
+    ]
+    assert [m.column_name for m in univariate_drift_result.categorical_methods] == ['chi2', 'jensen_shannon']
+    assert sorted(m.column_name for m in univariate_drift_result.methods) == sorted(
+        ('chi2', 'kolmogorov_smirnov', 'jensen_shannon', 'jensen_shannon')
+    )
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_univariate_drift_result_filter_should_preserve_data_with_default_args(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter()
+    pd.testing.assert_frame_equal(filtered_result.data, univariate_drift_result.data, check_like=True)
+    assert filtered_result.continuous_column_names == univariate_drift_result.continuous_column_names
+    assert filtered_result.categorical_column_names == univariate_drift_result.categorical_column_names
+    assert filtered_result.timestamp_column_name == univariate_drift_result.timestamp_column_name
+    assert filtered_result.continuous_method_names == univariate_drift_result.continuous_method_names
+    assert filtered_result.categorical_method_names == univariate_drift_result.categorical_method_names
+    assert filtered_result.continuous_methods == univariate_drift_result.continuous_methods
+    assert filtered_result.categorical_methods == univariate_drift_result.categorical_methods
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_unvariate_drift_result_filter_metrics(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter(methods=['chi2'])
+    metrics = tuple(set(metric for (_, metric, _) in filtered_result.data.columns if metric != 'chunk'))
+    assert metrics == ('chi2',)
+    assert filtered_result.data.shape[0] == univariate_drift_result.data.shape[0]
+
+    assert filtered_result.continuous_column_names == []
+    assert filtered_result.categorical_column_names == ['f3', 'f4']
+    assert filtered_result.continuous_method_names == []
+    assert filtered_result.categorical_method_names == ['chi2']
+    assert [m.column_name for m in filtered_result.continuous_methods] == []
+    assert [m.column_name for m in filtered_result.categorical_methods] == ['chi2']
+    assert sorted(m.column_name for m in filtered_result.methods) == ['chi2']
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_unvariate_drift_result_filter_column_names(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter(column_names=['f1', 'f2'])
+    columns = tuple(sorted(set(column for (column, _, _) in filtered_result.data.columns if column != 'chunk')))
+    assert columns == ('f1', 'f2')
+    assert filtered_result.data.shape[0] == univariate_drift_result.data.shape[0]
+
+    assert filtered_result.continuous_column_names == ['f1', 'f2']
+    assert filtered_result.categorical_column_names == []
+    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert filtered_result.categorical_method_names == []
+    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.categorical_methods] == []
+    assert sorted(m.column_name for m in filtered_result.methods) == sorted(('kolmogorov_smirnov', 'jensen_shannon'))
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_univariate_drift_result_filter_period(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter(period='reference')
+    ref_period = univariate_drift_result.data.loc[
+        univariate_drift_result.data.loc[:, ('chunk', 'chunk', 'period')] == 'reference', :
+    ]
+    pd.testing.assert_frame_equal(filtered_result.data, ref_period, check_like=True)
+
+    assert filtered_result.continuous_column_names == ['f1', 'f2']
+    assert filtered_result.categorical_column_names == ['f3', 'f4']
+    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert filtered_result.categorical_method_names == ['chi2', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.categorical_methods] == ['chi2', 'jensen_shannon']
+    assert sorted(m.column_name for m in filtered_result.methods) == sorted(
+        ('chi2', 'kolmogorov_smirnov', 'jensen_shannon', 'jensen_shannon')
+    )
+
+
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
@@ -592,19 +703,3 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
         _ = result.compare(result2).plot()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
-
-
-def test_univariate_drift_calculator_returns_distinct_but_consistent_results_when_reused(sample_drift_data):
-    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    sut = UnivariateDriftCalculator(
-        column_names=['f1', 'f3'],
-        timestamp_column_name='timestamp',
-        continuous_methods=['kolmogorov_smirnov'],
-        categorical_methods=['chi2'],
-    )
-    sut.fit(ref_data)
-    result1 = sut.calculate(data=sample_drift_data)
-    result2 = sut.calculate(data=sample_drift_data)
-
-    assert result1 is not result2
-    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
