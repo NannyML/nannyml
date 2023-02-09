@@ -570,7 +570,13 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
-    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        timestamp_column_name='timestamp',
+        calculation_method='auto',
+    ).fit(ref_data)
     result = calc.calculate(ana_data)
 
     calc2 = CBPE(
