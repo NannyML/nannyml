@@ -20,7 +20,6 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
-from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -56,6 +55,7 @@ class CBPE(AbstractEstimator):
         chunker: Optional[Chunker] = None,
         calibration: Optional[str] = None,
         calibrator: Optional[Calibrator] = None,
+        normalize_confusion_matrix: Optional[str] = None,
     ):
         """Initializes a new CBPE performance estimator.
 
@@ -94,6 +94,13 @@ class CBPE(AbstractEstimator):
         problem_type: Union[str, ProblemType]
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.
+        normalize_confusion_matrix: str, default=None
+            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
+            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
+            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
+            of observations. If 'true', the confusion matrix will be normalized by the total number of
+            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
+            total number of observations for each predicted class.
 
         Examples
         --------
@@ -133,6 +140,13 @@ class CBPE(AbstractEstimator):
                 f"Supported values are {SUPPORTED_METRIC_VALUES}."
             )
 
+        valid_normalizations = [None, 'all', 'pred', 'true']
+        if normalize_confusion_matrix not in valid_normalizations:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' given was '{normalize_confusion_matrix}'. "
+                f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
+            )
+
         if isinstance(problem_type, str):
             self.problem_type = ProblemType.parse(problem_type)
         else:
@@ -149,6 +163,7 @@ class CBPE(AbstractEstimator):
                 y_true=self.y_true,
                 timestamp_column_name=self.timestamp_column_name,
                 chunker=self.chunker,
+                normalize_confusion_matrix=normalize_confusion_matrix,
             )
             for metric in metrics
         ]
@@ -276,7 +291,9 @@ class CBPE(AbstractEstimator):
             ]
         )
 
-        multilevel_index = _create_multilevel_index(metric_names=[m.column_name for m in self.metrics])
+        metric_column_names = [name for metric in self.metrics for name in metric.column_names]
+        multilevel_index = _create_multilevel_index(metric_names=metric_column_names)
+
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
 
@@ -298,25 +315,12 @@ class CBPE(AbstractEstimator):
         return self.result
 
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
-        estimates: Dict[str, Any] = {}
+        chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
-            estimated_metric = metric.estimate(chunk.data)
-            sampling_error = metric.sampling_error(chunk.data)
-            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
-            estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
-            estimates[f'estimated_{metric.column_name}'] = estimated_metric
-            estimates[f'upper_confidence_{metric.column_name}'] = min(
-                self.confidence_upper_bound, estimated_metric + SAMPLING_ERROR_RANGE * sampling_error
-            )
-            estimates[f'lower_confidence_{metric.column_name}'] = max(
-                self.confidence_lower_bound, estimated_metric - SAMPLING_ERROR_RANGE * sampling_error
-            )
-            estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
-            estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
-            estimates[f'alert_{metric.column_name}'] = (
-                estimated_metric > metric.upper_threshold or estimated_metric < metric.lower_threshold
-            )
-        return estimates
+            chunk_record = metric.get_chunk_record(chunk.data)
+            # add the chunk record to the chunk_records dict
+            chunk_records.update(chunk_record)
+        return chunk_records
 
     def _fit_binary(self, reference_data: pd.DataFrame) -> CBPE:
         if reference_data.empty:
@@ -376,7 +380,7 @@ class CBPE(AbstractEstimator):
         return self
 
 
-def _create_multilevel_index(metric_names: List[str]):
+def _create_multilevel_index(metric_names: List[str]) -> MultiIndex:
     chunk_column_names = [
         'key',
         'chunk_index',
@@ -386,16 +390,18 @@ def _create_multilevel_index(metric_names: List[str]):
         'end_date',
         'period',
     ]
+
     method_column_names = [
+        'value',
         'sampling_error',
         'realized',
-        'value',
         'upper_confidence_boundary',
         'lower_confidence_boundary',
         'upper_threshold',
         'lower_threshold',
         'alert',
     ]
+
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
     reconstruction_tuples = [
         (metric_name, column_name) for metric_name in metric_names for column_name in method_column_names

@@ -40,17 +40,21 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
 
 Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using a list of metrics to calculate (or just one metric), the data columns required for these metrics, and an optional :ref:`chunking<chunking>` specification.
 
-The list of metrics specifies which performance metrics of the monitored model will be calculated.
-The following metrics are currently supported:
+.. note::
 
-- ``roc_auc`` - one-vs-the-rest, macro-averaged
-- ``f1`` - macro-averaged
-- ``precision`` - macro-averaged
-- ``recall`` - macro-averaged
-- ``specificity`` - macro-averaged
-- ``accuracy``
+    The list of metrics specifies which performance metrics of the monitored model will be calculated.
+    The following metrics are currently supported:
 
-For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
+    * ``roc_auc``
+    * ``f1`` 
+    * ``precision`` 
+    * ``recall``
+    * ``specificity`` 
+    * ``accuracy``
+    * ``confusion_matrix``
+        * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
+
+    For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
 
 .. nbimport::

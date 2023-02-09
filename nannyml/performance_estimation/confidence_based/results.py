@@ -19,7 +19,19 @@ from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
-SUPPORTED_METRIC_VALUES = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+SUPPORTED_METRIC_VALUES = [
+    'roc_auc',
+    'f1',
+    'precision',
+    'recall',
+    'specificity',
+    'accuracy',
+    'confusion_matrix',
+    'true_positive',
+    'true_negative',
+    'false_positive',
+    'false_negative',
+]
 
 
 class Result(Abstract1DResult, ResultCompareMixin):
@@ -47,27 +59,74 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.chunker = chunker
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
-        if metrics is None:
-            metrics = [metric.column_name for metric in self.metrics]
+        """Filter the results based on the specified period and metrics.
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
+        This function begins by expanding the metrics to all the metrics that were specified
+        or if no metrics were specified, all the metrics that were used to calculate the results.
+        Since some metrics have multiple components, we expand these to their individual components.
+        For example, the ``confusion_matrix`` metric has four components: ``true_positive``,
+        ``true_negative``, ``false_positive``, and ``false_negative``.  Specifying ``confusion_matrix``
+        or, for example, ``true_positive`` are both valid. We then filter the results based on the
+        specified period and metrics.
+        """
+        if metrics is None:
+            filtered_metrics = self.metrics
+        else:
+            filtered_metrics = []
+            for name in metrics:
+                if name not in SUPPORTED_METRIC_VALUES:
+                    raise InvalidArgumentsException(
+                        f"invalid metric '{name}'. Please choose from {SUPPORTED_METRIC_VALUES}"
+                    )
+
+                m = self._get_metric_by_name(name)
+
+                if m:
+                    filtered_metrics.append(m)
+                else:
+                    raise InvalidArgumentsException(f"no '{name}' in result, did you calculate it?")
+
+        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
         if period != 'all':
             data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
 
         data = data.reset_index(drop=True)
         res = copy.deepcopy(self)
         res.data = data
-        res.metrics = [m for m in self.metrics if m.column_name in metrics]
+        res.metrics = filtered_metrics
 
         return res
+
+    def _get_metric_by_name(self, name: str) -> Optional[Metric]:
+        for metric in self.metrics:
+            # If we match the metric by name, return the metric
+            # E.g. matching the name 'confusion_matrix'
+            if name == metric.name:
+                return metric
+            # If we match one of the metric component names
+            # E.g. matching the name 'true_positive' with the confusion matrix metric
+            elif name in metric.column_names:
+                # Only retain the component whose column name was given to filter on
+                res = copy.deepcopy(metric)
+                res.components = list(filter(lambda c: c[1] == name, metric.components))
+                return res
+            else:
+                continue
+        return None
 
     def keys(self) -> List[Key]:
         return [
             Key(
-                properties=(metric.column_name,),
-                display_names=(f'estimated {metric.display_name}', metric.display_name,)
+                properties=(component[1],),
+                display_names=(
+                    f'estimated {component[0]}',
+                    component[0],
+                ),
             )
             for metric in self.metrics
+            for component in metric.components
         ]
 
     @log_usage(UsageEvent.CBPE_PLOT, metadata_from_kwargs=['kind'])
@@ -118,7 +177,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
                 self,
                 title='Estimated performance <b>(CBPE)</b>',
                 subplot_title_format='Estimated <b>{display_names[1]}</b>',
-                subplot_y_axis_title_format='{display_names[1]}'
+                subplot_y_axis_title_format='{display_names[1]}',
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")

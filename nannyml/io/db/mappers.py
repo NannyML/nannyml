@@ -281,7 +281,7 @@ class CBPEMapper(Mapper):
 
         res: List[Metric] = []
 
-        for metric in [metric.column_name for metric in result.metrics]:
+        for metric in [component[1] for metric in result.metrics for component in metric.components]:
             res += (
                 result.filter(period='analysis')
                 .to_df()[

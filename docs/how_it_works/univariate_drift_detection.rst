@@ -82,17 +82,23 @@ The new bins relative frequency for the reference sample is set to 0.
 The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
 used to calculate the Jensen-Shannon Distance.
 
-Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
-(PDF). This makes it more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
+..
+    Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
+    (PDF). This makes it more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
+
+The figure below shows a visual representation of how the Jensen-Shannon Distance is calculated. The
+area of the shaded region is the Jensen-Shannon Divergence which can be calculated using the formula above.
+Taking the square root of this value gives us the Jensen-Shannon Distance.
 
 .. image:: ../_static/how-it-works-js.svg
     :width: 1400pt
 
-In the two rows we see two different changes been induced to the reference dataset.
-We can see from the cumulative density functions on the right that the resulting KS distance is the same.
-On the left we see the probability density functions of the samples and the resulting Jensen-Shannon Divergence
-at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
-see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
+..
+    In the two rows we see two different changes been induced to the reference dataset.
+    We can see from the cumulative density functions on the right that the resulting KS distance is the same.
+    On the left we see the probability density functions of the samples and the resulting Jensen-Shannon Divergence
+    at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
+    see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
 
 
 .. _univariate-drift-detection-cont-wasserstein:
