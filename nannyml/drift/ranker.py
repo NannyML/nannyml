@@ -169,6 +169,7 @@ class CorrelationRanker:
             raise InvalidArgumentsException("reference performance calculation results can not be None.")
         _validate_performance_result(reference_performance_calculation_result)
 
+        # we're expecting to have filtered inputs, so we should only have a single input.
         self.metric = reference_performance_calculation_result.metrics[0]  # type: ignore
         assert self.metric is not None
 
