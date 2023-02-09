@@ -342,7 +342,6 @@ class AbstractEstimator(ABC):
         )
         self.timestamp_column_name = timestamp_column_name
 
-
         self.result: Optional[Result] = None
 
     @property
