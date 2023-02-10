@@ -25,13 +25,21 @@ Estimation results for ``reference`` and ``analysis`` are combined with realized
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
     :cell: 2
 
-... New estimator instance
+Next we create the Confidence-based Performance Estimation (CBPE) estimator with a list of metrics, and an optional chunking specification.
+For more information about chunking you can check the setting up page and advanced guide.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
     :cells: 3
 
 ... Fit with reference dataset, estimate analysis dataset and filter only the analysis periods
+
+The CBPE estimator is then fitted using the fit() method on the reference data.
+
+We estimate the performance of both the reference and analysis datasets,
+to compare the estimated performance of the reference dataset with the actual performance.
+
+We then filter the results to only have the estimated values.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
@@ -41,7 +49,7 @@ Estimation results for ``reference`` and ``analysis`` are combined with realized
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
     :cell: 5
 
-... Compute actual roc auc
+We compute the actual performance with `sklearn` using the `Target` values.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
@@ -51,7 +59,7 @@ Estimation results for ``reference`` and ``analysis`` are combined with realized
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
     :cell: 7
 
-... Plot the Estimated and Actual values to compare them
+Finally we can plot the Actual vs the Estimated performance:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
