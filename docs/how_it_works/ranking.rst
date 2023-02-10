@@ -37,7 +37,7 @@ We'll use an example from :ref:`Correlation Ranking Tutorial<tutorial-ranking-co
     :cell: 2
 
 
-We see that after initializing a correlation ranker, the next step is to 
+We see that after initializing a correlation ranker, the next step is to
 :meth:`~nannyml.drift.ranking.CorrelationRanking.fit` it by providing performance results
 from the reference :term:`period<Data Period>`. From those results the ranker calculates
 the average performance during the reference period. This value is saved at the ``mean_perf_value`` property of the ranker.
@@ -50,7 +50,7 @@ on reference. We can see how this transformation affects the performance values 
     :path: ./example_notebooks/How it Works - Ranking.ipynb
     :cells: 3
 
-.. image:: /_static/how-it-works-ranking-abs-perf.svg
+.. image:: /_static/how-it-works/ranking-abs-perf.svg
 
 The next step is to calculate the `pearson correlation`_ between the drift results and the calculated
 absolute performance changes. In order to build an intuition about how the pearson correlation ranks
@@ -60,9 +60,9 @@ as shown in this plot below.
 
 .. nbimport::
     :path: ./example_notebooks/How it Works - Ranking.ipynb
-    :cells: 5
+    :cells: 4
 
-.. image:: /_static/how-it-works-ranking-abs-perf-features-compare.svg
+.. image:: /_static/how-it-works/ranking-abs-perf-features-compare.svg
 
 In the results, the correlation ranker outputs not only the pearson correlation coefficient but
 also the associated p-value for testing non-correlation. This is done to help interpret the
