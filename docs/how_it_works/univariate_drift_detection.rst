@@ -19,6 +19,10 @@ between the two types of features.
 Lastly let's note that we are always performing two sample tests or comparisons. Probability density functions (PDF) and
 cumulative density functions (CDF) are always estimated from the data samples that are being compared.
 
+.. note::
+
+    In the current implementation of the methods (both continuous and categorical), we drop all the missing values encountered.
+
 .. _univariate-drift-detection-continuous-methods:
 
 Methods for Continuous Features
