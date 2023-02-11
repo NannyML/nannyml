@@ -82,6 +82,8 @@ Below we see the columns our dataset contains and explain their purpose.
     :path: ./example_notebooks/Tutorial - Data Requirements.ipynb
     :cell: 4
 
+.. _data_requirements_columns_timestamp:
+
 Timestamp
 ^^^^^^^^^
 

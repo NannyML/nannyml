@@ -55,6 +55,8 @@ We'll now provide a directory on the local filesystem.
     :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
     :cells: 2
 
+.. _storing_calculators_remote_examples:
+
 Because we're using the `fsspec <https://filesystem-spec.readthedocs.io/en/latest/>`_ library under the covers we also
 support a lot of remote filesystems out of the box.
 

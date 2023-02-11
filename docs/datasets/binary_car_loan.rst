@@ -1,8 +1,8 @@
 .. _dataset-synthetic-binary-car-loan:
 
-=======================================
+===================================================
 Synthetic Binary Classification Dataset - Car Loan
-=======================================
+===================================================
 
 NannyML provides a synthetic dataset describing a binary classification problem,
 to make it easier to test and document its features.
