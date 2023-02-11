@@ -61,55 +61,26 @@ the type of the model being monitored, and the function being used. There will b
 be specific to a given model type. Also note that there is an expectation that the columns have the same name between reference and
 analysis datasets when they describe the same thing.
 
-We will illustrate this using the fictional ``work_from_home`` model included with the library,
-a binary classifier trying to predict whether someone will be working from home on a given day or not.
+We will illustrate this using the fictional ``car_loan`` model included with the library,
+a binary classifier trying to predict whether a customer will repay a loan to buy a car.
+
 Below we see the columns our dataset contains and explain their purpose.
 
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Data Requirements.ipynb
+    :cells: 1
 
-.. code-block:: python
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Data Requirements.ipynb
+    :cell: 2
 
-    >>> import nannyml as nml
-    >>> reference, _, _ = nml.load_synthetic_binary_classification_dataset()
-    >>> reference[['identifier', 'work_home_actual', 'timestamp', 'y_pred_proba', 'y_pred']].head()
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Data Requirements.ipynb
+    :cells: 3
 
-+----+--------------+--------------------+---------------------+----------------+----------+
-|    |   identifier |   work_home_actual | timestamp           |   y_pred_proba |   y_pred |
-+====+==============+====================+=====================+================+==========+
-|  0 |            0 |                  1 | 2014-05-09 22:27:20 |           0.99 |        1 |
-+----+--------------+--------------------+---------------------+----------------+----------+
-|  1 |            1 |                  0 | 2014-05-09 22:59:32 |           0.07 |        0 |
-+----+--------------+--------------------+---------------------+----------------+----------+
-|  2 |            2 |                  1 | 2014-05-09 23:48:25 |           1    |        1 |
-+----+--------------+--------------------+---------------------+----------------+----------+
-|  3 |            3 |                  1 | 2014-05-10 01:12:09 |           0.98 |        1 |
-+----+--------------+--------------------+---------------------+----------------+----------+
-|  4 |            4 |                  1 | 2014-05-10 02:21:34 |           0.99 |        1 |
-+----+--------------+--------------------+---------------------+----------------+----------+
-
-
-.. code-block:: python
-
-    >>> reference[[
-    ...     'distance_from_office', 'salary_range', 'gas_price_per_litre', 'public_transportation_cost',
-    ...     'wfh_prev_workday', 'workday', 'tenure'
-    >>> ]].head()
-
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
-|    |   distance_from_office | salary_range   |   gas_price_per_litre |   public_transportation_cost | wfh_prev_workday   | workday   |   tenure |
-+====+========================+================+=======================+==============================+====================+===========+==========+
-|  0 |               5.96225  | 40K - 60K €    |               2.11948 |                      8.56806 | False              | Friday    | 0.212653 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
-|  1 |               0.535872 | 40K - 60K €    |               2.3572  |                      5.42538 | True               | Tuesday   | 4.92755  |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
-|  2 |               1.96952  | 40K - 60K €    |               2.36685 |                      8.24716 | False              | Monday    | 0.520817 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
-|  3 |               2.53041  | 20K - 40K €    |               2.31872 |                      7.94425 | False              | Tuesday   | 0.453649 |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
-|  4 |               2.25364  | 60K+ €         |               2.22127 |                      8.88448 | True               | Thursday  | 5.69526  |
-+----+------------------------+----------------+-----------------------+------------------------------+--------------------+-----------+----------+
-
-
-.. _data_requirements_columns_timestamp:
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Data Requirements.ipynb
+    :cell: 4
 
 Timestamp
 ^^^^^^^^^
@@ -150,7 +121,7 @@ Target
 
 The actual outcome of the event the machine learning model is trying to predict.
 
-In the sample data this is the ``work_home_actual`` column.
+In the sample data this is the ``repaid`` column.
 
 Required as part of the reference data for :ref:`performance estimation<performance-estimation>`,
 and as part of both reference and analysis data to :ref:`calculate performance<performance-calculation>`.
@@ -161,8 +132,8 @@ Features
 The features of your model. These can be categorical or continuous and NannyML identifies this based on their
 declared pandas data types.
 
-In the sample data, the features are ``distance_from_office``, ``salary_range``, ``gas_price_per_litre``, ``public_transportation_cost``,
-``wfh_prev_workday``, ``workday`` and ``tenure``.
+In the sample data, the features are ``car_value``, ``salary_range``, ``debt_to_income_ratio``, ``loan_length``,
+``repaid_loan_on_prev_car``, ``size_of_downpayment`` and ``driver_tenure``.
 
 Required to :ref:`detect data drift<data-drift>` on features.
 
