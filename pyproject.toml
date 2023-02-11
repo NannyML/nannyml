@@ -82,6 +82,9 @@ sphinx-copybutton = "^0.5.0"
 typing-extensions = "^4.4.0"
 sphinx-toolbox = "^3.2.0"
 pytest-lazy-fixture = "^0.6.3"
+types-click = "^7.1.8"
+types-python-dateutil = "^2.8.19.6"
+types-PyYAML = "^6.0"
 
 [tool.black]
 line-length = 120

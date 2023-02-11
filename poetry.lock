@@ -3963,7 +3963,7 @@ files = [
 ]
 
 [[package]]
-name = "PyYAML"
+name = "pyyaml"
 version = "6.0"
 description = "YAML parser and emitter for Python"
 category = "main"
@@ -5218,6 +5218,42 @@ files = [
 ]
 
 [[package]]
+name = "types-click"
+version = "7.1.8"
+description = "Typing stubs for click"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-click-7.1.8.tar.gz", hash = "sha256:b6604968be6401dc516311ca50708a0a28baa7a0cb840efd7412f0dbbff4e092"},
+    {file = "types_click-7.1.8-py3-none-any.whl", hash = "sha256:8cb030a669e2e927461be9827375f83c16b8178c365852c060a34e24871e7e81"},
+]
+
+[[package]]
+name = "types-python-dateutil"
+version = "2.8.19.6"
+description = "Typing stubs for python-dateutil"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-python-dateutil-2.8.19.6.tar.gz", hash = "sha256:4a6f4cc19ce4ba1a08670871e297bf3802f55d4f129e6aa2443f540b6cf803d2"},
+    {file = "types_python_dateutil-2.8.19.6-py3-none-any.whl", hash = "sha256:cfb7d31021c6bce6f3362c69af6e3abb48fe3e08854f02487e844ff910deec2a"},
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.5"
+description = "Typing stubs for PyYAML"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-PyYAML-6.0.12.5.tar.gz", hash = "sha256:3b61b7a8111ce368eb366e4a13f3e94e568bc2ed6227e01520a50ee07993bf38"},
+    {file = "types_PyYAML-6.0.12.5-py3-none-any.whl", hash = "sha256:dcaf87b65b839e7b641721346ef8b12a87f94071e15205a64ac93ca0e0afc77a"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
@@ -5567,4 +5603,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7.1,<3.11"
-content-hash = "654a31002e30512a0f4d10f30eee6133729d8b1089c2e3b1a558367e514d88df"
+content-hash = "7ac7898cc86b1f80e50a093848cdf2d49ec97b7064ebb5c20fe05faad9f97c0d"

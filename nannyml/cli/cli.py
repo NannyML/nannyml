@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-import click  # type: ignore
+import click
 from pyfiglet import Figlet
 from rich.console import Console
 

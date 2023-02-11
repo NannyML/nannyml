@@ -16,7 +16,7 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from dateutil.parser import ParserError  # type: ignore
+from dateutil.parser import ParserError
 from pandas import Period
 
 from nannyml.exceptions import ChunkerException, InvalidArgumentsException
