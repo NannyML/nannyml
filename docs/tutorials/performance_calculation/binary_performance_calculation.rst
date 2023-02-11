@@ -14,7 +14,7 @@ Just The Code
 ==============
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -49,10 +49,10 @@ Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator
     The following metrics are currently supported:
 
     * ``roc_auc``
-    * ``f1`` 
-    * ``precision`` 
+    * ``f1``
+    * ``precision``
     * ``recall``
-    * ``specificity`` 
+    * ``specificity``
     * ``accuracy``
     * ``confusion_matrix``
         * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
