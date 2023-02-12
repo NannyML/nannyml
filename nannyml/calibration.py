@@ -179,7 +179,7 @@ def _get_bin_edges(vector: np.ndarray, bin_count: Union[int, str]) -> np.ndarray
     # Add an epsilon to the last bin edge to make the final bin right-edge inclusive
     bin_edges[-1] += 1e-8
 
-    if (len(bin_edges) == 2) or (len(np.unique(np.digitize(vector, bin_edges, 'right'))) < 2):  # pragma: no branch
+    if (len(bin_edges) == 2) or (len(np.unique(np.digitize(vector, bin_edges))) < 2):  # pragma: no branch
         raise InvalidArgumentsException(
             "cannot split into minimum of 2 bins. Current number of bins "
             f"is {len(bin_edges)}, please increase number of bins or sample size. "
@@ -192,7 +192,7 @@ def _calculate_expected_calibration_error(y_true: np.ndarray, y_pred_proba: np.n
     terms = []
 
     y_pred_proba, y_true = np.asarray(y_pred_proba), np.asarray(y_true)
-    bins_proba = np.digitize(y_pred_proba, bin_edges, 'right')
+    bins_proba = np.digitize(y_pred_proba, bin_edges)
 
     for bin in np.unique(bins_proba):
         bin_proba = y_pred_proba[np.where(bins_proba == bin)]
