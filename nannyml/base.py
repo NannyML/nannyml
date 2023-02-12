@@ -78,9 +78,7 @@ class AbstractResult(ABC):
             single_level_data.columns = column_names
             return single_level_data
 
-    def filter(
-        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> Result:
+    def filter(self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs) -> Result:
         """Returns filtered result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
             raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
@@ -167,12 +165,7 @@ class Abstract1DResult(AbstractResult, ABC):
 
 class Abstract2DResult(AbstractResult, ABC):
     def __init__(
-        self,
-        results_data: pd.DataFrame,
-        metrics: Sequence[Metric] = (),
-        column_names: List[str] = [],
-        *args,
-        **kwargs
+        self, results_data: pd.DataFrame, metrics: Sequence[Metric] = (), column_names: List[str] = [], *args, **kwargs
     ):
         super().__init__(results_data)
         self.metrics = metrics
@@ -204,7 +197,7 @@ class Abstract2DResult(AbstractResult, ABC):
         metrics: Optional[List[str]] = None,
         column_names: Optional[List[str]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ) -> Result:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]

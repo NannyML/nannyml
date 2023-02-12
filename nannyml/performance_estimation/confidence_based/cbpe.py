@@ -382,7 +382,9 @@ class CBPE(AbstractEstimator):
             metric.fit(reference_data)
 
         assert isinstance(self.y_pred_proba, Dict)
-        self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator, self.calibration_bin_count)
+        self._calibrators = _fit_calibrators(
+            reference_data, self.y_true, self.y_pred_proba, self.calibrator, self.calibration_bin_count
+        )
 
         self.result = self._estimate(reference_data)
         assert self.result
@@ -439,7 +441,11 @@ def _get_class_splits(
 
 
 def _fit_calibrators(
-    reference_data: pd.DataFrame, y_true_col: str, y_pred_proba_col: Dict[str, str], calibrator: Calibrator, calibration_bin_count: Union[int, str]
+    reference_data: pd.DataFrame,
+    y_true_col: str,
+    y_pred_proba_col: Dict[str, str],
+    calibrator: Calibrator,
+    calibration_bin_count: Union[int, str],
 ) -> Dict[str, Calibrator]:
     fitted_calibrators = {}
     noop_calibrator = NoopCalibrator()
