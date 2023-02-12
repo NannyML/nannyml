@@ -1,8 +1,10 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+from __future__ import annotations
 
 import typing
+from collections import namedtuple
 from enum import Enum
 from typing import Dict, List, Optional, Union  # noqa: TYP001
 
@@ -14,6 +16,9 @@ else:
 import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.plots import Figure
+
+Key = namedtuple('Key', 'properties display_names')
 
 
 class Result(Protocol):
@@ -21,26 +26,92 @@ class Result(Protocol):
 
     data: pd.DataFrame
 
+    @property
+    def empty(self) -> bool:
+        ...
+
+    @property
+    def chunk_keys(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_start_dates(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_end_dates(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_indices(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_periods(self) -> pd.Series:
+        ...
+
+    def keys(self) -> List[Key]:
+        ...
+
+    def values(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def alerts(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def upper_thresholds(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def lower_thresholds(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def upper_confidence_bounds(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def lower_confidence_bounds(self, key: Key) -> Optional[pd.Series]:
+        ...
+
+    def sampling_error(self, key: Key) -> Optional[pd.Series]:
+        ...
+
     def filter(
-        self, period: Optional[str] = None, metrics: Optional[List[str]] = None, *args, **kwargs
-    ) -> pd.DataFrame:
-        """"""
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+    ) -> Result:
+        ...
+
+    def to_df(self, multilevel: bool = True) -> pd.DataFrame:
+        ...
+
+    def plot(self, *args, **kwargs) -> Figure:
+        ...
+
+
+class Metric(Protocol):
+    """Represents any kind of metric (or method) that can be calculated or estimated."""
+
+    @property
+    def display_name(self) -> str:
+        ...
+
+    @property
+    def column_name(self) -> str:
+        ...
 
 
 class Calculator(Protocol):
     """Calculator base class."""
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
         """Fits the calculator on reference data."""
 
-    def calculate(self, data: pd.DataFrame, *args, **kwargs):
+    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Perform a calculation based on analysis data."""
 
 
 class Estimator(Protocol):
     """Estimator base class."""
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs):
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
         """Fits the estimator on reference data."""
 
     def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:

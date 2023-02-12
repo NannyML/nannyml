@@ -5,21 +5,21 @@
 """Contains the results of the realized performance calculation and provides plotting functionality."""
 from __future__ import annotations
 
-import copy
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import ProblemType
-from nannyml.base import AbstractCalculatorResult
+from nannyml._typing import Key, ProblemType
+from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
-from nannyml.plots.blueprints.metrics import plot_metric_list
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
+from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(AbstractCalculatorResult):
+class Result(Abstract1DResult, ResultCompareMixin):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     def __init__(
@@ -35,7 +35,7 @@ class Result(AbstractCalculatorResult):
         analysis_data: Optional[pd.DataFrame] = None,
     ):
         """Creates a new Result instance."""
-        super().__init__(results_data)
+        super().__init__(results_data, metrics)
 
         self.problem_type = problem_type
 
@@ -43,29 +43,19 @@ class Result(AbstractCalculatorResult):
         self.y_pred_proba = y_pred_proba
         self.y_pred = y_pred
         self.timestamp_column_name = timestamp_column_name
-        self.metrics = metrics
 
         self.reference_data = reference_data
         self.analysis_data = analysis_data
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
-        if metrics is None:
-            metrics = [metric.column_name for metric in self.metrics]
+    def keys(self) -> List[Key]:
+        return [
+            Key(
+                properties=(metric.column_name,), display_names=(f'realized {metric.display_name}', metric.display_name)
+            )
+            for metric in self.metrics
+        ]
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
-
-        if period != 'all':
-            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-
-        res = copy.deepcopy(self)
-        res.data = data
-        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
-
-        return res
-
-    @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
+    @log_usage(UsageEvent.PERFORMANCE_PLOT, metadata_from_kwargs=['kind'])
     def plot(
         self,
         kind: str = 'performance',
@@ -121,9 +111,11 @@ class Result(AbstractCalculatorResult):
         >>>     results.plot(metric=metric, plot_reference=True).show()
         """
         if kind == 'performance':
-            return plot_metric_list(
+            return plot_metrics(
                 result=self,
                 title='Realized performance',
+                subplot_title_format='Realized <b>{display_names[1]}</b>',
+                subplot_y_axis_title_format='{display_names[1]}',
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")

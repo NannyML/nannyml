@@ -13,6 +13,7 @@ Tutorials
     tutorials/compare_estimated_and_realized_performance
     tutorials/detecting_data_drift
     tutorials/ranking
+    tutorials/storing_and_loading_calculators
     tutorials/working_with_results
     tutorials/adjusting_plots
     tutorials/chunking

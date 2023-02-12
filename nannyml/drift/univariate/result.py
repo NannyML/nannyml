@@ -5,23 +5,29 @@
 """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 from __future__ import annotations
 
-import copy
-from typing import List, Optional
+import warnings
+from typing import cast, List, Optional
 
-import pandas as pd
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import pandas as pd
+
 import plotly.graph_objects as go
 
-from nannyml.base import AbstractCalculatorResult
+from nannyml._typing import Key
+from nannyml._typing import Result as ResultType
+from nannyml.base import Abstract2DResult
 from nannyml.chunk import Chunker
-from nannyml.drift.univariate.methods import FeatureType, MethodFactory
+from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots.blueprints.distributions import plot_2d_univariate_distributions_list
-from nannyml.plots.blueprints.metrics import plot_2d_metric_list
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
+from nannyml.plots.blueprints.distributions import plot_distributions
+from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.plots.components import Hover
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(AbstractCalculatorResult):
+class Result(Abstract2DResult, ResultCompareMixin):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(
@@ -37,51 +43,93 @@ class Result(AbstractCalculatorResult):
         analysis_data: pd.DataFrame = None,
         reference_data: pd.DataFrame = None,
     ):
-        super().__init__(results_data)
+        categorical_methods = [MethodFactory.create(m, FeatureType.CATEGORICAL) for m in categorical_method_names]
+        continuous_methods = [MethodFactory.create(m, FeatureType.CONTINUOUS) for m in continuous_method_names]
+        methods = continuous_methods + categorical_methods
+        # Passing on methods as metrics to base class, as they're essentially a more specialised form of metrics
+        # satisfying the same contract
+        super().__init__(results_data, methods, column_names)
 
-        self.column_names = column_names
         self.continuous_column_names = continuous_column_names
         self.categorical_column_names = categorical_column_names
         self.timestamp_column_name = timestamp_column_name
         self.categorical_method_names = categorical_method_names
-        self.categorical_methods = [MethodFactory.create(m, FeatureType.CATEGORICAL) for m in categorical_method_names]
+        self.categorical_methods = categorical_methods
         self.continuous_method_names = continuous_method_names
-        self.continuous_methods = [MethodFactory.create(m, FeatureType.CONTINUOUS) for m in continuous_method_names]
-        self.methods = self.categorical_methods + self.continuous_methods
+        self.continuous_methods = continuous_methods
         self.chunker = chunker
 
         self.analysis_data = analysis_data
         self.reference_data = reference_data
 
-    def _filter(self, period: str, *args, **kwargs) -> Result:
-        if 'column_names' in kwargs:
-            column_names = kwargs['column_names']
+    @property
+    def methods(self) -> List[Method]:
+        return cast(List[Method], self.metrics)
+
+    def _filter(
+        self,
+        period: str,
+        metrics: Optional[List[str]] = None,
+        column_names: Optional[List[str]] = None,
+        methods: Optional[List[str]] = None,
+        *args,
+        **kwargs
+    ) -> ResultType:
+        # TODO: Use TypeVar with generic self instead of cast
+        result = cast(Result, super()._filter(period, methods, column_names))
+        method_names = [m.column_name for m in result.methods]
+
+        # The `column_names` and `methods` filters can impact each other. Handled conditionally here
+        if any(c in result.column_names for c in result.categorical_column_names):
+            result.categorical_method_names = [m for m in self.categorical_method_names if m in method_names]
+            result.categorical_methods = [m for m in self.categorical_methods if m.column_name in method_names]
         else:
-            column_names = self.column_names
-
-        if 'methods' in kwargs:
-            methods = kwargs['methods']
+            result.categorical_method_names = []
+            result.categorical_methods = []
+        if any(c in result.column_names for c in result.continuous_column_names):
+            result.continuous_method_names = [m for m in self.continuous_method_names if m in method_names]
+            result.continuous_methods = [m for m in self.continuous_methods if m.column_name in method_names]
         else:
-            methods = list(set(self.categorical_method_names + self.continuous_method_names))
+            result.continuous_method_names = []
+            result.continuous_methods = []
+        if result.categorical_methods:
+            result.categorical_column_names = [c for c in self.categorical_column_names if c in result.column_names]
+        else:
+            result.categorical_column_names = []
+        if result.continuous_methods:
+            result.continuous_column_names = [c for c in self.continuous_column_names if c in result.column_names]
+        else:
+            result.continuous_column_names = []
+        result.metrics = result.continuous_methods + result.categorical_methods
+        result.column_names = result.continuous_column_names + result.categorical_column_names
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, methods)]], axis=1)
-
-        if period != 'all':
-            data = data.loc[data[('chunk', 'chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-
-        result = copy.deepcopy(self)
-        result.data = data
-        result.categorical_method_names = [m for m in self.categorical_method_names if m in methods]
-        result.categorical_methods = [m for m in self.categorical_methods if m.column_name in methods]
-        result.continuous_method_names = [m for m in self.continuous_method_names if m in methods]
-        result.continuous_methods = [m for m in self.continuous_methods if m.column_name in methods]
-        result.column_names = [c for c in self.column_names if c in column_names]
-        result.categorical_column_names = [c for c in self.categorical_column_names if c in column_names]
-        result.continuous_column_names = [c for c in self.continuous_column_names if c in column_names]
-        result.methods = result.categorical_methods + result.continuous_methods
         return result
+
+    def _get_result_property(self, property_name: str) -> List[pd.Series]:
+        continuous_values = [
+            self.data[(column, method.column_name, property_name)]
+            for column in sorted(self.continuous_column_names)
+            for method in sorted(self.continuous_methods, key=lambda m: m.column_name)
+        ]
+        categorical_values = [
+            self.data[(column, method.column_name, property_name)]
+            for column in sorted(self.categorical_column_names)
+            for method in sorted(self.categorical_methods, key=lambda m: m.column_name)
+        ]
+        return continuous_values + categorical_values
+
+    def keys(self) -> List[Key]:
+        continuous_keys = [
+            Key(properties=(column, method.column_name), display_names=(column, method.display_name))
+            for column in sorted(self.continuous_column_names)
+            for method in sorted(self.continuous_methods, key=lambda m: m.column_name)
+        ]
+        categorical_keys = [
+            Key(properties=(column, method.column_name), display_names=(column, method.display_name))
+            for column in sorted(self.categorical_column_names)
+            for method in sorted(self.categorical_methods, key=lambda m: m.column_name)
+        ]
+        return continuous_keys + categorical_keys
 
     @log_usage(UsageEvent.UNIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(  # type: ignore
@@ -132,17 +180,9 @@ class Result(AbstractCalculatorResult):
         ...    res.plot(kind='drift', column_name=column_name, method=method).show()
 
         """
-        column_to_method_mapping = [
-            (column_name, method)
-            for column_name in self.categorical_column_names
-            for method in self.categorical_methods
-        ] + [
-            (column_name, method) for column_name in self.continuous_column_names for method in self.continuous_methods
-        ]
         if kind == 'drift':
-            return plot_2d_metric_list(
+            return plot_metrics(
                 self,
-                items=column_to_method_mapping,
                 title='Univariate drift metrics',
                 hover=Hover(
                     template='%{period} &nbsp; &nbsp; %{alert} <br />'
@@ -150,11 +190,12 @@ class Result(AbstractCalculatorResult):
                     '%{metric_name}: <b>%{metric_value}</b><b r />',
                     show_extra=True,
                 ),
+                subplot_title_format='{display_names[1]} for <b>{display_names[0]}</b>',
+                subplot_y_axis_title_format='{display_names[1]}',
             )
         elif kind == 'distribution':
-            return plot_2d_univariate_distributions_list(
+            return plot_distributions(
                 self,
-                items=column_to_method_mapping,
                 reference_data=self.reference_data,
                 analysis_data=self.analysis_data,
                 chunker=self.chunker,

@@ -33,7 +33,7 @@ def calculate_value_counts(
 
     data = data.astype("category")
     cat_str = [str(value) for value in data.cat.categories.values]
-    data.cat.categories = cat_str
+    data = data.cat.rename_categories(cat_str)
     data = data.cat.add_categories([missing_category_label, 'Other'])
     data = data.fillna(missing_category_label)
 
@@ -42,10 +42,14 @@ def calculate_value_counts(
         if data.nunique() > max_number_of_categories + 1:
             data.loc[~data.isin(top_categories)] = 'Other'
 
+    data = data.cat.remove_unused_categories()
+
     categories_ordered = data.value_counts().index.tolist()
     categorical_data = pd.Categorical(data, categories_ordered)
 
     # TODO: deal with None timestamps
+    if isinstance(timestamps, pd.Series):
+        timestamps = timestamps.reset_index()
     data_with_chunk_keys = pd.concat(
         [
             chunk.data.assign(chunk_key=chunk.key, chunk_index=chunk.chunk_index)
@@ -106,9 +110,7 @@ def stacked_bar(
 
     # plot bars
     for i, category in enumerate(categories):
-        data = stacked_bar_table.loc[
-            stacked_bar_table[column_name] == category,
-        ]
+        data = stacked_bar_table.loc[stacked_bar_table[column_name] == category,]
 
         if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
             x = chunk_start_dates
@@ -186,7 +188,7 @@ def alert(
             "you must provide either 'chunk_indices' or 'chunk_start_dates' and " "'chunk_end_dates."
         )
 
-    prv_color = figure.data[0].marker.line.color
+    prv_color = figure.data[0].marker.line.color or figure.data[0].line.color
     marker_line_colors = [color if val else prv_color for val in list(alerts)]
     marker_line_widths = [2 if val else 0 for val in list(alerts)]
 

@@ -2,14 +2,15 @@
 #
 #  License: Apache Software License 2.0
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from pandas import MultiIndex
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder
 
 from nannyml._typing import ProblemType
+from nannyml._typing import Result as ResultType
 from nannyml.base import AbstractEstimator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -48,7 +49,7 @@ class DLE(AbstractEstimator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        metrics: Optional[List[str]] = None,
+        metrics: Optional[Union[str, List[str]]] = None,
         hyperparameters: Optional[Dict[str, Any]] = None,
         tune_hyperparameters: bool = False,
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = None,
@@ -77,7 +78,7 @@ class DLE(AbstractEstimator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
-        metrics : List[str], default = ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle']
+        metrics : Optional[Union[str, List[str]]], default = ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle']
             A list of metrics to calculate. When not provided it will default to include all currently supported
             metrics.
         hyperparameters : Dict[str, Any], default = None
@@ -185,6 +186,8 @@ class DLE(AbstractEstimator):
 
         if metrics is None:
             metrics = DEFAULT_METRICS
+        elif isinstance(metrics, str):
+            metrics = [metrics]
         self.metrics: List[Metric] = [
             MetricFactory.create(
                 metric,
@@ -201,9 +204,9 @@ class DLE(AbstractEstimator):
         ]
 
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
-        self._categorical_encoders: defaultdict = defaultdict(LabelEncoder)
+        self._categorical_encoders: defaultdict = defaultdict(_default_encoder)
 
-        self.result: Optional[Result] = None
+        self.result: Optional[ResultType] = None
 
     def __str__(self):
         return (
@@ -220,13 +223,14 @@ class DLE(AbstractEstimator):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
 
         _, categorical_feature_columns = _split_features_by_type(reference_data, self.feature_column_names)
-        if len(categorical_feature_columns) > 0:
-            reference_data[categorical_feature_columns] = self._categorical_imputer.fit_transform(
-                reference_data[categorical_feature_columns]
+        for categorical_feature_column in categorical_feature_columns:
+            reference_data[categorical_feature_column] = reference_data[categorical_feature_column].astype("object")
+            reference_data[categorical_feature_column] = self._categorical_imputer.fit_transform(
+                reference_data[categorical_feature_column].values.reshape(-1, 1)
             )
-            reference_data[categorical_feature_columns] = reference_data[categorical_feature_columns].apply(
-                lambda x: self._categorical_encoders[x.name].fit_transform(x)
-            )
+            reference_data[categorical_feature_column] = self._categorical_encoders[
+                categorical_feature_column
+            ].fit_transform(reference_data[categorical_feature_column].values.reshape(-1, 1))
 
         for metric in self.metrics:
             metric.fit(reference_data)
@@ -237,17 +241,20 @@ class DLE(AbstractEstimator):
         return self
 
     @log_usage(UsageEvent.DLE_ESTIMATOR_RUN, metadata_from_self=['metrics'])
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> ResultType:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_pred], list(data.columns))
 
         _, categorical_feature_columns = _split_features_by_type(data, self.feature_column_names)
-        if len(categorical_feature_columns) > 0:
-            data[categorical_feature_columns] = self._categorical_imputer.transform(data[categorical_feature_columns])
-            data[categorical_feature_columns] = data[categorical_feature_columns].apply(
-                lambda x: self._categorical_encoders[x.name].transform(x)
+        for categorical_feature_column in categorical_feature_columns:
+            data[categorical_feature_column] = data[categorical_feature_column].astype("object")
+            data[categorical_feature_column] = self._categorical_imputer.transform(
+                data[categorical_feature_column].values.reshape(-1, 1)
+            )
+            data[categorical_feature_column] = self._categorical_encoders[categorical_feature_column].transform(
+                data[categorical_feature_column].values.reshape(-1, 1)
             )
 
         chunks = self.chunker.split(data)
@@ -286,6 +293,7 @@ class DLE(AbstractEstimator):
                 hyperparameters=self.hyperparameters,
             )
         else:
+            self.result = self.result.filter(period='reference')  # type: ignore
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
@@ -345,3 +353,7 @@ def _create_multilevel_index(metric_names: List[str]):
     tuples = chunk_tuples + reconstruction_tuples
 
     return MultiIndex.from_tuples(tuples)
+
+
+def _default_encoder():
+    return OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)

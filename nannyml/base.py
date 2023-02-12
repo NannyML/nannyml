@@ -5,14 +5,16 @@
 """Module containing base classes for drift calculation."""
 from __future__ import annotations
 
+import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
+from nannyml._typing import Calculator, Estimator, Key, Metric, Result
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
@@ -23,7 +25,7 @@ from nannyml.exceptions import (
 )
 
 
-class AbstractCalculatorResult(ABC):
+class AbstractResult(ABC):
     """Contains the results of a calculation and provides plotting functionality.
 
     The result of the :meth:`~nannyml.base.AbstractCalculator.calculate` method of a
@@ -50,6 +52,10 @@ class AbstractCalculatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    @property
+    def empty(self) -> bool:
+        return self.data is None or self.data.empty
+
     # TODO: define more specific interface (add common arguments)
     def __len__(self):  # noqa: D105
         return len(self.data)
@@ -60,7 +66,7 @@ class AbstractCalculatorResult(ABC):
         raise NotImplementedError
 
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
-        """Export results do pandas dataframe."""
+        """Export results to pandas dataframe."""
         if multilevel:
             return self.data
         else:
@@ -73,8 +79,8 @@ class AbstractCalculatorResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> AbstractCalculatorResult:
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+    ) -> Result:
         """Returns filtered result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
             raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
@@ -86,8 +92,136 @@ class AbstractCalculatorResult(ABC):
             raise CalculatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
-        raise NotImplementedError
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_filter' method")
+
+    @abstractmethod
+    def keys(self) -> List[Key]:
+        raise NotImplementedError(f"'{self.__class__.__name__}' must implement the 'items' method")
+
+    def values(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='value')
+
+    def alerts(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='alert')
+
+    def upper_thresholds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='upper_threshold')
+
+    def lower_thresholds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='lower_threshold')
+
+    def upper_confidence_bounds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='upper_confidence_boundary')
+
+    def lower_confidence_bounds(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='lower_confidence_boundary')
+
+    def sampling_error(self, key: Key) -> Optional[pd.Series]:
+        return self._get_property_for_key(key, property_name='sampling_error')
+
+    def _get_property_for_key(self, key: Key, property_name: str) -> Optional[pd.Series]:
+        return self.data.get(key.properties + (property_name,), default=None)
+
+
+class Abstract1DResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, metrics: Sequence[Metric] = (), *args, **kwargs):
+        super().__init__(results_data)
+        self.metrics = metrics
+
+    @property
+    def chunk_keys(self) -> pd.Series:
+        return self.data[('chunk', 'key')]
+
+    @property
+    def chunk_start_dates(self) -> pd.Series:
+        return self.data[('chunk', 'start_date')]
+
+    @property
+    def chunk_end_dates(self) -> pd.Series:
+        return self.data[('chunk', 'end_date')]
+
+    @property
+    def chunk_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk_index')]
+
+    @property
+    def chunk_periods(self) -> pd.Series:
+        return self.data[('chunk', 'period')]
+
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        return res
+
+
+class Abstract2DResult(AbstractResult, ABC):
+    def __init__(
+        self,
+        results_data: pd.DataFrame,
+        metrics: Sequence[Metric] = (),
+        column_names: List[str] = [],
+        *args,
+        **kwargs
+    ):
+        super().__init__(results_data)
+        self.metrics = metrics
+        self.column_names = column_names
+
+    @property
+    def chunk_keys(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'key')]
+
+    @property
+    def chunk_start_dates(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'start_date')]
+
+    @property
+    def chunk_end_dates(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'end_date')]
+
+    @property
+    def chunk_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'chunk_index')]
+
+    @property
+    def chunk_periods(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'period')]
+
+    def _filter(
+        self,
+        period: str,
+        metrics: Optional[List[str]] = None,
+        column_names: Optional[List[str]] = None,
+        *args,
+        **kwargs
+    ) -> Result:
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
+        if column_names is None:
+            column_names = self.column_names
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, metrics)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        res.column_names = [c for c in self.column_names if c in column_names]
+        return res
 
 
 class AbstractCalculator(ABC):
@@ -125,13 +259,13 @@ class AbstractCalculator(ABC):
 
         self.timestamp_column_name = timestamp_column_name
 
-        self.result: Optional[AbstractCalculatorResult] = None
+        self.result: Optional[Result] = None
 
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractCalculator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
         """Trains the calculator using reference data."""
         try:
             self._logger.debug(f"fitting {str(self)}")
@@ -143,7 +277,7 @@ class AbstractCalculator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Performs a calculation on the provided data."""
         try:
             self._logger.debug(f"calculating {str(self)}")
@@ -157,11 +291,11 @@ class AbstractCalculator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractCalculator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
@@ -192,6 +326,10 @@ class AbstractEstimatorResult(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
+    @property
+    def empty(self) -> bool:
+        return self.data is None or self.data.empty
+
     def to_df(self, multilevel: bool = True):
         """Export results do pandas dataframe."""
         if multilevel:
@@ -206,7 +344,7 @@ class AbstractEstimatorResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> AbstractEstimatorResult:
         """Returns result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
@@ -261,16 +399,16 @@ class AbstractEstimator(ABC):
         )
         self.timestamp_column_name = timestamp_column_name
 
-        self.result: Optional[AbstractEstimatorResult] = None
+        self.result: Optional[Result] = None
 
     @property
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def __str__(self):  # noqa: D105
-        return self.__class__.__name__
+    def __str__(self):
+        return f'{self.__module__}.{self.__class__.__name__}'
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
         """Trains the calculator using reference data."""
         try:
             self._logger.info(f"fitting {str(self)}")
@@ -283,7 +421,7 @@ class AbstractEstimator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Performs a calculation on the provided data."""
         try:
             self._logger.info(f"estimating {str(self)}")
@@ -297,11 +435,11 @@ class AbstractEstimator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Any:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
@@ -340,7 +478,7 @@ def _list_missing(columns_to_find: List, dataset_columns: Union[List, pd.DataFra
         dataset_columns = dataset_columns.columns
 
     missing = [col for col in columns_to_find if col not in dataset_columns]
-    if len(missing) > 0:
+    if missing:
         raise InvalidArgumentsException(f"missing required columns '{missing}' in data set:\n\t{dataset_columns}")
 
 
@@ -360,6 +498,6 @@ def _raise_exception_for_negative_values(column: pd.Series):
         negative_item_indices = np.where(column.values < 0)
         raise InvalidArgumentsException(
             f"target values '{column.name}' contain negative values.\n"
-            f"\tLog-based metrics are not supported for negative target values.\n"
+            "\tLog-based metrics are not supported for negative target values.\n"
             f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
         )

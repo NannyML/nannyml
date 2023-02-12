@@ -30,7 +30,7 @@ class PerformanceCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        metrics: List[str],
+        metrics: Union[str, List[str]],
         y_true: str,
         y_pred: str,
         problem_type: Union[str, ProblemType],
@@ -56,8 +56,8 @@ class PerformanceCalculator(AbstractCalculator):
             The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
-        metrics: List[str]
-            A list of metrics to calculate.
+        metrics: Union[str, List[str]]
+            A metric or list of metrics to calculate.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -110,6 +110,8 @@ class PerformanceCalculator(AbstractCalculator):
         if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
             raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
 
+        if isinstance(metrics, str):
+            metrics = [metrics]
         self.metrics: List[Metric] = [
             MetricFactory.create(m, self.problem_type, y_true=y_true, y_pred=y_pred, y_pred_proba=y_pred_proba)
             for m in metrics  # type: ignore
@@ -207,6 +209,7 @@ class PerformanceCalculator(AbstractCalculator):
                 problem_type=self.problem_type,
             )
         else:
+            self.result = self.result.filter(period='reference')  # type: ignore
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
             self.result.analysis_data = data.copy()
 

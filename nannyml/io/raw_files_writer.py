@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.base import WriterFactory, _get_filepath_str
+from nannyml.io.base import WriterFactory, get_filepath_str
 from nannyml.io.file_writer import FileWriter, _write_bytes_to_filesystem
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -63,11 +63,11 @@ class RawFilesWriter(FileWriter):
         if not isinstance(plots, Dict):
             raise InvalidArgumentsException(f"parameter 'plots' is of type {type(plots)} but should be 'Dict'")
 
-        if result.data is None:
+        if result.empty:
             raise InvalidArgumentsException("result data cannot be None")
 
         calculator_name = kwargs['calculator_name']
-        write_path = _get_filepath_str(self.filepath, self._protocol)
+        write_path = get_filepath_str(self.filepath, self._protocol)
 
         images_path = Path(write_path) / calculator_name / "plots"
         images_path.mkdir(parents=True, exist_ok=True)
@@ -84,12 +84,12 @@ class RawFilesWriter(FileWriter):
 
         bytes_buffer = BytesIO()
         if self._data_format == "parquet":
-            result.data.to_parquet(
+            result.to_df(multilevel=False).to_parquet(
                 bytes_buffer, **self._write_args, coerce_timestamps='ms', allow_truncated_timestamps=True
             )
             _write_bytes_to_filesystem(bytes_buffer.getvalue(), data_path / f"{calculator_name}.pq", self._fs)
         elif self._data_format == "csv":
-            result.data.to_csv(bytes_buffer, **self._write_args)
+            result.to_df(multilevel=False).to_csv(bytes_buffer, **self._write_args)
             _write_bytes_to_filesystem(bytes_buffer.getvalue(), data_path / f"{calculator_name}.csv", self._fs)
         else:
             raise InvalidArgumentsException(f"unknown value for format '{format}', should be one of 'parquet', 'csv'")

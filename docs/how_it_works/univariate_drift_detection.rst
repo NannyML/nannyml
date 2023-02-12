@@ -33,10 +33,16 @@ The `Kolmogorov-Smirnov Test`_ is a two-sample, non-parametric statistical test.
 one-dimensional continuous distributions. The test outputs the test statistic, called D-statistic, and an associated p-value.
 The test statistic is the maximum distance of the cumulative distribution functions (CDF) of the two samples.
 
+NannyML calculates drift performing two sample set comparisons. One sample is usually the reference data while the other comes from the data of the chunk we are calculating drift for.
+It can calculate the KS test with two methods, depending on the user's ability to store the reference data. The first approach stores 
+and uses the reference data as-is, while the second splits the continuous feature into quantile bins and uses the bin edges and frequencies for the calculation.
+By default, NannyML employs the first method if the reference data has fewer than 10,000 rows, unless otherwise specified.
+
 The D-statistic is robust to small changes in the data, easy to interpret and falls into  0-1 range.
 This makes the Kolmogorov-Smirnov test a popular choice for many data distribution monitoring
 practitioners. You can see on the image below how the value of D-statistic changes with the change of data
 distribution to build some intuition on it's behavior.
+
 
 .. image:: ../_static/how-it-works-ks.svg
     :width: 1400pt
@@ -76,17 +82,23 @@ The new bins relative frequency for the reference sample is set to 0.
 The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
 used to calculate the Jensen-Shannon Distance.
 
-Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
-(PDF). This makes it more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
+..
+    Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
+    (PDF). This makes it more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
+
+The figure below shows a visual representation of how the Jensen-Shannon Distance is calculated. The
+area of the shaded region is the Jensen-Shannon Divergence which can be calculated using the formula above.
+Taking the square root of this value gives us the Jensen-Shannon Distance.
 
 .. image:: ../_static/how-it-works-js.svg
     :width: 1400pt
 
-In the two rows we see two different changes been induced to the reference dataset.
-We can see from the cumulative density functions on the right that the resulting KS distance is the same.
-On the left we see the probability density functions of the samples and the resulting Jensen-Shannon Divergence
-at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
-see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
+..
+    In the two rows we see two different changes been induced to the reference dataset.
+    We can see from the cumulative density functions on the right that the resulting KS distance is the same.
+    On the left we see the probability density functions of the samples and the resulting Jensen-Shannon Divergence
+    at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
+    see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
 
 
 .. _univariate-drift-detection-cont-wasserstein:
@@ -116,9 +128,10 @@ Wasserstein distance between the two distributions is given by:
 .. math::
     W_1\left(X_i^{P},X_i^{Q}\right) = \int_\mathbb{R}\left|\hat{F}_{P}(x)-\hat{F}_{Q}(x)\right|dx
 
-As mentioned, NannyML calculates drift performing two sample set comparisons. One sample is usually the whole reference data
-while the other comes from the data of the chunk we are calculating drift for. Hence we can view :math:`P,Q` as
-the reference sample and the chunk sample.
+NannyML calculates drift performing two sample set comparisons. One sample is usually the reference data while the other comes from the data of the chunk we are calculating drift for.
+It can calculate the Wasserstein Distance with two methods, depending on the user's ability to store the reference data. The first approach stores 
+and uses the reference data as-is, while the second splits the continuous feature into equal-width based bins and uses the bin edges and frequencies for the calculation.
+By default, NannyML employs the first method if the reference data has fewer than 10,000 rows, unless otherwise specified. 
 
 .. _univariate-drift-detection-cont-hellinger:
 

@@ -5,19 +5,23 @@
 """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 from __future__ import annotations
 
-import copy
+from collections import namedtuple
 from typing import List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml.base import AbstractCalculatorResult
+from nannyml._typing import Key
+from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metric
 from nannyml.usage_logging import UsageEvent, log_usage
 
+Metric = namedtuple("Metric", "display_name column_name")
 
-class Result(AbstractCalculatorResult):
+
+class Result(Abstract1DResult, ResultCompareMixin):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
     def __init__(
@@ -28,28 +32,16 @@ class Result(AbstractCalculatorResult):
         continuous_column_names: List[str],
         timestamp_column_name: Optional[str] = None,
     ):
-        super().__init__(results_data)
+        metric = Metric(display_name='Reconstruction error', column_name='reconstruction_error')
+        super().__init__(results_data, [metric])
 
         self.column_names = column_names
         self.categorical_column_names = categorical_column_names
         self.continuous_column_names = continuous_column_names
         self.timestamp_column_name = timestamp_column_name
-        self.metrics = ['reconstruction_error']
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
-        if metrics is None:
-            metrics = self.metrics
-
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
-
-        if period != 'all':
-            data = data.loc[data[('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-        result = copy.deepcopy(self)
-        result.data = data
-
-        return result
+    def keys(self) -> List[Key]:
+        return [Key(properties=('reconstruction_error',), display_names=('Reconstruction error',))]
 
     @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', *args, **kwargs) -> Optional[go.Figure]:

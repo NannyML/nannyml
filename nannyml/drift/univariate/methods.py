@@ -13,7 +13,7 @@ from typing import Callable, Dict, Optional
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
-from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
+from scipy.stats import chi2_contingency, ks_2samp, kstwo, wasserstein_distance
 
 from nannyml.base import _column_is_categorical
 from nannyml.chunk import Chunker
@@ -28,6 +28,7 @@ class Method(abc.ABC):
         display_name: str,
         column_name: str,
         chunker: Optional[Chunker] = None,
+        calculation_method: Optional[str] = None,
         upper_threshold: Optional[float] = None,
         lower_threshold: Optional[float] = None,
         upper_threshold_limit: Optional[float] = None,
@@ -54,23 +55,25 @@ class Method(abc.ABC):
         self.lower_threshold: Optional[float] = lower_threshold
         self.lower_threshold_limit: Optional[float] = lower_threshold_limit
         self.upper_threshold_limit: Optional[float] = upper_threshold_limit
-
+        self.calculation_method: Optional[str] = calculation_method
         self.chunker: Optional[Chunker] = chunker
 
-    def fit(self, reference_data: pd.Series) -> Method:
+    def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         """Fits a Method on reference data.
 
         Parameters
         ----------
         reference_data: pd.DataFrame
             The reference data used for fitting a Method. Must have target data available.
+        timestamps: Optional[pd.Series], default=None
+            A series containing the reference data Timestamps
 
         """
-        self._fit(reference_data)
+        self._fit(reference_data, timestamps)
 
         return self
 
-    def _fit(self, reference_data: pd.Series) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _fit method"
         )
@@ -225,7 +228,7 @@ class JensenShannonDistance(Method):
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
 
-    def _fit(self, reference_data: pd.Series):
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
@@ -299,19 +302,48 @@ class KolmogorovSmirnovStatistic(Method):
         )
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
+        self._reference_size: float
+        self._qts: np.ndarray
+        self._ref_rel_freqs: Optional[np.ndarray] = None
+        self._fitted = False
 
-    def _fit(self, reference_data: pd.Series) -> Method:
-        self._reference_data = reference_data
+    def _fit(
+        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
+    ) -> Method:
+        if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
+            self._reference_data = reference_data
+        else:
+            if bins is None:
+                bins = len(reference_data) // 500
+            quantile_range = np.arange(0, 1 + 1 / bins, 1 / bins)
+            quantile_edges = np.quantile(reference_data, quantile_range)
+            reference_proba_in_qts, self._qts = np.histogram(reference_data, quantile_edges)
+            ref_rel_freqs = reference_proba_in_qts / len(reference_data)
+            self._ref_rel_freqs = np.cumsum(ref_rel_freqs)
+        self._reference_size = len(reference_data)
+        self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if self._reference_data is None:
+        if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
+        if (
+            self.calculation_method == 'auto' and self._reference_size >= 10_000
+        ) or self.calculation_method == 'estimated':
+            m, n = sorted([float(self._reference_size), float(len(data))], reverse=True)
+            en = m * n / (m + n)
+            chunk_proba_in_qts, _ = np.histogram(data, self._qts)
+            chunk_rel_freqs = chunk_proba_in_qts / len(data)
+            rel_freq_lower_than_edges = len(data[data < self._qts[0]]) / len(data)
+            chunk_rel_freqs = rel_freq_lower_than_edges + np.cumsum(chunk_rel_freqs)
+            stat = np.max(abs(self._ref_rel_freqs - chunk_rel_freqs))
+            prob = kstwo.sf(stat, np.round(en))
+            self._p_value = np.clip(prob, 0, 1)
+        else:
+            stat, self._p_value = ks_2samp(self._reference_data, data)
 
-        stat, p_value = ks_2samp(self._reference_data, data)
-        self._p_value = p_value
         return stat
 
     def _alert(self, data: pd.Series):
@@ -339,22 +371,24 @@ class Chi2Statistic(Method):
             lower_threshold=None,  # setting this to `None` so we don't plot the threshold (p-value based)
             **kwargs,
         )
-        self._reference_data: Optional[pd.Series] = None
+        self._reference_data_vcs: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
+        self._fitted = False
 
-    def _fit(self, reference_data: pd.Series) -> Method:
-        self._reference_data = reference_data
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+        self._reference_data_vcs = reference_data.value_counts()
+        self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
-        if self._reference_data is None:
+        if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
 
         stat, p_value, _, _ = chi2_contingency(
             pd.concat(
-                [self._reference_data.value_counts(), data.value_counts()],  # type: ignore
+                [self._reference_data_vcs, data.value_counts()],  # type: ignore
                 axis=1,
             ).fillna(0)
         )
@@ -393,7 +427,7 @@ class LInfinityDistance(Method):
         self.upper_threshold = 0.1
         self._reference_proba: Optional[dict] = None
 
-    def _fit(self, reference_data: pd.Series) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         ref_labels = reference_data.unique()
         self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
         return self
@@ -438,43 +472,94 @@ class WassersteinDistance(Method):
 
         self._reference_data: Optional[pd.Series] = None
         self._p_value: Optional[float] = None
+        self._reference_size: float
+        self._bin_width: float
+        self._bin_edges: Optional[np.ndarray] = None
+        self._ref_rel_freqs: Optional[np.ndarray] = None
+        self._fitted = False
 
-    def _fit(self, reference_data: pd.Series) -> Method:
-        self._reference_data = reference_data
+    def _fit(
+        self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
+    ) -> Method:
+        if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
+            self._reference_data = reference_data
+        else:
+            if bins is None:
+                bins = len(reference_data) // 500
+            reference_proba_in_bins, self._bin_edges = np.histogram(reference_data, bins=bins)
+            self._ref_rel_freqs = reference_proba_in_bins / len(reference_data)
+            self._bin_width = self._bin_edges[1] - self._bin_edges[0]
+
+        self._fitted = True
+        self.lower_threshold = 0
+        self._reference_size = len(reference_data)
 
         if self.chunker is None:
             self.upper_threshold = 1
         else:
-            # TODO: review abstract class => chunker needs timestamp column
-            # Hotfixing by removing/re-adding it
-            chunker_timestamp_col = self.chunker.timestamp_column_name
-            self.chunker.timestamp_column_name = None
-            ref_chunk_distances = [
-                self._calculate(
-                    chunk.data.values.reshape(
-                        -1,
-                    )
-                )
-                for chunk in self.chunker.split(pd.DataFrame(reference_data))
-            ]
-            self.chunker.timestamp_column_name = chunker_timestamp_col
-            self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
+            # when a timestamp column is known we have to include it for chunking
+            if timestamps is not None:
+                data = pd.concat([reference_data, timestamps], axis=1)
+            else:
+                data = reference_data.to_frame()
 
-        self.lower_threshold = 0
+            ref_chunk_distances = [
+                self._calculate(chunk.data[reference_data.name].values.reshape(-1))
+                for chunk in self.chunker.split(data)
+            ]
+            self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
 
         return self
 
     def _calculate(self, data: pd.Series):
-        if self._reference_data is None:
+        if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
+        if (
+            self.calculation_method == 'auto' and self._reference_size >= 10_000
+        ) or self.calculation_method == 'estimated':
+            min_chunk = np.min(data)
 
-        # reshape data to be a 1d array
-        # data = data.values.reshape(-1,)
+            assert self._bin_edges is not None
+            if min_chunk < self._bin_edges[0]:
+                extra_bins_left = (min_chunk - self._bin_edges[0]) / self._bin_width
+                extra_bins_left = np.ceil(extra_bins_left)
+            else:
+                extra_bins_left = 0
 
-        distance = wasserstein_distance(self._reference_data, data)
-        self._p_value = None
+            max_chunk = np.max(data)
+
+            if max_chunk > self._bin_edges[-1]:
+                extra_bins_right = (max_chunk - self._bin_edges[-1]) / self._bin_width
+                extra_bins_right = np.ceil(extra_bins_right)
+            else:
+                extra_bins_right = 0
+
+            left_edges_to_prepand = np.arange(
+                min_chunk - self._bin_width, self._bin_edges[0] - self._bin_width, self._bin_width
+            )
+            right_edges_to_append = np.arange(
+                self._bin_edges[-1] + self._bin_width, max_chunk + self._bin_width, self._bin_width
+            )
+
+            updated_edges = np.concatenate([left_edges_to_prepand, self._bin_edges, right_edges_to_append])
+            updated_ref_binned_pdf = np.concatenate(
+                [np.zeros(len(left_edges_to_prepand)), self._ref_rel_freqs, np.zeros(len(right_edges_to_append))]
+            )
+
+            chunk_histogram, _ = np.histogram(data, bins=updated_edges)
+
+            chunk_binned_pdf = chunk_histogram / len(data)
+
+            ref_binned_cdf = np.cumsum(updated_ref_binned_pdf)
+            chunk_binned_cdf = np.cumsum(chunk_binned_pdf)
+
+            distance = np.sum(np.abs(ref_binned_cdf - chunk_binned_cdf) * self._bin_width)
+            self._p_value = None
+        else:
+            distance = wasserstein_distance(self._reference_data, data)
+            self._p_value = None
 
         return distance
 
@@ -503,7 +588,7 @@ class HellingerDistance(Method):
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
 
-    def _fit(self, reference_data: pd.Series):
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:

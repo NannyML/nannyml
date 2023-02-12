@@ -15,7 +15,6 @@ Use the library to:
 __author__ = """Niels Nuyttens"""
 __email__ = 'niels@nannyml.com'
 
-
 # PEP0440 compatible formatted version, see:
 # https://www.python.org/dev/peps/pep-0440/
 #
@@ -32,7 +31,7 @@ __email__ = 'niels@nannyml.com'
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.8.1'
+__version__ = '0.8.3'
 
 import logging
 
@@ -56,3 +55,5 @@ from .usage_logging import UsageEvent, disable_usage_logging, enable_usage_loggi
 
 # read any .env files to import environment variables
 load_dotenv()
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())

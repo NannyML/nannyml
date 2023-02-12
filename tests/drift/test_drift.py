@@ -10,13 +10,16 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml.base import AbstractCalculator, AbstractCalculatorResult
+from nannyml._typing import Key, Result
+from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import CBPE
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
@@ -114,14 +117,29 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     return data
 
 
-class SimpleDriftResult(AbstractCalculatorResult):
+@pytest.fixture(scope="module")
+def univariate_drift_result(sample_drift_data) -> Result:
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        categorical_methods=['chi2', 'jensen_shannon'],
+    ).fit(ref_data)
+    return calc.calculate(data=sample_drift_data)
+
+
+class SimpleDriftResult(Abstract1DResult):
     """Dummy DriftResult implementation."""
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         """Fake plot."""
         return plotly.graph_objects.Figure()
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractCalculatorResult:
+    def keys(self) -> List[Key]:
+        return []
+
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return self
 
 
@@ -131,7 +149,7 @@ class SimpleDriftCalculator(AbstractCalculator):
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):  # noqa: D102
         return self
 
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> SimpleDriftResult:  # noqa: D102
+    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:  # noqa: D102
         return SimpleDriftResult(results_data=data, calculator=self)
 
 
@@ -150,7 +168,7 @@ def test_base_drift_calculator_uses_count_based_chunker_when_given_chunk_number(
 
 
 def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period(sample_drift_data):  # noqa: D103
-    calc = SimpleDriftCalculator(chunk_period='W')
+    calc = SimpleDriftCalculator(chunk_period='W', timestamp_column_name='timestamp')
     assert isinstance(calc.chunker, PeriodBasedChunker)
     assert calc.chunker.offset == 'W'
 
@@ -158,6 +176,49 @@ def test_base_drift_calculator_uses_period_based_chunker_when_given_chunk_period
 def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(sample_drift_data):  # noqa: D103
     calc = SimpleDriftCalculator()
     assert isinstance(calc.chunker, DefaultChunker)
+
+
+@pytest.mark.parametrize('column_names, expected', [('f1', ['f1']), (['f1', 'f2'], ['f1', 'f2'])])
+def test_univariate_drift_calculator_create_with_single_or_list_of_column_names(column_names, expected):
+    calc = UnivariateDriftCalculator(
+        column_names=column_names,
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+    )
+    assert calc.column_names == expected
+
+
+@pytest.mark.parametrize(
+    'continuous_methods, expected',
+    [
+        ('wasserstein', ['wasserstein']),
+        (['wasserstein', 'jensen_shannon'], ['wasserstein', 'jensen_shannon']),
+        (None, ['jensen_shannon']),
+    ],
+)
+def test_univariate_drift_calculator_create_with_single_or_list_of_continuous_methods(continuous_methods, expected):
+    calc = UnivariateDriftCalculator(
+        column_names=['f1'],
+        timestamp_column_name='timestamp',
+        continuous_methods=continuous_methods,
+        categorical_methods=['chi2'],
+    )
+    assert calc.continuous_method_names == expected
+
+
+@pytest.mark.parametrize(
+    'categorical_methods, expected',
+    [('chi2', ['chi2']), (['chi2', 'jensen_shannon'], ['chi2', 'jensen_shannon']), (None, ['jensen_shannon'])],
+)
+def test_univariate_drift_calculator_create_with_single_or_list_of_categorical_methods(categorical_methods, expected):
+    calc = UnivariateDriftCalculator(
+        column_names=['f1'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=categorical_methods,
+    )
+    assert calc.categorical_method_names == expected
 
 
 @pytest.mark.parametrize(
@@ -239,6 +300,7 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
         timestamp_column_name='timestamp',
         continuous_methods=['kolmogorov_smirnov'],
         categorical_methods=['chi2'],
+        calculation_method='exact',
     ).fit(ref_data)
     results = calc.calculate(data=analysis_data)
 
@@ -250,58 +312,58 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
     [
         (
             {'chunk_size': 5000},
-            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.24206810631229236],
+            [0.004000, 0.003800, 0.009800, 0.239922],
         ),
         (
             {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
-            [0.005067460317460304, 0.004932539682539705, 0.01185952380952382, 0.24206810631229236],
+            [0.004000, 0.003800, 0.009800, 0.239922],
         ),
         (
             {'chunk_number': 5},
-            [0.008829365079365048, 0.007886904761904734, 0.015178571428571375, 0.06502976190476184, 0.2535218253968254],
+            [0.007937, 0.006597, 0.010069, 0.062946, 0.250198],
         ),
         (
             {'chunk_number': 5, 'timestamp_column_name': 'timestamp'},
-            [0.008829365079365048, 0.007886904761904734, 0.015178571428571375, 0.06502976190476184, 0.2535218253968254],
+            [0.007937, 0.006597, 0.010069, 0.062946, 0.250198],
         ),
         (
             {'chunk_period': 'M', 'timestamp_column_name': 'timestamp'},
             [
-                0.007646520146520119,
-                0.008035714285714257,
-                0.009456605222734282,
-                0.09057539682539684,
-                0.25612599206349207,
+                0.005609,
+                0.006418,
+                0.007034,
+                0.088657,
+                0.253356,
             ],
         ),
         (
             {},
             [
-                0.011011904761904723,
-                0.01736111111111116,
-                0.015773809523809523,
-                0.011011904761904723,
-                0.016865079365079305,
-                0.01468253968253963,
-                0.018650793650793696,
-                0.11398809523809528,
-                0.25496031746031744,
-                0.2530753968253968,
+                0.006845,
+                0.015774,
+                0.014286,
+                0.008234,
+                0.013889,
+                0.010417,
+                0.016766,
+                0.110813,
+                0.249306,
+                0.251190,
             ],
         ),
         (
             {'timestamp_column_name': 'timestamp'},
             [
-                0.011011904761904723,
-                0.01736111111111116,
-                0.015773809523809523,
-                0.011011904761904723,
-                0.016865079365079305,
-                0.01468253968253963,
-                0.018650793650793696,
-                0.11398809523809528,
-                0.25496031746031744,
-                0.2530753968253968,
+                0.006845,
+                0.015774,
+                0.014286,
+                0.008234,
+                0.013889,
+                0.010417,
+                0.016766,
+                0.110813,
+                0.249306,
+                0.251190,
             ],
         ),
     ],
@@ -323,15 +385,15 @@ def test_univariate_statistical_drift_calculator_works_with_chunker(
         column_names=['f1', 'f2', 'f3', 'f4'],
         continuous_methods=['kolmogorov_smirnov'],
         categorical_methods=['chi2'],
+        calculation_method='estimated',
         **calculator_opts,
     ).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
-
-    assert all(sut[('f1', 'kolmogorov_smirnov', 'value')] == expected)
+    result = calc.calculate(data=sample_drift_data).filter(period='analysis').data
+    sut = result[('f1', 'kolmogorov_smirnov', 'value')].to_list()
+    assert all(np.round(sut, 6) == expected)
 
 
 def test_statistical_drift_calculator_raises_type_error_when_features_missing():  # noqa: D103
-
     with pytest.raises(TypeError, match='column_names'):
         UnivariateDriftCalculator(timestamp_column_name='timestamp')
 
@@ -381,6 +443,105 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
 
     assert 'f2' not in sut
     assert 'f4' not in sut
+
+
+# See https://github.com/NannyML/nannyml/issues/192
+def test_univariate_drift_calculator_returns_distinct_but_consistent_results_when_reused(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    sut = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+    )
+    sut.fit(ref_data)
+    result1 = sut.calculate(data=sample_drift_data)
+    result2 = sut.calculate(data=sample_drift_data)
+
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_univariate_drift_result_extension_attributes_should_be_in_place(univariate_drift_result):
+    # Data model is set up so f1, f2 are continuous and f3, f4 are categorical
+    assert univariate_drift_result.continuous_column_names == ['f1', 'f2']
+    assert univariate_drift_result.categorical_column_names == ['f3', 'f4']
+    assert univariate_drift_result.timestamp_column_name == 'timestamp'
+    assert univariate_drift_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert univariate_drift_result.categorical_method_names == ['chi2', 'jensen_shannon']
+    assert [m.column_name for m in univariate_drift_result.continuous_methods] == [
+        'kolmogorov_smirnov',
+        'jensen_shannon',
+    ]
+    assert [m.column_name for m in univariate_drift_result.categorical_methods] == ['chi2', 'jensen_shannon']
+    assert sorted(m.column_name for m in univariate_drift_result.methods) == sorted(
+        ('chi2', 'kolmogorov_smirnov', 'jensen_shannon', 'jensen_shannon')
+    )
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_univariate_drift_result_filter_should_preserve_data_with_default_args(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter()
+    pd.testing.assert_frame_equal(filtered_result.data, univariate_drift_result.data, check_like=True)
+    assert filtered_result.continuous_column_names == univariate_drift_result.continuous_column_names
+    assert filtered_result.categorical_column_names == univariate_drift_result.categorical_column_names
+    assert filtered_result.timestamp_column_name == univariate_drift_result.timestamp_column_name
+    assert filtered_result.continuous_method_names == univariate_drift_result.continuous_method_names
+    assert filtered_result.categorical_method_names == univariate_drift_result.categorical_method_names
+    assert filtered_result.continuous_methods == univariate_drift_result.continuous_methods
+    assert filtered_result.categorical_methods == univariate_drift_result.categorical_methods
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_unvariate_drift_result_filter_metrics(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter(methods=['chi2'])
+    metrics = tuple(set(metric for (_, metric, _) in filtered_result.data.columns if metric != 'chunk'))
+    assert metrics == ('chi2',)
+    assert filtered_result.data.shape[0] == univariate_drift_result.data.shape[0]
+
+    assert filtered_result.continuous_column_names == []
+    assert filtered_result.categorical_column_names == ['f3', 'f4']
+    assert filtered_result.continuous_method_names == []
+    assert filtered_result.categorical_method_names == ['chi2']
+    assert [m.column_name for m in filtered_result.continuous_methods] == []
+    assert [m.column_name for m in filtered_result.categorical_methods] == ['chi2']
+    assert sorted(m.column_name for m in filtered_result.methods) == ['chi2']
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_unvariate_drift_result_filter_column_names(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter(column_names=['f1', 'f2'])
+    columns = tuple(sorted(set(column for (column, _, _) in filtered_result.data.columns if column != 'chunk')))
+    assert columns == ('f1', 'f2')
+    assert filtered_result.data.shape[0] == univariate_drift_result.data.shape[0]
+
+    assert filtered_result.continuous_column_names == ['f1', 'f2']
+    assert filtered_result.categorical_column_names == []
+    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert filtered_result.categorical_method_names == []
+    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.categorical_methods] == []
+    assert sorted(m.column_name for m in filtered_result.methods) == sorted(('kolmogorov_smirnov', 'jensen_shannon'))
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_univariate_drift_result_filter_period(univariate_drift_result):
+    filtered_result = univariate_drift_result.filter(period='reference')
+    ref_period = univariate_drift_result.data.loc[
+        univariate_drift_result.data.loc[:, ('chunk', 'chunk', 'period')] == 'reference', :
+    ]
+    pd.testing.assert_frame_equal(filtered_result.data, ref_period, check_like=True)
+
+    assert filtered_result.continuous_column_names == ['f1', 'f2']
+    assert filtered_result.categorical_column_names == ['f3', 'f4']
+    assert filtered_result.continuous_method_names == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert filtered_result.categorical_method_names == ['chi2', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.continuous_methods] == ['kolmogorov_smirnov', 'jensen_shannon']
+    assert [m.column_name for m in filtered_result.categorical_methods] == ['chi2', 'jensen_shannon']
+    assert sorted(m.column_name for m in filtered_result.methods) == sorted(
+        ('chi2', 'kolmogorov_smirnov', 'jensen_shannon', 'jensen_shannon')
+    )
 
 
 @pytest.mark.parametrize(
@@ -491,3 +652,54 @@ def test_repeat_calculation_results_return_only_latest_calculation_results(sampl
     assert len(res2) == 1
     assert res2.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[2].start_datetime
     assert res2.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[2].end_datetime
+
+
+def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    result = calc.calculate(ana_data)
+
+    calc2 = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        timestamp_column_name='timestamp',
+        calculation_method='auto',
+    ).fit(ref_data)
+    result2 = calc2.calculate(ana_data)
+
+    try:
+        _ = result.compare(result2).plot()
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        timestamp_column_name='timestamp',
+        calculation_method='auto',
+    ).fit(ref_data)
+    result = calc.calculate(ana_data)
+
+    calc2 = CBPE(
+        timestamp_column_name='timestamp',
+        y_pred_proba='y_pred_proba',
+        y_pred='output',
+        y_true='actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    ).fit(ref_data)
+    result2 = calc2.estimate(ana_data)
+
+    try:
+        _ = result.compare(result2).plot()
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")

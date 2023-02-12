@@ -18,6 +18,7 @@ from nannyml.cli.cli import cli
 from nannyml.config import Config
 from nannyml.exceptions import InvalidArgumentsException, IOException
 from nannyml.io import DEFAULT_WRITER, FileReader, WriterFactory
+from nannyml.io.store import FilesystemStore
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -102,6 +103,14 @@ def run(ctx, ignore_errors: bool):
 
         problem_type = ProblemType.parse(config.problem_type)
 
+        store = None
+        if config.store:
+            if config.store.file:
+                store = FilesystemStore(
+                    root_path=config.store.file.path,
+                    credentials=config.store.file.credentials if 'credentials' in config.store.file else {},
+                )
+
         runner.run(
             reference_data=reference,
             analysis_data=analysis,
@@ -111,6 +120,7 @@ def run(ctx, ignore_errors: bool):
             writer=writer,
             run_in_console=True,
             ignore_errors=_ignore_errors,
+            store=store,
         )
 
         if config.scheduling:
@@ -180,7 +190,7 @@ def _build_scheduling_trigger_args(config: Config) -> Dict[str, Any]:
     if config.scheduling.cron:
         return {'trigger': CronTrigger.from_crontab(config.scheduling.cron.crontab)}
     elif config.scheduling.interval:
-        if len(config.scheduling.interval.dict()) == 0:
+        if not config.scheduling.interval.dict():
             raise InvalidArgumentsException(
                 "found no values for the 'scheduling.interval' section. " "Provide at least one interval value."
             )

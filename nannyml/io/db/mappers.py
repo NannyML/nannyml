@@ -180,13 +180,13 @@ class ReconstructionErrorDriftResultMapper(Mapper):
                     [
                         ('chunk', 'start_date'),
                         ('chunk', 'end_date'),
-                        (metric, 'value'),
-                        (metric, 'upper_threshold'),
-                        (metric, 'lower_threshold'),
-                        (metric, 'alert'),
+                        (metric.column_name, 'value'),
+                        (metric.column_name, 'upper_threshold'),
+                        (metric.column_name, 'lower_threshold'),
+                        (metric.column_name, 'alert'),
                     ]
                 ]
-                .apply(lambda r: _parse(metric, *r), axis=1)
+                .apply(lambda r: _parse(metric.column_name, *r), axis=1)
                 .to_list()
             )
 
@@ -281,7 +281,7 @@ class CBPEMapper(Mapper):
 
         res: List[Metric] = []
 
-        for metric in [metric.column_name for metric in result.metrics]:
+        for metric in [component[1] for metric in result.metrics for component in metric.components]:
             res += (
                 result.filter(period='analysis')
                 .to_df()[

@@ -1,8 +1,4 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
-#  License: Apache Software License 2.0
-
-#  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
 
@@ -16,7 +12,6 @@ import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
 
-from nannyml._typing import ProblemType
 from nannyml.calibration import Calibrator, IsotonicCalibrator
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
@@ -53,6 +48,19 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
     )
     estimator.fit(reference)
     return estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
+
+
+@pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
+def test_cbpe_create_with_single_or_list_of_metrics(metrics, expected):
+    sut = CBPE(
+        timestamp_column_name='timestamp',
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=metrics,
+        problem_type='classification_binary',
+    )
+    assert [metric.name for metric in sut.metrics] == expected
 
 
 def test_cbpe_will_calibrate_scores_when_needed(binary_classification_data):  # noqa: D103
@@ -309,7 +317,7 @@ def test_cbpe_runs_for_all_metrics(binary_classification_data, metric):  # noqa:
             y_true='work_home_actual',
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
-            metrics=['roc_auc'],
+            metrics=[metric],
             problem_type='classification_binary',
         ).fit(reference)
         _ = estimator.estimate(pd.concat([reference, analysis]))
@@ -350,8 +358,13 @@ def reduce_confidence_bounds(monkeypatch, estimator, results):
 
     new_lower_bound = min_confidence + 0.001
     new_upper_bound = max_confidence - 0.001
-    monkeypatch.setattr(estimator, 'confidence_lower_bound', new_lower_bound)
-    monkeypatch.setattr(estimator, 'confidence_upper_bound', new_upper_bound)
+
+    for metric in estimator.metrics:
+        monkeypatch.setattr(metric, 'confidence_lower_bound', new_lower_bound)
+        monkeypatch.setattr(metric, 'confidence_upper_bound', new_upper_bound)
+
+    # monkeypatch.setattr(estimator, 'confidence_lower_bound', new_lower_bound)
+    # monkeypatch.setattr(estimator, 'confidence_upper_bound', new_upper_bound)
 
     return estimator, new_lower_bound, new_upper_bound
 
@@ -401,6 +414,24 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
     sut = results.filter(period='analysis').to_df()
     assert all(sut.loc[:, ('roc_auc', 'lower_confidence_boundary')] >= new_lower_bound)
     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
+
+
+def test_cpbe_result_filter_should_preserve_data_with_default_args(estimates):
+    filtered_result = estimates.filter()
+    assert filtered_result.data.equals(estimates.data)
+
+
+def test_cpbe_result_filter_metrics(estimates):
+    filtered_result = estimates.filter(metrics=["roc_auc"])
+    columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != "chunk"))
+    assert columns == ("roc_auc",)
+    assert filtered_result.data.shape[0] == estimates.data.shape[0]
+
+
+def test_cpbe_result_filter_period(estimates):
+    ref_period = estimates.data.loc[estimates.data.loc[:, ("chunk", "period")] == "reference", :]
+    filtered_result = estimates.filter(period="reference")
+    assert filtered_result.data.equals(ref_period)
 
 
 @pytest.mark.parametrize(
@@ -536,70 +567,23 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
     assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
 
 
-@pytest.mark.parametrize(
-    'estimator_args, plot_args',
-    [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
-        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
-        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
-    ],
-    ids=[
-        'performance_with_timestamp_without_reference',
-        'performance_without_timestamp_without_reference',
-        'performance_with_timestamp_with_reference',
-        'performance_without_timestamp_with_reference',
-    ],
-)
-def test_multiclass_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
-    est = CBPE(
-        y_true='y_true',
-        y_pred='y_pred',
-        y_pred_proba={
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-        },
-        problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
-        metrics=['roc_auc', 'f1'],
-    ).fit(reference)
-    sut = est.estimate(analysis)
+def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):
+    reference, analysis = binary_classification_data
 
-    try:
-        _ = sut.plot(**plot_args)
-    except Exception as exc:
-        pytest.fail(f"an unexpected exception occurred: {exc}")
-
-
-@pytest.mark.parametrize(
-    'estimator_args, plot_args',
-    [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
-        ({}, {'kind': 'performance', 'plot_reference': False, 'metric': 'f1'}),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
-        ({}, {'kind': 'performance', 'plot_reference': True, 'metric': 'f1'}),
-    ],
-    ids=[
-        'performance_with_timestamp_without_reference',
-        'performance_without_timestamp_without_reference',
-        'performance_with_timestamp_with_reference',
-        'performance_without_timestamp_with_reference',
-    ],
-)
-def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
-    est = CBPE(
+    sut = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
         y_true='work_home_actual',
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
-        problem_type=ProblemType.CLASSIFICATION_BINARY,
-        metrics=['roc_auc', 'f1'],
-        **estimator_args,
-    ).fit(reference)
-    sut = est.estimate(analysis)
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+    )
+    sut.fit(reference)
+    result1 = sut.estimate(analysis)
+    result2 = sut.estimate(analysis)
 
-    try:
-        _ = sut.plot(**plot_args)
-    except Exception as exc:
-        pytest.fail(f"an unexpected exception occurred: {exc}")
+    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
+    # modified on subsequent estimates.
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())

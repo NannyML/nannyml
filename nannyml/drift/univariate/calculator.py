@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 from pandas import MultiIndex
@@ -24,28 +24,29 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
     def __init__(
         self,
-        column_names: List[str],
+        column_names: Union[str, List[str]],
         timestamp_column_name: Optional[str] = None,
-        categorical_methods: Optional[List[str]] = None,
-        continuous_methods: Optional[List[str]] = None,
+        categorical_methods: Optional[Union[str, List[str]]] = None,
+        continuous_methods: Optional[Union[str, List[str]]] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
+        calculation_method: Optional[str] = None,
     ):
         """Creates a new UnivariateDriftCalculator instance.
 
         Parameters
         ----------
-        column_names: List[str]
-            A list containing the names of features in the provided data set.
+        column_names: Union[str, List[str]]
+            A string or list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
-        categorical_methods: List[str], default=['jensen_shannon']
-            A list of method names that will be performed on categorical columns.
-        continuous_methods: List[str], default=['jensen_shannon']
-            A list of method names that will be performed on continuous columns.
+        categorical_methods: Union[str, List[str]], default=['jensen_shannon']
+            A method name or list of method names that will be performed on categorical columns.
+        continuous_methods: Union[str, List[str]], default=['jensen_shannon']
+            A a method name list of method names that will be performed on continuous columns.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -57,6 +58,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+        calculation_method : str
+            The `calculation_method` used to measure the distance/statistic based on whether the exact or
+            the estimated reference data is used.
 
         Examples
         --------
@@ -76,12 +80,36 @@ class UnivariateDriftCalculator(AbstractCalculator):
         ...    res.plot(kind='drift', column_name=column_name, method=method).show()
         """
         super(UnivariateDriftCalculator, self).__init__(
-            chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
+            chunk_size,
+            chunk_number,
+            chunk_period,
+            chunker,
+            timestamp_column_name,
         )
-
+        if isinstance(column_names, str):
+            column_names = [column_names]
         self.column_names = column_names
-        self.continuous_method_names = continuous_methods or ['jensen_shannon']
-        self.categorical_method_names = categorical_methods or ['jensen_shannon']
+
+        if not continuous_methods:
+            continuous_methods = ['jensen_shannon']
+        elif isinstance(continuous_methods, str):
+            continuous_methods = [continuous_methods]
+        assert isinstance(continuous_methods, list)
+        self.continuous_method_names = continuous_methods
+
+        if not categorical_methods:
+            categorical_methods = ['jensen_shannon']
+        elif isinstance(categorical_methods, str):
+            categorical_methods = [categorical_methods]
+        assert isinstance(categorical_methods, list)
+        self.categorical_method_names: List[str] = categorical_methods
+
+        self.calculation_method: Optional[str] = None
+
+        if not calculation_method and any(elem in ['kolmogorov_smirnov', 'wasserstein'] for elem in continuous_methods):
+            self.calculation_method = 'auto'
+        else:
+            self.calculation_method = calculation_method
 
         self._column_to_models_mapping: Dict[str, List[Method]] = {column_name: [] for column_name in column_names}
 
@@ -107,8 +135,14 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         for column_name in self.continuous_column_names:
             self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(key=method, feature_type=FeatureType.CONTINUOUS, chunker=self.chunker).fit(
-                    reference_data[column_name]
+                MethodFactory.create(
+                    key=method,
+                    feature_type=FeatureType.CONTINUOUS,
+                    chunker=self.chunker,
+                    calculation_method=self.calculation_method,
+                ).fit(
+                    reference_data=reference_data[column_name],
+                    timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
                 )
                 for method in self.continuous_method_names
             ]
@@ -116,7 +150,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         for column_name in self.categorical_column_names:
             self._column_to_models_mapping[column_name] += [
                 MethodFactory.create(key=method, feature_type=FeatureType.CATEGORICAL, chunker=self.chunker).fit(
-                    reference_data[column_name]
+                    reference_data=reference_data[column_name],
+                    timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
                 )
                 for method in self.categorical_method_names
             ]
@@ -131,7 +166,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         return self
 
     @log_usage(
-        UsageEvent.UNIVAR_DRIFT_CALC_FIT, metadata_from_self=['continuous_method_names', 'categorical_method_names']
+        UsageEvent.UNIVAR_DRIFT_CALC_RUN, metadata_from_self=['continuous_method_names', 'categorical_method_names']
     )
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""

@@ -9,11 +9,14 @@ import pandas as pd
 import pytest
 from sklearn.impute import SimpleImputer
 
+from nannyml._typing import Result
 from nannyml.chunk import PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.multivariate.data_reconstruction.calculator import DataReconstructionDriftCalculator
+from nannyml.drift.univariate import UnivariateDriftCalculator
+from nannyml.performance_estimation.confidence_based import CBPE
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
@@ -109,6 +112,18 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     data.loc[data.id.isin(nan_pick2), 'f4'] = np.NaN
     data.drop(columns=['id'], inplace=True)
     return data
+
+
+@pytest.fixture(scope="module")
+def reconstruction_drift_result(sample_drift_data) -> Result:
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    calc = DataReconstructionDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        timestamp_column_name='timestamp',
+        n_components=0.75,
+        chunk_period='W',
+    ).fit(ref_data)
+    return calc.calculate(data=sample_drift_data)
 
 
 def test_data_reconstruction_drift_calculator_with_params_should_not_fail(sample_drift_data):  # noqa: D103
@@ -413,6 +428,48 @@ def test_data_reconstruction_drift_calculator_raises_type_error_when_missing_fea
         )
 
 
+# See https://github.com/NannyML/nannyml/issues/179
+def test_data_reconstruction_drift_lower_threshold_smaller_than_upper_threshold(sample_drift_data):  # noqa: D103
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+
+    calc = DataReconstructionDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp'
+    ).fit(ref_data)
+    results = calc.calculate(data=sample_drift_data)
+
+    results_df = results.to_df()
+    assert all(
+        results_df.loc[:, ('reconstruction_error', 'lower_threshold')]
+        <= results_df.loc[:, ('reconstruction_error', 'upper_threshold')]
+    )
+
+
+# See https://github.com/NannyML/nannyml/issues/192
+def test_data_reconstruction_drift_calculator_returns_distinct_but_consistent_results_when_reused(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    sut = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    result1 = sut.calculate(data=sample_drift_data)
+    result2 = sut.calculate(data=sample_drift_data)
+
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_data_reconstruction_drift_result_filter_should_preserve_data_with_default_args(reconstruction_drift_result):
+    filtered_result = reconstruction_drift_result.filter()
+    assert filtered_result.data.equals(reconstruction_drift_result.data)
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_data_reconstruction_drift_result_filter_period(reconstruction_drift_result):
+    ref_period = reconstruction_drift_result.data.loc[
+        reconstruction_drift_result.data.loc[:, ("chunk", "period")] == "reference", :
+    ]
+    filtered_result = reconstruction_drift_result.filter(period="reference")
+    assert filtered_result.data.equals(ref_period)
+
+
 def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
@@ -446,23 +503,72 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
 
 
 @pytest.mark.parametrize(
-    'calc_args, plot_args',
+    'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}),
-        ({}, {'kind': 'drift'}),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
+        ({}, {'kind': 'drift'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
+        ({}, {'kind': 'drift'}, 'all'),
     ],
     ids=[
         'drift_with_timestamp_without_reference',
         'drift_without_timestamp_without_reference',
+        'drift_with_timestamp_with_reference',
+        'drift_without_timestamp_with_reference',
     ],
 )
-def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args):  # noqa: D103
+def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args, period):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
     calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4'], **calc_args).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).filter(period='analysis')
+    sut = calc.calculate(data=ana_data).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_result_comparison_to_univariate_drift_plots_raise_no_exceptions(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    result = calc.calculate(ana_data)
+
+    calc2 = UnivariateDriftCalculator(
+        column_names=['f1', 'f3'],
+        continuous_methods=['kolmogorov_smirnov'],
+        categorical_methods=['chi2'],
+        timestamp_column_name='timestamp',
+    ).fit(ref_data)
+    result2 = calc2.calculate(ana_data)
+
+    try:
+        _ = result.compare(result2).plot()
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
+    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+
+    calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
+    result = calc.calculate(ana_data)
+
+    calc2 = CBPE(
+        timestamp_column_name='timestamp',
+        y_pred_proba='y_pred_proba',
+        y_pred='output',
+        y_true='actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    ).fit(ref_data)
+    result2 = calc2.estimate(ana_data)
+
+    try:
+        _ = result.compare(result2).plot()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")

@@ -322,6 +322,62 @@ This snippet shows how to setup the column mapping for the :ref:`dataset-synthet
         upmarket_card: y_pred_proba_upmarket_card
       y_true: y_true
 
+.. _cli_configuration_store:
+
+Store section
+*****************
+
+This section lets you set up a :class:`~nannyml.io.store.file_store.FilesystemStore` for caching purposes.
+
+When a :class:`~nannyml.io.store.file_store.FilesystemStore` is configured it will be used to store and load fitted
+calculators during the run. NannyML will use the store to try to load pre-fitted calculators. If none can be found
+a new calculator will be created, fitted and persisted using the store.
+The next time NannyML is run using the same configuration file it will find the stored calculator and use it subsequently.
+
+Check out the :ref:`tutorial on storing and loading calculators<storing_and_loading_calculators>` to learn more.
+
+This snippet shows how to setup the store in configuration using the local filesystem:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: /out/nml-cache/calculators
+
+This snippet shows how use S3:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: s3://my-bucket/nml/cache/
+        credentials:
+          client_kwargs:
+            aws_access_key_id: '<ACCESS_KEY_ID>'
+            aws_secret_access_key: '<SECRET_ACCESS_KEY>'
+
+This snippet shows how to use Google Cloud Storage:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: gs://my-bucket/nml/cache/
+        credentials:
+            token: service-account-access-key.json
+
+This snippet shows how to use Azure Blob Storage:
+
+.. code-block:: yaml
+
+    store:
+      file:
+        path: abfs://my-bucket/nml/cache/
+        credentials:
+            account_name: '<ACCOUNT_NAME>'
+            account_key: '<ACCOUNT_KEY>'
+
+
 Chunker section
 *****************
 
@@ -430,8 +486,9 @@ for the :ref:`dataset-synthetic-binary`. All data is read and written to the loc
         path: data/synthetic_sample_analysis.csv
 
     output:
-      path: out/
-      format: parquet
+      raw_files:
+        path: out/
+        format: parquet
 
     column_mapping:
       features:
@@ -484,12 +541,13 @@ The results are written to another S3 bucket, also using a templated path.
             aws_secret_access_key: 'DATA_SECRET_ACCESS_KEY'
 
     output:
-      path: s3://nml-results/{{year}}/{{month}}/{{day}}
-      format: parquet
-      credentials:  # different credentials
-          client_kwargs:
-            aws_access_key_id: 'RESULTS_ACCESS_KEY_ID'
-            aws_secret_access_key: 'RESULTS_SECRET_ACCESS_KEY'
+      raw_files:
+        path: s3://nml-results/{{year}}/{{month}}/{{day}}
+        format: parquet
+        credentials:  # different credentials
+            client_kwargs:
+              aws_access_key_id: 'RESULTS_ACCESS_KEY_ID'
+              aws_secret_access_key: 'RESULTS_SECRET_ACCESS_KEY'
 
     chunker:
       chunk_size: 5000

@@ -8,17 +8,20 @@ import pandas as pd
 import plotly.graph_objects
 import pytest
 
-from nannyml._typing import ProblemType
-from nannyml.base import AbstractEstimator, AbstractEstimatorResult
+from nannyml._typing import Key, ProblemType, Result
+from nannyml.base import Abstract1DResult, AbstractEstimator
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation import DLE
 from nannyml.performance_estimation.direct_loss_estimation.metrics import MetricFactory
 
 
-class FakeEstimatorResult(AbstractEstimatorResult):
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+class FakeEstimatorResult(Abstract1DResult):
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         return self
+
+    def keys(self) -> List[Key]:
+        return []
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
         return plotly.graph_objects.Figure()
@@ -28,7 +31,7 @@ class FakeEstimator(AbstractEstimator):
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
         return self
 
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> AbstractEstimatorResult:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         return FakeEstimatorResult(pd.DataFrame())
 
 
@@ -65,7 +68,8 @@ def estimates(regression_data, direct_error_estimator):
     analysis = analysis[~(analysis['y_pred'] < 0)]
 
     direct_error_estimator.fit(reference)
-    return direct_error_estimator.estimate(analysis)
+    estimates = direct_error_estimator.estimate(analysis)
+    return estimates
 
 
 @pytest.fixture(scope='module')
@@ -128,6 +132,22 @@ def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DLE
 
     direct_error_estimator.fit(reference)
     return direct_error_estimator.estimate(analysis)
+
+
+@pytest.mark.parametrize(
+    'metrics, expected',
+    [('mae', ['mae']), (['mae', 'mape'], ['mae', 'mape']), (None, ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle'])],
+)
+def test_dle_create_with_single_or_list_of_metrics(regression_feature_columns, metrics, expected):
+    sut = DLE(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_true='y_true',
+        feature_column_names=regression_feature_columns,
+        chunk_size=5000,
+        metrics=metrics,
+    )
+    assert [metric.column_name for metric in sut.metrics] == expected
 
 
 def test_direct_error_estimator_does_not_tune_hyperparameters_by_default(regression_feature_columns):
@@ -223,6 +243,45 @@ def test_direct_error_estimation_yields_correct_results_for_metric_with_custom_h
 def test_result_plot_raises_invalid_args_exception_when_given_incorrect_kind(estimates):
     with pytest.raises(InvalidArgumentsException):
         _ = estimates.plot(kind='foo')
+
+
+# See https://github.com/NannyML/nannyml/issues/192
+def test_dle_returns_distinct_but_consistent_results_when_reused(regression_data, direct_error_estimator):
+    reference, analysis = regression_data
+
+    # Get rid of negative values for log based metrics
+    reference = reference[~(reference['y_pred'] < 0)]
+    analysis = analysis[~(analysis['y_pred'] < 0)]
+
+    direct_error_estimator.fit(reference)
+    estimate1 = direct_error_estimator.estimate(analysis)
+    estimate2 = direct_error_estimator.estimate(analysis)
+
+    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
+    # modified on subsequent estimates.
+    assert estimate1 is not estimate2
+    pd.testing.assert_frame_equal(estimate1.to_df(), estimate2.to_df())
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_dle_result_filter_should_preserve_data_with_default_args(estimates):
+    filtered_result = estimates.filter()
+    assert filtered_result.data.equals(estimates.data)
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_dle_result_filter_metrics(estimates):
+    filtered_result = estimates.filter(metrics=["mae"])
+    columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != "chunk"))
+    assert columns == ("mae",)
+    assert filtered_result.data.shape[0] == estimates.data.shape[0]
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_dle_result_filter_period(estimates):
+    ref_period = estimates.data.loc[estimates.data.loc[:, ("chunk", "period")] == "reference", :]
+    filtered_result = estimates.filter(period="reference")
+    assert filtered_result.data.equals(ref_period)
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])

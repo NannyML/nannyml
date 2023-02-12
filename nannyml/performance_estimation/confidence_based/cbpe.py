@@ -3,17 +3,20 @@
 #  License: Apache Software License 2.0
 
 """Implementation of the CBPE estimator."""
-import copy
-from abc import abstractmethod
-from typing import Dict, List, Optional, Tuple, Union
+from __future__ import annotations
 
+import copy
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 import pandas as pd
 from pandas import MultiIndex
+from sklearn.preprocessing import label_binarize
 
-from nannyml._typing import ModelOutputsType, ProblemType
-from nannyml.base import AbstractEstimator
-from nannyml.calibration import Calibrator, CalibratorFactory
-from nannyml.chunk import Chunker
+from nannyml._typing import ModelOutputsType, ProblemType, model_output_column_names
+from nannyml.base import AbstractEstimator, _list_missing
+from nannyml.calibration import Calibrator, CalibratorFactory, NoopCalibrator, needs_calibration
+from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
@@ -23,24 +26,24 @@ from nannyml.usage_logging import UsageEvent, log_usage
 class CBPE(AbstractEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
 
-    def __new__(cls, y_pred_proba: ModelOutputsType, problem_type: Union[str, ProblemType], *args, **kwargs):
-        """Creates a new CBPE subclass instance based on the type of the provided ``model_metadata``."""
-        from ._cbpe_binary_classification import _BinaryClassificationCBPE
-        from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
-
-        if isinstance(problem_type, str):
-            problem_type = ProblemType.parse(problem_type)
-
-        if problem_type is ProblemType.CLASSIFICATION_BINARY:
-            return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
-        elif problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
-            return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
-        else:
-            raise NotImplementedError
+    # def __new__(cls, y_pred_proba: ModelOutputsType, problem_type: Union[str, ProblemType], *args, **kwargs):
+    #     """Creates a new CBPE subclass instance based on the type of the provided ``model_metadata``."""
+    #     from ._cbpe_binary_classification import _BinaryClassificationCBPE
+    #     from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
+    #
+    #     if isinstance(problem_type, str):
+    #         problem_type = ProblemType.parse(problem_type)
+    #
+    #     if problem_type is ProblemType.CLASSIFICATION_BINARY:
+    #         return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
+    #     elif problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
+    #         return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
+    #     else:
+    #         raise NotImplementedError
 
     def __init__(
         self,
-        metrics: List[str],
+        metrics: Union[str, List[str]],
         y_pred: str,
         y_pred_proba: ModelOutputsType,
         y_true: str,
@@ -53,6 +56,7 @@ class CBPE(AbstractEstimator):
         calibration: Optional[str] = None,
         calibration_bin_count: Optional[Union[int, str]] = None,
         calibrator: Optional[Calibrator] = None,
+        normalize_confusion_matrix: Optional[str] = None,
     ):
         """Initializes a new CBPE performance estimator.
 
@@ -69,8 +73,8 @@ class CBPE(AbstractEstimator):
             The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
-        metrics: List[str]
-            A list of metrics to calculate.
+        metrics: Union[str, List[str]]
+            A metric or list of metrics to calculate.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -95,6 +99,13 @@ class CBPE(AbstractEstimator):
         problem_type: Union[str, ProblemType]
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.
+        normalize_confusion_matrix: str, default=None
+            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
+            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
+            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
+            of observations. If 'true', the confusion matrix will be normalized by the total number of
+            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
+            total number of observations for each predicted class.
 
         Examples
         --------
@@ -134,11 +145,20 @@ class CBPE(AbstractEstimator):
                 f"Supported values are {SUPPORTED_METRIC_VALUES}."
             )
 
+        valid_normalizations = [None, 'all', 'pred', 'true']
+        if normalize_confusion_matrix not in valid_normalizations:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' given was '{normalize_confusion_matrix}'. "
+                f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
+            )
+
         if isinstance(problem_type, str):
             self.problem_type = ProblemType.parse(problem_type)
         else:
             self.problem_type = problem_type
 
+        if isinstance(metrics, str):
+            metrics = [metrics]
         self.metrics = [
             MetricFactory.create(
                 metric,
@@ -148,11 +168,13 @@ class CBPE(AbstractEstimator):
                 y_true=self.y_true,
                 timestamp_column_name=self.timestamp_column_name,
                 chunker=self.chunker,
+                normalize_confusion_matrix=normalize_confusion_matrix,
             )
             for metric in metrics
         ]
 
-        self._confidence_deviations: Dict[str, float] = {}
+        self.confidence_upper_bound = 1
+        self.confidence_lower_bound = 0
         self._alert_thresholds: Dict[str, Tuple[float, float]] = {}
         self.needs_calibration: bool = False
 
@@ -162,9 +184,15 @@ class CBPE(AbstractEstimator):
 
         if calibrator is None:
             calibrator = CalibratorFactory.create(calibration)
+
+        # Used in binary cases
+        # TODO: unify this with multiclass case (or remove from public interface)
         self.calibrator = calibrator
 
-        self.minimum_chunk_size: int = None  # type: ignore
+        # Used in multiclass cases
+        self._calibrators: Dict[str, Calibrator] = {}
+
+        self.result: Optional[Result] = None
 
     def __deepcopy__(self, memodict={}):
         cls = self.__class__
@@ -174,9 +202,8 @@ class CBPE(AbstractEstimator):
             setattr(result, k, copy.deepcopy(v, memodict))
         return result
 
-    @abstractmethod
     @log_usage(UsageEvent.CBPE_ESTIMATOR_FIT, metadata_from_self=['metrics', 'problem_type'])
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         """Fits the drift calculator using a set of reference data.
 
         Parameters
@@ -198,9 +225,13 @@ class CBPE(AbstractEstimator):
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
 
         """
-        pass
+        if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
+            return self._fit_binary(reference_data)
+        elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
+            return self._fit_multiclass(reference_data)
+        else:
+            raise InvalidArgumentsException('CBPE can only be used for binary or multiclass classification problems.')
 
-    @abstractmethod
     @log_usage(UsageEvent.CBPE_ESTIMATOR_RUN, metadata_from_self=['metrics', 'problem_type'])
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates the data reconstruction drift for a given data set.
@@ -227,10 +258,139 @@ class CBPE(AbstractEstimator):
         >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
         >>> estimates = estimator.estimate(data)
         """
-        pass
+        if data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
+            _list_missing([self.y_pred, self.y_pred_proba], data)
+
+            # We need uncalibrated data to calculate the realized performance on.
+            # https://github.com/NannyML/nannyml/issues/98
+            data[f'uncalibrated_{self.y_pred_proba}'] = data[self.y_pred_proba]
+
+            assert isinstance(self.y_pred_proba, str)
+            if self.needs_calibration:
+                data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])
+        else:
+            _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
+
+            # We need uncalibrated data to calculate the realized performance on.
+            # https://github.com/NannyML/nannyml/issues/98
+            for class_proba in model_output_column_names(self.y_pred_proba):
+                data[f'uncalibrated_{class_proba}'] = data[class_proba]
+
+            assert isinstance(self.y_pred_proba, Dict)
+            data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
+
+        chunks = self.chunker.split(data)
+
+        res = pd.DataFrame.from_records(
+            [
+                {
+                    'key': chunk.key,
+                    'chunk_index': chunk.chunk_index,
+                    'start_index': chunk.start_index,
+                    'end_index': chunk.end_index,
+                    'start_date': chunk.start_datetime,
+                    'end_date': chunk.end_datetime,
+                    'period': 'analysis',
+                    **self._estimate_chunk(chunk),
+                }
+                for chunk in chunks
+            ]
+        )
+
+        metric_column_names = [name for metric in self.metrics for name in metric.column_names]
+        multilevel_index = _create_multilevel_index(metric_names=metric_column_names)
+
+        res.columns = multilevel_index
+        res = res.reset_index(drop=True)
+
+        if self.result is None:
+            self.result = Result(
+                results_data=res,
+                y_pred_proba=self.y_pred_proba,
+                y_pred=self.y_pred,
+                y_true=self.y_true,
+                timestamp_column_name=self.timestamp_column_name,
+                metrics=self.metrics,
+                chunker=self.chunker,
+                problem_type=self.problem_type,
+            )
+        else:
+            self.result = self.result.filter(period='reference')  # type: ignore
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+
+        return self.result
+
+    def _estimate_chunk(self, chunk: Chunk) -> Dict:
+        chunk_records: Dict[str, Any] = {}
+        for metric in self.metrics:
+            chunk_record = metric.get_chunk_record(chunk.data)
+            # add the chunk record to the chunk_records dict
+            chunk_records.update(chunk_record)
+        return chunk_records
+
+    def _fit_binary(self, reference_data: pd.DataFrame) -> CBPE:
+        if reference_data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
+
+        # We need uncalibrated data to calculate the realized performance on.
+        # We need realized performance in threshold calculations.
+        # https://github.com/NannyML/nannyml/issues/98
+        reference_data[f'uncalibrated_{self.y_pred_proba}'] = reference_data[self.y_pred_proba]
+
+        for metric in self.metrics:
+            metric.fit(reference_data)
+
+        # Fit calibrator if calibration is needed
+        aligned_reference_data = reference_data.reset_index(drop=True)  # fix mismatch between data and shuffle split
+        self.needs_calibration = needs_calibration(
+            y_true=aligned_reference_data[self.y_true],
+            y_pred_proba=aligned_reference_data[self.y_pred_proba],
+            calibrator=self.calibrator,
+            bin_count=self.calibration_bin_count,
+        )
+
+        if self.needs_calibration:
+            self.calibrator.fit(
+                aligned_reference_data[self.y_pred_proba],
+                aligned_reference_data[self.y_true],
+            )
+
+        self.result = self._estimate(reference_data)
+        assert self.result
+        self.result.data[('chunk', 'period')] = 'reference'
+
+        return self
+
+    def _fit_multiclass(self, reference_data: pd.DataFrame) -> CBPE:
+        if reference_data.empty:
+            raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        _list_missing([self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
+
+        # We need uncalibrated data to calculate the realized performance on.
+        # We need realized performance in threshold calculations.
+        # https://github.com/NannyML/nannyml/issues/98
+        for class_proba in model_output_column_names(self.y_pred_proba):
+            reference_data[f'uncalibrated_{class_proba}'] = reference_data[class_proba]
+
+        for metric in self.metrics:
+            metric.fit(reference_data)
+
+        assert isinstance(self.y_pred_proba, Dict)
+        self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator, self.calibration_bin_count)
+
+        self.result = self._estimate(reference_data)
+        assert self.result
+        self.result.data[('chunk', 'period')] = 'reference'
+        return self
 
 
-def _create_multilevel_index(metric_names: List[str]):
+def _create_multilevel_index(metric_names: List[str]) -> MultiIndex:
     chunk_column_names = [
         'key',
         'chunk_index',
@@ -240,16 +400,18 @@ def _create_multilevel_index(metric_names: List[str]):
         'end_date',
         'period',
     ]
+
     method_column_names = [
+        'value',
         'sampling_error',
         'realized',
-        'value',
         'upper_confidence_boundary',
         'lower_confidence_boundary',
         'upper_threshold',
         'lower_threshold',
         'alert',
     ]
+
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
     reconstruction_tuples = [
         (metric_name, column_name) for metric_name in metric_names for column_name in method_column_names
@@ -258,3 +420,61 @@ def _create_multilevel_index(metric_names: List[str]):
     tuples = chunk_tuples + reconstruction_tuples
 
     return MultiIndex.from_tuples(tuples)
+
+
+def _get_class_splits(
+    data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], include_targets: bool = True
+) -> List[Tuple]:
+    classes = sorted(y_pred_proba.keys())
+    y_trues: List[np.ndarray] = []
+
+    if include_targets:
+        y_trues = list(label_binarize(data[y_true], classes=classes).T)
+
+    y_pred_probas = [data[y_pred_proba[clazz]] for clazz in classes]
+
+    return [
+        (classes[idx], y_trues[idx] if include_targets else None, y_pred_probas[idx]) for idx in range(len(classes))
+    ]
+
+
+def _fit_calibrators(
+    reference_data: pd.DataFrame, y_true_col: str, y_pred_proba_col: Dict[str, str], calibrator: Calibrator, calibration_bin_count: Union[int, str]
+) -> Dict[str, Calibrator]:
+    fitted_calibrators = {}
+    noop_calibrator = NoopCalibrator()
+
+    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true_col, y_pred_proba_col):
+        if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator, calibration_bin_count):
+            calibrator = noop_calibrator
+
+        calibrator.fit(y_pred_proba, y_true)
+        fitted_calibrators[clazz] = copy.deepcopy(calibrator)
+
+    return fitted_calibrators
+
+
+def _calibrate_predicted_probabilities(
+    data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], calibrators: Dict[str, Calibrator]
+) -> pd.DataFrame:
+    class_splits = _get_class_splits(data, y_true, y_pred_proba, include_targets=False)
+    number_of_observations = len(data)
+    number_of_classes = len(class_splits)
+
+    calibrated_probas = np.zeros((number_of_observations, number_of_classes))
+
+    for idx, split in enumerate(class_splits):
+        clazz, _, y_pred_proba_zz = split
+        calibrated_probas[:, idx] = calibrators[clazz].calibrate(y_pred_proba_zz)
+
+    denominator = np.sum(calibrated_probas, axis=1)[:, np.newaxis]
+    uniform_proba = np.full_like(calibrated_probas, 1 / number_of_classes)
+
+    calibrated_probas = np.divide(calibrated_probas, denominator, out=uniform_proba, where=denominator != 0)
+
+    calibrated_data = data.copy(deep=True)
+    predicted_class_proba_column_names = sorted([v for k, v in y_pred_proba.items()])
+    for idx in range(number_of_classes):
+        calibrated_data[predicted_class_proba_column_names[idx]] = calibrated_probas[:, idx]
+
+    return calibrated_data
