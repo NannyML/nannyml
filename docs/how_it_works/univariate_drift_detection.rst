@@ -73,22 +73,18 @@ And `Jensen-Shannon Divergence`_ is defined as:
     D_{JS} \left(P || Q \right) = \frac{1}{2} \left[ D_{KL} \left(P \Bigg|\Bigg| \frac{1}{2}(P+Q) \right) + D_{KL} \left(Q \Bigg|\Bigg| \frac{1}{2}(P+Q) \right)\right]
 
 and is a method of measuring the similarity between two probability distributions. Jensen-Shannon Distance is
-the squared root of Jensen-Shannon divergence and is a proper distance metric.
+the square root of Jensen-Shannon divergence and is a proper distance metric.
 
 As mentioned, NannyML calculates drift performing two sample set comparisons. One sample is usually the whole reference data
 while the other comes from the data of the chunk we are calculating drift for. In order to calculate Jensen-Shannon
 Distance NannyML splits a continuous feature into bins using information from the reference sample.
 The binning is done using `Doane's formula`_ from numpy.
-If a continuous feature has relatively low amount of unique values, meaning that
+If a continuous feature has a relatively low amount of unique values, meaning that
 unique values are less then 10% of the reference dataset size up to a maximum of 50, each value becomes a bin.
-If the any data from the chunk sample are outside those ranges a new bin created for them.
+If any data from the chunk sample are outside the range of the previous bins, then a new bin created for them.
 The new bins relative frequency for the reference sample is set to 0.
 The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
 used to calculate the Jensen-Shannon Distance.
-
-..
-    Unlike KS D-static that looks at maximum difference between two empirical CDFs, JS distance looks at the total difference between empirical Probability Density Functions
-    (PDF). This makes it more sensitive to changes that may be ignored by KS. This effect can be observed in the plot below to get the intuition:
 
 The figure below shows a visual representation of how the Jensen-Shannon Distance is calculated. The
 area of the shaded region is the Jensen-Shannon Divergence which can be calculated using the formula above.
@@ -96,14 +92,6 @@ Taking the square root of this value gives us the Jensen-Shannon Distance.
 
 .. image:: ../_static/how-it-works-js.svg
     :width: 1400pt
-
-..
-    In the two rows we see two different changes been induced to the reference dataset.
-    We can see from the cumulative density functions on the right that the resulting KS distance is the same.
-    On the left we see the probability density functions of the samples and the resulting Jensen-Shannon Divergence
-    at each point. Integrating over it and taking the square root gives the Jensen-Shannon distance showed. We can
-    see that the resulting Jensen-Shannon distance is able to differentiate the two changes.
-
 
 .. _univariate-drift-detection-cont-wasserstein:
 
