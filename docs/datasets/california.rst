@@ -107,11 +107,10 @@ The data are now being split to satisfy NannyML format requirements.
 
     >>> df_for_nanny = df[df['partition']!='train'].reset_index(drop=True)
     >>> df_for_nanny['partition'] = df_for_nanny['partition'].map({'test':'reference', 'production':'analysis'})
-    >>> df_for_nanny['identifier'] = df_for_nanny.index
 
     >>> reference = df_for_nanny[df_for_nanny['partition']=='reference'].copy()
     >>> analysis = df_for_nanny[df_for_nanny['partition']=='analysis'].copy()
-    >>> analysis_target = analysis[['identifier', 'clf_target']].copy()
+    >>> analysis_target = analysis[['clf_target']].copy()
     >>> analysis = analysis.drop('clf_target', axis=1)
 
     >>> # dropping partition column that is now removed from requirements.
