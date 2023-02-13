@@ -145,9 +145,6 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.previous_reference_data = reference_data
         self.result = self._calculate(reference_data)
-
-        assert self.result is not None
-
         self.result.data[('chunk', 'period')] = 'reference'
         self.result.reference_data = reference_data.copy()
 

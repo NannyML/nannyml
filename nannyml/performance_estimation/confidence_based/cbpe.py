@@ -351,7 +351,6 @@ class CBPE(AbstractEstimator):
             )
 
         self.result = self._estimate(reference_data)
-        assert self.result
         self.result.data[('chunk', 'period')] = 'reference'
 
         return self
@@ -375,7 +374,6 @@ class CBPE(AbstractEstimator):
         self._calibrators = _fit_calibrators(reference_data, self.y_true, self.y_pred_proba, self.calibrator)
 
         self.result = self._estimate(reference_data)
-        assert self.result
         self.result.data[('chunk', 'period')] = 'reference'
         return self
 

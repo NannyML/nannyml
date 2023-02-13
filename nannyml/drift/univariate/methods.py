@@ -472,7 +472,7 @@ class WassersteinDistance(Method):
         self._p_value: Optional[float] = None
         self._reference_size: float
         self._bin_width: float
-        self._bin_edges: Optional[np.ndarray] = None
+        self._bin_edges: np.ndarray
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
 
@@ -486,7 +486,6 @@ class WassersteinDistance(Method):
                 bins = len(reference_data) // 500
             reference_proba_in_bins, self._bin_edges = np.histogram(reference_data, bins=bins)
             self._ref_rel_freqs = reference_proba_in_bins / len(reference_data)
-            assert self._bin_edges is not None
             self._bin_width = self._bin_edges[1] - self._bin_edges[0]
 
         self._fitted = True
@@ -520,7 +519,6 @@ class WassersteinDistance(Method):
         ) or self.calculation_method == 'estimated':
             min_chunk = np.min(data)
 
-            assert self._bin_edges is not None
             if min_chunk < self._bin_edges[0]:
                 extra_bins_left = (min_chunk - self._bin_edges[0]) / self._bin_width
                 extra_bins_left = np.ceil(extra_bins_left)

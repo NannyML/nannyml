@@ -187,7 +187,6 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         )
 
         self.result = self._calculate(data=reference_data)
-        assert self.result is not None
         self.result.data[('chunk', 'period')] = 'reference'
 
         return self

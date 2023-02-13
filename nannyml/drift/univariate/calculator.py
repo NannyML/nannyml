@@ -94,14 +94,12 @@ class UnivariateDriftCalculator(AbstractCalculator):
             continuous_methods = ['jensen_shannon']
         elif isinstance(continuous_methods, str):
             continuous_methods = [continuous_methods]
-        assert isinstance(continuous_methods, list)
         self.continuous_method_names = continuous_methods
 
         if not categorical_methods:
             categorical_methods = ['jensen_shannon']
         elif isinstance(categorical_methods, str):
             categorical_methods = [categorical_methods]
-        assert isinstance(categorical_methods, list)
         self.categorical_method_names: List[str] = categorical_methods
 
         self.calculation_method: Optional[str] = None
@@ -157,9 +155,6 @@ class UnivariateDriftCalculator(AbstractCalculator):
             ]
 
         self.result = self._calculate(reference_data)
-
-        assert self.result is not None
-
         self.result.data['chunk', 'chunk', 'period'] = 'reference'
         self.result.reference_data = reference_data.copy()
 

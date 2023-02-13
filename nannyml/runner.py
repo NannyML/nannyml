@@ -155,7 +155,6 @@ def _run_statistical_univariate_feature_drift_calculator(
 
         if console:
             console.log('calculating on analysis data')
-        assert calc is not None
         results = calc.calculate(analysis_data)
 
         plots = {}

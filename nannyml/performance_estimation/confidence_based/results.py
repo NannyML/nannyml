@@ -103,7 +103,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
 
     def _get_metric_by_name(self, name: str) -> Optional[Metric]:
         for metric in self.metrics:
-            assert isinstance(metric, Metric)
             # If we match the metric by name, return the metric
             # E.g. matching the name 'confusion_matrix'
             if name == metric.name:
