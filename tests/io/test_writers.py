@@ -129,7 +129,7 @@ def realized_performance_for_multiclass_classification_result():
         problem_type='classification_multiclass',
         metrics=['roc_auc', 'f1'],
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='identifier'))
+    result = calc.calculate(analysis_df.merge(analysis_targets_df, left_index=True, right_index=True))
     return result
 
 
@@ -177,7 +177,7 @@ def cbpe_estimated_performance_for_multiclass_classification_result():
         problem_type='classification_multiclass',
         metrics=['roc_auc', 'f1'],
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='identifier'))
+    result = calc.estimate(analysis_df.merge(analysis_targets_df, left_index=True, right_index=True))
     return result
 
 
