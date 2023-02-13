@@ -455,6 +455,14 @@ def _column_is_categorical(column: pd.Series) -> bool:
     return column.dtype in ['object', 'string', 'category', 'bool']
 
 
+def _remove_missing_data(column: pd.Series):
+    if isinstance(column, pd.Series):
+        column = column.dropna().reset_index(drop=True)
+    else:
+        column = column[~np.isnan(column)]
+    return column
+
+
 def _column_is_continuous(column: pd.Series) -> bool:
     return column.dtype in [
         'int_',
