@@ -28,7 +28,7 @@ class Method(abc.ABC):
         display_name: str,
         column_name: str,
         chunker: Optional[Chunker] = None,
-        method_estimation: Optional[Dict[str, any]] = None,
+        computation_params: Optional[Dict[str, any]] = None,
         upper_threshold: Optional[float] = None,
         lower_threshold: Optional[float] = None,
         upper_threshold_limit: Optional[float] = None,
@@ -305,12 +305,12 @@ class KolmogorovSmirnovStatistic(Method):
         self._qts: np.ndarray
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
-        if (not kwargs) or not (kwargs['method_estimation']) or (self.column_name not in kwargs['method_estimation']):
+        if (not kwargs) or not (kwargs['computation_params']) or (self.column_name not in kwargs['computation_params']):
             self.calculation_method = 'auto'
             self.n_bins = 10_000
         else:
-            self.calculation_method = kwargs['method_estimation'].get('calculation_method', 'auto')
-            self.n_bins = kwargs['method_estimation'].get('n_bins', 10_000)
+            self.calculation_method = kwargs['computation_params'].get('calculation_method', 'auto')
+            self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
@@ -478,12 +478,12 @@ class WassersteinDistance(Method):
         self._bin_edges: Optional[np.ndarray] = None
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
-        if (not kwargs) or not (kwargs['method_estimation']) or (self.column_name not in kwargs['method_estimation']):
+        if (not kwargs) or not (kwargs['computation_params']) or (self.column_name not in kwargs['computation_params']):
             self.calculation_method = 'auto'
             self.n_bins = 10_000
         else:
-            self.calculation_method = kwargs['method_estimation'].get('calculation_method', 'auto')
-            self.n_bins = kwargs['method_estimation'].get('n_bins', 10_000)
+            self.calculation_method = kwargs['computation_params'].get('calculation_method', 'auto')
+            self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
