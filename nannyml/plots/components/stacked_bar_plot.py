@@ -110,7 +110,7 @@ def stacked_bar(
 
     # plot bars
     for i, category in enumerate(categories):
-        data = stacked_bar_table.loc[stacked_bar_table[column_name] == category,]
+        data = stacked_bar_table.loc[stacked_bar_table[column_name] == category]
 
         if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
             x = chunk_start_dates
