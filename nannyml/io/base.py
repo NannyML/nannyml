@@ -5,7 +5,7 @@
 import logging
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 from urllib.parse import urlsplit
 
 import pandas as pd
@@ -50,7 +50,7 @@ class WriterFactory:
     ``Writer`` initialization or passed along in the ``nann.yml`` configuration file.
     """
 
-    registry: Dict[str, Writer] = {}
+    registry: Dict[str, Type[Writer]] = {}
 
     @classmethod
     def _logger(cls) -> logging.Logger:
@@ -69,11 +69,11 @@ class WriterFactory:
             )
 
         writer_class = cls.registry[key]
-        return writer_class(**kwargs)  # type: ignore
+        return writer_class(**kwargs)
 
     @classmethod
     def register(cls, key) -> Callable:
-        def inner_wrapper(wrapped_class: Writer) -> Writer:
+        def inner_wrapper(wrapped_class: Type[Writer]) -> Type[Writer]:
             if key in cls.registry:
                 cls._logger().warning(f"re-registering Writer for key='{key}'")
             cls.registry[key] = wrapped_class

@@ -14,7 +14,7 @@ from typing import List, Optional
 from sqlmodel import Field, Relationship, SQLModel
 
 
-class Model(SQLModel, table=True):  # type: ignore
+class Model(SQLModel, table=True):
     """Represents a Model.
 
     Only created when the ``model_name`` property of the DatabaseWriter was given.
@@ -28,7 +28,7 @@ class Model(SQLModel, table=True):  # type: ignore
     runs: List["Run"] = Relationship(back_populates="model")
 
 
-class Run(SQLModel, table=True):  # type: ignore
+class Run(SQLModel, table=True):
     """Represents a NannyML run, allowing to filter results based on what run generated them.
 
     The ``id`` field here will act as a foreign key in all ``metric`` tables.
@@ -43,7 +43,7 @@ class Run(SQLModel, table=True):  # type: ignore
     execution_timestamp: datetime = Field(default=datetime.now())
 
 
-class Metric(SQLModel):  # type: ignore
+class Metric(SQLModel):
     """
     Base Metric definition
     """
@@ -62,7 +62,7 @@ class Metric(SQLModel):  # type: ignore
     alert: bool  #: Indicates if the method raised an alert for this Chunk
 
 
-class UnivariateDriftMetric(Metric, table=True):  # type: ignore
+class UnivariateDriftMetric(Metric, table=True):
     """Represents results of the UnivariateDriftCalculator.
 
     Stored in the ``univariate_drift_metrics`` table.
@@ -73,7 +73,7 @@ class UnivariateDriftMetric(Metric, table=True):  # type: ignore
     column_name: str  #: The name of the column this metric belongs to
 
 
-class DataReconstructionFeatureDriftMetric(Metric, table=True):  # type: ignore
+class DataReconstructionFeatureDriftMetric(Metric, table=True):
     """Represents results of the DataReconstructionDriftCalculator.
 
     Stored in the ``data_reconstruction_feature_drift_metrics`` table.
@@ -85,7 +85,7 @@ class DataReconstructionFeatureDriftMetric(Metric, table=True):  # type: ignore
     lower_threshold: Optional[float]  #: The lower alerting threshold value
 
 
-class RealizedPerformanceMetric(Metric, table=True):  # type: ignore
+class RealizedPerformanceMetric(Metric, table=True):
     """Represents results of the RealizedPerformanceCalculator.
 
     Stored in the ``realized_performance_metrics`` table.
@@ -97,7 +97,7 @@ class RealizedPerformanceMetric(Metric, table=True):  # type: ignore
     lower_threshold: Optional[float]  #: The lower alerting threshold value
 
 
-class CBPEPerformanceMetric(Metric, table=True):  # type: ignore
+class CBPEPerformanceMetric(Metric, table=True):
     """Represents results of the CBPE estimator.
 
     Stored in the ``cbpe_performance_metrics`` table.
@@ -109,7 +109,7 @@ class CBPEPerformanceMetric(Metric, table=True):  # type: ignore
     lower_threshold: Optional[float]  #: The lower alerting threshold value
 
 
-class DLEPerformanceMetric(Metric, table=True):  # type: ignore
+class DLEPerformanceMetric(Metric, table=True):
     """Represents results of the DLE estimator.
 
     Stored in the ``dle_performance_metrics`` table.

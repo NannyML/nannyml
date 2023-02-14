@@ -8,14 +8,14 @@ import logging
 from copy import copy
 from enum import Enum
 from logging import Logger
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Type
 
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2_contingency, ks_2samp, kstwo, wasserstein_distance
 
-from nannyml.base import _column_is_categorical
+from nannyml.base import _column_is_categorical, _remove_missing_data
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 
@@ -132,7 +132,7 @@ class FeatureType(str, Enum):
 class MethodFactory:
     """A factory class that produces Method instances given a 'key' string and a 'feature_type' it supports."""
 
-    registry: Dict[str, Dict[FeatureType, Method]] = {}
+    registry: Dict[str, Dict[FeatureType, Type[Method]]] = {}
 
     @classmethod
     def _logger(cls) -> Logger:
@@ -165,7 +165,7 @@ class MethodFactory:
             kwargs = {}
 
         method_class = cls.registry[key][feature_type]
-        return method_class(**kwargs)  # type: ignore
+        return method_class(**kwargs)
 
     @classmethod
     def register(cls, key: str, feature_type: FeatureType) -> Callable:
@@ -192,7 +192,7 @@ class MethodFactory:
         ...   pass
         """
 
-        def inner_wrapper(wrapped_class: Method) -> Method:
+        def inner_wrapper(wrapped_class: Type[Method]) -> Type[Method]:
             if key not in cls.registry:
                 cls.registry[key] = {feature_type: wrapped_class}
             else:
@@ -310,6 +310,7 @@ class KolmogorovSmirnovStatistic(Method):
     def _fit(
         self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
     ) -> Method:
+        reference_data = _remove_missing_data(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
@@ -325,6 +326,7 @@ class KolmogorovSmirnovStatistic(Method):
         return self
 
     def _calculate(self, data: pd.Series):
+        data = _remove_missing_data(data)
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
@@ -371,42 +373,42 @@ class Chi2Statistic(Method):
             lower_threshold=None,  # setting this to `None` so we don't plot the threshold (p-value based)
             **kwargs,
         )
-        self._reference_data_vcs: Optional[pd.Series] = None
+        self._reference_data_vcs: pd.Series
         self._p_value: Optional[float] = None
         self._fitted = False
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+        reference_data = _remove_missing_data(reference_data)
         self._reference_data_vcs = reference_data.value_counts()
         self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
+        data = _remove_missing_data(data)
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
 
-        stat, p_value, _, _ = chi2_contingency(
-            pd.concat(
-                [self._reference_data_vcs, data.value_counts()],  # type: ignore
-                axis=1,
-            ).fillna(0)
-        )
-        self._p_value = p_value
+        stat, self._p_value = self._calc_chi2(data)
         return stat
 
     def _alert(self, data: pd.Series):
         if self._p_value is None:
-            _, self._p_value, _, _ = chi2_contingency(
-                pd.concat(
-                    [self._reference_data.value_counts(), data.value_counts()],  # type: ignore
-                    axis=1,
-                ).fillna(0)
-            )
+            _, self._p_value = self._calc_chi2(data)
 
         alert = self._p_value < 0.05
         self._p_value = None
         return alert
+
+    def _calc_chi2(self, data: pd.Series):
+        stat, p_value, _, _ = chi2_contingency(
+            pd.concat(
+                [self._reference_data_vcs, data.value_counts()],
+                axis=1,
+            ).fillna(0)
+        )
+        return stat, p_value
 
 
 @MethodFactory.register(key='l_infinity', feature_type=FeatureType.CATEGORICAL)
@@ -428,6 +430,7 @@ class LInfinityDistance(Method):
         self._reference_proba: Optional[dict] = None
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+        reference_data = _remove_missing_data(reference_data)
         ref_labels = reference_data.unique()
         self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
         return self
@@ -437,7 +440,7 @@ class LInfinityDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-
+        data = _remove_missing_data(data)
         data_labels = data.unique()
         data_ratios = {label: (data == label).sum() / len(data) for label in data_labels}
 
@@ -474,13 +477,14 @@ class WassersteinDistance(Method):
         self._p_value: Optional[float] = None
         self._reference_size: float
         self._bin_width: float
-        self._bin_edges: Optional[np.ndarray] = None
+        self._bin_edges: np.ndarray
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
 
     def _fit(
         self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None, bins: Optional[int] = None
     ) -> Method:
+        reference_data = _remove_missing_data(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
@@ -516,12 +520,12 @@ class WassersteinDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
+        data = _remove_missing_data(data)
         if (
             self.calculation_method == 'auto' and self._reference_size >= 10_000
         ) or self.calculation_method == 'estimated':
             min_chunk = np.min(data)
 
-            assert self._bin_edges is not None
             if min_chunk < self._bin_edges[0]:
                 extra_bins_left = (min_chunk - self._bin_edges[0]) / self._bin_width
                 extra_bins_left = np.ceil(extra_bins_left)
@@ -589,6 +593,7 @@ class HellingerDistance(Method):
         self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
+        reference_data = _remove_missing_data(reference_data)
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
@@ -615,6 +620,7 @@ class HellingerDistance(Method):
         return self
 
     def _calculate(self, data: pd.Series):
+        data = _remove_missing_data(data)
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
         if self._treat_as_type == 'cont':
             len_data = len(data)

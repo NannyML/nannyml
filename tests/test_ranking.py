@@ -66,7 +66,7 @@ def sample_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D10
 @pytest.fixture(scope='module')
 def sample_multiclass_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D103
     reference, analysis, analysis_target = load_synthetic_multiclass_classification_dataset()
-    analysis = analysis.merge(analysis_target, on='identifier')
+    analysis = analysis.merge(analysis_target, left_index=True, right_index=True)
     # initialize, fit and calculate realized performance
     realized = PerformanceCalculator(
         y_pred_proba={
@@ -90,7 +90,7 @@ def sample_multiclass_realized_perf_result() -> PerformanceCalculationResults:  
 @pytest.fixture(scope='module')
 def sample_multiclass_estimated_perf_result() -> CBPEResults:  # noqa: D103
     reference, analysis, analysis_target = load_synthetic_multiclass_classification_dataset()
-    analysis = analysis.merge(analysis_target, on='identifier')
+    analysis = analysis.merge(analysis_target, left_index=True, right_index=True)
     # initialize, fit and calculate realized performance
     estimated = CBPE(  # type: ignore[abstract]
         y_pred_proba={

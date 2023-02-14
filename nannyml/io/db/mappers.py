@@ -4,7 +4,7 @@
 import abc
 import logging
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from nannyml.drift.multivariate.data_reconstruction.result import Result as DataReconstructionDriftResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
@@ -34,7 +34,7 @@ def _fully_qualified_class_name(result):
 class MapperFactory:
     """A factory class that produces Mapper instances for a given Result subclass."""
 
-    registry: Dict[str, Mapper] = {}
+    registry: Dict[str, Type[Mapper]] = {}
 
     @classmethod
     def _logger(cls) -> logging.Logger:
@@ -56,13 +56,13 @@ class MapperFactory:
             )
 
         mapper_class = cls.registry[key]
-        return mapper_class(**kwargs)  # type: ignore
+        return mapper_class(**kwargs)
 
     @classmethod
     def register(cls, result) -> Callable:
         key = _fully_qualified_class_name(result)
 
-        def inner_wrapper(wrapped_class: Mapper) -> Mapper:
+        def inner_wrapper(wrapped_class: Type[Mapper]) -> Type[Mapper]:
             if key in cls.registry:
                 cls._logger().warning(f"re-registering Metric for result_class='{key}'")
             cls.registry[key] = wrapped_class

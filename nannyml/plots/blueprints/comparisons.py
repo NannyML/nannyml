@@ -227,7 +227,8 @@ def _plot_compare_step_to_step(  # noqa: C901
         and len(reference_metric_2) > 0
     )
     if has_reference_results and not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates):
-        analysis_chunk_indices = analysis_chunk_indices + max(reference_chunk_indices) + 1  # type: ignore[arg-type]
+        assert reference_chunk_indices is not None
+        analysis_chunk_indices = analysis_chunk_indices + max(reference_chunk_indices) + 1
 
     show_in_legend = xaxis == 'x1' and yaxis == 'y1'
 
@@ -261,7 +262,7 @@ def _plot_compare_step_to_step(  # noqa: C901
             ),
             name='x_coordinate',
         )
-        _hover.add(np.round(reference_metric_1, 4), name='metric_value')  # type: ignore[arg-type]
+        _hover.add(np.round(reference_metric_1, 4), name='metric_value')
 
         figure.add_metric(
             data=reference_metric_1,
@@ -326,7 +327,7 @@ def _plot_compare_step_to_step(  # noqa: C901
             ),
             name='x_coordinate',
         )
-        _hover.add(np.round(reference_metric_2, 4), name='metric_value')  # type: ignore[arg-type]
+        _hover.add(np.round(reference_metric_2, 4), name='metric_value')
 
         figure.add_metric(
             data=reference_metric_2,
@@ -364,7 +365,7 @@ def _plot_compare_step_to_step(  # noqa: C901
             x=(
                 ensure_numpy(reference_chunk_indices)[0][-1] + 1
                 if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-                else ensure_numpy(analysis_chunk_start_dates)[0][0]  # type: ignore
+                else ensure_numpy(analysis_chunk_start_dates)[0][0]
             )
         )
         # endregion
