@@ -55,7 +55,11 @@ Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator
     * ``specificity``
     * ``accuracy``
     * ``confusion_matrix``
-        * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
+        * Normalization options:
+            * ``None``: returns counts
+            * ``true``: normalize by true class of observations
+            * ``pred``: normalize by predicted class of observations
+            * ``all``: normalize by all observations
 
     For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
