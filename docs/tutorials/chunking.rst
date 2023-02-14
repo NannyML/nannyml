@@ -6,7 +6,6 @@ Chunking
 
 Why do we need chunks?
 ----------------------
-aaa
 
 NannyML monitors ML models in production by doing data drift detection and performance estimation or monitoring.
 This functionality relies on aggregate metrics that are evaluated on samples of production data.
@@ -32,7 +31,6 @@ synthetic binary classification dataset provided by NannyML. First we set up thi
 
 Time-based chunking
 ~~~~~~~~~~~~~~~~~~~
-soo
 
 Time-based chunking creates chunks based on time intervals. One chunk can contain all the observations
 from a single hour, day, week, month etc. In most cases, such chunks will vary in the number of observations they
