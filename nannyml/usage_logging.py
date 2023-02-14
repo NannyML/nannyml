@@ -13,12 +13,16 @@ import uuid
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 import analytics as segment_analytics
 from dotenv import load_dotenv
 
 from nannyml import __version__
+from nannyml._typing import ParamSpec
+
+T = TypeVar('T')
+P = ParamSpec('P')
 
 # read any .env files to import environment variables
 load_dotenv()
@@ -134,15 +138,15 @@ def log_usage(
     metadata_from_self: Optional[List[str]] = None,
     metadata_from_kwargs: Optional[List[str]] = None,
     logger: UsageLogger = DEFAULT_USAGE_LOGGER,
-):
-    def logging_decorator(func):
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    def logging_decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def logging_wrapper(*args, **kwargs):
+        def logging_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # track start times
             start_time = time.time()
             process_start_time = time.process_time()
 
-            runtime_exception, res = None, None
+            runtime_exception = None
             try:
                 # run original function
                 res = func(*args, **kwargs)

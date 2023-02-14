@@ -5,8 +5,8 @@ import datetime
 import warnings
 from typing import Any, Dict
 
-import click  # type: ignore
-import jinja2  # type: ignore
+import click
+import jinja2
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from rich.console import Console

@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-import yaml  # type: ignore
+import yaml
 from pydantic import BaseModel
 
 CONFIG_PATH_ENV_VAR_KEY = 'NML_CONFIG_PATH'

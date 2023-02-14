@@ -44,7 +44,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         return [Key(properties=('reconstruction_error',), display_names=('Reconstruction error',))]
 
     @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
-    def plot(self, kind: str = 'drift', *args, **kwargs) -> Optional[go.Figure]:
+    def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
         The different plot kinds that are available:

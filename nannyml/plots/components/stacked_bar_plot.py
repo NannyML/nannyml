@@ -1,7 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import Any, Dict, Optional, Union
+from typing import Any, cast, Dict, Optional, Union
 
 import matplotlib
 import numpy as np
@@ -110,7 +110,7 @@ def stacked_bar(
 
     # plot bars
     for i, category in enumerate(categories):
-        data = stacked_bar_table.loc[stacked_bar_table[column_name] == category,]
+        data = stacked_bar_table.loc[stacked_bar_table[column_name] == category]
 
         if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
             x = chunk_start_dates
@@ -192,9 +192,11 @@ def alert(
     marker_line_colors = [color if val else prv_color for val in list(alerts)]
     marker_line_widths = [2 if val else 0 for val in list(alerts)]
 
-    assert chunk_start_dates is not None and chunk_indices is not None
+    if is_time_based_x_axis(chunk_start_dates, chunk_end_dates):
+        anchor = cast(Union[np.ndarray, pd.Series], chunk_start_dates)[0]
+    else:
+        anchor = cast(Union[np.ndarray, pd.Series], chunk_indices)[0]
 
-    anchor = chunk_start_dates[0] if is_time_based_x_axis(chunk_start_dates, chunk_end_dates) else chunk_indices[0]
     max_x_axis = max([bar.xaxis for bar in figure.data])
 
     for bars in [bar for bar in figure.data if bar.x[0] == anchor and bar.xaxis == max_x_axis]:
