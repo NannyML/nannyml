@@ -58,19 +58,30 @@ class UnivariateDriftCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-        computation_params : dict, default={'kolmogorov_smirnov':{'calculation_method':{'auto', 'exact', 'estimated}, 'n_bins':10 000}, 'wasserstein':{'calculation_method':{'auto', 'exact', 'estimated}, 'n_bins':10 000}}
-            
+        computation_params : dict, default={'kolmogorov_smirnov':{'calculation_method':{'auto', 'exact', 'estimated},
+            'n_bins':10 000}, 'wasserstein':{'calculation_method':{'auto', 'exact', 'estimated}, 'n_bins':10 000}}
+
             A dictionary which allows users to specify whether they want drift calculated on
-            the exact reference data or an estimated distribution of the reference data obtained 
+            the exact reference data or an estimated distribution of the reference data obtained
             using binning techniques. Applicable only to Kolmogorov-Smirnov and Wasserstein.
 
-            `calculation_method` : Specify whether the entire or the binned reference data will be stored. The default value is `auto`.
+            `calculation_method` : Specify whether the entire or the binned reference data will be stored.
+                The default value is `auto`.
 
                 - `auto` : Use `exact` for reference data smaller than 10 000 rows, `estimated` for larger.
-                - `exact` : Store the whole reference data. When calculating on chunk `scipy.stats.ks_2samp(reference, chunk,  method = `exact` )` is called and whole reference and chunk vectors are passed.
-                - `estimated` : Store reference data binned into `n_bins` (default=10 000). The D-statistic will be calculated based on binned eCDF. Bins are quantile-based for Kolmogorov-Smirnov and equal-width based for Wasserstein. Notice that for the reference data of 10 000 rows the resulting D-statistic for exact and estimated methods should be the same. The pvalue in that method is calculated using asymptotic distribution of test statistic (as it is in the `scipy.stats.ks_2samp` with method = `asymp` ).
+                - `exact` : Store the whole reference data.
+                    When calculating on chunk `scipy.stats.ks_2samp(reference, chunk,  method = `exact` )`
+                    is called and whole reference and chunk vectors are passed.
+                - `estimated` : Store reference data binned into `n_bins` (default=10 000).
+                    The D-statistic will be calculated based on binned eCDF.
+                    Bins are quantile-based for Kolmogorov-Smirnov and equal-width based for Wasserstein.
+                    Notice that for the reference data of 10 000 rows the resulting D-statistic for exact and
+                    estimated methods should be the same. The pvalue in that method is calculated using asymptotic
+                    distribution of test statistic (as it is in the `scipy.stats.ks_2samp` with method = `asymp` ).
 
-            `n_bins` : Number of bins used to bin data when calculation_method = `estimated` . The default value is 10 000. The larger the value the more precise the calculation (closer to  calculation_method = `exact` ) but more data will be stored in the fitted calculator.
+            `n_bins` : Number of bins used to bin data when calculation_method = `estimated`.
+                The default value is 10 000. The larger the value the more precise the calculation
+                (closer to  calculation_method = `exact` ) but more data will be stored in the fitted calculator.
 
 
         Examples

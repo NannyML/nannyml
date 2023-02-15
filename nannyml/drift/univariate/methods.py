@@ -8,7 +8,7 @@ import logging
 from copy import copy
 from enum import Enum
 from logging import Logger
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ class Method(abc.ABC):
         display_name: str,
         column_name: str,
         chunker: Optional[Chunker] = None,
-        computation_params: Optional[Dict[str, any]] = None,
+        computation_params: Optional[Dict[str, Any]] = None,
         upper_threshold: Optional[float] = None,
         lower_threshold: Optional[float] = None,
         upper_threshold_limit: Optional[float] = None,
