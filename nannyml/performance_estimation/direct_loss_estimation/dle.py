@@ -9,8 +9,7 @@ from pandas import MultiIndex
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder
 
-from nannyml._typing import ProblemType
-from nannyml._typing import Result as ResultType
+from nannyml._typing import ProblemType, Self
 from nannyml.base import AbstractEstimator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -206,7 +205,7 @@ class DLE(AbstractEstimator):
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
         self._categorical_encoders: defaultdict = defaultdict(_default_encoder)
 
-        self.result: Optional[ResultType] = None
+        self.result: Optional[Result] = None
 
     def __str__(self):
         return (
@@ -215,7 +214,7 @@ class DLE(AbstractEstimator):
         )
 
     @log_usage(UsageEvent.DLE_ESTIMATOR_FIT, metadata_from_self=['metrics'])
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> AbstractEstimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         """Fits the drift calculator using a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -236,12 +235,12 @@ class DLE(AbstractEstimator):
             metric.fit(reference_data)
 
         self.result = self._estimate(reference_data)
-        self.result.data[('chunk', 'period')] = 'reference'  # type: ignore
+        self.result.data[('chunk', 'period')] = 'reference'
 
         return self
 
     @log_usage(UsageEvent.DLE_ESTIMATOR_RUN, metadata_from_self=['metrics'])
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> ResultType:
+    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -293,7 +292,7 @@ class DLE(AbstractEstimator):
                 hyperparameters=self.hyperparameters,
             )
         else:
-            self.result = self.result.filter(period='reference')  # type: ignore
+            self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result

@@ -659,7 +659,9 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
         column_names=['y_true'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.merge(analysis_targets, on='identifier')).filter(period='analysis')
+    results = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True)).filter(
+        period='analysis'
+    )
     sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'statistical_target_drift']
     pd.testing.assert_frame_equal(expected, sut)
@@ -707,7 +709,7 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier')).filter(period=period)
+    sut = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True)).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)

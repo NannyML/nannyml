@@ -103,8 +103,8 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         self._encoder = None
         self._pca = None
 
-        self._upper_alert_threshold: Optional[float] = None
-        self._lower_alert_threshold: Optional[float] = None
+        self._upper_alert_threshold: float
+        self._lower_alert_threshold: float
 
         if imputer_categorical:
             if not isinstance(imputer_categorical, SimpleImputer):
@@ -187,7 +187,6 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         )
 
         self.result = self._calculate(data=reference_data)
-        assert self.result is not None
         self.result.data[('chunk', 'period')] = 'reference'
 
         return self
@@ -234,7 +233,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         res['lower_confidence_bound'] = res['reconstruction_error'] - SAMPLING_ERROR_RANGE * res['sampling_error']
         res['upper_threshold'] = [self._upper_alert_threshold] * len(res)
         res['lower_threshold'] = [self._lower_alert_threshold] * len(res)
-        res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)  # type: ignore
+        res['alert'] = _add_alert_flag(res, self._upper_alert_threshold, self._lower_alert_threshold)
 
         multilevel_index = _create_multilevel_index()
         res.columns = multilevel_index
@@ -249,13 +248,13 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                 continuous_column_names=self.continuous_column_names,
             )
         else:
-            self.result = self.result.filter(period='reference')  # type: ignore
+            self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
-        reference_chunks = self.chunker.split(reference_data)  # type: ignore
+        reference_chunks = self.chunker.split(reference_data)
         reference_reconstruction_error = pd.Series(
             [
                 _calculate_reconstruction_error_for_data(

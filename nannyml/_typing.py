@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 from __future__ import annotations
 
+import sys
 import typing
 from collections import namedtuple
 from enum import Enum
@@ -12,6 +13,16 @@ if typing.TYPE_CHECKING:
     from typing_extensions import Protocol
 else:
     Protocol = object
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec, TypeGuard  # noqa: F401
+else:
+    from typing_extensions import ParamSpec, TypeGuard  # noqa: F401
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 import pandas as pd
 
@@ -75,7 +86,7 @@ class Result(Protocol):
         ...
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
     ) -> Result:
         ...
 
@@ -89,14 +100,19 @@ class Result(Protocol):
 class Metric(Protocol):
     """Represents any kind of metric (or method) that can be calculated or estimated."""
 
-    display_name: str
-    column_name: str
+    @property
+    def display_name(self) -> str:
+        ...
+
+    @property
+    def column_name(self) -> str:
+        ...
 
 
 class Calculator(Protocol):
     """Calculator base class."""
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         """Fits the calculator on reference data."""
 
     def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
@@ -106,7 +122,7 @@ class Calculator(Protocol):
 class Estimator(Protocol):
     """Estimator base class."""
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         """Fits the estimator on reference data."""
 
     def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:

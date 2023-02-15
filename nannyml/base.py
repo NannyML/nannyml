@@ -5,15 +5,16 @@
 """Module containing base classes for drift calculation."""
 from __future__ import annotations
 
+import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects
 
-from nannyml._typing import Calculator, Estimator, Key, Result
+from nannyml._typing import Key, Metric, Result, Self
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
@@ -78,8 +79,8 @@ class AbstractResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> Result:
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+    ) -> Self:
         """Returns filtered result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
             raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
@@ -91,7 +92,7 @@ class AbstractResult(ABC):
             raise CalculatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_filter' method")
 
     @abstractmethod
@@ -124,6 +125,10 @@ class AbstractResult(ABC):
 
 
 class Abstract1DResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, metrics: Sequence[Metric] = (), *args, **kwargs):
+        super().__init__(results_data)
+        self.metrics = metrics
+
     @property
     def chunk_keys(self) -> pd.Series:
         return self.data[('chunk', 'key')]
@@ -144,8 +149,35 @@ class Abstract1DResult(AbstractResult, ABC):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        return res
+
 
 class Abstract2DResult(AbstractResult, ABC):
+    def __init__(
+        self,
+        results_data: pd.DataFrame,
+        metrics: Sequence[Metric] = (),
+        column_names: List[str] = [],
+        *args,
+        **kwargs
+    ):
+        super().__init__(results_data)
+        self.metrics = metrics
+        self.column_names = column_names
+
     @property
     def chunk_keys(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'key')]
@@ -165,6 +197,31 @@ class Abstract2DResult(AbstractResult, ABC):
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'period')]
+
+    def _filter(
+        self,
+        period: str,
+        metrics: Optional[List[str]] = None,
+        column_names: Optional[List[str]] = None,
+        *args,
+        **kwargs
+    ) -> Self:
+        if metrics is None:
+            metrics = [metric.column_name for metric in self.metrics]
+        if column_names is None:
+            column_names = self.column_names
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, metrics)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        res.column_names = [c for c in self.column_names if c in column_names]
+        return res
 
 
 class AbstractCalculator(ABC):
@@ -208,7 +265,7 @@ class AbstractCalculator(ABC):
     def _logger(self) -> logging.Logger:
         return logging.getLogger(__name__)
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         """Trains the calculator using reference data."""
         try:
             self._logger.debug(f"fitting {str(self)}")
@@ -234,7 +291,7 @@ class AbstractCalculator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Calculator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
@@ -287,8 +344,8 @@ class AbstractEstimatorResult(ABC):
             return single_level_data
 
     def filter(
-        self, period: str = 'analysis', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> AbstractEstimatorResult:
+        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
+    ) -> Self:
         """Returns result metric data."""
         if metrics and not isinstance(metrics, (str, list)):
             raise InvalidArgumentsException("metrics value provided is not a valid metric or list of metrics")
@@ -300,7 +357,7 @@ class AbstractEstimatorResult(ABC):
             raise EstimatorException(f"could not read result data: {exc}")
 
     @abstractmethod
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> AbstractEstimatorResult:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         raise NotImplementedError
 
     def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
@@ -351,7 +408,7 @@ class AbstractEstimator(ABC):
     def __str__(self):
         return f'{self.__module__}.{self.__class__.__name__}'
 
-    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
+    def fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         """Trains the calculator using reference data."""
         try:
             self._logger.info(f"fitting {str(self)}")
@@ -378,7 +435,7 @@ class AbstractEstimator(ABC):
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
 
     @abstractmethod
-    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Estimator:
+    def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_fit' method")
 
     @abstractmethod
@@ -396,6 +453,14 @@ def _split_features_by_type(data: pd.DataFrame, feature_column_names: List[str])
 
 def _column_is_categorical(column: pd.Series) -> bool:
     return column.dtype in ['object', 'string', 'category', 'bool']
+
+
+def _remove_missing_data(column: pd.Series):
+    if isinstance(column, pd.Series):
+        column = column.dropna().reset_index(drop=True)
+    else:
+        column = column[~np.isnan(column)]
+    return column
 
 
 def _column_is_continuous(column: pd.Series) -> bool:

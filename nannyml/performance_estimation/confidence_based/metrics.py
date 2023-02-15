@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -64,6 +64,14 @@ class Metric(abc.ABC):
 
         # A list of (display_name, column_name) tuples
         self.components: List[Tuple[str, str]] = components
+
+    @property
+    def display_name(self) -> str:
+        return self.name
+
+    @property
+    def column_name(self) -> str:
+        return self.components[0][0]
 
     @property
     def display_names(self):
@@ -213,7 +221,7 @@ class Metric(abc.ABC):
 class MetricFactory:
     """A factory class that produces Metric instances based on a given magic string or a metric specification."""
 
-    registry: Dict[str, Dict[ProblemType, Metric]] = {}
+    registry: Dict[str, Dict[ProblemType, Type[Metric]]] = {}
 
     @classmethod
     def _logger(cls) -> logging.Logger:
@@ -244,11 +252,11 @@ class MetricFactory:
                 f"{[md for md in cls.registry[key]]}"
             )
         metric_class = cls.registry[key][use_case]
-        return metric_class(**kwargs)  # type: ignore
+        return metric_class(**kwargs)
 
     @classmethod
     def register(cls, metric: str, use_case: ProblemType) -> Callable:
-        def inner_wrapper(wrapped_class: Metric) -> Metric:
+        def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:
                     cls._logger().warning(f"re-registering Metric for metric='{metric}' and use_case='{use_case}'")
@@ -1196,6 +1204,8 @@ class MulticlassClassificationAUROC(Metric):
             chunker=chunker,
             components=[('ROC AUC', 'roc_auc')],
         )
+        # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
+        self.y_pred_proba: Dict[str, str]
 
         # sampling error
         self._sampling_error_components: List[Tuple] = []
@@ -1203,7 +1213,7 @@ class MulticlassClassificationAUROC(Metric):
     def _fit(self, reference_data: pd.DataFrame):
         classes = class_labels(self.y_pred_proba)
         binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore
+        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]
 
         self._sampling_error_components = mse.auroc_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
@@ -1451,7 +1461,7 @@ class MulticlassClassificationSpecificity(Metric):
         tn_sum = mcm[:, 0, 0]
         fp_sum = mcm[:, 0, 1]
         class_wise_specificity = tn_sum / (tn_sum + fp_sum)
-        return np.mean(class_wise_specificity)  # type: ignore
+        return np.mean(class_wise_specificity)
 
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
@@ -1492,7 +1502,7 @@ class MulticlassClassificationAccuracy(Metric):
         y_preds_array = np.asarray(y_preds).T
         y_pred_probas_array = np.asarray(y_pred_probas).T
         probability_of_predicted = np.max(y_preds_array * y_pred_probas_array, axis=1)
-        return np.mean(probability_of_predicted)  # type: ignore
+        return np.mean(probability_of_predicted)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.accuracy_sampling_error(self._sampling_error_components, data)

@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml._typing import ProblemType
+from nannyml._typing import ProblemType, Result
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_car_price_dataset,
@@ -23,7 +23,7 @@ from nannyml.performance_calculation.metrics.binary_classification import (
 )
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
     ref_df, ana_df, tgt_df = load_synthetic_binary_classification_dataset()
     ref_df['y_pred'] = ref_df['y_pred_proba'].map(lambda p: p >= 0.8).astype(int)
@@ -42,6 +42,21 @@ def performance_calculator() -> PerformanceCalculator:
         metrics=['roc_auc', 'f1'],
         problem_type='classification_binary',
     )
+
+
+@pytest.fixture(scope='module')
+def performance_result(data) -> Result:
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        y_true='work_home_actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    ).fit(reference_data=data[0])
+
+    ref_with_tgt = data[1].merge(data[2], on='identifier')
+    return calc.calculate(ref_with_tgt)
 
 
 def test_calculator_init_with_empty_metrics_should_not_fail():  # noqa: D103, F821
@@ -160,6 +175,42 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
     assert sut.loc[1, ('chunk', 'targets_missing_rate')] == 0.9
 
 
+# See https://github.com/NannyML/nannyml/issues/192
+def test_calculator_returns_distinct_but_consistent_results_when_reused(data, performance_calculator):
+    reference, analysis, target = data
+
+    data = analysis.merge(target, on='identifier')
+    performance_calculator.fit(reference)
+    result1 = performance_calculator.calculate(data)
+    result2 = performance_calculator.calculate(data)
+
+    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
+    # modified on subsequent estimates.
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_performance_calculator_result_filter_should_preserve_data_with_default_args(performance_result):
+    filtered_result = performance_result.filter()
+    assert filtered_result.data.equals(performance_result.data)
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_performance_calculator_result_filter_metrics(performance_result):
+    filtered_result = performance_result.filter(metrics=['roc_auc'])
+    columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != 'chunk'))
+    assert columns == ('roc_auc',)
+    assert filtered_result.data.shape[0] == performance_result.data.shape[0]
+
+
+# See https://github.com/NannyML/nannyml/issues/197
+def test_performance_calculator_result_filter_period(performance_result):
+    ref_period = performance_result.data.loc[performance_result.data.loc[:, ('chunk', 'period')] == 'reference', :]
+    filtered_result = performance_result.filter(period='reference')
+    assert filtered_result.data.equals(ref_period)
+
+
 @pytest.mark.parametrize(
     'calc_args, plot_args',
     [
@@ -217,7 +268,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         metrics=['roc_auc', 'f1'],
         **calc_args,
     ).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    sut = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True))
 
     try:
         _ = sut.plot(**plot_args)
@@ -256,17 +307,3 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
-
-
-def test_calculator_returns_distinct_but_consistent_results_when_reused(data, performance_calculator):
-    reference, analysis, target = data
-
-    data = analysis.merge(target, on='identifier')
-    performance_calculator.fit(reference)
-    result1 = performance_calculator.calculate(data)
-    result2 = performance_calculator.calculate(data)
-
-    # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
-    # modified on subsequent estimates.
-    assert result1 is not result2
-    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())

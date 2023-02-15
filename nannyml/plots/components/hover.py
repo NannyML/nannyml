@@ -13,7 +13,7 @@ import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.colors import Colors
-from nannyml.plots.util import is_time_based_x_axis
+from nannyml.plots.util import is_time_series
 
 
 class Hover:
@@ -28,16 +28,15 @@ class Hover:
         data: Union[np.ndarray, pd.Series],
         name: Optional[str] = None,
     ) -> None:
-        if isinstance(data, np.ndarray):
-            if name is None:
-                raise InvalidArgumentsException("parameter 'name' is required when 'data' is of type 'np.ndarray'")
-
         if isinstance(data, pd.Series):
             if name is None:
                 name = data.name
             data = data.to_numpy(dtype='object')
 
-        self.custom_column_names.append(name)  # type: ignore
+        if name is None:
+            raise InvalidArgumentsException("parameter 'name' is required when 'data' is of type 'np.ndarray'")
+
+        self.custom_column_names.append(name)
         self.custom_data.append(data)
 
     def get_template(self) -> str:
@@ -99,11 +98,11 @@ def render_x_coordinate(
     end_dates_column: Optional[Union[np.ndarray, pd.Series]] = None,
     date_format: str = '%b-%d-%Y',
 ) -> np.ndarray:
-    if is_time_based_x_axis(start_dates_column, end_dates_column):
+    if is_time_series(start_dates_column) and is_time_series(end_dates_column):
         return np.array(
             [
                 f'From <b>{s.strftime(date_format)}</b> to <b>{e.strftime(date_format)}</b>'
-                for s, e in zip(start_dates_column, end_dates_column)  # type: ignore
+                for s, e in zip(start_dates_column, end_dates_column)
             ]
         )
     else:

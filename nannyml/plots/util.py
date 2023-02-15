@@ -11,23 +11,22 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
+from nannyml._typing import TypeGuard
 from nannyml.exceptions import InvalidArgumentsException
 
 
+def is_time_series(time_series: Optional[Union[np.ndarray, pd.Series]]) -> TypeGuard[Union[np.ndarray, pd.Series]]:
+    if time_series is None:
+        return False
+
+    return bool(np.any(time_series) if isinstance(time_series, np.ndarray) else not time_series.isnull().all())
+
+
 def is_time_based_x_axis(
-    start_dates: Optional[Union[np.ndarray, pd.Series]], end_dates: Optional[Union[np.ndarray, pd.Series]]
+    start_dates: Optional[Union[np.ndarray, pd.Series]],
+    end_dates: Optional[Union[np.ndarray, pd.Series]]
 ) -> bool:
-    if start_dates is None:
-        return False
-
-    all_start_none = not np.any(start_dates) if isinstance(start_dates, np.ndarray) else start_dates.isnull().all()
-
-    if end_dates is None:
-        return False
-
-    all_end_none = not np.any(end_dates) if isinstance(end_dates, np.ndarray) else end_dates.isnull().all()
-
-    return not all_start_none and not all_end_none
+    return is_time_series(start_dates) and is_time_series(end_dates)
 
 
 def add_artificial_endpoint(
@@ -41,13 +40,14 @@ def add_artificial_endpoint(
         _data = [np.append(e, e[-1]) for e in data]
     else:
         _data = np.append(_data, _data[-1])
-    if is_time_based_x_axis(start_dates, end_dates):
+    if is_time_series(start_dates) and is_time_series(end_dates):
         _start_dates = copy.deepcopy(start_dates)
-        _start_dates = np.append(_start_dates, end_dates[-1])  # type: ignore
+        _start_dates = np.append(_start_dates, end_dates[-1])
         return _start_dates, _data
     else:
+        assert chunk_indexes is not None
         _chunk_indexes = copy.deepcopy(chunk_indexes)
-        _chunk_indexes = np.append(_chunk_indexes, _chunk_indexes[-1] + 1)  # type: ignore
+        _chunk_indexes = np.append(_chunk_indexes, _chunk_indexes[-1] + 1)
         return _chunk_indexes, _data
 
 
