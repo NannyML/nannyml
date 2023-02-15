@@ -659,7 +659,9 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
         column_names=['y_true'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True)).filter(period='analysis')
+    results = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True)).filter(
+        period='analysis'
+    )
     sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'statistical_target_drift']
     pd.testing.assert_frame_equal(expected, sut)
