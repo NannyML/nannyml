@@ -10,7 +10,7 @@ The beginning of the code below is similar to the one in :ref:`tutorial on
 performance calculation with binary classification data<binary-performance-calculation>`.
 
 The synthetic datasets provided with the library contain targets for analysis period.
-It consists of the ``target`` for the monitored model - ``repaid``.
+It contains the :term:`target<Target>` values for the monitored model in the ``repaid`` column.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
@@ -37,7 +37,8 @@ For more information about chunking you can check the :ref:`chunking tutorial<ch
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
     :cells: 5
 
-The CBPE estimator is then fitted using the fit() method on the reference data.
+The CBPE estimator is then fitted using the :meth:`~nannyml.base.AbstractEstimator.fit` method
+on the reference data.
 
 We estimate the performance of both the reference and analysis datasets,
 to compare the estimated and actual performance of the reference period.
@@ -62,7 +63,7 @@ We compute the actual performance with `sklearn` using the `Target` values.
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
     :cell: 9
 
-Finally, estimation results for ``reference`` and ``analysis`` are combined with realized and plot the two on the same graph.
+Finally, estimation results for ``reference`` and ``analysis`` are combined with the realized performance and plot the two on the same graph.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance - Car Loan.ipynb
