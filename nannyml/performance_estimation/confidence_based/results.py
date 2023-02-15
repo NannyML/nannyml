@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Module containing CBPE estimation results and plotting implementations."""
+from __future__ import annotations
 import copy
 from typing import List, Optional, cast
 
@@ -10,7 +11,6 @@ import pandas as pd
 from plotly import graph_objects as go
 
 from nannyml._typing import Key, ModelOutputsType, ProblemType
-from nannyml._typing import Result as ResultType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -50,6 +50,9 @@ class Result(Abstract1DResult, ResultCompareMixin):
     ):
         super().__init__(results_data, metrics)
 
+        # Be more specific about the metric type than the base class
+        self.metrics: List[Metric]
+
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
         self.y_true = y_true
@@ -57,7 +60,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> ResultType:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
         """Filter the results based on the specified period and metrics.
 
         This function begins by expanding the metrics to all the metrics that were specified
@@ -85,7 +88,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
                 else:
                     raise InvalidArgumentsException(f"no '{name}' in result, did you calculate it?")
 
-        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]  # type: ignore
+        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
 
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
         if period != 'all':
@@ -100,7 +103,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
 
     def _get_metric_by_name(self, name: str) -> Optional[Metric]:
         for metric in self.metrics:
-            assert isinstance(metric, Metric)
             # If we match the metric by name, return the metric
             # E.g. matching the name 'confusion_matrix'
             if name == metric.name:

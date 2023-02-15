@@ -268,7 +268,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         metrics=['roc_auc', 'f1'],
         **calc_args,
     ).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    sut = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True))
 
     try:
         _ = sut.plot(**plot_args)

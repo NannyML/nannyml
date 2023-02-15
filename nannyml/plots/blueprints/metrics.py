@@ -426,7 +426,7 @@ def _plot_metric(  # noqa: C901
             x=(
                 reference_chunk_indices[-1] + 1
                 if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-                else analysis_chunk_start_dates[0]  # type: ignore
+                else analysis_chunk_start_dates[0]
             ),
             subplot_args=dict(row=row, col=col),
         )

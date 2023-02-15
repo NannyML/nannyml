@@ -104,12 +104,12 @@ In the sample data this is the ``timestamp`` column.
     This column is optional. When a timestamp column is not provided, plots will no longer make use of a time based x-axis
     but will use the index of the chunks instead. The following plots illustrate this:
 
-    .. figure:: /_static/tutorials/data-requirements-time-based-x-axis.svg
+    .. figure:: /_static/tutorials/data_requirements/data-requirements-time-based-x-axis.svg
 
         Plot using a time based X-axis
 
 
-    .. figure:: /_static/tutorials/data-requirements-index-based-x-axis.svg
+    .. figure:: /_static/tutorials/data_requirements/data-requirements-index-based-x-axis.svg
 
         Plot using an index based X-axis
 
@@ -137,7 +137,7 @@ declared pandas data types.
 In the sample data, the features are ``car_value``, ``salary_range``, ``debt_to_income_ratio``, ``loan_length``,
 ``repaid_loan_on_prev_car``, ``size_of_downpayment`` and ``driver_tenure``.
 
-Required to :ref:`detect data drift<data-drift>` on features.
+Required to :ref:`estimate performance for regression models<regression-performance-estimation>` and :ref:`detect data drift<data-drift>` on features.
 
 
 Model Output columns
@@ -172,20 +172,22 @@ NannyML Functionality Requirements
 After version 0.5 NannyML has relaxed the column requirements so that each functionality only requires what it needs.
 You can see those requirements in the table below:
 
-+--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| Data         | Performance Estimation              | Realized Performance                | Univariate Feature Drift          | Multivariate Feature Drift        | Target Drift                      | Output Drift                      |
-+==============+=====================================+=====================================+===================================+===================================+===================================+===================================+
-| timestamp    |                                     |                                     |                                   |                                   |                                   |                                   |
-+--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| features     |                                     |                                     | Required (reference and analysis) | Required (reference and analysis) |                                   |                                   |
-+--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| y_pred_proba | Required (reference and analysis)   |                                     |                                   |                                   |                                   | Required (reference and analysis) |
-+--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| y_pred       | | Required (reference and analysis) | | Required (reference and analysis) |                                   |                                   |                                   | Required (reference and analysis) |
-|              | | Not needed for ROC_AUC metric     | | Not needed for ROC_AUC metric     |                                   |                                   |                                   |                                   |
-+--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| y_true       | Required (reference only)           | Required (reference and analysis)   |                                   |                                   | Required (reference and analysis) |                                   |
-+--------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
++--------------+---------------------------------------------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| Data         | Performance Estimation                                                    | Realized Performance                | Feature Drift                                                         | Target Drift                      | Output Drift                      |
+|              +-------------------------------------+-------------------------------------+                                     +-----------------------------------+-----------------------------------+                                   |                                   |
+|              | Classification models               | Regression models                   |                                     | Univariate                        | Multivariate                      |                                   |                                   |
++==============+=====================================+=====================================+=====================================+===================================+===================================+===================================+===================================+
+| timestamp    |                                     |                                     |                                     |                                   |                                   |                                   |                                   |
++--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| features     |                                     | Required (reference and analysis)   |                                     | Required (reference and analysis) | Required (reference and analysis) |                                   |                                   |
++--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_pred_proba | Required (reference and analysis)   |                                     |                                     |                                   |                                   |                                   | Required (reference and analysis) |
++--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_pred       | | Required (reference and analysis) | Required (reference and analysis)   | | Required (reference and analysis) |                                   |                                   |                                   | Required (reference and analysis) |
+|              | | Not needed for ROC_AUC metric     |                                     | | Not needed for ROC_AUC metric     |                                   |                                   |                                   |                                   |
++--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
+| y_true       | Required (reference only)           |  Required (reference only)          | Required (reference and analysis)   |                                   |                                   | Required (reference and analysis) |                                   |
++--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 
 
 What next

@@ -4,7 +4,7 @@
 import abc
 import logging
 from logging import Logger
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union, Type
 
 import numpy as np
 import pandas as pd
@@ -153,7 +153,7 @@ class Metric(abc.ABC):
 class MetricFactory:
     """A factory class that produces Metric instances based on a given magic string or a metric specification."""
 
-    registry: Dict[str, Dict[ProblemType, Metric]] = {}
+    registry: Dict[str, Dict[ProblemType, Type[Metric]]] = {}
 
     @classmethod
     def _logger(cls) -> Logger:
@@ -181,11 +181,11 @@ class MetricFactory:
                 f"{[md.value for md in cls.registry[key]]}"
             )
         metric_class = cls.registry[key][use_case]
-        return metric_class(**kwargs)  # type: ignore
+        return metric_class(**kwargs)
 
     @classmethod
     def register(cls, metric: str, use_case: ProblemType) -> Callable:
-        def inner_wrapper(wrapped_class: Metric) -> Metric:
+        def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:
                     cls._logger().warning(f"re-registering Metric for metric='{metric}' and use_case='{use_case}'")

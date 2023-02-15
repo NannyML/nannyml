@@ -22,14 +22,14 @@ Glossary
 
     Chi Squared test
         The Chi Squared test, or chi2 test as is sometimes called, is a non parametric statistical test regarding
-        discrete distributions. It is be used to examine whether there is statistically significant difference
+        discrete distributions. It is used to examine whether there is a statistically significant difference
         between expected and observed frequencies for one or more categories of a contingency table.
         In NannyML we use the Chi Squared test to answer whether the two samples of a categorical variable
         come from a different distribution.
 
         The Chi Squared test results include the chi squared statistic and a p-value. The bigger the chi squared statistic
-        the more different the results between the two samples we are comparing are. The p value
-        represents the chance that we would get the results we have provided they came from the same
+        the more different the results between the two samples we are comparing. The p-value
+        represents the chance that we would get the results we have provided if they came from the same
         distribution.
 
         You can find more information on the `wikipedia Chi-squared test page`_. At NannyML we use the `scipy implementation of the
@@ -44,21 +44,21 @@ Glossary
 
     Confidence Band
         When we estimate a statistic from a sample our estimation has to take into account the variance of that statistic
-        from it's sampled distribution. We do that by calculating :term:`Sampling Error`. When we visualize our results
-        we show a Confidence Band above and below our estimation. This confidence band comprises of the values that have distance
-        less than the sampling error from our estimatiuon. This helps us know when changes in the value of a statistic are
+        from its sampled distribution. We do that by calculating :term:`Sampling Error`. When we visualize our results
+        we show a Confidence Band above and below our estimation. This confidence band comprises the values that have a distance
+        less than the sampling error from our estimation. This helps us know when changes in the value of a statistic are
         statistically significant instead of happening due to the natural variance of the statistic.
 
-        Note that the confidence band is also described as sampling error range at the hover information that appears on
+        Note that the confidence band is also described as the sampling error range at the hover information that appears on
         the interactive plots.
 
     Confidence Score
-        A score that is returned by classification model together with class prediction. It expresses the confidence
+        A score that is returned by the classification model together with class prediction. It expresses the confidence
         of the prediction i.e. the closer the score is to its minimum or maximum the more confident the classifier is
         with its prediction. If the score is in the range between 0 and 1 it is called *probability estimate*. It can also be
         the actual *probability*. Regardless of the algorithm type, all classification models calculate some form of
         confidence scores. These scores are then thresholded to return the predicted class. Confidence scores can be
-        turned into calibrated probabilities and uset to estimate performance of classification models in the absence
+        turned into calibrated probabilities and used to estimate the performance of classification models in the absence
         of ground truth (see how :ref:`here<how-it-works-cbpe>`).
 
     Covariate Shift
@@ -72,7 +72,7 @@ Glossary
         level of chunk i.e. a chunk is a single data point on the monitoring results. Chunks are usually created based on time
         periods - they contain all the observations and predictions from single hour, day, month etc. depending on
         the selected interval. They can be also size-based so that each chunk contains *n* observations, or
-        number-based so the whole data is splt into *k* chunks. In each case chronology of data between chunks is
+        number-based so the whole data is split into *k* chunks. In each case chronology of data between chunks is
         maintained.
 
     Data Period
@@ -129,7 +129,7 @@ Glossary
         The process of substituting missing values with actual values on a dataset.
 
     Kolmogorov-Smirnov test
-        The Kolmogorov-Smirnov test, or KS test as is more commonly called, is a non parametric statistical test regarding
+        The Kolmogorov-Smirnov test, or KS test as is more commonly called, is a non-parametric statistical test regarding
         the equality of continuous one dimensional probability distributions. It can be used to compare a sample with a
         reference probability distribution, called one-sample KS test, or to compare two samples. In NannyML we use the two
         sample KS test looking to answer whether the two samples in question come from a different distribution.
@@ -167,7 +167,7 @@ Glossary
         create appropriate drift measures.
 
     Nanny model
-        An extra model created as a part of NannyML monitoring solution. The name is used to distinguish from the
+        An extra model was created as a part of NannyML monitoring solution. The name is used to distinguish from the
         monitored model which is sometimes referred to as :term:`child model`.
 
     Partition Column
@@ -213,7 +213,7 @@ Glossary
         The term is used to differentiate between :term:`Estimated Performance` and actual results.
 
     Reconstruction Error
-        The average euclidean distance between the original and the reconstructed data points in a dataset.
+        The average Euclidean distance between the original and the reconstructed data points in a dataset.
         The reconstructed dataset is created by transforming our model inputs to a :term:`Latent space` and
 
         then transforming them back to the :term:`model input<Model Inputs>` space. Given that this process cannot be

@@ -94,14 +94,12 @@ class UnivariateDriftCalculator(AbstractCalculator):
             continuous_methods = ['jensen_shannon']
         elif isinstance(continuous_methods, str):
             continuous_methods = [continuous_methods]
-        assert isinstance(continuous_methods, list)
         self.continuous_method_names = continuous_methods
 
         if not categorical_methods:
             categorical_methods = ['jensen_shannon']
         elif isinstance(categorical_methods, str):
             categorical_methods = [categorical_methods]
-        assert isinstance(categorical_methods, list)
         self.categorical_method_names: List[str] = categorical_methods
 
         self.calculation_method: Optional[str] = None
@@ -157,9 +155,6 @@ class UnivariateDriftCalculator(AbstractCalculator):
             ]
 
         self.result = self._calculate(reference_data)
-
-        assert self.result is not None
-
         self.result.data['chunk', 'chunk', 'period'] = 'reference'
         self.result.reference_data = reference_data.copy()
 
@@ -227,7 +222,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
             #       Dropping the intermediate '_filter' and directly returning the correct 'Result' class works OK
             #       but this causes us to lose the "common behavior" in the top level 'filter' method when overriding.
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
-            self.result = self.result.filter(period='reference')  # type: ignore
+            self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
             self.result.analysis_data = data.copy()
 

@@ -61,7 +61,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         kind: str = 'performance',
         *args,
         **kwargs,
-    ) -> Optional[go.Figure]:
+    ) -> go.Figure:
         """Render realized performance metrics.
 
             The following kinds of plots are available:
