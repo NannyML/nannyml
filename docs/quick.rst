@@ -186,7 +186,7 @@ With NannyML we were able to estimate performance in the absence of ground truth
 potential drop in ROC AUC in the second half of the analysis period. Univariate and multivariate
 data drift detection algorithms have identified data drift.
 
-Putting everything together, we see that 4 features exhibit data drift from late 2019 onwards. They are
+Putting everything together, we see that 4 features exhibit data drift from the second half of the analysis period. They are
 ``loan_length``, ``salary_range``, ``car_value``, ``repaid_loan_on_prev_car``.
 
 This drift is responsible for the potential negative impact in performance that we have observed in this time period.
