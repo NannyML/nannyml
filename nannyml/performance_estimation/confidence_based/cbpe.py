@@ -56,6 +56,7 @@ class CBPE(AbstractEstimator):
         calibration: Optional[str] = None,
         calibrator: Optional[Calibrator] = None,
         normalize_confusion_matrix: Optional[str] = None,
+        business_cost_matrix: Optional[np.ndarray] = None,
     ):
         """Initializes a new CBPE performance estimator.
 
@@ -164,6 +165,7 @@ class CBPE(AbstractEstimator):
                 timestamp_column_name=self.timestamp_column_name,
                 chunker=self.chunker,
                 normalize_confusion_matrix=normalize_confusion_matrix,
+                business_cost_matrix=business_cost_matrix,
             )
             for metric in metrics
         ]
