@@ -142,12 +142,16 @@ The total number of chunks can be set by the ``chunk_number`` parameter:
         :cells: 12
         :show_output:
 
-.. note::
+.. warning::
     The same splitting rule is always applied to the dataset used for fitting (``reference``) and the dataset of
-    interest (in the presented case - ``analysis``). Unless these two datasets are of the same size, the chunk sizes
+    interest (in the presented case - ``analysis``).
+
+    Unless these two datasets are of the same size, the chunk sizes
     can be considerably different. E.g. if the ``reference`` dataset has 10 000 observations and the ``analysis``
     dataset has 80 000, and chunking is number-based, chunks in ``reference`` will be much smaller than in
-    ``analysis``. Additionally, if the data drift or performance estimation is calculated on
+    ``analysis``.
+
+    Additionally, if the data drift or performance estimation is calculated on
     combined ``reference`` and ``analysis`` the results presented for ``reference`` will be calculated on different
     chunks than they were fitted.
 
@@ -178,7 +182,19 @@ For example, ``SizeBasedChunker`` can be used to ``drop`` the leftover observati
     :cells: 14
     :show_output:
 
+You could also chunk your data into a fixed number of chunks, choosing to append any leftover observations
+to the last chunk.
 
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :cells: 15
+    :show_output:
+
+You can then provide your custom chunker to the appropriate calculator or estimator.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :cells: 16
 
 Chunks on plots with results
 ----------------------------
@@ -192,8 +208,6 @@ to help prevent any confusion.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
-    :cells: 15
+    :cells: 17
 
 .. image:: /_static/tutorials/chunking/chunk-size.svg
-
-
