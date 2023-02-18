@@ -1169,9 +1169,10 @@ class BinaryClassificationConfusionMatrix(Metric):
         chunker: Chunker,
         business_cost_matrix: np.ndarray,
         timestamp_column_name: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
-            name='confusion_matrix',
+            name='business_cost',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
@@ -1213,22 +1214,21 @@ class BinaryClassificationConfusionMatrix(Metric):
         (
             self.true_positive_cost_lower_threshold,
             self.true_positive_cost_upper_threshold,
-        ) = self._true_positive_cost_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        ) = self._true_positive_cost_alert_thresholds(reference_chunks, std_num=3)
         (
             self.true_negative_cost_lower_threshold,
             self.true_negative_cost_upper_threshold,
-        ) = self._true_negative_cost_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        ) = self._true_negative_cost_alert_thresholds(reference_chunks, std_num=3)
         (
             self.false_positive_cost_lower_threshold,
             self.false_positive_cost_upper_threshold,
-        ) = self._false_positive_cost_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        ) = self._false_positive_cost_alert_thresholds(reference_chunks, std_num=3)
         (
             self.false_negative_cost_lower_threshold,
             self.false_negative_cost_upper_threshold,
-        ) = self._false_negative_cost_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
-
+        ) = self._false_negative_cost_alert_thresholds(reference_chunks, std_num=3)
         (self.total_cost_lower_threshold, self.total_cost_upper_threshold) = self._total_cost_alert_thresholds(
-            reference_chunks, std_num=3, lower_limit=0, upper_limit=1
+            reference_chunks, std_num=3
         )
 
         # Calculate confidence bands
@@ -1282,7 +1282,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_positive_cost_upper_threshold = true_positive_cost_mean_realized_performance + deviation
         true_positive_cost_lower_threshold = true_positive_cost_mean_realized_performance - deviation
 
-        return true_positive_cost_lower_threshold, true_positive_cost_upper_threshold
+        return (true_positive_cost_lower_threshold, true_positive_cost_upper_threshold)
 
     def _true_negative_cost_alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3
@@ -1296,7 +1296,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_negative_cost_upper_threshold = true_negative_cost_mean_realized_performance + deviation
         true_negative_cost_lower_threshold = true_negative_cost_mean_realized_performance - deviation
 
-        return true_negative_cost_lower_threshold, true_negative_cost_upper_threshold
+        return (true_negative_cost_lower_threshold, true_negative_cost_upper_threshold)
 
     def _false_positive_cost_alert_thresholds(
         self,
@@ -1312,7 +1312,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_positive_cost_upper_threshold = false_positive_cost_mean_realized_performance + deviation
         false_positive_cost_lower_threshold = false_positive_cost_mean_realized_performance - deviation
 
-        return false_positive_cost_lower_threshold, false_positive_cost_upper_threshold
+        return (false_positive_cost_lower_threshold, false_positive_cost_upper_threshold)
 
     def _false_negative_cost_alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3
@@ -1326,7 +1326,19 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_negative_cost_upper_threshold = false_negative_cost_mean_realized_performance + deviation
         false_negative_cost_lower_threshold = false_negative_cost_mean_realized_performance - deviation
 
-        return false_negative_cost_lower_threshold, false_negative_cost_upper_threshold
+        return (false_negative_cost_lower_threshold, false_negative_cost_upper_threshold)
+
+    def _total_cost_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3) -> Tuple[float, float]:
+        total_cost_realized_chunk_performance = [
+            self._total_cost_realized_performance(chunk.data) for chunk in reference_chunks
+        ]
+        deviation = np.std(total_cost_realized_chunk_performance) * std_num
+        total_cost_mean_realized_performance = np.mean(total_cost_realized_chunk_performance)
+
+        total_cost_upper_threshold = total_cost_mean_realized_performance + deviation
+        total_cost_lower_threshold = total_cost_mean_realized_performance - deviation
+
+        return (total_cost_lower_threshold, total_cost_upper_threshold)
 
     def _true_positive_cost_realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
@@ -1352,7 +1364,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         return num_tn * tn_cost
 
-    def _false_positive_realized_performance(self, data: pd.DataFrame) -> float:
+    def _false_positive_cost_realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -1364,7 +1376,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         return num_fp * fp_cost
 
-    def _false_negative_realized_performance(self, data: pd.DataFrame) -> float:
+    def _false_negative_cost_realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
@@ -1375,6 +1387,24 @@ class BinaryClassificationConfusionMatrix(Metric):
         num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
 
         return num_fn * fn_cost
+
+    def _total_cost_realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+
+        if y_true is None:
+            return np.NaN
+
+        tp_cost = self.business_cost_matrix[1, 1]
+        tn_cost = self.business_cost_matrix[0, 0]
+        fp_cost = self.business_cost_matrix[0, 1]
+        fn_cost = self.business_cost_matrix[1, 0]
+
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+
+        return num_tp * tp_cost + num_tn * tn_cost + num_fp * fp_cost + num_fn * fn_cost
 
     def _true_positive_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
         return np.std([self.get_true_positive_cost_estimate(chunk.data) for chunk in reference_chunks])
@@ -1387,6 +1417,9 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _false_negative_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
         return np.std([self.get_false_negative_cost_estimate(chunk.data) for chunk in reference_chunks])
+
+    def _total_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
+        return np.std([self.get_total_cost_estimate(chunk.data) for chunk in reference_chunks])
 
     def get_true_positive_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
         y_pred_proba = chunk_data[self.y_pred_proba]
@@ -1433,6 +1466,14 @@ class BinaryClassificationConfusionMatrix(Metric):
         estimate = est_fn_ratio * fn_cost * len(y_pred)
 
         return estimate
+
+    def get_total_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
+        return (
+            self.get_true_positive_cost_estimate(chunk_data)
+            + self.get_true_negative_cost_estimate(chunk_data)
+            + self.get_false_positive_cost_estimate(chunk_data)
+            + self.get_false_negative_cost_estimate(chunk_data)
+        )
 
     def get_true_pos_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
         true_pos_cost_info = {}
@@ -1554,6 +1595,36 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         return false_neg_cost_info
 
+    def get_total_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
+        total_cost_info = {}
+
+        estimated_total_cost = self.get_total_cost_estimate(chunk_data)
+
+        sampling_error_total_cost = bse.total_cost_sampling_error(
+            self._total_cost_sampling_error_components, chunk_data
+        )
+
+        total_cost_info['estimated_total_cost'] = estimated_total_cost
+        total_cost_info['sampling_error_total_cost'] = sampling_error_total_cost
+        total_cost_info['realized_total_cost'] = self._total_cost_realized_performance(chunk_data)
+
+        total_cost_info['upper_confidence_boundary_total_cost'] = (
+            estimated_total_cost + SAMPLING_ERROR_RANGE * sampling_error_total_cost
+        )
+        total_cost_info['lower_confidence_boundary_total_cost'] = (
+            estimated_total_cost - SAMPLING_ERROR_RANGE * sampling_error_total_cost
+        )
+
+        total_cost_info['upper_threshold_total_cost'] = self.total_cost_upper_threshold
+        total_cost_info['lower_threshold_total_cost'] = self.total_cost_lower_threshold
+
+        total_cost_info['alert_total_cost'] = (
+            estimated_total_cost > self.total_cost_upper_threshold
+            or estimated_total_cost < self.total_cost_lower_threshold
+        )
+
+        return total_cost_info
+
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
         chunk_record = {}
 
@@ -1568,6 +1639,9 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         false_neg_cost_info = self.get_false_neg_cost_info(chunk_data)
         chunk_record.update(false_neg_cost_info)
+
+        total_cost_info = self.get_total_cost_info(chunk_data)
+        chunk_record.update(total_cost_info)
 
         return chunk_record
 

@@ -322,6 +322,8 @@ def true_positive_sampling_error_components(
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+    normalize_confusion_matrix: str
+        The type of normalization to apply to the confusion matrix.
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -416,6 +418,8 @@ def true_negative_sampling_error_components(
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+    normalize_confusion_matrix: str
+        The type of normalization to apply to the confusion matrix.
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -510,6 +514,8 @@ def false_positive_sampling_error_components(
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+    normalize_confusion_matrix: str
+        The type of normalization to apply to the confusion matrix.
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -604,6 +610,8 @@ def false_negative_sampling_error_components(
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+    normalize_confusion_matrix: str
+        The type of normalization to apply to the confusion matrix.
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -683,5 +691,209 @@ def false_negative_sampling_error(sampling_error_components: Tuple, data) -> flo
 
     elif norm_type == "true" or norm_type == "pred":
         fn_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    return fn_standard_error
+
+
+def true_positive_cost_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, business_cost_matrix: np.ndarray
+) -> Tuple:
+    """
+    Estimate sampling error for the true positive rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    business_cost_matrix: np.ndarray
+        A 2x2 matrix of costs for the business problem.
+    Returns
+    -------
+    std: float
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_tp = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    tp_cost = business_cost_matrix[1, 1]
+
+    obs_level_tp_cost = obs_level_tp * tp_cost
+
+    std = np.std(obs_level_tp_cost)
+
+    return std
+
+
+def true_positive_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the true positive rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    reference_std = sampling_error_components
+
+    analysis_std = reference_std * len(data)
+
+    tp_standard_error = analysis_std / np.sqrt(len(data))
+
+    return tp_standard_error
+
+
+def true_negative_cost_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, business_cost_matrix: np.ndarray
+) -> Tuple:
+    """
+    Estimate sampling error for the true negative rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    business_cost_matrix: np.ndarray
+        A 2x2 matrix of costs for the business problem.
+    Returns
+    -------
+    std: float
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_tn = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    tn_cost = business_cost_matrix[0, 0]
+
+    obs_level_tn_cost = obs_level_tn * tn_cost
+
+    std = np.std(obs_level_tn_cost)
+
+    return std
+
+
+def true_negative_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the true negative rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    reference_std = sampling_error_components
+
+    analysis_std = reference_std * len(data)
+
+    tn_standard_error = analysis_std / np.sqrt(len(data))
+
+    return tn_standard_error
+
+
+def false_positive_cost_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, business_cost_matrix: np.ndarray
+) -> Tuple:
+    """
+    Estimate sampling error for the false positive rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    business_cost_matrix: np.ndarray
+        A 2x2 matrix of costs for the business problem.
+    Returns
+    -------
+    std: float
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_fp = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 1), 1, 0)
+
+    fp_cost = business_cost_matrix[0, 1]
+
+    obs_level_fp_cost = obs_level_fp * fp_cost
+
+    std = np.std(obs_level_fp_cost)
+
+    return std
+
+
+def false_positive_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the false positive rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    reference_std = sampling_error_components
+
+    analysis_std = reference_std * len(data)
+
+    fp_standard_error = analysis_std / np.sqrt(len(data))
+
+    return fp_standard_error
+
+
+def false_negative_cost_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_reference: pd.Series, business_cost_matrix: np.ndarray
+) -> Tuple:
+    """
+    Estimate sampling error for the false negative rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    business_cost_matrix: np.ndarray
+        A 2x2 matrix of costs for the business problem.
+    Returns
+    -------
+    std: float
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_fn = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    fn_cost = business_cost_matrix[1, 0]
+
+    obs_level_fn_cost = obs_level_fn * fn_cost
+
+    std = np.std(obs_level_fn_cost)
+
+    return std
+
+
+def false_negative_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the false positive rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    reference_std = sampling_error_components
+
+    analysis_std = reference_std * len(data)
+
+    fn_standard_error = analysis_std / np.sqrt(len(data))
 
     return fn_standard_error
