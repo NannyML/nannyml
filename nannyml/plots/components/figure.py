@@ -165,7 +165,7 @@ class Figure(go.Figure):
             x, data = add_artificial_endpoint(indices, start_dates, end_dates, data)
 
         show_in_legend = kwargs.get('showlegend', True)
-        is_single_plot = subplot_args.get('row') is None and subplot_args.get('col') is None
+        is_single_plot = subplot_args and subplot_args.get('row') is None and subplot_args.get('col') is None
 
         if subplot_args is None or is_single_plot:
             subplot_args = {}
