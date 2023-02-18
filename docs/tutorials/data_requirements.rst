@@ -62,9 +62,10 @@ be specific to a given model type. Also note that there is an expectation that t
 analysis datasets when they describe the same thing.
 
 We will illustrate this using the fictional ``car_loan`` model included with the library,
-a binary classifier trying to predict whether a customer will repay a loan provided for buying a car.
+a binary classifier trying to predict whether a prospective customer will pay off a car loan.
 
 Below we see the columns contained in our dataset.
+
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Data Requirements.ipynb
     :cells: 1
