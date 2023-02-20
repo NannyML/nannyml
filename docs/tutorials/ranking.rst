@@ -13,7 +13,7 @@ Just The Code
 =============
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cells: 1 3 5 7 9 11
 
 Walkthrough
@@ -42,24 +42,24 @@ It is based on the univariate drift results of the features or data columns cons
 The first thing we need before using the alert count ranker is to create the univariate drift results.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cell: 2
 
-To illustrate the results we filter and display the analysis period results for ``distance_from_office`` feature.
+To illustrate the results we filter and display the analysis period results for ``debt_to_income_ratio`` feature.
 The next step is to instantiate the ranker and instruct it to :meth:`~nannyml.drift.ranking.AlertCountRanking.rank`
 the provided results. Notice that the univariate results are filtered to ensure they only have one drift method
 per categorical and continuous feature as required.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cells: 3
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cell: 4
 
 The alert count ranker results give a simple and concise view of features that tend to break univariate drift
@@ -77,11 +77,11 @@ Therefore we first need to create the performance results we will use in our ran
 performance results are created below.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cells: 5
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cell: 6
 
 The analysis period estimations are shown.
@@ -90,11 +90,11 @@ The realized performance results are also created
 since both can be used according to the use case being addressed.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cells: 7
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cell: 8
 
 The analysis period results are shown.
@@ -108,24 +108,24 @@ After fitting, we can :meth:`~nannyml.drift.ranking.CorrelationRanking.rank` pro
 filtered univariate and performance results.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cells: 9
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cell: 10
 
 Depending on circumstances it may be appropriate to consider correlation
 of drift results on just the analysis dataset or for different metrics.
-Below we can see the correlation of the same drift results with the ``precision``
+Below we can see the correlation of the same drift results with the ``recall``
 results
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cells: 11
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Ranking.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
     :cell: 12
 
 Insights

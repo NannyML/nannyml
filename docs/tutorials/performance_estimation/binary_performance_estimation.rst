@@ -21,14 +21,18 @@ Just The Code
 ----------------
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 1 3 4 6 8
 
 
 Walkthrough
 --------------
 
-For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
+For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
+predicts whether a customer will repay a loan to buy a car.
+You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
+
+where the monitored model predicts
 whether an employee will work from home. You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
@@ -37,11 +41,11 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 We start by loading the dataset we'll be using:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cell: 2
 
 Next we create the Confidence-based Performance Estimation
@@ -62,11 +66,14 @@ can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-da
   * ``specificity``
   * ``accuracy``
   * ``confusion_matrix``
-      * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
-
+        * Normalization options:
+            * ``None``: returns counts
+            * ``true``: normalize by true class of observations
+            * ``pred``: normalize by predicted class of observations
+            * ``all``: normalize by all observations
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 3
 
 
@@ -82,11 +89,11 @@ NannyML can then output a dataframe that contains all the results. Let's have a 
 only.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cell: 5
 
 .. _performance-estimation-thresholds:
@@ -128,10 +135,10 @@ Description of tabular results above explains how the
 interactive plots, though only static views are included here).
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 6
 
-.. image:: ../../_static/tutorial-perf-est-guide-analysis.svg
+.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis.svg
 
 
 To get a better context let's also plot estimation of performance on analysis data together with calculated
@@ -146,10 +153,10 @@ performance on the reference period (where the target was available).
   variability of the performance.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
     :cells: 8
 
-.. image:: ../../_static/tutorial-perf-est-guide-with-ref.svg
+.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
 
 
 Insights

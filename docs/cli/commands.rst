@@ -4,7 +4,6 @@ Command overview
 ----------------
 
 .. toctree::
-   :hidden:
    :maxdepth: 2
 
    commands/run
