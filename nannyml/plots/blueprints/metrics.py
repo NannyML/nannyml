@@ -332,7 +332,7 @@ def _plot_metric(  # noqa: C901
     # endregion
 
     # region thresholds
-
+    show_threshold_legend = show_in_legend
     if has_reference_results:
         if reference_upper_thresholds is not None:
             figure.add_threshold(
@@ -344,8 +344,9 @@ def _plot_metric(  # noqa: C901
                 with_additional_endpoint=True,
                 subplot_args=dict(row=row, col=col),
                 legendgroup='thresh',
-                showlegend=False,
+                showlegend=show_threshold_legend,
             )
+            show_threshold_legend = False
         if reference_lower_thresholds is not None:
             figure.add_threshold(
                 data=reference_lower_thresholds,
@@ -356,8 +357,9 @@ def _plot_metric(  # noqa: C901
                 with_additional_endpoint=True,
                 subplot_args=dict(row=row, col=col),
                 legendgroup='thresh',
-                showlegend=True,
+                showlegend=show_threshold_legend,
             )
+            show_threshold_legend = False
     if analysis_upper_thresholds is not None:
         figure.add_threshold(
             data=analysis_upper_thresholds,
@@ -368,8 +370,9 @@ def _plot_metric(  # noqa: C901
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
             legendgroup='thresh',
-            showlegend=False,
+            showlegend=show_threshold_legend,
         )
+        show_threshold_legend = False
 
     if analysis_lower_thresholds is not None:
         figure.add_threshold(
@@ -381,8 +384,9 @@ def _plot_metric(  # noqa: C901
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
             legendgroup='thresh',
-            showlegend=False,
+            showlegend=show_threshold_legend,
         )
+        show_threshold_legend = False
     # endregion
 
     # region confidence bands
