@@ -16,7 +16,7 @@ def _standard_deviation_of_variances(components: List[Tuple], data) -> float:
 
 def auroc_sampling_error_components(y_true_reference: List[pd.Series], y_pred_proba_reference: List[pd.Series]):
     """
-    Calculate the sampling error components on reference data.
+    Calculate sampling error components for AUROC using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -87,7 +87,7 @@ def auroc_sampling_error(sampling_error_components, data) -> float:
 
 def f1_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
     """
-    Calculate the sampling error components on reference data.
+    Calculate sampling error components for F1 using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -144,7 +144,7 @@ def f1_sampling_error(sampling_error_components: List[Tuple], data) -> float:
 
 def precision_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
     """
-    Calculate the sampling error components on reference data.
+    Calculate sampling error components for precision using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -199,7 +199,7 @@ def precision_sampling_error(sampling_error_components: List[Tuple], data) -> fl
 
 def recall_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
     """
-    Calculate the sampling error components on reference data.
+    Calculate sampling error components for recall using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -253,7 +253,7 @@ def recall_sampling_error(sampling_error_components: List[Tuple], data) -> float
 
 def specificity_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
     """
-    Calculate the sampling error components on reference data.
+    Calculate sampling error components for specificity using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -307,7 +307,7 @@ def specificity_sampling_error(sampling_error_components: List[Tuple], data) -> 
 
 def accuracy_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
     """
-    Calculate the sampling error components on reference data.
+    Calculate sampling error components for accuracy using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.

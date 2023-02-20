@@ -27,8 +27,8 @@ def _universal_sampling_error(reference_std, reference_fraction, data):
 
 def auroc_sampling_error_components(y_true_reference: pd.Series, y_pred_proba_reference: pd.Series) -> Tuple:
     """
-    Estimation of AUROC sampling error. Calculation is based on the Variance Sum Law and expressing AUROC as
-    a Mann-Whitney U statistic.
+    Calculate sampling error components for AUROC using reference data.
+    Calculation is based on the Variance Sum Law and expressing AUROC as a Mann-Whitney U statistic.
 
     Parameters
     ----------
@@ -87,7 +87,8 @@ def auroc_sampling_error(sampling_error_components, data):
 
 def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
     """
-    Estimate sampling error of F1 using modified standard error of mean formula.
+    Calculate sampling error components for F1 using reference data.
+    Calculation is based on modified standard error of mean formula.
 
     Parameters
     ----------
@@ -139,7 +140,8 @@ def f1_sampling_error(sampling_error_components, data):
 
 def precision_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
     """
-    Estimate sampling error for precision using modified standard error of mean formula.
+    Calculate sampling error components for precision using reference data.
+    Calculation is based on modified standard error of mean formula.
 
     Parameters
     ----------
@@ -184,7 +186,8 @@ def precision_sampling_error(sampling_error_components, data):
 
 def recall_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
     """
-    Estimate sampling error for recall using modified standard error of mean formula.
+    Calculate sampling error components for recall using reference data.
+    Calculation is based on modified standard error of mean formula.
 
     Parameters
     ----------
@@ -228,7 +231,8 @@ def recall_sampling_error(sampling_error_components, data):
 
 def specificity_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
     """
-    Estimate sampling error for specificity using modified standard error of mean formula.
+    Calculate sampling error components for specificity using reference data.
+    Calculation is based on modified standard error of mean formula.
 
     Parameters
     ----------
@@ -272,7 +276,8 @@ def specificity_sampling_error(sampling_error_components, data):
 
 def accuracy_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
     """
-    Estimate sampling error for accuracy.
+    Calculate sampling error components for accuracy using reference data.
+    Calculation is based on modified standard error of mean formula.
 
     Parameters
     ----------
@@ -315,13 +320,16 @@ def true_positive_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
 ) -> Tuple:
     """
-    Estimate sampling error for the true positive rate.
+    Estimate sampling error components for true positive rate using reference data.
+    Calculation is based on modified standard error of mean formula.
+
     Parameters
     ----------
     y_true_reference: pd.Series
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -383,10 +391,12 @@ def true_positive_sampling_error_components(
 def true_positive_sampling_error(sampling_error_components: Tuple, data) -> float:
     """
     Calculate the true positive rate sampling error for a chunk of data.
+
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
     data : the (analysis) data you want to calculate or estimate a metric for.
+
     Returns
     -------
     sampling_error: float
@@ -409,13 +419,16 @@ def true_negative_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
 ) -> Tuple:
     """
-    Estimate sampling error for the true negative rate.
+    Estimate sampling error components for true negative rate using reference data.
+    Calculation is based on modified standard error of mean formula.
+
     Parameters
     ----------
     y_true_reference: pd.Series
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -477,10 +490,12 @@ def true_negative_sampling_error_components(
 def true_negative_sampling_error(sampling_error_components: Tuple, data) -> float:
     """
     Calculate the true negative rate sampling error for a chunk of data.
+
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
     data : the (analysis) data you want to calculate or estimate a metric for.
+
     Returns
     -------
     sampling_error: float
@@ -503,13 +518,16 @@ def false_positive_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
 ) -> Tuple:
     """
-    Estimate sampling error for the false positive rate.
+    Estimate sampling error components for false positive rate using reference data.
+    Calculation is based on modified standard error of mean formula.
+
     Parameters
     ----------
     y_true_reference: pd.Series
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+    
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -571,10 +589,12 @@ def false_positive_sampling_error_components(
 def false_positive_sampling_error(sampling_error_components: Tuple, data) -> float:
     """
     Calculate the false positive rate sampling error for a chunk of data.
+
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
     data : the (analysis) data you want to calculate or estimate a metric for.
+
     Returns
     -------
     sampling_error: float
@@ -597,13 +617,16 @@ def false_negative_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
 ) -> Tuple:
     """
-    Estimate sampling error for the false negative rate.
+    Estimate sampling error components for false negative rate using reference data.
+    Calculation is based on modified standard error of mean formula.
+
     Parameters
     ----------
     y_true_reference: pd.Series
         Target values for the reference dataset.
     y_pred_reference: pd.Series
         Predictions for the reference dataset.
+    
     Returns
     -------
     (std, relevant_proportion, norm_type): Tuple[float, float, str]
@@ -665,10 +688,12 @@ def false_negative_sampling_error_components(
 def false_negative_sampling_error(sampling_error_components: Tuple, data) -> float:
     """
     Calculate the false positive rate sampling error for a chunk of data.
+
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
     data : the (analysis) data you want to calculate or estimate a metric for.
+
     Returns
     -------
     sampling_error: float
