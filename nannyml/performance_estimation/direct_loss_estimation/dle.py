@@ -66,13 +66,13 @@ class DLE(AbstractEstimator):
             A column name indicating which column contains the target values.
         timestamp_column_name : str
             A column name indicating which column contains the timestamp of the prediction.
-        chunk_size: int, default=None
+        chunk_size : int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int, default=None
+        chunk_number : int, default=None
             Splits the data into `chunk_number` pieces.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str, default=None
+        chunk_period : str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
@@ -230,6 +230,13 @@ class DLE(AbstractEstimator):
             reference_data[categorical_feature_column] = self._categorical_encoders[
                 categorical_feature_column
             ].fit_transform(reference_data[categorical_feature_column].values.reshape(-1, 1))
+            # LGBM treats -1 for categorical features as missing
+            # https://lightgbm.readthedocs.io/en/latest/Advanced-Topics.html#categorical-feature-support
+            # Ordinal encoder encodes from 0 to n-1.
+            # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OrdinalEncoder.html
+            # hence we add 1 before we pass the data to lightgbm for fitting so treating unseen values
+            # is more consistent
+            reference_data[categorical_feature_column] = reference_data[categorical_feature_column] + 1
 
         for metric in self.metrics:
             metric.fit(reference_data)
@@ -255,6 +262,13 @@ class DLE(AbstractEstimator):
             data[categorical_feature_column] = self._categorical_encoders[categorical_feature_column].transform(
                 data[categorical_feature_column].values.reshape(-1, 1)
             )
+            # LGBM treats -1 for categorical features as missing
+            # https://lightgbm.readthedocs.io/en/latest/Advanced-Topics.html#categorical-feature-support
+            # Ordinal encoder encodes from 0 to n-1.
+            # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OrdinalEncoder.html
+            # hence we add 1 before we pass the data to lightgbm for fitting so treating unseen values
+            # is more consistent
+            data[categorical_feature_column] = data[categorical_feature_column] + 1
 
         chunks = self.chunker.split(data)
 
