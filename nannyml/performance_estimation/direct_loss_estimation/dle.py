@@ -232,7 +232,7 @@ class DLE(AbstractEstimator):
             ].fit_transform(reference_data[categorical_feature_column].values.reshape(-1, 1))
 
         for metric in self.metrics:
-            metric.fit(reference_data)
+            metric.fit(reference_data, categorical_feature_columns)
 
         self.result = self._estimate(reference_data)
         self.result.data[('chunk', 'period')] = 'reference'

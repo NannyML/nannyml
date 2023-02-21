@@ -92,7 +92,7 @@ class Metric(abc.ABC):
     def __str__(self):
         return self.__class__.__name__
 
-    def fit(self, reference_data: pd.DataFrame):
+    def fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         """Fits a Metric on reference data.
 
         Parameters
@@ -112,12 +112,12 @@ class Metric(abc.ABC):
         )
 
         # Delegate to subclass
-        self._fit(reference_data)
+        self._fit(reference_data, categorical_feature_columns)
 
         return
 
     @abc.abstractmethod
-    def _fit(self, reference_data: pd.DataFrame):
+    def _fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _fit method"
         )
@@ -218,13 +218,14 @@ class Metric(abc.ABC):
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Optional[Dict[str, Any]],
+        categorical_feature_columns: List[str],
     ) -> LGBMRegressor:
         if hyperparameters:
             self._logger.debug("'hyperparameters' set: using custom hyperparameters")
             self._logger.debug(f"'hyperparameters': {hyperparameters}")
 
             model = LGBMRegressor(**hyperparameters)
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train, categorical_feature=categorical_feature_columns)
         elif tune_hyperparameters:
             self._logger.debug(
                 f"'tune_hyperparameters' set to '{tune_hyperparameters}': " f"performing hyperparameter tuning"
@@ -233,16 +234,17 @@ class Metric(abc.ABC):
             self._logger.debug(f'hyperparameter tuning configuration: {hyperparameter_tuning_config}')
 
             automl = AutoML()
-            automl.fit(X_train, y_train, **hyperparameter_tuning_config)
+            #TODO: is this correct? // categorical_feature
+            automl.fit(X_train, y_train, **hyperparameter_tuning_config, categorical_feature=categorical_feature_columns)
             self.hyperparameters = {**automl.model.estimator.get_params()}
             model = LGBMRegressor(**automl.model.estimator.get_params())
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train, categorical_feature=categorical_feature_columns)
         else:
             self._logger.debug(
                 f"'tune_hyperparameters' set to '{tune_hyperparameters}': skipping hyperparameter tuning"
             )
             model = LGBMRegressor()
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train, categorical_feature=categorical_feature_columns)
 
         return model
 
@@ -319,7 +321,7 @@ class MAE(Metric):
             hyperparameters=hyperparameters,
         )
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def _fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -335,6 +337,7 @@ class MAE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_feature_columns=categorical_feature_columns
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -378,7 +381,7 @@ class MAPE(Metric):
             hyperparameters=hyperparameters,
         )
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def _fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -395,6 +398,7 @@ class MAPE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_feature_columns=categorical_feature_columns
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -438,7 +442,7 @@ class MSE(Metric):
             hyperparameters=hyperparameters,
         )
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def _fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -454,6 +458,7 @@ class MSE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_feature_columns=categorical_feature_columns
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -497,7 +502,7 @@ class MSLE(Metric):
             hyperparameters=hyperparameters,
         )
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def _fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -516,6 +521,7 @@ class MSLE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_feature_columns=categorical_feature_columns
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -562,7 +568,7 @@ class RMSE(Metric):
             hyperparameters=hyperparameters,
         )
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def _fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -578,6 +584,7 @@ class RMSE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_feature_columns=categorical_feature_columns
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -621,7 +628,7 @@ class RMSLE(Metric):
             hyperparameters=hyperparameters,
         )
 
-    def _fit(self, reference_data: pd.DataFrame):
+    def _fit(self, reference_data: pd.DataFrame, categorical_feature_columns: List[str]):
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -640,6 +647,7 @@ class RMSLE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_feature_columns=categorical_feature_columns
         )
 
     def _estimate(self, data: pd.DataFrame):
