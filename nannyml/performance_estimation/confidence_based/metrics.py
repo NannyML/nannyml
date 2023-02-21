@@ -1254,12 +1254,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             y_pred_reference=reference_data[self.y_pred],
             business_cost_matrix=self.business_cost_matrix,
         )
-        self._false_positive_sampling_error_components = bse.false_positive_cost_sampling_error_components(
+        self._false_positive_cost_sampling_error_components = bse.false_positive_cost_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
             business_cost_matrix=self.business_cost_matrix,
         )
-        self._false_negative_sampling_error_components = bse.false_negative_cost_sampling_error_components(
+        self._false_negative_cost_sampling_error_components = bse.false_negative_cost_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
             business_cost_matrix=self.business_cost_matrix,
@@ -1454,6 +1454,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         fp_cost = self.business_cost_matrix[0, 1]
 
         estimate = est_fp_ratio * fp_cost * len(y_pred)
+
+        return estimate
 
     def get_false_negative_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
         y_pred_proba = chunk_data[self.y_pred_proba]
