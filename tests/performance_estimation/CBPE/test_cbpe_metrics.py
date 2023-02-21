@@ -2082,7 +2082,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         y_pred='y_pred',
         y_true='work_home_actual',
         problem_type='classification_binary',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix'],
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix', 'business_cost'],
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
@@ -2090,7 +2090,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
     metric_column_names = [name for metric in result.metrics for name in metric.column_names]
     sut = result.filter(period='analysis').to_df()[
         [('chunk', 'key')] + [(c, 'value') for c in metric_column_names]
-    ]  # Need to change
+    ] 
     sut.columns = [
         'key',
         'estimated_roc_auc',
@@ -2103,6 +2103,11 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         'estimated_true_negative',
         'estimated_false_positive',
         'estimated_false_negative',
+        'estimated_true_positive_cost',
+        'estimated_true_negative_cost',
+        'estimated_false_positive_cost',
+        'estimated_false_negative_cost',
+        'estimated_total_cost',
     ]
 
     pd.testing.assert_frame_equal(expected, sut)

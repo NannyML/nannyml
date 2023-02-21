@@ -629,6 +629,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         chunker: Chunker,
         timestamp_column_name: Optional[str] = None,
         normalize_confusion_matrix: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(
             name='confusion_matrix',
@@ -1187,6 +1188,17 @@ class BinaryClassificationConfusionMatrix(Metric):
             ],
         )
 
+        if not (isinstance(business_cost_matrix, np.ndarray) or isinstance(business_cost_matrix, list)):
+            raise ValueError(
+                f'Business cost matrix must be a numpy array or a list, but got {type(business_cost_matrix)}'
+            )
+
+        if isinstance(business_cost_matrix, list):
+            business_cost_matrix = np.array(business_cost_matrix)
+
+        if business_cost_matrix.shape != (2, 2):
+            raise ValueError(f'Business cost matrix must be a 2x2 array, but got {business_cost_matrix.shape}')
+
         self.business_cost_matrix = business_cost_matrix
 
         self.true_positive_lower_threshold: float = 0
@@ -1347,6 +1359,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             return np.NaN
 
         tp_cost = self.business_cost_matrix[1, 1]
+        # tp_cost = -10
 
         num_tp = np.sum(np.logical_and(y_pred, y_true))
 
