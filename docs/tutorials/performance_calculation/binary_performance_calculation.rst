@@ -14,7 +14,7 @@ Just The Code
 ==============
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -34,11 +34,11 @@ not used during :ref:`performance estimation.<performance-estimation>`. But it i
 The analysis target values are joined on the analysis frame by their index. Your dataset may already contain the ``target`` column, so you may skip this join.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cell: 2
 
 Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created using a list of metrics to calculate (or just one metric), the data columns required for these metrics, and an optional :ref:`chunking<chunking>` specification.
@@ -65,7 +65,7 @@ Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator
 
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 3
 
 The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
@@ -77,21 +77,21 @@ realized performance metrics on all data which has target values available with 
 NannyML can output a dataframe that contains all the results of the analysis data.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cell: 5
 
 There results from the reference data are also available.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cell: 7
 
 Apart from chunking and chunk and period-related columns, the results data have a set of columns for each
@@ -113,7 +113,7 @@ The results can be plotted for visual inspection.
 
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 8
 
 .. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-car-loan-analysis.svg

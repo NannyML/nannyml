@@ -24,13 +24,13 @@ Just the code
 Create the calculator and fit it on reference. Store the fitted calculator to local disk.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 1 2 3
 
 In a new session load the stored calculator and use it.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 4 5
 
 Walkthrough
@@ -40,7 +40,7 @@ In the first part we create a new :class:`~nannyml.drift.univariate.calculator.U
 to the reference data.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 1
 
 In this snippet we'll set up the :class:`~nannyml.io.store.file_store.FilesystemStore`. It is a class responsible for
@@ -52,7 +52,7 @@ actually storing objects.
 We'll now provide a directory on the local filesystem.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 2
 
 .. _storing_calculators_remote_examples:
@@ -64,21 +64,21 @@ The following snippet shows how to use S3 as a backing filesystem. See https://d
 to learn more about the required access key id and secret access key credentials.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 7
 
 This is how to use Google Cloud Storage as a backing system. See https://cloud.google.com/iam/docs/creating-managing-service-account-keys
 to learn more about the required service account key credentials.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 8
 
 This snippet illustrates how to do this using Azure Blob Storage. See https://github.com/fsspec/adlfs#setting-credentials
 to learn more about the required credentials.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 9
 
 The next step is using the :class:`~nannyml.io.store.file_store.FilesystemStore` to store our fitted calculator.
@@ -86,7 +86,7 @@ To do this we can provide an optional `path` string parameter. It allows us to s
 If no `path` is provided a file will be created using a standard name within the root directory of the store.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 3
 
 This concludes the first part: storing the fitted calculator.
@@ -96,7 +96,7 @@ calculations on analysis data (e.g. repeated on a daily basis) we can load the p
 First we define the analysis data and declare the store:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 4
 
 Now we'll use the store to load the pre-fitted calculator from disk. By providing the optional `as_type` parameter
@@ -107,11 +107,11 @@ If nothing is found at the given `path` the :meth:`~nannyml.io.store.file_store.
 `None`.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 5
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Ranking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 6
 
 What's Next

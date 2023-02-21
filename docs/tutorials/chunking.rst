@@ -26,7 +26,7 @@ kinds of chunks can be created. The examples will be run based on the performanc
 synthetic binary classification dataset provided by NannyML. First we set up this dataset.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 1
 
 Time-based chunking
@@ -37,11 +37,11 @@ from a single hour, day, week, month etc. In most cases, such chunks will vary i
 contain. Specify the ``chunk_period`` argument to get appropriate split. The example below chunks data quarterly.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 2
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cell: 3
 
 .. note::
@@ -81,11 +81,11 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
 ``chunk_size`` parameter.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cell: 5
 
 .. note::
@@ -97,15 +97,15 @@ Chunks can be of fixed size, i.e. each chunk contains the same number of observa
     Check the :ref:`custom chunks <custom_chunk>` section if you want to change the default behaviour.
 
     .. nbimport::
-        :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+        :path: ./example_notebooks/Tutorial - Chunking.ipynb
         :cells: 6
 
     .. nbtable::
-        :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+        :path: ./example_notebooks/Tutorial - Chunking.ipynb
         :cell: 7
 
     .. nbimport::
-        :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+        :path: ./example_notebooks/Tutorial - Chunking.ipynb
         :cells: 8
         :show_output:
 
@@ -116,7 +116,7 @@ Number-based chunking
 The total number of chunks can be set by the ``chunk_number`` parameter:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 9
     :show_output:
 
@@ -130,15 +130,15 @@ The total number of chunks can be set by the ``chunk_number`` parameter:
     Check the :ref:`custom chunks <custom_chunk>` section if you want to change the default behaviour.
 
     .. nbimport::
-        :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+        :path: ./example_notebooks/Tutorial - Chunking.ipynb
         :cells: 10
 
     .. nbtable::
-        :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+        :path: ./example_notebooks/Tutorial - Chunking.ipynb
         :cell: 11
 
     .. nbimport::
-        :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+        :path: ./example_notebooks/Tutorial - Chunking.ipynb
         :cells: 12
         :show_output:
 
@@ -162,7 +162,7 @@ The default chunking method is count-based, with the desired count set to `10`.
 This is used if a chunking method isn't specified.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 13
     :show_output:
 
@@ -178,7 +178,7 @@ or to handle a custom way of chunking the dataset.
 For example, ``SizeBasedChunker`` can be used to ``drop`` the leftover observations to have fixed sized chunks.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 14
     :show_output:
 
@@ -186,14 +186,14 @@ You could also chunk your data into a fixed number of chunks, choosing to append
 to the last chunk.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 15
     :show_output:
 
 You can then provide your custom chunker to the appropriate calculator or estimator.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 16
 
 Chunks on plots with results
@@ -207,7 +207,7 @@ Plots are interactive - hovering over the point will display the precise informa
 to help prevent any confusion.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Chunking - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Chunking.ipynb
     :cells: 17
 
 .. image:: /_static/tutorials/chunking/chunk-size.svg

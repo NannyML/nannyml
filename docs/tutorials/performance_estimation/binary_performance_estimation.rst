@@ -21,7 +21,7 @@ Just The Code
 ----------------
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 1 3 4 6 8
 
 
@@ -41,11 +41,11 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 We start by loading the dataset we'll be using:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cell: 2
 
 Next we create the Confidence-based Performance Estimation
@@ -73,7 +73,7 @@ can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-da
             * ``all``: normalize by all observations
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 3
 
 
@@ -89,11 +89,11 @@ NannyML can then output a dataframe that contains all the results. Let's have a 
 only.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cell: 5
 
 .. _performance-estimation-thresholds:
@@ -135,7 +135,7 @@ Description of tabular results above explains how the
 interactive plots, though only static views are included here).
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 6
 
 .. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis.svg
@@ -153,7 +153,7 @@ performance on the reference period (where the target was available).
   variability of the performance.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification - Car Loan.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 8
 
 .. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
