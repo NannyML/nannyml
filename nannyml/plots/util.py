@@ -15,7 +15,7 @@ from nannyml._typing import TypeGuard
 from nannyml.exceptions import InvalidArgumentsException
 
 
-def is_time_series(time_series: Optional[Union[np.ndarray, pd.Series]]) -> TypeGuard[Union[np.ndarray, pd.Series]]:
+def has_non_null_data(time_series: Optional[Union[np.ndarray, pd.Series]]) -> TypeGuard[Union[np.ndarray, pd.Series]]:
     if time_series is None:
         return False
 
@@ -26,7 +26,7 @@ def is_time_based_x_axis(
     start_dates: Optional[Union[np.ndarray, pd.Series]],
     end_dates: Optional[Union[np.ndarray, pd.Series]]
 ) -> bool:
-    return is_time_series(start_dates) and is_time_series(end_dates)
+    return has_non_null_data(start_dates) and has_non_null_data(end_dates)
 
 
 def add_artificial_endpoint(
@@ -40,7 +40,7 @@ def add_artificial_endpoint(
         _data = [np.append(e, e[-1]) for e in data]
     else:
         _data = np.append(_data, _data[-1])
-    if is_time_series(start_dates) and is_time_series(end_dates):
+    if has_non_null_data(start_dates) and has_non_null_data(end_dates):
         _start_dates = copy.deepcopy(start_dates)
         _start_dates = np.append(_start_dates, end_dates[-1])
         return _start_dates, _data

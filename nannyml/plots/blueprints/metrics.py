@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from nannyml._typing import Key, Result
-from nannyml.plots import Colors, ensure_numpy, is_time_based_x_axis
+from nannyml.plots import Colors, ensure_numpy, has_non_null_data, is_time_based_x_axis
 from nannyml.plots.components import Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
 
 
@@ -334,7 +334,7 @@ def _plot_metric(  # noqa: C901
     # region thresholds
     show_threshold_legend = show_in_legend
     if has_reference_results:
-        if reference_upper_thresholds is not None:
+        if has_non_null_data(reference_upper_thresholds):
             figure.add_threshold(
                 data=reference_upper_thresholds,
                 indices=reference_chunk_indices,
@@ -347,7 +347,7 @@ def _plot_metric(  # noqa: C901
                 showlegend=show_threshold_legend,
             )
             show_threshold_legend = False
-        if reference_lower_thresholds is not None:
+        if has_non_null_data(reference_lower_thresholds):
             figure.add_threshold(
                 data=reference_lower_thresholds,
                 indices=reference_chunk_indices,
@@ -360,7 +360,7 @@ def _plot_metric(  # noqa: C901
                 showlegend=show_threshold_legend,
             )
             show_threshold_legend = False
-    if analysis_upper_thresholds is not None:
+    if has_non_null_data(analysis_upper_thresholds):
         figure.add_threshold(
             data=analysis_upper_thresholds,
             indices=analysis_chunk_indices,
@@ -374,7 +374,7 @@ def _plot_metric(  # noqa: C901
         )
         show_threshold_legend = False
 
-    if analysis_lower_thresholds is not None:
+    if has_non_null_data(analysis_lower_thresholds):
         figure.add_threshold(
             data=analysis_lower_thresholds,
             indices=analysis_chunk_indices,

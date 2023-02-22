@@ -13,7 +13,7 @@ import pandas as pd
 
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.colors import Colors
-from nannyml.plots.util import is_time_series
+from nannyml.plots.util import has_non_null_data
 
 
 class Hover:
@@ -98,7 +98,7 @@ def render_x_coordinate(
     end_dates_column: Optional[Union[np.ndarray, pd.Series]] = None,
     date_format: str = '%b-%d-%Y',
 ) -> np.ndarray:
-    if is_time_series(start_dates_column) and is_time_series(end_dates_column):
+    if has_non_null_data(start_dates_column) and has_non_null_data(end_dates_column):
         return np.array(
             [
                 f'From <b>{s.strftime(date_format)}</b> to <b>{e.strftime(date_format)}</b>'
