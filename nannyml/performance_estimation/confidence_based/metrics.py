@@ -1157,9 +1157,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         return 0.0
 
 
-# ===============================================================================
-
-
 @MetricFactory.register('business_cost', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationConfusionMatrix(Metric):
     def __init__(
@@ -1188,6 +1185,9 @@ class BinaryClassificationConfusionMatrix(Metric):
             ],
         )
 
+        if business_cost_matrix is None:
+            raise ValueError('business_cost_matrix must be provided for \'business_cost\' metric')
+
         if not (isinstance(business_cost_matrix, np.ndarray) or isinstance(business_cost_matrix, list)):
             raise ValueError(
                 f'Business cost matrix must be a numpy array or a list, but got {type(business_cost_matrix)}'
@@ -1197,7 +1197,9 @@ class BinaryClassificationConfusionMatrix(Metric):
             business_cost_matrix = np.array(business_cost_matrix)
 
         if business_cost_matrix.shape != (2, 2):
-            raise ValueError(f'Business cost matrix must be a 2x2 array, but got {business_cost_matrix.shape}')
+            raise ValueError(
+                f'Business cost matrix must have shape (2,2), but got matrix of shape {business_cost_matrix.shape}'
+            )
 
         self.business_cost_matrix = business_cost_matrix
 
@@ -1668,9 +1670,6 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         return 0.0
-
-
-# ===============================================================================
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
