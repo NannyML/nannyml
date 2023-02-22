@@ -63,6 +63,7 @@ can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-da
   * ``accuracy``
   * ``confusion_matrix``
       * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
+  * ``business_cost``
       
       
 .. nbimport::

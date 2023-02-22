@@ -102,6 +102,11 @@ class CBPE(AbstractEstimator):
             of observations. If 'true', the confusion matrix will be normalized by the total number of
             observations for each true class. If 'predicted', the confusion matrix will be normalized by the
             total number of observations for each predicted class.
+        business_cost_matrix: np.ndarray, default=None
+            A matrix containing the business costs for each combination of true and predicted class.
+            The i-th row and j-th column entry of the matrix contains the business cost for predicting the
+            i-th class as the j-th class. The matrix must have the same number of rows and columns as the number
+            of classes in the problem.
 
         Examples
         --------
