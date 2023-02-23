@@ -20,6 +20,13 @@ from nannyml.plots.components.hover import (
 from nannyml.plots.components.joy_plot import calculate_chunk_distributions, joy
 from nannyml.plots.components.stacked_bar_plot import calculate_value_counts, stacked_bar
 from nannyml.plots.components.step_plot import alert, metric
-from nannyml.plots.util import add_artificial_endpoint, check_and_convert, ensure_numpy, is_time_based_x_axis, pairwise
+from nannyml.plots.util import (
+    add_artificial_endpoint,
+    check_and_convert,
+    ensure_numpy,
+    has_non_null_data,
+    is_time_based_x_axis,
+    pairwise
+)
 
 CHUNK_KEY_COLUMN_NAME = 'key'
