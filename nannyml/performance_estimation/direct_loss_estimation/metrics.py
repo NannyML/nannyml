@@ -68,6 +68,7 @@ class Metric(abc.ABC):
         self.column_name = column_name
 
         self.feature_column_names = feature_column_names
+        self.categorical_column_names: List[str] = []
         self.y_true = y_true
         self.y_pred = y_pred
         self.chunker = chunker
@@ -218,13 +219,14 @@ class Metric(abc.ABC):
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Optional[Dict[str, Any]],
+        categorical_column_names: List[str],
     ) -> LGBMRegressor:
         if hyperparameters:
             self._logger.debug("'hyperparameters' set: using custom hyperparameters")
             self._logger.debug(f"'hyperparameters': {hyperparameters}")
 
             model = LGBMRegressor(**hyperparameters)
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train, categorical_feature=categorical_column_names)
         elif tune_hyperparameters:
             self._logger.debug(
                 f"'tune_hyperparameters' set to '{tune_hyperparameters}': " f"performing hyperparameter tuning"
@@ -233,16 +235,17 @@ class Metric(abc.ABC):
             self._logger.debug(f'hyperparameter tuning configuration: {hyperparameter_tuning_config}')
 
             automl = AutoML()
-            automl.fit(X_train, y_train, **hyperparameter_tuning_config)
+            # TODO: is this correct? // categorical_feature
+            automl.fit(X_train, y_train, **hyperparameter_tuning_config, categorical_feature=categorical_column_names)
             self.hyperparameters = {**automl.model.estimator.get_params()}
             model = LGBMRegressor(**automl.model.estimator.get_params())
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train, categorical_feature=categorical_column_names)
         else:
             self._logger.debug(
                 f"'tune_hyperparameters' set to '{tune_hyperparameters}': skipping hyperparameter tuning"
             )
             model = LGBMRegressor()
-            model.fit(X_train, y_train)
+            model.fit(X_train, y_train, categorical_feature=categorical_column_names)
 
         return model
 
@@ -335,6 +338,7 @@ class MAE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_column_names=self.categorical_column_names,
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -395,6 +399,7 @@ class MAPE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_column_names=self.categorical_column_names,
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -454,6 +459,7 @@ class MSE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_column_names=self.categorical_column_names,
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -516,6 +522,7 @@ class MSLE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_column_names=self.categorical_column_names,
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -578,6 +585,7 @@ class RMSE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_column_names=self.categorical_column_names,
         )
 
     def _estimate(self, data: pd.DataFrame):
@@ -640,6 +648,7 @@ class RMSLE(Metric):
             tune_hyperparameters=self.tune_hyperparameters,
             hyperparameter_tuning_config=self.hyperparameter_tuning_config,
             hyperparameters=self.hyperparameters,
+            categorical_column_names=self.categorical_column_names,
         )
 
     def _estimate(self, data: pd.DataFrame):

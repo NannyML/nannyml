@@ -239,6 +239,7 @@ class DLE(AbstractEstimator):
             reference_data[categorical_feature_column] = reference_data[categorical_feature_column] + 1
 
         for metric in self.metrics:
+            metric.categorical_column_names = categorical_feature_columns
             metric.fit(reference_data)
 
         self.result = self._estimate(reference_data)
