@@ -47,15 +47,16 @@ estimator with a list of metrics, and an optional
 :ref:`chunking<chunking>` specification. For more information about :term:`chunking<Data Chunk>` you can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-data>`.
 
 
-The list of metrics specifies which performance metrics of the monitored model will be estimated.
-The following metrics are currently supported:
+.. note::
+  The list of metrics specifies which performance metrics of the monitored model will be estimated.
+  The following metrics are currently supported:
 
-- ``roc_auc`` - one-vs-the-rest, macro-averaged
-- ``f1`` - macro-aveaged
-- ``precision`` - macro-averaged
-- ``recall`` - macro-averaged
-- ``specificity`` - macro-averaged
-- ``accuracy``
+  - ``roc_auc`` - one-vs-the-rest, macro-averaged
+  - ``f1`` - macro-aveaged
+  - ``precision`` - macro-averaged
+  - ``recall`` - macro-averaged
+  - ``specificity`` - macro-averaged
+  - ``accuracy``
 
 
 .. nbimport::

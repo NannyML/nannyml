@@ -12,7 +12,7 @@ from nannyml.performance_estimation.confidence_based import CBPE
     'calculator_opts, expected',
     [
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': None},
+            {'chunk_size': 20000, 'normalize_confusion_matrix': None, 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -26,11 +26,16 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [9468.107941981285, 13200.5981195499],
                     'estimated_false_positive': [567.0359356949585, 1267.8197989638852],
                     'estimated_false_negative': [475.8920580187156, 994.4018804500995],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'all'},
+            {'chunk_size': 20000, 'normalize_confusion_matrix': 'all', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -44,11 +49,16 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [0.47340539709906426, 0.44001993731833],
                     'estimated_false_positive': [0.02835179678474793, 0.04226065996546284],
                     'estimated_false_negative': [0.02379460290093578, 0.03314672934833665],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'true'},
+            {'chunk_size': 20000, 'normalize_confusion_matrix': 'true', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -62,11 +72,16 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [0.9434949869571514, 0.9123732942949082],
                     'estimated_false_positive': [0.05650501304284861, 0.08762670570509186],
                     'estimated_false_negative': [0.04775704256809077, 0.06402450666216646],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'pred'},
+            {'chunk_size': 20000, 'normalize_confusion_matrix': 'pred', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -80,11 +95,21 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [0.952142793843653, 0.9299470320218318],
                     'estimated_false_positive': [0.05638782176759731, 0.08021637449945493],
                     'estimated_false_negative': [0.0478572061563471, 0.07005296797816835],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': None, 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_size': 20000,
+                'normalize_confusion_matrix': None,
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -98,11 +123,21 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [9468.107941981285, 13200.5981195499],
                     'estimated_false_positive': [567.0359356949585, 1267.8197989638852],
                     'estimated_false_negative': [475.8920580187156, 994.4018804500995],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'all', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_size': 20000,
+                'normalize_confusion_matrix': 'all',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -116,11 +151,21 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [0.47340539709906426, 0.44001993731833],
                     'estimated_false_positive': [0.02835179678474793, 0.04226065996546284],
                     'estimated_false_negative': [0.02379460290093578, 0.03314672934833665],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'true', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_size': 20000,
+                'normalize_confusion_matrix': 'true',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -134,11 +179,21 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [0.9434949869571514, 0.9123732942949082],
                     'estimated_false_positive': [0.05650501304284861, 0.08762670570509186],
                     'estimated_false_negative': [0.04775704256809077, 0.06402450666216646],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'pred', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_size': 20000,
+                'normalize_confusion_matrix': 'pred',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -152,11 +207,16 @@ from nannyml.performance_estimation.confidence_based import CBPE
                     'estimated_true_negative': [0.952142793843653, 0.9299470320218318],
                     'estimated_false_positive': [0.05638782176759731, 0.08021637449945493],
                     'estimated_false_negative': [0.0478572061563471, 0.07005296797816835],
+                    'estimated_true_positive_cost': [-75911.71251444033, -116297.44160828894],
+                    'estimated_true_negative_cost': [-9468.107941981285, -13200.5981195499],
+                    'estimated_false_positive_cost': [2268.143742779834, 5071.279195855541],
+                    'estimated_false_negative_cost': [3807.136464149725, 7955.215043600796],
+                    'estimated_total_cost': [-79304.54024949206, -116471.5454883825],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': None},
+            {'chunk_number': 4, 'normalize_confusion_matrix': None, 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -210,11 +270,41 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         438.1716563946605,
                         436.2496150755182,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'all'},
+            {'chunk_number': 4, 'normalize_confusion_matrix': 'all', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -268,11 +358,41 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.03505373251157284,
                         0.03489996920604146,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'true'},
+            {'chunk_number': 4, 'normalize_confusion_matrix': 'true', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -326,11 +446,41 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.06721362499796762,
                         0.06715668518185315,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'pred'},
+            {'chunk_number': 4, 'normalize_confusion_matrix': 'pred', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -384,11 +534,46 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.074888336420212,
                         0.0742047312596561,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': None, 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_number': 4,
+                'normalize_confusion_matrix': None,
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -442,11 +627,46 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         438.1716563946605,
                         436.2496150755182,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'all', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_number': 4,
+                'normalize_confusion_matrix': 'all',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -500,11 +720,46 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.03505373251157284,
                         0.03489996920604146,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'true', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_number': 4,
+                'normalize_confusion_matrix': 'true',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -558,11 +813,46 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.06721362499796762,
                         0.06715668518185315,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'pred', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_number': 4,
+                'normalize_confusion_matrix': 'pred',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
@@ -616,11 +906,46 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.074888336420212,
                         0.0742047312596561,
                     ],
+                    'estimated_true_positive_cost': [
+                        -47654.592761058164,
+                        -47429.23846116019,
+                        -48647.345059501866,
+                        -48477.97784100904,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -5887.325622313064,
+                        -5925.8017106883,
+                        -5412.82834360534,
+                        -5442.750384924482,
+                    ],
+                    'estimated_false_positive_cost': [
+                        1432.7036194709187,
+                        1389.3807694199072,
+                        2272.327470249067,
+                        2245.011079495482,
+                    ],
+                    'estimated_false_negative_cost': [
+                        2381.3950214954866,
+                        2385.5863144936043,
+                        3505.373251157284,
+                        3489.9969206041455,
+                    ],
+                    'estimated_total_cost': [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_period': 'Y', 'normalize_confusion_matrix': None, 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_period': 'Y',
+                'normalize_confusion_matrix': None,
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['2017', '2018', '2019', '2020', '2021'],
@@ -694,11 +1019,51 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         521.6560850289168,
                         0.32608873091890567,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19634.865222171506,
+                        -56399.74088769245,
+                        -57946.775104238804,
+                        -58205.05211249476,
+                        -22.720796131730786,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2231.7889710886143,
+                        -7246.055558471303,
+                        -6682.843705731104,
+                        -6502.343914971083,
+                        -5.673911269081095,
+                    ],
+                    'estimated_false_positive_cost': [
+                        598.5673889142479,
+                        1672.1295561537759,
+                        2366.6124478805973,
+                        2697.4739437526196,
+                        4.639601934134606,
+                    ],
+                    'estimated_false_negative_cost': [
+                        929.6882312910883,
+                        2879.555532229576,
+                        3777.25035415117,
+                        4173.248680231334,
+                        2.6087098473512453,
+                    ],
+                    'estimated_total_cost': [
+                        -20338.398573054783,
+                        -59094.1113577804,
+                        -58485.756007938144,
+                        -57836.67340348189,
+                        -21.14639561932603,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_period': 'Y', 'normalize_confusion_matrix': 'all', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_period': 'Y',
+                'normalize_confusion_matrix': 'all',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['2017', '2018', '2019', '2020', '2021'],
@@ -772,11 +1137,51 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.034837457261180496,
                         0.03260887309189057,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19634.865222171506,
+                        -56399.74088769245,
+                        -57946.775104238804,
+                        -58205.05211249476,
+                        -22.720796131730786,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2231.7889710886143,
+                        -7246.055558471303,
+                        -6682.843705731104,
+                        -6502.343914971083,
+                        -5.673911269081095,
+                    ],
+                    'estimated_false_positive_cost': [
+                        598.5673889142479,
+                        1672.1295561537759,
+                        2366.6124478805973,
+                        2697.4739437526196,
+                        4.639601934134606,
+                    ],
+                    'estimated_false_negative_cost': [
+                        929.6882312910883,
+                        2879.555532229576,
+                        3777.25035415117,
+                        4173.248680231334,
+                        2.6087098473512453,
+                    ],
+                    'estimated_total_cost': [
+                        -20338.398573054783,
+                        -59094.1113577804,
+                        -58485.756007938144,
+                        -57836.67340348189,
+                        -21.14639561932603,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_period': 'Y', 'normalize_confusion_matrix': 'true', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_period': 'Y',
+                'normalize_confusion_matrix': 'true',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['2017', '2018', '2019', '2020', '2021'],
@@ -850,11 +1255,51 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.06690225009652676,
                         0.10299094856037092,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19634.865222171506,
+                        -56399.74088769245,
+                        -57946.775104238804,
+                        -58205.05211249476,
+                        -22.720796131730786,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2231.7889710886143,
+                        -7246.055558471303,
+                        -6682.843705731104,
+                        -6502.343914971083,
+                        -5.673911269081095,
+                    ],
+                    'estimated_false_positive_cost': [
+                        598.5673889142479,
+                        1672.1295561537759,
+                        2366.6124478805973,
+                        2697.4739437526196,
+                        4.639601934134606,
+                    ],
+                    'estimated_false_negative_cost': [
+                        929.6882312910883,
+                        2879.555532229576,
+                        3777.25035415117,
+                        4173.248680231334,
+                        2.6087098473512453,
+                    ],
+                    'estimated_total_cost': [
+                        -20338.398573054783,
+                        -59094.1113577804,
+                        -58485.756007938144,
+                        -57836.67340348189,
+                        -21.14639561932603,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_period': 'Y', 'normalize_confusion_matrix': 'pred', 'timestamp_column_name': 'timestamp'},
+            {
+                'chunk_period': 'Y',
+                'normalize_confusion_matrix': 'pred',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['2017', '2018', '2019', '2020', '2021'],
@@ -928,11 +1373,46 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.07426766586402574,
                         0.054348121819817616,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19634.865222171506,
+                        -56399.74088769245,
+                        -57946.775104238804,
+                        -58205.05211249476,
+                        -22.720796131730786,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2231.7889710886143,
+                        -7246.055558471303,
+                        -6682.843705731104,
+                        -6502.343914971083,
+                        -5.673911269081095,
+                    ],
+                    'estimated_false_positive_cost': [
+                        598.5673889142479,
+                        1672.1295561537759,
+                        2366.6124478805973,
+                        2697.4739437526196,
+                        4.639601934134606,
+                    ],
+                    'estimated_false_negative_cost': [
+                        929.6882312910883,
+                        2879.555532229576,
+                        3777.25035415117,
+                        4173.248680231334,
+                        2.6087098473512453,
+                    ],
+                    'estimated_total_cost': [
+                        -20338.398573054783,
+                        -59094.1113577804,
+                        -58485.756007938144,
+                        -57836.67340348189,
+                        -21.14639561932603,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': None},
+            {'normalize_confusion_matrix': None, 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': [
@@ -1067,11 +1547,71 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         176.37969145227322,
                         171.65749117130238,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': 'all'},
+            {'normalize_confusion_matrix': 'all', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': [
@@ -1206,11 +1746,71 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.035275938290454646,
                         0.034331498234260474,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': 'true'},
+            {'normalize_confusion_matrix': 'true', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': [
@@ -1345,11 +1945,71 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.06890732957303593,
                         0.06450562744593023,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': 'pred'},
+            {'normalize_confusion_matrix': 'pred', 'business_cost_matrix': [[-1, 4], [8, -8]]},
             pd.DataFrame(
                 {
                     'key': [
@@ -1484,11 +2144,75 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.07343034614998886,
                         0.07535447373630481,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': None, 'timestamp_column_name': 'timestamp'},
+            {
+                'normalize_confusion_matrix': None,
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': [
@@ -1623,11 +2347,75 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         176.37969145227322,
                         171.65749117130238,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': 'all', 'timestamp_column_name': 'timestamp'},
+            {
+                'normalize_confusion_matrix': 'all',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': [
@@ -1762,11 +2550,75 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.035275938290454646,
                         0.034331498234260474,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': 'true', 'timestamp_column_name': 'timestamp'},
+            {
+                'normalize_confusion_matrix': 'true',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': [
@@ -1901,11 +2753,75 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.06890732957303593,
                         0.06450562744593023,
                     ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
                 }
             ),
         ),
         (
-            {'normalize_confusion_matrix': 'pred', 'timestamp_column_name': 'timestamp'},
+            {
+                'normalize_confusion_matrix': 'pred',
+                'timestamp_column_name': 'timestamp',
+                'business_cost_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': [
@@ -2039,6 +2955,66 @@ from nannyml.performance_estimation.confidence_based import CBPE
                         0.0739349563092676,
                         0.07343034614998886,
                         0.07535447373630481,
+                    ],
+                    'estimated_true_positive_cost': [
+                        -19808.506209391984,
+                        -18673.525603504324,
+                        -18703.26331904334,
+                        -18726.41738250068,
+                        -19172.11870777802,
+                        -19446.54676359115,
+                        -19391.513346787055,
+                        -19305.244680187912,
+                        -19066.283826810104,
+                        -19915.734283134683,
+                    ],
+                    'estimated_true_negative_cost': [
+                        -2255.359285228724,
+                        -2402.339691195284,
+                        -2409.8075237003773,
+                        -2400.6014418568993,
+                        -2345.0193910200787,
+                        -2164.93315881352,
+                        -2175.0213793171297,
+                        -2183.6613730227473,
+                        -2225.6203085477264,
+                        -2106.3425088286976,
+                    ],
+                    'estimated_false_positive_cost': [
+                        603.7468953040086,
+                        563.2371982478383,
+                        552.3683404783283,
+                        548.7913087496593,
+                        553.9406461109915,
+                        904.7266182044251,
+                        908.2433266064734,
+                        915.3776599060448,
+                        858.8580865949477,
+                        930.1328584326583,
+                    ],
+                    'estimated_false_negative_cost': [
+                        941.1257181702114,
+                        981.2824704377277,
+                        913.5398103969815,
+                        971.1884651448038,
+                        959.8448718393664,
+                        1424.5347294918388,
+                        1391.8289654629623,
+                        1394.709015818024,
+                        1411.0375316181858,
+                        1373.259929370419,
+                    ],
+                    'estimated_total_cost': [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
                     ],
                 }
             ),
@@ -2082,15 +3058,22 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         y_pred='y_pred',
         y_true='work_home_actual',
         problem_type='classification_binary',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix'],
+        metrics=[
+            'roc_auc',
+            'f1',
+            'precision',
+            'recall',
+            'specificity',
+            'accuracy',
+            'confusion_matrix',
+            'business_cost',
+        ],
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
 
     metric_column_names = [name for metric in result.metrics for name in metric.column_names]
-    sut = result.filter(period='analysis').to_df()[
-        [('chunk', 'key')] + [(c, 'value') for c in metric_column_names]
-    ]  # Need to change
+    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + [(c, 'value') for c in metric_column_names]]
     sut.columns = [
         'key',
         'estimated_roc_auc',
@@ -2103,6 +3086,11 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         'estimated_true_negative',
         'estimated_false_positive',
         'estimated_false_negative',
+        'estimated_true_positive_cost',
+        'estimated_true_negative_cost',
+        'estimated_false_positive_cost',
+        'estimated_false_negative_cost',
+        'estimated_total_cost',
     ]
 
     pd.testing.assert_frame_equal(expected, sut)

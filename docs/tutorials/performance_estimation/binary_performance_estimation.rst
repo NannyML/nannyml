@@ -71,6 +71,7 @@ can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-da
             * ``true``: normalize by true class of observations
             * ``pred``: normalize by predicted class of observations
             * ``all``: normalize by all observations
+  * ``business_cost``
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb

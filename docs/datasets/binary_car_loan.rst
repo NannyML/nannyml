@@ -67,4 +67,3 @@ There are 3 columns that reference the output of the model:
 There is also an auxiliary column that is helpful but not used by the monitored model:
 
 - `timestamp`: A date column informing us of the date the prediction was made.
-

@@ -4,6 +4,7 @@
 
 """Module containing CBPE estimation results and plotting implementations."""
 from __future__ import annotations
+
 import copy
 from typing import List, Optional, cast
 
@@ -31,6 +32,12 @@ SUPPORTED_METRIC_VALUES = [
     'true_negative',
     'false_positive',
     'false_negative',
+    'true_positive_cost',
+    'true_negative_cost',
+    'false_positive_cost',
+    'false_negative_cost',
+    'total_cost',
+    'business_cost',
 ]
 
 

@@ -38,7 +38,7 @@ one-dimensional continuous distributions. The test outputs the test statistic, c
 The test statistic is the maximum distance of the cumulative distribution functions (CDF) of the two samples.
 
 NannyML calculates drift performing two sample set comparisons. One sample is usually the reference data while the other comes from the data of the chunk we are calculating drift for.
-It can calculate the KS test with two methods, depending on the user's ability to store the reference data. The first approach stores 
+It can calculate the KS test with two methods, depending on the user's ability to store the reference data. The first approach stores
 and uses the reference data as-is, while the second splits the continuous feature into quantile bins and uses the bin edges and frequencies for the calculation.
 By default, NannyML employs the first method if the reference data has fewer than 10,000 rows, unless otherwise specified.
 
@@ -121,9 +121,9 @@ Wasserstein distance between the two distributions is given by:
     W_1\left(X_i^{P},X_i^{Q}\right) = \int_\mathbb{R}\left|\hat{F}_{P}(x)-\hat{F}_{Q}(x)\right|dx
 
 NannyML calculates drift performing two sample set comparisons. One sample is usually the reference data while the other comes from the data of the chunk we are calculating drift for.
-It can calculate the Wasserstein Distance with two methods, depending on the user's ability to store the reference data. The first approach stores 
+It can calculate the Wasserstein Distance with two methods, depending on the user's ability to store the reference data. The first approach stores
 and uses the reference data as-is, while the second splits the continuous feature into equal-width based bins and uses the bin edges and frequencies for the calculation.
-By default, NannyML employs the first method if the reference data has fewer than 10,000 rows, unless otherwise specified. 
+By default, NannyML employs the first method if the reference data has fewer than 10,000 rows, unless otherwise specified.
 
 .. _univariate-drift-detection-cont-hellinger:
 

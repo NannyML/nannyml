@@ -1,7 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import Any, cast, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 import matplotlib
 import numpy as np

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import cast, List, Optional
+from typing import List, Optional, cast
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -72,7 +72,7 @@ class Result(Abstract2DResult, ResultCompareMixin):
         column_names: Optional[List[str]] = None,
         methods: Optional[List[str]] = None,
         *args,
-        **kwargs
+        **kwargs,
     ) -> Result:
         # TODO: Use TypeVar with generic self instead of cast
         result = cast(Result, super()._filter(period, methods, column_names))

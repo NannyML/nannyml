@@ -20,8 +20,8 @@ Comparison of Methods for Continuous Variables
 Shifting the Mean of the Analysis Data Set
 ..........................................
 In this experiment, we show how each method responds as the mean of the analysis data set moves further away from the mean of the reference data set.
-To demonstrate this, the reference data set was sampled from :math:`\mathcal{N}(0,1)`, and the analysis data set was sampled from :math:`\mathcal{N}(\mu,1)` for 
-each value of :math:`\mu` in :math:`\{0,0.1,0.2,...,7\}`. So, there is one reference sample and 71 analysis samples and each of the analysis 
+To demonstrate this, the reference data set was sampled from :math:`\mathcal{N}(0,1)`, and the analysis data set was sampled from :math:`\mathcal{N}(\mu,1)` for
+each value of :math:`\mu` in :math:`\{0,0.1,0.2,...,7\}`. So, there is one reference sample and 71 analysis samples and each of the analysis
 samples is compared to the reference sample.
 
 We show the confidence intervals for empirical experiments like this one to demonstrate the stability of each method in comparison to the others. The confidence intervals depend
@@ -53,7 +53,7 @@ The Hellinger distance, on the other hand, increases more slowly to begin with a
 Shifting the Standard Deviation of the Analysis Data Set
 ........................................................
 In this experiment, we show how each method responds as the standard deviation of the analysis set increases. The reference data set was sampled from :math:`\mathcal{N}(0, 1)` and the analysis data set
-was sampled from :math:`\mathcal{N}(0, \sigma)` for each :math:`\sigma` in :math:`\{1, 1.1, 1.2,...,10\}`. 
+was sampled from :math:`\mathcal{N}(0, \sigma)` for each :math:`\sigma` in :math:`\{1, 1.1, 1.2,...,10\}`.
 So, there is one reference sample and 91 analysis samples.
 The size of both the
 reference and analysis data sets was again 1000 observations and the experiment consisted of 100 trials.
@@ -74,7 +74,7 @@ truncate the domain to :math:`[1,2]`.
 .. image:: ../_static/univariate-comparison/shifting_std_1_to_2.svg
     :width: 1400pt
 
-Each method appears to increase roughly linearly with the increase in standard deviation. 
+Each method appears to increase roughly linearly with the increase in standard deviation.
 The Hellinger distance, however, increases more slowly to begin with before taking on more linear behavior.
 
 Tradeoffs of The Kolmogorov-Smirnov Statistic

@@ -85,9 +85,7 @@ class Result(Protocol):
     def sampling_error(self, key: Key) -> Optional[pd.Series]:
         ...
 
-    def filter(
-        self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs
-    ) -> Result:
+    def filter(self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs) -> Result:
         ...
 
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
