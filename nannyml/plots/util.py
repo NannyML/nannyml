@@ -15,11 +15,11 @@ from nannyml._typing import TypeGuard
 from nannyml.exceptions import InvalidArgumentsException
 
 
-def has_non_null_data(time_series: Optional[Union[np.ndarray, pd.Series]]) -> TypeGuard[Union[np.ndarray, pd.Series]]:
-    if time_series is None:
+def has_non_null_data(series: Optional[Union[np.ndarray, pd.Series]]) -> TypeGuard[Union[np.ndarray, pd.Series]]:
+    if series is None:
         return False
 
-    return bool(np.any(time_series) if isinstance(time_series, np.ndarray) else not time_series.isnull().all())
+    return bool(np.any(series) if isinstance(series, np.ndarray) else not series.isnull().all())
 
 
 def is_time_based_x_axis(
