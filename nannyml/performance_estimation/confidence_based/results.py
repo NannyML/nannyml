@@ -4,6 +4,7 @@
 
 """Module containing CBPE estimation results and plotting implementations."""
 from __future__ import annotations
+
 import copy
 from typing import List, Optional, cast
 

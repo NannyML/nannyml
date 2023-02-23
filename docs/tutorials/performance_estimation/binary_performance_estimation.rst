@@ -28,7 +28,11 @@ Just The Code
 Walkthrough
 --------------
 
-For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
+For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
+predicts whether a customer will repay a loan to buy a car.
+You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
+
+where the monitored model predicts
 whether an employee will work from home. You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
@@ -62,10 +66,13 @@ can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-da
   * ``specificity``
   * ``accuracy``
   * ``confusion_matrix``
-      * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
+        * Normalization options:
+            * ``None``: returns counts
+            * ``true``: normalize by true class of observations
+            * ``pred``: normalize by predicted class of observations
+            * ``all``: normalize by all observations
   * ``business_cost``
-      
-      
+
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 3
@@ -95,18 +102,20 @@ only.
 Apart from chunk-related data, the results data have the following columns for each metric
 that was estimated:
 
- - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also
+ - ``value`` - the estimate of a metric for a specific chunk.
+ - ``sampling_error`` - the estimate of the :term:`Sampling Error`.
+ - ``realized`` - when ``target`` values are available for a chunk, the realized performance metric will also
    be calculated and included within the results.
- - ``estimated_<metric>`` - the estimate of a metric for a specific chunk,
- - ``upper_confidence_<metric>`` and ``lower_confidence_<metric>`` - These values show the :term:`Confidence Band` of the relevant metric
+ - ``upper_confidence_boundary`` and ``lower_confidence_boundary`` - These values show the :term:`Confidence Band` of the relevant metric
    and are equal to estimated value +/- 3 times the estimated :term:`Sampling Error`.
- - ``upper_threshold_<metric>`` and ``lower_threshold_<metric>`` - crossing these thresholds will raise an alert on significant
+ - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
    the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
    chunks.
    They are calculated during ``fit`` phase.
- - ``alert_<metric>`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
+ - ``alert`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
+
 
 
 These results can be also plotted. Our plot contains several key elements.
@@ -130,7 +139,7 @@ interactive plots, though only static views are included here).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 6
 
-.. image:: ../../_static/tutorial-perf-est-guide-analysis.svg
+.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis.svg
 
 
 To get a better context let's also plot estimation of performance on analysis data together with calculated
@@ -148,7 +157,7 @@ performance on the reference period (where the target was available).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 8
 
-.. image:: ../../_static/tutorial-perf-est-guide-with-ref.svg
+.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
 
 
 Insights

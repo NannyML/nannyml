@@ -41,14 +41,14 @@ We begin by loading some synthetic data provided in the NannyML package. This is
 The :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class implements the functionality needed for univariate drift detection.
 We need to instantiate it with appropriate parameters:
 
-* The names of the columns to be evaluated.
-* A list of methods to use on continuous columns. You can chose from :ref:`kolmogorov_smirnov<univ_cont_method_ks>`,
+- The names of the columns to be evaluated.
+- A list of methods to use on continuous columns. You can chose from :ref:`kolmogorov_smirnov<univ_cont_method_ks>`,
   :ref:`jensen_shannon<univariate-drift-detection-cont-jensen-shannon>`, :ref:`wasserstein<univariate-drift-detection-cont-wasserstein>`
   and :ref:`hellinger<univariate-drift-detection-cont-hellinger>`.
-* A list of methods to use on categorical columns. You can chose from :ref:`chi2<univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>`,
+- A list of methods to use on categorical columns. You can chose from :ref:`chi2<univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>`,
   :ref:`l_infinity<univ_cat_method_l8>` and :ref:`hellinger<univ_cat_method_hellinger>`.
-* Optionally, the name of the column containing the observation timestamps.
-* Optionally, a chunking approach or a predifined chunker. If neither is provided, the default chunker creating 10 chunks will be used.
+- Optionally, the name of the column containing the observation timestamps.
+- Optionally, a chunking approach or a predifined chunker. If neither is provided, the default chunker creating 10 chunks will be used.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
@@ -103,7 +103,7 @@ We'll first plot the ``jensen_shannon`` method results for each continuous colum
     :cells: 10
 
 .. _univariate_drift_detection_tenure:
-.. image:: /_static/drift-guide-continuous.svg
+.. image:: /_static/tutorials/detecting_data_drift/univariate_drift_detection/jensen-shannon-continuous.svg
 
 Note that among the columns shown ``y_pred_proba`` is included.
 The drift calculator operates on any column. This not only limits it to model features, but allows it to work
@@ -115,13 +115,14 @@ and that also includes the ``y_pred`` column.
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 12
 
-.. image:: /_static/drift-guide-categorical.svg
+.. image:: /_static/tutorials/detecting_data_drift/univariate_drift_detection/shi-2-categorical.svg
 
 
 NannyML also shows details about the distributions of continuous and categorical variables.
 
 For continuous variables NannyML plots the estimated probability distribution of the variable for
 each chunk in a plot called joyplot. The chunks where drift was detected are highlighted.
+
 We can create joyplots for the model's continuous variables with
 the code below.
 
@@ -133,14 +134,16 @@ the code below.
 
 For categorical variables NannyML plots stacked bar charts to show the variable's distribution for each chunk.
 If a variable has more than 5 categories, the top 4 are displayed and the rest are grouped together to make
-the plots easier to view. We can create stacked bar charts for the model's categorical variables with
+the plots easier to view. The chunks where drift was detected are highlighted.
+
+We can create stacked bar charts for the model's categorical variables with
 the code below.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 16
 
-.. image:: /_static/drift-guide-stacked-categorical.svg
+.. image:: /_static/tutorials/detecting_data_drift/univariate_drift_detection/stacked-categorical.svg
 
 Insights
 --------

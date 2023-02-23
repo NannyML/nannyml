@@ -4,74 +4,70 @@
 Comparing Estimated and Realized Performance
 ============================================
 
-
-
 When the :term:`targets<Target>` become available, the quality of estimations provided by NannyML can be evaluated.
-The synthetic datasets provided with the library contain targets for analysis period.
-It consists of ``identifier``, which allows to match it with
-``analysis`` data, and the target for the monitored model - ``work_home_actual``. See:
-
-.. code-block:: python
-
-    >>> import nannyml as nml
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
-    >>> analysis_target.head(3)
-
-
-+----+--------------+--------------------+
-|    |   identifier |   work_home_actual |
-+====+==============+====================+
-|  0 |        50000 |                  1 |
-+----+--------------+--------------------+
-|  1 |        50001 |                  1 |
-+----+--------------+--------------------+
-|  2 |        50002 |                  1 |
-+----+--------------+--------------------+
 
 The beginning of the code below is similar to the one in :ref:`tutorial on
-performance estimation with binary classification data<performance-estimation-binary-just-the-code>`.
+performance calculation with binary classification data<binary-performance-calculation>`.
 
-Estimation results for ``reference`` and ``analysis`` are combined with realized and plot the two on the same graph.
+The synthetic datasets provided with the library contain targets for analysis period.
+It contains the :term:`target<Target>` values for the monitored model in the ``repaid`` column.
 
-.. code-block:: python
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 1
 
-    >>> import pandas as pd
-    >>> import nannyml as nml
-    >>> from IPython.display import display
-    >>> from sklearn.metrics import roc_auc_score
-    >>> import matplotlib.pyplot as plt
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cell: 2
 
-    >>> reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+For this example, the analysis targets and the analysis frame are joined by their index.
 
-    >>> estimator = nml.CBPE(
-    ...     y_pred_proba='y_pred_proba',
-    ...     y_pred='y_pred',
-    ...     y_true='work_home_actual',
-    ...     timestamp_column_name='timestamp',
-    ...     metrics=['roc_auc', 'f1'],
-    ...     chunk_size=5000
-    >>> )
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 3
 
-    >>> estimator.fit(reference)
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cell: 4
 
-    >>> results = estimator.estimate(pd.concat([reference, analysis], ignore_index=True))
+Next we create the Confidence-based Performance Estimation (CBPE) estimator with a list of metrics, and an optional chunking specification.
+For more information about chunking you can check the :ref:`chunking tutorial<chunking>`.
 
-    >>> analysis_full = pd.merge(analysis, analysis_target, on = 'identifier')
-    >>> df_all = pd.concat([reference, analysis_full]).reset_index(drop=True)
-    >>> target_col = 'work_home_actual'
-    >>> pred_score_col = 'y_pred_proba'
-    >>> actual_performance = []
-    >>> for idx in results.data.index:
-    ...     start_index, end_index = results.data.loc[idx, 'start_index'], results.data.loc[idx, 'end_index']
-    ...     sub = df_all.loc[start_index:end_index]
-    ...     actual_perf = roc_auc_score(sub[target_col], sub[pred_score_col])
-    ...     results.data.loc[idx, 'actual_roc_auc'] = actual_perf
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 5
+
+The CBPE estimator is then fitted using the :meth:`~nannyml.base.AbstractEstimator.fit` method
+on the reference data.
+
+We estimate the performance of both the reference and analysis datasets,
+to compare the estimated and actual performance of the reference period.
+
+We filter the results to only have the estimated values.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 6
+
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cell: 7
+
+We compute the actual performance with `sklearn` using the `Target` values.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 8
+
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cell: 9
+
+Finally, estimation results for ``reference`` and ``analysis`` are combined with the realized performance and plot the two on the same graph.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 10
 
 
-    >>> results.data[['estimated_roc_auc', 'actual_roc_auc']].plot()
-    >>> plt.xlabel('chunk')
-    >>> plt.ylabel('ROC AUC')
-    >>> plt.show()
-
-
-.. image:: /_static/guide-performance_estimation_tmp.svg
+.. image:: /_static/tutorials/estimated_and_realized_performance/tutorial-binary-car-loan-roc-auc-estimated-and-actual.svg

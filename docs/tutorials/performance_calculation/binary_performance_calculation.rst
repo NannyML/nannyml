@@ -21,14 +21,17 @@ Just The Code
 Walkthrough
 ===============
 
-For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
-whether an employee will work from home. You can :ref:`read more about this synthetic dataset<dataset-synthetic-binary>`.
+For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
+predicts whether a customer will repay a loan to buy a car.
+You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
-not used during :ref:`performance estimation.<performance-estimation>`. But it is required to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.  The analysis target values are joined on the analysis frame by the ``identifier`` column.
+not used during :ref:`performance estimation.<performance-estimation>`. But it is required to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.
+
+The analysis target values are joined on the analysis frame by their index. Your dataset may already contain the ``target`` column, so you may skip this join.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
@@ -46,13 +49,17 @@ Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator
     The following metrics are currently supported:
 
     * ``roc_auc``
-    * ``f1`` 
-    * ``precision`` 
+    * ``f1``
+    * ``precision``
     * ``recall``
-    * ``specificity`` 
+    * ``specificity``
     * ``accuracy``
     * ``confusion_matrix``
-        * Normalization options: ``None`` (returns counts), ``true`` (normalize by true class of observations), ``pred`` (normalize by predicted class of observations), ``all`` (normalize by all observations).
+        * Normalization options:
+            * ``None``: returns counts
+            * ``true``: normalize by true class of observations
+            * ``pred``: normalize by predicted class of observations
+            * ``all``: normalize by all observations
 
     For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
@@ -109,7 +116,7 @@ The results can be plotted for visual inspection.
     :path: ./example_notebooks/Tutorial - Realized Performance - Binary Classification.ipynb
     :cells: 8
 
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary.svg
+.. image:: /_static/tutorials/performance_calculation/binary/tutorial-performance-calculation-binary-car-loan-analysis.svg
 
 
 Insights

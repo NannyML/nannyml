@@ -163,7 +163,6 @@ class UnivariateDriftCalculator(AbstractCalculator):
                 )
                 for method in self.continuous_method_names
             ]
-        print('161', self._column_to_models_mapping)
 
         for column_name in self.categorical_column_names:
             self._column_to_models_mapping[column_name] += [

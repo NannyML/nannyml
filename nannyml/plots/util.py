@@ -1,10 +1,7 @@
-#  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
-#  License: Apache Software License 2.0
-
-#  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  Author:  Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
 import copy
 from typing import List, Optional, Tuple, Union
 
@@ -23,8 +20,7 @@ def is_time_series(time_series: Optional[Union[np.ndarray, pd.Series]]) -> TypeG
 
 
 def is_time_based_x_axis(
-    start_dates: Optional[Union[np.ndarray, pd.Series]],
-    end_dates: Optional[Union[np.ndarray, pd.Series]]
+    start_dates: Optional[Union[np.ndarray, pd.Series]], end_dates: Optional[Union[np.ndarray, pd.Series]]
 ) -> bool:
     return is_time_series(start_dates) and is_time_series(end_dates)
 

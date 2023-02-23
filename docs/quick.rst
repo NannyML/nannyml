@@ -8,9 +8,7 @@ Quickstart
 What is NannyML?
 ----------------
 
-NannyML detects silent model failure, estimates performance of ML models after deployment
-before target data become available, and robustly detects data drift potentially responsible for the failure.
-It can also monitor performance once target data is available.
+.. include:: ./common/quickstart_what_is_nannyml.rst
 
 
 ------------------
@@ -44,13 +42,13 @@ or
 Contents of the Quickstart
 --------------------------
 
-
 This Quickstart presents core functionalities of NannyML on an example binary classification model
-that predicts whether an employee will work from home the next day or not. First, the whole code is shown
-so you can jump in and experiment right away if you want.
+that predicts  whether a customer will repay a loan to buy a car.
+
+First, the whole code is shown so you can jump in and experiment right away if you want.
 
 This is followed by a detailed walk-through to help you get familiar with the flow, and explain the details.
-:ref:`The synthetic dataset<dataset-synthetic-binary>` used contains inputs that are already merged with model
+:ref:`The synthetic dataset<dataset-synthetic-binary-car-loan>` used contains inputs that are already merged with model
 predictions and ready to be directly used by NannyML.
 
 All :ref:`our tutorials<tutorials>` are a good place to get detailed guides on main
@@ -62,7 +60,6 @@ on other datasets or ML problems look through our :ref:`examples<examples>`.
     The following example does not use any :term:`timestamps<Timestamp>`.
     These are optional but have an impact on the way data is chunked and results are plotted.
     You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
-
 
 
 -------------
@@ -80,13 +77,18 @@ Walkthrough
 -----------
 
 We start by loading the synthetic dataset included in the library. This synthetic dataset
-contains inputs and predictions of a binary classification model that predicts whether an employee will
-work from home the next workday or not.
+contains inputs and predictions of a binary classification model that predicts
+whether a customer will repay a loan to buy a car.
 
-The probability of the employee working from home is included in the ``y_pred_proba`` column, while the
-prediction is in ``y_pred`` column. The model inputs are ``distance_from_office``, ``salary_range``,
-``gas_price_per_litre``, ``public_transportation_cost``, ``wfh_prev_workday``, ``workday`` and ``tenure``.
-``identifier`` is the :term:`Identifier` column and ``timestamp`` is the :term:`Timestamp` column.
+The probability of the customer repaying the loan is included in the ``y_pred_proba`` column, while the
+prediction is in ``y_pred`` column.
+
+The model inputs are
+``car_value``, ``salary_range``,
+``debt_to_income_ratio``, ``loan_length``,
+``repaid_loan_on_prev_car``, ``size_of_downpayment`` and ``tenure``.
+
+``timestamp`` is the :term:`Timestamp` column.
 
 The data are split into a :ref:`reference period<data-drift-periods-reference>` and an
 :ref:`analysis period<data-drift-periods-analysis>`. NannyML uses the reference period to
@@ -106,7 +108,6 @@ Let's load and preview the data:
     :path: ./example_notebooks/Quickstart.ipynb
     :cell: 2
 
-
 .. nbtable::
     :path: ./example_notebooks/Quickstart.ipynb
     :cell: 3
@@ -125,7 +126,7 @@ NannyML can estimate the performance on a machine learning model in production
 without access to its :term:`Target`. For more details on how to use performance estimation see
 :ref:`our tutorial on performance estimation<performance-estimation>`,
 while for more details on how the algorithm behind it works see
-:ref:`Confidence-based Performance Estimation (CBPE)<performance-estimation-deep-dive>`.
+:ref:`Confidence-based Performance Estimation (CBPE)<how-it-works-cbpe>`.
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -133,8 +134,9 @@ while for more details on how the algorithm behind it works see
 
 .. image:: ./_static/quick-start-perf-est.svg
 
-The results indicate that the model's performance is likely to be negatively impacted from the second half of 2019
-onwards.
+The results indicate that the model's performance is likely to be negatively impacted
+from the second half of the analysis period.
+
 
 Detecting Data Drift
 ====================
@@ -180,8 +182,9 @@ With NannyML we were able to estimate performance in the absence of ground truth
 potential drop in ROC AUC in the second half of the analysis period. Univariate and multivariate
 data drift detection algorithms have identified data drift.
 
-Putting everything together, we see that 4 features exhibit data drift from late 2019 onwards. They are
-``distance_from_office``, ``salary_range``, ``public_transportation_cost``, ``wfh_prev_workday``.
+Putting everything together, we see that 4 features exhibit data drift from the second half of the analysis period. They are
+``loan_length``, ``salary_range``, ``car_value``, ``repaid_loan_on_prev_car``.
+
 This drift is responsible for the potential negative impact in performance that we have observed in this time period.
 
 ---------

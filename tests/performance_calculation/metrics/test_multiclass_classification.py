@@ -61,24 +61,18 @@ def realized_performance_metrics(multiclass_data) -> pd.DataFrame:
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         problem_type='classification_multiclass',
     ).fit(multiclass_data[0])
-    results = performance_calculator.calculate(multiclass_data[1].merge(
-        multiclass_data[2],
-        left_index=True,
-        right_index=True
-    )).filter(period='analysis')
+    results = performance_calculator.calculate(
+        multiclass_data[1].merge(multiclass_data[2], left_index=True, right_index=True)
+    ).filter(period='analysis')
     return results.to_df()
 
 
 @pytest.fixture(scope='module')
 def no_timestamp_metrics(performance_calculator, multiclass_data) -> pd.DataFrame:
     performance_calculator.fit(multiclass_data[0])
-    results = performance_calculator.calculate(multiclass_data[1].merge(
-        multiclass_data[2],
-        left_index=True,
-        right_index=True
-    )).filter(
-        period='analysis'
-    )
+    results = performance_calculator.calculate(
+        multiclass_data[1].merge(multiclass_data[2], left_index=True, right_index=True)
+    ).filter(period='analysis')
     return results.data
 
 

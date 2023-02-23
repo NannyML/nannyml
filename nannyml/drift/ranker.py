@@ -15,9 +15,9 @@ from nannyml._typing import Metric
 from nannyml.drift.univariate.result import Result as UnivariateResults
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
+from nannyml.performance_estimation.confidence_based.metrics import Metric as CBPEMetric
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResults
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
-from nannyml.performance_estimation.confidence_based.metrics import Metric as CBPEMetric
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -175,11 +175,7 @@ class CorrelationRanker:
         self.metric = reference_performance_calculation_result.metrics[0]
 
         # TODO: this will fail for estimated confusion matrix
-        metric_column_name = (
-            self.metric.name
-            if isinstance(self.metric, CBPEMetric)
-            else self.metric.column_name
-        )
+        metric_column_name = self.metric.name if isinstance(self.metric, CBPEMetric) else self.metric.column_name
 
         self.mean_reference_performance = (
             reference_performance_calculation_result.to_df().loc[:, (metric_column_name, 'value')].mean()
@@ -213,9 +209,7 @@ class CorrelationRanker:
             )
 
         # TODO: this will fail for estimated confusion matrix
-        metric_column_name = (
-            self.metric.name if isinstance(self.metric, CBPEMetric) else self.metric.column_name
-        )
+        metric_column_name = self.metric.name if isinstance(self.metric, CBPEMetric) else self.metric.column_name
 
         # Start ranking calculations
         abs_perf_change = np.abs(

@@ -34,6 +34,7 @@ Knowing the column names will help you understand this walkthrough better.
 
 We then set up the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` by specifying the names
 of the columns to evaluate and the continuous and categorical methods we would like to use.
+
 We then fit the calculator on our `reference` data. The fitted calculator is then used to evaluate drift for the
 `analysis` data, stored here as the variable ``results``.
 
@@ -52,6 +53,7 @@ this `DataFrame` looks like.
 
 We can immediately see that the a MultiLevel index is being used to store the data. There is a part containing `chunk`
 information, followed by the numerical results of the drift calculations.
+
 In the case of the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` there are two degrees of
 freedom. You can specify columns to include in the calculation, and each column might be evaluated by different methods.
 
@@ -98,7 +100,7 @@ When looking at the results after filtering, you can see only the `chi2` data fo
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
     :cell: 8
 
-To avoid the use of a `Multilevel index`, we've provided as switch in the
+To avoid the use of a `Multilevel index`, we've provided a switch in the
 :meth:`~nannyml.drift.univariate.result.Result.to_df` method.
 
 .. nbimport::

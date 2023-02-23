@@ -15,7 +15,7 @@ Just The Code
 -------------
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cells: 1 3 4 6 8
 
 Walkthrough
@@ -36,11 +36,11 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 Let's start by loading some synthetic data provided by the NannyML package, and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cell: 2
 
 The :class:`~nannyml.drift.model_inputs.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
@@ -54,7 +54,7 @@ to be called on the reference data where results will be based off. Then the
 calculate the multivariate drift results on the data provided to it.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cells: 3
 
 Any missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
@@ -64,7 +64,7 @@ overridden with an instance of `SimpleImputer`_ class in which cases NannyML wil
 An example where custom imputation strategies are used can be seen below.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cells: 10
 
 Because our synthetic dataset does not have missing values, the results are the same in both cases.
@@ -73,21 +73,21 @@ We can see these results of the data provided to the
 method as a dataframe.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cell: 5
 
 The drift results from the reference data are accessible from the properties of the results object:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cell: 7
 
 
@@ -105,10 +105,10 @@ NannyML can also visualize the multivariate drift results in a plot. Our plot co
   indicated by a red, diamond-shaped point marker in the middle of the chunk.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Model Inputs - Multivariate Data Reconstruction Error.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
     :cells: 8
 
-.. image:: /_static/drift-guide-multivariate.svg
+.. image:: /_static/tutorials/detecting_data_drift/multivariate_drift_detection/pca-reconstruction-error.svg
 
 The multivariate drift results provide a concise summary of where data drift
 is happening in our input data.

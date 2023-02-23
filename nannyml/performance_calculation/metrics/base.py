@@ -4,7 +4,7 @@
 import abc
 import logging
 from logging import Logger
-from typing import Callable, Dict, List, Optional, Tuple, Union, Type
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd

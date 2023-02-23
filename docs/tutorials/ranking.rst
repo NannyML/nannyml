@@ -49,7 +49,7 @@ The first thing we need before using the alert count ranker is to create the uni
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 2
 
-To illustrate the results we filter and display the analysis period results for ``distance_from_office`` feature.
+To illustrate the results we filter and display the analysis period results for ``debt_to_income_ratio`` feature.
 The next step is to instantiate the ranker and instruct it to :meth:`~nannyml.drift.ranking.AlertCountRanking.rank`
 the provided results. Notice that the univariate results are filtered to ensure they only have one drift method
 per categorical and continuous feature as required.
@@ -117,7 +117,7 @@ filtered univariate and performance results.
 
 Depending on circumstances it may be appropriate to consider correlation
 of drift results on just the analysis dataset or for different metrics.
-Below we can see the correlation of the same drift results with the ``precision``
+Below we can see the correlation of the same drift results with the ``recall``
 results
 
 .. nbimport::

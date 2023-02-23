@@ -233,9 +233,7 @@ class ChunkerFactory:
         if chunk_size:
             return SizeBasedChunker(chunk_size=chunk_size, timestamp_column_name=timestamp_column_name)
         elif chunk_number:
-            return CountBasedChunker(
-                chunk_number=chunk_number, timestamp_column_name=timestamp_column_name
-            )
+            return CountBasedChunker(chunk_number=chunk_number, timestamp_column_name=timestamp_column_name)
         elif chunk_period:
             if timestamp_column_name is None:
                 raise InvalidArgumentsException(
