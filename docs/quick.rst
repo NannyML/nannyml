@@ -8,9 +8,7 @@ Quickstart
 What is NannyML?
 ----------------
 
-NannyML detects silent model failure, estimates performance of ML models after deployment
-before target data become available, and robustly detects data drift potentially responsible for the failure.
-It can also monitor performance once target data is available.
+.. include:: ./common/quickstart_what_is_nannyml.rst
 
 
 ------------------
@@ -44,7 +42,6 @@ or
 Contents of the Quickstart
 --------------------------
 
-
 This Quickstart presents core functionalities of NannyML on an example binary classification model
 that predicts  whether a customer will repay a loan to buy a car.
 
@@ -63,7 +60,6 @@ on other datasets or ML problems look through our :ref:`examples<examples>`.
     The following example does not use any :term:`timestamps<Timestamp>`.
     These are optional but have an impact on the way data is chunked and results are plotted.
     You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
-
 
 
 -------------
@@ -130,7 +126,7 @@ NannyML can estimate the performance on a machine learning model in production
 without access to its :term:`Target`. For more details on how to use performance estimation see
 :ref:`our tutorial on performance estimation<performance-estimation>`,
 while for more details on how the algorithm behind it works see
-:ref:`Confidence-based Performance Estimation (CBPE)<performance-estimation-deep-dive>`.
+:ref:`Confidence-based Performance Estimation (CBPE)<how-it-works-cbpe>`.
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
