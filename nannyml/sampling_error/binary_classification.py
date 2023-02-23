@@ -20,6 +20,8 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 
+from nannyml.exceptions import InvalidArgumentsException
+
 
 def _universal_sampling_error(reference_std, reference_fraction, data):
     return reference_std / np.sqrt(len(data) * reference_fraction)
@@ -61,7 +63,7 @@ def auroc_sampling_error_components(y_true_reference: pd.Series, y_pred_proba_re
 
     n_pos = np.sum(y_true)
     n_neg = len(y_true) - n_pos
-    ser_multi = ser / n_neg
+    ser_multi = np.true_divide(ser, n_neg)
     fraction = n_pos / len(y_true)
 
     return np.std(ser_multi), fraction
@@ -346,14 +348,10 @@ def true_positive_sampling_error_components(
 
         relevant_proportion = 1
 
-        norm_type = None
-
     elif normalize_confusion_matrix == "all":
         std = np.std(obs_level_tp)
 
         relevant_proportion = 1
-
-        norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
         number_of_real_positives = num_fn + num_tp
@@ -365,8 +363,6 @@ def true_positive_sampling_error_components(
 
         relevant_proportion = proportion_of_real_positives
 
-        norm_type = "true"
-
     elif normalize_confusion_matrix == "pred":
         number_of_pred_positives = num_fp + num_tp
         proportion_of_pred_positives = number_of_pred_positives / len(y_true_reference)
@@ -377,9 +373,13 @@ def true_positive_sampling_error_components(
 
         relevant_proportion = proportion_of_pred_positives
 
-        norm_type = "pred"
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+            f"but got '{normalize_confusion_matrix}"
+        )
 
-    return (std, relevant_proportion, norm_type)
+    return std, relevant_proportion, normalize_confusion_matrix
 
 
 def true_positive_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -403,6 +403,11 @@ def true_positive_sampling_error(sampling_error_components: Tuple, data) -> floa
 
     elif norm_type == "true" or norm_type == "pred":
         tp_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' " f"but got '{norm_type}"
+        )
 
     return tp_standard_error
 
@@ -442,14 +447,10 @@ def true_negative_sampling_error_components(
 
         relevant_proportion = 1
 
-        norm_type = None
-
     elif normalize_confusion_matrix == "all":
         std = np.std(obs_level_tn)
 
         relevant_proportion = 1
-
-        norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
         number_of_real_negatives = num_fp + num_tn
@@ -461,8 +462,6 @@ def true_negative_sampling_error_components(
 
         relevant_proportion = proportion_of_real_negatives
 
-        norm_type = "true"
-
     elif normalize_confusion_matrix == "pred":
         number_of_pred_negatives = num_fn + num_tn
         proportion_of_pred_negatives = number_of_pred_negatives / len(y_true_reference)
@@ -473,9 +472,13 @@ def true_negative_sampling_error_components(
 
         relevant_proportion = proportion_of_pred_negatives
 
-        norm_type = "pred"
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+            f"but got '{normalize_confusion_matrix}"
+        )
 
-    return (std, relevant_proportion, norm_type)
+    return std, relevant_proportion, normalize_confusion_matrix
 
 
 def true_negative_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -499,6 +502,11 @@ def true_negative_sampling_error(sampling_error_components: Tuple, data) -> floa
 
     elif norm_type == "true" or norm_type == "pred":
         tn_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' " f"but got '{norm_type}"
+        )
 
     return tn_standard_error
 
@@ -538,14 +546,10 @@ def false_positive_sampling_error_components(
 
         relevant_proportion = 1
 
-        norm_type = None
-
     elif normalize_confusion_matrix == "all":
         std = np.std(obs_level_fp)
 
         relevant_proportion = 1
-
-        norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
         number_of_real_negatives = num_fp + num_tn
@@ -557,8 +561,6 @@ def false_positive_sampling_error_components(
 
         relevant_proportion = proportion_of_real_negatives
 
-        norm_type = "true"
-
     elif normalize_confusion_matrix == "pred":
         number_of_pred_positives = num_fp + num_tp
         proportion_of_pred_positives = number_of_pred_positives / len(y_true_reference)
@@ -569,9 +571,13 @@ def false_positive_sampling_error_components(
 
         relevant_proportion = proportion_of_pred_positives
 
-        norm_type = "pred"
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+            f"but got '{normalize_confusion_matrix}"
+        )
 
-    return (std, relevant_proportion, norm_type)
+    return std, relevant_proportion, normalize_confusion_matrix
 
 
 def false_positive_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -595,6 +601,11 @@ def false_positive_sampling_error(sampling_error_components: Tuple, data) -> flo
 
     elif norm_type == "true" or norm_type == "pred":
         fp_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
+
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' " f"but got '{norm_type}"
+        )
 
     return fp_standard_error
 
@@ -634,14 +645,10 @@ def false_negative_sampling_error_components(
 
         relevant_proportion = 1
 
-        norm_type = None
-
     elif normalize_confusion_matrix == "all":
         std = np.std(obs_level_fn)
 
         relevant_proportion = 1  # Could be None, None
-
-        norm_type = "all"
 
     elif normalize_confusion_matrix == "true":
         number_of_real_positives = num_fn + num_tp
@@ -653,8 +660,6 @@ def false_negative_sampling_error_components(
 
         relevant_proportion = proportion_of_real_positives
 
-        norm_type = "true"
-
     elif normalize_confusion_matrix == "pred":
         number_of_pred_negatives = num_fn + num_tn
         proportion_of_pred_negatives = number_of_pred_negatives / len(y_true_reference)
@@ -665,9 +670,13 @@ def false_negative_sampling_error_components(
 
         relevant_proportion = proportion_of_pred_negatives
 
-        norm_type = "pred"
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+            f"but got '{normalize_confusion_matrix}"
+        )
 
-    return (std, relevant_proportion, norm_type)
+    return std, relevant_proportion, normalize_confusion_matrix
 
 
 def false_negative_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -692,6 +701,11 @@ def false_negative_sampling_error(sampling_error_components: Tuple, data) -> flo
     elif norm_type == "true" or norm_type == "pred":
         fn_standard_error = reference_std / np.sqrt(len(data) * relevant_proportion)
 
+    else:
+        raise InvalidArgumentsException(
+            f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' " f"but got '{norm_type}"
+        )
+
     return fn_standard_error
 
 
@@ -710,7 +724,7 @@ def true_positive_cost_sampling_error_components(
         A 2x2 matrix of costs for the business problem.
     Returns
     -------
-    std: float
+    components: tuple
     """
     y_true_reference = np.asarray(y_true_reference).astype(int)
     y_pred_reference = np.asarray(y_pred_reference).astype(int)
@@ -723,7 +737,7 @@ def true_positive_cost_sampling_error_components(
 
     std = np.std(obs_level_tp_cost)
 
-    return std
+    return (std,)
 
 
 def true_positive_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -737,7 +751,7 @@ def true_positive_cost_sampling_error(sampling_error_components: Tuple, data) ->
     -------
     sampling_error: float
     """
-    reference_std = sampling_error_components
+    (reference_std,) = sampling_error_components
 
     analysis_std = reference_std * len(data)
 
@@ -761,7 +775,7 @@ def true_negative_cost_sampling_error_components(
         A 2x2 matrix of costs for the business problem.
     Returns
     -------
-    std: float
+    components: tuple
     """
     y_true_reference = np.asarray(y_true_reference).astype(int)
     y_pred_reference = np.asarray(y_pred_reference).astype(int)
@@ -774,7 +788,7 @@ def true_negative_cost_sampling_error_components(
 
     std = np.std(obs_level_tn_cost)
 
-    return std
+    return (std,)
 
 
 def true_negative_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -788,7 +802,7 @@ def true_negative_cost_sampling_error(sampling_error_components: Tuple, data) ->
     -------
     sampling_error: float
     """
-    reference_std = sampling_error_components
+    (reference_std,) = sampling_error_components
 
     analysis_std = reference_std * len(data)
 
@@ -812,7 +826,7 @@ def false_positive_cost_sampling_error_components(
         A 2x2 matrix of costs for the business problem.
     Returns
     -------
-    std: float
+    components: tuple
     """
     y_true_reference = np.asarray(y_true_reference).astype(int)
     y_pred_reference = np.asarray(y_pred_reference).astype(int)
@@ -825,7 +839,7 @@ def false_positive_cost_sampling_error_components(
 
     std = np.std(obs_level_fp_cost)
 
-    return std
+    return (std,)
 
 
 def false_positive_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -839,7 +853,7 @@ def false_positive_cost_sampling_error(sampling_error_components: Tuple, data) -
     -------
     sampling_error: float
     """
-    reference_std = sampling_error_components
+    (reference_std,) = sampling_error_components
 
     analysis_std = reference_std * len(data)
 
@@ -863,7 +877,7 @@ def false_negative_cost_sampling_error_components(
         A 2x2 matrix of costs for the business problem.
     Returns
     -------
-    std: float
+    components: tuple
     """
     y_true_reference = np.asarray(y_true_reference).astype(int)
     y_pred_reference = np.asarray(y_pred_reference).astype(int)
@@ -876,7 +890,7 @@ def false_negative_cost_sampling_error_components(
 
     std = np.std(obs_level_fn_cost)
 
-    return std
+    return (std,)
 
 
 def false_negative_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -890,7 +904,7 @@ def false_negative_cost_sampling_error(sampling_error_components: Tuple, data) -
     -------
     sampling_error: float
     """
-    reference_std = sampling_error_components
+    (reference_std,) = sampling_error_components
 
     analysis_std = reference_std * len(data)
 
@@ -914,7 +928,7 @@ def total_cost_sampling_error_components(
         A 2x2 matrix of costs for the business problem.
     Returns
     -------
-    std: float
+    components: tuple
     """
     y_true_reference = np.asarray(y_true_reference).astype(int)
     y_pred_reference = np.asarray(y_pred_reference).astype(int)
@@ -933,7 +947,7 @@ def total_cost_sampling_error_components(
 
     std = np.std(combined_and_weighted)
 
-    return std
+    return (std,)
 
 
 def total_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
@@ -947,7 +961,7 @@ def total_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
     -------
     sampling_error: float
     """
-    reference_std = sampling_error_components
+    (reference_std,) = sampling_error_components
 
     analysis_std = reference_std * len(data)
 

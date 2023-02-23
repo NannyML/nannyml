@@ -906,6 +906,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalizer = 1 / (est_tp_ratio + est_fp_ratio)
             normalized_est_tp_ratio = est_tp_ratio * normalizer
 
+        else:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+                f"but got '{self.normalize_confusion_matrix}"
+            )
+
         return normalized_est_tp_ratio
 
     def get_true_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
@@ -929,6 +935,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         elif self.normalize_confusion_matrix == 'pred':
             normalizer = 1 / (est_tn_ratio + est_fn_ratio)
             normalized_est_tn_ratio = est_tn_ratio * normalizer
+
+        else:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+                f"but got '{self.normalize_confusion_matrix}"
+            )
 
         return normalized_est_tn_ratio
 
@@ -954,6 +966,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalizer = 1 / (est_tp_ratio + est_fp_ratio)
             normalized_est_fp_ratio = est_fp_ratio * normalizer
 
+        else:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+                f"but got '{self.normalize_confusion_matrix}"
+            )
+
         return normalized_est_fp_ratio
 
     def get_false_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
@@ -977,6 +995,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         elif self.normalize_confusion_matrix == 'pred':
             normalizer = 1 / (est_tn_ratio + est_fn_ratio)
             normalized_est_fn_ratio = est_fn_ratio * normalizer
+
+        else:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
+                f"but got '{self.normalize_confusion_matrix}"
+            )
 
         return normalized_est_fn_ratio
 
@@ -1158,7 +1182,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
 
 @MetricFactory.register('business_cost', ProblemType.CLASSIFICATION_BINARY)
-class BinaryClassificationConfusionMatrix(Metric):
+class BinaryClassificationBusinessCost(Metric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1186,11 +1210,11 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
 
         if business_cost_matrix is None:
-            raise ValueError('business_cost_matrix must be provided for \'business_cost\' metric')
+            raise ValueError("business_cost_matrix must be provided for 'business_cost\' metric")
 
         if not (isinstance(business_cost_matrix, np.ndarray) or isinstance(business_cost_matrix, list)):
             raise ValueError(
-                f'Business cost matrix must be a numpy array or a list, but got {type(business_cost_matrix)}'
+                f"Business cost matrix must be a numpy array or a list, but got {type(business_cost_matrix)}"
             )
 
         if isinstance(business_cost_matrix, list):
@@ -1198,7 +1222,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         if business_cost_matrix.shape != (2, 2):
             raise ValueError(
-                f'Business cost matrix must have shape (2,2), but got matrix of shape {business_cost_matrix.shape}'
+                f"Business cost matrix must have shape (2,2), but got matrix of shape {business_cost_matrix.shape}"
             )
 
         self.business_cost_matrix = business_cost_matrix
@@ -1212,6 +1236,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         self.true_negative_confidence_deviation: float = 0
         self.false_positive_confidence_deviation: float = 0
         self.false_negative_confidence_deviation: float = 0
+
+        self.true_positive_cost_confidence_deviation: float = 0
+        self.true_negative_cost_confidence_deviation: float = 0
+        self.false_positive_cost_confidence_deviation: float = 0
+        self.false_negative_cost_confidence_deviation: float = 0
+        self.total_cost_confidence_deviation: float = 0
 
     def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
         """Fits a Metric on reference data.
@@ -1296,7 +1326,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_positive_cost_upper_threshold = true_positive_cost_mean_realized_performance + deviation
         true_positive_cost_lower_threshold = true_positive_cost_mean_realized_performance - deviation
 
-        return (true_positive_cost_lower_threshold, true_positive_cost_upper_threshold)
+        return true_positive_cost_lower_threshold, true_positive_cost_upper_threshold
 
     def _true_negative_cost_alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3
@@ -1310,7 +1340,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_negative_cost_upper_threshold = true_negative_cost_mean_realized_performance + deviation
         true_negative_cost_lower_threshold = true_negative_cost_mean_realized_performance - deviation
 
-        return (true_negative_cost_lower_threshold, true_negative_cost_upper_threshold)
+        return true_negative_cost_lower_threshold, true_negative_cost_upper_threshold
 
     def _false_positive_cost_alert_thresholds(
         self,
@@ -1326,7 +1356,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_positive_cost_upper_threshold = false_positive_cost_mean_realized_performance + deviation
         false_positive_cost_lower_threshold = false_positive_cost_mean_realized_performance - deviation
 
-        return (false_positive_cost_lower_threshold, false_positive_cost_upper_threshold)
+        return false_positive_cost_lower_threshold, false_positive_cost_upper_threshold
 
     def _false_negative_cost_alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3
@@ -1340,7 +1370,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_negative_cost_upper_threshold = false_negative_cost_mean_realized_performance + deviation
         false_negative_cost_lower_threshold = false_negative_cost_mean_realized_performance - deviation
 
-        return (false_negative_cost_lower_threshold, false_negative_cost_upper_threshold)
+        return false_negative_cost_lower_threshold, false_negative_cost_upper_threshold
 
     def _total_cost_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3) -> Tuple[float, float]:
         total_cost_realized_chunk_performance = [
@@ -1352,7 +1382,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         total_cost_upper_threshold = total_cost_mean_realized_performance + deviation
         total_cost_lower_threshold = total_cost_mean_realized_performance - deviation
 
-        return (total_cost_lower_threshold, total_cost_upper_threshold)
+        return total_cost_lower_threshold, total_cost_upper_threshold
 
     def _true_positive_cost_realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)

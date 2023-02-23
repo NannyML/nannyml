@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -38,7 +39,7 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc', 'f1', 'precision', 'recall', 'accuracy', 'confusion_matrix', 'business_cost'],
         problem_type='classification_binary',
-        business_cost_matrix=[[0, 1], [1, 0]],
+        business_cost_matrix=np.array([[0, 1], [1, 0]]),
     )
     estimator.fit(reference)
     return estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
