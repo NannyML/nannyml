@@ -29,7 +29,7 @@ def mae_sampling_error_components(y_true_reference: pd.Series, y_pred_reference:
 
 def mae_sampling_error(sampling_error_components, data) -> float:
     """
-    Calculate the specificity sampling error for a chunk of data.
+    Calculate Mean Absolute Error (MAE) sampling error for a chunk of data.
 
     Parameters
     ----------
@@ -65,7 +65,7 @@ def mape_sampling_error_components(y_true_reference: pd.Series, y_pred_reference
 
 def mape_sampling_error(sampling_error_components, data) -> float:
     """
-    Calculate the specificity sampling error for a chunk of data.
+    Calculate Mean Absolute Percentage Error (MAPE) sampling error for a chunk of data.
 
     Parameters
     ----------
@@ -101,7 +101,7 @@ def mse_sampling_error_components(y_true_reference: pd.Series, y_pred_reference:
 
 def mse_sampling_error(sampling_error_components, data) -> float:
     """
-    Calculate the specificity sampling error for a chunk of data.
+    Calculate Mean Squared Error (MSE) sampling error for a chunk of data.
 
     Parameters
     ----------
@@ -137,7 +137,7 @@ def msle_sampling_error_components(y_true_reference: pd.Series, y_pred_reference
 
 def msle_sampling_error(sampling_error_components, data) -> float:
     """
-    Calculate the specificity sampling error for a chunk of data.
+    Calculate Mean Squared Logarithmic Error (MSLE) sampling error for a chunk of data.
 
     Parameters
     ----------
@@ -154,7 +154,7 @@ def msle_sampling_error(sampling_error_components, data) -> float:
 
 def rmse_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
     """
-    Calculate sampling error components for Root Mean Squared Logarithmic Error (RMSLE) using reference data.
+    Calculate sampling error components for Root Mean Squared Error (RMSE) using reference data.
 
     Parameters
     ----------
@@ -175,7 +175,7 @@ def rmse_sampling_error_components(y_true_reference: pd.Series, y_pred_reference
 
 def rmse_sampling_error(sampling_error_components, data) -> float:
     """
-    Calculate the specificity sampling error for a chunk of data.
+    Calculate Root Mean Squared Error (RMSE) sampling error for a chunk of data.
 
     Parameters
     ----------
@@ -193,7 +193,7 @@ def rmse_sampling_error(sampling_error_components, data) -> float:
 
 def rmsle_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
     """
-    Calculate sampling error components for Mean Absolute Error (MAE) using reference data.
+    Calculate sampling error components for Root Mean Squared Logarithmic Error (RMSLE) using reference data.
 
     Parameters
     ----------
@@ -214,7 +214,7 @@ def rmsle_sampling_error_components(y_true_reference: pd.Series, y_pred_referenc
 
 def rmsle_sampling_error(sampling_error_components, data) -> float:
     """
-    Calculate the specificity sampling error for a chunk of data.
+    Calculate Root Mean Squared Logarithmic Error (RMSLE) sampling error for a chunk of data.
 
     Parameters
     ----------
