@@ -105,19 +105,19 @@ There results from the reference data are also available.
 Apart from chunk-related data, the results data have the following columns for each metric
 that was estimated:
 
- - ``realized_<metric>`` - when ``target`` values are available for a chunk, the realized performance metric will also
+ - ``value`` - the estimate of a metric for a specific chunk.
+ - ``sampling_error`` - the estimate of the :term:`Sampling Error`.
+ - ``realized`` - when ``target`` values are available for a chunk, the realized performance metric will also
    be calculated and included within the results.
- - ``estimated_<metric>`` - the estimate of a metric for a specific chunk,
- - ``upper_confidence_<metric>`` and ``lower_confidence_<metric>`` - these correspond to the sampling error and are equal to +/-
-   3 times the calculated :term:`standard error<Standard Error>`.
- - ``<metric>_lower_threshold>`` and ``<metric>_upper_threshold>`` - Lower and upper thresholds for performance metric.
-   Crossing them will raise an alert that there is a significant metric change. The thresholds are calculated based
-   on the realized performance of chunks in the ``reference`` period.
-   The thresholds are 3 standard deviations away from the mean performance calculated on ``reference`` chunks.
+ - ``upper_confidence_boundary`` and ``lower_confidence_boundary`` - These values show the :term:`Confidence Band` of the relevant metric
+   and are equal to estimated value +/- 3 times the estimated :term:`Sampling Error`.
+ - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
+   performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
+   the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   chunks.
    They are calculated during ``fit`` phase.
- - ``alert_<metric>`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
+ - ``alert`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
-
 
 These results can be also plotted. Our plot contains several key elements.
 
