@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support for estimating and calculating the realized confusion matrix for binary classification [(#191)](https://github.com/NannyML/nannyml/issues/191)
-- Support for estimating and calculating business cost (based on confusion matrix) for binary classification [(#237)](https://github.com/NannyML/nannyml/issues/237)
+- Support for estimating the realized confusion matrix for binary classification [(#191)](https://github.com/NannyML/nannyml/issues/191)
+- Support for estimating the business cost (based on confusion matrix) for binary classification [(#237)](https://github.com/NannyML/nannyml/issues/237)
 - Added `treat_as_categorical` parameter to univariate drift calculator [(#239)](https://github.com/NannyML/nannyml/issues/239)
 
 ### Fixed
