@@ -95,18 +95,18 @@ There results from the reference data are also available.
     :cell: 7
 
 Apart from chunking and chunk and period-related columns, the results data have a set of columns for each
-calculated metric. When taking ``roc_auc`` as an example:
+calculated metric.
 
  - ``targets_missing_rate`` - The fraction of missing target data.
- - ``<metric>`` - The value of the metric for a specific chunk.
- - ``<metric>_lower_threshold>`` and ``<metric>_upper_threshold>`` - Lower and upper thresholds for performance metric.
-   Crossing them will raise an alert that there is a significant metric change.
-   The thresholds are calculated based on the realized performance of chunks in the ``reference`` period.
-   The thresholds are 3 standard deviations away from the mean performance calculated on ``reference`` chunks.
+ - ``value`` - the realized metric value for a specific chunk.
+ - ``sampling_error`` - the estimate of the :term:`Sampling Error`.
+ - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
+   performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
+   the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   chunks.
    They are calculated during ``fit`` phase.
- - ``<metric>_alert`` - A flag indicating potentially significant performance change. ``True`` if realized performance
-   crosses upper or lower threshold.
- - ``<metric>_sampling_error`` - Estimated :term:`Sampling Error` for the relevant metric.
+ - ``alert`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
+   upper or lower threshold.
 
 
 The results can be plotted for visual inspection.
