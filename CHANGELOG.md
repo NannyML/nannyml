@@ -4,6 +4,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4] - 2023-02-24
+
+### Changed
+
+- Updated univariate drift methods to no longer store all reference data by default [(#182)](https://github.com/NannyML/nannyml/issues/182)
+- Updated univariate drift methods to deal better with missing data [(#202)](https://github.com/NannyML/nannyml/issues/202)
+- Updated the included example datasets
+- Critical security updates for dependencies
+- Updated visualization of multi-level table headers in the docs [(#242)](https://github.com/NannyML/nannyml/issues/242)
+
+
+### Added
+
+- Support for estimating and calculating the realized confusion matrix for binary classification [(#191)](https://github.com/NannyML/nannyml/issues/191)
+- Support for estimating and calculating business cost (based on confusion matrix) for binary classification [(#237)](https://github.com/NannyML/nannyml/issues/237)
+- Added `treat_as_categorical` parameter to univariate drift calculator [(#239)](https://github.com/NannyML/nannyml/issues/239)
+
+### Fixed
+
+- Fix missing confidence boundaries in some plots [(#193)](https://github.com/NannyML/nannyml/issues/193)
+- Fix incorrect metric names on plot y-axes [(#195)](https://github.com/NannyML/nannyml/issues/195)
+- Fix broken links to external docs [(#196)](https://github.com/NannyML/nannyml/issues/196)
+- Fix missing display name to performance calculation and estimation charts [(#200)](https://github.com/NannyML/nannyml/issues/200)
+- Fix missing confidence boundaries for single metric plots [(#203)](https://github.com/NannyML/nannyml/issues/203)
+- Fix incorrect code in example notebook for ranking
+- Fix result corruption when re-using calculators [(#206)](https://github.com/NannyML/nannyml/issues/206)
+- Fix unintentional period filtering [(#199)](https://github.com/NannyML/nannyml/issues/199)
+- Fixed some typing issues [(#213)](https://github.com/NannyML/nannyml/issues/213)
+- Fixed missing data requirements documentation on regression [(#215)](https://github.com/NannyML/nannyml/issues/215)
+- Corrections in the glossary [(#214)](https://github.com/NannyML/nannyml/issues/214), thanks [@sebasmos](https://github.com/sebasmos)!
+- Fix missing treshold in plotting legend [(#219)](https://github.com/NannyML/nannyml/issues/219)
+- Fix missing annotation in single row & column charts [(#221)](https://github.com/NannyML/nannyml/issues/221)
+- Fix outdated performance estimation and calculation docs [(#223)](https://github.com/NannyML/nannyml/issues/223)
+- Fix categorical encoding of unseen values for DLE [(#224)](https://github.com/NannyML/nannyml/issues/224)
+- Fix incorrect legend for None timeseries [(#235)](https://github.com/NannyML/nannyml/issues/235)
+-
+
 ## [0.8.3] - 2023-01-31
 
 ### Added
