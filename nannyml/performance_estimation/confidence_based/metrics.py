@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Callable, Dict, List, Optional, Tuple, Type
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -1189,7 +1189,7 @@ class BinaryClassificationBusinessCost(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
-        business_cost_matrix: np.ndarray,
+        business_cost_matrix: Union[List, np.ndarray],
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -1210,7 +1210,7 @@ class BinaryClassificationBusinessCost(Metric):
         )
 
         if business_cost_matrix is None:
-            raise ValueError("business_cost_matrix must be provided for 'business_cost\' metric")
+            raise ValueError("business_cost_matrix must be provided for 'business_cost' metric")
 
         if not (isinstance(business_cost_matrix, np.ndarray) or isinstance(business_cost_matrix, list)):
             raise ValueError(
