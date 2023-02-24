@@ -26,7 +26,7 @@ from nannyml.plots.util import (
     ensure_numpy,
     has_non_null_data,
     is_time_based_x_axis,
-    pairwise
+    pairwise,
 )
 
 CHUNK_KEY_COLUMN_NAME = 'key'

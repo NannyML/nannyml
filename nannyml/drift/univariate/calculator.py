@@ -25,6 +25,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         column_names: Union[str, List[str]],
+        treat_as_categorical: Optional[Union[str, List[str]]] = None,
         timestamp_column_name: Optional[str] = None,
         categorical_methods: Optional[Union[str, List[str]]] = None,
         continuous_methods: Optional[Union[str, List[str]]] = None,
@@ -41,12 +42,14 @@ class UnivariateDriftCalculator(AbstractCalculator):
         column_names: Union[str, List[str]]
             A string or list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
+        treat_as_categorical: Union[str, List[str]]
+            A single column name or list of column names to be treated as categorical by the calculator.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
         categorical_methods: Union[str, List[str]], default=['jensen_shannon']
             A method name or list of method names that will be performed on categorical columns.
         continuous_methods: Union[str, List[str]], default=['jensen_shannon']
-            A a method name list of method names that will be performed on continuous columns.
+            A method name list of method names that will be performed on continuous columns.
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -112,6 +115,12 @@ class UnivariateDriftCalculator(AbstractCalculator):
             column_names = [column_names]
         self.column_names = column_names
 
+        if not treat_as_categorical:
+            treat_as_categorical = []
+        if isinstance(treat_as_categorical, str):
+            treat_as_categorical = [treat_as_categorical]
+        self.treat_as_categorical = treat_as_categorical
+
         if not continuous_methods:
             continuous_methods = ['jensen_shannon']
         elif isinstance(continuous_methods, str):
@@ -149,6 +158,18 @@ class UnivariateDriftCalculator(AbstractCalculator):
         self.continuous_column_names, self.categorical_column_names = _split_features_by_type(
             reference_data, self.column_names
         )
+
+        for column_name in self.treat_as_categorical:
+            if column_name not in self.column_names:
+                self._logger.info(
+                    f"ignoring 'treat_as_categorical' value '{column_name}' because it was not in "
+                    f"listed column names"
+                )
+                break
+            if column_name in self.continuous_column_names:
+                self.continuous_column_names.remove(column_name)
+            if column_name not in self.categorical_column_names:
+                self.categorical_column_names.append(column_name)
 
         for column_name in self.continuous_column_names:
             self._column_to_models_mapping[column_name] += [
