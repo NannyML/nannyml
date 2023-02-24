@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Tests for Drift package."""
+import logging
 from typing import List, Optional
 
 import numpy as np
@@ -219,6 +220,71 @@ def test_univariate_drift_calculator_create_with_single_or_list_of_categorical_m
         categorical_methods=categorical_methods,
     )
     assert calc.categorical_method_names == expected
+
+
+@pytest.mark.parametrize(
+    'treat_as_categorical, expected', [('first', ['first']), (['first', 'second'], ['first', 'second']), (None, [])]
+)
+def test_univariate_drift_calculator_create_with_treat_as_categorical_columns(treat_as_categorical, expected):
+    calc = UnivariateDriftCalculator(
+        column_names=['first', 'second', 'third'],
+        treat_as_categorical=treat_as_categorical,
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+    )
+
+    sut = calc.treat_as_categorical
+    assert sut == expected
+
+
+def test_univariate_drift_calculator_treat_as_categorical_for_continuous_column(sample_drift_data):
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        treat_as_categorical='f1',
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+    ).fit(sample_drift_data)
+
+    expected_continuous = ['f2']
+    expected_categorical = ['f1', 'f3', 'f4']
+    assert sorted(calc.continuous_column_names) == expected_continuous
+    assert sorted(calc.categorical_column_names) == expected_categorical
+
+
+def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column(sample_drift_data):
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        treat_as_categorical='f3',
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+    ).fit(sample_drift_data)
+
+    expected_continuous = ['f1', 'f2']
+    expected_categorical = ['f3', 'f4']
+    assert sorted(calc.continuous_column_names) == expected_continuous
+    assert sorted(calc.categorical_column_names) == expected_categorical
+
+
+def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_column(sample_drift_data, caplog):
+    caplog.set_level(logging.INFO)
+
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        treat_as_categorical='foo',
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+    ).fit(sample_drift_data)
+
+    expected_continuous = ['f1', 'f2']
+    expected_categorical = ['f3', 'f4']
+    assert sorted(calc.continuous_column_names) == expected_continuous
+    assert sorted(calc.categorical_column_names) == expected_categorical
+
+    assert "ignoring 'treat_as_categorical' value 'foo' because it was not in listed column names" in caplog.messages
 
 
 @pytest.mark.parametrize(
