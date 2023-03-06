@@ -111,6 +111,68 @@ To avoid the use of a `Multilevel index`, we've provided a switch in the
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
     :cell: 10
 
+Results can be visualized by using the built in plotting functionality. With a quick call of the
+:meth:`~nannyml.base.AbstractResult.plot()` function we can create a Plotly
+`Figure <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html>`_.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Working with results.ipynb
+    :cells: 10
+
+To render it in our notebook we can call the `show()` method:
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Working with results.ipynb
+    :cells: 11
+
+.. image:: /_static/tutorials/working_with_results/result_plot.svg
+
+The image can also be exported to disk by using the following snippet:
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Working with results.ipynb
+    :cells: 12
+
+We might want to reduce the number of plots, since there is a lot happening on the visualization right now.
+We can first apply filtering and then perform the plotting.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Working with results.ipynb
+    :cells: 13
+
+.. image:: /_static/tutorials/working_with_results/filtered_result_plot.svg
+
+Some result classes might offer multiple ways of visualizing them. These are listed in their associated API reference docs.
+When looking at the docs for
+`univariate drift results <https://nannyml.readthedocs.io/en/latest/nannyml/nannyml.drift.univariate.result.html#nannyml.drift.univariate.result.Result.plot>`_,
+we can see there is the default `drift` kind but also the `distribution` kind. We can change the visualization by
+specifying the `kind` parameter.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Working with results.ipynb
+    :cells: 15
+
+.. image:: /_static/tutorials/working_with_results/distribution_plot.svg
+
+Another neat feature is that we can plot a comparison between multiple results. Suppose we want to visualize the
+estimated performance with respect to the univariate drift metrics for the _salary_range_ column.
+We'll first get our estimated performance result.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Working with results.ipynb
+    :cells: 16
+
+Now we can compare our estimated performance to the univariate drift on features:
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Working with results.ipynb
+    :cells: 17
+
+.. image:: /_static/tutorials/working_with_results/comparison_plot.svg
+    :width: 1200
+
+We can immediately spot how the estimated performance plummets when the Jensen-Shannon distance picks up!
+
 Results can also be exported to external storage using a :class:`~nannyml.io.base.Writer`. We currently support writing
 results to disk using a :class:`~nannyml.io.raw_files_writer.RawFilesWriter`, serializing the
 :class:`~nannyml.drift.univariate.result.Result` into a Python pickle file and storing that to disk using the
