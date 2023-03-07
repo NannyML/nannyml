@@ -3,9 +3,11 @@
 #  License: Apache Software License 2.0
 import abc
 import logging
-from typing import Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, Union
 
 import numpy as np
+
+from nannyml.exceptions import InvalidArgumentsException, ThresholdException
 
 
 class Threshold(abc.ABC):
@@ -49,6 +51,10 @@ class ConstantThreshold(Threshold):
         upper: Optional[float]
             The constant upper threshold value. Defaults to `None`, meaning there is no upper threshold.
 
+    Raises:
+        InvalidArgumentsException: raised when an argument was given using an incorrect type or name
+        ThresholdException: raised when the ConstantThreshold could not be created using the given argument values
+
     Examples:
         >>> data = np.array(range(10))
         >>> t = ConstantThreshold(lower=None, upper=0.1)
@@ -57,20 +63,42 @@ class ConstantThreshold(Threshold):
         None 0.1
     """
 
-    def __init__(self, lower: Optional[float], upper: Optional[float]):
+    def __init__(self, lower: Optional[Union[float, int]] = None, upper: Optional[Union[float, int]] = None):
         """Creates a new ConstantThreshold instance.
 
         Args:
-            lower: Optional[float]
+            lower: Optional[Union[float, int]], default=None
                 The constant lower threshold value. Defaults to `None`, meaning there is no lower threshold.
-            upper: Optional[float]
+            upper: Optional[Union[float, int]], default=None
                 The constant upper threshold value. Defaults to `None`, meaning there is no upper threshold.
+
+        Raises:
+            InvalidArgumentsException: raised when an argument was given using an incorrect type or name
+            ThresholdException: raised when the ConstantThreshold could not be created using the given argument values
         """
+        self._validate_inputs(lower, upper)
+
         self.lower = lower
         self.upper = upper
 
     def thresholds(self, data: np.ndarray, **kwargs) -> Tuple[Optional[float], Optional[float]]:
         return self.lower, self.upper
+
+    @staticmethod
+    def _validate_inputs(lower: Optional[Union[float, int]] = None, upper: Optional[Union[float, int]] = None):
+        if lower is not None and not isinstance(lower, (float, int)) or isinstance(lower, bool):
+            raise InvalidArgumentsException(
+                f"expected type of 'lower' to be 'float', 'int' or None " f"but got '{type(lower).__name__}'"
+            )
+
+        if upper is not None and not isinstance(upper, (float, int)) or isinstance(upper, bool):
+            raise InvalidArgumentsException(
+                f"expected type of 'upper' to be 'float', 'int' or None " f"but got '{type(upper).__name__}'"
+            )
+
+        # explicit None check is required due to special interpretation of the value 0.0 as False
+        if lower is not None and upper is not None and lower >= upper:
+            raise ThresholdException(f"lower threshold {lower} must be less than upper threshold {upper}")
 
 
 class StandardDeviationThreshold(Threshold):
@@ -94,11 +122,11 @@ class StandardDeviationThreshold(Threshold):
 
     def __init__(
         self,
-        std_lower_multiplier: float = 3,
-        std_upper_multiplier: float = 3,
-        agg_func: Callable[[np.ndarray], float] = np.mean,
+        std_lower_multiplier: Optional[Union[float, int]] = 3,
+        std_upper_multiplier: Optional[Union[float, int]] = 3,
+        agg_func: Callable[[np.ndarray], Any] = np.mean,
     ):
-        """Creates a new StandardDeviationThresholder instance.
+        """Creates a new StandardDeviationThreshold instance.
 
         Args:
             std_lower_multiplier: float, default=3
@@ -109,11 +137,14 @@ class StandardDeviationThreshold(Threshold):
                 The number the standard deviation of the input array will be multiplied with to form the upper offset.
                 This value will be added to the aggregate of the input array.
                 Defaults to 3.
-            agg_func: Callable[[np.ndarray], float], default=np.mean
+            agg_func: Callable[[np.ndarray], Any], default=np.mean
                 A function that will be applied to the input array to aggregate it into a single value.
                 Adding the upper offset to this value will yield the upper threshold, subtracting the lower offset
                 will yield the lower threshold.
         """
+
+        self._validate_inputs(std_lower_multiplier, std_upper_multiplier)
+
         self.std_lower_multiplier = std_lower_multiplier
         self.std_upper_multiplier = std_upper_multiplier
         self.agg_func = agg_func
@@ -122,10 +153,42 @@ class StandardDeviationThreshold(Threshold):
         aggregate = self.agg_func(data)
         std = np.std(data)
 
-        lower_offset = std * self.std_lower_multiplier
-        upper_offset = std * self.std_upper_multiplier
+        lower_threshold = aggregate - std * self.std_lower_multiplier if self.std_lower_multiplier is not None else None
 
-        lower_threshold = aggregate - lower_offset
-        upper_threshold = aggregate + upper_offset
+        upper_threshold = aggregate + std * self.std_upper_multiplier if self.std_upper_multiplier is not None else None
 
         return lower_threshold, upper_threshold
+
+    @staticmethod
+    def _validate_inputs(
+        std_lower_multiplier: Optional[Union[float, int]] = 3, std_upper_multiplier: Optional[Union[float, int]] = 3
+    ):
+        if (
+            std_lower_multiplier is not None
+            and not isinstance(std_lower_multiplier, (float, int))
+            or isinstance(std_lower_multiplier, bool)
+        ):
+            raise InvalidArgumentsException(
+                f"expected type of 'std_lower_multiplier' to be 'float', 'int' or None "
+                f"but got '{type(std_lower_multiplier).__name__}'"
+            )
+
+        if std_lower_multiplier and std_lower_multiplier < 0:
+            raise ThresholdException(
+                f"'std_lower_multiplier' should be greater than 0 " f"but got value {std_lower_multiplier}"
+            )
+
+        if (
+            std_upper_multiplier is not None
+            and not isinstance(std_upper_multiplier, (float, int))
+            or isinstance(std_upper_multiplier, bool)
+        ):
+            raise InvalidArgumentsException(
+                f"expected type of 'std_upper_multiplier' to be 'float', 'int' or None "
+                f"but got '{type(std_upper_multiplier).__name__}'"
+            )
+
+        if std_upper_multiplier and std_upper_multiplier < 0:
+            raise ThresholdException(
+                f"'std_upper_multiplier' should be greater than 0 " f"but got value {std_upper_multiplier}"
+            )
