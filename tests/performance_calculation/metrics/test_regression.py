@@ -13,6 +13,7 @@ from nannyml._typing import ProblemType
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.regression import MAE, MAPE, MSE, MSLE, RMSE, RMSLE
+from nannyml.thresholds import StandardDeviationThreshold
 
 
 @pytest.fixture(scope='module')
@@ -82,9 +83,16 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         problem_type='regression',
     )
     sut = MetricFactory.create(
-        key, problem_type, y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba
+        key,
+        problem_type,
+        y_true=calc.y_true,
+        y_pred=calc.y_pred,
+        y_pred_proba=calc.y_pred_proba,
+        threshold=StandardDeviationThreshold(),
     )
-    assert sut == metric(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut == metric(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold()
+    )
 
 
 @pytest.mark.parametrize(

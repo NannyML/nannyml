@@ -23,6 +23,7 @@ from nannyml.performance_calculation.metrics.multiclass_classification import (
     MulticlassClassificationRecall,
     MulticlassClassificationSpecificity,
 )
+from nannyml.thresholds import StandardDeviationThreshold
 
 
 @pytest.fixture(scope='module')
@@ -97,9 +98,16 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         problem_type='classification_multiclass',
     )
     sut = MetricFactory.create(
-        key, problem_type, y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba
+        key,
+        problem_type,
+        y_true=calc.y_true,
+        y_pred=calc.y_pred,
+        y_pred_proba=calc.y_pred_proba,
+        threshold=StandardDeviationThreshold(),
     )
-    assert sut == metric(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut == metric(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold
+    )
 
 
 @pytest.mark.parametrize(

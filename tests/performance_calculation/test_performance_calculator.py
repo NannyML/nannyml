@@ -21,6 +21,7 @@ from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationAUROC,
     BinaryClassificationF1,
 )
+from nannyml.thresholds import StandardDeviationThreshold
 
 
 @pytest.fixture(scope='module')
@@ -84,8 +85,12 @@ def test_calculator_init_should_set_metrics(performance_calculator):  # noqa: D1
     )
     sut = calc.metrics
     assert len(sut) == 2
-    assert sut[0] == BinaryClassificationAUROC(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
-    assert sut[1] == BinaryClassificationF1(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut[0] == BinaryClassificationAUROC(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold()
+    )
+    assert sut[1] == BinaryClassificationF1(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold()
+    )
 
 
 @pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
