@@ -154,42 +154,44 @@ def test_cbpe_raises_invalid_arguments_exception_when_given_none_metrics_list():
         )
 
 
-def test_cbpe_raises_value_error_when_business_cost_matrix_wrong_shape():  # noqa: D103
+def test_cbpe_raises_value_error_when_business_value_matrix_wrong_shape():  # noqa: D103
     with pytest.raises(
-        ValueError, match=re.escape("Business cost matrix must have shape (2,2), but got matrix of shape (4,)")
+        ValueError, match=re.escape("business_value_matrix must have shape (2,2), but got matrix of shape (4,)")
     ):
         _ = CBPE(
             timestamp_column_name='timestamp',
             y_true='work_home_actual',
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
-            metrics=['business_cost'],
+            metrics=['business_value'],
             problem_type='classification_binary',
-            business_cost_matrix=[1, 2, 3, 4],
+            business_value_matrix=[1, 2, 3, 4],
         )
 
 
-def test_cbpe_raises_value_error_when_business_cost_matrix_wrong_type():  # noqa: D103
-    with pytest.raises(ValueError, match="Business cost matrix must be a numpy array or a list, but got <class 'str'>"):
+def test_cbpe_raises_value_error_when_business_value_matrix_wrong_type():  # noqa: D103
+    with pytest.raises(
+        ValueError, match="business_value_matrix must be a numpy array or a list, but got <class 'str'>"
+    ):
         _ = CBPE(
             timestamp_column_name='timestamp',
             y_true='work_home_actual',
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
-            metrics=['business_cost'],
+            metrics=['business_value'],
             problem_type='classification_binary',
-            business_cost_matrix='[1,2,3,4]',
+            business_value_matrix='[1,2,3,4]',
         )
 
 
-def test_cbpe_raises_value_error_when_business_cost_matrix_not_given():  # noqa: D103
-    with pytest.raises(ValueError, match="business_cost_matrix must be provided for 'business_cost' metric"):
+def test_cbpe_raises_value_error_when_business_value_matrix_not_given():  # noqa: D103
+    with pytest.raises(ValueError, match="business_value_matrix must be provided for 'business_value' metric"):
         _ = CBPE(
             timestamp_column_name='timestamp',
             y_true='work_home_actual',
             y_pred='y_pred',
             y_pred_proba='y_pred_proba',
-            metrics=['business_cost'],
+            metrics=['business_value'],
             problem_type='classification_binary',
         )
 

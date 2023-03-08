@@ -32,12 +32,7 @@ SUPPORTED_METRIC_VALUES = [
     'true_negative',
     'false_positive',
     'false_negative',
-    'true_positive_cost',
-    'true_negative_cost',
-    'false_positive_cost',
-    'false_negative_cost',
-    'total_cost',
-    'business_cost',
+    'business_value',
 ]
 
 

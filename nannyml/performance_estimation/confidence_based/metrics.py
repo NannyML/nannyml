@@ -55,12 +55,11 @@ class Metric(abc.ABC):
 
         self.upper_threshold: Optional[float] = None
         self.lower_threshold: Optional[float] = None
-        self.confidence_deviation: Optional[float] = None
 
         self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
 
-        self.confidence_upper_bound = 1
-        self.confidence_lower_bound = 0
+        self.confidence_upper_bound = 1.0
+        self.confidence_lower_bound = 0.0
 
         # A list of (display_name, column_name) tuples
         self.components: List[Tuple[str, str]] = components
@@ -102,9 +101,6 @@ class Metric(abc.ABC):
         )
         self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
 
-        # Calculate confidence bands
-        self.confidence_deviation = self._confidence_deviation(reference_chunks)
-
         # Delegate to subclass
         self._fit(reference_data)
 
@@ -127,9 +123,6 @@ class Metric(abc.ABC):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _sampling_error method"
         )
-
-    def _confidence_deviation(self, reference_chunks: List[Chunk]):
-        return np.std([self._estimate(chunk.data) for chunk in reference_chunks])
 
     def _alert_thresholds(
         self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
@@ -653,13 +646,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         self.true_negative_lower_threshold: float = 0
         self.true_negative_upper_threshold: float = 1
 
-        self.true_positive_confidence_deviation: float = 0
-        self.true_negative_confidence_deviation: float = 0
-        self.false_positive_confidence_deviation: float = 0
-        self.false_negative_confidence_deviation: float = 0
-
-        # self.components = ["true_positive", "true_negative", "false_positive", "false_negative"]
-
     def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
         """Fits a Metric on reference data.
         Parameters
@@ -686,12 +672,6 @@ class BinaryClassificationConfusionMatrix(Metric):
             self.false_negative_lower_threshold,
             self.false_negative_upper_threshold,
         ) = self._false_negative_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
-
-        # Calculate confidence bands
-        self.true_positive_confidence_deviation = self._true_positive_confidence_deviation(reference_chunks)
-        self.true_negative_confidence_deviation = self._true_negative_confidence_deviation(reference_chunks)
-        self.false_positive_confidence_deviation = self._false_positive_confidence_deviation(reference_chunks)
-        self.false_negative_confidence_deviation = self._false_negative_confidence_deviation(reference_chunks)
 
         # Delegate to confusion matrix subclass
         self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
@@ -732,9 +712,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         if self.normalize_confusion_matrix is None:
             true_positive_upper_threshold = true_positive_mean_realized_performance + deviation
         else:
-            true_positive_upper_threshold = np.maximum(upper_limit, true_positive_mean_realized_performance + deviation)
+            true_positive_upper_threshold = np.minimum(upper_limit, true_positive_mean_realized_performance + deviation)
 
-        true_positive_lower_threshold = np.minimum(lower_limit, true_positive_mean_realized_performance - deviation)
+        true_positive_lower_threshold = np.maximum(lower_limit, true_positive_mean_realized_performance - deviation)
 
         return true_positive_lower_threshold, true_positive_upper_threshold
 
@@ -750,9 +730,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         if self.normalize_confusion_matrix is None:
             true_negative_upper_threshold = true_negative_mean_realized_performance + deviation
         else:
-            true_negative_upper_threshold = np.maximum(upper_limit, true_negative_mean_realized_performance + deviation)
+            true_negative_upper_threshold = np.minimum(upper_limit, true_negative_mean_realized_performance + deviation)
 
-        true_negative_lower_threshold = np.minimum(lower_limit, true_negative_mean_realized_performance - deviation)
+        true_negative_lower_threshold = np.maximum(lower_limit, true_negative_mean_realized_performance - deviation)
 
         return true_negative_lower_threshold, true_negative_upper_threshold
 
@@ -768,11 +748,11 @@ class BinaryClassificationConfusionMatrix(Metric):
         if self.normalize_confusion_matrix is None:
             false_positive_upper_threshold = false_positive_mean_realized_performance + deviation
         else:
-            false_positive_upper_threshold = np.maximum(
+            false_positive_upper_threshold = np.minimum(
                 upper_limit, false_positive_mean_realized_performance + deviation
             )
 
-        false_positive_lower_threshold = np.minimum(lower_limit, false_positive_mean_realized_performance - deviation)
+        false_positive_lower_threshold = np.maximum(lower_limit, false_positive_mean_realized_performance - deviation)
 
         return false_positive_lower_threshold, false_positive_upper_threshold
 
@@ -788,11 +768,11 @@ class BinaryClassificationConfusionMatrix(Metric):
         if self.normalize_confusion_matrix is None:
             false_negative_upper_threshold = false_negative_mean_realized_performance + deviation
         else:
-            false_negative_upper_threshold = np.maximum(
+            false_negative_upper_threshold = np.minimum(
                 upper_limit, false_negative_mean_realized_performance + deviation
             )
 
-        false_negative_lower_threshold = np.minimum(lower_limit, false_negative_mean_realized_performance - deviation)
+        false_negative_lower_threshold = np.maximum(lower_limit, false_negative_mean_realized_performance - deviation)
 
         return false_negative_lower_threshold, false_negative_upper_threshold
 
@@ -871,18 +851,6 @@ class BinaryClassificationConfusionMatrix(Metric):
             return num_fn / (num_fn + num_tn)
         else:
             return num_fn / len(y_true)
-
-    def _true_positive_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_true_positive_estimate(chunk.data) for chunk in reference_chunks])
-
-    def _true_negative_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_true_negative_estimate(chunk.data) for chunk in reference_chunks])
-
-    def _false_positive_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_false_positive_estimate(chunk.data) for chunk in reference_chunks])
-
-    def _false_negative_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_false_negative_estimate(chunk.data) for chunk in reference_chunks])
 
     def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
         y_pred_proba = chunk_data[self.y_pred_proba]
@@ -1181,525 +1149,151 @@ class BinaryClassificationConfusionMatrix(Metric):
         return 0.0
 
 
-@MetricFactory.register('business_cost', ProblemType.CLASSIFICATION_BINARY)
-class BinaryClassificationBusinessCost(Metric):
+@MetricFactory.register('business_value', ProblemType.CLASSIFICATION_BINARY)
+class BinaryClassificationBusinessValue(Metric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
-        business_cost_matrix: Union[List, np.ndarray],
+        business_value_matrix: Union[List, np.ndarray],
+        normalize_business_value: Optional[str] = None,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+
+        if normalize_business_value not in [None, "per_prediction"]:
+            raise InvalidArgumentsException(
+                f"normalize_business_value must be None or 'per_prediction', but got {normalize_business_value}"
+            )
+
         super().__init__(
-            name='business_cost',
+            name='business_value',
             y_pred_proba=y_pred_proba,
             y_pred=y_pred,
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
-            components=[
-                ('True Positive Cost', 'true_positive_cost'),
-                ('True Negative Cost', 'true_negative_cost'),
-                ('False Positive Cost', 'false_positive_cost'),
-                ('False Negative Cost', 'false_negative_cost'),
-                ('Total Cost', 'total_cost'),
-            ],
+            components=[('Business Value', 'business_value')],
         )
 
-        if business_cost_matrix is None:
-            raise ValueError("business_cost_matrix must be provided for 'business_cost' metric")
+        if business_value_matrix is None:
+            raise ValueError("business_value_matrix must be provided for 'business_value' metric")
 
-        if not (isinstance(business_cost_matrix, np.ndarray) or isinstance(business_cost_matrix, list)):
+        if not (isinstance(business_value_matrix, np.ndarray) or isinstance(business_value_matrix, list)):
             raise ValueError(
-                f"Business cost matrix must be a numpy array or a list, but got {type(business_cost_matrix)}"
+                f"business_value_matrix must be a numpy array or a list, but got {type(business_value_matrix)}"
             )
 
-        if isinstance(business_cost_matrix, list):
-            business_cost_matrix = np.array(business_cost_matrix)
+        if isinstance(business_value_matrix, list):
+            business_value_matrix = np.array(business_value_matrix)
 
-        if business_cost_matrix.shape != (2, 2):
+        if business_value_matrix.shape != (2, 2):
             raise ValueError(
-                f"Business cost matrix must have shape (2,2), but got matrix of shape {business_cost_matrix.shape}"
+                f"business_value_matrix must have shape (2,2), but got matrix of shape {business_value_matrix.shape}"
             )
 
-        self.business_cost_matrix = business_cost_matrix
+        self.business_value_matrix = business_value_matrix
+        self.normalize_business_value: Optional[str] = normalize_business_value
 
-        self.true_positive_lower_threshold: float = 0
-        self.true_positive_upper_threshold: float = 1
-        self.true_negative_lower_threshold: float = 0
-        self.true_negative_upper_threshold: float = 1
+        self.lower_threshold: float = 0
+        self.upper_threshold: float = 1
 
-        self.true_positive_confidence_deviation: float = 0
-        self.true_negative_confidence_deviation: float = 0
-        self.false_positive_confidence_deviation: float = 0
-        self.false_negative_confidence_deviation: float = 0
+        # we dont have an upper or lower limit for the total value
+        # as the range is determined by the business value matrix
+        # and is thus not bounded
+        self.confidence_upper_bound: float = np.inf
+        self.confidence_lower_bound: float = -np.inf
 
-        self.true_positive_cost_confidence_deviation: float = 0
-        self.true_negative_cost_confidence_deviation: float = 0
-        self.false_positive_cost_confidence_deviation: float = 0
-        self.false_negative_cost_confidence_deviation: float = 0
-        self.total_cost_confidence_deviation: float = 0
+    def _alert_thresholds(  # override the superclass _alert_thresholds method
+        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
+    ) -> Tuple[float, float]:
+        realized_chunk_performance = [self._realized_performance(chunk.data) for chunk in reference_chunks]
+        deviation = np.std(realized_chunk_performance) * std_num
+        mean_realised_performance = np.mean(realized_chunk_performance)
 
-    def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
-        """Fits a Metric on reference data.
-        Parameters
-        ----------
-        reference_data: pd.DataFrame
-            The reference data used for fitting. Must have target data available.
-        """
-        # Calculate alert thresholds
-        reference_chunks = self.chunker.split(
-            reference_data,
-        )
+        # we dont have an upper or lower limit for the total value
+        # because negative values are possible and the range is not bounded
+        lower_threshold = mean_realised_performance - deviation
+        upper_threshold = mean_realised_performance + deviation
 
-        (
-            self.true_positive_cost_lower_threshold,
-            self.true_positive_cost_upper_threshold,
-        ) = self._true_positive_cost_alert_thresholds(reference_chunks, std_num=3)
-        (
-            self.true_negative_cost_lower_threshold,
-            self.true_negative_cost_upper_threshold,
-        ) = self._true_negative_cost_alert_thresholds(reference_chunks, std_num=3)
-        (
-            self.false_positive_cost_lower_threshold,
-            self.false_positive_cost_upper_threshold,
-        ) = self._false_positive_cost_alert_thresholds(reference_chunks, std_num=3)
-        (
-            self.false_negative_cost_lower_threshold,
-            self.false_negative_cost_upper_threshold,
-        ) = self._false_negative_cost_alert_thresholds(reference_chunks, std_num=3)
-        (self.total_cost_lower_threshold, self.total_cost_upper_threshold) = self._total_cost_alert_thresholds(
-            reference_chunks, std_num=3
-        )
-
-        # Calculate confidence bands
-        self.true_positive_cost_confidence_deviation = self._true_positive_cost_confidence_deviation(reference_chunks)
-        self.true_negative_cost_confidence_deviation = self._true_negative_cost_confidence_deviation(reference_chunks)
-        self.false_positive_cost_confidence_deviation = self._false_positive_cost_confidence_deviation(reference_chunks)
-        self.false_negative_cost_confidence_deviation = self._false_negative_cost_confidence_deviation(reference_chunks)
-        self.total_cost_confidence_deviation = self._total_cost_confidence_deviation(reference_chunks)
-
-        # Delegate to confusion matrix subclass
-        self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
-
-        return
+        return lower_threshold, upper_threshold
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._true_positive_cost_sampling_error_components = bse.true_positive_cost_sampling_error_components(
+
+        self._sampling_error_components = bse.business_value_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
-            business_cost_matrix=self.business_cost_matrix,
+            business_value_matrix=self.business_value_matrix,
+            normalize_business_value=self.normalize_business_value,
         )
-        self._true_negative_cost_sampling_error_components = bse.true_negative_cost_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            business_cost_matrix=self.business_cost_matrix,
-        )
-        self._false_positive_cost_sampling_error_components = bse.false_positive_cost_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            business_cost_matrix=self.business_cost_matrix,
-        )
-        self._false_negative_cost_sampling_error_components = bse.false_negative_cost_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            business_cost_matrix=self.business_cost_matrix,
-        )
-        self._total_cost_sampling_error_components = bse.total_cost_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            business_cost_matrix=self.business_cost_matrix,
-        )
-
-    def _true_positive_cost_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3
-    ) -> Tuple[float, float]:
-        true_positive_cost_realized_chunk_performance = [
-            self._true_positive_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(true_positive_cost_realized_chunk_performance) * std_num
-        true_positive_cost_mean_realized_performance = np.mean(true_positive_cost_realized_chunk_performance)
-
-        true_positive_cost_upper_threshold = true_positive_cost_mean_realized_performance + deviation
-        true_positive_cost_lower_threshold = true_positive_cost_mean_realized_performance - deviation
-
-        return true_positive_cost_lower_threshold, true_positive_cost_upper_threshold
-
-    def _true_negative_cost_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3
-    ) -> Tuple[float, float]:
-        true_negative_cost_realized_chunk_performance = [
-            self._true_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(true_negative_cost_realized_chunk_performance) * std_num
-        true_negative_cost_mean_realized_performance = np.mean(true_negative_cost_realized_chunk_performance)
-
-        true_negative_cost_upper_threshold = true_negative_cost_mean_realized_performance + deviation
-        true_negative_cost_lower_threshold = true_negative_cost_mean_realized_performance - deviation
-
-        return true_negative_cost_lower_threshold, true_negative_cost_upper_threshold
-
-    def _false_positive_cost_alert_thresholds(
-        self,
-        reference_chunks: List[Chunk],
-        std_num: int = 3,
-    ) -> Tuple[float, float]:
-        false_positive_cost_realized_chunk_performance = [
-            self._false_positive_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(false_positive_cost_realized_chunk_performance) * std_num
-        false_positive_cost_mean_realized_performance = np.mean(false_positive_cost_realized_chunk_performance)
-
-        false_positive_cost_upper_threshold = false_positive_cost_mean_realized_performance + deviation
-        false_positive_cost_lower_threshold = false_positive_cost_mean_realized_performance - deviation
-
-        return false_positive_cost_lower_threshold, false_positive_cost_upper_threshold
-
-    def _false_negative_cost_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3
-    ) -> Tuple[float, float]:
-        false_negative_cost_realized_chunk_performance = [
-            self._false_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(false_negative_cost_realized_chunk_performance) * std_num
-        false_negative_cost_mean_realized_performance = np.mean(false_negative_cost_realized_chunk_performance)
-
-        false_negative_cost_upper_threshold = false_negative_cost_mean_realized_performance + deviation
-        false_negative_cost_lower_threshold = false_negative_cost_mean_realized_performance - deviation
-
-        return false_negative_cost_lower_threshold, false_negative_cost_upper_threshold
-
-    def _total_cost_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3) -> Tuple[float, float]:
-        total_cost_realized_chunk_performance = [
-            self._total_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(total_cost_realized_chunk_performance) * std_num
-        total_cost_mean_realized_performance = np.mean(total_cost_realized_chunk_performance)
-
-        total_cost_upper_threshold = total_cost_mean_realized_performance + deviation
-        total_cost_lower_threshold = total_cost_mean_realized_performance - deviation
-
-        return total_cost_lower_threshold, total_cost_upper_threshold
-
-    def _true_positive_cost_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            return np.NaN
-
-        tp_cost = self.business_cost_matrix[1, 1]
-        # tp_cost = -10
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-
-        return num_tp * tp_cost
-
-    def _true_negative_cost_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            return np.NaN
-
-        tn_cost = self.business_cost_matrix[0, 0]
-
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-
-        return num_tn * tn_cost
-
-    def _false_positive_cost_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            return np.NaN
-
-        fp_cost = self.business_cost_matrix[0, 1]
-
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-
-        return num_fp * fp_cost
-
-    def _false_negative_cost_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            return np.NaN
-
-        fn_cost = self.business_cost_matrix[1, 0]
-
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        return num_fn * fn_cost
-
-    def _total_cost_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            return np.NaN
-
-        tp_cost = self.business_cost_matrix[1, 1]
-        tn_cost = self.business_cost_matrix[0, 0]
-        fp_cost = self.business_cost_matrix[0, 1]
-        fn_cost = self.business_cost_matrix[1, 0]
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        return num_tp * tp_cost + num_tn * tn_cost + num_fp * fp_cost + num_fn * fn_cost
-
-    def _true_positive_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_true_positive_cost_estimate(chunk.data) for chunk in reference_chunks])
-
-    def _true_negative_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_true_negative_cost_estimate(chunk.data) for chunk in reference_chunks])
-
-    def _false_positive_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_false_positive_cost_estimate(chunk.data) for chunk in reference_chunks])
-
-    def _false_negative_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_false_negative_cost_estimate(chunk.data) for chunk in reference_chunks])
-
-    def _total_cost_confidence_deviation(self, reference_chunks: List[Chunk]) -> float:
-        return np.std([self.get_total_cost_estimate(chunk.data) for chunk in reference_chunks])
-
-    def get_true_positive_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-
-        tp_cost = self.business_cost_matrix[1, 1]
-
-        estimate = est_tp_ratio * tp_cost * len(y_pred)
-
-        return estimate
-
-    def get_true_negative_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
-
-        tn_cost = self.business_cost_matrix[0, 0]
-
-        estimate = est_tn_ratio * tn_cost * len(y_pred)
-
-        return estimate
-
-    def get_false_positive_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-
-        fp_cost = self.business_cost_matrix[0, 1]
-
-        estimate = est_fp_ratio * fp_cost * len(y_pred)
-
-        return estimate
-
-    def get_false_negative_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
-
-        fn_cost = self.business_cost_matrix[1, 0]
-
-        estimate = est_fn_ratio * fn_cost * len(y_pred)
-
-        return estimate
-
-    def get_total_cost_estimate(self, chunk_data: pd.DataFrame) -> float:
-        return (
-            self.get_true_positive_cost_estimate(chunk_data)
-            + self.get_true_negative_cost_estimate(chunk_data)
-            + self.get_false_positive_cost_estimate(chunk_data)
-            + self.get_false_negative_cost_estimate(chunk_data)
-        )
-
-    def get_true_pos_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        true_pos_cost_info = {}
-
-        estimated_true_positive_cost = self.get_true_positive_cost_estimate(chunk_data)
-
-        sampling_error_true_positive_cost = bse.true_positive_cost_sampling_error(
-            self._true_positive_cost_sampling_error_components, chunk_data
-        )
-
-        true_pos_cost_info['estimated_true_positive_cost'] = estimated_true_positive_cost
-        true_pos_cost_info['sampling_error_true_positive_cost'] = sampling_error_true_positive_cost
-        true_pos_cost_info['realized_true_positive_cost'] = self._true_positive_cost_realized_performance(chunk_data)
-
-        true_pos_cost_info['upper_confidence_boundary_true_positive_cost'] = (
-            estimated_true_positive_cost + SAMPLING_ERROR_RANGE * sampling_error_true_positive_cost
-        )
-        true_pos_cost_info['lower_confidence_boundary_true_positive_cost'] = (
-            estimated_true_positive_cost - SAMPLING_ERROR_RANGE * sampling_error_true_positive_cost
-        )
-
-        true_pos_cost_info['upper_threshold_true_positive_cost'] = self.true_positive_cost_upper_threshold
-        true_pos_cost_info['lower_threshold_true_positive_cost'] = self.true_positive_cost_lower_threshold
-
-        true_pos_cost_info['alert_true_positive_cost'] = (
-            estimated_true_positive_cost > self.true_positive_cost_upper_threshold
-            or estimated_true_positive_cost < self.true_positive_cost_lower_threshold
-        )
-
-        return true_pos_cost_info
-
-    def get_true_neg_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        true_neg_cost_info = {}
-
-        estimated_true_negative_cost = self.get_true_negative_cost_estimate(chunk_data)
-
-        sampling_error_true_negative_cost = bse.true_negative_cost_sampling_error(
-            self._true_negative_cost_sampling_error_components, chunk_data
-        )
-
-        true_neg_cost_info['estimated_true_negative_cost'] = estimated_true_negative_cost
-        true_neg_cost_info['sampling_error_true_negative_cost'] = sampling_error_true_negative_cost
-        true_neg_cost_info['realized_true_negative_cost'] = self._true_negative_cost_realized_performance(chunk_data)
-
-        true_neg_cost_info['upper_confidence_boundary_true_negative_cost'] = (
-            estimated_true_negative_cost + SAMPLING_ERROR_RANGE * sampling_error_true_negative_cost
-        )
-        true_neg_cost_info['lower_confidence_boundary_true_negative_cost'] = (
-            estimated_true_negative_cost - SAMPLING_ERROR_RANGE * sampling_error_true_negative_cost
-        )
-
-        true_neg_cost_info['upper_threshold_true_negative_cost'] = self.true_negative_cost_upper_threshold
-        true_neg_cost_info['lower_threshold_true_negative_cost'] = self.true_negative_cost_lower_threshold
-
-        true_neg_cost_info['alert_true_negative_cost'] = (
-            estimated_true_negative_cost > self.true_negative_cost_upper_threshold
-            or estimated_true_negative_cost < self.true_negative_cost_lower_threshold
-        )
-
-        return true_neg_cost_info
-
-    def get_false_pos_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        false_pos_cost_info = {}
-
-        estimated_false_positive_cost = self.get_false_positive_cost_estimate(chunk_data)
-
-        sampling_error_false_positive_cost = bse.false_positive_cost_sampling_error(
-            self._false_positive_cost_sampling_error_components, chunk_data
-        )
-
-        false_pos_cost_info['estimated_false_positive_cost'] = estimated_false_positive_cost
-        false_pos_cost_info['sampling_error_false_positive_cost'] = sampling_error_false_positive_cost
-        false_pos_cost_info['realized_false_positive_cost'] = self._false_positive_cost_realized_performance(chunk_data)
-
-        false_pos_cost_info['upper_confidence_boundary_false_positive_cost'] = (
-            estimated_false_positive_cost + SAMPLING_ERROR_RANGE * sampling_error_false_positive_cost
-        )
-        false_pos_cost_info['lower_confidence_boundary_false_positive_cost'] = (
-            estimated_false_positive_cost - SAMPLING_ERROR_RANGE * sampling_error_false_positive_cost
-        )
-
-        false_pos_cost_info['upper_threshold_false_positive_cost'] = self.false_positive_cost_upper_threshold
-        false_pos_cost_info['lower_threshold_false_positive_cost'] = self.false_positive_cost_lower_threshold
-
-        false_pos_cost_info['alert_false_positive_cost'] = (
-            estimated_false_positive_cost > self.false_positive_cost_upper_threshold
-            or estimated_false_positive_cost < self.false_positive_cost_lower_threshold
-        )
-
-        return false_pos_cost_info
-
-    def get_false_neg_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        false_neg_cost_info = {}
-
-        estimated_false_negative_cost = self.get_false_negative_cost_estimate(chunk_data)
-
-        sampling_error_false_negative_cost = bse.false_negative_cost_sampling_error(
-            self._false_negative_cost_sampling_error_components, chunk_data
-        )
-
-        false_neg_cost_info['estimated_false_negative_cost'] = estimated_false_negative_cost
-        false_neg_cost_info['sampling_error_false_negative_cost'] = sampling_error_false_negative_cost
-        false_neg_cost_info['realized_false_negative_cost'] = self._false_negative_cost_realized_performance(chunk_data)
-
-        false_neg_cost_info['upper_confidence_boundary_false_negative_cost'] = (
-            estimated_false_negative_cost + SAMPLING_ERROR_RANGE * sampling_error_false_negative_cost
-        )
-        false_neg_cost_info['lower_confidence_boundary_false_negative_cost'] = (
-            estimated_false_negative_cost - SAMPLING_ERROR_RANGE * sampling_error_false_negative_cost
-        )
-
-        false_neg_cost_info['upper_threshold_false_negative_cost'] = self.false_negative_cost_upper_threshold
-        false_neg_cost_info['lower_threshold_false_negative_cost'] = self.false_negative_cost_lower_threshold
-
-        false_neg_cost_info['alert_false_negative_cost'] = (
-            estimated_false_negative_cost > self.false_negative_cost_upper_threshold
-            or estimated_false_negative_cost < self.false_negative_cost_lower_threshold
-        )
-
-        return false_neg_cost_info
-
-    def get_total_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        total_cost_info = {}
-
-        estimated_total_cost = self.get_total_cost_estimate(chunk_data)
-
-        sampling_error_total_cost = bse.total_cost_sampling_error(
-            self._total_cost_sampling_error_components, chunk_data
-        )
-
-        total_cost_info['estimated_total_cost'] = estimated_total_cost
-        total_cost_info['sampling_error_total_cost'] = sampling_error_total_cost
-        total_cost_info['realized_total_cost'] = self._total_cost_realized_performance(chunk_data)
-
-        total_cost_info['upper_confidence_boundary_total_cost'] = (
-            estimated_total_cost + SAMPLING_ERROR_RANGE * sampling_error_total_cost
-        )
-        total_cost_info['lower_confidence_boundary_total_cost'] = (
-            estimated_total_cost - SAMPLING_ERROR_RANGE * sampling_error_total_cost
-        )
-
-        total_cost_info['upper_threshold_total_cost'] = self.total_cost_upper_threshold
-        total_cost_info['lower_threshold_total_cost'] = self.total_cost_lower_threshold
-
-        total_cost_info['alert_total_cost'] = (
-            estimated_total_cost > self.total_cost_upper_threshold
-            or estimated_total_cost < self.total_cost_lower_threshold
-        )
-
-        return total_cost_info
-
-    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
-        chunk_record = {}
-
-        true_pos_cost_info = self.get_true_pos_cost_info(chunk_data)
-        chunk_record.update(true_pos_cost_info)
-
-        true_neg_cost_info = self.get_true_neg_cost_info(chunk_data)
-        chunk_record.update(true_neg_cost_info)
-
-        false_pos_cost_info = self.get_false_pos_cost_info(chunk_data)
-        chunk_record.update(false_pos_cost_info)
-
-        false_neg_cost_info = self.get_false_neg_cost_info(chunk_data)
-        chunk_record.update(false_neg_cost_info)
-
-        total_cost_info = self.get_total_cost_info(chunk_data)
-        chunk_record.update(total_cost_info)
-
-        return chunk_record
-
-    def _estimate(self, data: pd.DataFrame):
-        pass
-
-    def _sampling_error(self, data: pd.DataFrame) -> float:
-        return 0.0
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        return 0.0
+        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+
+        if y_true is None:
+            return np.NaN
+
+        tp_value = self.business_value_matrix[1, 1]
+        tn_value = self.business_value_matrix[0, 0]
+        fp_value = self.business_value_matrix[0, 1]
+        fn_value = self.business_value_matrix[1, 0]
+
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+
+        business_value = num_tp * tp_value + num_tn * tn_value + num_fp * fp_value + num_fn * fn_value
+
+        if self.normalize_business_value is None:
+            return business_value
+        else:  # normalize must be 'per_prediction'
+            return business_value / len(y_true)
+
+    def _estimate(self, chunk_data: pd.DataFrame) -> float:
+        y_pred_proba = chunk_data[self.y_pred_proba]
+        y_pred = chunk_data[self.y_pred]
+
+        business_value_normalization = self.normalize_business_value
+        business_value_matrix = self.business_value_matrix
+
+        return estimate_business_value(y_pred, y_pred_proba, business_value_normalization, business_value_matrix)
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+
+        return bse.business_value_sampling_error(
+            self._sampling_error_components,
+            data,
+        )
+
+
+def estimate_business_value(
+    y_pred: np.ndarray,
+    y_pred_proba: np.ndarray,
+    normalize_business_value: Optional[str],
+    business_value_matrix: np.ndarray,
+):
+
+    est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
+    est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
+    est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
+    est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+
+    tp_value = business_value_matrix[1, 1]
+    tn_value = business_value_matrix[0, 0]
+    fp_value = business_value_matrix[0, 1]
+    fn_value = business_value_matrix[1, 0]
+
+    business_value = (
+        est_tn_ratio * tn_value + est_tp_ratio * tp_value + est_fp_ratio * fp_value + est_fn_ratio * fn_value
+    )
+
+    if normalize_business_value is None:
+        return business_value * len(y_pred)
+    else:  # normalize must be 'per_prediciton'
+        return business_value
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):

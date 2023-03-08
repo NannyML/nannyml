@@ -37,9 +37,9 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
         y_true='work_home_actual',
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'accuracy', 'confusion_matrix', 'business_cost'],
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'accuracy', 'confusion_matrix', 'business_value'],
         problem_type='classification_binary',
-        business_cost_matrix=np.array([[0, 1], [1, 0]]),
+        business_value_matrix=np.array([[0, 1], [1, 0]]),
     )
     estimator.fit(reference)
     return estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
@@ -54,10 +54,7 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
         ('recall', ['recall']),
         ('accuracy', ['accuracy']),
         ('confusion_matrix', ['true_positive', 'false_positive', 'true_negative', 'false_negative']),
-        (
-            'business_cost',
-            ['true_positive_cost', 'false_positive_cost', 'true_negative_cost', 'false_negative_cost', 'total_cost'],
-        ),
+        ('business_value', ['business_value']),
     ],
 )
 def test_filter_on_metric_name_returns_only_matching_components(estimates: Result, metric, component_column_names):
@@ -79,8 +76,7 @@ def test_filter_on_metric_name_returns_only_matching_components(estimates: Resul
         ('recall', ['recall']),
         ('accuracy', ['accuracy']),
         ('true_positive', ['true_positive']),
-        ('false_positive_cost', ['false_positive_cost']),
-        ('total_cost', ['total_cost']),
+        ('business_value', ['business_value']),
     ],
 )
 def test_filter_on_metric_component_returns_only_matching_components(estimates: Result, metric, component_column_names):
@@ -96,10 +92,7 @@ def test_filter_on_metric_component_returns_only_matching_components(estimates: 
         ('true_positive', ['true_positive']),
         (['true_positive', 'false_positive'], ['true_positive', 'false_positive']),
         (['true_positive', 'false_positive', 'true_negative'], ['true_positive', 'false_positive', 'true_negative']),
-        (
-            ['true_positive_cost', 'false_positive_cost', 'total_cost'],
-            ['true_positive_cost', 'false_positive_cost', 'total_cost'],
-        ),
+        (['business_value', 'true_positive'], ['business_value', 'true_positive']),
     ],
 )
 def test_filter_on_multiple_metric_component_returns_matching_components(
@@ -112,22 +105,14 @@ def test_filter_on_multiple_metric_component_returns_matching_components(
 
 
 def test_filter_on_both_metric_and_component_names_returns_all_matching_components(estimates):
-    sut = (
-        estimates.filter(metrics=['confusion_matrix', 'true_positive', 'business_cost', 'false_positive_cost'])
-        .to_df()
-        .columns
-    )
+    sut = estimates.filter(metrics=['confusion_matrix', 'true_positive', 'business_value']).to_df().columns
 
     assert 'false_positive' in sut
     assert 'true_negative' in sut
     assert 'false_negative' in sut
     assert 'true_positive' in sut
 
-    assert 'true_positive_cost' in sut
-    assert 'false_positive_cost' in sut
-    assert 'true_negative_cost' in sut
-    assert 'false_negative_cost' in sut
-    assert 'total_cost' in sut
+    assert 'business_value' in sut
 
 
 def test_filter_on_non_existing_metric_raises_invalid_arguments_exception(estimates):
