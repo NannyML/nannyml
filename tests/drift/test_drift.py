@@ -15,9 +15,10 @@ from nannyml._typing import Key, Result, Self
 from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
-from nannyml.drift.univariate import UnivariateDriftCalculator
+from nannyml.drift.univariate.calculator import DEFAULT_THRESHOLDS, UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
+from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
 
 @pytest.fixture(scope="module")
@@ -285,6 +286,81 @@ def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_colum
     assert sorted(calc.categorical_column_names) == expected_categorical
 
     assert "ignoring 'treat_as_categorical' value 'foo' because it was not in listed column names" in caplog.messages
+
+
+def test_univariate_drift_calculator_without_custom_thresholds():
+    sut = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        treat_as_categorical='foo',
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+    )
+
+    assert sut.thresholds == DEFAULT_THRESHOLDS
+
+
+@pytest.mark.parametrize(
+    'custom_thresholds',
+    [
+        {'kolmogorov_smirnov': ConstantThreshold(lower=1, upper=2)},
+        {'kolmogorov_smirnov': ConstantThreshold(lower=1, upper=2), 'wasserstein': ConstantThreshold(lower=1, upper=2)},
+        {
+            'kolmogorov_smirnov': ConstantThreshold(lower=1, upper=2),
+            'wasserstein': ConstantThreshold(lower=1, upper=2),
+            'hellinger': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'kolmogorov_smirnov': ConstantThreshold(lower=1, upper=2),
+            'wasserstein': ConstantThreshold(lower=1, upper=2),
+            'hellinger': ConstantThreshold(lower=1, upper=2),
+            'jensen_shannon': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'kolmogorov_smirnov': ConstantThreshold(lower=1, upper=2),
+            'wasserstein': ConstantThreshold(lower=1, upper=2),
+            'hellinger': ConstantThreshold(lower=1, upper=2),
+            'jensen_shannon': ConstantThreshold(lower=1, upper=2),
+            'l_infinity': ConstantThreshold(lower=1, upper=2),
+        },
+    ],
+)
+def test_univariate_drift_calculator_with_custom_thresholds(custom_thresholds):
+    calc = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        treat_as_categorical='foo',
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+        thresholds=custom_thresholds,
+    )
+    sut = calc.thresholds
+
+    expected_thresholds = DEFAULT_THRESHOLDS
+    expected_thresholds.update(**custom_thresholds)
+    assert sut == expected_thresholds
+
+
+def test_univariate_drift_calculator_ignores_chi2_custom_threshold(caplog, recwarn):
+    caplog.set_level(logging.WARN)
+
+    _ = UnivariateDriftCalculator(
+        column_names=['f1', 'f2', 'f3', 'f4'],
+        treat_as_categorical='foo',
+        timestamp_column_name='timestamp',
+        continuous_methods=['jensen_shannon'],
+        categorical_methods=['jensen_shannon'],
+        thresholds={'chi2': StandardDeviationThreshold()},
+    )
+    # sut = calc.thresholds
+    # assert 'chi2' not in sut
+
+    assert "ignoring custom threshold for 'chi2' as it does not support custom thresholds for now." in caplog.messages
+    assert len(recwarn) == 1
+    assert (
+        str(recwarn[0].message) == "ignoring custom threshold for 'chi2' as it does not "
+        "support custom thresholds for now."
+    )
 
 
 @pytest.mark.parametrize(

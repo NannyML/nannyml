@@ -16,13 +16,14 @@ import plotly.graph_objects as go
 
 from nannyml._typing import Key
 from nannyml.base import Abstract2DResult
-from nannyml.chunk import Chunker
+from nannyml.chunk import Chunker, DefaultChunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.distributions import plot_distributions
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.plots.components import Hover
+from nannyml.thresholds import StandardDeviationThreshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -42,8 +43,18 @@ class Result(Abstract2DResult, ResultCompareMixin):
         analysis_data: pd.DataFrame = None,
         reference_data: pd.DataFrame = None,
     ):
-        categorical_methods = [MethodFactory.create(m, FeatureType.CATEGORICAL) for m in categorical_method_names]
-        continuous_methods = [MethodFactory.create(m, FeatureType.CONTINUOUS) for m in continuous_method_names]
+        categorical_methods = [
+            MethodFactory.create(
+                m, FeatureType.CATEGORICAL, chunker=DefaultChunker(), threshold=StandardDeviationThreshold()
+            )
+            for m in categorical_method_names
+        ]
+        continuous_methods = [
+            MethodFactory.create(
+                m, FeatureType.CONTINUOUS, chunker=DefaultChunker(), threshold=StandardDeviationThreshold()
+            )
+            for m in continuous_method_names
+        ]
         methods = continuous_methods + categorical_methods
         # Passing on methods as metrics to base class, as they're essentially a more specialised form of metrics
         # satisfying the same contract
