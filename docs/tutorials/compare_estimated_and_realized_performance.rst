@@ -71,3 +71,24 @@ Finally, estimation results for ``reference`` and ``analysis`` are combined with
 
 
 .. image:: /_static/tutorials/estimated_and_realized_performance/tutorial-binary-car-loan-roc-auc-estimated-and-actual.svg
+
+Note that we could easily do this with the built-in performance calculator as well.
+We'll first calculate the realized performance:
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 12
+
+We can then visualize both estimated and realized performance in a single comparison plot.
+
+
+.. note::
+    Note that the comparison plot has multiple Y-axis, which makes this plot somewhat different from
+    the manually generated one just before. The estimated performance is indicated on the left Y-axis, the realized
+    performance on the right Y-axis.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
+    :cells: 13
+
+.. image:: /_static/tutorials/estimated_and_realized_performance/comparison_plot.svg
