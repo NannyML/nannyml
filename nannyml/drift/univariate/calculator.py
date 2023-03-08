@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Calculates drift for individual features using the `Kolmogorov-Smirnov` and `chi2-contingency` statistical tests."""
+"""Calculates drift for individual features using the drift method selected."""
 
 from __future__ import annotations
 

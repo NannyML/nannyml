@@ -47,6 +47,7 @@ from .datasets import (
     load_synthetic_multiclass_classification_dataset,
 )
 from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
+from .data_quality import MissingValueCalculator
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator

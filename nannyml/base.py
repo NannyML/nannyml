@@ -163,6 +163,47 @@ class Abstract1DResult(AbstractResult, ABC):
         return res
 
 
+class Abstract1DColumnsResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, column_names: List[str] = [], *args, **kwargs):
+        super().__init__(results_data)
+        self.column_names = column_names
+
+    @property
+    def chunk_keys(self) -> pd.Series:
+        return self.data[('chunk', 'key')]
+
+    @property
+    def chunk_start_dates(self) -> pd.Series:
+        return self.data[('chunk', 'start_date')]
+
+    @property
+    def chunk_end_dates(self) -> pd.Series:
+        return self.data[('chunk', 'end_date')]
+
+    @property
+    def chunk_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk_index')]
+
+    @property
+    def chunk_periods(self) -> pd.Series:
+        return self.data[('chunk', 'period')]
+
+    def _filter(self, period: str, column_names: Optional[List[str]] = None, *args, **kwargs) -> Self:
+        if column_names is None:
+            column_names = self.column_names
+
+        # is column names loc argument correct? likely
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names,)]], axis=1)
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        res.column_names = [c for c in self.column_names if c in column_names]
+        return res
+
 class Abstract2DResult(AbstractResult, ABC):
     def __init__(
         self, results_data: pd.DataFrame, metrics: Sequence[Metric] = (), column_names: List[str] = [], *args, **kwargs

@@ -42,6 +42,10 @@ class UsageEvent(str, Enum):
 
     # Calculators
 
+    DQ_CALC_MISSING_FIT = "Data Quality Calculator Missing Value fit"
+    DQ_CALC_MISSING_RUN = "Data Quality Calculator Missing Value run"
+    DQ_CALC_MISSING_PLOT = "Data Quality Calculator Missing Value plot"
+
     UNIVAR_DRIFT_CALC_FIT = "Univariate drift calculator fit"
     UNIVAR_DRIFT_CALC_RUN = "Univariate drift calculator run"
     UNIVAR_DRIFT_PLOT = "Univariate drift results plot"
