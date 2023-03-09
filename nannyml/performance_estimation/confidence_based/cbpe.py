@@ -20,26 +20,23 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
+
+DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
+    'roc_auc': StandardDeviationThreshold(),
+    'f1': StandardDeviationThreshold(),
+    'precision': StandardDeviationThreshold(),
+    'recall': StandardDeviationThreshold(),
+    'specificity': StandardDeviationThreshold(),
+    'accuracy': StandardDeviationThreshold(),
+    'confusion_matrix': StandardDeviationThreshold(),
+    'business_cost': StandardDeviationThreshold(),
+}
 
 
 class CBPE(AbstractEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
-
-    # def __new__(cls, y_pred_proba: ModelOutputsType, problem_type: Union[str, ProblemType], *args, **kwargs):
-    #     """Creates a new CBPE subclass instance based on the type of the provided ``model_metadata``."""
-    #     from ._cbpe_binary_classification import _BinaryClassificationCBPE
-    #     from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
-    #
-    #     if isinstance(problem_type, str):
-    #         problem_type = ProblemType.parse(problem_type)
-    #
-    #     if problem_type is ProblemType.CLASSIFICATION_BINARY:
-    #         return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
-    #     elif problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
-    #         return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
-    #     else:
-    #         raise NotImplementedError
 
     def __init__(
         self,
@@ -57,6 +54,7 @@ class CBPE(AbstractEstimator):
         calibrator: Optional[Calibrator] = None,
         normalize_confusion_matrix: Optional[str] = None,
         business_cost_matrix: Optional[Union[List, np.ndarray]] = None,
+        thresholds: Optional[Dict[str, Threshold]] = None,
     ):
         """Initializes a new CBPE performance estimator.
 
@@ -158,6 +156,10 @@ class CBPE(AbstractEstimator):
         else:
             self.problem_type = problem_type
 
+        self.thresholds = DEFAULT_THRESHOLDS
+        if thresholds:
+            self.thresholds.update(**thresholds)
+
         if isinstance(metrics, str):
             metrics = [metrics]
         self.metrics = [
@@ -171,13 +173,13 @@ class CBPE(AbstractEstimator):
                 chunker=self.chunker,
                 normalize_confusion_matrix=normalize_confusion_matrix,
                 business_cost_matrix=business_cost_matrix,
+                threshold=self.thresholds[metric],
             )
             for metric in metrics
         ]
 
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
-        self._alert_thresholds: Dict[str, Tuple[float, float]] = {}
         self.needs_calibration: bool = False
 
         if calibrator is None:
