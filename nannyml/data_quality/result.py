@@ -37,8 +37,6 @@ class Result(Abstract1DColumnsResult, ResultCompareMixin):
         timestamp_column_name: Optional[str],
         chunker: Chunker,
     ):
-        # Passing on methods as metrics to base class, as they're essentially a more specialised form of metrics
-        # satisfying the same contract
         super().__init__(results_data, column_names)
 
         self.timestamp_column_name = timestamp_column_name
@@ -47,13 +45,12 @@ class Result(Abstract1DColumnsResult, ResultCompareMixin):
 
         # self.analysis_data = analysis_data
         # self.reference_data = reference_data
-    
-    #TODO: Verify with Niels this is correct.
+
     def keys(self) -> List[Key]:
-        return [
+        return [ 
             Key(
-                properties=(self.data_quality_metric,), display_names=(f"{self.data_quality_metric}", f"{self.data_quality_metric.replace('_', ' ').title()}")
-            )
+                properties=(column_name,), display_names=(column_name,f"{self.data_quality_metric.replace('_', ' ').title()}")
+            ) for column_name in self.column_names
         ]
 
     # @log_usage(UsageEvent.DQ_CALC_MISSING_PLOT, metadata_from_kwargs=['kind'])
@@ -92,13 +89,14 @@ class Result(Abstract1DColumnsResult, ResultCompareMixin):
         """
         return plot_metrics(
             self,
-            title='Missing Value Metric',
-            hover=Hover(
-                template='%{period} &nbsp; &nbsp; %{alert} <br />'
-                'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-                '%{metric_name}: <b>%{metric_value}</b><b r />',
-                show_extra=True,
-            ),
+            title='Data Quality ',
+            # TODO: Below is default used, should work OOB - remove lines once verified.
+            # hover=Hover(
+            #     template='%{period} &nbsp; &nbsp; %{alert} <br />'
+            #     'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+            #     '%{metric_name}: <b>%{metric_value}</b><b r />',
+            #     show_extra=True,
+            # ),
             subplot_title_format='{display_names[1]} for <b>{display_names[0]}</b>',
             subplot_y_axis_title_format='{display_names[1]}',
         )

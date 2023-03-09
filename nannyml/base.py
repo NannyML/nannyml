@@ -188,11 +188,12 @@ class Abstract1DColumnsResult(AbstractResult, ABC):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
-    def _filter(self, period: str, column_names: Optional[List[str]] = None, *args, **kwargs) -> Self:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, column_names: Optional[List[str]] = None, *args, **kwargs) -> Self:
         if column_names is None:
             column_names = self.column_names
 
         # is column names loc argument correct? likely
+        # data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
         data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names,)]], axis=1)
         if period != 'all':
             data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]

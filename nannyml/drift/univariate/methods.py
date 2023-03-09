@@ -220,7 +220,7 @@ class MethodFactory:
 class JensenShannonDistance(Method):
     """Calculates Jensen-Shannon distance.
 
-    An alert will be raised if `distance > 0.1`.
+    By default an alert will be raised if `distance > 0.1`.
     """
 
     def __init__(self, **kwargs) -> None:

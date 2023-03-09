@@ -77,8 +77,8 @@ class MissingValueCalculator(AbstractCalculator):
             self.data_quality_metric = 'missing_value_rate'
         else:
             self.data_quality_metric = 'missing_value_count'
-        self._upper_alert_threshold: float
-        self._lower_alert_threshold: float
+        # self._upper_alert_threshold: float
+        # self._lower_alert_threshold: float
         self.result: Optional[Result] = None
         self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
 
@@ -108,18 +108,15 @@ class MissingValueCalculator(AbstractCalculator):
 
         for col in self.column_names:
             count_nan, count_tot = self._calculate_missing_value_stats(reference_data[col])
-            self._sampling_error_components[col] = count_nan/count_tot
+            self._sampling_error_components[col] = count_nan if self.normalize else count_nan/count_tot
 
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
 
         return self
-    
-    def _add_sampling_error(self):
-        pass
 
     @log_usage(
-        UsageEvent.DQ_CALC_MISSING_FIT, metadata_from_self=['normalize']
+        UsageEvent.DQ_CALC_MISSING_RUN, metadata_from_self=['normalize']
     )
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""
@@ -188,8 +185,8 @@ class MissingValueCalculator(AbstractCalculator):
         else:
             result['sampling_error'] = serr*np.sqrt(tot)
 
-        result['upper_confidence_boundary'] = result['value'] + 3 * result['sampling_error']
-        result['lower_confidence_boundary'] = result['value'] - 3 * result['sampling_error']
+        result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
+        result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
         return result
 
     def _calculate_alert_thresholds(self, results, column_names) -> Tuple[float, float]:
@@ -198,7 +195,7 @@ class MissingValueCalculator(AbstractCalculator):
             upper, lower = self._calculate_individual_alert_thresholds(values)
             results[(column_name, 'upper_threshold')] = upper
             results[(column_name, 'lower_threshold')] = lower
-            results[(column_name, 'alert')] = False#_add_alert_flag(results, column_name)
+            results[(column_name, 'alert')] = _add_alert_flag(results, column_name) # plotting suppresses them
 
         return results
 
@@ -221,7 +218,7 @@ class MissingValueCalculator(AbstractCalculator):
     def _calculate_individual_alert_thresholds(self, values: pd.Series):
         avg = values.mean()
         std = values.std()
-        return avg+SAMPLING_ERROR_RANGE*std, avg-SAMPLING_ERROR_RANGE*std
+        return avg+3*std, avg-3*std
 
 
 def _add_alert_flag(drift_result: pd.DataFrame, column_name: str) -> pd.Series:

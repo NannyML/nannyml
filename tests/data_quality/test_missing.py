@@ -57,7 +57,7 @@ def test_missing_value_calculator_with_default_params_should_not_fail(sample_dri
     try:
         calc = MissingValueCalculator(
             column_names=['f1', 'f2', 'f3', 'f4'],
-            timestamp_column_name='timestamp',
+            # timestamp_column_name='timestamp',
         )
         calc.fit(data_ref)
         _ = calc.calculate(data=data_anl)
