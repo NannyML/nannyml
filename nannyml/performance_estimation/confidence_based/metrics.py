@@ -235,7 +235,7 @@ class MetricFactory:
             raise InvalidArgumentsException(
                 f"unknown metric key '{key}' given. "
                 "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
-                "'accuracy']."
+                "'accuracy', 'confusion_matrix', 'business_value']."
             )
 
         if use_case not in cls.registry[key]:
