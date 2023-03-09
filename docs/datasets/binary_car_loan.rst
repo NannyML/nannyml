@@ -1,8 +1,8 @@
 .. _dataset-synthetic-binary-car-loan:
 
-===================================================
-Synthetic Binary Classification Dataset - Car Loan
-===================================================
+================================================
+Synthetic Binary Classification Car Loan Dataset
+================================================
 
 NannyML provides a synthetic dataset describing a binary classification problem,
 to make it easier to test and document its features.
@@ -67,3 +67,17 @@ There are 3 columns that reference the output of the model:
 There is also an auxiliary column that is helpful but not used by the monitored model:
 
 - `timestamp`: A date column informing us of the date the prediction was made.
+
+
+Data Quality Version
+======================
+
+NannyML also provides a version of the car loan dataset that includes missing and unseen values in order to
+demonstrate the data quality modules provided by NannyML. The problem modeled and the columns included are the
+same. You can access this dataset with:
+
+.. code-block:: python
+
+    >>> import nannyml as nml
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_car_loan_data_quality_dataset()
+

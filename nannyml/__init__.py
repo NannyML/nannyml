@@ -45,6 +45,7 @@ from .datasets import (
     load_synthetic_car_loan_dataset,
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
+    load_synthetic_car_loan_data_quality_dataset
 )
 from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
 from .data_quality import MissingValueCalculator

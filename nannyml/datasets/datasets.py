@@ -133,7 +133,7 @@ def load_synthetic_car_loan_dataset():
 
     return reference, analysis, analysis_gt
 
-def load_synthetic_car_loan_w_missing_dataset():
+def load_synthetic_car_loan_data_quality_dataset():
     """Loads the synthetic car loan binary classification dataset that contains missing values
     provided for testing the NannyML package.
 
@@ -155,8 +155,8 @@ def load_synthetic_car_loan_w_missing_dataset():
     >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_w_missing_dataset()
 
     """
-    reference = load_csv_file_to_df('synthetic_car_loan_nan_reference.csv')
-    analysis = load_csv_file_to_df('synthetic_car_loan_nan_analysis.csv')
+    reference = load_csv_file_to_df('synthetic_car_loan_dq_reference.csv')
+    analysis = load_csv_file_to_df('synthetic_car_loan_dq_analysis.csv')
     analysis_gt = load_csv_file_to_df('synthetic_car_loan_analysis_target.csv')
 
     return reference, analysis, analysis_gt
