@@ -15,7 +15,7 @@ The second function will be called during calculation or estimation. It takes th
 combines them with the size of the (analysis) data to give an estimate for the sampling error.
 """
 
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -993,3 +993,66 @@ def total_cost_sampling_error(sampling_error_components: Tuple, data) -> float:
     total_cost_standard_error = analysis_std / np.sqrt(len(data))
 
     return total_cost_standard_error
+
+
+def business_value_sampling_error_components(
+    y_true_reference: pd.Series,
+    y_pred_reference: pd.Series,
+    business_value_matrix: np.ndarray,
+    normalize_business_value: Optional[str],
+) -> Tuple:
+    """
+    Estimate sampling error for the false negative rate.
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    business_value_matrix: np.ndarray
+        A 2x2 matrix of values for the business problem.
+    Returns
+    -------
+    components: tuple
+    """
+    y_true_reference = np.asarray(y_true_reference).astype(int)
+    y_pred_reference = np.asarray(y_pred_reference).astype(int)
+
+    obs_level_tp = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 1), 1, 0)
+    obs_level_tn = np.where((y_true_reference == y_pred_reference) & (y_pred_reference == 0), 1, 0)
+    obs_level_fp = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 1), 1, 0)
+    obs_level_fn = np.where((y_true_reference != y_pred_reference) & (y_pred_reference == 0), 1, 0)
+
+    combined_and_weighted = (
+        obs_level_tp * business_value_matrix[1, 1]
+        + obs_level_tn * business_value_matrix[0, 0]
+        + obs_level_fp * business_value_matrix[0, 1]
+        + obs_level_fn * business_value_matrix[1, 0]
+    )
+
+    std = np.std(combined_and_weighted)
+
+    return (std, normalize_business_value)
+
+
+def business_value_sampling_error(sampling_error_components: Tuple, data) -> float:
+    """
+    Calculate the false positive rate sampling error for a chunk of data.
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+    Returns
+    -------
+    sampling_error: float
+    """
+    (reference_std, norm_type) = sampling_error_components
+
+    if norm_type is None:
+        analysis_std = reference_std * len(data)
+    else:  # norm_type must be 'per_prediciton'
+        analysis_std = reference_std
+
+    total_value_standard_error = analysis_std / np.sqrt(len(data))
+
+    return total_value_standard_error

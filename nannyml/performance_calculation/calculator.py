@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -40,6 +40,9 @@ class PerformanceCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
+        normalize_confusion_matrix: Optional[str] = None,
+        business_value_matrix: Optional[Union[List, np.ndarray]] = None,
+        normalize_business_value: Optional[str] = None,
     ):
         """Creates a new performance calculator.
 
@@ -69,6 +72,23 @@ class PerformanceCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
+        normalize_confusion_matrix: str, default=None
+            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
+            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
+            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
+            of observations. If 'true', the confusion matrix will be normalized by the total number of
+            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
+            total number of observations for each predicted class.
+        business_value_matrix: Optional[Union[List, np.ndarray]], default=None
+            A matrix containing the business costs for each combination of true and predicted class.
+            The i-th row and j-th column entry of the matrix contains the business cost for predicting the
+            i-th class as the j-th class. The matrix must have the same number of rows and columns as the number
+            of classes in the problem.
+        normalize_business_value: str, default=None
+            Determines how the business value will be normalized. Allowed values are None and
+            'per_prediction'. If None, the business value will not be normalized and the value
+            returned will be the total value per chunk. If 'per_prediction', the value will be normalized
+            by the number of predictions in the chunk.
 
         Examples
         --------
@@ -113,7 +133,16 @@ class PerformanceCalculator(AbstractCalculator):
         if isinstance(metrics, str):
             metrics = [metrics]
         self.metrics: List[Metric] = [
-            MetricFactory.create(m, self.problem_type, y_true=y_true, y_pred=y_pred, y_pred_proba=y_pred_proba)
+            MetricFactory.create(
+                m,
+                self.problem_type,
+                y_true=y_true,
+                y_pred=y_pred,
+                y_pred_proba=y_pred_proba,
+                normalize_confusion_matrix=normalize_confusion_matrix,
+                business_value_matrix=business_value_matrix,
+                normalize_business_value=normalize_business_value,
+            )
             for m in metrics
         ]
 
@@ -213,18 +242,11 @@ class PerformanceCalculator(AbstractCalculator):
         return self.result
 
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
-        metrics_results = {}
+        chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
-            chunk_metric = metric.calculate(chunk.data)
-            metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
-            metrics_results[metric.column_name] = chunk_metric
-            metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
-            metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
-            metrics_results[f'{metric.column_name}_alert'] = (
-                metric.lower_threshold > chunk_metric if metric.lower_threshold else False
-            ) or (chunk_metric > metric.upper_threshold if metric.upper_threshold else False)
-
-        return metrics_results
+            chunk_record = metric.get_chunk_record(chunk.data)
+            chunk_records.update(chunk_record)
+        return chunk_records
 
 
 def _create_multilevel_index(metric_names: List[str]):
