@@ -198,7 +198,7 @@ class MissingValueCalculator(AbstractCalculator):
             upper, lower = self._calculate_individual_alert_thresholds(values)
             results[(column_name, 'upper_threshold')] = upper
             results[(column_name, 'lower_threshold')] = lower
-            results[(column_name, 'alert')] = _add_alert_flag(results, column_name)
+            results[(column_name, 'alert')] = False#_add_alert_flag(results, column_name)
 
         return results
 

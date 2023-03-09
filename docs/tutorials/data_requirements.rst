@@ -30,6 +30,10 @@ to be stable and acceptable.
 The reference dataset contains observations for which target values
 are available, so the model performance can be calculated for this set.
 The ranges and distribution of model inputs, outputs and targets need to be well-known and validated for this set.
+For newly deployed models the reference dataset is usually the test dataset where the model was
+evaluated before entering production. For a model that has been in production for some time
+the reference dataset is usually a benchmark dataset selected from the production data of the model
+during which the model performed as expected.
 
 .. warning::
     Don't use model training data as a reference dataset. Machine learning models tend to overfit on their training data.

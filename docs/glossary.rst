@@ -13,6 +13,8 @@ Glossary
         expected range of the metric being calculated or estimated.
         An alert is raised after NannyML finds the calculated metric outside of the specified range.
 
+        Note that alerts are not raised during the reference :term:`Data Period`.
+
     Butterfly dataset
         A dataset used in :ref:`data-reconstruction-pca` to give an example where univariate
         drift statistics are insufficient in detecting complex data drifts in multidimensional

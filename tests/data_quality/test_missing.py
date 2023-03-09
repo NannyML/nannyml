@@ -98,7 +98,7 @@ def test_missing_value_calculator_should_contain_chunk_details_and_results_prope
     calc.fit(data_ref)
     results = calc.calculate(data=data_anl)
 
-    assert results.data_quality_metric is 'missing_value_rate'
+    assert results.data_quality_metric == 'missing_value_rate'
     # print("debug1")
     # print(results.data)
     sut = results.data.columns
