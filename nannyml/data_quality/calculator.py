@@ -1,5 +1,6 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#            Nikolaos Perrakis  <nikos@nannyml.com>
+#  Author:   Nikolaos Perrakis  <nikos@nannyml.com>
+#
 #  License: Apache Software License 2.0
 
 """Drift calculator using Reconstruction Error as a measure of drift."""
@@ -73,7 +74,10 @@ class MissingValueCalculator(AbstractCalculator):
         )
         self.column_names = column_names
         self.result: Optional[Result] = None
+        # thresholds are the same across all results
         self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+        self._upper_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+        self._lower_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
 
         self.lower_threshold_limit: float = 0
         self.normalize = normalize
@@ -82,20 +86,14 @@ class MissingValueCalculator(AbstractCalculator):
             self.upper_threshold_limit: float = 1
         else:
             self.data_quality_metric = 'missing_value_count'
-            self.upper_threshold_limit: float = None
+            self.upper_threshold_limit: float = np.nan
         
 
     def _calculate_missing_value_stats(self, data: pd.Series):
         count_tot = data.shape[0]
-        tmp = data.isnull().value_counts()
-        if True in list(tmp.index.unique()):
-            count_nan = tmp.loc[True]
-        else:
-            count_nan = 0
-
+        count_nan = data.isnull().sum()
         if self.normalize:
-            count_nan = count_nan/count_tot
-        
+            count_nan = count_nan/count_tot    
         return count_nan, count_tot
 
 
@@ -195,6 +193,8 @@ class MissingValueCalculator(AbstractCalculator):
         for column_name in column_names:
             values = results.loc[:, (column_name, 'value')]
             upper, lower = self._calculate_individual_alert_thresholds(values)
+            self._upper_alert_thresholds[column_name] = upper
+            self._lower_alert_thresholds[column_name] = lower
             results[(column_name, 'upper_threshold')] = upper
             results[(column_name, 'lower_threshold')] = lower
             results[(column_name, 'alert')] = _add_alert_flag(results, column_name) # plotting suppresses them
@@ -207,9 +207,8 @@ class MissingValueCalculator(AbstractCalculator):
         results_ref: pd.DataFrame
     ) -> pd.DataFrame:
         for column_name in column_names:
-            # thresholds are the same across all results
-            upper = results_ref[(column_name, 'upper_threshold')][0]
-            lower = results_ref[(column_name, 'lower_threshold')][0]
+            upper = self._upper_alert_thresholds[column_name]
+            lower = self._lower_alert_thresholds[column_name]
             results_anl[(column_name, 'upper_threshold')] = upper
             results_anl[(column_name, 'lower_threshold')] = lower
             results_anl[(column_name, 'alert')] = _add_alert_flag(results_anl, column_name)
@@ -218,12 +217,20 @@ class MissingValueCalculator(AbstractCalculator):
     def _calculate_individual_alert_thresholds(self, values: pd.Series):
         avg = values.mean()
         std = values.std()
-        upper, lower = avg+3*std, avg-3*std
-        # enforce threshold limits
+        upper = avg + 3 * std
+        lower = avg - 3 * std
+        # Enforce threshold limits:
+        # Threshold limits define the valid range of data quality metric values
+        # If the threshold is at that limit, it doesn't make sense to be shown/present
+        # since it can't be crossed anyway.
         if self.upper_threshold_limit:
-            upper = min(upper, self.upper_threshold_limit)
-        lower = max(lower, self.lower_threshold_limit)
+            if upper >= self.upper_threshold_limit:
+                upper = np.nan
+        # lower limit always exists for Missing Value DQ metric
+        if lower <= self.lower_threshold_limit:
+            lower = np.nan
         return upper, lower
+
 
 def _add_alert_flag(drift_result: pd.DataFrame, column_name: str) -> pd.Series:
     alert = drift_result.apply(
@@ -247,45 +254,3 @@ def _create_multilevel_index(
     ]
     tuples = chunk_tuples + column_tuples
     return MultiIndex.from_tuples(tuples)
-
-
-[
-    ('chunk', 'key'),
-    ('chunk', 'chunk_index'),
-    ('chunk', 'start_index'),
-    ('chunk', 'end_index'),
-    ('chunk', 'start_date'),
-    ('chunk', 'end_date'),
-    ('chunk', 'period'),
-    ('car_value', 'value'),
-    ('car_value', 'sampling_error'),
-    ('car_value', 'upper_confidence_boundary'),
-    ('car_value', 'lower_confidence_boundary'),
-    ('car_value', 'upper_threshold'),
-    ('car_value', 'lower_threshold'),
-    ('car_value', 'alert'),
-    ('salary_range', 'value'),
-    ('salary_range', 'sampling_error'),
-    ('salary_range', 'upper_confidence_boundary'),
-    ('salary_range', 'lower_confidence_boundary'),
-    ('debt_to_income_ratio', 'value'),
-    ('debt_to_income_ratio', 'sampling_error'),
-    ('debt_to_income_ratio', 'upper_confidence_boundary'),
-    ('debt_to_income_ratio', 'lower_confidence_boundary'),
-    ('loan_length', 'value'),
-    ('loan_length', 'sampling_error'),
-    ('loan_length', 'upper_confidence_boundary'),
-    ('loan_length', 'lower_confidence_boundary'),
-    ('repaid_loan_on_prev_car', 'value'),
-    ('repaid_loan_on_prev_car', 'sampling_error'),
-    ('repaid_loan_on_prev_car', 'upper_confidence_boundary'),
-    ('repaid_loan_on_prev_car', 'lower_confidence_boundary'),
-    ('size_of_downpayment', 'value'),
-    ('size_of_downpayment', 'sampling_error'),
-    ('size_of_downpayment', 'upper_confidence_boundary'),
-    ('size_of_downpayment', 'lower_confidence_boundary'),
-    ('driver_tenure', 'value'),
-    ('driver_tenure', 'sampling_error'),
-    ('driver_tenure', 'upper_confidence_boundary'),
-    ('driver_tenure', 'lower_confidence_boundary')
-]

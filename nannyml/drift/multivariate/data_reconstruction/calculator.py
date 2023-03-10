@@ -1,5 +1,6 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #            Nikolaos Perrakis  <nikos@nannyml.com>
+#
 #  License: Apache Software License 2.0
 
 """Drift calculator using Reconstruction Error as a measure of drift."""

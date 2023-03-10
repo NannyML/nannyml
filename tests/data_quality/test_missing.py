@@ -1,4 +1,5 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  Author:   Nikolaos Perrakis  <nikos@nannyml.com>
 #
 #  License: Apache Software License 2.0
 
@@ -149,6 +150,67 @@ def test_whether_data_quality_metric_property_on_results_mv_rate(missing_value_r
     assert missing_value_result.data_quality_metric == 'missing_value_rate'
 
 
+def test_whether_result_data_dataframe_has_proper_columns(missing_value_result):
+    cols = missing_value_result.data.columns
+    assert len(cols) == 7 + 7*7
+    assert ('chunk', 'key') in cols
+    assert ('chunk', 'chunk_index') in cols
+    assert ('chunk', 'start_index') in cols
+    assert ('chunk', 'start_date') in cols
+    assert ('chunk', 'end_index') in cols
+    assert ('chunk', 'end_date') in cols
+    assert ('chunk', 'period') in cols
+    assert ('car_value', 'value') in cols
+    assert ('car_value', 'upper_threshold') in cols
+    assert ('car_value', 'lower_threshold') in cols
+    assert ('car_value', 'alert') in cols
+    assert ('car_value', 'sampling_error') in cols
+    assert ('car_value', 'upper_confidence_boundary') in cols
+    assert ('car_value', 'lower_confidence_boundary') in cols
+    assert ('salary_range', 'value') in cols
+    assert ('salary_range', 'upper_threshold') in cols
+    assert ('salary_range', 'lower_threshold') in cols
+    assert ('salary_range', 'alert') in cols
+    assert ('salary_range', 'sampling_error') in cols
+    assert ('salary_range', 'upper_confidence_boundary') in cols
+    assert ('salary_range', 'lower_confidence_boundary') in cols
+    assert ('debt_to_income_ratio', 'value') in cols
+    assert ('debt_to_income_ratio', 'upper_threshold') in cols
+    assert ('debt_to_income_ratio', 'lower_threshold') in cols
+    assert ('debt_to_income_ratio', 'alert') in cols
+    assert ('debt_to_income_ratio', 'sampling_error') in cols
+    assert ('debt_to_income_ratio', 'upper_confidence_boundary') in cols
+    assert ('debt_to_income_ratio', 'lower_confidence_boundary') in cols
+    assert ('loan_length', 'value') in cols
+    assert ('loan_length', 'upper_threshold') in cols
+    assert ('loan_length', 'lower_threshold') in cols
+    assert ('loan_length', 'alert') in cols
+    assert ('loan_length', 'sampling_error') in cols
+    assert ('loan_length', 'upper_confidence_boundary') in cols
+    assert ('loan_length', 'lower_confidence_boundary') in cols
+    assert ('repaid_loan_on_prev_car', 'value') in cols
+    assert ('repaid_loan_on_prev_car', 'upper_threshold') in cols
+    assert ('repaid_loan_on_prev_car', 'lower_threshold') in cols
+    assert ('repaid_loan_on_prev_car', 'alert') in cols
+    assert ('repaid_loan_on_prev_car', 'sampling_error') in cols
+    assert ('repaid_loan_on_prev_car', 'upper_confidence_boundary') in cols
+    assert ('repaid_loan_on_prev_car', 'lower_confidence_boundary') in cols
+    assert ('size_of_downpayment', 'value') in cols
+    assert ('size_of_downpayment', 'upper_threshold') in cols
+    assert ('size_of_downpayment', 'lower_threshold') in cols
+    assert ('size_of_downpayment', 'alert') in cols
+    assert ('size_of_downpayment', 'sampling_error') in cols
+    assert ('size_of_downpayment', 'upper_confidence_boundary') in cols
+    assert ('size_of_downpayment', 'lower_confidence_boundary') in cols
+    assert ('driver_tenure', 'value') in cols
+    assert ('driver_tenure', 'upper_threshold') in cols
+    assert ('driver_tenure', 'lower_threshold') in cols
+    assert ('driver_tenure', 'alert') in cols
+    assert ('driver_tenure', 'sampling_error') in cols
+    assert ('driver_tenure', 'upper_confidence_boundary') in cols
+    assert ('driver_tenure', 'lower_confidence_boundary') in cols
+
+
 def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValueCalculator(
@@ -184,113 +246,116 @@ def test_results_filtering_columns_list(missing_value_result):
         pytest.fail()
 
 
-# def test_missing_value_calculator_should_contain_chunk_details_and_results_properties(  # noqa: D103
-#     sample_drift_data_with_nans,
-# ):
-#     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+def test_results_car_value_values(missing_value_result):
+ 
+    res = missing_value_result.filter(column_names='car_value').to_df()
+    assert list(res[('car_value', 'value')]) == [0]*20
 
-#     calc = MissingValueCalculator(
-#         column_names=[
-#                 'car_value',
-#                 'salary_range',
-#                 'debt_to_income_ratio',
-#                 'loan_length',
-#                 'repaid_loan_on_prev_car',
-#                 'size_of_downpayment',
-#                 'driver_tenure'
-#             ],
-#         timestamp_column_name='timestamp',
-#     )
-#     calc.fit(data_ref)
-#     results = calc.calculate(data=data_anl)
 
-#     assert results.data_quality_metric == 'missing_value_rate'
-#     # print("debug1")
-#     # print(results.data)
-#     sut = results.data.columns
-#     assert len(sut) == 7 + 4*7
-#     assert ('chunk', 'key') in sut
-#     assert ('chunk', 'chunk_index') in sut
-#     assert ('chunk', 'start_index') in sut
-#     assert ('chunk', 'start_date') in sut
-#     assert ('chunk', 'end_index') in sut
-#     assert ('chunk', 'end_date') in sut
-#     assert ('chunk', 'period') in sut
-#     assert ('f1', 'value') in sut
-#     assert ('f1', 'upper_threshold') in sut
-#     assert ('f1', 'lower_threshold') in sut
-#     assert ('f1', 'alert') in sut
-#     assert ('f1', 'sampling_error') in sut
-#     assert ('f1', 'upper_confidence_boundary') in sut
-#     assert ('f1', 'lower_confidence_boundary') in sut
-#     assert ('f2', 'value') in sut
-#     assert ('f2', 'upper_threshold') in sut
-#     assert ('f2', 'lower_threshold') in sut
-#     assert ('f2', 'alert') in sut
-#     assert ('f2', 'sampling_error') in sut
-#     assert ('f2', 'upper_confidence_boundary') in sut
-#     assert ('f2', 'lower_confidence_boundary') in sut
-#     assert ('f3', 'value') in sut
-#     assert ('f3', 'upper_threshold') in sut
-#     assert ('f3', 'lower_threshold') in sut
-#     assert ('f3', 'alert') in sut
-#     assert ('f3', 'sampling_error') in sut
-#     assert ('f3', 'upper_confidence_boundary') in sut
-#     assert ('f3', 'lower_confidence_boundary') in sut
-#     assert ('f4', 'value') in sut
-#     assert ('f4', 'upper_threshold') in sut
-#     assert ('f4', 'lower_threshold') in sut
-#     assert ('f4', 'alert') in sut
-#     assert ('f4', 'sampling_error') in sut
-#     assert ('f4', 'upper_confidence_boundary') in sut
-#     assert ('f4', 'lower_confidence_boundary') in sut
+def test_results_car_value_alerts(missing_value_result):
+    
+    res = missing_value_result.filter(column_names='car_value').to_df()
+    assert list(res[('car_value', 'alert')]) == [False]*20
 
-#     assert results.data.loc[:, ('f1', 'value')].tolist() == [
-#         0.1259920634920635,
-#         0.11210317460317461,
-#         0.09325396825396826,
-#         0.10317460317460317,
-#         0.10515873015873016,
-#         0.10317460317460317,
-#         0.1111111111111111,
-#         0.10912698412698413,
-#         0.10317460317460317,
-#         0.11011904761904762,
-#         0.125,
-#         0.1111111111111111,
-#         0.10515873015873016,
-#         0.12202380952380952,
-#         0.11011904761904762,
-#         0.2361111111111111,
-#         0.21329365079365079,
-#         0.2371031746031746,
-#         0.2390873015873016,
-#         0.22420634920634921
-#     ]
 
-#     assert results.data.loc[:, ('f1', 'alert')].tolist() == [False]*15 + [True]*5
+def test_results_salary_range_values(missing_value_result):
+    
+    res = missing_value_result.filter(column_names='salary_range').to_df()
+    assert list(res[('salary_range', 'value')]) == [
+        0.0998,
+        0.1004,
+        0.0912,
+        0.1018,
+        0.1014,
+        0.0966,
+        0.1028,
+        0.1108,
+        0.1018,
+        0.0934,
+        0.1004,
+        0.1064,
+        0.0982,
+        0.0966,
+        0.0984,
+        0.2188,
+        0.2214,
+        0.2178,
+        0.2264,
+        0.2156
+    ]
 
-#     assert results.data.loc[:, ('f4', 'value')].tolist() == [
-#         0.12568328786892544,
-#         0.11179439898003656,
-#         0.0929451926308302,
-#         0.10286582755146512,
-#         0.10484995453559211,
-#         0.10286582755146512,
-#         0.11080233548797305,
-#         0.10881820850384608,
-#         0.10286582755146512,
-#         0.10981027199590956,
-#         0.12469122437686195,
-#         0.11080233548797305,
-#         0.10484995453559211,
-#         0.12171503390067147,
-#         0.10981027199590956,
-#         0.23580233548797305,
-#         0.21298487517051273,
-#         0.23679439898003654,
-#         0.23877852596416355,
-#         0.22389757358321116
-#     ]
 
-#     assert results.data.loc[:, ('f4', 'alert')].tolist() == [False]*15 + [True]*5
+def test_results_salary_range_alerts(missing_value_result):
+    res = missing_value_result.filter(column_names='salary_range').to_df()
+    assert list(res[('salary_range', 'alert')]) == [False]*15 + [True]*5
+
+
+def test_results_driver_tenure_values(missing_value_result): 
+    res = missing_value_result.filter(column_names='driver_tenure').to_df()
+    assert list(res[('driver_tenure', 'value')]) == [
+        0.1018,
+        0.1080,
+        0.0942,
+        0.099,
+        0.094,
+        0.1066,
+        0.0978,
+        0.1062,
+        0.0958,
+        0.0966,
+        0.1074,
+        0.1042,
+        0.094,
+        0.1,
+        0.0944,
+        0.2196,
+        0.2138,
+        0.2236,
+        0.2296,
+        0.2134
+    ]
+
+
+def test_results_driver_tenure_alerts(missing_value_result):
+    
+    res = missing_value_result.filter(column_names='driver_tenure').to_df()
+    assert list(res[('driver_tenure', 'alert')]) == [False]*15 + [True]*5
+
+
+def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_expect_nan():
+    calc = MissingValueCalculator(
+        column_names=[
+            'car_value',
+        ],
+        normalize=True
+    )
+    test_series = pd.Series([0.1,0.9,0.1,0.9])
+    upper, lower = calc._calculate_individual_alert_thresholds(test_series)
+    assert upper is np.nan
+    assert lower is np.nan
+
+
+def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_expect_numbers():
+    calc = MissingValueCalculator(
+        column_names=[
+            'car_value',
+        ],
+        normalize=True
+    )
+    test_series = pd.Series([0.21,0.29,0.21,0.29])
+    upper, lower = calc._calculate_individual_alert_thresholds(test_series)
+    assert upper == 0.3885640646055102
+    assert lower == 0.11143593539448984
+
+
+def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_one_nan():
+    calc = MissingValueCalculator(
+        column_names=[
+            'car_value',
+        ],
+        normalize=True
+    )
+    test_series = pd.Series([0,0,0,0])
+    upper, lower = calc._calculate_individual_alert_thresholds(test_series)
+    assert upper == 0
+    assert lower is np.nan
