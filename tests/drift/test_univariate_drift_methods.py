@@ -1,11 +1,13 @@
 """Unit tests for the UnivariateDriftCalculator methods."""
 import numpy as np
 import pandas as pd
+import pytest
 
-from nannyml.chunk import CountBasedChunker
+from nannyml.chunk import CountBasedChunker, DefaultChunker
 from nannyml.drift.univariate.methods import (
     HellingerDistance,
     JensenShannonDistance,
+    KolmogorovSmirnovStatistic,
     LInfinityDistance,
     WassersteinDistance,
 )
@@ -164,3 +166,43 @@ def test_hellinger_for_categorical():
     hell_dist.fit(reference)
     distance = hell_dist.calculate(analysis)
     assert np.round(distance, 2) == 0.5
+
+
+@pytest.mark.parametrize(
+    'method',
+    [
+        KolmogorovSmirnovStatistic(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
+        LInfinityDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
+        JensenShannonDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
+        WassersteinDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
+        HellingerDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
+    ],
+)
+def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, method):
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 1000), name='A')
+    method.fit(reference)
+
+    assert len(caplog.messages) == 1
+    assert (
+        caplog.messages[0] == f'{method.__class__.__name__} lower threshold value -1 overridden by '
+        f'lower threshold value limit {method.lower_threshold_value_limit}'
+    )
+
+
+@pytest.mark.parametrize(
+    'method',
+    [
+        KolmogorovSmirnovStatistic(chunker=DefaultChunker(), threshold=ConstantThreshold(upper=2)),
+    ],
+)
+def test_method_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(caplog, method):
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 1000), name='A')
+    method.fit(reference)
+
+    assert len(caplog.messages) == 1
+    assert (
+        caplog.messages[0] == f'{method.__class__.__name__} upper threshold value 2 overridden by '
+        f'upper threshold value limit {method.upper_threshold_value_limit}'
+    )

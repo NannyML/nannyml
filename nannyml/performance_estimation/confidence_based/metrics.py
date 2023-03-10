@@ -39,6 +39,8 @@ class Metric(abc.ABC):
         threshold: Threshold,
         components: List[Tuple[str, str]],
         timestamp_column_name: Optional[str] = None,
+        lower_threshold_value_limit: Optional[float] = None,
+        upper_threshold_value_limit: Optional[float] = None,
         **kwargs,
     ):
         """Creates a new Metric instance.
@@ -59,8 +61,8 @@ class Metric(abc.ABC):
         self.threshold = threshold
         self.lower_threshold_value: Optional[float] = None
         self.upper_threshold_value: Optional[float] = None
-        self.lower_threshold_value_limit: Optional[float] = None
-        self.upper_threshold_value_limit: Optional[float] = None
+        self.lower_threshold_value_limit: Optional[float] = lower_threshold_value_limit
+        self.upper_threshold_value_limit: Optional[float] = upper_threshold_value_limit
 
         self.confidence_deviation: Optional[float] = None
 
@@ -71,6 +73,10 @@ class Metric(abc.ABC):
 
         # A list of (display_name, column_name) tuples
         self.components: List[Tuple[str, str]] = components
+
+    @property
+    def _logger(self) -> logging.Logger:
+        return logging.getLogger(__name__)
 
     @property
     def display_name(self) -> str:
@@ -117,12 +123,21 @@ class Metric(abc.ABC):
 
         # explicit None-check since value might be 0
         if self.lower_threshold_value is not None and self.lower_threshold_value_limit is not None:
-            self.lower_threshold_value = np.maximum(self.lower_threshold_value_limit, self.lower_threshold_value)
+            if self.lower_threshold_value < self.lower_threshold_value_limit:
+                self._logger.warning(
+                    f"{self.display_name} lower threshold value {self.lower_threshold_value} "
+                    f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+                )
+                self.lower_threshold_value = self.lower_threshold_value_limit
 
         # explicit None-check since value might be 0
         if self.upper_threshold_value is not None and self.upper_threshold_value_limit is not None:
-            self.upper_threshold_value = np.minimum(self.upper_threshold_value_limit, self.upper_threshold_value)
-
+            if self.upper_threshold_value > self.upper_threshold_value_limit:
+                self._logger.warning(
+                    f"{self.display_name} upper threshold value {self.upper_threshold_value} "
+                    f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+                )
+                self.upper_threshold_value = self.upper_threshold_value_limit
         return
 
     @abc.abstractmethod
@@ -294,6 +309,7 @@ class BinaryClassificationAUROC(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('ROC AUC', 'roc_auc')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -368,6 +384,7 @@ class BinaryClassificationF1(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('F1', 'f1')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -427,6 +444,7 @@ class BinaryClassificationPrecision(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Precision', 'precision')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -486,6 +504,7 @@ class BinaryClassificationRecall(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Recall', 'recall')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -544,6 +563,7 @@ class BinaryClassificationSpecificity(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Specificity', 'specificity')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -603,6 +623,7 @@ class BinaryClassificationAccuracy(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Accuracy', 'accuracy')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -663,6 +684,7 @@ class BinaryClassificationConfusionMatrix(Metric):
                 ('False Positive', 'false_positive'),
                 ('False Negative', 'false_negative'),
             ],
+            lower_threshold_value_limit=0,
         )
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
@@ -692,19 +714,19 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
 
         self.true_positive_lower_threshold, self.true_positive_upper_threshold = self._true_positive_alert_thresholds(
-            reference_chunks, lower_limit=0, upper_limit=1
+            reference_chunks
         )
         self.true_negative_lower_threshold, self.true_negative_upper_threshold = self._true_negative_alert_thresholds(
-            reference_chunks, lower_limit=0, upper_limit=1
+            reference_chunks
         )
         (
             self.false_positive_lower_threshold,
             self.false_positive_upper_threshold,
-        ) = self._false_positive_alert_thresholds(reference_chunks, lower_limit=0, upper_limit=1)
+        ) = self._false_positive_alert_thresholds(reference_chunks)
         (
             self.false_negative_lower_threshold,
             self.false_negative_upper_threshold,
-        ) = self._false_negative_alert_thresholds(reference_chunks, lower_limit=0, upper_limit=1)
+        ) = self._false_negative_alert_thresholds(reference_chunks)
 
         # Calculate confidence bands
         self.true_positive_confidence_deviation = self._true_positive_confidence_deviation(reference_chunks)
@@ -739,63 +761,131 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
-    def _true_positive_alert_thresholds(
-        self, reference_chunks: List[Chunk], lower_limit: int = 0, upper_limit: int = 1
-    ) -> Tuple[Optional[float], Optional[float]]:
+    def _true_positive_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = np.asarray(
             [self._true_positive_realized_performance(chunk.data) for chunk in reference_chunks]
         )
         lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
 
-        if upper_threshold_value is not None and self.normalize_confusion_matrix is not None:
-            upper_threshold_value = np.maximum(upper_limit, upper_threshold_value)
+        if (
+            self.upper_threshold_value_limit is not None
+            and upper_threshold_value is not None
+            and self.normalize_confusion_matrix is not None
+            and upper_threshold_value > self.upper_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} upper threshold value {upper_threshold_value} "
+                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+            )
+            upper_threshold_value = self.upper_threshold_value_limit
 
-        lower_threshold_value = np.minimum(lower_limit, lower_threshold_value)
+        if (
+            self.lower_threshold_value_limit is not None
+            and lower_threshold_value is not None
+            and lower_threshold_value < self.lower_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} lower threshold value {lower_threshold_value} "
+                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+            )
+            lower_threshold_value = self.lower_threshold_value_limit
 
         return lower_threshold_value, upper_threshold_value
 
-    def _true_negative_alert_thresholds(
-        self, reference_chunks: List[Chunk], lower_limit: int = 0, upper_limit: int = 1
-    ) -> Tuple[Optional[float], Optional[float]]:
+    def _true_negative_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = np.asarray(
             [self._true_negative_realized_performance(chunk.data) for chunk in reference_chunks]
         )
         lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
 
-        if upper_threshold_value is not None and self.normalize_confusion_matrix is not None:
-            upper_threshold_value = np.maximum(upper_limit, upper_threshold_value)
+        if (
+            self.upper_threshold_value_limit is not None
+            and upper_threshold_value is not None
+            and self.normalize_confusion_matrix is not None
+            and upper_threshold_value > self.upper_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} upper threshold value {upper_threshold_value} "
+                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+            )
+            upper_threshold_value = self.upper_threshold_value_limit
 
-        lower_threshold_value = np.minimum(lower_limit, lower_threshold_value)
+        if (
+            self.lower_threshold_value_limit is not None
+            and lower_threshold_value is not None
+            and lower_threshold_value < self.lower_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} lower threshold value {lower_threshold_value} "
+                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+            )
+            lower_threshold_value = self.lower_threshold_value_limit
 
         return lower_threshold_value, upper_threshold_value
 
     def _false_positive_alert_thresholds(
-        self, reference_chunks: List[Chunk], lower_limit: int = 0, upper_limit: int = 1
+        self, reference_chunks: List[Chunk]
     ) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = np.asarray(
             [self._false_positive_realized_performance(chunk.data) for chunk in reference_chunks]
         )
         lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
 
-        if upper_threshold_value is not None and self.normalize_confusion_matrix is not None:
-            upper_threshold_value = np.maximum(upper_limit, upper_threshold_value)
+        if (
+            self.upper_threshold_value_limit is not None
+            and upper_threshold_value is not None
+            and self.normalize_confusion_matrix is not None
+            and upper_threshold_value > self.upper_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} upper threshold value {upper_threshold_value} "
+                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+            )
+            upper_threshold_value = self.upper_threshold_value_limit
 
-        lower_threshold_value = np.minimum(lower_limit, lower_threshold_value)
+        if (
+            self.lower_threshold_value_limit is not None
+            and lower_threshold_value is not None
+            and lower_threshold_value < self.lower_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} lower threshold value {lower_threshold_value} "
+                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+            )
+            lower_threshold_value = self.lower_threshold_value_limit
 
         return lower_threshold_value, upper_threshold_value
 
     def _false_negative_alert_thresholds(
-        self, reference_chunks: List[Chunk], lower_limit: int = 0, upper_limit: int = 1
+        self, reference_chunks: List[Chunk]
     ) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = np.asarray(
             [self._false_negative_realized_performance(chunk.data) for chunk in reference_chunks]
         )
         lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
 
-        if upper_threshold_value is not None and self.normalize_confusion_matrix is not None:
-            upper_threshold_value = np.maximum(upper_limit, upper_threshold_value)
+        if (
+            self.upper_threshold_value_limit is not None
+            and upper_threshold_value is not None
+            and self.normalize_confusion_matrix is not None
+            and upper_threshold_value > self.upper_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} upper threshold value {upper_threshold_value} "
+                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+            )
+            upper_threshold_value = self.upper_threshold_value_limit
 
-        lower_threshold_value = np.minimum(lower_limit, lower_threshold_value)
+        if (
+            self.lower_threshold_value_limit is not None
+            and lower_threshold_value is not None
+            and lower_threshold_value < self.lower_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} lower threshold value {lower_threshold_value} "
+                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+            )
+            lower_threshold_value = self.lower_threshold_value_limit
 
         return lower_threshold_value, upper_threshold_value
 

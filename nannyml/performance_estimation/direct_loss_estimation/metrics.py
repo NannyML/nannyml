@@ -168,15 +168,31 @@ class Metric(abc.ABC):
         realized_chunk_performance = np.asarray([self.realized_performance(chunk.data) for chunk in reference_chunks])
         lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
 
-        if self.lower_threshold_value_limit is not None:
-            lower_threshold_value = np.maximum(lower_threshold_value, lower_threshold_value)
+        if (
+            self.lower_threshold_value_limit is not None
+            and lower_threshold_value is not None
+            and lower_threshold_value < self.lower_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} lower threshold value {lower_threshold_value} "
+                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+            )
+            lower_threshold_value = self.lower_threshold_value_limit
+
+        if (
+            self.upper_threshold_value_limit is not None
+            and upper_threshold_value is not None
+            and upper_threshold_value > self.upper_threshold_value_limit
+        ):
+            self._logger.warning(
+                f"{self.display_name} upper threshold value {upper_threshold_value} "
+                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+            )
+            upper_threshold_value = self.upper_threshold_value_limit
 
         # Special case... in case lower threshold equals 0, it should not be shown at all
         if lower_threshold_value == 0.0:
             lower_threshold_value = None
-
-        if self.upper_threshold_value_limit is not None:
-            upper_threshold_value = np.minimum(self.upper_threshold_value_limit, upper_threshold_value)
 
         return lower_threshold_value, upper_threshold_value
 

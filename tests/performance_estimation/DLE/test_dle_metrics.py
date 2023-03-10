@@ -9,8 +9,11 @@ import pytest
 
 from nannyml._typing import Key, Result, Self
 from nannyml.base import Abstract1DResult, AbstractEstimator
+from nannyml.chunk import DefaultChunker
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.performance_estimation.direct_loss_estimation import DLE
+from nannyml.performance_estimation.direct_loss_estimation.metrics import MAE, MAPE, MSE, MSLE, RMSE, RMSLE
+from nannyml.thresholds import ConstantThreshold
 
 
 class FakeEstimatorResult(Abstract1DResult):
@@ -322,3 +325,38 @@ def test_dle_for_regression_with_timestamps(calculator_opts, expected):
     ]
 
     pd.testing.assert_frame_equal(expected, sut)
+
+
+@pytest.mark.parametrize('metric_cls', [MAE, MAPE, MSE, MSLE, RMSE, RMSLE])
+def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls):
+    ref_df, ana_df, _ = load_synthetic_car_price_dataset()
+
+    metric = metric_cls(
+        feature_column_names=[
+            col for col in ref_df.columns if col not in ['timestamp', 'y_true', 'y_pred', 'fuel', 'transmission']
+        ],
+        y_pred='y_pred',
+        y_true='y_true',
+        chunker=DefaultChunker(),
+        threshold=ConstantThreshold(lower=-1),
+        tune_hyperparameters=False,
+        hyperparameters={},
+        hyperparameter_tuning_config={
+            "time_budget": 15,
+            "metric": "mse",
+            "estimator_list": ['lgbm'],
+            "eval_method": "cv",
+            "hpo_method": "cfo",
+            "n_splits": 5,
+            "task": 'regression',
+            "seed": 1,
+            "verbose": 0,
+        },
+    )
+    metric.fit(ref_df)
+
+    assert len(caplog.messages) == 1
+    assert (
+        caplog.messages[0] == f'{metric.display_name} lower threshold value -1 overridden by '
+        f'lower threshold value limit {metric.lower_threshold_value_limit}'
+    )

@@ -60,6 +60,10 @@ class Method(abc.ABC):
 
         self.chunker = chunker
 
+    @property
+    def _logger(self) -> logging.Logger:
+        return logging.getLogger(__name__)
+
     def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         """Fits a Method on reference data.
 
@@ -90,11 +94,21 @@ class Method(abc.ABC):
 
         # explicit None-check since value might be 0
         if self.lower_threshold_value is not None and self.lower_threshold_value_limit is not None:
-            self.lower_threshold_value = np.maximum(self.lower_threshold_value_limit, self.lower_threshold_value)
+            if self.lower_threshold_value < self.lower_threshold_value_limit:
+                self._logger.warning(
+                    f"{self.__class__.__name__} lower threshold value {self.lower_threshold_value} "
+                    f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+                )
+                self.lower_threshold_value = self.lower_threshold_value_limit
 
         # explicit None-check since value might be 0
         if self.upper_threshold_value is not None and self.upper_threshold_value_limit is not None:
-            self.upper_threshold_value = np.minimum(self.upper_threshold_value_limit, self.upper_threshold_value)
+            if self.upper_threshold_value > self.upper_threshold_value_limit:
+                self._logger.warning(
+                    f"{self.__class__.__name__} upper threshold value {self.upper_threshold_value} "
+                    f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+                )
+                self.upper_threshold_value = self.upper_threshold_value_limit
 
         return self
 
@@ -306,6 +320,7 @@ class KolmogorovSmirnovStatistic(Method):
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
             upper_threshold_limit=1,
+            lower_threshold_limit=0,
             **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None
@@ -372,6 +387,7 @@ class Chi2Statistic(Method):
             display_name='Chi2 statistic',
             column_name='chi2',
             upper_threshold_limit=1.0,
+            lower_threshold_limit=0,
             **kwargs,
         )
         self._reference_data_vcs: pd.Series
@@ -463,6 +479,7 @@ class WassersteinDistance(Method):
         super().__init__(
             display_name='Wasserstein distance',
             column_name='wasserstein',
+            lower_threshold_limit=0,
             **kwargs,
         )
 
@@ -557,6 +574,7 @@ class HellingerDistance(Method):
         super().__init__(
             display_name='Hellinger distance',
             column_name='hellinger',
+            lower_threshold_limit=0,
             **kwargs,
         )
 

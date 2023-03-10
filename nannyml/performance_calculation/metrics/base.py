@@ -55,6 +55,10 @@ class Metric(abc.ABC):
         self.lower_threshold_value_limit: Optional[float] = lower_threshold_limit
         self.upper_threshold_value_limit: Optional[float] = upper_threshold_limit
 
+    @property
+    def _logger(self) -> logging.Logger:
+        return logging.getLogger(__name__)
+
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
         """Fits a Metric on reference data.
 
@@ -73,6 +77,24 @@ class Metric(abc.ABC):
         # Calculate alert thresholds
         reference_chunk_results = np.asarray([self.calculate(chunk.data) for chunk in chunker.split(reference_data)])
         self.lower_threshold_value, self.upper_threshold_value = self.threshold.thresholds(reference_chunk_results)
+
+        # explicit None-check since value might be 0
+        if self.lower_threshold_value is not None and self.lower_threshold_value_limit is not None:
+            if self.lower_threshold_value < self.lower_threshold_value_limit:
+                self._logger.warning(
+                    f"{self.display_name} lower threshold value {self.lower_threshold_value} "
+                    f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
+                )
+                self.lower_threshold_value = self.lower_threshold_value_limit
+
+        # explicit None-check since value might be 0
+        if self.upper_threshold_value is not None and self.upper_threshold_value_limit is not None:
+            if self.upper_threshold_value > self.upper_threshold_value_limit:
+                self._logger.warning(
+                    f"{self.display_name} upper threshold value {self.upper_threshold_value} "
+                    f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
+                )
+                self.upper_threshold_value = self.upper_threshold_value_limit
 
         return
 

@@ -45,6 +45,7 @@ class MAE(Metric):
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
+            lower_threshold_limit=0,
         )
 
         # sampling error
@@ -91,6 +92,7 @@ class MAPE(Metric):
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
+            lower_threshold_limit=0,
         )
 
         # sampling error
@@ -137,6 +139,7 @@ class MSE(Metric):
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
+            lower_threshold_limit=0,
         )
 
         # sampling error
@@ -183,6 +186,7 @@ class MSLE(Metric):
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
+            lower_threshold_limit=0,
         )
 
         # sampling error
@@ -234,6 +238,7 @@ class RMSE(Metric):
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
+            lower_threshold_limit=0,
         )
 
         # sampling error
@@ -280,6 +285,7 @@ class RMSLE(Metric):
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
+            lower_threshold_limit=0,
         )
 
         # sampling error
