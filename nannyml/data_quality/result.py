@@ -79,7 +79,7 @@ class Result(Abstract1DColumnsResult, ResultCompareMixin):
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
         >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
-        >>> calc = nml.MissingValueCalculator(
+        >>> calc = nml.MissingValuesCalculator(
         ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)

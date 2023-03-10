@@ -11,7 +11,7 @@ import pytest
 
 from nannyml._typing import Result
 from nannyml.chunk import PeriodBasedChunker, SizeBasedChunker
-from nannyml.data_quality.calculator import MissingValueCalculator
+from nannyml.data_quality.calculator import MissingValuesCalculator
 
 from nannyml.datasets import load_synthetic_car_loan_data_quality_dataset
 
@@ -22,7 +22,7 @@ from nannyml.exceptions import InvalidArgumentsException
 def missing_value_result() -> Result:
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
 
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
             'salary_range',
@@ -39,7 +39,7 @@ def missing_value_result() -> Result:
 def test_missing_value_calculator_with_default_params_should_not_fail():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
     try:
-        calc = MissingValueCalculator(
+        calc = MissingValuesCalculator(
             column_names=[
                 'car_value',
                 'salary_range',
@@ -58,7 +58,7 @@ def test_missing_value_calculator_with_default_params_should_not_fail():  # noqa
 def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
     try:
-        calc = MissingValueCalculator(
+        calc = MissingValuesCalculator(
             column_names=[
                 'car_value',
                 'salary_range',
@@ -76,8 +76,20 @@ def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa:
         pytest.fail()
 
 
+def test_missing_value_calculator_validates_column_names_list_elements():
+    with pytest.raises(TypeError):
+        calc = MissingValuesCalculator(
+            column_names=[
+                'car_value',
+                {'ab':1},
+            ],
+            timestamp_column_name='timestamp',
+            normalize=False
+        )
+
+
 def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_no_data_present():  # noqa: D103, F821
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
             'salary_range',
@@ -96,7 +108,7 @@ def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_n
 
 def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_when_no_data_present():  # noqa: D103, F821
     reference, _, _ = load_synthetic_car_loan_data_quality_dataset()
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
             'salary_range',
@@ -115,7 +127,7 @@ def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_
 
 def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103, F821
     reference, _, _ = load_synthetic_car_loan_data_quality_dataset()
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
             'missing_column',
@@ -129,7 +141,7 @@ def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_c
 
 def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103, F821
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
             'salary_range',
@@ -147,7 +159,7 @@ def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_
 
 
 def test_whether_data_quality_metric_property_on_results_mv_rate(missing_value_result):
-    assert missing_value_result.data_quality_metric == 'missing_value_rate'
+    assert missing_value_result.data_quality_metric == 'missing_values_rate'
 
 
 def test_whether_result_data_dataframe_has_proper_columns(missing_value_result):
@@ -213,7 +225,7 @@ def test_whether_result_data_dataframe_has_proper_columns(missing_value_result):
 
 def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
             'salary_range',
@@ -225,7 +237,7 @@ def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D1
         ],
         normalize=False
     ).fit(reference)
-    assert calc.calculate(data=analysis).data_quality_metric == 'missing_value_count'
+    assert calc.calculate(data=analysis).data_quality_metric == 'missing_values_count'
 
 
 def test_results_filtering_column_str(missing_value_result):
@@ -323,7 +335,7 @@ def test_results_driver_tenure_alerts(missing_value_result):
 
 
 def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_expect_nan():
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
         ],
@@ -336,7 +348,7 @@ def test_missing_value_sub_components_calculate_individual_alert_thresholds_inte
 
 
 def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_expect_numbers():
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
         ],
@@ -349,7 +361,7 @@ def test_missing_value_sub_components_calculate_individual_alert_thresholds_inte
 
 
 def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_one_nan():
-    calc = MissingValueCalculator(
+    calc = MissingValuesCalculator(
         column_names=[
             'car_value',
         ],

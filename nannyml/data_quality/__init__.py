@@ -4,5 +4,5 @@
 
 """Package containing the Data Quality Calculators implementation."""
 
-from .calculator import MissingValueCalculator
+from .calculator import MissingValuesCalculator, UnseenValuesCalculator
 from .result import Result
