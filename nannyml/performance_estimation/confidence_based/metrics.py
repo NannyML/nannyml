@@ -23,7 +23,7 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-from nannyml.thresholds import Threshold
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
@@ -119,25 +119,14 @@ class Metric(abc.ABC):
 
         # Calculate alert thresholds
         reference_chunk_results = np.asarray([self._realized_performance(chunk.data) for chunk in reference_chunks])
-        self.lower_threshold_value, self.upper_threshold_value = self.threshold.thresholds(reference_chunk_results)
-
-        # explicit None-check since value might be 0
-        if self.lower_threshold_value is not None and self.lower_threshold_value_limit is not None:
-            if self.lower_threshold_value < self.lower_threshold_value_limit:
-                self._logger.warning(
-                    f"{self.display_name} lower threshold value {self.lower_threshold_value} "
-                    f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-                )
-                self.lower_threshold_value = self.lower_threshold_value_limit
-
-        # explicit None-check since value might be 0
-        if self.upper_threshold_value is not None and self.upper_threshold_value_limit is not None:
-            if self.upper_threshold_value > self.upper_threshold_value_limit:
-                self._logger.warning(
-                    f"{self.display_name} upper threshold value {self.upper_threshold_value} "
-                    f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-                )
-                self.upper_threshold_value = self.upper_threshold_value_limit
+        self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=reference_chunk_results,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
         return
 
     @abc.abstractmethod
@@ -765,30 +754,14 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_chunk_performance = np.asarray(
             [self._true_positive_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
-
-        if (
-            self.upper_threshold_value_limit is not None
-            and upper_threshold_value is not None
-            and self.normalize_confusion_matrix is not None
-            and upper_threshold_value > self.upper_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} upper threshold value {upper_threshold_value} "
-                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-            )
-            upper_threshold_value = self.upper_threshold_value_limit
-
-        if (
-            self.lower_threshold_value_limit is not None
-            and lower_threshold_value is not None
-            and lower_threshold_value < self.lower_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} lower threshold value {lower_threshold_value} "
-                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-            )
-            lower_threshold_value = self.lower_threshold_value_limit
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -796,30 +769,14 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_chunk_performance = np.asarray(
             [self._true_negative_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
-
-        if (
-            self.upper_threshold_value_limit is not None
-            and upper_threshold_value is not None
-            and self.normalize_confusion_matrix is not None
-            and upper_threshold_value > self.upper_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} upper threshold value {upper_threshold_value} "
-                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-            )
-            upper_threshold_value = self.upper_threshold_value_limit
-
-        if (
-            self.lower_threshold_value_limit is not None
-            and lower_threshold_value is not None
-            and lower_threshold_value < self.lower_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} lower threshold value {lower_threshold_value} "
-                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-            )
-            lower_threshold_value = self.lower_threshold_value_limit
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -829,30 +786,14 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_chunk_performance = np.asarray(
             [self._false_positive_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
-
-        if (
-            self.upper_threshold_value_limit is not None
-            and upper_threshold_value is not None
-            and self.normalize_confusion_matrix is not None
-            and upper_threshold_value > self.upper_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} upper threshold value {upper_threshold_value} "
-                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-            )
-            upper_threshold_value = self.upper_threshold_value_limit
-
-        if (
-            self.lower_threshold_value_limit is not None
-            and lower_threshold_value is not None
-            and lower_threshold_value < self.lower_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} lower threshold value {lower_threshold_value} "
-                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-            )
-            lower_threshold_value = self.lower_threshold_value_limit
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -862,30 +803,14 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_chunk_performance = np.asarray(
             [self._false_negative_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
-
-        if (
-            self.upper_threshold_value_limit is not None
-            and upper_threshold_value is not None
-            and self.normalize_confusion_matrix is not None
-            and upper_threshold_value > self.upper_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} upper threshold value {upper_threshold_value} "
-                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-            )
-            upper_threshold_value = self.upper_threshold_value_limit
-
-        if (
-            self.lower_threshold_value_limit is not None
-            and lower_threshold_value is not None
-            and lower_threshold_value < self.lower_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} lower threshold value {lower_threshold_value} "
-                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-            )
-            lower_threshold_value = self.lower_threshold_value_limit
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -1427,7 +1352,14 @@ class BinaryClassificationBusinessCost(Metric):
         realized_chunk_performance = np.asarray(
             [self._true_positive_cost_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -1437,7 +1369,14 @@ class BinaryClassificationBusinessCost(Metric):
         realized_chunk_performance = np.asarray(
             [self._true_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -1448,7 +1387,14 @@ class BinaryClassificationBusinessCost(Metric):
         realized_chunk_performance = np.asarray(
             [self._false_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -1458,7 +1404,14 @@ class BinaryClassificationBusinessCost(Metric):
         realized_chunk_performance = np.asarray(
             [self._false_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 
@@ -1466,7 +1419,14 @@ class BinaryClassificationBusinessCost(Metric):
         realized_chunk_performance = np.asarray(
             [self._total_cost_realized_performance(chunk.data) for chunk in reference_chunks]
         )
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 

@@ -19,7 +19,7 @@ from nannyml._typing import Self
 from nannyml.base import _column_is_categorical, _remove_missing_data
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
-from nannyml.thresholds import Threshold
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Method(abc.ABC):
@@ -89,26 +89,14 @@ class Method(abc.ABC):
             [self._calculate(chunk.data[reference_data.name]) for chunk in self.chunker.split(data)]
         )
 
-        if self.threshold:
-            self.lower_threshold_value, self.upper_threshold_value = self.threshold.thresholds(reference_chunk_results)
-
-        # explicit None-check since value might be 0
-        if self.lower_threshold_value is not None and self.lower_threshold_value_limit is not None:
-            if self.lower_threshold_value < self.lower_threshold_value_limit:
-                self._logger.warning(
-                    f"{self.__class__.__name__} lower threshold value {self.lower_threshold_value} "
-                    f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-                )
-                self.lower_threshold_value = self.lower_threshold_value_limit
-
-        # explicit None-check since value might be 0
-        if self.upper_threshold_value is not None and self.upper_threshold_value_limit is not None:
-            if self.upper_threshold_value > self.upper_threshold_value_limit:
-                self._logger.warning(
-                    f"{self.__class__.__name__} upper threshold value {self.upper_threshold_value} "
-                    f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-                )
-                self.upper_threshold_value = self.upper_threshold_value_limit
+        self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=reference_chunk_results,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return self
 

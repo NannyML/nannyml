@@ -35,7 +35,7 @@ from nannyml.sampling_error.regression import (
     rmsle_sampling_error,
     rmsle_sampling_error_components,
 )
-from nannyml.thresholds import Threshold
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
@@ -166,33 +166,14 @@ class Metric(abc.ABC):
 
     def _alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = np.asarray([self.realized_performance(chunk.data) for chunk in reference_chunks])
-        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
-
-        if (
-            self.lower_threshold_value_limit is not None
-            and lower_threshold_value is not None
-            and lower_threshold_value < self.lower_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} lower threshold value {lower_threshold_value} "
-                f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-            )
-            lower_threshold_value = self.lower_threshold_value_limit
-
-        if (
-            self.upper_threshold_value_limit is not None
-            and upper_threshold_value is not None
-            and upper_threshold_value > self.upper_threshold_value_limit
-        ):
-            self._logger.warning(
-                f"{self.display_name} upper threshold value {upper_threshold_value} "
-                f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-            )
-            upper_threshold_value = self.upper_threshold_value_limit
-
-        # Special case... in case lower threshold equals 0, it should not be shown at all
-        if lower_threshold_value == 0.0:
-            lower_threshold_value = None
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return lower_threshold_value, upper_threshold_value
 

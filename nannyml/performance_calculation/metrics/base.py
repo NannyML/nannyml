@@ -12,7 +12,7 @@ import pandas as pd
 from nannyml._typing import ProblemType
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.thresholds import Threshold
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
@@ -76,25 +76,14 @@ class Metric(abc.ABC):
 
         # Calculate alert thresholds
         reference_chunk_results = np.asarray([self.calculate(chunk.data) for chunk in chunker.split(reference_data)])
-        self.lower_threshold_value, self.upper_threshold_value = self.threshold.thresholds(reference_chunk_results)
-
-        # explicit None-check since value might be 0
-        if self.lower_threshold_value is not None and self.lower_threshold_value_limit is not None:
-            if self.lower_threshold_value < self.lower_threshold_value_limit:
-                self._logger.warning(
-                    f"{self.display_name} lower threshold value {self.lower_threshold_value} "
-                    f"overridden by lower threshold value limit {self.lower_threshold_value_limit}"
-                )
-                self.lower_threshold_value = self.lower_threshold_value_limit
-
-        # explicit None-check since value might be 0
-        if self.upper_threshold_value is not None and self.upper_threshold_value_limit is not None:
-            if self.upper_threshold_value > self.upper_threshold_value_limit:
-                self._logger.warning(
-                    f"{self.display_name} upper threshold value {self.upper_threshold_value} "
-                    f"overridden by upper threshold value limit {self.upper_threshold_value_limit}"
-                )
-                self.upper_threshold_value = self.upper_threshold_value_limit
+        self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=reference_chunk_results,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return
 
