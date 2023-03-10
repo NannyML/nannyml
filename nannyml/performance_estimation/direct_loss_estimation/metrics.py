@@ -35,6 +35,7 @@ from nannyml.sampling_error.regression import (
     rmsle_sampling_error,
     rmsle_sampling_error_components,
 )
+from nannyml.thresholds import Threshold
 
 
 class Metric(abc.ABC):
@@ -51,6 +52,7 @@ class Metric(abc.ABC):
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
+        threshold: Threshold,
         upper_value_limit: Optional[float] = None,
         lower_value_limit: float = 0.0,
     ):
@@ -77,10 +79,11 @@ class Metric(abc.ABC):
         self.hyperparameter_tuning_config = hyperparameter_tuning_config
         self.hyperparameters = hyperparameters
 
-        self.upper_threshold: Optional[float] = None
-        self.lower_threshold: Optional[float] = None
-        self.upper_value_limit: Optional[float] = upper_value_limit
-        self.lower_value_limit: Optional[float] = lower_value_limit
+        self.threshold = threshold
+        self.upper_threshold_value: Optional[float] = None
+        self.lower_threshold_value: Optional[float] = None
+        self.upper_threshold_value_limit: Optional[float] = upper_value_limit
+        self.lower_threshold_value_limit: Optional[float] = lower_value_limit
 
         self._dee_model: LGBMRegressor
 
@@ -105,12 +108,8 @@ class Metric(abc.ABC):
         self._logger.debug(f"fitting {self.__class__.__name__}")
 
         # Calculate alert thresholds
-        reference_chunks = self.chunker.split(
-            reference_data,
-        )
-        self.lower_threshold, self.upper_threshold = self._alert_thresholds(
-            reference_chunks, lower_limit=self.lower_value_limit, upper_limit=self.upper_value_limit
-        )
+        reference_chunks = self.chunker.split(reference_data)
+        self.lower_threshold_value, self.upper_threshold_value = self._alert_thresholds(reference_chunks)
 
         # Delegate to subclass
         self._fit(reference_data)
@@ -165,29 +164,26 @@ class Metric(abc.ABC):
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _sampling_error method"
         )
 
-    def _alert_thresholds(
-        self,
-        reference_chunks: List[Chunk],
-        std_num: int = 3,
-        lower_limit: Optional[float] = None,
-        upper_limit: Optional[float] = None,
-    ) -> Tuple[Optional[float], Optional[float]]:
-        realized_chunk_performance = [self.realized_performance(chunk.data) for chunk in reference_chunks]
-        deviation = np.std(realized_chunk_performance) * std_num
-        mean_realised_performance = np.mean(realized_chunk_performance)
-        lower_threshold = mean_realised_performance - deviation
-        if lower_limit is not None:
-            lower_threshold = np.maximum(lower_threshold, lower_limit)
+    def _alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray([self.realized_performance(chunk.data) for chunk in reference_chunks])
+        lower_threshold_value, upper_threshold_value = self.threshold.thresholds(realized_chunk_performance)
+
+        if self.lower_threshold_value_limit is not None:
+            lower_threshold_value = np.maximum(lower_threshold_value, lower_threshold_value)
 
         # Special case... in case lower threshold equals 0, it should not be shown at all
-        if lower_threshold == 0.0:
-            lower_threshold = None
+        if lower_threshold_value == 0.0:
+            lower_threshold_value = None
 
-        upper_threshold = mean_realised_performance + deviation
-        if upper_limit is not None:
-            upper_threshold = np.minimum(upper_threshold, upper_limit)
+        if self.upper_threshold_value_limit is not None:
+            upper_threshold_value = np.minimum(self.upper_threshold_value_limit, upper_threshold_value)
 
-        return lower_threshold, upper_threshold
+        return lower_threshold_value, upper_threshold_value
+
+    def alert(self, value: float) -> bool:
+        return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
+            self.upper_threshold_value is not None and value > self.upper_threshold_value
+        )
 
     @abc.abstractmethod
     def realized_performance(self, data: pd.DataFrame) -> float:
@@ -306,6 +302,7 @@ class MAE(Metric):
         y_true: str,
         y_pred: str,
         chunker: Chunker,
+        threshold: Threshold,
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
@@ -317,6 +314,7 @@ class MAE(Metric):
             y_true=y_true,
             y_pred=y_pred,
             chunker=chunker,
+            threshold=threshold,
             tune_hyperparameters=tune_hyperparameters,
             hyperparameter_tuning_config=hyperparameter_tuning_config,
             hyperparameters=hyperparameters,
@@ -366,6 +364,7 @@ class MAPE(Metric):
         y_true: str,
         y_pred: str,
         chunker: Chunker,
+        threshold: Threshold,
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
@@ -377,6 +376,7 @@ class MAPE(Metric):
             y_true=y_true,
             y_pred=y_pred,
             chunker=chunker,
+            threshold=threshold,
             tune_hyperparameters=tune_hyperparameters,
             hyperparameter_tuning_config=hyperparameter_tuning_config,
             hyperparameters=hyperparameters,
@@ -427,6 +427,7 @@ class MSE(Metric):
         y_true: str,
         y_pred: str,
         chunker: Chunker,
+        threshold: Threshold,
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
@@ -438,6 +439,7 @@ class MSE(Metric):
             y_true=y_true,
             y_pred=y_pred,
             chunker=chunker,
+            threshold=threshold,
             tune_hyperparameters=tune_hyperparameters,
             hyperparameter_tuning_config=hyperparameter_tuning_config,
             hyperparameters=hyperparameters,
@@ -487,6 +489,7 @@ class MSLE(Metric):
         y_true: str,
         y_pred: str,
         chunker: Chunker,
+        threshold: Threshold,
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
@@ -498,6 +501,7 @@ class MSLE(Metric):
             y_true=y_true,
             y_pred=y_pred,
             chunker=chunker,
+            threshold=threshold,
             tune_hyperparameters=tune_hyperparameters,
             hyperparameter_tuning_config=hyperparameter_tuning_config,
             hyperparameters=hyperparameters,
@@ -553,6 +557,7 @@ class RMSE(Metric):
         y_true: str,
         y_pred: str,
         chunker: Chunker,
+        threshold: Threshold,
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
@@ -564,6 +569,7 @@ class RMSE(Metric):
             y_true=y_true,
             y_pred=y_pred,
             chunker=chunker,
+            threshold=threshold,
             tune_hyperparameters=tune_hyperparameters,
             hyperparameter_tuning_config=hyperparameter_tuning_config,
             hyperparameters=hyperparameters,
@@ -613,6 +619,7 @@ class RMSLE(Metric):
         y_true: str,
         y_pred: str,
         chunker: Chunker,
+        threshold: Threshold,
         tune_hyperparameters: bool,
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
@@ -624,6 +631,7 @@ class RMSLE(Metric):
             y_true=y_true,
             y_pred=y_pred,
             chunker=chunker,
+            threshold=threshold,
             tune_hyperparameters=tune_hyperparameters,
             hyperparameter_tuning_config=hyperparameter_tuning_config,
             hyperparameters=hyperparameters,
