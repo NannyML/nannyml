@@ -72,15 +72,18 @@ class MissingValueCalculator(AbstractCalculator):
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
         self.column_names = column_names
+        self.result: Optional[Result] = None
+        self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+
+        self.lower_threshold_limit: float = 0
         self.normalize = normalize
         if self.normalize:
             self.data_quality_metric = 'missing_value_rate'
+            self.upper_threshold_limit: float = 1
         else:
             self.data_quality_metric = 'missing_value_count'
-        # self._upper_alert_threshold: float
-        # self._lower_alert_threshold: float
-        self.result: Optional[Result] = None
-        self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+            self.upper_threshold_limit: float = None
+        
 
     def _calculate_missing_value_stats(self, data: pd.Series):
         count_tot = data.shape[0]
@@ -169,7 +172,6 @@ class MissingValueCalculator(AbstractCalculator):
             self.result = self.result.filter(period='reference')
             res = self._populate_alert_thresholds(res, self.column_names, self.result.data)
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
-            self.result.analysis_data = data.copy()
 
         return self.result
 
@@ -196,7 +198,6 @@ class MissingValueCalculator(AbstractCalculator):
             results[(column_name, 'upper_threshold')] = upper
             results[(column_name, 'lower_threshold')] = lower
             results[(column_name, 'alert')] = _add_alert_flag(results, column_name) # plotting suppresses them
-
         return results
 
     def _populate_alert_thresholds(
@@ -204,7 +205,7 @@ class MissingValueCalculator(AbstractCalculator):
         results_anl: pd.DataFrame,
         column_names: List[str],
         results_ref: pd.DataFrame
-    ) -> Tuple[float, float]:
+    ) -> pd.DataFrame:
         for column_name in column_names:
             # thresholds are the same across all results
             upper = results_ref[(column_name, 'upper_threshold')][0]
@@ -212,14 +213,17 @@ class MissingValueCalculator(AbstractCalculator):
             results_anl[(column_name, 'upper_threshold')] = upper
             results_anl[(column_name, 'lower_threshold')] = lower
             results_anl[(column_name, 'alert')] = _add_alert_flag(results_anl, column_name)
-
         return results_anl
 
     def _calculate_individual_alert_thresholds(self, values: pd.Series):
         avg = values.mean()
         std = values.std()
-        return avg+3*std, avg-3*std
-
+        upper, lower = avg+3*std, avg-3*std
+        # enforce threshold limits
+        if self.upper_threshold_limit:
+            upper = min(upper, self.upper_threshold_limit)
+        lower = max(lower, self.lower_threshold_limit)
+        return upper, lower
 
 def _add_alert_flag(drift_result: pd.DataFrame, column_name: str) -> pd.Series:
     alert = drift_result.apply(
@@ -237,9 +241,51 @@ def _create_multilevel_index(
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
     column_tuples = [
-        (column_name, el) for el in  [
+        (column_name, el) for column_name in column_names for el in  [
             'value', 'sampling_error', 'upper_confidence_boundary', 'lower_confidence_boundary'
-            ] for column_name in column_names
+        ]
     ]
     tuples = chunk_tuples + column_tuples
     return MultiIndex.from_tuples(tuples)
+
+
+[
+    ('chunk', 'key'),
+    ('chunk', 'chunk_index'),
+    ('chunk', 'start_index'),
+    ('chunk', 'end_index'),
+    ('chunk', 'start_date'),
+    ('chunk', 'end_date'),
+    ('chunk', 'period'),
+    ('car_value', 'value'),
+    ('car_value', 'sampling_error'),
+    ('car_value', 'upper_confidence_boundary'),
+    ('car_value', 'lower_confidence_boundary'),
+    ('car_value', 'upper_threshold'),
+    ('car_value', 'lower_threshold'),
+    ('car_value', 'alert'),
+    ('salary_range', 'value'),
+    ('salary_range', 'sampling_error'),
+    ('salary_range', 'upper_confidence_boundary'),
+    ('salary_range', 'lower_confidence_boundary'),
+    ('debt_to_income_ratio', 'value'),
+    ('debt_to_income_ratio', 'sampling_error'),
+    ('debt_to_income_ratio', 'upper_confidence_boundary'),
+    ('debt_to_income_ratio', 'lower_confidence_boundary'),
+    ('loan_length', 'value'),
+    ('loan_length', 'sampling_error'),
+    ('loan_length', 'upper_confidence_boundary'),
+    ('loan_length', 'lower_confidence_boundary'),
+    ('repaid_loan_on_prev_car', 'value'),
+    ('repaid_loan_on_prev_car', 'sampling_error'),
+    ('repaid_loan_on_prev_car', 'upper_confidence_boundary'),
+    ('repaid_loan_on_prev_car', 'lower_confidence_boundary'),
+    ('size_of_downpayment', 'value'),
+    ('size_of_downpayment', 'sampling_error'),
+    ('size_of_downpayment', 'upper_confidence_boundary'),
+    ('size_of_downpayment', 'lower_confidence_boundary'),
+    ('driver_tenure', 'value'),
+    ('driver_tenure', 'sampling_error'),
+    ('driver_tenure', 'upper_confidence_boundary'),
+    ('driver_tenure', 'lower_confidence_boundary')
+]

@@ -164,9 +164,14 @@ class Abstract1DResult(AbstractResult, ABC):
 
 
 class Abstract1DColumnsResult(AbstractResult, ABC):
-    def __init__(self, results_data: pd.DataFrame, column_names: List[str] = [], *args, **kwargs):
+    def __init__(self, results_data: pd.DataFrame, column_names: Union[str, List[str]] = [], *args, **kwargs):
         super().__init__(results_data)
-        self.column_names = column_names
+        if isinstance(column_names, str):
+            self.column_names = [column_names]
+        elif isinstance(column_names, list):
+            self.column_names = column_names
+        else:
+            raise TypeError("column_names should be either a column name string or a list of strings.")
 
     @property
     def chunk_keys(self) -> pd.Series:
@@ -188,9 +193,15 @@ class Abstract1DColumnsResult(AbstractResult, ABC):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, column_names: Optional[List[str]] = None, *args, **kwargs) -> Self:
-        if column_names is None:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, column_names: Union[str, List[str]] = None, *args, **kwargs) -> Self:
+        if isinstance(column_names, str):
+            column_names = [column_names]
+        elif isinstance(column_names, list):
+            pass
+        elif column_names is None:
             column_names = self.column_names
+        else:
+            raise TypeError("column_names should be either a column name string or a list of strings.")
 
         # is column names loc argument correct? likely
         # data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
