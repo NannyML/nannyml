@@ -74,10 +74,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         thresholds: dict, default={'kolmogorov_smirnov': StandardDeviationThreshold(),
-            'jensen_shannon': ConstantThreshold(lower=0, upper=1),
-            'wasserstein': ConstantThreshold(lower=0, upper=1),
-            'hellinger': ConstantThreshold(lower=0, upper=1),
-            'l_infinity': ConstantThreshold(lower=0, upper=1)}
+            'jensen_shannon': ConstantThreshold(upper=0.1),
+            'wasserstein': StandardDeviationThreshold(),
+            'hellinger': ConstantThreshold(upper=0.1),
+            'l_infinity': ConstantThreshold(upper=0.1)}
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
@@ -85,10 +85,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
             will be applied. The default method thresholds are as follows:
 
                 - `kolmogorov_smirnov`: `StandardDeviationThreshold()`
-                - `jensen_shannon`: `ConstantThreshold(lower=0, upper=1)`
-                - `wasserstein`: `ConstantThreshold(lower=0, upper=1)`
-                - `hellinger`: `ConstantThreshold(lower=0, upper=1)`
-                - `l_infinity`: `ConstantThreshold(lower=0, upper=1)`
+                - `jensen_shannon`: `ConstantThreshold(upper=0.1)`
+                - `wasserstein`: `StandardDeviationThreshold()`
+                - `hellinger`: `ConstantThreshold(upper=0.1)`
+                - `l_infinity`: `ConstantThreshold(upper=0.1)`
 
             The `chi2` method does not support custom thresholds for now. Additional research is required to determine
             how to transition from its current p-value based implementation.

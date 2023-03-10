@@ -86,6 +86,38 @@ class PerformanceCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
+        thresholds: dict, default={
+            'roc_auc': StandardDeviationThreshold(),
+            'f1': StandardDeviationThreshold(),
+            'precision': StandardDeviationThreshold(),
+            'recall': StandardDeviationThreshold(),
+            'specificity': StandardDeviationThreshold(),
+            'accuracy': StandardDeviationThreshold(),
+            'mae': StandardDeviationThreshold(),
+            'mape': StandardDeviationThreshold(),
+            'mse': StandardDeviationThreshold(),
+            'msle': StandardDeviationThreshold(),
+            'rmse': StandardDeviationThreshold(),
+            'rmsle': StandardDeviationThreshold(),
+        }
+
+            A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
+            to a method name. This dictionary is optional.
+            When a dictionary is given its values will override the default values. If no dictionary is given a default
+            will be applied. The default method thresholds are as follows:
+
+                - `roc_auc`: `StandardDeviationThreshold()`
+                - `f1`: `StandardDeviationThreshold()`
+                - `precision`: `StandardDeviationThreshold()`
+                - `recall`: `StandardDeviationThreshold()`
+                - `specificity`: `StandardDeviationThreshold()`
+                - `accuracy`: `StandardDeviationThreshold()`
+                - `mae`: `StandardDeviationThreshold()`
+                - `mape`: `StandardDeviationThreshold()`
+                - `mse`: `StandardDeviationThreshold()`
+                - `msle`: `StandardDeviationThreshold()`
+                - `rmse`: `StandardDeviationThreshold()`
+                - `rmsle`: `StandardDeviationThreshold()`
 
         Examples
         --------
