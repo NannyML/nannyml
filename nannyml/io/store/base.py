@@ -77,7 +77,7 @@ class Store(ABC):
             self._logger.info(f'loading object from store "{self}"')
             obj = self._load(**load_args)
             if as_type and not (obj is None or isinstance(obj, as_type)):
-                raise StoreException(f'loaded object is not of type "{type}"')
+                raise StoreException(f'loaded object is not of type "{as_type}"')
             return obj
         except Exception as exc:
             raise StoreException(f'an unexpected exception occurred when loading object: {exc}')
