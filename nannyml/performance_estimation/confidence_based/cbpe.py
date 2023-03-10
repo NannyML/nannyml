@@ -162,21 +162,27 @@ class CBPE(AbstractEstimator):
 
         if isinstance(metrics, str):
             metrics = [metrics]
-        self.metrics = [
-            MetricFactory.create(
-                metric,
-                self.problem_type,
-                y_pred_proba=self.y_pred_proba,
-                y_pred=self.y_pred,
-                y_true=self.y_true,
-                timestamp_column_name=self.timestamp_column_name,
-                chunker=self.chunker,
-                normalize_confusion_matrix=normalize_confusion_matrix,
-                business_cost_matrix=business_cost_matrix,
-                threshold=self.thresholds[metric],
+
+        self.metrics = []
+        for metric in metrics:
+            if metric not in SUPPORTED_METRIC_VALUES:
+                raise InvalidArgumentsException(
+                    f"unknown metric key '{metric}' given. " f"Should be one of {SUPPORTED_METRIC_VALUES}."
+                )
+            self.metrics.append(
+                MetricFactory.create(
+                    metric,
+                    self.problem_type,
+                    y_pred_proba=self.y_pred_proba,
+                    y_pred=self.y_pred,
+                    y_true=self.y_true,
+                    timestamp_column_name=self.timestamp_column_name,
+                    chunker=self.chunker,
+                    normalize_confusion_matrix=normalize_confusion_matrix,
+                    business_cost_matrix=business_cost_matrix,
+                    threshold=self.thresholds[metric],
+                )
             )
-            for metric in metrics
-        ]
 
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0

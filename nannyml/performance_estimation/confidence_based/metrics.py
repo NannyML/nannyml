@@ -21,6 +21,7 @@ import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import Threshold
 
@@ -246,9 +247,7 @@ class MetricFactory:
 
         if key not in cls.registry:
             raise InvalidArgumentsException(
-                f"unknown metric key '{key}' given. "
-                "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
-                "'accuracy']."
+                f"unknown metric key '{key}' given. " f"Should be one of {SUPPORTED_METRIC_VALUES}."
             )
 
         if use_case not in cls.registry[key]:
