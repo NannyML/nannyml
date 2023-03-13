@@ -1,13 +1,14 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Tuple, Union, List, Dict
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 
 from nannyml._typing import ProblemType
+from nannyml.chunk import Chunk, Chunker
 from nannyml.base import _list_missing
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
@@ -26,6 +27,14 @@ from nannyml.sampling_error.binary_classification import (
     specificity_sampling_error_components,
     business_value_sampling_error,
     business_value_sampling_error_components,
+    true_positive_sampling_error,
+    true_positive_sampling_error_components,
+    true_negative_sampling_error,
+    true_negative_sampling_error_components,
+    false_positive_sampling_error,
+    false_positive_sampling_error_components,
+    false_negative_sampling_error,
+    false_negative_sampling_error_components,
 )
 
 
@@ -357,7 +366,7 @@ class BinaryClassificationAccuracy(Metric):
 
 @MetricFactory.register(metric='business_value', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationBusinessValue(Metric):
-    """Accuracy metric."""
+    """Business Value metric."""
 
     def __init__(
         self,
@@ -368,7 +377,7 @@ class BinaryClassificationBusinessValue(Metric):
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
-        """Creates a new Accuracy instance."""
+        """Creates a new Business Value instance."""
 
         if normalize_business_value not in [None, "per_prediction"]:
             raise InvalidArgumentsException(
@@ -454,3 +463,372 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return business_value_sampling_error(self._sampling_error_components, data)
+
+
+@MetricFactory.register(metric='confusion_matrix', use_case=ProblemType.CLASSIFICATION_BINARY)
+class BinaryClassificationConfusionMatrix(Metric):
+    """Confusion Matrix metric."""
+
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        normalize_confusion_matrix: Optional[str] = None,
+        y_pred_proba: Optional[str] = None,
+        **kwargs,
+    ):
+        """Creates a new Confusion Matrix instance."""
+        super().__init__(
+            name='confusion_matrix',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+            lower_threshold_limit=-np.inf,
+            upper_threshold_limit=np.inf,
+            components=[
+                ('True Positive', 'true_positive'),
+                ('True Negative', 'true_negative'),
+                ('False Positive', 'false_positive'),
+                ('False Negative', 'false_negative'),
+            ],
+        )
+
+        self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
+
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
+    def __str__(self):
+        return "confusion_matrix"
+
+    def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
+        """Fits a Metric on reference data.
+
+        Parameters
+        ----------
+        reference_data: pd.DataFrame
+            The reference data used for fitting. Must have target data available.
+        chunker: Chunker
+            The :class:`~nannyml.chunk.Chunker` used to split the reference data into chunks.
+            This value is provided by the calling
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`.
+
+        """
+        self._fit(reference_data)
+
+        # Calculate alert thresholds
+        reference_chunks = chunker.split(
+            reference_data,
+        )
+
+        (
+            self.true_positive_lower_threshold,
+            self.true_positive_upper_threshold,
+        ) = self._calculate_confusion_matrix_alert_thresholds(
+            metric_name='true_positive',
+            reference_chunks=reference_chunks,
+        )
+        (
+            self.true_negative_lower_threshold,
+            self.true_negative_upper_threshold,
+        ) = self._calculate_confusion_matrix_alert_thresholds(
+            metric_name='true_negative',
+            reference_chunks=reference_chunks,
+        )
+        (
+            self.false_positive_lower_threshold,
+            self.false_positive_upper_threshold,
+        ) = self._calculate_confusion_matrix_alert_thresholds(
+            metric_name='false_positive',
+            reference_chunks=reference_chunks,
+        )
+        (
+            self.false_negative_lower_threshold,
+            self.false_negative_upper_threshold,
+        ) = self._calculate_confusion_matrix_alert_thresholds(
+            metric_name='false_negative',
+            reference_chunks=reference_chunks,
+        )
+
+        return
+
+    def _calculate_confusion_matrix_alert_thresholds(
+        self,
+        metric_name: str,
+        reference_chunks: List[Chunk],
+        std_num: int = 3,
+    ) -> Tuple[Optional[float], Optional[float]]:
+        if metric_name == 'true_positive':
+            chunked_reference_metric = [self._calculate_true_positives(chunk.data) for chunk in reference_chunks]
+        elif metric_name == 'true_negative':
+            chunked_reference_metric = [self._calculate_true_negatives(chunk.data) for chunk in reference_chunks]
+        elif metric_name == 'false_positive':
+            chunked_reference_metric = [self._calculate_false_positives(chunk.data) for chunk in reference_chunks]
+        elif metric_name == 'false_negative':
+            chunked_reference_metric = [self._calculate_false_negatives(chunk.data) for chunk in reference_chunks]
+        else:
+            raise InvalidArgumentsException(f"could not calculate metric {metric_name}. invalid metric name")
+
+        deviation = np.std(chunked_reference_metric) * std_num
+        mean_reference_metric = np.mean(chunked_reference_metric)
+
+        if self.normalize_confusion_matrix is not None:
+            upper_limit = 1
+            lower_limit = 0
+        else:
+            upper_limit = None
+            lower_limit = None
+
+        lower_threshold = mean_reference_metric - deviation
+        if lower_limit is not None:
+            lower_threshold = max(lower_threshold, lower_limit)
+        upper_threshold = mean_reference_metric + deviation
+        if upper_limit is not None:
+            upper_threshold = min(upper_threshold, upper_limit)
+
+        return lower_threshold, upper_threshold
+
+    def _fit(self, reference_data: pd.DataFrame):
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+
+        self._true_positive_sampling_error_components = true_positive_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._true_negative_sampling_error_components = true_negative_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._false_positive_sampling_error_components = false_positive_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+        self._false_negative_sampling_error_components = false_negative_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+
+    def _calculate_true_positives(self, data: pd.DataFrame):
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        if y_pred.isna().all():
+            raise InvalidArgumentsException(
+                f"could not calculate metric true_positive. prediction column contains no data"
+            )
+
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+
+        if self.normalize_confusion_matrix is None:
+            return num_tp
+        elif self.normalize_confusion_matrix == 'true':
+            return num_tp / (num_tp + num_fn)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_tp / (num_tp + num_fp)
+        else:  # normalize_confusion_matrix == 'all'
+            return num_tp / len(y_true)
+
+    def _calculate_true_negatives(self, data: pd.DataFrame) -> int:
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        if y_pred.isna().all():
+            raise InvalidArgumentsException(
+                f"could not calculate metric true_negative. prediction column contains no data"
+            )
+
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+
+        if self.normalize_confusion_matrix is None:
+            return num_tn
+        elif self.normalize_confusion_matrix == 'true':
+            return num_tn / (num_tn + num_fp)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_tn / (num_tn + num_fn)
+        else:  # normalize_confusion_matrix == 'all'
+            return num_tn / len(y_true)
+
+    def _calculate_false_positives(self, data: pd.DataFrame) -> int:
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        if y_pred.isna().all():
+            raise InvalidArgumentsException(
+                f"could not calculate metric false_positive. prediction column contains no data"
+            )
+
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+
+        if self.normalize_confusion_matrix is None:
+            return num_fp
+        elif self.normalize_confusion_matrix == 'true':
+            return num_fp / (num_fp + num_tn)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_fp / (num_fp + num_tp)
+        else:  # normalize_confusion_matrix == 'all'
+            return num_fp / len(y_true)
+
+    def _calculate_false_negatives(self, data: pd.DataFrame) -> int:
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        if y_pred.isna().all():
+            raise InvalidArgumentsException(
+                f"could not calculate metric false_negative. prediction column contains no data"
+            )
+
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+
+        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
+        num_tp = np.sum(np.logical_and(y_pred, y_true))
+
+        if self.normalize_confusion_matrix is None:
+            return num_fn
+        elif self.normalize_confusion_matrix == 'true':
+            return num_fn / (num_fn + num_tp)
+        elif self.normalize_confusion_matrix == 'pred':
+            return num_fn / (num_fn + num_tn)
+        else:  # normalize_confusion_matrix == 'all'
+            return num_fn / len(y_true)
+
+    def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+
+        column_name = 'true_positive'
+
+        true_pos_info = {}
+
+        realized_tp = self._calculate_true_positives(chunk_data)  # in this function, check if there are
+        sampling_error_tp = true_positive_sampling_error(self._true_positive_sampling_error_components, chunk_data)
+
+        true_pos_info[f'{column_name}_sampling_error'] = sampling_error_tp
+        true_pos_info[f'{column_name}'] = realized_tp
+        true_pos_info[f'{column_name}_upper_threshold'] = self.true_positive_upper_threshold
+        true_pos_info[f'{column_name}_lower_threshold'] = self.true_positive_lower_threshold
+        true_pos_info[f'{column_name}_alert'] = (
+            self.true_positive_lower_threshold > realized_tp
+            if self.true_positive_lower_threshold is not None
+            else False
+        ) or (
+            self.true_positive_upper_threshold < realized_tp
+            if self.true_positive_upper_threshold is not None
+            else False
+        )
+
+        return true_pos_info
+
+    def get_true_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+
+        column_name = 'true_negative'
+
+        true_neg_info = {}
+
+        realized_tn = self._calculate_true_negatives(chunk_data)
+        sampling_error_tn = true_negative_sampling_error(self._true_negative_sampling_error_components, chunk_data)
+
+        true_neg_info[f'{column_name}_sampling_error'] = sampling_error_tn
+        true_neg_info[f'{column_name}'] = realized_tn
+        true_neg_info[f'{column_name}_upper_threshold'] = self.true_negative_upper_threshold
+        true_neg_info[f'{column_name}_lower_threshold'] = self.true_negative_lower_threshold
+        true_neg_info[f'{column_name}_alert'] = (
+            self.true_negative_lower_threshold > realized_tn
+            if self.true_negative_lower_threshold is not None
+            else False
+        ) or (
+            self.true_negative_upper_threshold < realized_tn
+            if self.true_negative_upper_threshold is not None
+            else False
+        )
+
+        return true_neg_info
+
+    def get_false_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+
+        column_name = 'false_positive'
+
+        false_pos_info = {}
+
+        realized_fp = self._calculate_false_positives(chunk_data)
+        sampling_error_fp = false_positive_sampling_error(self._false_positive_sampling_error_components, chunk_data)
+
+        false_pos_info[f'{column_name}_sampling_error'] = sampling_error_fp
+        false_pos_info[f'{column_name}'] = realized_fp
+        false_pos_info[f'{column_name}_upper_threshold'] = self.false_positive_upper_threshold
+        false_pos_info[f'{column_name}_lower_threshold'] = self.false_positive_lower_threshold
+        false_pos_info[f'{column_name}_alert'] = (
+            self.false_positive_lower_threshold > realized_fp
+            if self.false_positive_lower_threshold is not None
+            else False
+        ) or (
+            self.false_positive_upper_threshold < realized_fp
+            if self.false_positive_upper_threshold is not None
+            else False
+        )
+
+        return false_pos_info
+
+    def get_false_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+
+        column_name = 'false_negative'
+
+        false_neg_info = {}
+
+        realized_fn = self._calculate_false_negatives(chunk_data)
+        sampling_error_fn = false_negative_sampling_error(self._false_negative_sampling_error_components, chunk_data)
+
+        false_neg_info[f'{column_name}_sampling_error'] = sampling_error_fn
+        false_neg_info[f'{column_name}'] = realized_fn
+        false_neg_info[f'{column_name}_upper_threshold'] = self.false_negative_upper_threshold
+        false_neg_info[f'{column_name}_lower_threshold'] = self.false_negative_lower_threshold
+        false_neg_info[f'{column_name}_alert'] = (
+            self.false_negative_lower_threshold > realized_fn
+            if self.false_negative_lower_threshold is not None
+            else False
+        ) or (
+            self.false_negative_upper_threshold < realized_fn
+            if self.false_negative_upper_threshold is not None
+            else False
+        )
+
+        return false_neg_info
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        chunk_record = {}
+
+        true_pos_info = self.get_true_pos_info(chunk_data)
+        chunk_record.update(true_pos_info)
+
+        true_neg_info = self.get_true_neg_info(chunk_data)
+        chunk_record.update(true_neg_info)
+
+        false_pos_info = self.get_false_pos_info(chunk_data)
+        chunk_record.update(false_pos_info)
+
+        false_neg_info = self.get_false_neg_info(chunk_data)
+        chunk_record.update(false_neg_info)
+
+        return chunk_record

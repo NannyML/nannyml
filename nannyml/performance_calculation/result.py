@@ -5,7 +5,8 @@
 """Contains the results of the realized performance calculation and provides plotting functionality."""
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
+import copy
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -17,6 +18,21 @@ from nannyml.performance_calculation.metrics.base import Metric
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
+
+SUPPORTED_METRIC_VALUES = [
+    'roc_auc',
+    'f1',
+    'precision',
+    'recall',
+    'specificity',
+    'accuracy',
+    'confusion_matrix',
+    'true_positive',
+    'true_negative',
+    'false_positive',
+    'false_negative',
+    'business_value',
+]
 
 
 class Result(Abstract1DResult, ResultCompareMixin):
@@ -50,9 +66,14 @@ class Result(Abstract1DResult, ResultCompareMixin):
     def keys(self) -> List[Key]:
         return [
             Key(
-                properties=(metric.column_name,), display_names=(f'realized {metric.display_name}', metric.display_name)
+                properties=(component[1],),
+                display_names=(
+                    f'estimated {component[0]}',
+                    component[0],
+                ),
             )
             for metric in self.metrics
+            for component in cast(Metric, metric).components
         ]
 
     @log_usage(UsageEvent.PERFORMANCE_PLOT, metadata_from_kwargs=['kind'])
@@ -119,3 +140,61 @@ class Result(Abstract1DResult, ResultCompareMixin):
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
+
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+        """Filter the results based on the specified period and metrics.
+
+        This function begins by expanding the metrics to all the metrics that were specified
+        or if no metrics were specified, all the metrics that were used to calculate the results.
+        Since some metrics have multiple components, we expand these to their individual components.
+        For example, the ``confusion_matrix`` metric has four components: ``true_positive``,
+        ``true_negative``, ``false_positive``, and ``false_negative``.  Specifying ``confusion_matrix``
+        or, for example, ``true_positive`` are both valid. We then filter the results based on the
+        specified period and metrics.
+        """
+        if metrics is None:
+            filtered_metrics = self.metrics
+        else:
+            filtered_metrics = []
+            for name in metrics:
+                if name not in SUPPORTED_METRIC_VALUES:
+                    raise InvalidArgumentsException(
+                        f"invalid metric '{name}'. Please choose from {SUPPORTED_METRIC_VALUES}"
+                    )
+
+                m = self._get_metric_by_name(name)
+
+                if m:
+                    filtered_metrics = filtered_metrics + [m]
+                else:
+                    raise InvalidArgumentsException(f"no '{name}' in result, did you calculate it?")
+
+        metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
+
+        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
+        if period != 'all':
+            data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
+
+        data = data.reset_index(drop=True)
+        res = copy.deepcopy(self)
+        res.data = data
+        res.metrics = filtered_metrics
+
+        return res
+
+    def _get_metric_by_name(self, name: str) -> Optional[Metric]:
+        for metric in self.metrics:
+            # If we match the metric by name, return the metric
+            # E.g. matching the name 'confusion_matrix'
+            if name == metric.name:
+                return metric
+            # If we match one of the metric component names
+            # E.g. matching the name 'true_positive' with the confusion matrix metric
+            elif name in metric.column_names:
+                # Only retain the component whose column name was given to filter on
+                res = copy.deepcopy(metric)
+                res.components = list(filter(lambda c: c[1] == name, metric.components))
+                return res
+            else:
+                continue
+        return None

@@ -1163,11 +1163,6 @@ class BinaryClassificationBusinessValue(Metric):
         **kwargs,
     ):
 
-        if normalize_business_value not in [None, "per_prediction"]:
-            raise InvalidArgumentsException(
-                f"normalize_business_value must be None or 'per_prediction', but got {normalize_business_value}"
-            )
-
         super().__init__(
             name='business_value',
             y_pred_proba=y_pred_proba,

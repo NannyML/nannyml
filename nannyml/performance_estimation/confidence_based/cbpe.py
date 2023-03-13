@@ -158,6 +158,11 @@ class CBPE(AbstractEstimator):
                 f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
             )
 
+        if normalize_business_value not in [None, "per_prediction"]:
+            raise InvalidArgumentsException(
+                f"normalize_business_value must be None or 'per_prediction', but got '{normalize_business_value}'"
+            )
+
         if isinstance(problem_type, str):
             self.problem_type = ProblemType.parse(problem_type)
         else:

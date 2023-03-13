@@ -19,6 +19,7 @@ from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsExc
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
 from nannyml.usage_logging import UsageEvent, log_usage
+from nannyml.performance_calculation.result import SUPPORTED_METRIC_VALUES
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
@@ -117,6 +118,24 @@ class PerformanceCalculator(AbstractCalculator):
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
+        if metrics is None or len(metrics) == 0:
+            raise InvalidArgumentsException(
+                "no metrics provided. Please provide a non-empty list of metrics."
+                f"Supported values are {SUPPORTED_METRIC_VALUES}."
+            )
+
+        valid_normalizations = [None, 'all', 'pred', 'true']
+        if normalize_confusion_matrix not in valid_normalizations:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' given was '{normalize_confusion_matrix}'. "
+                f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
+            )
+
+        if normalize_business_value not in [None, "per_prediction"]:
+            raise InvalidArgumentsException(
+                f"normalize_business_value must be None or 'per_prediction', but got '{normalize_business_value}'"
+            )
+
         self.y_true = y_true
         self.y_pred = y_pred
 
@@ -173,6 +192,7 @@ class PerformanceCalculator(AbstractCalculator):
             metric.fit(reference_data=reference_data, chunker=self.chunker)
 
         self.previous_reference_data = reference_data
+
         self.result = self._calculate(reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
         self.result.reference_data = reference_data.copy()
@@ -221,8 +241,10 @@ class PerformanceCalculator(AbstractCalculator):
             ]
         )
 
-        multilevel_index = _create_multilevel_index(metric_names=[metric.column_name for metric in self.metrics])
+        metric_column_names = [name for metric in self.metrics for name in metric.column_names]
+        multilevel_index = _create_multilevel_index(metric_names=metric_column_names)
         res.columns = multilevel_index
+        res = res.reset_index(drop=True)
 
         if self.result is None:
             self.result = Result(
@@ -235,8 +257,7 @@ class PerformanceCalculator(AbstractCalculator):
                 problem_type=self.problem_type,
             )
         else:
-            self.result = self.result.filter(period='reference')
-            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.data = pd.concat([self.result.data, res])  # .reset_index(drop=True)
             self.result.analysis_data = data.copy()
 
         return self.result
@@ -246,6 +267,7 @@ class PerformanceCalculator(AbstractCalculator):
         for metric in self.metrics:
             chunk_record = metric.get_chunk_record(chunk.data)
             chunk_records.update(chunk_record)
+
         return chunk_records
 
 
