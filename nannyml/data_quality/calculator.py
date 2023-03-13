@@ -300,10 +300,10 @@ class UnseenValuesCalculator(AbstractCalculator):
         elif isinstance(column_names, list):
             for el in column_names:
                 if not isinstance(el, str):
-                    raise TypeError("column_names should be either a column name string or a list of strings.")
+                    raise InvalidArgumentsException("column_names should be either a column name string or a list of strings.")
             self.column_names = column_names
         else:
-            raise TypeError("column_names should be either a column name string or a list of strings.")
+            raise InvalidArgumentsException("column_names should be either a column name string or a list of strings.")
         self.result: Optional[Result] = None
         # thresholds are the same across all results
         # By default for unseen values there is no lower threshold or threshold limit.
@@ -311,7 +311,7 @@ class UnseenValuesCalculator(AbstractCalculator):
         # The upper limit is also 0 because there shouldn't be any. If there is we alert.
         self._upper_alert_thresholds: float = 0
 
-        self.normalize = normalize 
+        self.normalize = normalize
         if self.normalize:
             self.data_quality_metric = 'unseen_values_rate'
         else:

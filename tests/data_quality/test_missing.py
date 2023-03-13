@@ -10,7 +10,6 @@ import pandas as pd
 import pytest
 
 from nannyml._typing import Result
-from nannyml.chunk import PeriodBasedChunker, SizeBasedChunker
 from nannyml.data_quality.calculator import MissingValuesCalculator
 
 from nannyml.datasets import load_synthetic_car_loan_data_quality_dataset
