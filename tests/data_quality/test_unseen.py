@@ -143,7 +143,7 @@ def test_whether_data_quality_metric_property_on_results_mv_rate(unseen_value_re
 
 def test_whether_result_data_dataframe_has_proper_columns(unseen_value_result):
     cols = unseen_value_result.data.columns
-    assert len(cols) == 7 + 2*7
+    assert len(cols) == 7 + 2*4
     assert ('chunk', 'key') in cols
     assert ('chunk', 'chunk_index') in cols
     assert ('chunk', 'start_index') in cols
@@ -155,16 +155,10 @@ def test_whether_result_data_dataframe_has_proper_columns(unseen_value_result):
     assert ('repaid_loan_on_prev_car', 'upper_threshold') in cols
     assert ('repaid_loan_on_prev_car', 'lower_threshold') in cols
     assert ('repaid_loan_on_prev_car', 'alert') in cols
-    assert ('repaid_loan_on_prev_car', 'sampling_error') in cols
-    assert ('repaid_loan_on_prev_car', 'upper_confidence_boundary') in cols
-    assert ('repaid_loan_on_prev_car', 'lower_confidence_boundary') in cols
     assert ('size_of_downpayment', 'value') in cols
     assert ('size_of_downpayment', 'upper_threshold') in cols
     assert ('size_of_downpayment', 'lower_threshold') in cols
     assert ('size_of_downpayment', 'alert') in cols
-    assert ('size_of_downpayment', 'sampling_error') in cols
-    assert ('size_of_downpayment', 'upper_confidence_boundary') in cols
-    assert ('size_of_downpayment', 'lower_confidence_boundary') in cols
 
 
 def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D103

@@ -204,23 +204,7 @@ class UnseenValuesCalculator(AbstractCalculator):
         seen_values = self._categorical_seen_values[column_name]
         value = self._calculate_unseen_value_stats(data[column_name], seen_values)
         result['value'] = value
-        result['sampling_error'] = 0
-        # TODO: Ask Niels, should confidence boundaries be 0, value or None or ??
-        result['upper_confidence_boundary'] = 0
-        result['lower_confidence_boundary'] = 0
         return result
-
-    # Not Needed for default thr strategy
-    # def _calculate_alert_thresholds(self, results, column_names) -> Tuple[float, float]:
-    #     for column_name in column_names:
-    #         values = results.loc[:, (column_name, 'value')]
-    #         upper, lower = self._calculate_individual_alert_thresholds(values)
-    #         self._upper_alert_thresholds[column_name] = upper
-    #         self._lower_alert_thresholds[column_name] = lower
-    #         results[(column_name, 'upper_threshold')] = upper
-    #         results[(column_name, 'lower_threshold')] = lower
-    #         results[(column_name, 'alert')] = _add_alert_flag(results, column_name) # plotting suppresses them
-    #     return results
 
     def _populate_alert_thresholds(
         self,
@@ -232,10 +216,6 @@ class UnseenValuesCalculator(AbstractCalculator):
             results_anl[(column_name, 'lower_threshold')] = np.nan
             results_anl[(column_name, 'alert')] = _add_alert_flag(results_anl, column_name)
         return results_anl
-
-    # Not Needed for default thr strategy
-    # def _calculate_individual_alert_thresholds(self, values: pd.Series):
-        # pass
 
 
 def _add_alert_flag(drift_result: pd.DataFrame, column_name: str) -> pd.Series:
@@ -253,10 +233,6 @@ def _create_multilevel_index(
 ):
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    column_tuples = [
-        (column_name, el) for column_name in column_names for el in  [
-            'value', 'sampling_error', 'upper_confidence_boundary', 'lower_confidence_boundary'
-        ]
-    ]
+    column_tuples = [(column_name, el) for column_name in column_names for el in  ['value']]
     tuples = chunk_tuples + column_tuples
     return MultiIndex.from_tuples(tuples)
