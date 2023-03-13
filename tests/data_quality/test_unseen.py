@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from nannyml._typing import Result
-from nannyml.data_quality.calculator import UnseenValuesCalculator
+from nannyml.data_quality.unseen import UnseenValuesCalculator
 
 from nannyml.datasets import load_synthetic_car_loan_data_quality_dataset
 
@@ -179,93 +179,49 @@ def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D1
     assert calc.calculate(data=analysis).data_quality_metric == 'unseen_values_count'
 
 
-# def test_results_filtering_column_repaid_loan_on_prev_car_str(unseen_value_result):
-#     try:
-#         missing_value_result.filter(column_names='repaid_loan_on_prev_car')
-#     except Exception:
-#         pytest.fail()
+def test_results_filtering_column_repaid_loan_on_prev_car_str(unseen_value_result):
+    try:
+        unseen_value_result.filter(column_names='repaid_loan_on_prev_car')
+    except Exception:
+        pytest.fail()
 
 
-# def test_results_filtering_columns_size_of_downpayment_list(unseen_value_result):
-#     try:
-#         missing_value_result.filter(column_names=[
-#             'size_of_downpayment',
-#         ])
-#     except Exception:
-#         pytest.fail()
+def test_results_filtering_columns_size_of_downpayment_list(unseen_value_result):
+    try:
+        unseen_value_result.filter(column_names=[
+            'size_of_downpayment',
+        ])
+    except Exception:
+        pytest.fail()
 
 
-# def test_results_car_value_values(missing_value_result):
- 
-#     res = missing_value_result.filter(column_names='car_value').to_df()
-#     assert list(res[('car_value', 'value')]) == [0]*20
+def test_results_repaid_loan_on_prev_car_values(unseen_value_result):
+    res = unseen_value_result.filter(column_names='repaid_loan_on_prev_car').to_df()
+    assert list(res[('repaid_loan_on_prev_car', 'value')]) == [0]*20
 
 
-# def test_results_car_value_alerts(missing_value_result):
+def test_results_repaid_loan_on_prev_car_alerts(unseen_value_result):
+    res = unseen_value_result.filter(column_names='repaid_loan_on_prev_car').to_df()
+    assert list(res[('repaid_loan_on_prev_car', 'alert')]) == [False]*20
+
+
+def test_results_size_of_downpayment_values(unseen_value_result):
     
-#     res = missing_value_result.filter(column_names='car_value').to_df()
-#     assert list(res[('car_value', 'alert')]) == [False]*20
+    res = unseen_value_result.filter(column_names='size_of_downpayment').to_df()
+    assert list(res[('size_of_downpayment', 'value')]) == [0]*10 + [
+        0.0094,
+        0.0062,
+        0.0076,
+        0.0072,
+        0.0096,
+        0.0188,
+        0.0178,
+        0.0202,
+        0.0222,
+        0.021,
+    ]
 
 
-# def test_results_salary_range_values(missing_value_result):
-    
-#     res = missing_value_result.filter(column_names='salary_range').to_df()
-#     assert list(res[('salary_range', 'value')]) == [
-#         0.0998,
-#         0.1004,
-#         0.0912,
-#         0.1018,
-#         0.1014,
-#         0.0966,
-#         0.1028,
-#         0.1108,
-#         0.1018,
-#         0.0934,
-#         0.1004,
-#         0.1064,
-#         0.0982,
-#         0.0966,
-#         0.0984,
-#         0.2188,
-#         0.2214,
-#         0.2178,
-#         0.2264,
-#         0.2156
-#     ]
-
-
-# def test_results_salary_range_alerts(missing_value_result):
-#     res = missing_value_result.filter(column_names='salary_range').to_df()
-#     assert list(res[('salary_range', 'alert')]) == [False]*15 + [True]*5
-
-
-# def test_results_driver_tenure_values(missing_value_result): 
-#     res = missing_value_result.filter(column_names='driver_tenure').to_df()
-#     assert list(res[('driver_tenure', 'value')]) == [
-#         0.1018,
-#         0.1080,
-#         0.0942,
-#         0.099,
-#         0.094,
-#         0.1066,
-#         0.0978,
-#         0.1062,
-#         0.0958,
-#         0.0966,
-#         0.1074,
-#         0.1042,
-#         0.094,
-#         0.1,
-#         0.0944,
-#         0.2196,
-#         0.2138,
-#         0.2236,
-#         0.2296,
-#         0.2134
-#     ]
-
-
-# def test_results_driver_tenure_alerts(missing_value_result):
-    
-#     res = missing_value_result.filter(column_names='driver_tenure').to_df()
-#     assert list(res[('driver_tenure', 'alert')]) == [False]*15 + [True]*5
+def test_results_size_of_downpayment_alerts(unseen_value_result):
+    res = unseen_value_result.filter(column_names='size_of_downpayment').to_df()
+    assert list(res[('size_of_downpayment', 'alert')]) == [False]*10 + [True]*10

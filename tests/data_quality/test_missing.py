@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from nannyml._typing import Result
-from nannyml.data_quality.calculator import MissingValuesCalculator
+from nannyml.data_quality.missing import MissingValuesCalculator
 
 from nannyml.datasets import load_synthetic_car_loan_data_quality_dataset
 
@@ -76,7 +76,7 @@ def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa:
 
 
 def test_missing_value_calculator_validates_column_names_list_elements():
-    with pytest.raises(TypeError):
+    with pytest.raises(InvalidArgumentsException):
         calc = MissingValuesCalculator(
             column_names=[
                 'car_value',
