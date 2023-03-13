@@ -122,9 +122,6 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             imputer_continuous = SimpleImputer(missing_values=np.nan, strategy='mean')
         self._imputer_continuous = imputer_continuous
 
-        # sampling error
-        self._sampling_error_components: Tuple = ()
-
         self.previous_reference_results: Optional[pd.DataFrame] = None
 
         self.result: Optional[Result] = None
@@ -171,21 +168,6 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         # Calculate thresholds
         self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
 
-        # Reference stability
-        self._sampling_error_components = (
-            _calculate_reconstruction_error_for_data(
-                column_names=self.column_names,
-                categorical_column_names=self.categorical_column_names,
-                continuous_column_names=self.continuous_column_names,
-                data=reference_data,  # TODO: check with Nikos if this needs to be chunked or not?
-                encoder=self._encoder,
-                scaler=self._scaler,
-                pca=self._pca,
-                imputer_categorical=self._imputer_categorical,
-                imputer_continuous=self._imputer_continuous,
-            ).std(),
-        )
-
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
 
@@ -213,7 +195,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'period': 'analysis',
-                    'sampling_error': sampling_error(self._sampling_error_components, chunk.data),
+                    'sampling_error': sampling_error(self._reference_reconstruction_error, chunk.data),
                     'reconstruction_error': _calculate_reconstruction_error_for_data(
                         column_names=self.column_names,
                         categorical_column_names=self.categorical_column_names,
@@ -255,7 +237,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
     def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
         reference_chunks = self.chunker.split(reference_data)
-        reference_reconstruction_error = pd.Series(
+        self._reference_reconstruction_error = pd.Series(
             [
                 _calculate_reconstruction_error_for_data(
                     column_names=self.column_names,
@@ -273,10 +255,9 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         )
 
         return (
-            reference_reconstruction_error.mean() + 3 * reference_reconstruction_error.std(),
-            reference_reconstruction_error.mean() - 3 * reference_reconstruction_error.std(),
+            self._reference_reconstruction_error.mean() + 3 * self._reference_reconstruction_error.std(),
+            self._reference_reconstruction_error.mean() - 3 * self._reference_reconstruction_error.std(),
         )
-
 
 def _calculate_reconstruction_error_for_data(
     column_names: List[str],
@@ -374,7 +355,7 @@ def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_th
 
 
 def sampling_error(components: Tuple, data: pd.DataFrame) -> float:
-    return components[0] / np.sqrt(len(data))
+    return components.std() / np.sqrt(len(data))
 
 
 def _create_multilevel_index():
