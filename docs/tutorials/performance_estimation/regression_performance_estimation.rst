@@ -23,6 +23,12 @@ Just The Code
     :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 1 3 4 6 8
 
+.. admonition:: **Advanced configuration**
+    :class: hint
+
+    - Set up custom chunking [:ref:`tutorial <chunking>`] [`API reference <../../nannyml/nannyml.chunk.html>`__]
+    - Set up custom thresholds [:ref:`tutorial <thresholds>`] [`API reference <../../nannyml/nannyml.thresholds.html>`__]
+
 
 Walkthrough
 -----------
