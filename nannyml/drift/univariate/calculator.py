@@ -73,11 +73,13 @@ class UnivariateDriftCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-        thresholds: dict, default={'kolmogorov_smirnov': StandardDeviationThreshold(),
-            'jensen_shannon': ConstantThreshold(upper=0.1),
-            'wasserstein': StandardDeviationThreshold(),
-            'hellinger': ConstantThreshold(upper=0.1),
-            'l_infinity': ConstantThreshold(upper=0.1)}
+        thresholds: dict, default={ \
+                                    'kolmogorov_smirnov': StandardDeviationThreshold(), \
+                                    'jensen_shannon': ConstantThreshold(upper=0.1), \
+                                    'wasserstein': StandardDeviationThreshold(), \
+                                    'hellinger': ConstantThreshold(upper=0.1), \
+                                    'l_infinity': ConstantThreshold(upper=0.1) \
+                                }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.

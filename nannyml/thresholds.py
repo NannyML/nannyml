@@ -124,7 +124,7 @@ class StandardDeviationThreshold(Threshold):
         self,
         std_lower_multiplier: Optional[Union[float, int]] = 3,
         std_upper_multiplier: Optional[Union[float, int]] = 3,
-        agg_func: Callable[[np.ndarray], Any] = np.mean,
+        offset_from: Callable[[np.ndarray], Any] = np.mean,
     ):
         """Creates a new StandardDeviationThreshold instance.
 
@@ -137,7 +137,7 @@ class StandardDeviationThreshold(Threshold):
                 The number the standard deviation of the input array will be multiplied with to form the upper offset.
                 This value will be added to the aggregate of the input array.
                 Defaults to 3.
-            agg_func: Callable[[np.ndarray], Any], default=np.mean
+            offset_from: Callable[[np.ndarray], Any], default=np.mean
                 A function that will be applied to the input array to aggregate it into a single value.
                 Adding the upper offset to this value will yield the upper threshold, subtracting the lower offset
                 will yield the lower threshold.
@@ -147,7 +147,7 @@ class StandardDeviationThreshold(Threshold):
 
         self.std_lower_multiplier = std_lower_multiplier
         self.std_upper_multiplier = std_upper_multiplier
-        self.agg_func = agg_func
+        self.agg_func = offset_from
 
     def thresholds(self, data: np.ndarray, **kwargs) -> Tuple[Optional[float], Optional[float]]:
         aggregate = self.agg_func(data)

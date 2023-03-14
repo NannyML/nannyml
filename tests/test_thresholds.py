@@ -56,7 +56,7 @@ def test_constant_threshold_returns_correct_threshold_values(lower, upper):
 
 
 @pytest.mark.parametrize(
-    'lower_multiplier, upper_multiplier, agg_func',
+    'lower_multiplier, upper_multiplier, offset_from',
     [(1, 1, np.median), (1, None, np.median), (None, 1, np.median), (None, None, np.median)],
 )
 def test_standard_deviation_threshold_init_sets_instance_attributes(lower_multiplier, upper_multiplier, agg_func):
@@ -95,9 +95,9 @@ def test_standard_deviation_threshold_init_raises_invalid_arguments_exception_wh
         _ = StandardDeviationThreshold(std_lower_multiplier=lower_multiplier, std_upper_multiplier=upper_multiplier)
 
 
-@pytest.mark.parametrize('agg_func, expected', [(np.min, -1), (np.max, 1), (np.median, 0), (np.mean, 0)])
-def test_standard_deviation_threshold_applies_agg_func(agg_func, expected):
-    t = StandardDeviationThreshold(std_lower_multiplier=0, std_upper_multiplier=0, agg_func=agg_func)
+@pytest.mark.parametrize('offset_from, expected', [(np.min, -1), (np.max, 1), (np.median, 0), (np.mean, 0)])
+def test_standard_deviation_threshold_applies_offset_from(agg_func, expected):
+    t = StandardDeviationThreshold(std_lower_multiplier=0, std_upper_multiplier=0, offset_from=agg_func)
 
     lt, ut = t.thresholds(np.asarray([-1, -0.5, 0, 0.5, 1]))
 
@@ -109,7 +109,7 @@ def test_standard_deviation_threshold_applies_agg_func(agg_func, expected):
     'std_lower_multiplier, expected_threshold', [(1, -1.8660254037844386), (0, -1), (2, -2.732050807568877)]
 )
 def test_standard_deviation_threshold_correctly_applies_std_lower_multiplier(std_lower_multiplier, expected_threshold):
-    t = StandardDeviationThreshold(std_lower_multiplier=std_lower_multiplier, agg_func=np.min)
+    t = StandardDeviationThreshold(std_lower_multiplier=std_lower_multiplier, offset_from=np.min)
     lt, _ = t.thresholds(np.asarray([-1, 1, 1, 1]))
     assert lt == expected_threshold
 
@@ -121,7 +121,7 @@ def test_standard_deviation_threshold_correctly_applies_std_lower_multiplier(std
 def test_standard_deviation_threshold_treats_none_multiplier_as_no_threshold(
     std_lower_multiplier, std_upper_multiplier, exp_lower_threshold, exp_upper_threshold
 ):
-    t = StandardDeviationThreshold(std_lower_multiplier, std_upper_multiplier, agg_func=np.min)
+    t = StandardDeviationThreshold(std_lower_multiplier, std_upper_multiplier, offset_from=np.min)
     lt, ut = t.thresholds(np.asarray([-1, 1, 1, 1]))
 
     assert lt == exp_lower_threshold
@@ -129,7 +129,7 @@ def test_standard_deviation_threshold_treats_none_multiplier_as_no_threshold(
 
 
 @pytest.mark.parametrize(
-    'low_mult, up_mult, agg_func, exp_low_threshold, exp_up_threshold',
+    'low_mult, up_mult, offset_from, exp_low_threshold, exp_up_threshold',
     [
         (1.4, 2, np.median, 2.382381972241136, 31.81088289679838),
         (0.3, 3.1, np.min, -2.5966324345197567, 26.83186849003749),

@@ -119,13 +119,13 @@ class DLE(AbstractEstimator):
 
             For an overview of possible parameters for the tuning process check out the
             `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
-        thresholds: dict, default={
-            'mae': StandardDeviationThreshold(),
-            'mape': StandardDeviationThreshold(),
-            'mse': StandardDeviationThreshold(),
-            'msle': StandardDeviationThreshold(),
-            'rmse': StandardDeviationThreshold(),
-            'rmsle': StandardDeviationThreshold(),
+        thresholds: dict, default={ \
+            'mae': StandardDeviationThreshold(), \
+            'mape': StandardDeviationThreshold(), \
+            'mse': StandardDeviationThreshold(), \
+            'msle': StandardDeviationThreshold(), \
+            'rmse': StandardDeviationThreshold(), \
+            'rmsle': StandardDeviationThreshold(), \
         }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass

@@ -105,15 +105,15 @@ class CBPE(AbstractEstimator):
             The i-th row and j-th column entry of the matrix contains the business cost for predicting the
             i-th class as the j-th class. The matrix must have the same number of rows and columns as the number
             of classes in the problem.
-        thresholds: dict, default={
-            'roc_auc': StandardDeviationThreshold(),
-            'f1': StandardDeviationThreshold(),
-            'precision': StandardDeviationThreshold(),
-            'recall': StandardDeviationThreshold(),
-            'specificity': StandardDeviationThreshold(),
-            'accuracy': StandardDeviationThreshold(),
-            'confusion_matrix': StandardDeviationThreshold(),
-            'business_cost': StandardDeviationThreshold(),
+        thresholds: dict, default={ \
+            'roc_auc': StandardDeviationThreshold(), \
+            'f1': StandardDeviationThreshold(), \
+            'precision': StandardDeviationThreshold(), \
+            'recall': StandardDeviationThreshold(), \
+            'specificity': StandardDeviationThreshold(), \
+            'accuracy': StandardDeviationThreshold(), \
+            'confusion_matrix': StandardDeviationThreshold(), \
+            'business_cost': StandardDeviationThreshold(), \
         }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
