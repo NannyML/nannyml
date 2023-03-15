@@ -59,12 +59,12 @@ def test_constant_threshold_returns_correct_threshold_values(lower, upper):
     'lower_multiplier, upper_multiplier, offset_from',
     [(1, 1, np.median), (1, None, np.median), (None, 1, np.median), (None, None, np.median)],
 )
-def test_standard_deviation_threshold_init_sets_instance_attributes(lower_multiplier, upper_multiplier, agg_func):
-    sut = StandardDeviationThreshold(lower_multiplier, upper_multiplier, agg_func)
+def test_standard_deviation_threshold_init_sets_instance_attributes(lower_multiplier, upper_multiplier, offset_from):
+    sut = StandardDeviationThreshold(lower_multiplier, upper_multiplier, offset_from)
 
     assert sut.std_lower_multiplier == lower_multiplier
     assert sut.std_upper_multiplier == upper_multiplier
-    assert sut.agg_func == agg_func
+    assert sut.offset_from == offset_from
 
 
 def test_standard_deviation_threshold_init_sets_default_instance_attributes():
@@ -72,7 +72,7 @@ def test_standard_deviation_threshold_init_sets_default_instance_attributes():
 
     assert sut.std_lower_multiplier == 3
     assert sut.std_upper_multiplier == 3
-    assert sut.agg_func == np.mean
+    assert sut.offset_from == np.mean
 
 
 @pytest.mark.parametrize(
@@ -96,8 +96,8 @@ def test_standard_deviation_threshold_init_raises_invalid_arguments_exception_wh
 
 
 @pytest.mark.parametrize('offset_from, expected', [(np.min, -1), (np.max, 1), (np.median, 0), (np.mean, 0)])
-def test_standard_deviation_threshold_applies_offset_from(agg_func, expected):
-    t = StandardDeviationThreshold(std_lower_multiplier=0, std_upper_multiplier=0, offset_from=agg_func)
+def test_standard_deviation_threshold_applies_offset_from(offset_from, expected):
+    t = StandardDeviationThreshold(std_lower_multiplier=0, std_upper_multiplier=0, offset_from=offset_from)
 
     lt, ut = t.thresholds(np.asarray([-1, -0.5, 0, 0.5, 1]))
 
@@ -136,9 +136,9 @@ def test_standard_deviation_threshold_treats_none_multiplier_as_no_threshold(
     ],
 )
 def test_standard_deviation_threshold_correctly_returns_thresholds(
-    low_mult, up_mult, agg_func, exp_low_threshold, exp_up_threshold
+    low_mult, up_mult, offset_from, exp_low_threshold, exp_up_threshold
 ):
-    t = StandardDeviationThreshold(low_mult, up_mult, agg_func)
+    t = StandardDeviationThreshold(low_mult, up_mult, offset_from)
     lt, ut = t.thresholds(np.asarray(range(30)))
 
     assert lt == exp_low_threshold

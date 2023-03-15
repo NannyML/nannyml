@@ -153,10 +153,10 @@ class StandardDeviationThreshold(Threshold):
 
         self.std_lower_multiplier = std_lower_multiplier
         self.std_upper_multiplier = std_upper_multiplier
-        self.agg_func = offset_from
+        self.offset_from = offset_from
 
     def thresholds(self, data: np.ndarray, **kwargs) -> Tuple[Optional[float], Optional[float]]:
-        aggregate = self.agg_func(data)
+        aggregate = self.offset_from(data)
         std = np.std(data)
 
         lower_threshold = aggregate - std * self.std_lower_multiplier if self.std_lower_multiplier is not None else None
