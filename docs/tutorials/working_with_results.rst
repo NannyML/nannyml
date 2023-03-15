@@ -22,6 +22,9 @@ Just the code
 Walkthrough
 -----------
 
+The data structure
+===================
+
 In order to obtain results we first have to perform some calculation. We'll start by loading the `reference` and
 `analysis` sample data for binary classification.
 We'll perform univariate drift detection on a number of columns whose names are printed below.
@@ -65,6 +68,10 @@ leading to an alert.
 .. nbtable::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
     :cell: 4
+
+
+Filtering
+==========
 
 Working with the `Multilevel indexes` can be very powerful, yet also quite challenging.
 The following snippet illustrates how to retrieve all calculated method values from our results.
@@ -111,6 +118,9 @@ To avoid the use of a `Multilevel index`, we've provided a switch in the
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
     :cell: 10
 
+Plotting
+==========
+
 Results can be visualized by using the built in plotting functionality. With a quick call of the
 :meth:`~nannyml.base.AbstractResult.plot()` function we can create a Plotly
 `Figure <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html>`_.
@@ -153,6 +163,9 @@ specifying the `kind` parameter.
     :cells: 15
 
 .. image:: /_static/tutorials/working_with_results/distribution_plot.svg
+
+Comparing
+==========
 
 Another neat feature is that we can plot a comparison between multiple results. Suppose we want to visualize the
 estimated performance with respect to the univariate drift metrics for the _salary_range_ column.
