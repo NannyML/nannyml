@@ -557,7 +557,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         metric_name: str,
         reference_chunks: List[Chunk],
         std_num: int = 3,
-    ) -> Tuple[Optional[float], Optional[float]]:
+    ) -> Tuple[float, float]:
         if metric_name == 'true_positive':
             chunked_reference_metric = [self._calculate_true_positives(chunk.data) for chunk in reference_chunks]
         elif metric_name == 'true_negative':
@@ -620,7 +620,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         if y_pred.isna().all():
             raise InvalidArgumentsException(
-                f"could not calculate metric true_positive. prediction column contains no data"
+                "could not calculate metric true_positive. prediction column contains no data"
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
@@ -646,7 +646,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         if y_pred.isna().all():
             raise InvalidArgumentsException(
-                f"could not calculate metric true_negative. prediction column contains no data"
+                "could not calculate metric true_negative. prediction column contains no data"
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
@@ -672,7 +672,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         if y_pred.isna().all():
             raise InvalidArgumentsException(
-                f"could not calculate metric false_positive. prediction column contains no data"
+                "could not calculate metric false_positive. prediction column contains no data"
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
@@ -698,7 +698,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         if y_pred.isna().all():
             raise InvalidArgumentsException(
-                f"could not calculate metric false_negative. prediction column contains no data"
+                "could not calculate metric false_negative. prediction column contains no data"
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)

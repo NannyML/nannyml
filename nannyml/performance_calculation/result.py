@@ -12,6 +12,8 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml._typing import Key, ProblemType
+
+# from nannyml import _typing
 from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
@@ -32,6 +34,12 @@ SUPPORTED_METRIC_VALUES = [
     'false_positive',
     'false_negative',
     'business_value',
+    'mae',
+    'mape',
+    'mse',
+    'msle',
+    'rmse',
+    'rmsle',
 ]
 
 
@@ -142,25 +150,14 @@ class Result(Abstract1DResult, ResultCompareMixin):
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
-        """Filter the results based on the specified period and metrics.
-
-        This function begins by expanding the metrics to all the metrics that were specified
-        or if no metrics were specified, all the metrics that were used to calculate the results.
-        Since some metrics have multiple components, we expand these to their individual components.
-        For example, the ``confusion_matrix`` metric has four components: ``true_positive``,
-        ``true_negative``, ``false_positive``, and ``false_negative``.  Specifying ``confusion_matrix``
-        or, for example, ``true_positive`` are both valid. We then filter the results based on the
-        specified period and metrics.
-        """
+        """Filter the results based on the specified period and metrics."""
         if metrics is None:
             filtered_metrics = self.metrics
         else:
             filtered_metrics = []
             for name in metrics:
                 if name not in SUPPORTED_METRIC_VALUES:
-                    raise InvalidArgumentsException(
-                        f"invalid metric '{name}'. Please choose from {SUPPORTED_METRIC_VALUES}"
-                    )
+                    raise InvalidArgumentsException(f"invalid metric '{name}'")
 
                 m = self._get_metric_by_name(name)
 

@@ -57,14 +57,14 @@ class RegressionMetric(Metric, ABC):
 class MAE(RegressionMetric):
     """Mean Absolute Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAE instance."""
         super().__init__(
-            display_name='MAE',
-            column_name='mae',
+            name='mae',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            components=[('MAE', 'mae')],
         )
 
         # sampling error
@@ -102,14 +102,14 @@ class MAE(RegressionMetric):
 class MAPE(RegressionMetric):
     """Mean Absolute Percentage Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAPE instance."""
         super().__init__(
-            display_name='MAPE',
-            column_name='mape',
+            name='mape',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            components=[('MAPE', 'mape')],
         )
 
         # sampling error
@@ -147,14 +147,14 @@ class MAPE(RegressionMetric):
 class MSE(RegressionMetric):
     """Mean Squared Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSE instance."""
         super().__init__(
-            display_name='MSE',
-            column_name='mse',
+            name='mse',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            components=[('MSE', 'mse')],
         )
 
         # sampling error
@@ -192,14 +192,14 @@ class MSE(RegressionMetric):
 class MSLE(RegressionMetric):
     """Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSLE instance."""
         super().__init__(
-            display_name='MSLE',
-            column_name='msle',
+            name='msle',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            components=[('MSLE', 'msle')],
         )
 
         # sampling error
@@ -242,14 +242,14 @@ class MSLE(RegressionMetric):
 class RMSE(RegressionMetric):
     """Root Mean Squared Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSE instance."""
         super().__init__(
-            display_name='RMSE',
-            column_name='rmse',
+            name='rmse',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            components=[('RMSE', 'rmse')],
         )
 
         # sampling error
@@ -287,14 +287,14 @@ class RMSE(RegressionMetric):
 class RMSLE(RegressionMetric):
     """Root Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSLE instance."""
         super().__init__(
-            display_name='RMSLE',
-            column_name='rmsle',
+            name='rmsle',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            components=[('RMSLE', 'rmsle')],
         )
 
         # sampling error

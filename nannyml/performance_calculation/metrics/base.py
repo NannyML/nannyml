@@ -41,7 +41,7 @@ class Metric(abc.ABC):
         lower_threshold_limit : float, default=None
             An optional lower threshold for the performance metric.
         """
-        self.name = name
+        self.name: str = name
 
         self.y_true = y_true
         self.y_pred = y_pred
@@ -181,14 +181,14 @@ class Metric(abc.ABC):
 
     @property
     def column_name(self) -> str:
-        return self.components[0][0]
+        return self.components[0][1]
 
     @property
-    def display_names(self):
+    def display_names(self) -> List[str]:
         return [c[0] for c in self.components]
 
     @property
-    def column_names(self):
+    def column_names(self) -> List[str]:
         return [c[1] for c in self.components]
 
 

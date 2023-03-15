@@ -19,7 +19,6 @@ from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsExc
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
 from nannyml.usage_logging import UsageEvent, log_usage
-from nannyml.performance_calculation.result import SUPPORTED_METRIC_VALUES
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
@@ -118,12 +117,6 @@ class PerformanceCalculator(AbstractCalculator):
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
-        if metrics is None or len(metrics) == 0:
-            raise InvalidArgumentsException(
-                "no metrics provided. Please provide a non-empty list of metrics."
-                f"Supported values are {SUPPORTED_METRIC_VALUES}."
-            )
-
         valid_normalizations = [None, 'all', 'pred', 'true']
         if normalize_confusion_matrix not in valid_normalizations:
             raise InvalidArgumentsException(
@@ -151,6 +144,11 @@ class PerformanceCalculator(AbstractCalculator):
 
         if isinstance(metrics, str):
             metrics = [metrics]
+
+        for metric in metrics:
+            if metric not in SUPPORTED_METRICS:
+                raise InvalidArgumentsException(f"Metric '{metric}' is not supported.")
+
         self.metrics: List[Metric] = [
             MetricFactory.create(
                 m,
@@ -208,7 +206,7 @@ class PerformanceCalculator(AbstractCalculator):
         if self.y_true not in data.columns:
             raise InvalidArgumentsException(f"data does not contain target data column '{self.y_true}'.")
 
-        data = data.copy()
+        data = data.copy(deep=True)
 
         # Setup for target completeness rate
         data['NML_TARGET_INCOMPLETE'] = data[self.y_true].isna().astype(np.int16)
@@ -257,8 +255,8 @@ class PerformanceCalculator(AbstractCalculator):
                 problem_type=self.problem_type,
             )
         else:
-            self.result.data = pd.concat([self.result.data, res])  # .reset_index(drop=True)
-            self.result.analysis_data = data.copy()
+            self.result = self.result.filter(period='reference')
+            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
 
