@@ -117,7 +117,12 @@ def plot_2d_compare_step_to_step(
         analysis_metric_2_upper_confidence_bounds = analysis_result_2.upper_confidence_bounds(key_2)
         analysis_metric_2_lower_confidence_bounds = analysis_result_2.lower_confidence_bounds(key_2)
 
-        x_axis, y_axis, y_axis_2 = _get_subplot_axes_names(idx, y_axis_per_subplot=2)
+        # TODO: move this logic to the `Result` and `Metric` level.
+        #       This is just a quick and very dirty way to check the same "metric" is being plotted, e.g.
+        #       estimated f1 and realized f1.
+        #       We're now making the assumption that they will both use the same column name in results.
+        is_same_metric = key_1.properties[0] == key_2.properties[0]
+        x_axis, y_axis, y_axis_2 = _get_subplot_axes_names(idx, y_axis_per_subplot=2, use_single_y_axis=is_same_metric)
         _set_y_axis_title(figure, y_axis, render_metric_display_name(key_1.display_names))
         _set_y_axis_title(figure, y_axis_2, render_metric_display_name(key_2.display_names))
 
@@ -158,8 +163,22 @@ def plot_2d_compare_step_to_step(
     return figure
 
 
-def _get_subplot_axes_names(index: int, y_axis_per_subplot: int = 2) -> Tuple:
-    return tuple([f'x{index + 1}'] + [f'y{2 * index + 1 + a}' for a in range(y_axis_per_subplot)])
+def _get_subplot_axes_names(index: int, y_axis_per_subplot: int = 2, use_single_y_axis: bool = False) -> Tuple:
+    # TODO: when removing subplots later, the decision on using a single y-axis or not should be given in the place
+    #       best suited to determine it: the top level `compare()` function that has access to `Result` and `Metric`
+    #       instances (due to the `information expert` principle
+    #       https://en.wikipedia.org/wiki/GRASP_(object-oriented_design)#Information_expert)
+    #       The decision can be made there and then either passes along as a parameter to a single function or
+    #       determines one of multiple plotting functions to be used.
+    #
+    """Returns the names of the single x and y axes given the index of the subplot we're in.
+
+    When `use_single_y_axis` is set to true, all returned y axes will have the same name, causing all metrics
+    to use a single shared y-axis.
+    """
+
+    return tuple([f'x{index + 1}'] + [f'y{2 * index + 1 + (0 if use_single_y_axis else a)}'
+                                      for a in range(y_axis_per_subplot)])
 
 
 def _set_y_axis_title(figure: Figure, y_axis_name: str, title: str):
