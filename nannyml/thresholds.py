@@ -25,6 +25,12 @@ class Threshold(abc.ABC):
     def _logger(self):
         return logging.getLogger(self.__name__)
 
+    def __str__(self):
+        return self.__str__()
+
+    def __repr__(self):
+        return self.__class__.__name__ + str(vars(self))
+
     @abc.abstractmethod
     def thresholds(self, data: np.ndarray, **kwargs) -> Tuple[Optional[float], Optional[float]]:
         """Returns lower and upper threshold values when given one or more np.ndarray instances.

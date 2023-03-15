@@ -23,30 +23,10 @@ We'll use an F1-score estimation as an example use case.
 But first, let's dive into some of the basics. Note that we're explaining how the thresholds work in the internals of
 NannyML. How you'll be using them is shown further down this page.
 
-Threshold basics
------------------
+NannyML compares the metric values it calculates to lower and upper threshold values. If the metric values fall
+outside of the range determined by these, NannyML will flag these values as alerts.
 
-The :class:`~nannyml.thresholds.Threshold` class represents a way of calculating thresholds.
-Its :meth:`~nannyml.thresholds.Threshold.thresholds` method returns two values: a lower and an upper threshold value.
-It takes a ``np.ndarray`` of values as a parameter. This are typically the metric or method value
-calculated on reference data.
-
-All NannyML calculators and estimators have a ``threshold`` property that allows you to set a custom threshold for
-their metrics or inspect them.
-
-When the calculator or estimator runs it will use :term:`reference data<data period>` to calculate the lower and upper
-threshold values during fitting.
-These values are then used during calculation or estimation to check if the
-values for each chunk are breaching either the lower or upper threshold value.
-If so, an alert flag will be set to ``True`` for that chunk.
-
-
-Some metrics have mathematical boundaries. The ``F1`` score for example, is limited to `[0, 1]`.
-To enforce these boundaries some metrics and drift methods within NannyML have lower and upper limits.
-When calculating the threshold values during fitting, NannyML will check if the calculated threshold values fall within
-these limits. If they don't, the breaching threshold value(s) will be overridden by the theoretical limit.
-
-NannyML also supports disabling the lower, upper or both thresholds. We'll illustrate this in the following examples.
+NannyML provides simple classes to customize this behavior.
 
 Constant thresholds
 ---------------------
@@ -55,66 +35,42 @@ The :class:`~nannyml.thresholds.ConstantThreshold` class is a very basic thresho
 when initialized and these will be returned as the lower and upper threshold values, independent of what reference data
 is passed to it.
 
+The :class:`~nannyml.thresholds.ConstantThreshold` can be configured using the following parameters:
+
+- ``lower``: an optional float that sets the constant lower value. Defaults to ``None``.
+                            Setting this to ``None`` disables the lower threshold.
+- ``upper``: an optional float that sets the constant upper threshold value. Defaults to ``None``.
+                            Setting this to ``None`` disables the upper threshold.
+
+This snippet shows how to create an instance of the :class:`~nannyml.thresholds.ConstantThreshold`:
+
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
     :cells: 2
     :show_output:
 
-The ``lower`` and ``upper`` parameters have a default value of ``None``. NannyML interprets this as `no lower threshold
-should be applied`.
-
-.. nbimport::
-    :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 3
-    :show_output:
 
 Standard deviation thresholds
---------------------------------
+------------------------------
 
 The :class:`~nannyml.thresholds.StandardDeviationThreshold` class will use the mean of the data it is given as
 a baseline. It will then add the standard deviation of the given data, scaled by a multiplier, to that baseline to
 calculate the upper threshold value. By subtracting the standard deviation, scaled by a multiplier, from the baseline
 it calculates the lower threshold value.
 
-This is easier to illustrate in code:
-
-.. code-block:: python
-
-    data = np.asarray(range(10))
-    baseline = np.mean(data)
-    offset = np.std(data)
-    upper_offset = offset * 3
-    lower_offset = offset * 3
-    lower_threshold, upper_threshold = baseline - lower_offset, baseline + upper_offset
-
 The :class:`~nannyml.thresholds.StandardDeviationThreshold` can be configured using the following parameters:
 
-- ``std_lower_multiplier``: an optional float that scales the offset for the upper threshold value. Defaults to ``3``.
-- ``std_upper_multiplier``: an optional float that scales the offset for the lower threshold value. Defaults to ``3``.
+- ``std_lower_multiplier``: an optional float that scales the offset for the lower threshold value. Defaults to ``3``.
+                            Setting this to ``None`` disables the lower threshold.
+- ``std_upper_multiplier``: an optional float that scales the offset for the upper threshold value. Defaults to ``3``.
+                            Setting this to ``None`` disables the upper threshold.
 - ``offset_from``: a function used to aggregate the given data.
 
-These examples show how to create a :class:`~nannyml.thresholds.StandardDeviationThreshold`.
-This first example demonstrates the default usage.
+This snippet shows how to create an instance of the :class:`~nannyml.thresholds.StandardDeviationThreshold`:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 4
-    :show_output:
-
-This next example shows how to configure the :class:`~nannyml.thresholds.StandardDeviationThreshold`.
-Multipliers can make the offset smaller or larger, alternatives to the `mean` may be provided as well.
-
-.. nbimport::
-    :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 5
-    :show_output:
-
-By providing a `None` value you can disable one or more thresholds. The following example shows how to disable the
-lower threshold by setting the appropriate multiplier to `None`.
-
-.. nbimport::
-    :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 6
+    :cells: 3
     :show_output:
 
 
@@ -141,35 +97,35 @@ First we load our datasets.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 7
+    :cells: 4
 
 .. nbtable::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cell: 8
+    :cell: 5
 
 Next we'll set up the CBPE estimator. Note that we're not providing any threshold specifications for now.
 Let's check out the defaults:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 9
+    :cells: 6
     :show_output:
 
 After running the estimation we can see some alerts popping up. This means a couple of threshold values have been breached.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 10
+    :cells: 7
 
 .. nbtable::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cell: 11
+    :cell: 8
 
 The plots clearly illustrate this:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 12
+    :cells: 9
 
 .. image:: ../_static/tutorials/thresholds/est_f1_default_thresholds.svg
 
@@ -177,26 +133,27 @@ Now let's set a threshold that inverses this result by fixing the upper threshol
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 14
+    :cells: 11
     :show_output:
 
 Let's use this new custom threshold for our performance estimation now.
 Note that we're passing our custom thresholds as a dictionary,
 mapping the metric name to a :class:`~nannyml.thresholds.Threshold` instance.
+We only have to provide our single override value, the other metrics will use the default values.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 15
+    :cells: 12
 
 .. nbtable::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cell: 16
+    :cell: 13
 
 If we check the plots, we can see that the alerts have now inverted.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 17
+    :cells: 14
 
 .. image:: ../_static/tutorials/thresholds/est_f1_inverted_thresholds.svg
 
@@ -204,116 +161,35 @@ If we check the plots, we can see that the alerts have now inverted.
 Default thresholds
 -------------------
 
-Univariate Drift Calculator
-****************************
+Performance metrics and drift detection methods have the following default threshold:
+
+.. code-block:: python
+
+    StandardDeviationThreshold(std_lower_multiplier=3, std_upper_multiplier=3, offset_from=np.mean)
+
+
+Some drift detection methods are exceptions to this rule. They have default thresholds more attuned to distances:
 
 .. list-table::
-   :widths: 25, 75
+   :widths: 25, 25, 50
    :header-rows: 1
 
-   * - Drift method
+   * - Calculator
+     - Drift method
      - Default threshold
-   * - `kolmogorov_smirnov`
-     - ``StandardDeviationThreshold()``
-   * - `jensen_shannon`
+   * - Univariate drift calculator
+     - `jensen_shannon`
      - ``ConstantThreshold(upper=0.1)``
-   * - `hellinger`
+   * - Univariate drift calculator
+     - `hellinger`
      - ``ConstantThreshold(upper=0.1)``
-   * - `wasserstein`
-     - ``StandardDeviationThreshold()``
-   * - `l_infinity`
+   * - Univariate drift calculator
+     - `l_infinity`
      - ``ConstantThreshold(upper=0.1)``
-
-Multivariate Drift Calculator
-*******************************
-
-.. list-table::
-   :widths: 25, 75
-   :header-rows: 1
-
-   * - Drift method
-     - Default threshold
-   * - `Reconstruction error`
-     - ``StandardDeviationThreshold()``
-
-Realized Performance Calculator
-********************************
-
-.. list-table::
-   :widths: 25, 75
-   :header-rows: 1
-
-   * - Drift method
-     - Default threshold
-   * - `roc_auc`
-     - ``StandardDeviationThreshold()``
-   * - `f1`
-     - ``StandardDeviationThreshold()``
-   * - `precision`
-     - ``StandardDeviationThreshold()``
-   * - `recall`
-     - ``StandardDeviationThreshold()``
-   * - `specificity`
-     - ``StandardDeviationThreshold()``
-   * - `accuracy`
-     - ``StandardDeviationThreshold()``
-   * - `mae`
-     - ``StandardDeviationThreshold()``
-   * - `mape`
-     - ``StandardDeviationThreshold()``
-   * - `mse`
-     - ``StandardDeviationThreshold()``
-   * - `msle`
-     - ``StandardDeviationThreshold()``
-   * - `rmse`
-     - ``StandardDeviationThreshold()``
-   * - `rmsle`
-     - ``StandardDeviationThreshold()``
-
-CBPE Performance Estimator
-*****************************
-
-.. list-table::
-   :widths: 25, 75
-   :header-rows: 1
-
-   * - Drift method
-     - Default threshold
-   * - `roc_auc`
-     - ``StandardDeviationThreshold()``
-   * - `f1`
-     - ``StandardDeviationThreshold()``
-   * - `precision`
-     - ``StandardDeviationThreshold()``
-   * - `recall`
-     - ``StandardDeviationThreshold()``
-   * - `specificity`
-     - ``StandardDeviationThreshold()``
-   * - `accuracy`
-     - ``StandardDeviationThreshold()``
-
-DLE Performance Estimator
-***************************
-
-.. list-table::
-   :widths: 25, 75
-   :header-rows: 1
-
-   * - Drift method
-     - Default threshold
-   * - `mae`
-     - ``StandardDeviationThreshold()``
-   * - `mape`
-     - ``StandardDeviationThreshold()``
-   * - `mse`
-     - ``StandardDeviationThreshold()``
-   * - `msle`
-     - ``StandardDeviationThreshold()``
-   * - `rmse`
-     - ``StandardDeviationThreshold()``
-   * - `rmsle`
-     - ``StandardDeviationThreshold()``
 
 
 What's next?
 =============
+
+You can read more about the threshold inner workings in the :ref:`how it works article<how_thresholds>`, or review the
+`API reference documentation <../nannyml/nannyml.thresholds.html>`__.
