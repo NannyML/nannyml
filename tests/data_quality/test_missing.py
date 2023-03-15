@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from nannyml._typing import Result
-from nannyml.data_quality.missing import MissingValuesCalculator
+from nannyml.data_quality import MissingValuesCalculator
 
 from nannyml.datasets import load_synthetic_car_loan_data_quality_dataset
 

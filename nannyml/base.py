@@ -553,3 +553,13 @@ def _raise_exception_for_negative_values(column: pd.Series):
             "\tLog-based metrics are not supported for negative target values.\n"
             f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
         )
+
+
+def _add_alert_flag(drift_result: pd.DataFrame, column_name: str) -> pd.Series:
+    alert = drift_result.apply(
+        lambda row: True
+        if (row[(column_name, 'value')] > row[(column_name, 'upper_threshold')] or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')])
+        else False,
+        axis=1,
+    )
+    return alert
