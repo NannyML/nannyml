@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from nannyml._typing import Result
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import Colors
 from nannyml.plots.components import Figure, Hover, render_alert_string, render_period_string, render_x_coordinate
 from nannyml.plots.util import ensure_numpy, is_time_based_x_axis
@@ -177,8 +178,9 @@ def _get_subplot_axes_names(index: int, y_axis_per_subplot: int = 2, use_single_
     to use a single shared y-axis.
     """
 
-    return tuple([f'x{index + 1}'] + [f'y{2 * index + 1 + (0 if use_single_y_axis else a)}'
-                                      for a in range(y_axis_per_subplot)])
+    return tuple(
+        [f'x{index + 1}'] + [f'y{2 * index + 1 + (0 if use_single_y_axis else a)}' for a in range(y_axis_per_subplot)]
+    )
 
 
 def _set_y_axis_title(figure: Figure, y_axis_name: str, title: str):
@@ -592,6 +594,14 @@ class ResultCompareMixin:
 
 class ResultComparison:
     def __init__(self, result: Result, other: Result, title: Optional[str] = None):
+
+        if len(result.keys()) != 1 or len(result.keys()) != 1:
+            raise InvalidArgumentsException(
+                f"you're comparing {len(result.keys())} metrics to {len(result.keys())} "
+                "metrics, but should only compare 1 to 1 at a time. Please filter your"
+                "results first using `result.filter()`"
+            )
+
         self.result = result
         self.other = other
         self.title = title
