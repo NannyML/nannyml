@@ -15,7 +15,7 @@ The second function will be called during calculation or estimation. It takes th
 combines them with the size of the (analysis) data to give an estimate for the sampling error.
 """
 
-from typing import Tuple, Union, Optional
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd

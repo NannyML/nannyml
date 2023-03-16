@@ -5,15 +5,13 @@
 """Contains the results of the realized performance calculation and provides plotting functionality."""
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Union, cast
 import copy
+from typing import Dict, List, Optional, Union, cast
 
 import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml._typing import Key, ProblemType
-
-# from nannyml import _typing
 from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric
@@ -45,6 +43,8 @@ SUPPORTED_METRIC_VALUES = [
 
 class Result(Abstract1DResult, ResultCompareMixin):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
+
+    metrics: List[Metric]
 
     def __init__(
         self,

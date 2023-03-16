@@ -74,7 +74,7 @@ can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-da
   * ``business_value``
         * Normalization options:
             * ``None``: returns total value for each chunk
-            * ``"per_prediction"``: returns value per prediction 
+            * ``"per_prediction"``: returns value per prediction
 
 .. note::
   Most of the metrics do not require additional parameters. However, the ``business_value`` metric requires a
@@ -136,7 +136,7 @@ These results can be also plotted. Our plot contains several key elements.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 
-* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated by a red, 
+* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated by a red,
   diamond-shaped point marker in the middle of the chunk.
 
 Description of tabular results above explains how the

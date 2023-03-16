@@ -29,7 +29,12 @@ repos:
       - id: flake8
         additional_dependencies: [ flake8-typing-imports==1.10.0 ]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.901
+    rev: v1.1.1
     hooks:
       - id: mypy
         exclude: tests/
+        additional_dependencies:
+          - types-PyYAML
+          - types-python-dateutil
+          - types-click
+          - sqlmodel

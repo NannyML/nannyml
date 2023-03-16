@@ -44,7 +44,7 @@ We start by loading the dataset we'll be using:
 
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
-estimator and specify that we would like the "confusion_matrix" 
+estimator and specify that we would like the "confusion_matrix"
 metric using the ``metrics`` parameter. We also specify how we would
 like the confusion matrix results to be normalized using the
 ``normalize_confusion_matrix`` parameter. The normalization options
@@ -55,17 +55,17 @@ are:
     * ``"pred"`` : normalize over the predicted class of observations
     * ``"all"`` : normalize over all observations
 
-.. note:: 
+.. note::
     Since we are estimating the confusion matrix, we do not
     have access to the true counts of the true classes of observations.
-    For this reason, we normalize the values using the estimated values 
-    for each cell. So, for example, if ``"true"`` is given as the 
+    For this reason, we normalize the values using the estimated values
+    for each cell. So, for example, if ``"true"`` is given as the
     normalization option, the estimates in each row will sum to 1.
     And if the ``"pred"`` option is given, the estimates in each column
     will sum to 1.
 
 Additionally, we specify an
-optional :ref:`chunking<chunking>` specification. For more 
+optional :ref:`chunking<chunking>` specification. For more
 information about :term:`chunking<Data Chunk>` you can check
 the :ref:`setting up page<chunking>` and
 :ref:`advanced guide<chunk-data>`.
@@ -77,7 +77,7 @@ the :ref:`setting up page<chunking>` and
 .. note::
   The list of metrics specifies which performance metrics of the monitored model will be estimated.
   This tutorial is specific to the ``confusion_matrix`` metric, but you can find more information about
-  other standard metrics such as ``roc_auc``, ``f1``, ``precision``, ``recall``, ``specificity``, 
+  other standard metrics such as ``roc_auc``, ``f1``, ``precision``, ``recall``, ``specificity``,
   and ``accuracy`` in the
   :ref:`estimation of standard performance metrics tutorial<standard-metric-estimation>`. Additionally,
   you can find more information about the ``business_value`` metric in the
@@ -134,7 +134,7 @@ These results can be also plotted. Our plot contains several key elements.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 
-* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated by a red, 
+* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated by a red,
   diamond-shaped point marker in the middle of the chunk.
 
 Description of tabular results above explains how the
@@ -182,4 +182,3 @@ results<compare_estimated_and_realized_performance>`.
 
 You can learn more about the Confidence Based Performance Estimation and its limitations in the
 :ref:`How it Works page<performance-estimation-deep-dive>`.
-
