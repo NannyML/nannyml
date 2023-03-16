@@ -230,6 +230,7 @@ Glossary
         Sampling errors are statistical errors that arise when a sample does not accurately represent the whole population.
         They are the difference between the real values of the population, which we don't always know, and the values
         derived by using samples from the population. In order to quantify the sampling error we use the :term:`Standard Error`.
+        You can find more about how NannyML calculates sampling error at :ref:`estimation_of_standard_error`.
 
     Standard Error
         The Standard Error of a statistic is the standard deviation of the probability distribution we are sampling it from.

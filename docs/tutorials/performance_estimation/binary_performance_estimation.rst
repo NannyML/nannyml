@@ -38,10 +38,8 @@ For simplicity this guide is based on a synthetic dataset included in the librar
 predicts whether a customer will repay a loan to buy a car.
 You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
 
-where the monitored model predicts
-whether an employee will work from home. You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary>`.
-
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+In order to monitor a model, NannyML needs to learn about it and set expectations from a reference dataset.
+Then NannyML can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 We start by loading the dataset we'll be using:
@@ -77,7 +75,6 @@ can check the :ref:`setting up page<chunking>` and :ref:`advanced guide<chunk-da
             * ``true``: normalize by true class of observations
             * ``pred``: normalize by predicted class of observations
             * ``all``: normalize by all observations
-  * ``business_cost``
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
@@ -123,13 +120,17 @@ that was estimated:
    upper or lower threshold.
 
 
-
 These results can be also plotted. Our plot contains several key elements.
 
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* The low-saturated purple area around the estimated performance indicates the :ref:`sampling error<estimation_of_standard_error>`.
+* The blue dashed step plot shows the estimated performance in each chunk of the reference period. Thick squared point
+  markers indicate the middle of these chunks.
+
+* The black vertical line splits the reference and analysis periods.
+
+* The low-saturated colored area around the estimated performance indicates the :ref:`sampling error<estimation_of_standard_error>`.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 
@@ -145,25 +146,7 @@ interactive plots, though only static views are included here).
     :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
     :cells: 6
 
-.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis.svg
-
-
-To get a better context let's also plot estimation of performance on analysis data together with calculated
-performance on the reference period (where the target was available).
-
-* The right-hand side of the plot shows the estimated performance for the analysis period, as before.
-
-* The purple dashed vertical line splits the reference and analysis periods.
-
-* On the left-hand side of the line, the actual model performance (not estimation!) is plotted with a solid light blue
-  line. This facilitates comparison of the estimation against the reference period, and sets expectations on the
-  variability of the performance.
-
-.. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Performance - Binary Classification.ipynb
-    :cells: 8
-
-.. image:: ../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
+.. image:: ../../_static/tutorials/performance_estimation/binary-car-loan.svg
 
 
 Insights
