@@ -79,7 +79,8 @@ Glossary
         A data period is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two data periods.
 
         The first data period is called the ``reference`` period. It contains all the observations for a period with an *accepted*
-        level of performance. It most likely also includes ``target`` data.
+        level of performance. It most likely also includes ``target`` data. This period can be the test set for a model that
+        only recently entered production or a selected benchmark dataset for a model that has been in production for some time.
 
         The second subset of the data is the ``analysis`` period. It contains the observations you want NannyML to analyse.
         In the absence of targets performance in the analysis period can be estimated.
