@@ -131,6 +131,18 @@ class MissingValuesCalculator(AbstractCalculator):
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
 
+        # # Calculate alert thresholds
+        # reference_chunk_results = np.asarray([self.calculate(chunk.data) for chunk in chunker.split(reference_data)])
+        # self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
+        #     threshold=self.threshold,
+        #     data=reference_chunk_results,
+        #     lower_threshold_value_limit=self.lower_threshold_value_limit,
+        #     upper_threshold_value_limit=self.upper_threshold_value_limit,
+        #     logger=self._logger,
+        #     metric_name=self.display_name,
+        # )
+        # lower = self._lower_alert_thresholds[column_name]
+
         return self
 
     @log_usage(
