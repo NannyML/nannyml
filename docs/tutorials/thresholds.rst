@@ -19,14 +19,17 @@ Just the code
 Walkthrough
 ===========
 
-We'll use an F1-score estimation as an example use case.
-But first, let's dive into some of the basics. Note that we're explaining how the thresholds work in the internals of
-NannyML. How you'll be using them is shown further down this page.
+We'll use an F1-score estimation as an example use case. But first, let's dive into some of the basics.
 
 NannyML compares the metric values it calculates to lower and upper threshold values. If the metric values fall
 outside of the range determined by these, NannyML will flag these values as alerts.
 
-NannyML provides simple classes to customize this behavior.
+To determine the lower and upper threshold values for a certain metric, NannyML will take the
+:ref:`reference data <data-drift-periods>`, split it into chunks and calculate the metric value for each of those chunks.
+NannyML then applies a calculation that transforms this array of chunked reference metric values into a single
+lower threshold value and a single upper threshold value.
+
+NannyML provides simple classes to customize this calculation.
 
 Constant thresholds
 -------------------
@@ -35,12 +38,9 @@ The :class:`~nannyml.thresholds.ConstantThreshold` class is a very basic thresho
 when initialized and these will be returned as the lower and upper threshold values, independent of what reference data
 is passed to it.
 
-The :class:`~nannyml.thresholds.ConstantThreshold` can be configured using the following parameters:
-
-- ``lower``: an optional float that sets the constant lower value. Defaults to ``None``.
-                            Setting this to ``None`` disables the lower threshold.
-- ``upper``: an optional float that sets the constant upper threshold value. Defaults to ``None``.
-                            Setting this to ``None`` disables the upper threshold.
+The :class:`~nannyml.thresholds.ConstantThreshold` can be configured using the parameters ``lower`` and ``upper``.
+They represent the constant lower and upper values used as thresholds when evaluating alerts.
+One or both parameters can be set to ``None``, disabling the upper or lower threshold.
 
 This snippet shows how to create an instance of the :class:`~nannyml.thresholds.ConstantThreshold`:
 
@@ -58,13 +58,13 @@ a baseline. It will then add the standard deviation of the given data, scaled by
 calculate the upper threshold value. By subtracting the standard deviation, scaled by a multiplier, from the baseline
 it calculates the lower threshold value.
 
-The :class:`~nannyml.thresholds.StandardDeviationThreshold` can be configured using the following parameters:
+The :class:`~nannyml.thresholds.StandardDeviationThreshold` can be configured using the following parameters.
+The ``std_lower_multiplier`` and ``std_upper_multiplier`` parameters allow you to set a custom value for the multiplier
+applied to the standard deviation of the given data, determining respectively the lower threshold value and the
+upper threshold value. Both can be set to ``None``, which disables the respective threshold.
 
-- ``std_lower_multiplier``: an optional float that scales the offset for the lower threshold value. Defaults to ``3``.
-                            Setting this to ``None`` disables the lower threshold.
-- ``std_upper_multiplier``: an optional float that scales the offset for the upper threshold value. Defaults to ``3``.
-                            Setting this to ``None`` disables the upper threshold.
-- ``offset_from``: a function used to aggregate the given data.
+The ``offset_from`` parameter takes any function that aggregates an array of numbers into a single number. This function
+will be applied to the given data and the resulting value serves as a baseline to add or subtract the calculated offset.
 
 This snippet shows how to create an instance of the :class:`~nannyml.thresholds.StandardDeviationThreshold`:
 
@@ -104,7 +104,7 @@ First we load our datasets.
     :cell: 5
 
 Next we'll set up the CBPE estimator. Note that we're not providing any threshold specifications for now.
-Let's check out the defaults:
+Let's check out the default value for the **f1** metric:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
