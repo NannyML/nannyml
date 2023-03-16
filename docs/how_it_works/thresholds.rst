@@ -9,7 +9,7 @@ Threshold basics
 
 The :class:`~nannyml.thresholds.Threshold` class represents a way of calculating thresholds.
 Its :meth:`~nannyml.thresholds.Threshold.thresholds` method returns two values: a lower and an upper threshold value.
-It takes a ``np.ndarray`` of values as a parameter. This are typically the metric or method value
+It takes a ``numpy.ndarray`` of values as a parameter. This are typically the metric or method value
 calculated on reference data.
 
 All NannyML calculators and estimators have a ``threshold`` property that allows you to set a custom threshold for
@@ -22,7 +22,7 @@ values for each chunk are breaching either the lower or upper threshold value.
 If so, an alert flag will be set to ``True`` for that chunk.
 
 
-Some metrics have mathematical boundaries. The ``F1`` score for example, is limited to `[0, 1]`.
+Some metrics have mathematical boundaries. The ``F1`` score for example, is limited to :math:`[0, 1]`.
 To enforce these boundaries some metrics and drift methods within NannyML have lower and upper limits.
 When calculating the threshold values during fitting, NannyML will check if the calculated threshold values fall within
 these limits. If they don't, the breaching threshold value(s) will be overridden by the theoretical limit.
@@ -39,17 +39,17 @@ is passed to it.
 The :class:`~nannyml.thresholds.ConstantThreshold` can be configured using the following parameters:
 
 - ``lower``: an optional float that sets the constant lower value. Defaults to ``None``.
-                            Setting this to ``None`` disables the lower threshold.
+    Setting this to ``None`` disables the lower threshold.
 - ``upper``: an optional float that sets the constant upper threshold value. Defaults to ``None``.
-                            Setting this to ``None`` disables the upper threshold.
+    Setting this to ``None`` disables the upper threshold.
 
 .. nbimport::
     :path: ./example_notebooks/How it Works - Thresholds.ipynb
     :cells: 2
     :show_output:
 
-The ``lower`` and ``upper`` parameters have a default value of ``None``. NannyML interprets this as `no lower threshold
-should be applied`.
+The ``lower`` and ``upper`` parameters have a default value of ``None``. For example
+NannyML interprets providing no ``lower`` threshold value as `no lower threshold should be applied`.
 
 .. nbimport::
     :path: ./example_notebooks/How it Works - Thresholds.ipynb
