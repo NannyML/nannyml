@@ -134,9 +134,8 @@ These results can be also plotted. Our plot contains several key elements.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 
-* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red,
-  low-saturated background in the whole width of the relevant chunk. This is additionally
-  indicated by a red, diamond-shaped point marker in the middle of the chunk.
+* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red
+  diamond-shaped point marker in the middle of the chunk.
 
 Description of tabular results above explains how the
 :term:`confidence bands<Confidence Band>` and thresholds are calculated. Additional information is shown in the hover (these are
@@ -160,7 +159,7 @@ What's next
 -----------
 
 The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
-When the target values become    available they can be :ref:`compared with the estimated
+When the target values become available they can be :ref:`compared with the estimated
 results<compare_estimated_and_realized_performance>`.
 
 You can learn more about the Confidence Based Performance Estimation and its limitations in the
