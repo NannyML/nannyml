@@ -115,7 +115,7 @@ class MissingValuesCalculator(AbstractCalculator):
 
 
     @log_usage(
-        UsageEvent.DQ_CALC_MISSING_FIT, metadata_from_self=['normalize']
+        UsageEvent.DQ_CALC_MISSING_VALUES_FIT, metadata_from_self=['normalize']
     )
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
@@ -134,7 +134,7 @@ class MissingValuesCalculator(AbstractCalculator):
         return self
 
     @log_usage(
-        UsageEvent.DQ_CALC_MISSING_RUN, metadata_from_self=['normalize']
+        UsageEvent.DQ_CALC_MISSING_VALUES_RUN, metadata_from_self=['normalize']
     )
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""

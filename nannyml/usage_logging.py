@@ -42,9 +42,9 @@ class UsageEvent(str, Enum):
 
     # Calculators
 
-    DQ_CALC_MISSING_FIT = "Data Quality Calculator Missing Values fit"
-    DQ_CALC_MISSING_RUN = "Data Quality Calculator Missing Values run"
-    DQ_CALC_MISSING_PLOT = "Data Quality Calculator Missing Values plot"
+    DQ_CALC_MISSING_VALUES_FIT = "Data Quality Calculator Missing Values fit"
+    DQ_CALC_MISSING_VALUES_RUN = "Data Quality Calculator Missing Values run"
+    DQ_CALC_MISSING_VALUES_PLOT = "Data Quality Calculator Missing Values plot"
 
     DQ_CALC_UNSEEN_VALUES_FIT = "Data Quality Calculator Unseen Values fit"
     DQ_CALC_UNSEEN_VALUES_RUN = "Data Quality Calculator Unseen Values run"

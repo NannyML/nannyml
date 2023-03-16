@@ -51,7 +51,7 @@ class Result(Abstract1DColumnsResult, ResultCompareMixin):
             ) for column_name in self.column_names
         ]
 
-    @log_usage(UsageEvent.DQ_CALC_MISSING_PLOT)
+    @log_usage(UsageEvent.DQ_CALC_MISSING_VALUES_PLOT)
     def plot(
         self,
         *args,
