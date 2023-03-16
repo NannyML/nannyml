@@ -5,22 +5,28 @@ Thresholds
 ===========
 
 Threshold basics
------------------
+----------------
 
-The :class:`~nannyml.thresholds.Threshold` class represents a way of calculating thresholds.
+NannyML performance metrics and drift methods have thresholds associated to them in order to generate
+alerts when necessary. The :class:`~nannyml.thresholds.Threshold` class is responsible for calculating
+those thresholds.
 Its :meth:`~nannyml.thresholds.Threshold.thresholds` method returns two values: a lower and an upper threshold value.
-It takes a ``numpy.ndarray`` of values as a parameter. This are typically the metric or method value
+It takes a ``numpy.ndarray`` of values as an input. These are typically the metric or method values
 calculated on reference data.
+
+The process of calculating the threshold values is as follows.
+The calculator or estimator runs and uses the :term:`reference data<data period>` to compute the values
+for the related method or metric for each :term:`chunk<Data Chunk>`. Those values are used by the
+:meth:`~nannyml.thresholds.Threshold.thresholds` method to calculate the associated lower and upper
+threshold values. 
+
+When the calculator or estimator runs on an :term:`analysis<data period>` :term:`chunk<Data Chunk>`
+the lower and upper threshold values will be compared with the method or metric values for each
+chunk to see if they are breaching either the lower or upper threshold values.
+If so, the alert flag will be set to ``True`` for that chunk.
 
 All NannyML calculators and estimators have a ``threshold`` property that allows you to set a custom threshold for
 their metrics or inspect them.
-
-When the calculator or estimator runs it will use :term:`reference data<data period>` to calculate the lower and upper
-threshold values during fitting.
-These values are then used during calculation or estimation to check if the
-values for each chunk are breaching either the lower or upper threshold value.
-If so, an alert flag will be set to ``True`` for that chunk.
-
 
 Some metrics have mathematical boundaries. The ``F1`` score for example, is limited to :math:`[0, 1]`.
 To enforce these boundaries some metrics and drift methods within NannyML have lower and upper limits.
@@ -30,7 +36,7 @@ these limits. If they don't, the breaching threshold value(s) will be overridden
 NannyML also supports disabling the lower, upper or both thresholds. We'll illustrate this in the following examples.
 
 Constant thresholds
----------------------
+-------------------
 
 The :class:`~nannyml.thresholds.ConstantThreshold` class is a very basic threshold. It is given a lower and upper value
 when initialized and these will be returned as the lower and upper threshold values, independent of what reference data
