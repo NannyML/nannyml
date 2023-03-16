@@ -25,19 +25,21 @@ from nannyml.sampling_error.binary_classification import (
     specificity_sampling_error,
     specificity_sampling_error_components,
 )
+from nannyml.thresholds import Threshold
 
 
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
         """Creates a new AUROC instance."""
         super().__init__(
             display_name='ROC AUC',
             column_name='roc_auc',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -78,13 +80,14 @@ class BinaryClassificationAUROC(Metric):
 class BinaryClassificationF1(Metric):
     """F1 score metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
         """Creates a new F1 instance."""
         super().__init__(
             display_name='F1',
             column_name='f1',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -125,13 +128,14 @@ class BinaryClassificationF1(Metric):
 class BinaryClassificationPrecision(Metric):
     """Precision metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
         """Creates a new Precision instance."""
         super().__init__(
             display_name='Precision',
             column_name='precision',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -171,13 +175,14 @@ class BinaryClassificationPrecision(Metric):
 class BinaryClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
         """Creates a new Recall instance."""
         super().__init__(
             display_name='Recall',
             column_name='recall',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -217,13 +222,14 @@ class BinaryClassificationRecall(Metric):
 class BinaryClassificationSpecificity(Metric):
     """Specificity metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
         """Creates a new F1 instance."""
         super().__init__(
             display_name='Specificity',
             column_name='specificity',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -269,13 +275,14 @@ class BinaryClassificationSpecificity(Metric):
 class BinaryClassificationAccuracy(Metric):
     """Accuracy metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
         """Creates a new Accuracy instance."""
         super().__init__(
             display_name='Accuracy',
             column_name='accuracy',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,

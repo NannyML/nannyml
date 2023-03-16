@@ -13,11 +13,13 @@ from typing import Any, Callable, Dict, Optional, Type
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import jensenshannon
-from scipy.stats import chi2_contingency, ks_2samp, kstwo, wasserstein_distance
+from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
 
+from nannyml._typing import Self
 from nannyml.base import _column_is_categorical, _remove_missing_data
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Method(abc.ABC):
@@ -27,10 +29,9 @@ class Method(abc.ABC):
         self,
         display_name: str,
         column_name: str,
-        chunker: Optional[Chunker] = None,
+        chunker: Chunker,
+        threshold: Threshold,
         computation_params: Optional[Dict[str, Any]] = None,
-        upper_threshold: Optional[float] = None,
-        lower_threshold: Optional[float] = None,
         upper_threshold_limit: Optional[float] = None,
         lower_threshold_limit: Optional[float] = None,
     ):
@@ -60,13 +61,19 @@ class Method(abc.ABC):
         self.display_name = display_name
         self.column_name = column_name
 
-        self.upper_threshold: Optional[float] = upper_threshold
-        self.lower_threshold: Optional[float] = lower_threshold
-        self.lower_threshold_limit: Optional[float] = lower_threshold_limit
-        self.upper_threshold_limit: Optional[float] = upper_threshold_limit
-        self.chunker: Optional[Chunker] = chunker
+        self.threshold = threshold
+        self.upper_threshold_value: Optional[float] = None
+        self.lower_threshold_value: Optional[float] = None
+        self.lower_threshold_value_limit: Optional[float] = lower_threshold_limit
+        self.upper_threshold_value_limit: Optional[float] = upper_threshold_limit
 
-    def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+        self.chunker = chunker
+
+    @property
+    def _logger(self) -> logging.Logger:
+        return logging.getLogger(__name__)
+
+    def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         """Fits a Method on reference data.
 
         Parameters
@@ -77,11 +84,32 @@ class Method(abc.ABC):
             A series containing the reference data Timestamps
 
         """
+        # delegate to subclasses first, since _calculate might use properties set during fitting
         self._fit(reference_data, timestamps)
+
+        # calculate alert thresholds by calculating the method values on reference chunks and applying the configured
+        # threshold on those values. Then check with any limits
+        if timestamps is not None:
+            data = pd.concat([reference_data, timestamps], axis=1)
+        else:
+            data = reference_data.to_frame()
+
+        reference_chunk_results = np.asarray(
+            [self._calculate(chunk.data[reference_data.name]) for chunk in self.chunker.split(data)]
+        )
+
+        self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=reference_chunk_results,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
         return self
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _fit method"
         )
@@ -105,29 +133,21 @@ class Method(abc.ABC):
     # E.g. KS and Chi2 alerts are still based on p-values, hence each method needs to individually decide how
     # to evaluate alert conditions...
     # To be refactored / removed when custom thresholding kicks in (and p-values are no longer used)
-    def alert(self, data: pd.Series):
+    def alert(self, value: float):
         """Evaluates if an alert has occurred for this method on the current chunk data.
 
         Parameters
         ----------
-        data: pd.DataFrame
-            The data to evaluate for an alert.
+        value: float
+            The method value for a given chunk
         """
-        return self._alert(data)
-
-    def _alert(self, data: pd.Series):
-        raise NotImplementedError(
-            f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _alert method"
+        return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
+            self.upper_threshold_value is not None and value > self.upper_threshold_value
         )
 
     def __eq__(self, other):
         """Establishes equality by comparing all properties."""
-        return (
-            self.display_name == other.display_name
-            and self.column_name == other.column_name
-            and self.upper_threshold == other.upper_threshold
-            and self.lower_threshold == other.lower_threshold
-        )
+        return self.display_name == other.display_name and self.column_name == other.column_name
 
 
 class FeatureType(str, Enum):
@@ -230,7 +250,6 @@ class JensenShannonDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
-        self.upper_threshold = 0.1
 
         self._treat_as_type: str
         self._bins: np.ndarray
@@ -280,17 +299,10 @@ class JensenShannonDistance(Method):
             reference_proba_in_bins = np.append(reference_proba_in_bins, 0)
 
         distance = jensenshannon(reference_proba_in_bins, data_proba_in_bins, base=2)
-        self._p_value = None
 
         del reference_proba_in_bins
 
         return distance
-
-    def _alert(self, data: pd.Series):
-        value = self.calculate(data)
-        return (self.lower_threshold is not None and value < self.lower_threshold) or (
-            self.upper_threshold is not None and value > self.upper_threshold
-        )
 
 
 @MethodFactory.register(key='kolmogorov_smirnov', feature_type=FeatureType.CONTINUOUS)
@@ -305,23 +317,26 @@ class KolmogorovSmirnovStatistic(Method):
             display_name='Kolmogorov-Smirnov statistic',
             column_name='kolmogorov_smirnov',
             upper_threshold_limit=1,
-            lower_threshold=None,
-            **kwargs,  # setting this to `None` so we don't plot the threshold (p-value based)
+            lower_threshold_limit=0,
+            **kwargs,
         )
         self._reference_data: Optional[pd.Series] = None
-        self._p_value: Optional[float] = None
         self._reference_size: float
         self._qts: np.ndarray
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
-        if (not kwargs) or not (kwargs['computation_params']) or (self.column_name not in kwargs['computation_params']):
+        if (
+            (not kwargs)
+            or ('computation_params' not in kwargs)
+            or (self.column_name not in kwargs['computation_params'])
+        ):
             self.calculation_method = 'auto'
             self.n_bins = 10_000
         else:
             self.calculation_method = kwargs['computation_params'].get('calculation_method', 'auto')
             self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_missing_data(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
@@ -332,6 +347,7 @@ class KolmogorovSmirnovStatistic(Method):
             ref_rel_freqs = reference_proba_in_qts / len(reference_data)
             self._ref_rel_freqs = np.cumsum(ref_rel_freqs)
         self._reference_size = len(reference_data)
+
         self._fitted = True
         return self
 
@@ -345,27 +361,15 @@ class KolmogorovSmirnovStatistic(Method):
             self.calculation_method == 'auto' and self._reference_size >= 10_000
         ) or self.calculation_method == 'estimated':
             m, n = sorted([float(self._reference_size), float(len(data))], reverse=True)
-            en = m * n / (m + n)
             chunk_proba_in_qts, _ = np.histogram(data, self._qts)
             chunk_rel_freqs = chunk_proba_in_qts / len(data)
             rel_freq_lower_than_edges = len(data[data < self._qts[0]]) / len(data)
             chunk_rel_freqs = rel_freq_lower_than_edges + np.cumsum(chunk_rel_freqs)
             stat = np.max(abs(self._ref_rel_freqs - chunk_rel_freqs))
-            prob = kstwo.sf(stat, np.round(en))
-            self._p_value = np.clip(prob, 0, 1)
         else:
-            stat, self._p_value = ks_2samp(self._reference_data, data)
+            stat, _ = ks_2samp(self._reference_data, data)
 
         return stat
-
-    def _alert(self, data: pd.Series):
-        if self._p_value is None:
-            _, self._p_value = ks_2samp(self._reference_data, data)
-
-        alert = self._p_value < 0.05
-        self._p_value = None  # just cleaning up state before running on new chunk data (optimization)
-
-        return alert
 
 
 @MethodFactory.register(key='chi2', feature_type=FeatureType.CATEGORICAL)
@@ -380,13 +384,14 @@ class Chi2Statistic(Method):
             display_name='Chi2 statistic',
             column_name='chi2',
             upper_threshold_limit=1.0,
+            lower_threshold_limit=0,
             **kwargs,
         )
         self._reference_data_vcs: pd.Series
-        self._p_value: Optional[float] = None
+        self._p_value: float
         self._fitted = False
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_missing_data(reference_data)
         self._reference_data_vcs = reference_data.value_counts()
         self._fitted = True
@@ -402,13 +407,11 @@ class Chi2Statistic(Method):
         stat, self._p_value = self._calc_chi2(data)
         return stat
 
-    def _alert(self, data: pd.Series):
-        if self._p_value is None:
-            _, self._p_value = self._calc_chi2(data)
+    def alert(self, value: float):
+        self.lower_threshold_value = None  # ignoring all custom thresholding, disable plotting a threshold
+        self.upper_threshold_value = None  # ignoring all custom thresholding, disable plotting a threshold
 
-        alert = self._p_value < 0.05
-        self._p_value = None
-        return alert
+        return self._p_value < 0.05
 
     def _calc_chi2(self, data: pd.Series):
         stat, p_value, _, _ = chi2_contingency(
@@ -435,13 +438,13 @@ class LInfinityDistance(Method):
             **kwargs,
         )
 
-        self.upper_threshold = 0.1
         self._reference_proba: Optional[dict] = None
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_missing_data(reference_data)
         ref_labels = reference_data.unique()
         self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
+
         return self
 
     def _calculate(self, data: pd.Series):
@@ -461,12 +464,6 @@ class LInfinityDistance(Method):
 
         return max(differences.values())
 
-    def _alert(self, data: pd.Series):
-        value = self._calculate(data)
-        return (self.lower_threshold is not None and value < self.lower_threshold) or (
-            self.upper_threshold is not None and value > self.upper_threshold
-        )
-
 
 @MethodFactory.register(key='wasserstein', feature_type=FeatureType.CONTINUOUS)
 class WassersteinDistance(Method):
@@ -479,24 +476,28 @@ class WassersteinDistance(Method):
         super().__init__(
             display_name='Wasserstein distance',
             column_name='wasserstein',
+            lower_threshold_limit=0,
             **kwargs,
         )
 
         self._reference_data: Optional[pd.Series] = None
-        self._p_value: Optional[float] = None
         self._reference_size: float
         self._bin_width: float
         self._bin_edges: np.ndarray
         self._ref_rel_freqs: Optional[np.ndarray] = None
         self._fitted = False
-        if (not kwargs) or not (kwargs['computation_params']) or (self.column_name not in kwargs['computation_params']):
+        if (
+            (not kwargs)
+            or ('computation_params' not in kwargs)
+            or (self.column_name not in kwargs['computation_params'])
+        ):
             self.calculation_method = 'auto'
             self.n_bins = 10_000
         else:
             self.calculation_method = kwargs['computation_params'].get('calculation_method', 'auto')
             self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Method:
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_missing_data(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
@@ -506,23 +507,7 @@ class WassersteinDistance(Method):
             self._bin_width = self._bin_edges[1] - self._bin_edges[0]
 
         self._fitted = True
-        self.lower_threshold = 0
         self._reference_size = len(reference_data)
-
-        if self.chunker is None:
-            self.upper_threshold = 1
-        else:
-            # when a timestamp column is known we have to include it for chunking
-            if timestamps is not None:
-                data = pd.concat([reference_data, timestamps], axis=1)
-            else:
-                data = reference_data.to_frame()
-
-            ref_chunk_distances = [
-                self._calculate(chunk.data[reference_data.name].values.reshape(-1))
-                for chunk in self.chunker.split(data)
-            ]
-            self.upper_threshold = np.mean(ref_chunk_distances) + 3 * np.std(ref_chunk_distances)
 
         return self
 
@@ -571,18 +556,10 @@ class WassersteinDistance(Method):
             chunk_binned_cdf = np.cumsum(chunk_binned_pdf)
 
             distance = np.sum(np.abs(ref_binned_cdf - chunk_binned_cdf) * self._bin_width)
-            self._p_value = None
         else:
             distance = wasserstein_distance(self._reference_data, data)
-            self._p_value = None
 
         return distance
-
-    def _alert(self, data: pd.Series):
-        value = self.calculate(data)
-        alert = value < self.lower_threshold or value > self.upper_threshold
-
-        return alert
 
 
 @MethodFactory.register(key='hellinger', feature_type=FeatureType.CONTINUOUS)
@@ -594,16 +571,15 @@ class HellingerDistance(Method):
         super().__init__(
             display_name='Hellinger distance',
             column_name='hellinger',
+            lower_threshold_limit=0,
             **kwargs,
         )
-
-        self.upper_threshold = 0.1
 
         self._treat_as_type: str
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
 
-    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_missing_data(reference_data)
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
@@ -649,14 +625,7 @@ class HellingerDistance(Method):
             reference_proba_in_bins = np.append(reference_proba_in_bins, 0)
 
         distance = np.sqrt(np.sum((np.sqrt(reference_proba_in_bins) - np.sqrt(data_proba_in_bins)) ** 2)) / np.sqrt(2)
-        self._p_value = None
 
         del reference_proba_in_bins
 
         return distance
-
-    def _alert(self, data: pd.Series):
-        value = self.calculate(data)
-        return (self.lower_threshold is not None and value < self.lower_threshold) or (
-            self.upper_threshold is not None and value > self.upper_threshold
-        )

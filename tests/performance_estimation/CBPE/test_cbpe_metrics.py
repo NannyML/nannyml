@@ -1,11 +1,22 @@
 import pandas as pd
 import pytest
 
+from nannyml.chunk import DefaultChunker
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
 from nannyml.performance_estimation.confidence_based import CBPE
+from nannyml.performance_estimation.confidence_based.metrics import (
+    BinaryClassificationAccuracy,
+    BinaryClassificationAUROC,
+    BinaryClassificationConfusionMatrix,
+    BinaryClassificationF1,
+    BinaryClassificationPrecision,
+    BinaryClassificationRecall,
+    BinaryClassificationSpecificity,
+)
+from nannyml.thresholds import ConstantThreshold
 
 
 @pytest.mark.parametrize(
@@ -3439,3 +3450,39 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
     ]
 
     pd.testing.assert_frame_equal(expected, sut)
+
+
+@pytest.mark.parametrize(
+    'metric_cls',
+    [
+        BinaryClassificationAUROC,
+        BinaryClassificationF1,
+        BinaryClassificationPrecision,
+        BinaryClassificationRecall,
+        BinaryClassificationSpecificity,
+        BinaryClassificationAccuracy,
+        BinaryClassificationConfusionMatrix,
+    ],
+)
+def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls):
+    reference, _, _ = load_synthetic_binary_classification_dataset()
+
+    # TODO: move this from CBPE to metrics
+    # workaround to deal with functionality outside of Metrics classes
+    reference['uncalibrated_y_pred_proba'] = reference['y_pred_proba']
+
+    metric = metric_cls(
+        y_pred_proba='y_pred_proba',
+        y_pred='y_pred',
+        y_true='work_home_actual',
+        problem_type='classification_binary',
+        chunker=DefaultChunker(),
+        threshold=ConstantThreshold(lower=-1),
+    )
+    metric.fit(reference)
+
+    assert len(caplog.messages) == 4 if isinstance(metric, BinaryClassificationConfusionMatrix) else 1
+    assert (
+        caplog.messages[0] == f'{metric.display_name} lower threshold value -1 overridden by '
+        f'lower threshold value limit {metric.lower_threshold_value_limit}'
+    )

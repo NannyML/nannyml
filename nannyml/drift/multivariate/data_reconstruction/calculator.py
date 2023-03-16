@@ -20,6 +20,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction.result import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -37,59 +38,63 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         chunker: Optional[Chunker] = None,
         imputer_categorical: Optional[SimpleImputer] = None,
         imputer_continuous: Optional[SimpleImputer] = None,
+        threshold: Threshold = StandardDeviationThreshold(),
     ):
         """Creates a new DataReconstructionDriftCalculator instance.
 
-        Parameters
-        ----------
-        column_names: List[str]
-            A list containing the names of features in the provided data set. All of these features will be used by
-            the multivariate data reconstruction drift calculator to calculate an aggregate drift score.
-        timestamp_column_name: str, default=None
-            The name of the column containing the timestamp of the model prediction.
-        n_components: Union[int, float, str], default=0.65
-            The n_components parameter as passed to the sklearn.decomposition.PCA constructor.
-            See https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
-        chunk_size: int, default=None
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int, default=None
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str, default=None
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker, default=None
-            The `Chunker` used to split the data sets into a lists of chunks.
-        imputer_categorical: SimpleImputer, default=None
-            The SimpleImputer used to impute categorical features in the data. Defaults to using most_frequent value.
-        imputer_continuous: SimpleImputer, default=None
-            The SimpleImputer used to impute continuous features in the data. Defaults to using mean value.
+        Parameters:
+            column_names: List[str]
+                A list containing the names of features in the provided data set. All of these features will be used by
+                the multivariate data reconstruction drift calculator to calculate an aggregate drift score.
+            timestamp_column_name: str, default=None
+                The name of the column containing the timestamp of the model prediction.
+            n_components: Union[int, float, str], default=0.65
+                The n_components parameter as passed to the sklearn.decomposition.PCA constructor.
+                See https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+            chunk_size: int, default=None
+                Splits the data into chunks containing `chunks_size` observations.
+                Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+            chunk_number: int, default=None
+                Splits the data into `chunk_number` pieces.
+                Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+            chunk_period: str, default=None
+                Splits the data according to the given period.
+                Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+            chunker : Chunker, default=None
+                The `Chunker` used to split the data sets into a lists of chunks.
+            imputer_categorical: SimpleImputer, default=None
+                The SimpleImputer used to impute categorical features in the data.
+                Defaults to using most_frequent value.
+            imputer_continuous: SimpleImputer, default=None
+                The SimpleImputer used to impute continuous features in the data. Defaults to using mean value.
+            threshold: Threshold, default=StandardDeviationThreshold
+                The threshold you wish to evaluate values on. Defaults to a StandardDeviationThreshold with default
+                options.
 
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> from IPython.display import display
-        >>> # Load synthetic data
-        >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
-        >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
-        >>> display(reference.head())
-        >>> # Define feature columns
-        >>> column_names = [
-        ...     col for col in reference.columns if col not in [
-        ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
-        ...     ]]
-        >>> calc = nml.DataReconstructionDriftCalculator(
-        ...     column_names=column_names,
-        ...     timestamp_column_name='timestamp',
-        ...     chunk_size=5000
-        >>> )
-        >>> calc.fit(reference)
-        >>> results = calc.calculate(analysis)
-        >>> display(results.data)
-        >>> display(results.calculator.previous_reference_results)
-        >>> figure = results.plot(plot_reference=True)
-        >>> figure.show()
+
+        Examples:
+            >>> import nannyml as nml
+            >>> from IPython.display import display
+            >>> # Load synthetic data
+            >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
+            >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
+            >>> display(reference.head())
+            >>> # Define feature columns
+            >>> column_names = [
+            ...     col for col in reference.columns if col not in [
+            ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
+            ...     ]]
+            >>> calc = nml.DataReconstructionDriftCalculator(
+            ...     column_names=column_names,
+            ...     timestamp_column_name='timestamp',
+            ...     chunk_size=5000
+            >>> )
+            >>> calc.fit(reference)
+            >>> results = calc.calculate(analysis)
+            >>> display(results.data)
+            >>> display(results.calculator.previous_reference_results)
+            >>> figure = results.plot(plot_reference=True)
+            >>> figure.show()
         """
         super(DataReconstructionDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
@@ -100,12 +105,14 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         self._n_components = n_components
 
+        self.threshold = threshold
+
         self._scaler = None
         self._encoder = None
         self._pca = None
 
-        self._upper_alert_threshold: float
-        self._lower_alert_threshold: float
+        self._upper_alert_threshold: Optional[float]
+        self._lower_alert_threshold: Optional[float]
 
         if imputer_categorical:
             if not isinstance(imputer_categorical, SimpleImputer):
@@ -170,7 +177,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         self._pca = pca
 
         # Calculate thresholds
-        self._upper_alert_threshold, self._lower_alert_threshold = self._calculate_alert_thresholds(reference_data)
+        self._lower_alert_threshold, self._upper_alert_threshold = self._calculate_alert_thresholds(reference_data)
 
         # Reference stability
         self._sampling_error_components = (
@@ -254,9 +261,9 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         return self.result
 
-    def _calculate_alert_thresholds(self, reference_data) -> Tuple[float, float]:
+    def _calculate_alert_thresholds(self, reference_data) -> Tuple[Optional[float], Optional[float]]:
         reference_chunks = self.chunker.split(reference_data)
-        reference_reconstruction_error = pd.Series(
+        reference_reconstruction_error = np.asarray(
             [
                 _calculate_reconstruction_error_for_data(
                     column_names=self.column_names,
@@ -273,10 +280,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             ]
         )
 
-        return (
-            reference_reconstruction_error.mean() + 3 * reference_reconstruction_error.std(),
-            reference_reconstruction_error.mean() - 3 * reference_reconstruction_error.std(),
-        )
+        return self.threshold.thresholds(reference_reconstruction_error)
 
 
 def _calculate_reconstruction_error_for_data(
@@ -363,10 +367,15 @@ def _calculate_distance(df: pd.DataFrame, features_preprocessed: List[str], feat
     return x['rc_error']
 
 
-def _add_alert_flag(drift_result: pd.DataFrame, upper_threshold: float, lower_threshold: float) -> pd.Series:
+def _add_alert_flag(
+    drift_result: pd.DataFrame, upper_threshold: Optional[float], lower_threshold: Optional[float]
+) -> pd.Series:
     alert = drift_result.apply(
         lambda row: True
-        if (row['reconstruction_error'] > upper_threshold or row['reconstruction_error'] < lower_threshold)
+        if (
+            (upper_threshold is not None and row['reconstruction_error'] > upper_threshold)
+            or (lower_threshold is not None and row['reconstruction_error'] < lower_threshold)
+        )
         else False,
         axis=1,
     )

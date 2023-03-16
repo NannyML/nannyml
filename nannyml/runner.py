@@ -22,7 +22,9 @@ from nannyml.io.raw_files_writer import RawFilesWriter
 from nannyml.io.store import Store
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.direct_loss_estimation.dle import DEFAULT_METRICS, DLE
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES as CBPE_SUPPORTED_METRICS
+from nannyml.performance_estimation.direct_loss_estimation import DLE
+from nannyml.performance_estimation.direct_loss_estimation import SUPPORTED_METRIC_VALUES as DLE_SUPPORTED_METRICS
 
 _logger = logging.getLogger(__name__)
 
@@ -277,9 +279,9 @@ def _run_realized_performance_calculator(  # noqa: C901
         if not calc:  # no store or no fitted calculator was in the store
             metrics = []
             if problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
-                metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+                metrics = CBPE_SUPPORTED_METRICS
             elif problem_type in [ProblemType.REGRESSION]:
-                metrics = DEFAULT_METRICS
+                metrics = DLE_SUPPORTED_METRICS
 
             if console:
                 console.log('no fitted calculator found in store')
@@ -357,7 +359,7 @@ def _run_cbpe_performance_estimation(
             estimator = store.load(path=estimator_path, as_type=CBPE)
 
         if not estimator:  # no store or no fitted calculator was in the store
-            metrics = ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy']
+            metrics = CBPE_SUPPORTED_METRICS
 
             if console:
                 console.log('no fitted estimator found in store')
@@ -445,7 +447,7 @@ def _run_dle_performance_estimation(
                 y_pred=column_mapping['y_pred'],
                 timestamp_column_name=column_mapping.get('timestamp', None),
                 chunker=chunker,
-                metrics=DEFAULT_METRICS,
+                metrics=DLE_SUPPORTED_METRICS,
             )
             estimator.fit(reference_data)
             if store:

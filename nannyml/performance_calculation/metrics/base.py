@@ -4,14 +4,15 @@
 import abc
 import logging
 from logging import Logger
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
 
 from nannyml._typing import ProblemType
-from nannyml.chunk import Chunk, Chunker
+from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
@@ -23,6 +24,7 @@ class Metric(abc.ABC):
         column_name: str,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         upper_threshold_limit: Optional[float] = None,
         lower_threshold_limit: Optional[float] = None,
@@ -47,10 +49,15 @@ class Metric(abc.ABC):
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
 
-        self.upper_threshold: Optional[float] = None
-        self.lower_threshold: Optional[float] = None
-        self.lower_threshold_limit: Optional[float] = lower_threshold_limit
-        self.upper_threshold_limit: Optional[float] = upper_threshold_limit
+        self.threshold = threshold
+        self.upper_threshold_value: Optional[float] = None
+        self.lower_threshold_value: Optional[float] = None
+        self.lower_threshold_value_limit: Optional[float] = lower_threshold_limit
+        self.upper_threshold_value_limit: Optional[float] = upper_threshold_limit
+
+    @property
+    def _logger(self) -> logging.Logger:
+        return logging.getLogger(__name__)
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
         """Fits a Metric on reference data.
@@ -68,13 +75,14 @@ class Metric(abc.ABC):
         self._fit(reference_data)
 
         # Calculate alert thresholds
-        reference_chunks = chunker.split(
-            reference_data,
-        )
-        self.lower_threshold, self.upper_threshold = self._calculate_alert_thresholds(
-            reference_chunks=reference_chunks,
-            lower_limit=self.lower_threshold_limit,
-            upper_limit=self.upper_threshold_limit,
+        reference_chunk_results = np.asarray([self.calculate(chunk.data) for chunk in chunker.split(reference_data)])
+        self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=reference_chunk_results,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
         )
 
         return
@@ -122,31 +130,18 @@ class Metric(abc.ABC):
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _sampling_error method"
         )
 
-    def _calculate_alert_thresholds(
-        self,
-        reference_chunks: List[Chunk],
-        std_num: int = 3,
-        lower_limit: Optional[float] = None,
-        upper_limit: Optional[float] = None,
-    ) -> Tuple[Optional[float], Optional[float]]:
-        chunked_reference_metric = [self.calculate(chunk.data) for chunk in reference_chunks]
-        deviation = np.std(chunked_reference_metric) * std_num
-        mean_reference_metric = np.mean(chunked_reference_metric)
-        lower_threshold = mean_reference_metric - deviation
-        if lower_limit is not None:
-            lower_threshold = np.maximum(lower_threshold, lower_limit)
-        upper_threshold = mean_reference_metric + deviation
-        if upper_limit is not None:
-            upper_threshold = np.minimum(upper_threshold, upper_limit)
-        return lower_threshold, upper_threshold
+    def alert(self, value: float) -> bool:
+        return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
+            self.upper_threshold_value is not None and value > self.upper_threshold_value
+        )
 
     def __eq__(self, other):
         """Establishes equality by comparing all properties."""
         return (
             self.display_name == other.display_name
             and self.column_name == other.column_name
-            and self.upper_threshold == other.upper_threshold
-            and self.lower_threshold == other.lower_threshold
+            and self.upper_threshold_value == other.upper_threshold_value
+            and self.lower_threshold_value == other.lower_threshold_value
         )
 
 

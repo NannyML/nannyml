@@ -47,7 +47,10 @@ class NbImport(SphinxDirective):
                             output = outputs['text']
                         elif 'data' in outputs:
                             output = outputs['data']['text/plain']
-                        cell_content += [line.replace('\n', '') for line in output]
+                        if isinstance(output, str):
+                            cell_content += [output]
+                        else:
+                            cell_content += [line.replace('\n', '') for line in output]
                     cell_content.append('')
             except Exception as exc:
                 print(

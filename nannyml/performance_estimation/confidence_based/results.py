@@ -15,30 +15,11 @@ from nannyml._typing import Key, ModelOutputsType, ProblemType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
-
-SUPPORTED_METRIC_VALUES = [
-    'roc_auc',
-    'f1',
-    'precision',
-    'recall',
-    'specificity',
-    'accuracy',
-    'confusion_matrix',
-    'true_positive',
-    'true_negative',
-    'false_positive',
-    'false_negative',
-    'true_positive_cost',
-    'true_negative_cost',
-    'false_positive_cost',
-    'false_negative_cost',
-    'total_cost',
-    'business_cost',
-]
 
 
 class Result(Abstract1DResult, ResultCompareMixin):
