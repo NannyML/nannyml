@@ -113,6 +113,6 @@ lower threshold by setting the appropriate multiplier to `None`.
 
     For now it will continue to function as it did before.
 
-    When specifying a custom threshold for :math:`\chi^2` in the
-    :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`, NannyML will log a warning message
-    to clarify the custom threshold will be ignored.
+    When specifying a custom threshold for Chi-squared in the
+    :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`,
+    NannyML will log a warning message to clarify the custom threshold will be ignored.
