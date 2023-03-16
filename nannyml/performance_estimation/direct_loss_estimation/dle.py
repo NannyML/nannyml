@@ -13,10 +13,20 @@ from nannyml._typing import ProblemType, Self
 from nannyml.base import AbstractEstimator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.direct_loss_estimation import DEFAULT_METRICS
+from nannyml.performance_estimation.direct_loss_estimation import SUPPORTED_METRIC_VALUES
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric, MetricFactory
 from nannyml.performance_estimation.direct_loss_estimation.result import Result
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
+
+DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
+    'mae': StandardDeviationThreshold(),
+    'mape': StandardDeviationThreshold(),
+    'mse': StandardDeviationThreshold(),
+    'msle': StandardDeviationThreshold(),
+    'rmse': StandardDeviationThreshold(),
+    'rmsle': StandardDeviationThreshold(),
+}
 
 
 class DLE(AbstractEstimator):
@@ -52,6 +62,7 @@ class DLE(AbstractEstimator):
         hyperparameters: Optional[Dict[str, Any]] = None,
         tune_hyperparameters: bool = False,
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = None,
+        thresholds: Optional[Dict[str, Threshold]] = None,
     ):
         """
         Creates a new Direct Loss Estimator.
@@ -108,6 +119,26 @@ class DLE(AbstractEstimator):
 
             For an overview of possible parameters for the tuning process check out the
             `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        thresholds: dict, default={ \
+            'mae': StandardDeviationThreshold(), \
+            'mape': StandardDeviationThreshold(), \
+            'mse': StandardDeviationThreshold(), \
+            'msle': StandardDeviationThreshold(), \
+            'rmse': StandardDeviationThreshold(), \
+            'rmsle': StandardDeviationThreshold(), \
+        }
+
+            A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
+            to a method name. This dictionary is optional.
+            When a dictionary is given its values will override the default values. If no dictionary is given a default
+            will be applied. The default method thresholds are as follows:
+
+                - `mae`: `StandardDeviationThreshold()`
+                - `mape`: `StandardDeviationThreshold()`
+                - `mse`: `StandardDeviationThreshold()`
+                - `msle`: `StandardDeviationThreshold()`
+                - `rmse`: `StandardDeviationThreshold()`
+                - `rmsle`: `StandardDeviationThreshold()`
 
         Returns
         -------
@@ -183,24 +214,36 @@ class DLE(AbstractEstimator):
         self.tune_hyperparameters = tune_hyperparameters
         self.hyperparameters = hyperparameters
 
+        self.thresholds = DEFAULT_THRESHOLDS
+        if thresholds:
+            self.thresholds.update(**thresholds)
+
         if metrics is None:
-            metrics = DEFAULT_METRICS
+            metrics = SUPPORTED_METRIC_VALUES
         elif isinstance(metrics, str):
             metrics = [metrics]
-        self.metrics: List[Metric] = [
-            MetricFactory.create(
-                metric,
-                ProblemType.REGRESSION,
-                feature_column_names=self.feature_column_names,
-                y_true=self.y_true,
-                y_pred=self.y_pred,
-                chunker=self.chunker,
-                tune_hyperparameters=self.tune_hyperparameters,
-                hyperparameter_tuning_config=self.hyperparameter_tuning_config,
-                hyperparameters=self.hyperparameters,
+
+        self.metrics: List[Metric] = []
+        for metric in metrics:
+            if metric not in SUPPORTED_METRIC_VALUES:
+                raise InvalidArgumentsException(
+                    f"unknown metric key '{metric}' given. " f"Should be one of {SUPPORTED_METRIC_VALUES}."
+                )
+
+            self.metrics.append(
+                MetricFactory.create(
+                    metric,
+                    ProblemType.REGRESSION,
+                    feature_column_names=self.feature_column_names,
+                    y_true=self.y_true,
+                    y_pred=self.y_pred,
+                    chunker=self.chunker,
+                    tune_hyperparameters=self.tune_hyperparameters,
+                    hyperparameter_tuning_config=self.hyperparameter_tuning_config,
+                    hyperparameters=self.hyperparameters,
+                    threshold=self.thresholds[metric],
+                )
             )
-            for metric in metrics
-        ]
 
         self._categorical_imputer = SimpleImputer(strategy='constant', fill_value='NML_missing_value')
         self._categorical_encoders: defaultdict = defaultdict(_default_encoder)
@@ -319,23 +362,21 @@ class DLE(AbstractEstimator):
             sampling_error = metric.sampling_error(chunk.data)
 
             upper_confidence_boundary = estimated_metric + 3 * sampling_error
-            if metric.upper_value_limit is not None:
-                upper_confidence_boundary = min(metric.upper_value_limit, upper_confidence_boundary)
+            if metric.upper_threshold_value_limit is not None:
+                upper_confidence_boundary = min(metric.upper_threshold_value_limit, upper_confidence_boundary)
 
             lower_confidence_boundary = estimated_metric - 3 * sampling_error
-            if metric.lower_value_limit is not None:
-                lower_confidence_boundary = max(metric.lower_value_limit, lower_confidence_boundary)
+            if metric.lower_threshold_value_limit is not None:
+                lower_confidence_boundary = max(metric.lower_threshold_value_limit, lower_confidence_boundary)
 
             estimates[f'sampling_error_{metric.column_name}'] = sampling_error
             estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
             estimates[f'estimated_{metric.column_name}'] = estimated_metric
             estimates[f'upper_confidence_{metric.column_name}'] = upper_confidence_boundary
             estimates[f'lower_confidence_{metric.column_name}'] = lower_confidence_boundary
-            estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold
-            estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold
-            estimates[f'alert_{metric.column_name}'] = (
-                estimated_metric > metric.upper_threshold if metric.upper_threshold else False
-            ) or (estimated_metric < metric.lower_threshold if metric.lower_threshold else False)
+            estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold_value
+            estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold_value
+            estimates[f'alert_{metric.column_name}'] = metric.alert(estimated_metric)
         return estimates
 
 

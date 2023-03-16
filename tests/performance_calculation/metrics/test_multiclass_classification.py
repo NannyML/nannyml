@@ -13,6 +13,7 @@ import pytest
 
 from nannyml import PerformanceCalculator
 from nannyml._typing import ProblemType
+from nannyml.chunk import DefaultChunker
 from nannyml.datasets import load_synthetic_multiclass_classification_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.multiclass_classification import (
@@ -23,6 +24,7 @@ from nannyml.performance_calculation.metrics.multiclass_classification import (
     MulticlassClassificationRecall,
     MulticlassClassificationSpecificity,
 )
+from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
 
 @pytest.fixture(scope='module')
@@ -97,9 +99,16 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         problem_type='classification_multiclass',
     )
     sut = MetricFactory.create(
-        key, problem_type, y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba
+        key,
+        problem_type,
+        y_true=calc.y_true,
+        y_pred=calc.y_pred,
+        y_pred_proba=calc.y_pred_proba,
+        threshold=StandardDeviationThreshold(),
     )
-    assert sut == metric(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut == metric(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold
+    )
 
 
 @pytest.mark.parametrize(
@@ -132,3 +141,67 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
 def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_metrics, metric, expected):
     metric_values = no_timestamp_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
+
+
+@pytest.mark.parametrize(
+    'metric_cls',
+    [
+        MulticlassClassificationAUROC,
+        MulticlassClassificationF1,
+        MulticlassClassificationPrecision,
+        MulticlassClassificationRecall,
+        MulticlassClassificationSpecificity,
+        MulticlassClassificationAccuracy,
+    ],
+)
+def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls, multiclass_data):
+    reference = multiclass_data[0]
+    metric = metric_cls(
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        threshold=ConstantThreshold(lower=-1),
+    )
+    metric.fit(reference, chunker=DefaultChunker())
+
+    assert len(caplog.messages) == 1
+    assert (
+        caplog.messages[0] == f'{metric.display_name} lower threshold value -1 overridden by '
+        f'lower threshold value limit {metric.lower_threshold_value_limit}'
+    )
+
+
+@pytest.mark.parametrize(
+    'metric_cls',
+    [
+        MulticlassClassificationAUROC,
+        MulticlassClassificationF1,
+        MulticlassClassificationPrecision,
+        MulticlassClassificationRecall,
+        MulticlassClassificationSpecificity,
+        MulticlassClassificationAccuracy,
+    ],
+)
+def test_metric_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(caplog, metric_cls, multiclass_data):
+    reference = multiclass_data[0]
+    metric = metric_cls(
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        threshold=ConstantThreshold(upper=2),
+    )
+    metric.fit(reference, chunker=DefaultChunker())
+
+    assert len(caplog.messages) == 1
+    assert (
+        caplog.messages[0] == f'{metric.display_name} upper threshold value 2 overridden by '
+        f'upper threshold value limit {metric.upper_threshold_value_limit}'
+    )

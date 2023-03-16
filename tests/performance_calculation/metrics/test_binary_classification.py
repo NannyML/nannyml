@@ -10,6 +10,7 @@ import pytest
 
 from nannyml import PerformanceCalculator
 from nannyml._typing import ProblemType
+from nannyml.chunk import DefaultChunker
 from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.binary_classification import (
@@ -20,6 +21,7 @@ from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationRecall,
     BinaryClassificationSpecificity,
 )
+from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
 
 @pytest.fixture(scope='module')
@@ -86,9 +88,16 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         problem_type='classification_binary',
     )
     sut = MetricFactory.create(
-        key, problem_type, y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba
+        key,
+        problem_type,
+        y_true=calc.y_true,
+        y_pred=calc.y_pred,
+        y_pred_proba=calc.y_pred_proba,
+        threshold=StandardDeviationThreshold(),
     )
-    assert sut == metric(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut == metric(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold
+    )
 
 
 @pytest.mark.parametrize(
@@ -121,3 +130,53 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
 def test_metric_values_without_timestamp_are_calculated_correctly(no_timestamp_metrics, metric, expected):
     metric_values = no_timestamp_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
+
+
+@pytest.mark.parametrize(
+    'metric_cls',
+    [
+        BinaryClassificationAUROC,
+        BinaryClassificationF1,
+        BinaryClassificationPrecision,
+        BinaryClassificationRecall,
+        BinaryClassificationSpecificity,
+        BinaryClassificationAccuracy,
+    ],
+)
+def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls, binary_data):
+    reference = binary_data[0]
+    metric = metric_cls(
+        y_pred_proba='y_pred_proba', y_pred='y_pred', y_true='work_home_actual', threshold=ConstantThreshold(lower=-1)
+    )
+    metric.fit(reference, chunker=DefaultChunker())
+
+    assert len(caplog.messages) == 1
+    assert (
+        caplog.messages[0] == f'{metric.display_name} lower threshold value -1 overridden by '
+        f'lower threshold value limit {metric.lower_threshold_value_limit}'
+    )
+
+
+@pytest.mark.parametrize(
+    'metric_cls',
+    [
+        BinaryClassificationAUROC,
+        BinaryClassificationF1,
+        BinaryClassificationPrecision,
+        BinaryClassificationRecall,
+        BinaryClassificationSpecificity,
+        BinaryClassificationAccuracy,
+    ],
+)
+def test_metric_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(caplog, metric_cls, binary_data):
+    reference = binary_data[0]
+    metric = metric_cls(
+        y_pred_proba='y_pred_proba', y_pred='y_pred', y_true='work_home_actual', threshold=ConstantThreshold(upper=2)
+    )
+    metric.fit(reference, chunker=DefaultChunker())
+
+    assert len(caplog.messages) == 1
+    assert (
+        caplog.messages[0] == f'{metric.display_name} upper threshold value 2 overridden by '
+        f'upper threshold value limit {metric.upper_threshold_value_limit}'
+    )

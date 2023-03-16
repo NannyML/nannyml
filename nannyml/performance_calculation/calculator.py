@@ -18,11 +18,27 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
 SUPPORTED_METRICS = list(MetricFactory.registry.keys())
+
+DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
+    'roc_auc': StandardDeviationThreshold(),
+    'f1': StandardDeviationThreshold(),
+    'precision': StandardDeviationThreshold(),
+    'recall': StandardDeviationThreshold(),
+    'specificity': StandardDeviationThreshold(),
+    'accuracy': StandardDeviationThreshold(),
+    'mae': StandardDeviationThreshold(),
+    'mape': StandardDeviationThreshold(),
+    'mse': StandardDeviationThreshold(),
+    'msle': StandardDeviationThreshold(),
+    'rmse': StandardDeviationThreshold(),
+    'rmsle': StandardDeviationThreshold(),
+}
 
 
 class PerformanceCalculator(AbstractCalculator):
@@ -36,6 +52,7 @@ class PerformanceCalculator(AbstractCalculator):
         problem_type: Union[str, ProblemType],
         y_pred_proba: Optional[ModelOutputsType] = None,
         timestamp_column_name: Optional[str] = None,
+        thresholds: Optional[Dict[str, Threshold]] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
@@ -69,6 +86,38 @@ class PerformanceCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
+        thresholds: dict, default={ \
+            'roc_auc': StandardDeviationThreshold(), \
+            'f1': StandardDeviationThreshold(), \
+            'precision': StandardDeviationThreshold(), \
+            'recall': StandardDeviationThreshold(), \
+            'specificity': StandardDeviationThreshold(), \
+            'accuracy': StandardDeviationThreshold(), \
+            'mae': StandardDeviationThreshold(), \
+            'mape': StandardDeviationThreshold(), \
+            'mse': StandardDeviationThreshold(), \
+            'msle': StandardDeviationThreshold(), \
+            'rmse': StandardDeviationThreshold(), \
+            'rmsle': StandardDeviationThreshold(), \
+        }
+
+            A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
+            to a method name. This dictionary is optional.
+            When a dictionary is given its values will override the default values. If no dictionary is given a default
+            will be applied. The default method thresholds are as follows:
+
+                - `roc_auc`: `StandardDeviationThreshold()`
+                - `f1`: `StandardDeviationThreshold()`
+                - `precision`: `StandardDeviationThreshold()`
+                - `recall`: `StandardDeviationThreshold()`
+                - `specificity`: `StandardDeviationThreshold()`
+                - `accuracy`: `StandardDeviationThreshold()`
+                - `mae`: `StandardDeviationThreshold()`
+                - `mape`: `StandardDeviationThreshold()`
+                - `mse`: `StandardDeviationThreshold()`
+                - `msle`: `StandardDeviationThreshold()`
+                - `rmse`: `StandardDeviationThreshold()`
+                - `rmsle`: `StandardDeviationThreshold()`
 
         Examples
         --------
@@ -110,10 +159,21 @@ class PerformanceCalculator(AbstractCalculator):
         if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
             raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
 
+        self.thresholds = DEFAULT_THRESHOLDS
+        if thresholds:
+            self.thresholds.update(**thresholds)
+
         if isinstance(metrics, str):
             metrics = [metrics]
         self.metrics: List[Metric] = [
-            MetricFactory.create(m, self.problem_type, y_true=y_true, y_pred=y_pred, y_pred_proba=y_pred_proba)
+            MetricFactory.create(
+                m,
+                self.problem_type,
+                y_true=y_true,
+                y_pred=y_pred,
+                y_pred_proba=y_pred_proba,
+                threshold=self.thresholds[m],
+            )
             for m in metrics
         ]
 
@@ -218,11 +278,9 @@ class PerformanceCalculator(AbstractCalculator):
             chunk_metric = metric.calculate(chunk.data)
             metrics_results[f'{metric.column_name}_sampling_error'] = metric.sampling_error(chunk.data)
             metrics_results[metric.column_name] = chunk_metric
-            metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold
-            metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold
-            metrics_results[f'{metric.column_name}_alert'] = (
-                metric.lower_threshold > chunk_metric if metric.lower_threshold else False
-            ) or (chunk_metric > metric.upper_threshold if metric.upper_threshold else False)
+            metrics_results[f'{metric.column_name}_upper_threshold'] = metric.upper_threshold_value
+            metrics_results[f'{metric.column_name}_lower_threshold'] = metric.lower_threshold_value
+            metrics_results[f'{metric.column_name}_alert'] = metric.alert(chunk_metric)
 
         return metrics_results
 

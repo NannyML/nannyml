@@ -1,6 +1,6 @@
 import abc
 import logging
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,9 @@ import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
@@ -34,8 +36,11 @@ class Metric(abc.ABC):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         components: List[Tuple[str, str]],
         timestamp_column_name: Optional[str] = None,
+        lower_threshold_value_limit: Optional[float] = None,
+        upper_threshold_value_limit: Optional[float] = None,
         **kwargs,
     ):
         """Creates a new Metric instance.
@@ -53,8 +58,12 @@ class Metric(abc.ABC):
         self.timestamp_column_name = timestamp_column_name
         self.chunker = chunker
 
-        self.upper_threshold: Optional[float] = None
-        self.lower_threshold: Optional[float] = None
+        self.threshold = threshold
+        self.lower_threshold_value: Optional[float] = None
+        self.upper_threshold_value: Optional[float] = None
+        self.lower_threshold_value_limit: Optional[float] = lower_threshold_value_limit
+        self.upper_threshold_value_limit: Optional[float] = upper_threshold_value_limit
+
         self.confidence_deviation: Optional[float] = None
 
         self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
@@ -64,6 +73,10 @@ class Metric(abc.ABC):
 
         # A list of (display_name, column_name) tuples
         self.components: List[Tuple[str, str]] = components
+
+    @property
+    def _logger(self) -> logging.Logger:
+        return logging.getLogger(__name__)
 
     @property
     def display_name(self) -> str:
@@ -96,18 +109,24 @@ class Metric(abc.ABC):
             The reference data used for fitting. Must have target data available.
 
         """
-        # Calculate alert thresholds
-        reference_chunks = self.chunker.split(
-            reference_data,
-        )
-        self.lower_threshold, self.upper_threshold = self._alert_thresholds(reference_chunks)
+        # Delegate to subclass
+        self._fit(reference_data)
+
+        reference_chunks = self.chunker.split(reference_data)
 
         # Calculate confidence bands
         self.confidence_deviation = self._confidence_deviation(reference_chunks)
 
-        # Delegate to subclass
-        self._fit(reference_data)
-
+        # Calculate alert thresholds
+        reference_chunk_results = np.asarray([self._realized_performance(chunk.data) for chunk in reference_chunks])
+        self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=reference_chunk_results,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
         return
 
     @abc.abstractmethod
@@ -131,21 +150,15 @@ class Metric(abc.ABC):
     def _confidence_deviation(self, reference_chunks: List[Chunk]):
         return np.std([self._estimate(chunk.data) for chunk in reference_chunks])
 
-    def _alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
-    ) -> Tuple[float, float]:
-        realized_chunk_performance = [self._realized_performance(chunk.data) for chunk in reference_chunks]
-        deviation = np.std(realized_chunk_performance) * std_num
-        mean_realised_performance = np.mean(realized_chunk_performance)
-        lower_threshold = np.maximum(mean_realised_performance - deviation, lower_limit)
-        upper_threshold = np.minimum(mean_realised_performance + deviation, upper_limit)
-
-        return lower_threshold, upper_threshold
-
     @abc.abstractmethod
     def _realized_performance(self, data: pd.DataFrame) -> float:
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the realized_performance method"
+        )
+
+    def alert(self, value: float) -> bool:
+        return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
+            self.upper_threshold_value is not None and value > self.upper_threshold_value
         )
 
     def __eq__(self, other):
@@ -208,12 +221,10 @@ class Metric(abc.ABC):
             self.confidence_lower_bound, estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error
         )
 
-        chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold
-        chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold
+        chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
+        chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
 
-        chunk_record[f'alert_{column_name}'] = (
-            estimated_metric_value > self.upper_threshold or estimated_metric_value < self.lower_threshold
-        )
+        chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
 
         return chunk_record
 
@@ -240,9 +251,7 @@ class MetricFactory:
 
         if key not in cls.registry:
             raise InvalidArgumentsException(
-                f"unknown metric key '{key}' given. "
-                "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
-                "'accuracy']."
+                f"unknown metric key '{key}' given. " f"Should be one of {SUPPORTED_METRIC_VALUES}."
             )
 
         if use_case not in cls.registry[key]:
@@ -276,6 +285,7 @@ class BinaryClassificationAUROC(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -286,7 +296,9 @@ class BinaryClassificationAUROC(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('ROC AUC', 'roc_auc')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -348,6 +360,7 @@ class BinaryClassificationF1(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -358,7 +371,9 @@ class BinaryClassificationF1(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('F1', 'f1')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -405,6 +420,7 @@ class BinaryClassificationPrecision(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -415,7 +431,9 @@ class BinaryClassificationPrecision(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Precision', 'precision')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -462,6 +480,7 @@ class BinaryClassificationRecall(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -472,7 +491,9 @@ class BinaryClassificationRecall(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Recall', 'recall')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -518,6 +539,7 @@ class BinaryClassificationSpecificity(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -528,7 +550,9 @@ class BinaryClassificationSpecificity(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Specificity', 'specificity')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -575,6 +599,7 @@ class BinaryClassificationAccuracy(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -585,7 +610,9 @@ class BinaryClassificationAccuracy(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Accuracy', 'accuracy')],
+            lower_threshold_value_limit=0,
         )
 
         # sampling error
@@ -627,6 +654,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         normalize_confusion_matrix: Optional[str] = None,
         **kwargs,
@@ -638,20 +666,22 @@ class BinaryClassificationConfusionMatrix(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[
                 ('True Positive', 'true_positive'),
                 ('True Negative', 'true_negative'),
                 ('False Positive', 'false_positive'),
                 ('False Negative', 'false_negative'),
             ],
+            lower_threshold_value_limit=0,
         )
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
 
-        self.true_positive_lower_threshold: float = 0
-        self.true_positive_upper_threshold: float = 1
-        self.true_negative_lower_threshold: float = 0
-        self.true_negative_upper_threshold: float = 1
+        self.true_positive_lower_threshold: Optional[float] = 0
+        self.true_positive_upper_threshold: Optional[float] = 1
+        self.true_negative_lower_threshold: Optional[float] = 0
+        self.true_negative_upper_threshold: Optional[float] = 1
 
         self.true_positive_confidence_deviation: float = 0
         self.true_negative_confidence_deviation: float = 0
@@ -673,19 +703,19 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
 
         self.true_positive_lower_threshold, self.true_positive_upper_threshold = self._true_positive_alert_thresholds(
-            reference_chunks, std_num=3, lower_limit=0, upper_limit=1
+            reference_chunks
         )
         self.true_negative_lower_threshold, self.true_negative_upper_threshold = self._true_negative_alert_thresholds(
-            reference_chunks, std_num=3, lower_limit=0, upper_limit=1
+            reference_chunks
         )
         (
             self.false_positive_lower_threshold,
             self.false_positive_upper_threshold,
-        ) = self._false_positive_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        ) = self._false_positive_alert_thresholds(reference_chunks)
         (
             self.false_negative_lower_threshold,
             self.false_negative_upper_threshold,
-        ) = self._false_negative_alert_thresholds(reference_chunks, std_num=3, lower_limit=0, upper_limit=1)
+        ) = self._false_negative_alert_thresholds(reference_chunks)
 
         # Calculate confidence bands
         self.true_positive_confidence_deviation = self._true_positive_confidence_deviation(reference_chunks)
@@ -720,81 +750,69 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
-    def _true_positive_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
-    ) -> Tuple[float, float]:
-        true_positive_realized_chunk_performance = [
-            self._true_positive_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(true_positive_realized_chunk_performance) * std_num
-        true_positive_mean_realized_performance = np.mean(true_positive_realized_chunk_performance)
+    def _true_positive_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._true_positive_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        if self.normalize_confusion_matrix is None:
-            true_positive_upper_threshold = true_positive_mean_realized_performance + deviation
-        else:
-            true_positive_upper_threshold = np.maximum(upper_limit, true_positive_mean_realized_performance + deviation)
+        return lower_threshold_value, upper_threshold_value
 
-        true_positive_lower_threshold = np.minimum(lower_limit, true_positive_mean_realized_performance - deviation)
+    def _true_negative_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._true_negative_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        return true_positive_lower_threshold, true_positive_upper_threshold
-
-    def _true_negative_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
-    ) -> Tuple[float, float]:
-        true_negative_realized_chunk_performance = [
-            self._true_negative_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(true_negative_realized_chunk_performance) * std_num
-        true_negative_mean_realized_performance = np.mean(true_negative_realized_chunk_performance)
-
-        if self.normalize_confusion_matrix is None:
-            true_negative_upper_threshold = true_negative_mean_realized_performance + deviation
-        else:
-            true_negative_upper_threshold = np.maximum(upper_limit, true_negative_mean_realized_performance + deviation)
-
-        true_negative_lower_threshold = np.minimum(lower_limit, true_negative_mean_realized_performance - deviation)
-
-        return true_negative_lower_threshold, true_negative_upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _false_positive_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
-    ) -> Tuple[float, float]:
-        false_positive_realized_chunk_performance = [
-            self._false_positive_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(false_positive_realized_chunk_performance) * std_num
-        false_positive_mean_realized_performance = np.mean(false_positive_realized_chunk_performance)
+        self, reference_chunks: List[Chunk]
+    ) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._false_positive_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        if self.normalize_confusion_matrix is None:
-            false_positive_upper_threshold = false_positive_mean_realized_performance + deviation
-        else:
-            false_positive_upper_threshold = np.maximum(
-                upper_limit, false_positive_mean_realized_performance + deviation
-            )
-
-        false_positive_lower_threshold = np.minimum(lower_limit, false_positive_mean_realized_performance - deviation)
-
-        return false_positive_lower_threshold, false_positive_upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _false_negative_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3, lower_limit: int = 0, upper_limit: int = 1
-    ) -> Tuple[float, float]:
-        false_negative_realized_chunk_performance = [
-            self._false_negative_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(false_negative_realized_chunk_performance) * std_num
-        false_negative_mean_realized_performance = np.mean(false_negative_realized_chunk_performance)
+        self, reference_chunks: List[Chunk]
+    ) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._false_negative_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        if self.normalize_confusion_matrix is None:
-            false_negative_upper_threshold = false_negative_mean_realized_performance + deviation
-        else:
-            false_negative_upper_threshold = np.maximum(
-                upper_limit, false_negative_mean_realized_performance + deviation
-            )
-
-        false_negative_lower_threshold = np.minimum(lower_limit, false_negative_mean_realized_performance - deviation)
-
-        return false_negative_lower_threshold, false_negative_upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _true_positive_realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
@@ -1005,7 +1023,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_fn_ratio
 
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
-        true_pos_info = {}
+        true_pos_info: Dict[str, Any] = {}
 
         estimated_true_positives = self.get_true_positive_estimate(chunk_data)
 
@@ -1035,14 +1053,17 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_pos_info['lower_threshold_true_positive'] = self.true_positive_lower_threshold
 
         true_pos_info['alert_true_positive'] = (
-            estimated_true_positives > self.true_positive_upper_threshold
-            or estimated_true_positives < self.true_positive_lower_threshold
+            self.true_positive_upper_threshold is not None
+            and estimated_true_positives > self.true_positive_upper_threshold
+        ) or (
+            self.true_positive_lower_threshold is not None
+            and estimated_true_positives < self.true_positive_lower_threshold
         )
 
         return true_pos_info
 
     def get_true_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
-        true_neg_info = {}
+        true_neg_info: Dict[str, Any] = {}
 
         estimated_true_negatives = self.get_true_negative_estimate(chunk_data)
 
@@ -1072,14 +1093,17 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_neg_info['lower_threshold_true_negative'] = self.true_negative_lower_threshold
 
         true_neg_info['alert_true_negative'] = (
-            estimated_true_negatives > self.true_negative_upper_threshold
-            or estimated_true_negatives < self.true_negative_lower_threshold
+            self.true_negative_upper_threshold is not None
+            and estimated_true_negatives > self.true_negative_upper_threshold
+        ) or (
+            self.true_negative_lower_threshold is not None
+            and estimated_true_negatives < self.true_negative_lower_threshold
         )
 
         return true_neg_info
 
     def get_false_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
-        false_pos_info = {}
+        false_pos_info: Dict[str, Any] = {}
 
         estimated_false_positives = self.get_false_positive_estimate(chunk_data)
 
@@ -1110,14 +1134,17 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_pos_info['lower_threshold_false_positive'] = self.false_positive_lower_threshold
 
         false_pos_info['alert_false_positive'] = (
-            estimated_false_positives > self.false_positive_upper_threshold
-            or estimated_false_positives < self.false_positive_lower_threshold
+            self.false_positive_upper_threshold is not None
+            and estimated_false_positives > self.false_positive_upper_threshold
+        ) or (
+            self.false_positive_lower_threshold is not None
+            and estimated_false_positives < self.false_positive_lower_threshold
         )
 
         return false_pos_info
 
     def get_false_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
-        false_neg_info = {}
+        false_neg_info: Dict[str, Any] = {}
 
         estimated_false_negatives = self.get_false_negative_estimate(chunk_data)
 
@@ -1148,8 +1175,11 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info['lower_threshold_false_negative'] = self.false_negative_lower_threshold
 
         false_neg_info['alert_false_negative'] = (
-            estimated_false_negatives > self.false_negative_upper_threshold
-            or estimated_false_negatives < self.false_negative_lower_threshold
+            self.false_negative_upper_threshold is not None
+            and estimated_false_negatives > self.false_negative_upper_threshold
+        ) or (
+            self.false_negative_lower_threshold is not None
+            and estimated_false_negatives < self.false_negative_lower_threshold
         )
 
         return false_neg_info
@@ -1189,6 +1219,7 @@ class BinaryClassificationBusinessCost(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         business_cost_matrix: Union[List, np.ndarray],
         timestamp_column_name: Optional[str] = None,
         **kwargs,
@@ -1200,6 +1231,7 @@ class BinaryClassificationBusinessCost(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[
                 ('True Positive Cost', 'true_positive_cost'),
                 ('True Negative Cost', 'true_negative_cost'),
@@ -1258,21 +1290,21 @@ class BinaryClassificationBusinessCost(Metric):
         (
             self.true_positive_cost_lower_threshold,
             self.true_positive_cost_upper_threshold,
-        ) = self._true_positive_cost_alert_thresholds(reference_chunks, std_num=3)
+        ) = self._true_positive_cost_alert_thresholds(reference_chunks)
         (
             self.true_negative_cost_lower_threshold,
             self.true_negative_cost_upper_threshold,
-        ) = self._true_negative_cost_alert_thresholds(reference_chunks, std_num=3)
+        ) = self._true_negative_cost_alert_thresholds(reference_chunks)
         (
             self.false_positive_cost_lower_threshold,
             self.false_positive_cost_upper_threshold,
-        ) = self._false_positive_cost_alert_thresholds(reference_chunks, std_num=3)
+        ) = self._false_positive_cost_alert_thresholds(reference_chunks)
         (
             self.false_negative_cost_lower_threshold,
             self.false_negative_cost_upper_threshold,
-        ) = self._false_negative_cost_alert_thresholds(reference_chunks, std_num=3)
+        ) = self._false_negative_cost_alert_thresholds(reference_chunks)
         (self.total_cost_lower_threshold, self.total_cost_upper_threshold) = self._total_cost_alert_thresholds(
-            reference_chunks, std_num=3
+            reference_chunks
         )
 
         # Calculate confidence bands
@@ -1315,74 +1347,88 @@ class BinaryClassificationBusinessCost(Metric):
         )
 
     def _true_positive_cost_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3
-    ) -> Tuple[float, float]:
-        true_positive_cost_realized_chunk_performance = [
-            self._true_positive_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(true_positive_cost_realized_chunk_performance) * std_num
-        true_positive_cost_mean_realized_performance = np.mean(true_positive_cost_realized_chunk_performance)
+        self, reference_chunks: List[Chunk]
+    ) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._true_positive_cost_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        true_positive_cost_upper_threshold = true_positive_cost_mean_realized_performance + deviation
-        true_positive_cost_lower_threshold = true_positive_cost_mean_realized_performance - deviation
-
-        return true_positive_cost_lower_threshold, true_positive_cost_upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _true_negative_cost_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3
-    ) -> Tuple[float, float]:
-        true_negative_cost_realized_chunk_performance = [
-            self._true_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(true_negative_cost_realized_chunk_performance) * std_num
-        true_negative_cost_mean_realized_performance = np.mean(true_negative_cost_realized_chunk_performance)
+        self, reference_chunks: List[Chunk]
+    ) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._true_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        true_negative_cost_upper_threshold = true_negative_cost_mean_realized_performance + deviation
-        true_negative_cost_lower_threshold = true_negative_cost_mean_realized_performance - deviation
-
-        return true_negative_cost_lower_threshold, true_negative_cost_upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _false_positive_cost_alert_thresholds(
         self,
         reference_chunks: List[Chunk],
-        std_num: int = 3,
-    ) -> Tuple[float, float]:
-        false_positive_cost_realized_chunk_performance = [
-            self._false_positive_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(false_positive_cost_realized_chunk_performance) * std_num
-        false_positive_cost_mean_realized_performance = np.mean(false_positive_cost_realized_chunk_performance)
+    ) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._false_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        false_positive_cost_upper_threshold = false_positive_cost_mean_realized_performance + deviation
-        false_positive_cost_lower_threshold = false_positive_cost_mean_realized_performance - deviation
-
-        return false_positive_cost_lower_threshold, false_positive_cost_upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _false_negative_cost_alert_thresholds(
-        self, reference_chunks: List[Chunk], std_num: int = 3
-    ) -> Tuple[float, float]:
-        false_negative_cost_realized_chunk_performance = [
-            self._false_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(false_negative_cost_realized_chunk_performance) * std_num
-        false_negative_cost_mean_realized_performance = np.mean(false_negative_cost_realized_chunk_performance)
+        self, reference_chunks: List[Chunk]
+    ) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._false_negative_cost_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        false_negative_cost_upper_threshold = false_negative_cost_mean_realized_performance + deviation
-        false_negative_cost_lower_threshold = false_negative_cost_mean_realized_performance - deviation
+        return lower_threshold_value, upper_threshold_value
 
-        return false_negative_cost_lower_threshold, false_negative_cost_upper_threshold
+    def _total_cost_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self._total_cost_realized_performance(chunk.data) for chunk in reference_chunks]
+        )
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=realized_chunk_performance,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-    def _total_cost_alert_thresholds(self, reference_chunks: List[Chunk], std_num: int = 3) -> Tuple[float, float]:
-        total_cost_realized_chunk_performance = [
-            self._total_cost_realized_performance(chunk.data) for chunk in reference_chunks
-        ]
-        deviation = np.std(total_cost_realized_chunk_performance) * std_num
-        total_cost_mean_realized_performance = np.mean(total_cost_realized_chunk_performance)
-
-        total_cost_upper_threshold = total_cost_mean_realized_performance + deviation
-        total_cost_lower_threshold = total_cost_mean_realized_performance - deviation
-
-        return total_cost_lower_threshold, total_cost_upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _true_positive_cost_realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
@@ -1523,7 +1569,7 @@ class BinaryClassificationBusinessCost(Metric):
         )
 
     def get_true_pos_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        true_pos_cost_info = {}
+        true_pos_cost_info: Dict[str, Any] = {}
 
         estimated_true_positive_cost = self.get_true_positive_cost_estimate(chunk_data)
 
@@ -1546,14 +1592,17 @@ class BinaryClassificationBusinessCost(Metric):
         true_pos_cost_info['lower_threshold_true_positive_cost'] = self.true_positive_cost_lower_threshold
 
         true_pos_cost_info['alert_true_positive_cost'] = (
-            estimated_true_positive_cost > self.true_positive_cost_upper_threshold
-            or estimated_true_positive_cost < self.true_positive_cost_lower_threshold
+            self.true_positive_cost_upper_threshold is not None
+            and estimated_true_positive_cost > self.true_positive_cost_upper_threshold
+        ) or (
+            self.true_positive_cost_lower_threshold is not None
+            and estimated_true_positive_cost < self.true_positive_cost_lower_threshold
         )
 
         return true_pos_cost_info
 
     def get_true_neg_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        true_neg_cost_info = {}
+        true_neg_cost_info: Dict[str, Any] = {}
 
         estimated_true_negative_cost = self.get_true_negative_cost_estimate(chunk_data)
 
@@ -1576,14 +1625,17 @@ class BinaryClassificationBusinessCost(Metric):
         true_neg_cost_info['lower_threshold_true_negative_cost'] = self.true_negative_cost_lower_threshold
 
         true_neg_cost_info['alert_true_negative_cost'] = (
-            estimated_true_negative_cost > self.true_negative_cost_upper_threshold
-            or estimated_true_negative_cost < self.true_negative_cost_lower_threshold
+            self.true_negative_cost_upper_threshold is not None
+            and estimated_true_negative_cost > self.true_negative_cost_upper_threshold
+        ) or (
+            self.true_negative_cost_lower_threshold is not None
+            and estimated_true_negative_cost < self.true_negative_cost_lower_threshold
         )
 
         return true_neg_cost_info
 
     def get_false_pos_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        false_pos_cost_info = {}
+        false_pos_cost_info: Dict[str, Any] = {}
 
         estimated_false_positive_cost = self.get_false_positive_cost_estimate(chunk_data)
 
@@ -1606,14 +1658,17 @@ class BinaryClassificationBusinessCost(Metric):
         false_pos_cost_info['lower_threshold_false_positive_cost'] = self.false_positive_cost_lower_threshold
 
         false_pos_cost_info['alert_false_positive_cost'] = (
-            estimated_false_positive_cost > self.false_positive_cost_upper_threshold
-            or estimated_false_positive_cost < self.false_positive_cost_lower_threshold
+            self.false_positive_cost_upper_threshold is not None
+            and estimated_false_positive_cost > self.false_positive_cost_upper_threshold
+        ) or (
+            self.false_positive_cost_lower_threshold is not None
+            and estimated_false_positive_cost < self.false_positive_cost_lower_threshold
         )
 
         return false_pos_cost_info
 
     def get_false_neg_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        false_neg_cost_info = {}
+        false_neg_cost_info: Dict[str, Any] = {}
 
         estimated_false_negative_cost = self.get_false_negative_cost_estimate(chunk_data)
 
@@ -1636,14 +1691,17 @@ class BinaryClassificationBusinessCost(Metric):
         false_neg_cost_info['lower_threshold_false_negative_cost'] = self.false_negative_cost_lower_threshold
 
         false_neg_cost_info['alert_false_negative_cost'] = (
-            estimated_false_negative_cost > self.false_negative_cost_upper_threshold
-            or estimated_false_negative_cost < self.false_negative_cost_lower_threshold
+            self.false_negative_cost_upper_threshold is not None
+            and estimated_false_negative_cost > self.false_negative_cost_upper_threshold
+        ) or (
+            self.false_negative_cost_lower_threshold is not None
+            and estimated_false_negative_cost < self.false_negative_cost_lower_threshold
         )
 
         return false_neg_cost_info
 
     def get_total_cost_info(self, chunk_data: pd.DataFrame) -> Dict:
-        total_cost_info = {}
+        total_cost_info: Dict[str, Any] = {}
 
         estimated_total_cost = self.get_total_cost_estimate(chunk_data)
 
@@ -1666,9 +1724,8 @@ class BinaryClassificationBusinessCost(Metric):
         total_cost_info['lower_threshold_total_cost'] = self.total_cost_lower_threshold
 
         total_cost_info['alert_total_cost'] = (
-            estimated_total_cost > self.total_cost_upper_threshold
-            or estimated_total_cost < self.total_cost_lower_threshold
-        )
+            self.total_cost_upper_threshold is not None and estimated_total_cost > self.total_cost_upper_threshold
+        ) or (self.total_cost_lower_threshold is not None and estimated_total_cost < self.total_cost_lower_threshold)
 
         return total_cost_info
 
@@ -1738,6 +1795,7 @@ class MulticlassClassificationAUROC(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -1748,6 +1806,7 @@ class MulticlassClassificationAUROC(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('ROC AUC', 'roc_auc')],
         )
         # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
@@ -1794,6 +1853,7 @@ class MulticlassClassificationF1(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -1804,6 +1864,7 @@ class MulticlassClassificationF1(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('F1', 'f1')],
         )
 
@@ -1849,6 +1910,7 @@ class MulticlassClassificationPrecision(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -1859,6 +1921,7 @@ class MulticlassClassificationPrecision(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Precision', 'precision')],
         )
 
@@ -1904,6 +1967,7 @@ class MulticlassClassificationRecall(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -1914,6 +1978,7 @@ class MulticlassClassificationRecall(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Recall', 'recall')],
         )
 
@@ -1959,6 +2024,7 @@ class MulticlassClassificationSpecificity(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -1969,6 +2035,7 @@ class MulticlassClassificationSpecificity(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Specificity', 'specificity')],
         )
 
@@ -2018,6 +2085,7 @@ class MulticlassClassificationAccuracy(Metric):
         y_pred: str,
         y_true: str,
         chunker: Chunker,
+        threshold: Threshold,
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
@@ -2028,6 +2096,7 @@ class MulticlassClassificationAccuracy(Metric):
             y_true=y_true,
             timestamp_column_name=timestamp_column_name,
             chunker=chunker,
+            threshold=threshold,
             components=[('Accuracy', 'accuracy')],
         )
 

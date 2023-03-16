@@ -16,11 +16,12 @@ from nannyml.datasets import (
     load_synthetic_multiclass_classification_dataset,
 )
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation import PerformanceCalculator
+from nannyml.performance_calculation.calculator import DEFAULT_THRESHOLDS, PerformanceCalculator
 from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationAUROC,
     BinaryClassificationF1,
 )
+from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
 
 @pytest.fixture(scope='module')
@@ -84,8 +85,12 @@ def test_calculator_init_should_set_metrics(performance_calculator):  # noqa: D1
     )
     sut = calc.metrics
     assert len(sut) == 2
-    assert sut[0] == BinaryClassificationAUROC(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
-    assert sut[1] == BinaryClassificationF1(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut[0] == BinaryClassificationAUROC(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold()
+    )
+    assert sut[1] == BinaryClassificationF1(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, threshold=StandardDeviationThreshold()
+    )
 
 
 @pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
@@ -173,6 +178,83 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
     assert ('chunk', 'targets_missing_rate') in sut.columns
     assert sut.loc[0, ('chunk', 'targets_missing_rate')] == 0.1
     assert sut.loc[1, ('chunk', 'targets_missing_rate')] == 0.9
+
+
+@pytest.mark.parametrize(
+    'custom_thresholds',
+    [
+        {'roc_auc': ConstantThreshold(lower=1, upper=2)},
+        {'roc_auc': ConstantThreshold(lower=1, upper=2), 'f1': ConstantThreshold(lower=1, upper=2)},
+        {
+            'roc_auc': ConstantThreshold(lower=1, upper=2),
+            'f1': ConstantThreshold(lower=1, upper=2),
+            'precision': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'roc_auc': ConstantThreshold(lower=1, upper=2),
+            'f1': ConstantThreshold(lower=1, upper=2),
+            'precision': ConstantThreshold(lower=1, upper=2),
+            'recall': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'roc_auc': ConstantThreshold(lower=1, upper=2),
+            'f1': ConstantThreshold(lower=1, upper=2),
+            'precision': ConstantThreshold(lower=1, upper=2),
+            'recall': ConstantThreshold(lower=1, upper=2),
+            'specificity': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'roc_auc': ConstantThreshold(lower=1, upper=2),
+            'f1': ConstantThreshold(lower=1, upper=2),
+            'precision': ConstantThreshold(lower=1, upper=2),
+            'recall': ConstantThreshold(lower=1, upper=2),
+            'specificity': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'roc_auc': ConstantThreshold(lower=1, upper=2),
+            'f1': ConstantThreshold(lower=1, upper=2),
+            'precision': ConstantThreshold(lower=1, upper=2),
+            'recall': ConstantThreshold(lower=1, upper=2),
+            'specificity': ConstantThreshold(lower=1, upper=2),
+            'accuracy': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'mae': ConstantThreshold(lower=1, upper=2),
+            'mape': ConstantThreshold(lower=1, upper=2),
+            'mse': ConstantThreshold(lower=1, upper=2),
+            'msle': ConstantThreshold(lower=1, upper=2),
+            'rmse': ConstantThreshold(lower=1, upper=2),
+            'rmsle': ConstantThreshold(lower=1, upper=2),
+        },
+    ],
+)
+def test_performance_calculator_with_custom_thresholds(custom_thresholds):
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        y_true='work_home_actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    )
+    sut = calc.thresholds
+    expected_thresholds = DEFAULT_THRESHOLDS
+    expected_thresholds.update(**custom_thresholds)
+    assert sut == expected_thresholds
+
+
+def test_performance_calculator_with_default_thresholds():
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        y_true='work_home_actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    )
+    sut = calc.thresholds
+
+    assert sut == DEFAULT_THRESHOLDS
 
 
 # See https://github.com/NannyML/nannyml/issues/192
