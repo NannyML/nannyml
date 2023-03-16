@@ -174,7 +174,7 @@ Chi-squared Test
 ................
 
 The `Chi-squared test`_ is a statistical hypothesis test of independence for categorical data.
-The test outputs the test statistic, sometimes called chi2 statistic, and an associated p-value.
+The test outputs the test statistic, sometimes called :math:`\chi^2` statistic, and an associated p-value.
 
 We can understand the Chi-squared test in the following way. We create a `contingency table`_ from the
 categories present in the data and the two samples we are comparing. The expected frequencies,

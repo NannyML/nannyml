@@ -107,12 +107,12 @@ lower threshold by setting the appropriate multiplier to `None`.
 
 .. warning::
 
-    The :math:`chi^2` drift detection method for categorical data does not support custom thresholds yet.
+    The :ref:`Chi-squared<univ_cat_method_chi2>`, :math:`\chi^2`, drift detection method for categorical data does not support custom thresholds yet.
     It is currently using p-values for thresholding and replacing them by or incorporating them in the custom
     thresholding system requires further research.
 
     For now it will continue to function as it did before.
 
-    When specifying a custom threshold for :math:`chi^2` in the
+    When specifying a custom threshold for :math:`\chi^2` in the
     :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`, NannyML will log a warning message
     to clarify the custom threshold will be ignored.
