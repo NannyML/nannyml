@@ -8,7 +8,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Generic, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -23,6 +23,9 @@ from nannyml.exceptions import (
     InvalidArgumentsException,
     InvalidReferenceDataException,
 )
+
+
+MetricLike = TypeVar('MetricLike', bound=Metric)
 
 
 class AbstractResult(ABC):
@@ -122,8 +125,8 @@ class AbstractResult(ABC):
         return self.data.get(key.properties + (property_name,), default=None)
 
 
-class Abstract1DResult(AbstractResult, ABC):
-    def __init__(self, results_data: pd.DataFrame, metrics: Sequence[Metric] = (), *args, **kwargs):
+class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
+    def __init__(self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], *args, **kwargs):
         super().__init__(results_data)
         self.metrics = metrics
 
@@ -163,9 +166,9 @@ class Abstract1DResult(AbstractResult, ABC):
         return res
 
 
-class Abstract2DResult(AbstractResult, ABC):
+class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
     def __init__(
-        self, results_data: pd.DataFrame, metrics: Sequence[Metric] = (), column_names: List[str] = [], *args, **kwargs
+        self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], column_names: List[str] = [], *args, **kwargs
     ):
         super().__init__(results_data)
         self.metrics = metrics

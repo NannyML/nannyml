@@ -27,7 +27,7 @@ from nannyml.thresholds import StandardDeviationThreshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract2DResult, ResultCompareMixin):
+class Result(Abstract2DResult[Method], ResultCompareMixin):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(
