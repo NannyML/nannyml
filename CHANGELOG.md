@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.4] - 2023-02-24
+## [0.8.4] - 2023-03-17
 
 ### Changed
 
@@ -13,13 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated the included example datasets
 - Critical security updates for dependencies
 - Updated visualization of multi-level table headers in the docs [(#242)](https://github.com/NannyML/nannyml/issues/242)
-
+- Improved typing support for Result classes using generics
 
 ### Added
 
-- Support for estimating the realized confusion matrix for binary classification [(#191)](https://github.com/NannyML/nannyml/issues/191)
-- Support for estimating the business cost (based on confusion matrix) for binary classification [(#237)](https://github.com/NannyML/nannyml/issues/237)
+- Support for estimating the confusion matrix for binary classification [(#191)](https://github.com/NannyML/nannyml/issues/191)
 - Added `treat_as_categorical` parameter to univariate drift calculator [(#239)](https://github.com/NannyML/nannyml/issues/239)
+- Added comparison plots to help visualize two different metrics at once
 
 ### Fixed
 
@@ -39,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix outdated performance estimation and calculation docs [(#223)](https://github.com/NannyML/nannyml/issues/223)
 - Fix categorical encoding of unseen values for DLE [(#224)](https://github.com/NannyML/nannyml/issues/224)
 - Fix incorrect legend for None timeseries [(#235)](https://github.com/NannyML/nannyml/issues/235)
--
 
 ## [0.8.3] - 2023-01-31
 
