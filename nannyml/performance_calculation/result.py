@@ -19,7 +19,7 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult, ResultCompareMixin):
+class Result(Abstract1DResult[Metric], ResultCompareMixin):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     def __init__(

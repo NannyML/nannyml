@@ -22,7 +22,7 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult, ResultCompareMixin):
+class Result(Abstract1DResult[Metric], ResultCompareMixin):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
     def __init__(
@@ -37,9 +37,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
         timestamp_column_name: Optional[str] = None,
     ):
         super().__init__(results_data, metrics)
-
-        # Be more specific about the metric type than the base class
-        self.metrics: List[Metric]
 
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
