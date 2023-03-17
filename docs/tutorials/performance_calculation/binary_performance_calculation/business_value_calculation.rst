@@ -80,7 +80,7 @@ false positives have a value of -10, false negatives have a value of -50,
 and true positives have a value of 50.
 
 .. note::
-  The list of metrics specifies which performance metrics of the monitored model will be caclulated.
+  The list of metrics specifies which performance metrics of the monitored model will be calculated.
   This tutorial is specific to the ``business_value`` metric, but you can find more information about
   other standard metrics such as ``roc_auc``, ``f1``, ``precision``, ``recall``, ``specificity``,
   and ``accuracy`` in the
