@@ -328,45 +328,6 @@ def test_results_driver_tenure_values(missing_value_result):
 
 
 def test_results_driver_tenure_alerts(missing_value_result):
-    
+
     res = missing_value_result.filter(column_names='driver_tenure').to_df()
     assert list(res[('driver_tenure', 'alert')]) == [False]*15 + [True]*5
-
-
-def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_expect_nan():
-    calc = MissingValuesCalculator(
-        column_names=[
-            'car_value',
-        ],
-        normalize=True
-    )
-    test_series = pd.Series([0.1,0.9,0.1,0.9])
-    upper, lower = calc._calculate_individual_alert_thresholds(test_series)
-    assert upper is np.nan
-    assert lower is np.nan
-
-
-def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_expect_numbers():
-    calc = MissingValuesCalculator(
-        column_names=[
-            'car_value',
-        ],
-        normalize=True
-    )
-    test_series = pd.Series([0.21,0.29,0.21,0.29])
-    upper, lower = calc._calculate_individual_alert_thresholds(test_series)
-    assert upper == 0.3885640646055102
-    assert lower == 0.11143593539448984
-
-
-def test_missing_value_sub_components_calculate_individual_alert_thresholds_intended_one_nan():
-    calc = MissingValuesCalculator(
-        column_names=[
-            'car_value',
-        ],
-        normalize=True
-    )
-    test_series = pd.Series([0,0,0,0])
-    upper, lower = calc._calculate_individual_alert_thresholds(test_series)
-    assert upper == 0
-    assert lower is np.nan

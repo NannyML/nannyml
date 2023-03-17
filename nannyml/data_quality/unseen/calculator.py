@@ -14,14 +14,16 @@ from pandas import MultiIndex
 from nannyml.base import (
     AbstractCalculator,
     _list_missing,
-    _split_features_by_type,
-    _add_alert_flag
+    _split_features_by_type
 )
+from nannyml.data_quality.base import _add_alert_flag
 from nannyml.chunk import Chunker
 from .result import Result
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.usage_logging import UsageEvent, log_usage
+from nannyml.thresholds import (
+    ConstantThreshold, Threshold, calculate_threshold_values
+)
 
 """
 Unseen Values Data Quality Module.
@@ -42,6 +44,7 @@ class UnseenValuesCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
+        thresholds: Optional[Threshold] = ConstantThreshold(lower=None, upper=0),
     ):
         """Creates a new MissingValuesCalculator instance.
 
@@ -93,17 +96,22 @@ class UnseenValuesCalculator(AbstractCalculator):
         else:
             raise InvalidArgumentsException("column_names should be either a column name string or a list of columns names strings, found\n{column_names}")
         self.result: Optional[Result] = None
-        # thresholds are the same across all results
+        # Threshold strategy is the same across all columns
         # By default for unseen values there is no lower threshold or threshold limit.
         # The value should be 0 and can't go lower.
         # The upper limit is also 0 because there shouldn't be any. If there is we alert.
-        self._upper_alert_thresholds: float = 0
+        self.thresholds = thresholds
+        self._upper_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+        self._lower_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
 
+        self.lower_threshold_value_limit: float = 0
         self.normalize = normalize
         if self.normalize:
             self.data_quality_metric = 'unseen_values_rate'
+            self.upper_threshold_value_limit: float = 1
         else:
             self.data_quality_metric = 'unseen_values_count'
+            self.upper_threshold_value_limit: float = np.nan
         
         self._categorical_seen_values: Dict[str, set] = {column_name: set() for column_name in self.column_names}
         
@@ -112,8 +120,8 @@ class UnseenValuesCalculator(AbstractCalculator):
         count_tot = data.shape[0]
         count_uns = count_tot - data.isin(seen_set).sum()
         if self.normalize:
-            count_uns = count_uns/count_tot    
-        return count_uns#, count_tot
+            count_uns = count_uns/count_tot
+        return count_uns
 
 
     @log_usage(
@@ -138,8 +146,28 @@ class UnseenValuesCalculator(AbstractCalculator):
 
         for col in self.column_names:
             self._categorical_seen_values[col] = set(reference_data[col].unique())
+        
+        # Calculate Alert Thresholds
+        # #TODO_REF1: Alert thresholds are calculated here to fit the patterns set elsewhere in the library
+        # This implementation is sub-optimal because value calculations are being done twice.
+        for column in self.column_names:
+            _seen_values = self._categorical_seen_values[column]
+            reference_chunk_results = np.asarray([
+                self._calculate_unseen_value_stats(
+                    chunk.data[column], _seen_values
+                ) for chunk in self.chunker.split(reference_data)
+            ])
+            self._lower_alert_thresholds[column], self._upper_alert_thresholds[column] = calculate_threshold_values(
+                threshold=self.thresholds,
+                data=reference_chunk_results,
+                lower_threshold_value_limit=self.lower_threshold_value_limit,
+                upper_threshold_value_limit=self.upper_threshold_value_limit,
+                logger=self._logger,
+                metric_name=self.data_quality_metric,
+                override_using_none=True
+            )
 
-        # By definition everything here is 0.
+        # By definition everything (sampling error and confidence boundaries) here is 0.
         # We are not breaking pattern by artificially creating the result object
         # But maybe we should? to be more efficient??
         self.result = self._calculate(data=reference_data)
@@ -185,7 +213,7 @@ class UnseenValuesCalculator(AbstractCalculator):
         res = res.reset_index(drop=True)
 
         if self.result is None:
-            res = self._populate_alert_thresholds(res, self.column_names)
+            # res = self._populate_alert_thresholds(res, self.column_names)
             self.result = Result(
                 results_data=res,
                 column_names=self.column_names,
@@ -199,28 +227,33 @@ class UnseenValuesCalculator(AbstractCalculator):
             #       but this causes us to lose the "common behavior" in the top level 'filter' method when overriding.
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
             self.result = self.result.filter(period='reference')
-            res = self._populate_alert_thresholds(res, self.column_names)
+            # res = self._populate_alert_thresholds(res, self.column_names)
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
 
+    
     def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
         result = {}
         seen_values = self._categorical_seen_values[column_name]
         value = self._calculate_unseen_value_stats(data[column_name], seen_values)
         result['value'] = value
+        result['upper_threshold'] = self._upper_alert_thresholds[column_name]
+        result['lower_threshold'] = self._lower_alert_thresholds[column_name]
+        result['alert'] = _add_alert_flag(result)
         return result
 
-    def _populate_alert_thresholds(
-        self,
-        results_anl: pd.DataFrame,
-        column_names: List[str],
-    ) -> pd.DataFrame:
-        for column_name in column_names:
-            results_anl[(column_name, 'upper_threshold')] = 0
-            results_anl[(column_name, 'lower_threshold')] = np.nan
-            results_anl[(column_name, 'alert')] = _add_alert_flag(results_anl, column_name)
-        return results_anl
+    #TODO_REF1
+    # def _populate_alert_thresholds(
+    #     self,
+    #     results_anl: pd.DataFrame,
+    #     column_names: List[str],
+    # ) -> pd.DataFrame:
+    #     for column_name in column_names:
+    #         results_anl[(column_name, 'upper_threshold')] = 0
+    #         results_anl[(column_name, 'lower_threshold')] = np.nan
+    #         results_anl[(column_name, 'alert')] = _add_alert_flag(results_anl, column_name)
+    #     return results_anl
 
 
 def _create_multilevel_index(
@@ -228,6 +261,10 @@ def _create_multilevel_index(
 ):
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    column_tuples = [(column_name, el) for column_name in column_names for el in  ['value']]
+    column_tuples = [
+        (column_name, el) for column_name in column_names for el in  [
+            'value', 'upper_threshold', 'lower_threshold', 'alert'
+        ]
+    ]
     tuples = chunk_tuples + column_tuples
     return MultiIndex.from_tuples(tuples)
