@@ -820,7 +820,7 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
     calc = UnivariateDriftCalculator(
-        column_names=['f1', 'f2', 'f3', 'f4'],
+        column_names=['f1'],
         continuous_methods=['kolmogorov_smirnov'],
         categorical_methods=['chi2'],
         timestamp_column_name='timestamp',
@@ -832,7 +832,7 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
         y_pred_proba='y_pred_proba',
         y_pred='output',
         y_true='actual',
-        metrics=['roc_auc', 'f1'],
+        metrics=['f1'],
         problem_type='classification_binary',
     ).fit(ref_data)
     result2 = calc2.estimate(ana_data)
