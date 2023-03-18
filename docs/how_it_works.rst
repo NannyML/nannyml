@@ -8,6 +8,7 @@ How It Works
     :maxdepth: 2
 
     how_it_works/performance_estimation
+    how_it_works/business_value
     how_it_works/univariate_drift_detection
     how_it_works/univariate_drift_comparison
     how_it_works/ranking
