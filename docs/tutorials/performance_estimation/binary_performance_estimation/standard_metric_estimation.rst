@@ -22,7 +22,7 @@ Just The Code
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - Binary Classification.ipynb
-    :cells: 1 3 4 5 7 9
+    :cells: 1 3 4 5 7
 
 
 Walkthrough
@@ -147,26 +147,15 @@ interactive plots, though only static views are included here).
     :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - Binary Classification.ipynb
     :cells: 7
 
-.. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis.svg
+.. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
 
+* The right-hand side of the plot shows the estimated performance for the analysis period.
 
-To get a better context let's also plot estimation of performance on analysis data together with calculated
-performance on the reference period (where the target was available).
-
-* The right-hand side of the plot shows the estimated performance for the analysis period, as before.
-
-* The purple dashed vertical line splits the reference and analysis periods.
+* The solid grey vertical line splits the reference and analysis periods.
 
 * On the left-hand side of the line, the actual model performance (not estimation!) is plotted with a solid light blue
   line. This facilitates comparison of the estimation against the reference period, and sets expectations on the
   variability of the performance.
-
-.. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - Binary Classification.ipynb
-    :cells: 9
-
-.. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
-
 
 Insights
 --------
