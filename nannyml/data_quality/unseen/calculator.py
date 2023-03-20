@@ -148,8 +148,6 @@ class UnseenValuesCalculator(AbstractCalculator):
             self._categorical_seen_values[col] = set(reference_data[col].unique())
         
         # Calculate Alert Thresholds
-        # #TODO_REF1: Alert thresholds are calculated here to fit the patterns set elsewhere in the library
-        # This implementation is sub-optimal because value calculations are being done twice.
         for column in self.column_names:
             _seen_values = self._categorical_seen_values[column]
             reference_chunk_results = np.asarray([
@@ -213,7 +211,6 @@ class UnseenValuesCalculator(AbstractCalculator):
         res = res.reset_index(drop=True)
 
         if self.result is None:
-            # res = self._populate_alert_thresholds(res, self.column_names)
             self.result = Result(
                 results_data=res,
                 column_names=self.column_names,
@@ -227,7 +224,6 @@ class UnseenValuesCalculator(AbstractCalculator):
             #       but this causes us to lose the "common behavior" in the top level 'filter' method when overriding.
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
             self.result = self.result.filter(period='reference')
-            # res = self._populate_alert_thresholds(res, self.column_names)
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
@@ -242,18 +238,6 @@ class UnseenValuesCalculator(AbstractCalculator):
         result['lower_threshold'] = self._lower_alert_thresholds[column_name]
         result['alert'] = _add_alert_flag(result)
         return result
-
-    #TODO_REF1
-    # def _populate_alert_thresholds(
-    #     self,
-    #     results_anl: pd.DataFrame,
-    #     column_names: List[str],
-    # ) -> pd.DataFrame:
-    #     for column_name in column_names:
-    #         results_anl[(column_name, 'upper_threshold')] = 0
-    #         results_anl[(column_name, 'lower_threshold')] = np.nan
-    #         results_anl[(column_name, 'alert')] = _add_alert_flag(results_anl, column_name)
-    #     return results_anl
 
 
 def _create_multilevel_index(
