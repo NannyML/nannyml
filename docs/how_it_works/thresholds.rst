@@ -18,7 +18,7 @@ The process of calculating the threshold values is as follows.
 The calculator or estimator runs and uses the :term:`reference data<data period>` to compute the values
 for the related method or metric for each :term:`chunk<Data Chunk>`. Those values are used by the
 :meth:`~nannyml.thresholds.Threshold.thresholds` method to calculate the associated lower and upper
-threshold values. 
+threshold values.
 
 When the calculator or estimator runs on an :term:`analysis<data period>` :term:`chunk<Data Chunk>`
 the lower and upper threshold values will be compared with the method or metric values for each
