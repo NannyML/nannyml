@@ -17,7 +17,7 @@ Just the code
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 1 2 3 6 7 9 11
+    :cells: 1 2 3 6 7 9 11 17 18
 
 Walkthrough
 -----------
@@ -173,18 +173,28 @@ We'll first get our estimated performance result.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 16
+    :cells: 17
 
 Now we can compare our estimated performance to the univariate drift on features:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 17
+    :cells: 18
 
 .. image:: /_static/tutorials/working_with_results/comparison_plot.svg
     :width: 1200
 
 We can immediately spot how the estimated performance plummets when the Jensen-Shannon distance picks up!
+
+.. note::
+
+    To reduce complexity we only support comparing a single metric to a single other one.
+
+    You can use filtering to select a single metric from your result before comparing it, as illustrated in the
+    code snippet above.
+
+Exporting
+==========
 
 Results can also be exported to external storage using a :class:`~nannyml.io.base.Writer`. We currently support writing
 results to disk using a :class:`~nannyml.io.raw_files_writer.RawFilesWriter`, serializing the
