@@ -24,7 +24,6 @@ from nannyml.exceptions import (
     InvalidReferenceDataException,
 )
 
-
 MetricLike = TypeVar('MetricLike', bound=Metric)
 
 
