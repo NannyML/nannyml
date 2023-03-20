@@ -10,6 +10,7 @@ from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDri
 from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionResult
 from nannyml.drift.univariate import Result as UnivariateDriftResult
 from nannyml.drift.univariate import UnivariateDriftCalculator
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_calculation import Result as RealizedPerformanceResult
 from nannyml.performance_estimation.confidence_based import CBPE
@@ -45,7 +46,7 @@ def univariate_drift_results(chunker) -> UnivariateDriftResult:
 def realized_performance_results(chunker) -> RealizedPerformanceResult:
     ref, ana, tgt = load_synthetic_binary_classification_dataset()
     calc = PerformanceCalculator(
-        metrics=['f1', 'roc_auc'],
+        metrics=['f1'],
         y_pred_proba='y_pred_proba',
         y_pred='y_pred',
         y_true='work_home_actual',
@@ -61,7 +62,7 @@ def realized_performance_results(chunker) -> RealizedPerformanceResult:
 def cbpe_results(chunker) -> CBPEResult:
     ref, ana, tgt = load_synthetic_binary_classification_dataset()
     est = CBPE(
-        metrics=['f1', 'roc_auc'],
+        metrics=['f1'],
         y_pred_proba='y_pred_proba',
         y_pred='y_pred',
         y_true='work_home_actual',
@@ -95,3 +96,23 @@ def test_comparison_plot_raises_no_exceptions(result_1, result_2):
         _ = result_1.compare(result_2).plot().show()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_comparison_plot_comparing_multiple_metrics_raises_invalid_arguments_exception(chunker, cbpe_results):
+    ref, ana, tgt = load_synthetic_binary_classification_dataset()
+    calc = PerformanceCalculator(
+        metrics=['f1', 'roc_auc'],
+        y_pred_proba='y_pred_proba',
+        y_pred='y_pred',
+        y_true='work_home_actual',
+        problem_type='classification',
+        chunker=chunker,
+    ).fit(ref)
+    drift_results = calc.calculate(ana.merge(tgt), on='identifier')
+
+    with pytest.raises(
+        InvalidArgumentsException,
+        match="you're comparing 2 metrics to 2 metrics, but should only compare 1 to 1 at a time. "
+        "Please filter yourresults first using `result.filter()",
+    ):
+        drift_results.compare(cbpe_results).plot().show()

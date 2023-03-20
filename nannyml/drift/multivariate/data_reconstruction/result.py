@@ -21,7 +21,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 Metric = namedtuple("Metric", "display_name column_name")
 
 
-class Result(Abstract1DResult, ResultCompareMixin):
+class Result(Abstract1DResult[Metric], ResultCompareMixin):
     """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
 
     def __init__(
