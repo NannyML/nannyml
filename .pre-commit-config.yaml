@@ -33,3 +33,7 @@ repos:
     hooks:
       - id: mypy
         exclude: tests/
+        additional_dependencies:
+          - types-click
+          - types-python-dateutil
+          - types-PyYAML
