@@ -19,6 +19,8 @@ from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationPrecision,
     BinaryClassificationRecall,
     BinaryClassificationSpecificity,
+    BinaryClassificationBusinessValue,
+    BinaryClassificationConfusionMatrix,
 )
 
 
@@ -38,7 +40,17 @@ def performance_calculator() -> PerformanceCalculator:
         y_pred_proba='y_pred_proba',
         y_pred='y_pred',
         y_true='work_home_actual',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        metrics=[
+            'roc_auc',
+            'f1',
+            'precision',
+            'recall',
+            'specificity',
+            'accuracy',
+            'business_value',
+            'confusion_matrix',
+        ],
+        business_value_matrix=[[0, -10], [5, 0]],
         problem_type='classification_binary',
     )
 
@@ -58,7 +70,17 @@ def no_timestamp_metrics(binary_data):
         y_pred_proba='y_pred_proba',
         y_pred='y_pred',
         y_true='work_home_actual',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        metrics=[
+            'roc_auc',
+            'f1',
+            'precision',
+            'recall',
+            'specificity',
+            'accuracy',
+            'business_value',
+            'confusion_matrix',
+        ],
+        business_value_matrix=[[0, -10], [5, 0]],
         problem_type='classification_binary',
     ).fit(binary_data[0])
     results = calc.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(period='analysis')
@@ -74,6 +96,8 @@ def no_timestamp_metrics(binary_data):
         ('recall', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationRecall),
         ('specificity', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationSpecificity),
         ('accuracy', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationAccuracy),
+        ('business_value', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationBusinessValue),
+        ('confusion_matrix', ProblemType.CLASSIFICATION_BINARY, BinaryClassificationConfusionMatrix),
     ],
 )
 def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, problem_type, metric):  # noqa: D103
@@ -86,9 +110,16 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         problem_type='classification_binary',
     )
     sut = MetricFactory.create(
-        key, problem_type, y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba
+        key,
+        problem_type,
+        y_true=calc.y_true,
+        y_pred=calc.y_pred,
+        y_pred_proba=calc.y_pred_proba,
+        business_value_matrix=[[0, -10], [5, 0]],
     )
-    assert sut == metric(y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba)
+    assert sut == metric(
+        y_true=calc.y_true, y_pred=calc.y_pred, y_pred_proba=calc.y_pred_proba, business_value_matrix=[[0, -10], [5, 0]]
+    )
 
 
 @pytest.mark.parametrize(
@@ -100,6 +131,11 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         ('recall', [0.88051, 0.88039, 0.88843, 0.87067, 0.8846, 0.81017, 0.80832, 0.79904, 0.8195, 0.80383]),
         ('specificity', [0.9681, 0.9701, 0.97277, 0.9718, 0.96864, 0.95685, 0.96364, 0.95795, 0.96386, 0.94879]),
         ('accuracy', [0.9228, 0.926, 0.9318, 0.9216, 0.9264, 0.8836, 0.8852, 0.8784, 0.8922, 0.8746]),
+        ('business_value', [775, 710, 655, 895, 670, 1290, 1520, 1465, 1330, 1260]),
+        ('true_positive', [2277, 2164, 2158, 2161, 2223, 2023, 2041, 2000, 2034, 2057]),
+        ('false_positive', [77, 76, 70, 71, 78, 108, 90, 105, 91, 125]),
+        ('true_negative', [2337, 2466, 2501, 2447, 2409, 2395, 2385, 2392, 2427, 2316]),
+        ('false_negative', [309, 294, 271, 321, 290, 474, 484, 503, 448, 502]),
     ],
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
@@ -116,6 +152,11 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
         ('recall', [0.88051, 0.88039, 0.88843, 0.87067, 0.8846, 0.81017, 0.80832, 0.79904, 0.8195, 0.80383]),
         ('specificity', [0.9681, 0.9701, 0.97277, 0.9718, 0.96864, 0.95685, 0.96364, 0.95795, 0.96386, 0.94879]),
         ('accuracy', [0.9228, 0.926, 0.9318, 0.9216, 0.9264, 0.8836, 0.8852, 0.8784, 0.8922, 0.8746]),
+        ('business_value', [775, 710, 655, 895, 670, 1290, 1520, 1465, 1330, 1260]),
+        ('true_positive', [2277, 2164, 2158, 2161, 2223, 2023, 2041, 2000, 2034, 2057]),
+        ('false_positive', [77, 76, 70, 71, 78, 108, 90, 105, 91, 125]),
+        ('true_negative', [2337, 2466, 2501, 2447, 2409, 2395, 2385, 2392, 2427, 2316]),
+        ('false_negative', [309, 294, 271, 321, 290, 474, 484, 503, 448, 502]),
     ],
 )
 def test_metric_values_without_timestamp_are_calculated_correctly(no_timestamp_metrics, metric, expected):
