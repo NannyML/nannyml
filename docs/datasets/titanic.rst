@@ -67,7 +67,7 @@ There is also an auxiliary column that kaggle_ uses and we have kept for compati
 - `PassengerId`: A unique number referencing each passenger. This is very useful for joining the target
   results on the analysis dataset.
 
-the titanic dataset is used by NannyML at the :ref:`Data Quality Tutorials<data-quality>` showcasing our Missing values
+The titanic dataset is used by NannyML at the :ref:`Data Quality Tutorials<data-quality>` showcasing our Missing values
 and Unseen Values detection functionality.
 
 .. _kaggle: https://www.kaggle.com/competitions/titanic/data

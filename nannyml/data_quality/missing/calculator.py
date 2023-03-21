@@ -51,7 +51,7 @@ class MissingValuesCalculator(AbstractCalculator):
         ----------
         column_names: Union[str, List[str]]
             A string or list containing the names of features in the provided data set.
-            A drift score will be calculated for each entry in this list.
+            Missing Values will be calculated for each entry in this list.
         normalize: bool, default=True
             Whether to provide the missing value ratio (True) or the absolute number of missing values (False).
         timestamp_column_name: str
