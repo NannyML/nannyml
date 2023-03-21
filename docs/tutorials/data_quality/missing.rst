@@ -39,11 +39,13 @@ the functionality needed for missing values calculations.
 We need to instantiate it with appropriate parameters:
 
 - The names of the columns to be evaluated.
-- A boolean option indicating whether we want the absolute count of the missing value instances or
-  their relative ratio.
+- Optionally, a boolean option indicating whether we want the absolute count of the missing
+  value instances or their relative ratio. By default it is set to true.
 - Optionally, the name of the column containing the observation timestamps.
 - Optionally, a chunking approach or a predefined chunker. If neither is provided, the default
   chunker creating 10 chunks will be used.
+- Optionally, a threshold strategy to modify the default one. See available threshold options
+  :ref:`here<thresholds>`.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Missing Values.ipynb

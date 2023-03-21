@@ -277,14 +277,14 @@ Glossary
     Univariate Drift Detection
         Drift Detection methods that use each model feature individually
         in order to detect change.
-    
+
     Unseen Values
         NannyML uses Unseen Values as a data quality check for categorical features. This is done in
         two steps. By looking at the reference :term:`Data Period` a set of expected is created for
         each categorical feature. The second step is looking at the values present in the analysis
         :term:`Data Period` for each categorical feature, any value not previously seen on the
-        reference period is considered Unseen Value.
-
+        reference period is considered Unseen Value. You can find more information at the
+        :ref:`unseen_values` tutorial.
 
 
 .. _`wikipedia KS test page`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test
