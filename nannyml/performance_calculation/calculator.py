@@ -32,6 +32,8 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'recall': StandardDeviationThreshold(),
     'specificity': StandardDeviationThreshold(),
     'accuracy': StandardDeviationThreshold(),
+    'confusion_matrix': StandardDeviationThreshold(),
+    'business_value': StandardDeviationThreshold(),
     'mae': StandardDeviationThreshold(),
     'mape': StandardDeviationThreshold(),
     'mse': StandardDeviationThreshold(),
@@ -96,6 +98,8 @@ class PerformanceCalculator(AbstractCalculator):
             'recall': StandardDeviationThreshold(), \
             'specificity': StandardDeviationThreshold(), \
             'accuracy': StandardDeviationThreshold(), \
+            'confusion_matrix': StandardDeviationThreshold(), \
+            'business_value': StandardDeviationThreshold(), \
             'mae': StandardDeviationThreshold(), \
             'mape': StandardDeviationThreshold(), \
             'mse': StandardDeviationThreshold(), \

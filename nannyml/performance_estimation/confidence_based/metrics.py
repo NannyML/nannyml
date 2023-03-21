@@ -213,12 +213,14 @@ class Metric(abc.ABC):
 
         chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
 
-        chunk_record[f'upper_confidence_boundary_{column_name}'] = min(
-            self.confidence_upper_bound, estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error
+        chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
+            self.confidence_upper_bound or np.inf,
+            estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
 
-        chunk_record[f'lower_confidence_boundary_{column_name}'] = max(
-            self.confidence_lower_bound, estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error
+        chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
+            self.confidence_lower_bound or -np.inf,
+            estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
 
         chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
