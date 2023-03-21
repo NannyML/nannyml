@@ -16,14 +16,13 @@ from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
+from nannyml.performance_calculation import SUPPORTED_METRIC_VALUES
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
-
-SUPPORTED_METRICS = list(MetricFactory.registry.keys())
 
 DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'roc_auc': StandardDeviationThreshold(),
@@ -203,7 +202,7 @@ class PerformanceCalculator(AbstractCalculator):
             metrics = [metrics]
 
         for metric in metrics:
-            if metric not in SUPPORTED_METRICS:
+            if metric not in SUPPORTED_METRIC_VALUES:
                 raise InvalidArgumentsException(f"Metric '{metric}' is not supported.")
 
         self.metrics: List[Metric] = [

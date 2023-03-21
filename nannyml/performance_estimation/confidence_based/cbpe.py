@@ -18,8 +18,9 @@ from nannyml.base import AbstractEstimator, _list_missing
 from nannyml.calibration import Calibrator, CalibratorFactory, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
-from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
+from nannyml.performance_estimation.confidence_based.results import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 

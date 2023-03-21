@@ -14,31 +14,11 @@ import plotly.graph_objects as go
 from nannyml._typing import Key, ProblemType
 from nannyml.base import Abstract1DResult
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_calculation import SUPPORTED_METRIC_FILTER_VALUES
 from nannyml.performance_calculation.metrics.base import Metric
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
-
-SUPPORTED_METRIC_VALUES = [
-    'roc_auc',
-    'f1',
-    'precision',
-    'recall',
-    'specificity',
-    'accuracy',
-    'confusion_matrix',
-    'true_positive',
-    'true_negative',
-    'false_positive',
-    'false_negative',
-    'business_value',
-    'mae',
-    'mape',
-    'mse',
-    'msle',
-    'rmse',
-    'rmsle',
-]
 
 
 class Result(Abstract1DResult[Metric], ResultCompareMixin):
@@ -156,7 +136,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         else:
             filtered_metrics = []
             for name in metrics:
-                if name not in SUPPORTED_METRIC_VALUES:
+                if name not in SUPPORTED_METRIC_FILTER_VALUES:
                     raise InvalidArgumentsException(f"invalid metric '{name}'")
 
                 m = self._get_metric_by_name(name)
