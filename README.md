@@ -158,7 +158,7 @@ import nannyml as nml
 from IPython.display import display
 
 # Load synthetic data
-reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+reference, analysis, analysis_target = nml.load_synthetic_car_loan_dataset()
 display(reference.head())
 display(analysis.head())
 
@@ -169,7 +169,7 @@ chunk_size = 5000
 estimator = nml.CBPE(
     y_pred_proba='y_pred_proba',
     y_pred='y_pred',
-    y_true='work_home_actual',
+    y_true='repaid',
     metrics=['roc_auc'],
     chunk_size=chunk_size,
     problem_type='classification_binary',
@@ -184,11 +184,12 @@ figure.show()
 # Define feature columns
 feature_column_names = [
     col for col in reference.columns if col not in [
-        'timestamp', 'period', 'work_home_actual', 'identifier'
+        'timestamp', 'repaid',
     ]]
 # Let's initialize the object that will perform the Univariate Drift calculations
 univariate_calculator = nml.UnivariateDriftCalculator(
     column_names=feature_column_names,
+    treat_as_categorical=['y_pred'],
     chunk_size=chunk_size,
     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
     categorical_methods=['chi2', 'jensen_shannon'],
@@ -198,12 +199,14 @@ univariate_results = univariate_calculator.calculate(analysis)
 # Plot drift results for all continuous columns
 figure = univariate_results.filter(
     column_names=univariate_results.continuous_column_names,
+    period='analysis',
     methods=['jensen_shannon']).plot(kind='drift')
 figure.show()
 
 # Plot drift results for all categorical columns
 figure = univariate_results.filter(
     column_names=univariate_results.categorical_column_names,
+    period='analysis',
     methods=['chi2']).plot(kind='drift')
 figure.show()
 
