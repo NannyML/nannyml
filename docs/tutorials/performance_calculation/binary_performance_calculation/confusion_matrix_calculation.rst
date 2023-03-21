@@ -18,7 +18,7 @@ Just The Code
 ----------------
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Calculating Confusion MAtrix - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Calculating Confusion Matrix - Binary Classification.ipynb
     :cells: 1 3 4 5 7 9
 
 
