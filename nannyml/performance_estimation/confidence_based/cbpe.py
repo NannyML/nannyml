@@ -20,26 +20,23 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
+
+DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
+    'roc_auc': StandardDeviationThreshold(),
+    'f1': StandardDeviationThreshold(),
+    'precision': StandardDeviationThreshold(),
+    'recall': StandardDeviationThreshold(),
+    'specificity': StandardDeviationThreshold(),
+    'accuracy': StandardDeviationThreshold(),
+    'confusion_matrix': StandardDeviationThreshold(),
+    'business_cost': StandardDeviationThreshold(),
+}
 
 
 class CBPE(AbstractEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
-
-    # def __new__(cls, y_pred_proba: ModelOutputsType, problem_type: Union[str, ProblemType], *args, **kwargs):
-    #     """Creates a new CBPE subclass instance based on the type of the provided ``model_metadata``."""
-    #     from ._cbpe_binary_classification import _BinaryClassificationCBPE
-    #     from ._cbpe_multiclass_classification import _MulticlassClassificationCBPE
-    #
-    #     if isinstance(problem_type, str):
-    #         problem_type = ProblemType.parse(problem_type)
-    #
-    #     if problem_type is ProblemType.CLASSIFICATION_BINARY:
-    #         return super(CBPE, cls).__new__(_BinaryClassificationCBPE)
-    #     elif problem_type is ProblemType.CLASSIFICATION_MULTICLASS:
-    #         return super(CBPE, cls).__new__(_MulticlassClassificationCBPE)
-    #     else:
-    #         raise NotImplementedError
 
     def __init__(
         self,
@@ -55,6 +52,7 @@ class CBPE(AbstractEstimator):
         chunker: Optional[Chunker] = None,
         calibration: Optional[str] = None,
         calibrator: Optional[Calibrator] = None,
+        thresholds: Optional[Dict[str, Threshold]] = None,
         normalize_confusion_matrix: Optional[str] = None,
         business_value_matrix: Optional[Union[List, np.ndarray]] = None,
         normalize_business_value: Optional[str] = None,
@@ -93,6 +91,31 @@ class CBPE(AbstractEstimator):
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
+        thresholds: dict, default={ \
+            'roc_auc': StandardDeviationThreshold(), \
+            'f1': StandardDeviationThreshold(), \
+            'precision': StandardDeviationThreshold(), \
+            'recall': StandardDeviationThreshold(), \
+            'specificity': StandardDeviationThreshold(), \
+            'accuracy': StandardDeviationThreshold(), \
+            'confusion_matrix': StandardDeviationThreshold(), \
+            'business_cost': StandardDeviationThreshold(), \
+        }
+
+            A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
+            to a method name. This dictionary is optional.
+            When a dictionary is given its values will override the default values. If no dictionary is given a default
+            will be applied. The default method thresholds are as follows:
+
+                - `roc_auc`: `StandardDeviationThreshold()`
+                - `f1`: `StandardDeviationThreshold()`
+                - `precision`: `StandardDeviationThreshold()`
+                - `recall`: `StandardDeviationThreshold()`
+                - `specificity`: `StandardDeviationThreshold()`
+                - `accuracy`: `StandardDeviationThreshold()`
+                - `confusion_matrix`: `StandardDeviationThreshold()`
+                - `mape`: `StandardDeviationThreshold()`
+                - `business_cost`: `StandardDeviationThreshold()`
         problem_type: Union[str, ProblemType]
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.
@@ -168,27 +191,37 @@ class CBPE(AbstractEstimator):
         else:
             self.problem_type = problem_type
 
+        self.thresholds = DEFAULT_THRESHOLDS
+        if thresholds:
+            self.thresholds.update(**thresholds)
+
         if isinstance(metrics, str):
             metrics = [metrics]
-        self.metrics = [
-            MetricFactory.create(
-                metric,
-                self.problem_type,
-                y_pred_proba=self.y_pred_proba,
-                y_pred=self.y_pred,
-                y_true=self.y_true,
-                timestamp_column_name=self.timestamp_column_name,
-                chunker=self.chunker,
-                normalize_confusion_matrix=normalize_confusion_matrix,
-                business_value_matrix=business_value_matrix,
-                normalize_business_value=normalize_business_value,
+
+        self.metrics = []
+        for metric in metrics:
+            if metric not in SUPPORTED_METRIC_VALUES:
+                raise InvalidArgumentsException(
+                    f"unknown metric key '{metric}' given. " f"Should be one of {SUPPORTED_METRIC_VALUES}."
+                )
+            self.metrics.append(
+                MetricFactory.create(
+                    metric,
+                    self.problem_type,
+                    y_pred_proba=self.y_pred_proba,
+                    y_pred=self.y_pred,
+                    y_true=self.y_true,
+                    timestamp_column_name=self.timestamp_column_name,
+                    chunker=self.chunker,
+                    threshold=self.thresholds[metric],
+                    normalize_confusion_matrix=normalize_confusion_matrix,
+                    business_value_matrix=business_value_matrix,
+                    normalize_business_value=normalize_business_value,
+                )
             )
-            for metric in metrics
-        ]
 
         self.confidence_upper_bound = 1
         self.confidence_lower_bound = 0
-        self._alert_thresholds: Dict[str, Tuple[float, float]] = {}
         self.needs_calibration: bool = False
 
         if calibrator is None:

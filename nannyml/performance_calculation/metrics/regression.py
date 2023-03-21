@@ -1,8 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from abc import ABC
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,7 +14,6 @@ from sklearn.metrics import (
 
 from nannyml._typing import ProblemType
 from nannyml.base import _list_missing, _raise_exception_for_negative_values
-from nannyml.chunk import Chunk
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
@@ -31,39 +29,22 @@ from nannyml.sampling_error.regression import (
     rmsle_sampling_error,
     rmsle_sampling_error_components,
 )
-
-
-class RegressionMetric(Metric, ABC):
-    def __init__(self, *args, **kwargs):
-        super().__init__(lower_threshold_limit=0, *args, **kwargs)
-
-    def _calculate_alert_thresholds(
-        self,
-        reference_chunks: List[Chunk],
-        std_num: int = 3,
-        lower_limit: Optional[float] = None,
-        upper_limit: Optional[float] = None,
-    ) -> Tuple[Optional[float], Optional[float]]:
-        lower_threshold, upper_threshold = super()._calculate_alert_thresholds(
-            reference_chunks, std_num, lower_limit, upper_limit
-        )
-        if lower_threshold == 0.0:
-            return None, upper_threshold
-        else:
-            return lower_threshold, upper_threshold
+from nannyml.thresholds import Threshold
 
 
 @MetricFactory.register(metric='mae', use_case=ProblemType.REGRESSION)
-class MAE(RegressionMetric):
+class MAE(Metric):
     """Mean Absolute Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAE instance."""
         super().__init__(
             name='mae',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            threshold=threshold,
+            lower_threshold_limit=0,
             components=[('MAE', 'mae')],
         )
 
@@ -99,16 +80,18 @@ class MAE(RegressionMetric):
 
 
 @MetricFactory.register(metric='mape', use_case=ProblemType.REGRESSION)
-class MAPE(RegressionMetric):
+class MAPE(Metric):
     """Mean Absolute Percentage Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAPE instance."""
         super().__init__(
             name='mape',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            threshold=threshold,
+            lower_threshold_limit=0,
             components=[('MAPE', 'mape')],
         )
 
@@ -144,16 +127,18 @@ class MAPE(RegressionMetric):
 
 
 @MetricFactory.register(metric='mse', use_case=ProblemType.REGRESSION)
-class MSE(RegressionMetric):
+class MSE(Metric):
     """Mean Squared Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSE instance."""
         super().__init__(
             name='mse',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            threshold=threshold,
+            lower_threshold_limit=0,
             components=[('MSE', 'mse')],
         )
 
@@ -189,16 +174,18 @@ class MSE(RegressionMetric):
 
 
 @MetricFactory.register(metric='msle', use_case=ProblemType.REGRESSION)
-class MSLE(RegressionMetric):
+class MSLE(Metric):
     """Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSLE instance."""
         super().__init__(
             name='msle',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            threshold=threshold,
+            lower_threshold_limit=0,
             components=[('MSLE', 'msle')],
         )
 
@@ -239,16 +226,18 @@ class MSLE(RegressionMetric):
 
 
 @MetricFactory.register(metric='rmse', use_case=ProblemType.REGRESSION)
-class RMSE(RegressionMetric):
+class RMSE(Metric):
     """Root Mean Squared Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSE instance."""
         super().__init__(
             name='rmse',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            threshold=threshold,
+            lower_threshold_limit=0,
             components=[('RMSE', 'rmse')],
         )
 
@@ -284,16 +273,18 @@ class RMSE(RegressionMetric):
 
 
 @MetricFactory.register(metric='rmsle', use_case=ProblemType.REGRESSION)
-class RMSLE(RegressionMetric):
+class RMSLE(Metric):
     """Root Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[str] = None, **kwargs):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSLE instance."""
         super().__init__(
             name='rmsle',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
+            threshold=threshold,
+            lower_threshold_limit=0,
             components=[('RMSLE', 'rmsle')],
         )
 

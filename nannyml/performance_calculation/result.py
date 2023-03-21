@@ -41,7 +41,7 @@ SUPPORTED_METRIC_VALUES = [
 ]
 
 
-class Result(Abstract1DResult, ResultCompareMixin):
+class Result(Abstract1DResult[Metric], ResultCompareMixin):
     """Contains the results of the realized performance calculation and provides plotting functionality."""
 
     metrics: List[Metric]

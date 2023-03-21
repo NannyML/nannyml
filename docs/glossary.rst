@@ -79,7 +79,8 @@ Glossary
         A data period is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two data periods.
 
         The first data period is called the ``reference`` period. It contains all the observations for a period with an *accepted*
-        level of performance. It most likely also includes ``target`` data.
+        level of performance. It most likely also includes ``target`` data. This period can be the test set for a model that
+        only recently entered production or a selected benchmark dataset for a model that has been in production for some time.
 
         The second subset of the data is the ``analysis`` period. It contains the observations you want NannyML to analyse.
         In the absence of targets performance in the analysis period can be estimated.
@@ -230,6 +231,7 @@ Glossary
         Sampling errors are statistical errors that arise when a sample does not accurately represent the whole population.
         They are the difference between the real values of the population, which we don't always know, and the values
         derived by using samples from the population. In order to quantify the sampling error we use the :term:`Standard Error`.
+        You can find more about how NannyML calculates sampling error at :ref:`estimation_of_standard_error`.
 
     Standard Error
         The Standard Error of a statistic is the standard deviation of the probability distribution we are sampling it from.

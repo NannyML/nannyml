@@ -18,11 +18,27 @@ from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 TARGET_COMPLETENESS_RATE_COLUMN_NAME = 'NML_TARGET_INCOMPLETE'
 
 SUPPORTED_METRICS = list(MetricFactory.registry.keys())
+
+DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
+    'roc_auc': StandardDeviationThreshold(),
+    'f1': StandardDeviationThreshold(),
+    'precision': StandardDeviationThreshold(),
+    'recall': StandardDeviationThreshold(),
+    'specificity': StandardDeviationThreshold(),
+    'accuracy': StandardDeviationThreshold(),
+    'mae': StandardDeviationThreshold(),
+    'mape': StandardDeviationThreshold(),
+    'mse': StandardDeviationThreshold(),
+    'msle': StandardDeviationThreshold(),
+    'rmse': StandardDeviationThreshold(),
+    'rmsle': StandardDeviationThreshold(),
+}
 
 
 class PerformanceCalculator(AbstractCalculator):
@@ -36,6 +52,7 @@ class PerformanceCalculator(AbstractCalculator):
         problem_type: Union[str, ProblemType],
         y_pred_proba: Optional[ModelOutputsType] = None,
         timestamp_column_name: Optional[str] = None,
+        thresholds: Optional[Dict[str, Threshold]] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
@@ -72,6 +89,38 @@ class PerformanceCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
+        thresholds: dict, default={ \
+            'roc_auc': StandardDeviationThreshold(), \
+            'f1': StandardDeviationThreshold(), \
+            'precision': StandardDeviationThreshold(), \
+            'recall': StandardDeviationThreshold(), \
+            'specificity': StandardDeviationThreshold(), \
+            'accuracy': StandardDeviationThreshold(), \
+            'mae': StandardDeviationThreshold(), \
+            'mape': StandardDeviationThreshold(), \
+            'mse': StandardDeviationThreshold(), \
+            'msle': StandardDeviationThreshold(), \
+            'rmse': StandardDeviationThreshold(), \
+            'rmsle': StandardDeviationThreshold(), \
+        }
+
+            A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
+            to a method name. This dictionary is optional.
+            When a dictionary is given its values will override the default values. If no dictionary is given a default
+            will be applied. The default method thresholds are as follows:
+
+                - `roc_auc`: `StandardDeviationThreshold()`
+                - `f1`: `StandardDeviationThreshold()`
+                - `precision`: `StandardDeviationThreshold()`
+                - `recall`: `StandardDeviationThreshold()`
+                - `specificity`: `StandardDeviationThreshold()`
+                - `accuracy`: `StandardDeviationThreshold()`
+                - `mae`: `StandardDeviationThreshold()`
+                - `mape`: `StandardDeviationThreshold()`
+                - `mse`: `StandardDeviationThreshold()`
+                - `msle`: `StandardDeviationThreshold()`
+                - `rmse`: `StandardDeviationThreshold()`
+                - `rmsle`: `StandardDeviationThreshold()`
         normalize_confusion_matrix: str, default=None
             Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
             'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
@@ -117,18 +166,6 @@ class PerformanceCalculator(AbstractCalculator):
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
-        valid_normalizations = [None, 'all', 'pred', 'true']
-        if normalize_confusion_matrix not in valid_normalizations:
-            raise InvalidArgumentsException(
-                f"'normalize_confusion_matrix' given was '{normalize_confusion_matrix}'. "
-                f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
-            )
-
-        if normalize_business_value not in [None, "per_prediction"]:
-            raise InvalidArgumentsException(
-                f"normalize_business_value must be None or 'per_prediction', but got '{normalize_business_value}'"
-            )
-
         self.y_true = y_true
         self.y_pred = y_pred
 
@@ -141,6 +178,22 @@ class PerformanceCalculator(AbstractCalculator):
 
         if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
             raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
+
+        self.thresholds = DEFAULT_THRESHOLDS
+        if thresholds:
+            self.thresholds.update(**thresholds)
+
+        valid_normalizations = [None, 'all', 'pred', 'true']
+        if normalize_confusion_matrix not in valid_normalizations:
+            raise InvalidArgumentsException(
+                f"'normalize_confusion_matrix' given was '{normalize_confusion_matrix}'. "
+                f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
+            )
+
+        if normalize_business_value not in [None, "per_prediction"]:
+            raise InvalidArgumentsException(
+                f"normalize_business_value must be None or 'per_prediction', but got '{normalize_business_value}'"
+            )
 
         if isinstance(metrics, str):
             metrics = [metrics]
@@ -156,6 +209,7 @@ class PerformanceCalculator(AbstractCalculator):
                 y_true=y_true,
                 y_pred=y_pred,
                 y_pred_proba=y_pred_proba,
+                threshold=self.thresholds[m],
                 normalize_confusion_matrix=normalize_confusion_matrix,
                 business_value_matrix=business_value_matrix,
                 normalize_business_value=normalize_business_value,

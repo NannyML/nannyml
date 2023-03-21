@@ -4,7 +4,7 @@
 Calculating Business Value for Binary Classification
 ========================================================================================
 This tutorial explains how to use NannyML to calculate business value for binary classification
-models. 
+models.
 
 .. note::
     The following example uses :term:`timestamps<Timestamp>`.
@@ -48,7 +48,7 @@ Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator
 the following:
 
     * **The names of the data columns required for these metrics:** for binary classification performance estimation,
-      NannyML needs to know where to find the true class, the predicted class, and the predicted probability values 
+      NannyML needs to know where to find the true class, the predicted class, and the predicted probability values
       in the provided data. In our example, the true class values are found
       in the ``repaid`` column, the predicted values are found in the ``y_pred`` column, and the predicted probabilities
       are found in the ``y_pred_proba`` column.

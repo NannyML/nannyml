@@ -1,7 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -36,6 +36,7 @@ from nannyml.sampling_error.binary_classification import (
     true_positive_sampling_error,
     true_positive_sampling_error_components,
 )
+from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_BINARY)
@@ -46,6 +47,7 @@ class BinaryClassificationAUROC(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -54,6 +56,7 @@ class BinaryClassificationAUROC(Metric):
             name='roc_auc',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -99,6 +102,7 @@ class BinaryClassificationF1(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -107,6 +111,7 @@ class BinaryClassificationF1(Metric):
             name='f1',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -152,6 +157,7 @@ class BinaryClassificationPrecision(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -160,6 +166,7 @@ class BinaryClassificationPrecision(Metric):
             name='precision',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -204,6 +211,7 @@ class BinaryClassificationRecall(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -212,6 +220,7 @@ class BinaryClassificationRecall(Metric):
             name='recall',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -256,6 +265,7 @@ class BinaryClassificationSpecificity(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -264,6 +274,7 @@ class BinaryClassificationSpecificity(Metric):
             name='specificity',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -314,6 +325,7 @@ class BinaryClassificationAccuracy(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -322,6 +334,7 @@ class BinaryClassificationAccuracy(Metric):
             name='accuracy',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -372,6 +385,7 @@ class BinaryClassificationBusinessValue(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         business_value_matrix: Union[List, np.ndarray],
         normalize_business_value: Optional[str] = None,
         y_pred_proba: Optional[str] = None,
@@ -389,8 +403,7 @@ class BinaryClassificationBusinessValue(Metric):
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
-            lower_threshold_limit=-np.inf,
-            upper_threshold_limit=np.inf,
+            threshold=threshold,
             components=[('Business Value', 'business_value')],
         )
 
@@ -473,6 +486,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         normalize_confusion_matrix: Optional[str] = None,
         y_pred_proba: Optional[str] = None,
         **kwargs,
@@ -483,8 +497,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
-            lower_threshold_limit=-np.inf,
-            upper_threshold_limit=np.inf,
+            threshold=threshold,
             components=[
                 ('True Positive', 'true_positive'),
                 ('True Negative', 'true_negative'),
@@ -492,6 +505,9 @@ class BinaryClassificationConfusionMatrix(Metric):
                 ('False Negative', 'false_negative'),
             ],
         )
+
+        self.lower_threshold_limit: Optional[float] = 0.0 if normalize_confusion_matrix else None
+        self.upper_threshold_limit: Optional[float] = 1.0 if normalize_confusion_matrix else None
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
 
@@ -556,8 +572,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         self,
         metric_name: str,
         reference_chunks: List[Chunk],
-        std_num: int = 3,
-    ) -> Tuple[float, float]:
+    ) -> Tuple[Optional[float], Optional[float]]:
         if metric_name == 'true_positive':
             chunked_reference_metric = [self._calculate_true_positives(chunk.data) for chunk in reference_chunks]
         elif metric_name == 'true_negative':
@@ -569,24 +584,16 @@ class BinaryClassificationConfusionMatrix(Metric):
         else:
             raise InvalidArgumentsException(f"could not calculate metric {metric_name}. invalid metric name")
 
-        deviation = np.std(chunked_reference_metric) * std_num
-        mean_reference_metric = np.mean(chunked_reference_metric)
+        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+            threshold=self.threshold,
+            data=np.asarray(chunked_reference_metric),
+            lower_threshold_value_limit=self.lower_threshold_limit,
+            upper_threshold_value_limit=self.upper_threshold_limit,
+            logger=self._logger,
+            metric_name=self.display_name,
+        )
 
-        if self.normalize_confusion_matrix is not None:
-            upper_limit = 1
-            lower_limit = 0
-        else:
-            upper_limit = None
-            lower_limit = None
-
-        lower_threshold = mean_reference_metric - deviation
-        if lower_limit is not None:
-            lower_threshold = max(lower_threshold, lower_limit)
-        upper_threshold = mean_reference_metric + deviation
-        if upper_limit is not None:
-            upper_threshold = min(upper_threshold, upper_limit)
-
-        return lower_threshold, upper_threshold
+        return lower_threshold_value, upper_threshold_value
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
@@ -720,7 +727,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         column_name = 'true_positive'
 
-        true_pos_info = {}
+        true_pos_info: Dict[str, Any] = {}
 
         realized_tp = self._calculate_true_positives(chunk_data)  # in this function, check if there are
         sampling_error_tp = true_positive_sampling_error(self._true_positive_sampling_error_components, chunk_data)
@@ -730,14 +737,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_pos_info[f'{column_name}_upper_threshold'] = self.true_positive_upper_threshold
         true_pos_info[f'{column_name}_lower_threshold'] = self.true_positive_lower_threshold
         true_pos_info[f'{column_name}_alert'] = (
-            self.true_positive_lower_threshold > realized_tp
-            if self.true_positive_lower_threshold is not None
-            else False
-        ) or (
-            self.true_positive_upper_threshold < realized_tp
-            if self.true_positive_upper_threshold is not None
-            else False
-        )
+            self.true_positive_lower_threshold is not None and self.true_positive_lower_threshold > realized_tp
+        ) or (self.true_positive_upper_threshold is not None and self.true_positive_upper_threshold < realized_tp)
 
         return true_pos_info
 
@@ -745,7 +746,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         column_name = 'true_negative'
 
-        true_neg_info = {}
+        true_neg_info: Dict[str, Any] = {}
 
         realized_tn = self._calculate_true_negatives(chunk_data)
         sampling_error_tn = true_negative_sampling_error(self._true_negative_sampling_error_components, chunk_data)
@@ -755,14 +756,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_neg_info[f'{column_name}_upper_threshold'] = self.true_negative_upper_threshold
         true_neg_info[f'{column_name}_lower_threshold'] = self.true_negative_lower_threshold
         true_neg_info[f'{column_name}_alert'] = (
-            self.true_negative_lower_threshold > realized_tn
-            if self.true_negative_lower_threshold is not None
-            else False
-        ) or (
-            self.true_negative_upper_threshold < realized_tn
-            if self.true_negative_upper_threshold is not None
-            else False
-        )
+            self.true_negative_lower_threshold is not None and self.true_negative_lower_threshold > realized_tn
+        ) or (self.true_negative_upper_threshold is not None and self.true_negative_upper_threshold < realized_tn)
 
         return true_neg_info
 
@@ -770,7 +765,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         column_name = 'false_positive'
 
-        false_pos_info = {}
+        false_pos_info: Dict[str, Any] = {}
 
         realized_fp = self._calculate_false_positives(chunk_data)
         sampling_error_fp = false_positive_sampling_error(self._false_positive_sampling_error_components, chunk_data)
@@ -780,14 +775,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_pos_info[f'{column_name}_upper_threshold'] = self.false_positive_upper_threshold
         false_pos_info[f'{column_name}_lower_threshold'] = self.false_positive_lower_threshold
         false_pos_info[f'{column_name}_alert'] = (
-            self.false_positive_lower_threshold > realized_fp
-            if self.false_positive_lower_threshold is not None
-            else False
-        ) or (
-            self.false_positive_upper_threshold < realized_fp
-            if self.false_positive_upper_threshold is not None
-            else False
-        )
+            self.false_positive_lower_threshold is not None and self.false_positive_lower_threshold > realized_fp
+        ) or (self.false_positive_upper_threshold is not None and self.false_positive_upper_threshold < realized_fp)
 
         return false_pos_info
 
@@ -795,7 +784,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         column_name = 'false_negative'
 
-        false_neg_info = {}
+        false_neg_info: Dict[str, Any] = {}
 
         realized_fn = self._calculate_false_negatives(chunk_data)
         sampling_error_fn = false_negative_sampling_error(self._false_negative_sampling_error_components, chunk_data)
@@ -805,14 +794,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info[f'{column_name}_upper_threshold'] = self.false_negative_upper_threshold
         false_neg_info[f'{column_name}_lower_threshold'] = self.false_negative_lower_threshold
         false_neg_info[f'{column_name}_alert'] = (
-            self.false_negative_lower_threshold > realized_fn
-            if self.false_negative_lower_threshold is not None
-            else False
-        ) or (
-            self.false_negative_upper_threshold < realized_fn
-            if self.false_negative_upper_threshold is not None
-            else False
-        )
+            self.false_negative_lower_threshold is not None and self.false_negative_lower_threshold > realized_fn
+        ) or (self.false_negative_upper_threshold is not None and self.false_negative_upper_threshold < realized_fn)
 
         return false_neg_info
 
@@ -832,3 +815,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         chunk_record.update(false_neg_info)
 
         return chunk_record
+
+    def _calculate(self, data: pd.DataFrame):
+        pass
+
+    def _sampling_error(self, data: pd.DataFrame):
+        pass

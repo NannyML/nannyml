@@ -13,7 +13,7 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult, ResultCompareMixin):
+class Result(Abstract1DResult[Metric], ResultCompareMixin):
     def __init__(
         self,
         results_data: pd.DataFrame,

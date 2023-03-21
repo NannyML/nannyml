@@ -1,8 +1,8 @@
 .. _tutorial-ranking:
 
-=======
+========
 Ranking
-=======
+========
 
 NannyML uses ranking to order columns in univariate drift results. The resulting order can be helpful
 in prioritizing what to further investigate to fully address any issues with the model being monitored.

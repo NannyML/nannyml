@@ -23,6 +23,12 @@ Just The Code
     :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cells: 1 3 4 6 8
 
+.. admonition:: **Advanced configuration**
+    :class: hint
+
+    - Set up custom chunking [:ref:`tutorial <chunking>`] [`API reference <../../nannyml/nannyml.chunk.html>`__]
+    - Set up custom thresholds [:ref:`tutorial <thresholds>`] [`API reference <../../nannyml/nannyml.thresholds.html>`__]
+
 
 Walkthrough
 -----------
@@ -124,14 +130,17 @@ These results can be also plotted. Our plot contains several key elements.
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* The low-saturated purple area around the estimated performance indicates the :ref:`sampling
-  error<estimation_of_standard_error>`.
+* The blue dashed step plot shows the estimated performance in each chunk of the reference period. Thick squared point
+  markers indicate the middle of these chunks.
+
+* The black vertical line splits the reference and analysis periods.
+
+* The low-saturated colored area around the estimated performance indicates the :ref:`sampling error<estimation_of_standard_error>`.
 
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
 
-* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red,
-  low-saturated background in the whole width of the relevant chunk. This is additionally
-  indicated by a red, diamond-shaped point marker in the middle of the chunk.
+* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated with a red
+  diamond-shaped point marker in the middle of the chunk.
 
 Additional information is shown in the hover (these are interactive plots, though only static views are included here).
 The plots can be created with the following code:

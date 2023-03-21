@@ -13,7 +13,7 @@ Intro and Importance of Business Value
 
 The ``business_value`` metric offers a way to quantify
 the value of a model to a business in terms of the
-business's own metrics. At the core, if the value (or cost) of each 
+business's own metrics. At the core, if the value (or cost) of each
 cell in the confusion matrix is known, then the business value of a
 model can be calculated.
 
@@ -79,9 +79,9 @@ Normalization
 
 The ``business_value`` metric can be normalized so that the value returned is the business value per prediction.
 The advantage of this is that it allows for easy comparison of the business value of different models, even if they have
-different numbers of predictions. Further, it allows for easy comparison of the business value of the same model on different 
+different numbers of predictions. Further, it allows for easy comparison of the business value of the same model on different
 chunks of data, if they have different numbers of predictions as is often the case when using period-based chunking.
 To see how to normalize the ``business_value`` metric, see the :ref:`business-value-estimation` tutorial.
 
-Under the hood normalization is quite simple. The total ``business_value`` metric is calculated or estimated as described above, 
+Under the hood normalization is quite simple. The total ``business_value`` metric is calculated or estimated as described above,
 and then divided by the number of predictions in a given chunk.

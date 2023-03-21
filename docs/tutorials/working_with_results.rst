@@ -17,10 +17,13 @@ Just the code
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 1 2 3 6 7 9 11
+    :cells: 1 2 3 6 7 9 11 17 18
 
 Walkthrough
 -----------
+
+The data structure
+===================
 
 In order to obtain results we first have to perform some calculation. We'll start by loading the `reference` and
 `analysis` sample data for binary classification.
@@ -65,6 +68,10 @@ leading to an alert.
 .. nbtable::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
     :cell: 4
+
+
+Filtering
+==========
 
 Working with the `Multilevel indexes` can be very powerful, yet also quite challenging.
 The following snippet illustrates how to retrieve all calculated method values from our results.
@@ -111,6 +118,9 @@ To avoid the use of a `Multilevel index`, we've provided a switch in the
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
     :cell: 10
 
+Plotting
+==========
+
 Results can be visualized by using the built in plotting functionality. With a quick call of the
 :meth:`~nannyml.base.AbstractResult.plot()` function we can create a Plotly
 `Figure <https://plotly.com/python-api-reference/generated/plotly.graph_objects.Figure.html>`_.
@@ -154,24 +164,37 @@ specifying the `kind` parameter.
 
 .. image:: /_static/tutorials/working_with_results/distribution_plot.svg
 
+Comparing
+==========
+
 Another neat feature is that we can plot a comparison between multiple results. Suppose we want to visualize the
 estimated performance with respect to the univariate drift metrics for the _salary_range_ column.
 We'll first get our estimated performance result.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 16
+    :cells: 17
 
 Now we can compare our estimated performance to the univariate drift on features:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 17
+    :cells: 18
 
 .. image:: /_static/tutorials/working_with_results/comparison_plot.svg
     :width: 1200
 
 We can immediately spot how the estimated performance plummets when the Jensen-Shannon distance picks up!
+
+.. note::
+
+    To reduce complexity we only support comparing a single metric to a single other one.
+
+    You can use filtering to select a single metric from your result before comparing it, as illustrated in the
+    code snippet above.
+
+Exporting
+==========
 
 Results can also be exported to external storage using a :class:`~nannyml.io.base.Writer`. We currently support writing
 results to disk using a :class:`~nannyml.io.raw_files_writer.RawFilesWriter`, serializing the

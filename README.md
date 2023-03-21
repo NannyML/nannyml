@@ -69,7 +69,7 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                                                                                    | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                                                                                   | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                                                                             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.8.3]**                                                                                          | New features, bug fixes.                                                               |
+| 💎 **[New in v0.8.4]**                                                                                          | New features, bug fixes.                                                               |
 | 🧑‍💻 **[Contribute]**                                                                                          | How to contribute to the NannyML project and codebase.                                 |
 | <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
@@ -77,7 +77,7 @@ Allowing you to have the following benefits:
 [Performance Estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
 [Key Concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
 [Technical Reference]:https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
-[New in v0.8.3]: https://github.com/NannyML/nannyml/releases/latest/
+[New in v0.8.4]: https://github.com/NannyML/nannyml/releases/latest/
 [Real World Example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
 [Blog]: https://www.nannyml.com/blog
 [Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
@@ -158,7 +158,7 @@ import nannyml as nml
 from IPython.display import display
 
 # Load synthetic data
-reference, analysis, analysis_target = nml.load_synthetic_binary_classification_dataset()
+reference, analysis, analysis_target = nml.load_synthetic_car_loan_dataset()
 display(reference.head())
 display(analysis.head())
 
@@ -169,7 +169,7 @@ chunk_size = 5000
 estimator = nml.CBPE(
     y_pred_proba='y_pred_proba',
     y_pred='y_pred',
-    y_true='work_home_actual',
+    y_true='repaid',
     metrics=['roc_auc'],
     chunk_size=chunk_size,
     problem_type='classification_binary',
@@ -184,11 +184,12 @@ figure.show()
 # Define feature columns
 feature_column_names = [
     col for col in reference.columns if col not in [
-        'timestamp', 'period', 'work_home_actual', 'identifier'
+        'timestamp', 'repaid',
     ]]
 # Let's initialize the object that will perform the Univariate Drift calculations
 univariate_calculator = nml.UnivariateDriftCalculator(
     column_names=feature_column_names,
+    treat_as_categorical=['y_pred'],
     chunk_size=chunk_size,
     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
     categorical_methods=['chi2', 'jensen_shannon'],
@@ -198,12 +199,14 @@ univariate_results = univariate_calculator.calculate(analysis)
 # Plot drift results for all continuous columns
 figure = univariate_results.filter(
     column_names=univariate_results.continuous_column_names,
+    period='analysis',
     methods=['jensen_shannon']).plot(kind='drift')
 figure.show()
 
 # Plot drift results for all categorical columns
 figure = univariate_results.filter(
     column_names=univariate_results.categorical_column_names,
+    period='analysis',
     methods=['chi2']).plot(kind='drift')
 figure.show()
 

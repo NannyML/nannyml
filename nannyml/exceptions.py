@@ -59,3 +59,7 @@ class SerializeException(BaseException):
 
 class DeserializeException(BaseException):
     """An exception occurring when deserialization some object went wrong."""
+
+
+class ThresholdException(BaseException):
+    """An exception occurring during threshold creation or calculation."""

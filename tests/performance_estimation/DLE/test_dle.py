@@ -12,8 +12,9 @@ from nannyml._typing import Key, ProblemType, Result, Self
 from nannyml.base import Abstract1DResult, AbstractEstimator
 from nannyml.datasets import load_synthetic_car_price_dataset
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.direct_loss_estimation import DLE
+from nannyml.performance_estimation.direct_loss_estimation.dle import DEFAULT_THRESHOLDS, DLE
 from nannyml.performance_estimation.direct_loss_estimation.metrics import MetricFactory
+from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
 
 class FakeEstimatorResult(Abstract1DResult):
@@ -284,6 +285,68 @@ def test_dle_result_filter_period(estimates):
     assert filtered_result.data.equals(ref_period)
 
 
+@pytest.mark.parametrize(
+    'custom_thresholds',
+    [
+        {'mae': ConstantThreshold(lower=1, upper=2)},
+        {'mae': ConstantThreshold(lower=1, upper=2), 'mape': ConstantThreshold(lower=1, upper=2)},
+        {
+            'mae': ConstantThreshold(lower=1, upper=2),
+            'mape': ConstantThreshold(lower=1, upper=2),
+            'mse': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'mae': ConstantThreshold(lower=1, upper=2),
+            'mape': ConstantThreshold(lower=1, upper=2),
+            'mse': ConstantThreshold(lower=1, upper=2),
+            'msle': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'mae': ConstantThreshold(lower=1, upper=2),
+            'mape': ConstantThreshold(lower=1, upper=2),
+            'mse': ConstantThreshold(lower=1, upper=2),
+            'msle': ConstantThreshold(lower=1, upper=2),
+            'rmse': ConstantThreshold(lower=1, upper=2),
+        },
+        {
+            'mae': ConstantThreshold(lower=1, upper=2),
+            'mape': ConstantThreshold(lower=1, upper=2),
+            'mse': ConstantThreshold(lower=1, upper=2),
+            'msle': ConstantThreshold(lower=1, upper=2),
+            'rmse': ConstantThreshold(lower=1, upper=2),
+            'rmsle': ConstantThreshold(lower=1, upper=2),
+        },
+    ],
+)
+def test_cbpe_with_custom_thresholds(custom_thresholds, regression_feature_columns):
+    est = DLE(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_true='y_true',
+        feature_column_names=regression_feature_columns,
+        chunk_size=10000,
+        metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+    )
+    sut = est.thresholds
+    expected_thresholds = DEFAULT_THRESHOLDS
+    expected_thresholds.update(**custom_thresholds)
+    assert sut == expected_thresholds
+
+
+def test_cbpe_with_default_thresholds(regression_feature_columns):
+    est = DLE(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_true='y_true',
+        feature_column_names=regression_feature_columns,
+        chunk_size=10000,
+        metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+    )
+    sut = est.thresholds
+
+    assert sut == DEFAULT_THRESHOLDS
+
+
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
 def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_error_estimator, metric):
     _ = MetricFactory.create(
@@ -296,6 +359,7 @@ def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_
         tune_hyperparameters=direct_error_estimator.tune_hyperparameters,
         hyperparameter_tuning_config=direct_error_estimator.hyperparameter_tuning_config,
         hyperparameters=direct_error_estimator.hyperparameters,
+        threshold=StandardDeviationThreshold(),
     )
 
     sut = estimates.plot(metric=metric).to_dict()
@@ -314,6 +378,7 @@ def test_result_plot_with_metric_object_returns_plotly_figure(estimates, direct_
         tune_hyperparameters=direct_error_estimator.tune_hyperparameters,
         hyperparameter_tuning_config=direct_error_estimator.hyperparameter_tuning_config,
         hyperparameters=direct_error_estimator.hyperparameters,
+        threshold=StandardDeviationThreshold(),
     )
 
     sut = estimates.plot(metric=_metric)

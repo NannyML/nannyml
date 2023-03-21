@@ -39,6 +39,7 @@ from nannyml.sampling_error.multiclass_classification import (
     specificity_sampling_error,
     specificity_sampling_error_components,
 )
+from nannyml.thresholds import Threshold
 
 
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
@@ -49,6 +50,7 @@ class MulticlassClassificationAUROC(Metric):
         self,
         y_true: str,
         y_pred: str,
+        threshold: Threshold,
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
@@ -57,6 +59,7 @@ class MulticlassClassificationAUROC(Metric):
             name='roc_auc',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -119,12 +122,20 @@ class MulticlassClassificationAUROC(Metric):
 class MulticlassClassificationF1(Metric):
     """F1 score metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None, **kwargs):
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
+        **kwargs,
+    ):
         """Creates a new F1 instance."""
         super().__init__(
             name='f1',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -181,12 +192,20 @@ class MulticlassClassificationF1(Metric):
 class MulticlassClassificationPrecision(Metric):
     """Precision metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None, **kwargs):
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
+        **kwargs,
+    ):
         """Creates a new Precision instance."""
         super().__init__(
             name='precision',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -243,12 +262,20 @@ class MulticlassClassificationPrecision(Metric):
 class MulticlassClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None, **kwargs):
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
+        **kwargs,
+    ):
         """Creates a new Recall instance."""
         super().__init__(
             name='recall',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -305,12 +332,20 @@ class MulticlassClassificationRecall(Metric):
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None, **kwargs):
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
+        **kwargs,
+    ):
         """Creates a new Specificity instance."""
         super().__init__(
             name='specificity',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,
@@ -371,12 +406,20 @@ class MulticlassClassificationSpecificity(Metric):
 class MulticlassClassificationAccuracy(Metric):
     """Accuracy metric."""
 
-    def __init__(self, y_true: str, y_pred: str, y_pred_proba: Optional[Union[str, Dict[str, str]]] = None, **kwargs):
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
+        **kwargs,
+    ):
         """Creates a new Accuracy instance."""
         super().__init__(
             name='accuracy',
             y_true=y_true,
             y_pred=y_pred,
+            threshold=threshold,
             y_pred_proba=y_pred_proba,
             lower_threshold_limit=0,
             upper_threshold_limit=1,

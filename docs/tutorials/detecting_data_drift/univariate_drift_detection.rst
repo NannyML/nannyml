@@ -14,6 +14,12 @@ Just The Code
 
 .. _univariate_drift_detection_walkthrough:
 
+.. admonition:: **Advanced configuration**
+    :class: hint
+
+    - Set up custom chunking [:ref:`tutorial <chunking>`] [`API reference <../../nannyml/nannyml.chunk.html>`__]
+    - Set up custom thresholds [:ref:`tutorial <thresholds>`] [`API reference <../../nannyml/nannyml.thresholds.html>`__]
+
 Walkthrough
 -----------
 
@@ -150,6 +156,7 @@ Insights
 
 After reviewing the above results we have a good understanding of what has changed in our
 model's population.
+
 
 What Next
 ---------

@@ -15,28 +15,14 @@ from nannyml._typing import Key, ModelOutputsType, ProblemType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
-SUPPORTED_METRIC_VALUES = [
-    'roc_auc',
-    'f1',
-    'precision',
-    'recall',
-    'specificity',
-    'accuracy',
-    'confusion_matrix',
-    'true_positive',
-    'true_negative',
-    'false_positive',
-    'false_negative',
-    'business_value',
-]
 
-
-class Result(Abstract1DResult, ResultCompareMixin):
+class Result(Abstract1DResult[Metric], ResultCompareMixin):
     """Contains results for CBPE estimation and adds plotting functionality."""
 
     def __init__(
@@ -51,9 +37,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
         timestamp_column_name: Optional[str] = None,
     ):
         super().__init__(results_data, metrics)
-
-        # Be more specific about the metric type than the base class
-        self.metrics: List[Metric]
 
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
