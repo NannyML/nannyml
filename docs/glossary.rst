@@ -17,8 +17,9 @@ Glossary
         data.
 
     CBPE (Confidence-Based Performance Estimation)
-        A family of methods to estimate model performance in the absence of ground truth that take advantage of the
-        confidence which is expressed in the monitored model output probability/score prediction.
+        A family of methods to estimate classification model performance in the absence of ground truth that takes
+        advantage of the confidence which is expressed in the monitored model output probability/score prediction.
+        To see how it works, check out our :ref:`CBPE deep dive<how-it-works-cbpe>`.
 
     Chi Squared test
         The Chi Squared test, or chi2 test as is sometimes called, is a non parametric statistical test regarding
@@ -60,6 +61,13 @@ Glossary
         confidence scores. These scores are then thresholded to return the predicted class. Confidence scores can be
         turned into calibrated probabilities and used to estimate the performance of classification models in the absence
         of ground truth (see how :ref:`here<how-it-works-cbpe>`).
+
+    Confusion Matrix
+        A confusion matrix is a table that is often used to describe the performance of a classification model (or
+        a set of classifiers). Each row of the matrix represents the instances in an actual class while each column
+        represents the instances in a predicted class. In binary classification the matrix has 4 cells, that are
+        commonly named as follows: true positives (TP), true negatives (TN), false positives (FP) and false negatives (FN).
+        For more information on the confusion matrix, see the `Wikipedia Confusion Matrix page`_.
 
     Covariate Shift
         A change in joint distribution of :term:`Model Inputs`, :math:`P(\mathbf{X})`.
@@ -279,3 +287,4 @@ Glossary
 .. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_analysis
 .. _`Wikipedia Standard Error page`: https://en.wikipedia.org/wiki/Standard_error
 .. _`loss function`: https://en.wikipedia.org/wiki/Loss_function
+.. _`Wikipedia Confusion Matrix page`: https://en.wikipedia.org/wiki/Confusion_matrix

@@ -4,7 +4,7 @@
 Calculating Confusion Matrix Elements for Binary Classification
 ========================================================================================
 
-This tutorial explains how to use NannyML to calculate the confusion matrix for binary classification
+This tutorial explains how to use NannyML to calculate the :term:`confusion matrix<Confusion Matrix>` for binary classification
 models.
 
 .. note::

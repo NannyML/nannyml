@@ -3,7 +3,7 @@
 ========================================================================================
 Estimating Confusion Matrix Elements for Binary Classification
 ========================================================================================
-This tutorial explains how to use NannyML to estimate the confusion matrix for binary classification
+This tutorial explains how to use NannyML to estimate the :term:`confusion matrix<Confusion Matrix>` for binary classification
 models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
 
