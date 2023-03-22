@@ -14,7 +14,7 @@ Just the code
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
-    :cells: 1 7 8 9 10 11 12
+    :cells: 1 4 6 7 9 11 12 14
 
 Walkthrough
 ===========

@@ -10,7 +10,7 @@
 ARG APP_NAME=nannyml
 ARG APP_PATH=/opt/$APP_NAME
 ARG PYTHON_VERSION=3.10.0-slim-bullseye
-ARG POETRY_VERSION=1.2.0
+ARG POETRY_VERSION=1.3.2
 
 #
 # Stage: staging
