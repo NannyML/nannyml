@@ -314,6 +314,7 @@ def _plot_compare_step_to_step(  # noqa: C901
                 yaxis=yaxis,
                 showlegend=show_in_legend and confidence_band_in_legend,
                 with_additional_endpoint=True,
+                color=Colors.INDIGO_PERSIAN,
             )
             confidence_band_in_legend = False
 
@@ -379,6 +380,7 @@ def _plot_compare_step_to_step(  # noqa: C901
                 yaxis=yaxis2,
                 showlegend=show_in_legend and confidence_band_in_legend,
                 with_additional_endpoint=True,
+                color=Colors.BLUE_SKY_CRAYOLA,
             )
             confidence_band_in_legend = False
 
@@ -447,6 +449,7 @@ def _plot_compare_step_to_step(  # noqa: C901
             yaxis=yaxis,
             showlegend=show_in_legend and confidence_band_in_legend,
             with_additional_endpoint=True,
+            color=Colors.INDIGO_PERSIAN,
         )
         confidence_band_in_legend = False
 
@@ -506,6 +509,7 @@ def _plot_compare_step_to_step(  # noqa: C901
             yaxis=yaxis2,
             showlegend=show_in_legend and confidence_band_in_legend,
             with_additional_endpoint=True,
+            color=Colors.BLUE_SKY_CRAYOLA,
         )
         confidence_band_in_legend = False
 
