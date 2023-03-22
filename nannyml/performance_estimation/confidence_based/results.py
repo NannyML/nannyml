@@ -15,7 +15,7 @@ from nannyml._typing import Key, ModelOutputsType, ProblemType
 from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_FILTER_VALUES
 from nannyml.performance_estimation.confidence_based.metrics import Metric
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
@@ -61,9 +61,9 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         else:
             filtered_metrics = []
             for name in metrics:
-                if name not in SUPPORTED_METRIC_VALUES:
+                if name not in SUPPORTED_METRIC_FILTER_VALUES:
                     raise InvalidArgumentsException(
-                        f"invalid metric '{name}'. Please choose from {SUPPORTED_METRIC_VALUES}"
+                        f"invalid metric '{name}'. Please choose from {SUPPORTED_METRIC_FILTER_VALUES}"
                     )
 
                 m = self._get_metric_by_name(name)
