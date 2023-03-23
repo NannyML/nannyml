@@ -14,5 +14,4 @@ Some specific examples of when you could benefit from estimating your performanc
 - When dealing with huge datasets, where human verification can only cover a small sample, estimation of performance can help confirm confidence or question the efficacy.
 
 The following tutorials explain how to use NannyML to estimate the performance of ML
-models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
-Performance Estimation<performance-estimation-deep-dive>`.
+models in the absence of target data. To find out how NannyML estimates performance, read the :ref:`explanation on how performance estimation works<performance-estimation-deep-dive>`.
