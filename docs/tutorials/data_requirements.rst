@@ -156,7 +156,7 @@ In the sample data this is the **y_pred_proba** column.
 Required for running :ref:`performance estimation<performance-estimation>` on binary classification models.
 
 In multiclass classification problems each class is expected to have its own
-:term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>`column. They are required for running :ref:`performance estimation<performance-estimation>` on multiclass models.
+:term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` column. They are required for running :ref:`performance estimation<performance-estimation>` on multiclass models.
 
 Prediction class labels
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -193,7 +193,7 @@ You can see those requirements in the table below:
 
 
 What's next
----------
+-----------
 
 You can check out our tutorials on how to :ref:`estimate performance<performance-estimation>`,
-:ref:`calculate performance<performance-calculation>`, and :ref:`detect data drift<data-drift>`.
+:ref:`calculate realized performance<performance-calculation>`, and :ref:`detect data drift<data-drift>`.
