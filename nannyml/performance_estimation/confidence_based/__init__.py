@@ -12,16 +12,14 @@ SUPPORTED_METRIC_VALUES = [
     'specificity',
     'accuracy',
     'confusion_matrix',
+    'business_value',
+]
+
+SUPPORTED_METRIC_FILTER_VALUES = SUPPORTED_METRIC_VALUES + [
     'true_positive',
     'true_negative',
     'false_positive',
     'false_negative',
-    'true_positive_cost',
-    'true_negative_cost',
-    'false_positive_cost',
-    'false_negative_cost',
-    'total_cost',
-    'business_cost',
 ]
 
 

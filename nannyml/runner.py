@@ -17,10 +17,15 @@ from nannyml._typing import ProblemType
 from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io.base import Writer
 from nannyml.io.raw_files_writer import RawFilesWriter
 from nannyml.io.store import Store
-from nannyml.performance_calculation import PerformanceCalculator
+from nannyml.performance_calculation import (
+    SUPPORTED_CLASSIFICATION_METRIC_VALUES,
+    SUPPORTED_REGRESSION_METRIC_VALUES,
+    PerformanceCalculator,
+)
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES as CBPE_SUPPORTED_METRICS
 from nannyml.performance_estimation.direct_loss_estimation import DLE
@@ -277,11 +282,21 @@ def _run_realized_performance_calculator(  # noqa: C901
             calc = store.load(path=calc_path, as_type=PerformanceCalculator)
 
         if not calc:  # no store or no fitted calculator was in the store
-            metrics = []
-            if problem_type in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
-                metrics = CBPE_SUPPORTED_METRICS
+            if problem_type in [ProblemType.CLASSIFICATION_BINARY]:
+                # requires a non-default parameter 'business_value_matrix'
+                metrics = [
+                    metric for metric in SUPPORTED_CLASSIFICATION_METRIC_VALUES if metric not in ['business_value']
+                ]
+            elif problem_type in [ProblemType.CLASSIFICATION_MULTICLASS]:
+                metrics = [
+                    metric
+                    for metric in SUPPORTED_CLASSIFICATION_METRIC_VALUES
+                    if metric not in ['business_value', 'confusion_matrix']
+                ]
             elif problem_type in [ProblemType.REGRESSION]:
-                metrics = DLE_SUPPORTED_METRICS
+                metrics = SUPPORTED_REGRESSION_METRIC_VALUES
+            else:
+                raise InvalidArgumentsException(f"unsupported problem type '{problem_type}'")
 
             if console:
                 console.log('no fitted calculator found in store')
@@ -326,7 +341,7 @@ def _run_realized_performance_calculator(  # noqa: C901
     writer.write(result=results, plots=plots, calculator_name='realized_performance')
 
 
-def _run_cbpe_performance_estimation(
+def _run_cbpe_performance_estimation(  # noqa: C901
     reference_data: pd.DataFrame,
     analysis_data: pd.DataFrame,
     column_mapping: Dict[str, Any],
@@ -359,7 +374,15 @@ def _run_cbpe_performance_estimation(
             estimator = store.load(path=estimator_path, as_type=CBPE)
 
         if not estimator:  # no store or no fitted calculator was in the store
-            metrics = CBPE_SUPPORTED_METRICS
+            if problem_type in [ProblemType.CLASSIFICATION_BINARY]:
+                # requires a non-default parameter 'business_value_matrix'
+                metrics = [metric for metric in CBPE_SUPPORTED_METRICS if metric not in ['business_value']]
+            elif problem_type in [ProblemType.CLASSIFICATION_MULTICLASS]:
+                metrics = [
+                    metric for metric in CBPE_SUPPORTED_METRICS if metric not in ['business_value', 'confusion_matrix']
+                ]
+            else:
+                raise InvalidArgumentsException(f"unsupported problem type '{problem_type}'")
 
             if console:
                 console.log('no fitted estimator found in store')

@@ -4,7 +4,7 @@
 import abc
 import logging
 from logging import Logger
-from typing import Callable, Dict, Optional, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -20,31 +20,31 @@ class Metric(abc.ABC):
 
     def __init__(
         self,
-        display_name: str,
-        column_name: str,
+        name: str,
         y_true: str,
         y_pred: str,
+        components: List[Tuple[str, str]],
         threshold: Threshold,
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         upper_threshold_limit: Optional[float] = None,
         lower_threshold_limit: Optional[float] = None,
+        **kwargs,
     ):
         """Creates a new Metric instance.
 
         Parameters
         ----------
-        display_name : str
-            The name of the metric. Used to display in plots. If not given this name will be derived from the
-            ``calculation_function``.
-        column_name: str
-            The name used to indicate the metric in columns of a DataFrame.
+        components: List[Tuple[str, str]]
+            A list of (display_name, column_name) tuples. The
+            display_name is used for display purposes, while the
+            column_name is used for column names in the output.
         upper_threshold_limit : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold_limit : float, default=None
             An optional lower threshold for the performance metric.
         """
-        self.display_name = display_name
-        self.column_name = column_name
+        self.name: str = name
+
         self.y_true = y_true
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba
@@ -54,6 +54,9 @@ class Metric(abc.ABC):
         self.lower_threshold_value: Optional[float] = None
         self.lower_threshold_value_limit: Optional[float] = lower_threshold_limit
         self.upper_threshold_value_limit: Optional[float] = upper_threshold_limit
+
+        # A list of (display_name, column_name) tuples
+        self.components: List[Tuple[str, str]] = components
 
     @property
     def _logger(self) -> logging.Logger:
@@ -140,9 +143,48 @@ class Metric(abc.ABC):
         return (
             self.display_name == other.display_name
             and self.column_name == other.column_name
+            and self.components == other.components
             and self.upper_threshold_value == other.upper_threshold_value
             and self.lower_threshold_value == other.lower_threshold_value
         )
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a DataFrame containing the performance metrics for a given chunk."""
+        if len(self.components) > 1:
+            raise NotImplementedError(
+                "cannot use default 'get_chunk_record' implementation when a metric has multiple components."
+            )
+
+        column_name = self.components[0][1]
+
+        chunk_record = {}
+
+        realized_value = self.calculate(chunk_data)
+        sampling_error = self.sampling_error(chunk_data)
+
+        chunk_record[f'{column_name}_sampling_error'] = sampling_error
+        chunk_record[f'{column_name}'] = realized_value
+        chunk_record[f'{column_name}_upper_threshold'] = self.upper_threshold_value
+        chunk_record[f'{column_name}_lower_threshold'] = self.lower_threshold_value
+        chunk_record[f'{column_name}_alert'] = self.alert(realized_value)
+
+        return chunk_record
+
+    @property
+    def display_name(self) -> str:
+        return self.name
+
+    @property
+    def column_name(self) -> str:
+        return self.components[0][1]
+
+    @property
+    def display_names(self) -> List[str]:
+        return [c[0] for c in self.components]
+
+    @property
+    def column_names(self) -> List[str]:
+        return [c[1] for c in self.components]
 
 
 class MetricFactory:
@@ -166,7 +208,7 @@ class MetricFactory:
             raise InvalidArgumentsException(
                 f"unknown metric key '{key}' given. "
                 "Should be one of ['roc_auc', 'f1', 'precision', 'recall', 'specificity', "
-                "'accuracy']."
+                "'accuracy', 'confusion_matrix', 'business_value']."
             )
 
         if use_case not in cls.registry[key]:
