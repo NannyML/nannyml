@@ -137,11 +137,12 @@ Using the code below, we can create joyplots for the model’s continuous variab
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 14
 
-.. image:: /_static/drift-guide-joyplot-continuous.svg
+.. image:: _static/tutorials/detecting_data_drift/univariate_drift_detection/joyplot-continuous.svg
 
-For categorical variables NannyML plots stacked bar charts to show the variable's distribution for each chunk.
+
+NannyML plots stacked bar charts for categorical variables to show the variable's distribution for each chunk.
 If a variable has more than 5 categories, the top 4 are displayed and the rest are grouped together to make
-the plots easier to view. The chunks where drift was detected are highlighted.
+the plots easier to view. In addition, the chunks where drift was detected are highlighted.
 
 We can create stacked bar charts for the model's categorical variables with
 the code below.
@@ -163,5 +164,5 @@ What Next
 ---------
 
 The :ref:`Performance Estimation<performance-estimation>` functionality of NannyML can help provide estimates of the impact of the
-observed changes to Model Performance. The :ref:`ranking<tutorial-ranking>` functionality can help rank drifted features in order to
+observed changes to Model Performance. The :ref:`ranking<tutorial-ranking>` functionality can help rank drifted features to
 suggest which ones to prioritize for further investigation if needed. This would be an ad-hoc investigating that is not covered by NannyML.
