@@ -6,19 +6,21 @@ Estimating Performance for Binary Classification
 
 We currently support the following **standard** metrics for bianry classification performance estimation:
 
-    * roc_auc
-    * f1
-    * precision
-    * recall
-    * specificity
-    * accuracy
+    * **roc_auc**
+    * **f1**
+    * **precision**
+    * **recall**
+    * **specificity**
+    * **accuracy**
 
 For more information about estimating these metrics, refer to the :ref:`standard-metric-estimation` section.
 
-We also support the following metrics for binary classification performance estimation:
+We also support the following *complex* metrics for binary classification performance estimation:
 
-    * confusion_matrix
-    * business_value
+    * **confusion_matrix:** a metric that has four components (TP, FP, FN, TN)
+    * **business_value:** a metric that combines the four components of the confusion matrix using
+      user-specified weights for each element, allowing for a connection between model performance and
+      business results.
 
 For more information about estimating these metrics, refer to the :ref:`confusion-matrix-estimation` and :ref:`business-value-estimation` sections.
 

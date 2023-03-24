@@ -13,6 +13,14 @@ Some specific examples of when you could benefit from estimating your performanc
 - When performing sentiment analysis, targets may be entirely unavailable without significant human effort, so estimation is the only feasible way to attain metrics.
 - When dealing with huge datasets, where human verification can only cover a small sample, estimation of performance can help confirm confidence or question the efficacy.
 
-The following tutorials explain how to use NannyML to estimate the performance of ML
-models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
-Performance Estimation<performance-estimation-deep-dive>`.
+We offer performance estimation for *binary classification*, *multiclass classification*, and *regression* tasks.
+To see how to use NannyML's performance estimation, check out the following tutorials:
+
+- :ref:`binary-performance-estimation`
+- :ref:`multiclass-performance-estimation`
+- :ref:`regression-performance-estimation`
+
+To learn about the underlying principles and algorithms we use for performance estimation, refer to these sections:
+
+- :ref:`How Performance Estimation Works for Classification Tasks<how-it-works-cbpe>`
+- :ref:`How Performance Estimation Works for Regression Tasks<how-it-works-dle>`
