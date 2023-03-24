@@ -23,9 +23,9 @@ Just The Code
 
 .. admonition:: **Advanced configuration**
     :class: hint
-    - To learn how :class:`~nannyml.chunk.Chunk` works and to set up custom chunkings check out the [:ref:`chunking tutorial <chunking>`]
-    - To learn how :class:`~nannyml.thresholds.ConstantThreshold` works and to set up custom threshold check out the [:ref:`thresholds tutorial <thresholds>`]
 
+    - To learn how :class:`~nannyml.chunk.Chunk` works and to set up custom chunkings check out the :ref:`chunking tutorial <chunking>`
+    - To learn how :class:`~nannyml.thresholds.ConstantThreshold` works and to set up custom threshold check out the :ref:`thresholds tutorial <thresholds>`
 
 Walkthrough
 -----------
