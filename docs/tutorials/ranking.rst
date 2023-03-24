@@ -48,7 +48,7 @@ The first thing we need before using the alert count ranker is to create the uni
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 2
 
-To illustrate the results, we filter and display the analysis period results for ``debt_to_income_ratio`` feature.
+To illustrate the results, we filter and display the analysis period results for **debt_to_income_ratio** feature.
 The next step is to instantiate the ranker and instruct it to :meth:`~nannyml.drift.ranker.AlertCountRanker.rank`
 the provided results. Notice that the univariate results are filtered to ensure they only have one drift method
 per categorical and continuous feature as required.
