@@ -97,9 +97,9 @@ that was estimated:
    and are equal to estimated value +/- 3 times the estimated :term:`Sampling Error`.
  - **upper_threshold** and **lower_threshold** - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
-   the reference partition. The thresholds are 3 standard deviations away from the mean performance calculated on
-   chunks.
-   They are calculated during ``fit`` phase.
+   the reference partition. By default, the thresholds are 3 standard deviations away from the mean performance calculated on
+   chunks. They are calculated during ``fit`` phase. You can also set up custom thresholds using constant or standard deviations thresholds,
+   to learn more about it check out our :ref:`tutorial on thresholds<thresholds>`.
  - **alert** - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
 
