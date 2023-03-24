@@ -44,7 +44,7 @@ We start by loading the dataset we'll be using:
 
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
-estimator. To initialize the estimator that estimates **business_value**, we specify the following
+estimator. To initialize an estimator that estimates **business_value**, we specify the following
 parameters:
 
   - *y_pred_proba:* the name of the column in the reference data that
