@@ -79,6 +79,7 @@ We specify the following parameters in the initialization of the estimator:
 .. note::
     Threshold specification is optional. In this example we will specify thresholds for *roc_auc* and *accuracy*, 
     but not for *f1*. This means that the *f1* metric will use the default thresholds of 3 standard deviations from the mean.
+    For more information about the default thresholds, check out the :ref:`default thresholds section<default_thresholds>`.
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
@@ -108,18 +109,18 @@ only.
 Apart from chunk-related data, the results data have the following columns for each metric
 that was estimated:
 
- - ``value`` - the estimate of a metric for a specific chunk.
- - ``sampling_error`` - the estimate of the :term:`Sampling Error`.
- - ``realized`` - when ``target`` values are available for a chunk, the realized performance metric will also
+ - **value** - the estimate of a metric for a specific chunk.
+ - **sampling_error** - the estimate of the :term:`Sampling Error`.
+ - **realized** - when **target** values are available for a chunk, the realized performance metric will also
    be calculated and included within the results.
- - ``upper_confidence_boundary`` and ``lower_confidence_boundary`` - These values show the :term:`confidence band<Confidence Band>` of the relevant metric
+ - **upper_confidence_boundary** and **lower_confidence_boundary** - These values show the :term:`confidence band<Confidence Band>` of the relevant metric
    and are equal to estimated value +/- 3 times the estimated :term:`sampling error<Sampling Error>`.
- - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
+ - **upper_threshold** and **lower_threshold** - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
-   the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   the **reference** partition. The thresholds are 3 standard deviations away from the mean performance calculated on
    chunks.
-   The thresholds are calculated during ``fit`` phase.
- - ``alert`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
+   The thresholds are calculated during **fit** phase.
+ - **alert** - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
 
 These results can be also plotted. Our plot contains several key elements.
@@ -142,13 +143,13 @@ These results can be also plotted. Our plot contains several key elements.
 
 * *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised. Alerts are caused by the estimated performance crossing the upper or lower threshold.
 
-In the **accuracy** plot below, notice that the upper threshold is absent becuase we of the way we specified the thresholds in the initialization of the estimator.
+In the *accuracy* plot below, notice that the upper threshold is absent becuase we of the way we specified the thresholds in the initialization of the estimator.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - Binary Classification.ipynb
     :cells: 7
 
-.. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
+.. image:: /_static/tutorials/performance_estimation/binary/tutorial-performance-estimation-binary-car-loan-analysis-with-ref.svg
 
 Additional information such as the chunk index range and chunk date range (if timestamps were provided) is shown in the hover for each chunk (these are
 interactive plots, though only static views are included here).

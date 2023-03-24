@@ -158,6 +158,7 @@ If we check the plots, we can see that the alerts have now inverted.
 
 .. image:: ../_static/tutorials/thresholds/est_f1_inverted_thresholds.svg
 
+.. _default_thresholds:
 
 Default thresholds
 -------------------
