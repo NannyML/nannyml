@@ -97,7 +97,7 @@ NannyML can output a dataframe that contains all the results of the analysis dat
     :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
     :cell: 5
 
-There results from the reference data are also available.
+The results from the reference data are also available.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Performance - Regression.ipynb
