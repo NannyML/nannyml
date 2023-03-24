@@ -1,8 +1,8 @@
 .. _binary-performance-estimation:
 
-============================================
-Estimating Binary Performance
-============================================
+================================================
+Estimating Performance for Binary Classification
+================================================
 
 .. toctree::
    :maxdepth: 2
