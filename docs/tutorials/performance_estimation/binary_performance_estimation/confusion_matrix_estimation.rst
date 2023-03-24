@@ -4,7 +4,7 @@
 Estimating Confusion Matrix Elements for Binary Classification
 ========================================================================================
 This tutorial explains how to use NannyML to estimate the confusion matrix for binary classification
-models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
+models in the absence of target data. To find out how :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimates performance, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
 
 .. note::
@@ -27,7 +27,7 @@ Walkthrough
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
-You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
+Check out :ref:`Car Loan Dataset<dataset-synthetic-binary-car-loan>` to learn more about this dataset.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
@@ -44,7 +44,7 @@ We start by loading the dataset we'll be using:
 
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
-estimator and specify that we would like the "confusion_matrix"
+estimator and specify that we would like the 'confusion_matrix'
 metric using the ``metrics`` parameter. We also specify how we would
 like the confusion matrix results to be normalized using the
 ``normalize_confusion_matrix`` parameter. The normalization options
@@ -59,16 +59,14 @@ are:
     Since we are estimating the confusion matrix, we do not
     have access to the true counts of the true classes of observations.
     For this reason, we normalize the values using the estimated values
-    for each cell. So, for example, if ``"true"`` is given as the
+    for each cell. So, for example, if "true" is given as the
     normalization option, the estimates in each row will sum to 1.
-    And if the ``"pred"`` option is given, the estimates in each column
+    And if the "pred" option is given, the estimates in each column
     will sum to 1.
 
-Additionally, we specify an
-optional :ref:`chunking<chunking>` specification. For more
-information about :term:`chunking<Data Chunk>` you can check
-the :ref:`setting up page<chunking>` and
-:ref:`advanced guide<chunk-data>`.
+Additionally, we specify an optional :term:`chunking<Data Chunk>` specification.
+For more information about chunking check out the :ref:`chunking tutorial<chunking>`
+and it's :ref:`advanced guide<chunk-data>`.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - Binary Classification.ipynb
