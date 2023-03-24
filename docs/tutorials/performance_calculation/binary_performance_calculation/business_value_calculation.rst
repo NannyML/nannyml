@@ -47,35 +47,35 @@ The analysis target values are joined on the analysis frame by their index. Your
 Next a :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is created with
 the following parameter specifications:
 
-  - *y_pred_proba:* the name of the column in the reference data that
+  - **y_pred_proba:** the name of the column in the reference data that
     contains the predicted probabilities.
-  - *y_pred:* the name of the column in the reference data that
+  - **y_pred:** the name of the column in the reference data that
     contains the predicted classes.
-  - *y_true:* the name of the column in the reference data that
+  - **y_true:** the name of the column in the reference data that
     contains the true classes.
-  - *timestamp_column_name (Optional):* the name of the column in the reference data that
+  - **timestamp_column_name (Optional):** the name of the column in the reference data that
     contains timestamps.
-  - *problem_type:* the type of problem being monitored. In this example we
+  - **problem_type:** the type of problem being monitored. In this example we
     will monitor a binary classification problem.
-  - *metrics:* a list of metrics to calculate. In this example we
+  - **metrics:** a list of metrics to calculate. In this example we
     will calculate the ``business_value`` metric.
-  - *business_value_matrix:* a 2x2 matrix that specifies the value of each
+  - **business_value_matrix:** a 2x2 matrix that specifies the value of each
     cell in the confusion matrix where the top left cell is the value
     of a true negative, the top right cell is the value of a false
     positive, the bottom left cell is the value of a false negative,
     and the bottom right cell is the value of a true positive. 
-  - *normalize_business_value (Optional):* how to normalize the business value.
+  - **normalize_business_value (Optional):** how to normalize the business value.
     The normalization options are:
 
     * **None** : returns the total value per chunk
     * **"per_prediction"** :  returns the total value for the chunk divided by the number of observations
       in a given chunk.
 
-  - *thresholds (Optional):* the thresholds used to calculate the alert flag. For more information about
-    thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
-  - *chunk_size (Optional):* the number of observations in each chunk of data
+  - **chunk_size (Optional):** the number of observations in each chunk of data
     used to calculate performance. For more information about
     :term:`chunking<Data Chunk>` other chunking options check out the :ref:`chunking tutorial<chunking>`.
+  - **thresholds (Optional):** the thresholds used to calculate the alert flag. For more information about
+    thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Calculating Business Value - Binary Classification.ipynb

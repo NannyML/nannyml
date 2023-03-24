@@ -47,22 +47,22 @@ Next we create the Confidence-based Performance Estimation
 estimator and specify. To initialize an estimator that estimates the **confusion_matrix**, we specify the following
 parameters:
 
-  - *y_pred_proba:* the name of the column in the reference data that
+  - **y_pred_proba:** the name of the column in the reference data that
     contains the predicted probabilities.
-  - *y_pred:* the name of the column in the reference data that
+  - **y_pred:** the name of the column in the reference data that
     contains the predicted classes.
-  - *y_true:* the name of the column in the reference data that
+  - **y_true:** the name of the column in the reference data that
     contains the true classes.
-  - *timestamp_column_name (Optional):* the name of the column in the reference data that
+  - **timestamp_column_name (Optional):** the name of the column in the reference data that
     contains timestamps.
-  - *metrics:* a list of metrics to estimate. In this example we
+  - **metrics:** a list of metrics to estimate. In this example we
     will estimate the ``confusion_matrix`` metric.
-  - *chunk_size (Optional):* the number of observations in each chunk of data
+  - **chunk_size (Optional):** the number of observations in each chunk of data
     used to estimate performance. For more information about
     :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
-  - *problem_type:* the type of problem being monitored. In this example we
+  - **problem_type:** the type of problem being monitored. In this example we
     will monitor a binary classification problem.
-  - *normalize_confusion_matrix (Optional):* how to normalize the confusion matrix.
+  - **normalize_confusion_matrix (Optional):** how to normalize the confusion matrix.
     The normalization options are:
 
     * **None** : returns counts for each cell
@@ -70,7 +70,7 @@ parameters:
     * **"pred"** : normalize over the predicted class of observations
     * **"all"** : normalize over all observations
 
-  - *thresholds (Optional):* the thresholds used to calculate the alert flag. For more information about
+  - **thresholds (Optional):** the thresholds used to calculate the alert flag. For more information about
     thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
 
 .. note::

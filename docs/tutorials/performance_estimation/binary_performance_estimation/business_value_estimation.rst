@@ -47,34 +47,34 @@ Next we create the Confidence-based Performance Estimation
 estimator. To initialize an estimator that estimates **business_value**, we specify the following
 parameters:
 
-  - *y_pred_proba:* the name of the column in the reference data that
+  - **y_pred_proba:** the name of the column in the reference data that
     contains the predicted probabilities.
-  - *y_pred:* the name of the column in the reference data that
+  - **y_pred:** the name of the column in the reference data that
     contains the predicted classes.
-  - *y_true:* the name of the column in the reference data that
+  - **y_true:** the name of the column in the reference data that
     contains the true classes.
-  - *timestamp_column_name (Optional):* the name of the column in the reference data that
+  - **timestamp_column_name (Optional):** the name of the column in the reference data that
     contains timestamps.
-  - *metrics:* a list of metrics to estimate. In this example we
+  - **metrics:** a list of metrics to estimate. In this example we
     will estimate the ``business_value`` metric.
-  - *chunk_size (Optional):* the number of observations in each chunk of data
+  - **chunk_size (Optional):** the number of observations in each chunk of data
     used to estimate performance. For more information about
     :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
-  - *problem_type:* the type of problem being monitored. In this example we
+  - **problem_type:** the type of problem being monitored. In this example we
     will monitor a binary classification problem.
-  - *business_value_matrix:* a 2x2 matrix that specifies the value of each
+  - **business_value_matrix:** a 2x2 matrix that specifies the value of each
     cell in the confusion matrix where the top left cell is the value
     of a true negative, the top right cell is the value of a false
     positive, the bottom left cell is the value of a false negative,
     and the bottom right cell is the value of a true positive. 
-  - *normalize_business_value (Optional):* how to normalize the business value.
+  - **normalize_business_value (Optional):** how to normalize the business value.
     The normalization options are:
 
     * **None** : returns the total value per chunk
     * **"per_prediction"** :  returns the total value for the chunk divided by the number of observations
       in a given chunk.
 
-  - *thresholds (Optional):* the thresholds used to calculate the alert flag. For more information about
+  - **thresholds (Optional):** the thresholds used to calculate the alert flag. For more information about
     thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
 
 .. note::
