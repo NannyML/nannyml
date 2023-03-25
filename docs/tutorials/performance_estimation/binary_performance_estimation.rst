@@ -30,3 +30,4 @@ For more information about estimating these metrics, refer to the :ref:`confusio
    binary_performance_estimation/standard_metric_estimation
    binary_performance_estimation/confusion_matrix_estimation
    binary_performance_estimation/business_value_estimation
+   binary_performance_estimation/custom_metric_estimation
