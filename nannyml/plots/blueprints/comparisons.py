@@ -253,7 +253,8 @@ def _plot_compare_step_to_step(  # noqa: C901
 
     show_in_legend = xaxis == 'x1' and yaxis == 'y1'
 
-    confidence_band_in_legend = True
+    metric_1_confidence_band_in_legend = True
+    metric_2_confidence_band_in_legend = True
 
     if has_reference_results:
         # region reference metric 1
@@ -312,11 +313,11 @@ def _plot_compare_step_to_step(  # noqa: C901
                 name='Confidence band',
                 xaxis=xaxis,
                 yaxis=yaxis,
-                showlegend=show_in_legend and confidence_band_in_legend,
+                showlegend=show_in_legend and metric_1_confidence_band_in_legend,
                 with_additional_endpoint=True,
                 color=Colors.INDIGO_PERSIAN,
             )
-            confidence_band_in_legend = False
+            metric_1_confidence_band_in_legend = False
 
         # endregion
 
@@ -378,11 +379,11 @@ def _plot_compare_step_to_step(  # noqa: C901
                 name='Confidence band',
                 xaxis=xaxis,
                 yaxis=yaxis2,
-                showlegend=show_in_legend and confidence_band_in_legend,
+                showlegend=show_in_legend and metric_2_confidence_band_in_legend,
                 with_additional_endpoint=True,
                 color=Colors.BLUE_SKY_CRAYOLA,
             )
-            confidence_band_in_legend = False
+            metric_2_confidence_band_in_legend = False
 
         figure.add_period_separator(
             x=(
@@ -447,11 +448,11 @@ def _plot_compare_step_to_step(  # noqa: C901
             name='Confidence band',
             xaxis=xaxis,
             yaxis=yaxis,
-            showlegend=show_in_legend and confidence_band_in_legend,
+            showlegend=show_in_legend and metric_1_confidence_band_in_legend,
             with_additional_endpoint=True,
             color=Colors.INDIGO_PERSIAN,
         )
-        confidence_band_in_legend = False
+        metric_1_confidence_band_in_legend = False
 
     # endregion
 
@@ -507,11 +508,11 @@ def _plot_compare_step_to_step(  # noqa: C901
             name='Confidence band',
             xaxis=xaxis,
             yaxis=yaxis2,
-            showlegend=show_in_legend and confidence_band_in_legend,
+            showlegend=show_in_legend and metric_2_confidence_band_in_legend,
             with_additional_endpoint=True,
             color=Colors.BLUE_SKY_CRAYOLA,
         )
-        confidence_band_in_legend = False
+        metric_2_confidence_band_in_legend = False
 
     # endregion
 
