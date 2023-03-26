@@ -104,7 +104,7 @@ The drift results from the reference data are accessible though the :meth:`~nann
     :cell: 9
 
 The next step is visualizing the results. NannyML can plot both the `drift` and `distribution` for a given column.
-We'll first plot the ``jensen_shannon`` method results for each continuous column shown below.
+We will first plot the ``jensen_shannon`` method results for each continuous column shown below.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb

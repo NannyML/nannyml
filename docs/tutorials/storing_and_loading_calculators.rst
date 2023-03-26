@@ -57,7 +57,7 @@ We will now provide a directory on the local filesystem.
 
 .. _storing_calculators_remote_examples:
 
-Because we're using the `fsspec <https://filesystem-spec.readthedocs.io/en/latest/>`_ library under the covers we also
+Because we are using the `fsspec <https://filesystem-spec.readthedocs.io/en/latest/>`_ library under the covers we also
 support a lot of remote filesystems out of the box.
 
 The following snippet shows how to use S3 as a backing filesystem. See `AWS documentation <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html>`_
