@@ -396,17 +396,54 @@ def _plot_compare_step_to_step(  # noqa: C901
                 color=metric_2_color,
                 **_metric_2_kwargs,
             )
+
+        # region Period separator
         if has_analysis_results:
+            is_time_based = is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
+
             figure.add_period_separator(
                 x=(
                     ensure_numpy(reference_chunk_indices)[0][-1] + 1
-                    if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
+                    if not is_time_based
                     else ensure_numpy(analysis_chunk_start_dates)[0][0]
                 )
             )
+
+            reference_period_text_x = (
+                reference_chunk_indices.mean()  # type: ignore
+                if not is_time_based
+                else reference_chunk_start_dates.mean()  # type: ignore
+            )
+
+            figure.add_annotation(
+                x=reference_period_text_x,
+                xshift=10,
+                yref='paper',
+                y=1,
+                text="Reference",
+                showarrow=False,
+            )
+
+            analyis_period_text_x = (
+                analysis_chunk_indices.mean()  # type: ignore
+                if not is_time_based
+                else analysis_chunk_start_dates.mean()  # type: ignore
+            )
+
+            figure.add_annotation(
+                x=analyis_period_text_x,
+                xshift=15,
+                yref='paper',
+                y=1,
+                text="Analysis",
+                showarrow=False,
+            )
+        # endregion
+
         # endregion
 
     if has_analysis_results:
+
         # region analysis metric 1
 
         _hover = hover or Hover(

@@ -428,18 +428,47 @@ def _plot_metric(  # noqa: C901
         )
     # endregion
 
+    # region Period separator
     if has_reference_results:
-        assert reference_chunk_indices is not None
-        reference_chunk_indices, analysis_chunk_start_dates = ensure_numpy(
-            reference_chunk_indices, analysis_chunk_start_dates
-        )
+        is_time_based = is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
+
         figure.add_period_separator(
             x=(
-                reference_chunk_indices[-1] + 1
-                if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-                else analysis_chunk_start_dates[0]
-            ),
-            subplot_args=dict(row=row, col=col),
+                ensure_numpy(reference_chunk_indices)[0][-1] + 1
+                if not is_time_based
+                else ensure_numpy(analysis_chunk_start_dates)[0][0]
+            )
         )
+
+        reference_period_text_x = (
+            reference_chunk_indices.mean() if not is_time_based else reference_chunk_start_dates.mean()  # type: ignore
+        )
+
+        figure.add_annotation(
+            x=reference_period_text_x,
+            xshift=10,
+            yref='y domain',
+            y=1.01,
+            text="Reference",
+            showarrow=False,
+            row=row,
+            col=col,
+        )
+
+        analyis_period_text_x = (
+            analysis_chunk_indices.mean() if not is_time_based else analysis_chunk_start_dates.mean()  # type: ignore
+        )
+
+        figure.add_annotation(
+            x=analyis_period_text_x,
+            xshift=15,
+            yref='y domain',
+            y=1.01,
+            text="Analysis",
+            showarrow=False,
+            row=row,
+            col=col,
+        )
+    # endregion
 
     return figure
