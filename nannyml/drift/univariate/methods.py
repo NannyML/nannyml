@@ -384,7 +384,7 @@ class Chi2Statistic(Method):
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_missing_data(reference_data)
-        self._reference_data_vcs = reference_data.value_counts()
+        self._reference_data_vcs = reference_data.value_counts().loc[lambda v: v != 0]
         self._fitted = True
         return self
 
@@ -405,9 +405,10 @@ class Chi2Statistic(Method):
         return self._p_value < 0.05
 
     def _calc_chi2(self, data: pd.Series):
+        value_counts = data.value_counts().loc[lambda v: v != 0]
         stat, p_value, _, _ = chi2_contingency(
             pd.concat(
-                [self._reference_data_vcs, data.value_counts()],
+                [self._reference_data_vcs, value_counts],
                 axis=1,
             ).fillna(0)
         )
