@@ -25,6 +25,7 @@ def plot_2d_compare_step_to_step(
     subplot_titles: Optional[List[str]] = None,
     number_of_columns: Optional[int] = None,
     hover: Optional[Hover] = None,
+    **kwargs,
 ) -> Figure:
     # validate if both result keysets are compatible for plotting
     items = list(itertools.product(result_1.keys(), result_2.keys()))
@@ -159,6 +160,7 @@ def plot_2d_compare_step_to_step(
             xaxis=x_axis,
             yaxis=y_axis,
             yaxis2=y_axis_2,
+            **kwargs,
         )
 
     return figure
@@ -220,7 +222,14 @@ def _plot_compare_step_to_step(  # noqa: C901
     xaxis: Optional[str] = 'x',
     yaxis: Optional[str] = 'y',
     yaxis2: Optional[str] = 'y2',
+    metric_1_color=Colors.BLUE_SKY_CRAYOLA,
+    metric_2_color=Colors.BLUE_SKY_CRAYOLA,
+    **kwargs,
 ) -> Figure:
+
+    _metric_1_kwargs = {k.replace('metric_1_', ''): v for k, v in kwargs.items() if k.startswith('metric_1_')}
+    _metric_2_kwargs = {k.replace('metric_2_', ''): v for k, v in kwargs.items() if k.startswith('metric_2_')}
+
     _metric_1_display_name = render_display_name(metric_1_display_name)
     _metric_2_display_name = render_display_name(metric_2_display_name)
 
@@ -271,7 +280,7 @@ def _plot_compare_step_to_step(  # noqa: C901
         _hover.add(np.asarray([_metric_1_display_name] * len(reference_metric_1)), 'metric_name')
 
         if reference_chunk_periods is not None:
-            _hover.add(render_period_string(reference_chunk_periods), name='period')
+            _hover.add(render_period_string(reference_chunk_periods, color=metric_1_color), name='period')
 
         if reference_chunk_keys is not None:
             _hover.add(reference_chunk_keys, name='chunk_key')
@@ -292,12 +301,12 @@ def _plot_compare_step_to_step(  # noqa: C901
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
             name=f'{_metric_1_display_name} (reference)',
-            color=Colors.INDIGO_PERSIAN.transparent(alpha=0.5),
             hover=_hover,
-            line_dash='dash',
             xaxis=xaxis,
             yaxis=yaxis,
             showlegend=show_in_legend,
+            color=metric_1_color,
+            **_metric_1_kwargs,
         )
 
         if (
@@ -315,7 +324,8 @@ def _plot_compare_step_to_step(  # noqa: C901
                 yaxis=yaxis,
                 showlegend=show_in_legend and metric_1_confidence_band_in_legend,
                 with_additional_endpoint=True,
-                color=Colors.INDIGO_PERSIAN,
+                color=metric_1_color,
+                **_metric_1_kwargs,
             )
             metric_1_confidence_band_in_legend = False
 
@@ -337,7 +347,7 @@ def _plot_compare_step_to_step(  # noqa: C901
         )
 
         if reference_chunk_periods is not None:
-            _hover.add(render_period_string(reference_chunk_periods), name='period')
+            _hover.add(render_period_string(reference_chunk_periods, color=metric_2_color), name='period')
 
         if reference_chunk_keys is not None:
             _hover.add(reference_chunk_keys, name='chunk_key')
@@ -358,12 +368,12 @@ def _plot_compare_step_to_step(  # noqa: C901
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
             name=f'{_metric_2_display_name} (reference)',
-            color=Colors.BLUE_SKY_CRAYOLA.transparent(alpha=0.5),
             xaxis=xaxis,
             yaxis=yaxis2,
             hover=_hover,
             showlegend=show_in_legend,
-            # line_dash='dash',
+            color=metric_2_color,
+            **_metric_2_kwargs,
         )
 
         if (
@@ -381,7 +391,8 @@ def _plot_compare_step_to_step(  # noqa: C901
                 yaxis=yaxis2,
                 showlegend=show_in_legend and metric_2_confidence_band_in_legend,
                 with_additional_endpoint=True,
-                color=Colors.BLUE_SKY_CRAYOLA,
+                color=metric_2_color,
+                **_metric_2_kwargs,
             )
             metric_2_confidence_band_in_legend = False
 
@@ -406,7 +417,7 @@ def _plot_compare_step_to_step(  # noqa: C901
     _hover.add(np.asarray([_metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
 
     if analysis_chunk_periods is not None:
-        _hover.add(render_period_string(analysis_chunk_periods), name='period')
+        _hover.add(render_period_string(analysis_chunk_periods, color=metric_1_color), name='period')
 
     if analysis_metric_1_alerts is not None:
         _hover.add(render_alert_string(analysis_metric_1_alerts), name='alert')
@@ -430,12 +441,12 @@ def _plot_compare_step_to_step(  # noqa: C901
         start_dates=analysis_chunk_start_dates,
         end_dates=analysis_chunk_end_dates,
         name=f'{_metric_1_display_name} (analysis)',
-        color=Colors.INDIGO_PERSIAN,
         hover=_hover,
-        line_dash='dash',
         xaxis=xaxis,
         yaxis=yaxis,
         showlegend=show_in_legend,
+        color=metric_1_color,
+        **_metric_1_kwargs,
     )
 
     if analysis_metric_1_upper_confidence_bounds is not None and analysis_metric_1_lower_confidence_bounds is not None:
@@ -450,7 +461,7 @@ def _plot_compare_step_to_step(  # noqa: C901
             yaxis=yaxis,
             showlegend=show_in_legend and metric_1_confidence_band_in_legend,
             with_additional_endpoint=True,
-            color=Colors.INDIGO_PERSIAN,
+            color=metric_1_color,
         )
         metric_1_confidence_band_in_legend = False
 
@@ -467,7 +478,7 @@ def _plot_compare_step_to_step(  # noqa: C901
     _hover.add(np.asarray([render_metric_display_name(metric_2_display_name)] * len(analysis_metric_2)), 'metric_name')
 
     if analysis_chunk_periods is not None:
-        _hover.add(render_period_string(analysis_chunk_periods), name='period')
+        _hover.add(render_period_string(analysis_chunk_periods, color=metric_2_color), name='period')
 
     if analysis_metric_2_alerts is not None:
         _hover.add(render_alert_string(analysis_metric_2_alerts), name='alert')
@@ -491,11 +502,12 @@ def _plot_compare_step_to_step(  # noqa: C901
         start_dates=analysis_chunk_start_dates,
         end_dates=analysis_chunk_end_dates,
         name=f'{_metric_2_display_name} (analysis)',
-        color=Colors.BLUE_SKY_CRAYOLA,
         xaxis=xaxis,
         yaxis=yaxis2,
         hover=_hover,
         showlegend=show_in_legend,
+        color=metric_2_color,
+        **_metric_2_kwargs,
     )
 
     if analysis_metric_2_upper_confidence_bounds is not None and analysis_metric_2_lower_confidence_bounds is not None:
@@ -510,7 +522,8 @@ def _plot_compare_step_to_step(  # noqa: C901
             yaxis=yaxis2,
             showlegend=show_in_legend and metric_2_confidence_band_in_legend,
             with_additional_endpoint=True,
-            color=Colors.BLUE_SKY_CRAYOLA,
+            color=metric_2_color,
+            **_metric_2_kwargs,
         )
         metric_2_confidence_band_in_legend = False
 
@@ -577,7 +590,9 @@ def render_metric_display_name(metric_display_name: Union[str, Tuple]):
 
 class ResultCompareMixin:
     def compare(self, other: Result):
-        return ResultComparison(self, other, title=self._get_title(other))  # type: ignore
+        return ResultComparison(
+            self, other, title=self._get_title(other), plot_kwargs=_get_plot_kwargs(self, other)  # type: ignore
+        )
 
     def _get_title(self, other: Result):
         from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
@@ -597,8 +612,31 @@ class ResultCompareMixin:
         return f"<b>{_result_title_names[type(self)]}</b> vs. <b>{_result_title_names[type(other)]}</b>"
 
 
+def _get_plot_kwargs(result: Result, other: Result) -> Dict[str, Any]:
+    kwargs: Dict[str, Any] = {}
+    if _is_estimated_result(result):
+        kwargs['metric_1_color'] = Colors.BLUE_SKY_CRAYOLA if _is_estimated_result(other) else Colors.INDIGO_PERSIAN
+        kwargs['metric_1_line_dash'] = 'dash'
+
+    if _is_estimated_result(other):
+        kwargs['metric_2_color'] = Colors.INDIGO_PERSIAN
+        kwargs['metric_2_line_dash'] = 'dash'
+
+    if not _is_estimated_result(result) and not _is_estimated_result(other):
+        kwargs['metric_2_color'] = Colors.INDIGO_PERSIAN
+
+    return kwargs
+
+
+def _is_estimated_result(result: Result) -> bool:
+    from nannyml.performance_estimation.confidence_based import Result as CBPEResult
+    from nannyml.performance_estimation.direct_loss_estimation import Result as DLEResult
+
+    return isinstance(result, (CBPEResult, DLEResult))
+
+
 class ResultComparison:
-    def __init__(self, result: Result, other: Result, title: Optional[str] = None):
+    def __init__(self, result: Result, other: Result, plot_kwargs: Dict[str, Any], title: Optional[str] = None):
 
         if len(result.keys()) != 1 or len(result.keys()) != 1:
             raise InvalidArgumentsException(
@@ -610,10 +648,9 @@ class ResultComparison:
         self.result = result
         self.other = other
         self.title = title
+        self.plot_kwargs = plot_kwargs
 
     def plot(self) -> Figure:
         return plot_2d_compare_step_to_step(
-            result_1=self.result,
-            result_2=self.other,
-            plot_title=self.title,
+            result_1=self.result, result_2=self.other, plot_title=self.title, **self.plot_kwargs
         )
