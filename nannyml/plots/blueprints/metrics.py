@@ -190,6 +190,7 @@ def _plot_metric(  # noqa: C901
     hover: Optional[Hover] = None,
     subplot_y_axis_title: Optional[str] = None,
     color: Optional[str] = None,
+    metric_name: str = 'Metric',
     **kwargs,
 ) -> Figure:
     if figure is None:
@@ -253,7 +254,7 @@ def _plot_metric(  # noqa: C901
             indices=reference_chunk_indices,
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
-            name='Metric (reference)',
+            name=metric_name,
             color=color or Colors.BLUE_SKY_CRAYOLA,
             hover=_hover,
             # subplot_args=dict(row=row, col=col, subplot_y_axis_title=metric_display_name),
@@ -310,12 +311,12 @@ def _plot_metric(  # noqa: C901
         indices=analysis_chunk_indices,
         start_dates=analysis_chunk_start_dates,
         end_dates=analysis_chunk_end_dates,
-        name='Metric (analysis)',
+        name=metric_name,
         color=color or Colors.BLUE_SKY_CRAYOLA,
         hover=_hover,
         subplot_args=dict(row=row, col=col, subplot_y_axis_title=subplot_y_axis_title or metric_display_name),
         legendgroup='metric_analysis',
-        showlegend=show_in_legend,
+        showlegend=show_in_legend and not has_reference_results,
         **kwargs,
     )
     # endregion
@@ -377,7 +378,7 @@ def _plot_metric(  # noqa: C901
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
             legendgroup='thresh',
-            showlegend=show_threshold_legend,
+            showlegend=show_threshold_legend and not has_reference_results,
         )
         show_threshold_legend = False
 
@@ -391,7 +392,7 @@ def _plot_metric(  # noqa: C901
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
             legendgroup='thresh',
-            showlegend=show_threshold_legend,
+            showlegend=show_threshold_legend and not has_reference_results,
         )
         show_threshold_legend = False
     # endregion
@@ -406,7 +407,7 @@ def _plot_metric(  # noqa: C901
                 indices=reference_chunk_indices,
                 start_dates=reference_chunk_start_dates,
                 end_dates=reference_chunk_end_dates,
-                name='Sampling error (reference)',
+                name='Confidence band',
                 color=color or Colors.BLUE_SKY_CRAYOLA,
                 with_additional_endpoint=True,
                 subplot_args=dict(row=row, col=col),
@@ -420,11 +421,11 @@ def _plot_metric(  # noqa: C901
             indices=analysis_chunk_indices,
             start_dates=analysis_chunk_start_dates,
             end_dates=analysis_chunk_end_dates,
-            name='Sampling error (analysis)',
+            name='Confidence band',
             color=color or Colors.BLUE_SKY_CRAYOLA,
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
-            showlegend=show_in_legend,
+            showlegend=show_in_legend and not has_reference_results,
         )
     # endregion
 

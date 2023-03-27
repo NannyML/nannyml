@@ -204,6 +204,7 @@ class Result(Abstract2DResult[Method], ResultCompareMixin):
                 subplot_title_format='{display_names[1]} for <b>{display_names[0]}</b>',
                 subplot_y_axis_title_format='{display_names[1]}',
                 color=Colors.BLUE_SKY_CRAYOLA,
+                metric_name='Method',
             )
         elif kind == 'distribution':
             return plot_distributions(
