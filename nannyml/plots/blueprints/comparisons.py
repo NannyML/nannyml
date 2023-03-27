@@ -256,14 +256,17 @@ def _plot_compare_step_to_step(  # noqa: C901
         and reference_metric_2 is not None
         and len(reference_metric_2) > 0
     )
+
+    has_analysis_results = (
+        analysis_metric_1 is not None
+        and len(analysis_metric_1) > 0
+        and analysis_metric_2 is not None
+        and len(analysis_metric_2) > 0
+    )
+
     if has_reference_results and not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates):
         assert reference_chunk_indices is not None
         analysis_chunk_indices = analysis_chunk_indices + max(reference_chunk_indices) + 1
-
-    show_in_legend = xaxis == 'x1' and yaxis == 'y1'
-
-    metric_1_confidence_band_in_legend = True
-    metric_2_confidence_band_in_legend = True
 
     if has_reference_results:
         # region reference metric 1
@@ -300,11 +303,11 @@ def _plot_compare_step_to_step(  # noqa: C901
             indices=reference_chunk_indices,
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
-            name=f'{_metric_1_display_name} (reference)',
+            name=f'{_metric_1_display_name}',
             hover=_hover,
             xaxis=xaxis,
             yaxis=yaxis,
-            showlegend=show_in_legend,
+            showlegend=True,
             color=metric_1_color,
             **_metric_1_kwargs,
         )
@@ -322,12 +325,11 @@ def _plot_compare_step_to_step(  # noqa: C901
                 name='Confidence band',
                 xaxis=xaxis,
                 yaxis=yaxis,
-                showlegend=show_in_legend and metric_1_confidence_band_in_legend,
+                showlegend=True,
                 with_additional_endpoint=True,
                 color=metric_1_color,
                 **_metric_1_kwargs,
             )
-            metric_1_confidence_band_in_legend = False
 
         # endregion
 
@@ -367,11 +369,11 @@ def _plot_compare_step_to_step(  # noqa: C901
             indices=reference_chunk_indices,
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
-            name=f'{_metric_2_display_name} (reference)',
+            name=f'{_metric_2_display_name}',
             xaxis=xaxis,
             yaxis=yaxis2,
             hover=_hover,
-            showlegend=show_in_legend,
+            showlegend=True,
             color=metric_2_color,
             **_metric_2_kwargs,
         )
@@ -389,179 +391,185 @@ def _plot_compare_step_to_step(  # noqa: C901
                 name='Confidence band',
                 xaxis=xaxis,
                 yaxis=yaxis2,
-                showlegend=show_in_legend and metric_2_confidence_band_in_legend,
+                showlegend=True,
                 with_additional_endpoint=True,
                 color=metric_2_color,
                 **_metric_2_kwargs,
             )
-            metric_2_confidence_band_in_legend = False
-
-        figure.add_period_separator(
-            x=(
-                ensure_numpy(reference_chunk_indices)[0][-1] + 1
-                if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-                else ensure_numpy(analysis_chunk_start_dates)[0][0]
+        if has_analysis_results:
+            figure.add_period_separator(
+                x=(
+                    ensure_numpy(reference_chunk_indices)[0][-1] + 1
+                    if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
+                    else ensure_numpy(analysis_chunk_start_dates)[0][0]
+                )
             )
-        )
         # endregion
 
-    # region analysis metric 1
+    if has_analysis_results:
+        # region analysis metric 1
 
-    _hover = hover or Hover(
-        template='%{period} &nbsp; &nbsp; %{alert} <br />'
-        'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-        '%{metric_name}: <b>%{metric_value}</b><br />',
-        # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-        show_extra=True,
-    )
-    _hover.add(np.asarray([_metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
+        _hover = hover or Hover(
+            template='%{period} &nbsp; &nbsp; %{alert} <br />'
+            'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+            '%{metric_name}: <b>%{metric_value}</b><br />',
+            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
+            show_extra=True,
+        )
+        _hover.add(np.asarray([_metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
 
-    if analysis_chunk_periods is not None:
-        _hover.add(render_period_string(analysis_chunk_periods, color=metric_1_color), name='period')
+        if analysis_chunk_periods is not None:
+            _hover.add(render_period_string(analysis_chunk_periods, color=metric_1_color), name='period')
 
-    if analysis_metric_1_alerts is not None:
-        _hover.add(render_alert_string(analysis_metric_1_alerts), name='alert')
+        if analysis_metric_1_alerts is not None:
+            _hover.add(render_alert_string(analysis_metric_1_alerts), name='alert')
 
-    if analysis_chunk_keys is not None:
-        _hover.add(analysis_chunk_keys, name='chunk_key')
+        if analysis_chunk_keys is not None:
+            _hover.add(analysis_chunk_keys, name='chunk_key')
 
-    _hover.add(
-        render_x_coordinate(
-            analysis_chunk_indices,
-            analysis_chunk_start_dates,
-            analysis_chunk_end_dates,
-        ),
-        name='x_coordinate',
-    )
-    _hover.add(np.round(analysis_metric_1, 4), name='metric_value')
+        _hover.add(
+            render_x_coordinate(
+                analysis_chunk_indices,
+                analysis_chunk_start_dates,
+                analysis_chunk_end_dates,
+            ),
+            name='x_coordinate',
+        )
+        _hover.add(np.round(analysis_metric_1, 4), name='metric_value')
 
-    figure.add_metric(
-        data=analysis_metric_1,
-        indices=analysis_chunk_indices,
-        start_dates=analysis_chunk_start_dates,
-        end_dates=analysis_chunk_end_dates,
-        name=f'{_metric_1_display_name} (analysis)',
-        hover=_hover,
-        xaxis=xaxis,
-        yaxis=yaxis,
-        showlegend=show_in_legend,
-        color=metric_1_color,
-        **_metric_1_kwargs,
-    )
-
-    if analysis_metric_1_upper_confidence_bounds is not None and analysis_metric_1_lower_confidence_bounds is not None:
-        figure.add_confidence_band(
-            upper_confidence_boundaries=analysis_metric_1_upper_confidence_bounds,
-            lower_confidence_boundaries=analysis_metric_1_lower_confidence_bounds,
+        figure.add_metric(
+            data=analysis_metric_1,
             indices=analysis_chunk_indices,
             start_dates=analysis_chunk_start_dates,
             end_dates=analysis_chunk_end_dates,
-            name='Confidence band',
+            name=f'{_metric_1_display_name}',
+            hover=_hover,
             xaxis=xaxis,
             yaxis=yaxis,
-            showlegend=show_in_legend and metric_1_confidence_band_in_legend,
-            with_additional_endpoint=True,
+            showlegend=not has_reference_results,
             color=metric_1_color,
+            **_metric_1_kwargs,
         )
-        metric_1_confidence_band_in_legend = False
 
-    # endregion
+        if (
+            analysis_metric_1_upper_confidence_bounds is not None
+            and analysis_metric_1_lower_confidence_bounds is not None
+        ):
+            figure.add_confidence_band(
+                upper_confidence_boundaries=analysis_metric_1_upper_confidence_bounds,
+                lower_confidence_boundaries=analysis_metric_1_lower_confidence_bounds,
+                indices=analysis_chunk_indices,
+                start_dates=analysis_chunk_start_dates,
+                end_dates=analysis_chunk_end_dates,
+                name='Confidence band',
+                xaxis=xaxis,
+                yaxis=yaxis,
+                showlegend=not has_reference_results,
+                with_additional_endpoint=True,
+                color=metric_1_color,
+            )
 
-    # region analysis metric 2
-    _hover = hover or Hover(
-        template='%{period} &nbsp; &nbsp; %{alert} <br />'
-        'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-        '%{metric_name}: <b>%{metric_value}</b><br />',
-        # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
-        show_extra=True,
-    )
-    _hover.add(np.asarray([render_metric_display_name(metric_2_display_name)] * len(analysis_metric_2)), 'metric_name')
+        # endregion
 
-    if analysis_chunk_periods is not None:
-        _hover.add(render_period_string(analysis_chunk_periods, color=metric_2_color), name='period')
+        # region analysis metric 2
+        _hover = hover or Hover(
+            template='%{period} &nbsp; &nbsp; %{alert} <br />'
+            'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+            '%{metric_name}: <b>%{metric_value}</b><br />',
+            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
+            show_extra=True,
+        )
+        _hover.add(
+            np.asarray([render_metric_display_name(metric_2_display_name)] * len(analysis_metric_2)), 'metric_name'
+        )
 
-    if analysis_metric_2_alerts is not None:
-        _hover.add(render_alert_string(analysis_metric_2_alerts), name='alert')
+        if analysis_chunk_periods is not None:
+            _hover.add(render_period_string(analysis_chunk_periods, color=metric_2_color), name='period')
 
-    if analysis_chunk_keys is not None:
-        _hover.add(analysis_chunk_keys, name='chunk_key')
+        if analysis_metric_2_alerts is not None:
+            _hover.add(render_alert_string(analysis_metric_2_alerts), name='alert')
 
-    _hover.add(
-        render_x_coordinate(
-            analysis_chunk_indices,
-            analysis_chunk_start_dates,
-            analysis_chunk_end_dates,
-        ),
-        name='x_coordinate',
-    )
-    _hover.add(np.round(analysis_metric_2, 4), name='metric_value')
+        if analysis_chunk_keys is not None:
+            _hover.add(analysis_chunk_keys, name='chunk_key')
 
-    figure.add_metric(
-        data=analysis_metric_2,
-        indices=analysis_chunk_indices,
-        start_dates=analysis_chunk_start_dates,
-        end_dates=analysis_chunk_end_dates,
-        name=f'{_metric_2_display_name} (analysis)',
-        xaxis=xaxis,
-        yaxis=yaxis2,
-        hover=_hover,
-        showlegend=show_in_legend,
-        color=metric_2_color,
-        **_metric_2_kwargs,
-    )
+        _hover.add(
+            render_x_coordinate(
+                analysis_chunk_indices,
+                analysis_chunk_start_dates,
+                analysis_chunk_end_dates,
+            ),
+            name='x_coordinate',
+        )
+        _hover.add(np.round(analysis_metric_2, 4), name='metric_value')
 
-    if analysis_metric_2_upper_confidence_bounds is not None and analysis_metric_2_lower_confidence_bounds is not None:
-        figure.add_confidence_band(
-            upper_confidence_boundaries=analysis_metric_2_upper_confidence_bounds,
-            lower_confidence_boundaries=analysis_metric_2_lower_confidence_bounds,
+        figure.add_metric(
+            data=analysis_metric_2,
             indices=analysis_chunk_indices,
             start_dates=analysis_chunk_start_dates,
             end_dates=analysis_chunk_end_dates,
-            name='Confidence band',
+            name=f'{_metric_2_display_name}',
             xaxis=xaxis,
             yaxis=yaxis2,
-            showlegend=show_in_legend and metric_2_confidence_band_in_legend,
-            with_additional_endpoint=True,
+            hover=_hover,
+            showlegend=not has_reference_results,
             color=metric_2_color,
             **_metric_2_kwargs,
         )
-        metric_2_confidence_band_in_legend = False
 
-    # endregion
+        if (
+            analysis_metric_2_upper_confidence_bounds is not None
+            and analysis_metric_2_lower_confidence_bounds is not None
+        ):
+            figure.add_confidence_band(
+                upper_confidence_boundaries=analysis_metric_2_upper_confidence_bounds,
+                lower_confidence_boundaries=analysis_metric_2_lower_confidence_bounds,
+                indices=analysis_chunk_indices,
+                start_dates=analysis_chunk_start_dates,
+                end_dates=analysis_chunk_end_dates,
+                name='Confidence band',
+                xaxis=xaxis,
+                yaxis=yaxis2,
+                showlegend=not has_reference_results,
+                with_additional_endpoint=True,
+                color=metric_2_color,
+                **_metric_2_kwargs,
+            )
 
-    # region alerts
+        # endregion
 
-    if analysis_metric_1_alerts is not None:
-        figure.add_alert(
-            data=analysis_metric_1,
-            alerts=analysis_metric_1_alerts,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
-            name='Alert',
-            legendgroup='alert',
-            plot_areas=False,
-            showlegend=False,
-            xaxis=xaxis,
-            yaxis=yaxis,
-        )
+        # region alerts
 
-    if analysis_metric_2_alerts is not None:
-        figure.add_alert(
-            data=analysis_metric_2,
-            alerts=analysis_metric_2_alerts,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
-            name='Alert',
-            legendgroup='alert',
-            plot_areas=False,
-            showlegend=show_in_legend,
-            xaxis=xaxis,
-            yaxis=yaxis2,
-        )
+        if analysis_metric_1_alerts is not None:
+            figure.add_alert(
+                data=analysis_metric_1,
+                alerts=analysis_metric_1_alerts,
+                indices=analysis_chunk_indices,
+                start_dates=analysis_chunk_start_dates,
+                end_dates=analysis_chunk_end_dates,
+                name='Alert',
+                legendgroup='alert',
+                plot_areas=False,
+                showlegend=True,
+                xaxis=xaxis,
+                yaxis=yaxis,
+            )
 
-    # endregion
+        if analysis_metric_2_alerts is not None:
+            figure.add_alert(
+                data=analysis_metric_2,
+                alerts=analysis_metric_2_alerts,
+                indices=analysis_chunk_indices,
+                start_dates=analysis_chunk_start_dates,
+                end_dates=analysis_chunk_end_dates,
+                name='Alert',
+                legendgroup='alert',
+                plot_areas=False,
+                showlegend=False,
+                xaxis=xaxis,
+                yaxis=yaxis2,
+            )
+
+        # endregion
 
     return figure
 
