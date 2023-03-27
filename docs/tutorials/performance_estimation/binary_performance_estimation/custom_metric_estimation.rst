@@ -15,13 +15,14 @@ Just the Code
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Creating and Estimating a Custom Metric - Binary Classification.ipynb
-    :cells: 1 3 4 5 7 8 9
+    :cells: 1 3 4 5 7 8 9 10
 
 Walkthrough
 --------------
 
-While NannyML offers out-of-the-box support for th estimation of a number of metrics (see which in our :ref:`binary-performance-estimation` page),
-it is also possible to create custom metrics. In this tutorial we will be creating a **balanced accuracy** metric. 
+While NannyML offers out-of-the-box support for the estimation of a number of metrics (see which in our :ref:`binary-performance-estimation` page),
+it is also possible to create custom metrics. In this tutorial we will be creating a **balanced accuracy** metric, using 
+the :term:`confusion matrix<Confusion Matrix>` as a building block.
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
@@ -114,7 +115,8 @@ index the ``balanced_accuracy`` array.
     :path: ./example_notebooks/Tutorial - Creating and Estimating a Custom Metric - Binary Classification.ipynb
     :cells: 9
 
-We can now plot the results to check for any performance changes in the analysis data compared to the reference data.
+Since **balanced accuracy** is not supported out of the box with NannyML, we will create a custom plot to visualize the performance
+estimation results.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Creating and Estimating a Custom Metric - Binary Classification.ipynb
@@ -138,3 +140,6 @@ results<compare_estimated_and_realized_performance>`.
 
 You can learn more about the Confidence Based Performance Estimation and its limitations in the
 :ref:`How it Works page<performance-estimation-deep-dive>`.
+
+And if targets are available or become available, you can learn more about *calculating* confusion
+matrix elements in the :ref:`confusion-matrix-calculation` tutorial.
