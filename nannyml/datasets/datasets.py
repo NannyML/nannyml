@@ -6,7 +6,7 @@
 
 from importlib import resources
 
-from pandas import DataFrame, read_csv
+from pandas import DataFrame, read_csv, read_parquet
 
 DATA_MODULE = "nannyml.datasets.data"
 
@@ -26,6 +26,22 @@ def load_csv_file_to_df(local_file: str) -> DataFrame:
     """
     with resources.path(DATA_MODULE, local_file) as data:
         return read_csv(data)
+        
+def load_pq_file_to_df(local_file: str) -> DataFrame:
+    """Loads a data file from within the NannyML package.
+
+    Parameters
+    ----------
+    local_file : str, required
+        string with the name of the data file to be loaded.
+
+    Returns
+    -------
+    df: pd.DataFrame
+        A DataFrame containing the requested data
+    """
+    with resources.path(DATA_MODULE, local_file) as data:
+        return read_parquet(data)
 
 
 def load_synthetic_binary_classification_dataset():
@@ -156,5 +172,32 @@ def load_synthetic_car_price_dataset():
     reference = load_csv_file_to_df('regression_synthetic_reference.csv')
     analysis = load_csv_file_to_df('regression_synthetic_analysis.csv')
     analysis_tgt = load_csv_file_to_df('regression_synthetic_analysis_targets.csv')
+
+    return reference, analysis, analysis_tgt
+
+
+def load_us_census_ma_employment_data():
+    """Loads the real-world binary classification dataset - predicting whether an individual is employed.
+
+
+    Returns
+    -------
+    reference : pd.DataFrame
+        A DataFrame containing reference period of synthetic car price dataset
+    analysis : pd.DataFrame
+        A DataFrame containing analysis period of synthetic car price dataset
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis period of synthetic car price dataset
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_us_census_ma_employment_reference_and_analysis_data
+    >>> reference, analysis, analysis_tgt = load_us_census_ma_employment_reference_and_analysis_data()
+
+    """
+
+    reference = load_pq_file_to_df('employment_MA_reference.pq')
+    analysis = laod_pq_file_to_df('employment_MA_analysis.pq')
+    analysis_tgt = load_pq_file_to_df('employment_MA_analysis_target.pq')
 
     return reference, analysis, analysis_tgt
