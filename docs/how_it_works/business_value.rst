@@ -62,7 +62,7 @@ Since we are in the binary classification case, :math:`n=2`, and the :term:`conf
     \text{# of false negatives} & \text{# of true negatives}
     \end{bmatrix}
 
-And the business value matrix is:
+And the :term:`business value matrix` is:
 
 .. math::
 

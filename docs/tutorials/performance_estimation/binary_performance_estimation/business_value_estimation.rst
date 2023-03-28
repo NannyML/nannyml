@@ -78,7 +78,7 @@ parameters:
     thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
 
 .. note::
-    When estimating **business_value**, the ``business_value_matrix`` parameter is required. The format of the business value matrix
+    When estimating **business_value**, the ``business_value_matrix`` parameter is required. The format of the :term:`business value matrix`
     must be specified as ``[[value_of_TN, value_of_FP], [value_of_FN, value_of_TP]]``. For more information about 
     the business value matrix, check out the :ref:`Business Value "How it Works" page<business-value-deep-dive>`.
 

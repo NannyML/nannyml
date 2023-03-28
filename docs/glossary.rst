@@ -11,6 +11,13 @@ Glossary
         drift. The alert is raised after the drift functionality of NannyML finds the drift
         characteristics for this variable and chunk to be suspect.
 
+    Business Value Matrix
+        A matrix that is used to calculate the business value of a model. For binary classification,
+        the matrix is a 2x2 matrix with the following cells: true positive cost, true negative cost,
+        false positive cost, false negative cost. The business value of a model is calculated as the
+        sum of the products of the values in the matrix and the corresponding cells in the confusion
+        matrix.
+
     Butterfly dataset
         A dataset used in :ref:`data-reconstruction-pca` to give an example where univariate
         drift statistics are insufficient in detecting complex data drifts in multidimensional
