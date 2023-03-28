@@ -10,4 +10,4 @@ from .pickle_file_writer import PickleFileWriter
 from .raw_files_writer import RawFilesWriter
 from .store import FilesystemStore, JoblibPickleSerializer, Serializer, Store
 
-DEFAULT_WRITER = RawFilesWriter(path='out', format='parquet')
+DEFAULT_WRITER = RawFilesWriter(path='out')

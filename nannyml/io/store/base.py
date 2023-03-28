@@ -87,5 +87,5 @@ class Store(ABC):
             raise StoreException(f'an unexpected exception occurred when loading object: {exc}')
 
     @abstractmethod
-    def _load(self, path: str, **load_args):
+    def _load(self, **load_args):
         ...
