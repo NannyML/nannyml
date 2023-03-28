@@ -38,7 +38,10 @@ class Runner:
 
 _registry: Dict[str, Type] = {
     'univariate_drift': UnivariateDriftCalculator,
-    'realized_performance': PerformanceCalculator,
+    'multivariate_drift': DataReconstructionDriftCalculator,
+    'performance': PerformanceCalculator,
+    'cbpe': CBPE,
+    'dle': DLE,
 }
 _logger = logging.getLogger(__name__)
 
@@ -86,7 +89,7 @@ def run(
 
     for calculator_config in config.calculators:
         if not calculator_config.enabled:
-            break
+            continue
 
         writers = get_output_writers(calculator_config.outputs, logger)
 
