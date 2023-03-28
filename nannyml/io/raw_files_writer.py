@@ -14,13 +14,11 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 @WriterFactory.register('raw_files')
 class RawFilesWriter(FileWriter):
-    """A Writer implementation that dumps the Result contents (data and plots) on disk (local/remote/cloud)."""
+    """A Writer implementation that dumps the result data on disk (local/remote/cloud)."""
 
     def __init__(
         self,
         path: str,
-        format: str,
-        write_args: Optional[Dict[str, Any]] = None,
         credentials: Optional[Dict[str, Any]] = None,
         fs_args: Optional[Dict[str, Any]] = None,
     ):
@@ -32,10 +30,6 @@ class RawFilesWriter(FileWriter):
         path : str
             The directory to write the results in. Each Result being written there will end create its own subdirectory.
             Each of those will contain `data` and `plots` subdirectories.
-        format: str
-            The file format for the data export. Should be one of ``parquet`` or ``csv``.
-        write_args : Dict[str, Any]
-            Specific arguments passed along the method performing the actual writing.
         credentials : Dict[str, Any]
             Used to provide credential information following specific ``fsspec`` implementations.
         fs_args :
@@ -48,48 +42,49 @@ class RawFilesWriter(FileWriter):
         >>> # this is some legacy stuff to be cleaned up
         >>> writer.write(result, plots={}, calculator_name='test')
         """
-        super().__init__(path, write_args, credentials, fs_args)
-        if format not in ['parquet', 'csv']:
-            raise InvalidArgumentsException(f"unknown value for format '{format}', should be one of 'parquet', 'csv'")
-        self._data_format = format
+        super().__init__(path, credentials, fs_args)
 
     @log_usage(UsageEvent.WRITE_RAW)
-    def _write(self, result: Result, **kwargs):
-        if 'plots' not in kwargs:
-            raise InvalidArgumentsException("missing parameter 'plots'.")
+    def _write(self, result: Result, format: str = 'parquet', **write_args):
+        """Exports the Result data into a CSV or Parquet file on a disk location.
 
-        plots = kwargs['plots']
+        The disk location is determined by the `path` given during initialization and the filename parameter.
 
-        if not isinstance(plots, Dict):
-            raise InvalidArgumentsException(f"parameter 'plots' is of type {type(plots)} but should be 'Dict'")
+        Parameters
+        ----------
+        result : Result
+            The result to be exported
+        filename : str
+            The filename to use for the exported file.
+        format: str
+            The file format for the data export. Should be one of ``parquet`` or ``csv``.
+        kwargs : dict
+            A dictionary of key-value pairs passed to the function
 
+        """
         if result.empty:
             raise InvalidArgumentsException("result data cannot be None")
 
-        calculator_name = kwargs['calculator_name']
+        if format not in ['parquet', 'csv']:
+            raise InvalidArgumentsException(f"unknown value for format '{format}', should be one of 'parquet', 'csv'")
+
+        if 'filename' not in write_args:
+            raise InvalidArgumentsException("missing required parameter 'filename'")
+        filename = write_args.pop('filename')
+
         write_path = get_filepath_str(self.filepath, self._protocol)
 
-        images_path = Path(write_path) / calculator_name / "plots"
-        images_path.mkdir(parents=True, exist_ok=True)
-        self._logger.debug(f"writing {len(plots)} images to {images_path}")
-        for name, image in plots.items():
-            if image is None:
-                self._logger.debug(f"image for '{name}' is 'None'. Skipping writing to file.")
-                break
-            _write_bytes_to_filesystem(image.to_image(format='png'), images_path / f'{name}.png', self._fs)
-
-        data_path = Path(write_path) / calculator_name / "data"
-        data_path.mkdir(parents=True, exist_ok=True)
+        data_path = Path(write_path) / filename
         self._logger.debug(f"writing data to {data_path}")
 
         bytes_buffer = BytesIO()
-        if self._data_format == "parquet":
+        if format == "parquet":
             result.to_df(multilevel=False).to_parquet(
-                bytes_buffer, **self._write_args, coerce_timestamps='ms', allow_truncated_timestamps=True
+                bytes_buffer, coerce_timestamps='ms', allow_truncated_timestamps=True, **write_args
             )
-            _write_bytes_to_filesystem(bytes_buffer.getvalue(), data_path / f"{calculator_name}.pq", self._fs)
-        elif self._data_format == "csv":
-            result.to_df(multilevel=False).to_csv(bytes_buffer, **self._write_args)
-            _write_bytes_to_filesystem(bytes_buffer.getvalue(), data_path / f"{calculator_name}.csv", self._fs)
+            _write_bytes_to_filesystem(bytes_buffer.getvalue(), data_path, self._fs)
+        elif format == "csv":
+            result.to_df(multilevel=False).to_csv(bytes_buffer, **write_args)
+            _write_bytes_to_filesystem(bytes_buffer.getvalue(), data_path, self._fs)
         else:
             raise InvalidArgumentsException(f"unknown value for format '{format}', should be one of 'parquet', 'csv'")

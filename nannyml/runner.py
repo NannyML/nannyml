@@ -6,20 +6,20 @@
 
 import logging
 import sys
-from pathlib import Path
-from typing import Any, Dict, Optional
+from datetime import date, datetime
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
+import jinja2
 import pandas as pd
 from rich.console import Console
-from rich.progress import Progress
 
 from nannyml._typing import ProblemType
 from nannyml.chunk import Chunker
+from nannyml.config import Config, InputDataConfig, StoreConfig, WriterConfig
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
-from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.base import Writer
-from nannyml.io.raw_files_writer import RawFilesWriter
+from nannyml.exceptions import InvalidArgumentsException, IOException
+from nannyml.io import FileReader, FilesystemStore, RawFilesWriter, Writer, WriterFactory
 from nannyml.io.store import Store
 from nannyml.performance_calculation import (
     SUPPORTED_CLASSIFICATION_METRIC_VALUES,
@@ -31,84 +31,125 @@ from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VAL
 from nannyml.performance_estimation.direct_loss_estimation import DLE
 from nannyml.performance_estimation.direct_loss_estimation import SUPPORTED_METRIC_VALUES as DLE_SUPPORTED_METRICS
 
+
+class Runner:
+    pass
+
+
+_registry: Dict[str, Type] = {
+    'univariate_drift': UnivariateDriftCalculator,
+    'realized_performance': PerformanceCalculator,
+}
 _logger = logging.getLogger(__name__)
 
 
+class RunnerLogger:
+    def __init__(
+        self, logger: Optional[logging.Logger] = logging.getLogger(__name__), console: Optional[Console] = None
+    ):
+        self.logger = logger
+        self.console = console
+
+    def log(self, message: object, log_level: int = logging.INFO):
+        if self.logger:
+            self.logger.log(level=log_level, msg=message)
+
+        if self.console:
+            self.console.log(message)
+
+
 def run(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    store: Optional[Store] = None,
-    ignore_errors: bool = True,
-    run_in_console: bool = False,
+    config: Config,
+    console: Optional[Console] = None,
+    on_fit: Optional[Callable] = None,
+    on_calculate: Optional[Callable] = None,
+    on_success: Optional[Callable] = None,
+    on_fail: Optional[Callable] = None,
 ):
-    with Progress() as progress:
-        _run_statistical_univariate_feature_drift_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
+    logger = RunnerLogger(logger=logging.getLogger(__name__), console=console)
 
-        _run_data_reconstruction_multivariate_feature_drift_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
+    logger.log("reading reference data")
+    reference_data = read_data(config.input.reference_data, logger)
 
-        _run_realized_performance_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
+    # read analysis data
+    logger.log("reading analysis data")
+    analysis_data = read_data(config.input.analysis_data, logger)
 
-        _run_cbpe_performance_estimation(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
+    if config.input.target_data:
+        logger.log("reading target data")
+        target_data = read_data(config.input.target_data, logger)
 
-        _run_dle_performance_estimation(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
+        if config.input.target_data.join_column:
+            analysis_data = analysis_data.merge(target_data, on=config.input.target_data.join_column)
+        else:
+            analysis_data = analysis_data.join(target_data)
 
-        progress.console.line(2)
-        if isinstance(writer, RawFilesWriter):
-            progress.console.rule()
-            progress.console.log(f"view results in {Path(writer.filepath)}")
+    for calculator_config in config.calculators:
+        if not calculator_config.enabled:
+            break
+
+        writers = get_output_writers(calculator_config.outputs, logger)
+
+        store = get_store(calculator_config.store, logger)
+
+        if calculator_config.type not in _registry:
+            raise InvalidArgumentsException(f"unknown calculator type '{calculator_config.type}'")
+
+        calc_cls = _registry[calculator_config.type]
+        if store and calculator_config.store:
+            calc = store.load(filename=calculator_config.store.filename, as_type=calc_cls)
+            if calc is None:
+                calc = calc_cls(**calculator_config.params)
+                calc.fit(reference_data)
+                store.store(obj=calc, filename=calculator_config.store.filename)
+        else:
+            calc = calc_cls(**calculator_config.params)
+            calc.fit(reference_data)
+
+        result = calc.calculate(analysis_data) if hasattr(calc, 'calculate') else calc.estimate(analysis_data)
+
+        for writer, write_args in writers:
+            writer.write(result, **write_args)
+
+
+def read_data(input_config: InputDataConfig, logger: Optional[RunnerLogger] = None) -> pd.DataFrame:
+    path = _render_path_template(input_config.path)
+    data = FileReader(filepath=path, credentials=input_config.credentials, read_args=input_config.read_args).read()
+    if logger:
+        logger.log(f"read {data.size} rows from {path}")
+    return data
+
+
+def get_output_writers(
+    outputs_config: Optional[List[WriterConfig]], logger: Optional[RunnerLogger] = None
+) -> List[Tuple[Writer, Dict[str, Any]]]:
+    if not outputs_config:
+        return []
+
+    writers: List[Tuple[Writer, Dict[str, Any]]] = []
+
+    for writer_config in outputs_config:
+        if writer_config.params and 'path' in writer_config.params:
+            writer_config.params['path'] = _render_path_template(writer_config.params['path'])
+
+        writer = WriterFactory.create(writer_config.type, writer_config.params)
+        writers.append((writer, writer_config.write_args or {}))
+
+    return writers
+
+
+def get_store(store_config: Optional[StoreConfig], logger: Optional[RunnerLogger] = None) -> Optional[Store]:
+    if store_config:
+        path = _render_path_template(store_config.path)
+        if logger:
+            logger.log(f"using file system store with path '{path}'")
+        store = FilesystemStore(
+            root_path=path,
+            credentials=store_config.credentials or {},
+        )
+        return store
+
+    return None
 
 
 def _run_statistical_univariate_feature_drift_calculator(
@@ -501,3 +542,29 @@ def _run_dle_performance_estimation(
     if console:
         console.log('writing results')
     writer.write(result=results, plots=plots, calculator_name='direct_loss_estimator')
+
+
+def _get_ignore_errors(ignore_errors: bool, config: Config) -> bool:
+    if ignore_errors is None:
+        if config.ignore_errors is None:
+            return False
+        else:
+            return config.ignore_errors
+    else:
+        return ignore_errors
+
+
+def _render_path_template(path_template: str) -> str:
+    try:
+        env = jinja2.Environment()
+        tpl = env.from_string(path_template)
+        return tpl.render(
+            minute=datetime.strftime(datetime.today(), "%M"),
+            hour=datetime.strftime(datetime.today(), "%H"),
+            day=datetime.strftime(datetime.today(), "%d"),
+            weeknumber=date.today().isocalendar()[1],
+            month=datetime.strftime(datetime.today(), "%m"),
+            year=datetime.strftime(datetime.today(), "%Y"),
+        )
+    except Exception as exc:
+        raise IOException(f"could not render file path template: '{path_template}': {exc}")

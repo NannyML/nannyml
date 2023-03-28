@@ -4,7 +4,7 @@
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import yaml
 from pydantic import BaseModel
@@ -28,36 +28,10 @@ class InputConfig(BaseModel):
     target_data: Optional[TargetDataConfig]
 
 
-class RawFileWriterConfig(BaseModel):
-    path: str
-    format: str = 'parquet'
-    credentials: Optional[Dict[str, Any]]
-    write_args: Optional[Dict[str, Any]]
-
-
-class DatabaseWriterConfig(BaseModel):
-    connection_string: str
-    model_name: Optional[str]
-
-
-class PickleWriterConfig(BaseModel):
-    path: str
-    credentials: Optional[Dict[str, Any]]
-    write_args: Optional[Dict[str, Any]]
-
-
 class WriterConfig(BaseModel):
-    database: Optional[DatabaseWriterConfig]
-    raw_files: Optional[RawFileWriterConfig]
-    pickle: Optional[PickleWriterConfig]
-
-
-class ColumnMapping(BaseModel):
-    features: List[str]
-    timestamp: str
-    y_pred: str
-    y_pred_proba: Union[str, Dict[str, str], None]
-    y_true: str
+    type: str
+    params: Optional[Dict[str, Any]]
+    write_args: Optional[Dict[str, Any]]
 
 
 class ChunkerConfig(BaseModel):
@@ -82,23 +56,25 @@ class SchedulingConfig(BaseModel):
     cron: Optional[CronSchedulingConfig]
 
 
-class FileStoreConfig(BaseModel):
-    path: str
-
-
 class StoreConfig(BaseModel):
-    file: Optional[FileStoreConfig]
+    path: str
+    credentials: Optional[Dict[str, Any]]
+    filename: Optional[str]
+
+
+class CalculatorConfig(BaseModel):
+    type: str
+    enabled: Optional[bool] = True
+    outputs: Optional[List[WriterConfig]]
+    store: Optional[StoreConfig]
+    params: Dict[str, Any]
 
 
 class Config(BaseModel):
     input: InputConfig
-    output: WriterConfig
-    column_mapping: ColumnMapping
-    chunker: Optional[ChunkerConfig]
+    calculators: List[CalculatorConfig]
     scheduling: Optional[SchedulingConfig]
-    store: Optional[StoreConfig]
 
-    problem_type: str
     ignore_errors: Optional[bool]
 
     @classmethod
