@@ -56,7 +56,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
             Key(
                 properties=(component[1],),
                 display_names=(
-                    f'estimated {component[0]}',
+                    f'realized {component[0]}',
                     component[0],
                 ),
             )
