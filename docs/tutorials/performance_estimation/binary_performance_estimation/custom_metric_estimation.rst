@@ -100,8 +100,8 @@ and the sensitivity and specificity are defined as:
 .. math::
     \text{specificity} = \frac{TN}{TN + FP}
 
-where :math:`TP` is the number of true positives, :math:`TN` is the number of true negatives,
-:math:`FP` is the number of false positives, and :math:`FN` is the number of false negatives.
+where :math:`TP` is the number of true positives (or true positive rate), :math:`TN` is the number of true negatives (or true negative rate),
+:math:`FP` is the number of false positives (or false positive rate), and :math:`FN` is the number of false negatives (or false negative rate).
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Creating and Estimating a Custom Metric - Binary Classification.ipynb
