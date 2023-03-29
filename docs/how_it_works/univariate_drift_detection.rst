@@ -44,8 +44,10 @@ By default, NannyML employs the first method if the reference data has fewer tha
 
 The D-statistic is robust to small changes in the data, easy to interpret and falls into  0-1 range.
 This makes the Kolmogorov-Smirnov test a popular choice for many data distribution monitoring
-practitioners. You can see on the image below how the value of D-statistic changes with the change of data
-distribution to build some intuition on it's behavior.
+practitioners. 
+
+The figure below shows a visual representation of how the Kolmogorov-Smirnov test is calculated. The 
+largest distance between the two CDFs is the D-statistic.
 
 
 .. image:: ../_static/how-it-works-ks.svg
@@ -162,6 +164,13 @@ where
 
 .. math::
     BC\left(P,Q\right) =  \int \sqrt{p(x)q(x)}dx
+
+Below we show a visual representation of Hellinger Distance. 
+The shaded area represents the value of the Bhattacharya
+Coefficient which is part of the Hellinger Distance formula.
+
+.. image:: ../_static/how-it-works-hellinger.svg
+    :width: 1400pt
 
 .. _univariate-drift-detection-categorical-methods:
 
@@ -281,6 +290,12 @@ If the any data from the chunk sample have different unique values a new bin cre
 The new bins relative frequency for the reference sample is set to 0.
 The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
 used to calculate the Hellinger Distance.
+
+Below we see a visualization of the Hellinger Distance for a categorical variable with three
+categories, a, b and c. The red vertical lines map to the expression within the sum in the Hellinger Distance formula.
+
+.. image:: ../_static/how-it-works-cat_hellinger.svg
+    :width: 1400pt
 
 .. _univ_cat_method_l8:
 
