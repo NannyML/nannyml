@@ -131,9 +131,6 @@ These results can be also plotted. Our plot contains several key elements.
 * The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* The blue dashed step plot shows the estimated performance in each chunk of the reference period. Thick squared point
-  markers indicate the middle of these chunks.
-
 * The black vertical line splits the reference and analysis periods.
 
 * The low-saturated colored area around the estimated performance indicates the :ref:`sampling error<estimation_of_standard_error>`.

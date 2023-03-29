@@ -135,12 +135,6 @@ These results can be also plotted. Our plot contains several key elements.
 * *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is
   calculated as the estimated performance +/- 3 times the estimated :term:`Sampling Error`.
 
-* *The blue step plot* shows the estimated performance in each chunk of the reference period. Thick squared point markers indicate
-  the middle of these chunks.
-
-* *The low-saturated blue area* around the estimated performance in the reference period corresponds to the :term:`confidence band<Confidence Band>` which is
-  calculated as the estimated performance +/- 3 times the estimated :term:`sampling error<Sampling Error>`.
-
 * *The gray vertical line* splits the reference and analysis periods.
 
 * *The red horizontal dashed lines* show upper and lower thresholds for alerting purposes.
