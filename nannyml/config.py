@@ -84,6 +84,11 @@ class Config(BaseModel):
             config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
             return Config.parse_obj(config_dict)
 
+    @classmethod
+    def parse(cls, config: str):
+        config_dict = yaml.safe_load(config)
+        return Config.parse_obj(config_dict)
+
 
 def get_config_path(custom_config_path: Optional[str] = None) -> Path:
     if custom_config_path:
