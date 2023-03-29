@@ -111,6 +111,7 @@ def _get_protocol_and_path(filepath: str) -> Tuple[str, str]:
     path = parsed_path.path
 
     if protocol in HTTP_PROTOCOLS:
+        path = filepath.split("://", 1)[-1]
         return protocol, path
 
     if protocol == "file":

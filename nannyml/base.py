@@ -142,6 +142,14 @@ class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
         return self.data[('chunk', 'end_date')]
 
     @property
+    def chunk_start_indices(self) -> pd.Series:
+        return self.data[('chunk', 'start_index')]
+
+    @property
+    def chunk_end_indices(self) -> pd.Series:
+        return self.data[('chunk', 'end_index')]
+
+    @property
     def chunk_indices(self) -> pd.Series:
         return self.data[('chunk', 'chunk_index')]
 
@@ -184,6 +192,14 @@ class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
     @property
     def chunk_end_dates(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'end_date')]
+
+    @property
+    def chunk_start_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'start_index')]
+
+    @property
+    def chunk_end_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'end_index')]
 
     @property
     def chunk_indices(self) -> pd.Series:
