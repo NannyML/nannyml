@@ -4,7 +4,7 @@
 Calculating Standard Performance Metrics for Binary Classification
 ========================================================================================
 
-This tutorial explains how to use NannyML to calculate the confusion matrix for binary classification
+This tutorial explains how to use NannyML to calculate standard performance metrics for binary classification
 models.
 
 .. note::
@@ -21,19 +21,27 @@ Just The Code
     :path: ./example_notebooks/Tutorial - Calculating Standard Metrics - Binary Classification.ipynb
     :cells: 1 3 4 5 7 9
 
+.. admonition:: **Advanced configuration**
+    :class: hint
+
+    - To learn how :class:`~nannyml.chunk.Chunk` works and to set up custom chunkings check out the :ref:`chunking tutorial <chunking>`
+    - To learn how :class:`~nannyml.thresholds.ConstantThreshold` works and to set up custom threshold check out the :ref:`thresholds tutorial <thresholds>`
 
 Walkthrough
 --------------
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
-You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
+Check out :ref:`Car Loan Dataset<dataset-synthetic-binary-car-loan>` to learn more about this dataset.
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
-You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is
+subject to actual analysis, provided as the analysis dataset.You can read more about this in our section on
+:ref:`data periods<data-drift-periods>`.
 
-The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
-not used during :ref:`performance estimation<performance-estimation>`. But it is required to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.
+The ``analysis_target_df`` dataframe contains the target results of the analysis period. This is kept separate in the
+synthetic data because it is not used during :ref:`performance estimation<performance-estimation>`.
+But it is required to calculate the :term:`Realized Performance`, so the first thing we need to in this case is set up the
+right data in the right dataframes.
 
 The analysis target values are joined on the analysis frame by their index. Your dataset may already contain the **target** column, so you may skip this join.
 
@@ -70,8 +78,8 @@ the following:
     :path: ./example_notebooks/Tutorial - Calculating Standard Metrics - Binary Classification.ipynb
     :cells: 3
 
-The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
-:meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.fit` method on the ``reference`` data.
+The :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
+:meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.fit` method on the reference data.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Calculating Standard Metrics - Binary Classification.ipynb
@@ -100,8 +108,7 @@ The results from the reference data are also available.
     :path: ./example_notebooks/Tutorial - Calculating Standard Metrics - Binary Classification.ipynb
     :cell: 8
 
-Apart from chunk and period-related columns, the results data have a set of columns for each
-calculated metric.
+Apart from chunk-related data, the results data have a set of columns for each calculated metric.
 
  - **targets_missing_rate** - The fraction of missing target data.
  - **value** - the realized metric value for a specific chunk.
@@ -110,7 +117,7 @@ calculated metric.
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
    the **reference** partition. The thresholds are 3 standard deviations away from the mean performance calculated on
    chunks.
-   They are calculated during **fit** phase.
+   They are calculated during ``fit`` phase.
  - **alert** - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
 
@@ -119,7 +126,7 @@ The results can be plotted for visual inspection. Our plot contains several key 
 * *The purple step plot* shows the performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate 
+* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate
   the middle of these chunks.
 
 * *The gray vertical line* splits the reference and analysis periods.
@@ -148,7 +155,9 @@ What's Next
 -----------
 
 If we decide further investigation is needed, the :ref:`Data Drift<data-drift>` functionality can help us to see
-what feature changes may be contributing to any performance changes.
+what feature changes may be contributing to any performance changes. We can also plot the realized performance
+and :ref:`compare it with the estimated results<compare_estimated_and_realized_performance>`.
+
 
 It is also wise to check whether the model's performance is satisfactory
 according to business requirements. This is an ad-hoc investigation that is not covered by NannyML.

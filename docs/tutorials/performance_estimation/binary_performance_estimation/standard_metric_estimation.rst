@@ -5,7 +5,7 @@ Estimating Standard Performance Metrics for Binary Classification
 ========================================================================================
 
 This tutorial explains how to use NannyML to estimate the performance of binary classification
-models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
+models in the absence of target data. To find out how :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimates performance, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
 
 .. note::
@@ -24,13 +24,18 @@ Just The Code
     :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - Binary Classification.ipynb
     :cells: 1 3 4 5 7
 
+.. admonition:: **Advanced configuration**
+    :class: hint
+
+    - To learn how :class:`~nannyml.chunk.Chunk` works and to set up custom chunkings check out the :ref:`chunking tutorial <chunking>`
+    - To learn how :class:`~nannyml.thresholds.ConstantThreshold` works and to set up custom threshold check out the :ref:`thresholds tutorial <thresholds>`
 
 Walkthrough
 --------------
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
-You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
+Check out :ref:`Car Loan Dataset<dataset-synthetic-binary-car-loan>` to learn more about this dataset.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
@@ -60,8 +65,8 @@ We specify the following parameters in the initialization of the estimator:
   - **timestamp_column_name (Optional):** the name of the column in the reference data that
     contains timestamps.
   - **metrics:** a list of metrics to estimate. For more information about the
-    metrics that can be estimated for binary classification, check out 
-    the :ref:`Bianry Performance Estimation page<binary-performance-estimation>`.
+    metrics that can be estimated for binary classification, check out
+    the :ref:`Binary Performance Estimation page<binary-performance-estimation>`.
   - **chunk_size (Optional):** the number of observations in each chunk of data
     used to estimate performance. For more information about
     :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
@@ -77,7 +82,7 @@ We specify the following parameters in the initialization of the estimator:
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
-:meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` method on the ``reference`` data.
+:meth:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE.fit` method on the reference data.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - Binary Classification.ipynb
@@ -111,9 +116,10 @@ that was estimated:
    and are equal to estimated value +/- 3 times the estimated :term:`sampling error<Sampling Error>`.
  - **upper_threshold** and **lower_threshold** - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
-   the **reference** partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   the reference partition. The thresholds are 3 standard deviations away from the mean performance calculated on
    chunks.
-   The thresholds are calculated during **fit** phase.
+   The thresholds are calculated during ``fit`` phase. You can also set up custom thresholds using constant or standard deviations thresholds,
+   to learn more about it check out our :ref:`tutorial on thresholds<thresholds>`.
  - **alert** - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
 
@@ -122,13 +128,13 @@ These results can be also plotted. Our plot contains several key elements.
 * *The purple step plot* shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is 
+* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is
   calculated as the estimated performance +/- 3 times the estimated :term:`Sampling Error`.
 
-* *The blue step plot* shows the estimated performance in each chunk of the reference period. Thick squared point markers indicate 
+* *The blue step plot* shows the estimated performance in each chunk of the reference period. Thick squared point markers indicate
   the middle of these chunks.
 
-* *The low-saturated blue area* around the estimated performance in the reference period corresponds to the :term:`confidence band<Confidence Band>` which is 
+* *The low-saturated blue area* around the estimated performance in the reference period corresponds to the :term:`confidence band<Confidence Band>` which is
   calculated as the estimated performance +/- 3 times the estimated :term:`sampling error<Sampling Error>`.
 
 * *The gray vertical line* splits the reference and analysis periods.
