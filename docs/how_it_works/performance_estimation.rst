@@ -47,7 +47,7 @@ Implementation details
 ======================
 
 Currently, NannyML supports :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` for performance estimation of binary and multiclass classification models.
-The sections below give details on :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`'s implementation for these use cases for selected metrics.
+The sections below give details on CBPE's implementation for these use cases for selected metrics.
 
 
 Binary classification
@@ -74,7 +74,7 @@ True Negatives (TN). The algorithm runs as follows:
 
 
     1. Get the :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote by :math:`\hat{p}_j`, and it's corresponding
-     predicted label :math:`\hat{y}_j` from :math:`\mathbf{\hat{y}}`.
+    predicted label :math:`\hat{y}_j` from :math:`\mathbf{\hat{y}}`.
 
     2. Calculate the estimated probability that the prediction is false:
 
@@ -332,9 +332,9 @@ Fitting a calibrator on model training data would introduce bias [1]_.
 
 .. _how-it-works-dle:
 
------------------------------
-Direct Loss (:class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`)
------------------------------
+-----------------
+Direct Loss (DLE)
+-----------------
 
 The Intuition
 =============
@@ -387,7 +387,7 @@ predictions. Targets for reference set :math:`y_{reference}` are available. The 
 For other metrics step 1 and 3 are slightly modified. For example, for root mean squared error (RMSE) in step 1 we
 would calculate the squared error while in step 3 we would calculate the root of the mean of all predictions.
 
-The code below shows a simple implementation of the :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`
+The code below shows a simple implementation of the DLE
 approach. We use a 1d-dataset with a continuous target with heteroscedastic normal noise
 (i.e. the variation of the noise is not constant, in this case it is dependent on the value of the input
 feature - see the target generating function in the code).
@@ -564,9 +564,9 @@ as the monitored model. The important details of the current NannyML implementat
 Assumptions and limitations
 ===========================
 
-In general, DLE works well if there are regions in the feature space where the model performs better or worse and there
+In general, :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` works well if there are regions in the feature space where the model performs better or worse and there
 are enough observations from these regions in the reference dataset so that the :term:`nanny model` can learn this pattern.
-Just like CBPE, it will handle covariate shifts well. The detailed assumptions are:
+Just like :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`, it will handle covariate shifts well. The detailed assumptions are:
 
 
 **There is no concept drift**.
