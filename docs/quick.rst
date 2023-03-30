@@ -11,191 +11,195 @@ What is NannyML?
 .. include:: ./common/quickstart_what_is_nannyml.rst
 
 
-------------------
-Installing NannyML
-------------------
-
-NannyML depends on `LightGBM`_. This might require you to set install additional
-OS-specific binaries. You can follow the `official LightGBM installation guide`_.
-
-From the shell of your python environment type:
-
-.. code-block:: bash
-
-    $ pip install nannyml
-
-or
-
-.. code-block:: bash
-
-    $ conda install -c conda-forge nannyml
-
-
-or
-
-.. code-block:: bash
-
-    $ docker -v /local/config/dir/:/config/ run nannyml/nannyml nml run
-
-
---------------------------
-Contents of the Quickstart
---------------------------
-
-This Quickstart presents core functionalities of NannyML on an example binary classification model
-that predicts  whether a customer will repay a loan to buy a car.
-
-First, the whole code is shown so you can jump in and experiment right away if you want.
-
-This is followed by a detailed walk-through to help you get familiar with the flow, and explain the details.
-:ref:`The synthetic dataset<dataset-synthetic-binary-car-loan>` used contains inputs that are already merged with model
-predictions and ready to be directly used by NannyML.
-
-All :ref:`our tutorials<tutorials>` are a good place to get detailed guides on main
-concepts and functionalities. If you want to know what is implemented under the hood -
-visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
-on other datasets or ML problems look through our :ref:`examples<examples>`.
-
-.. note::
-    The following example does not use any :term:`timestamps<Timestamp>`.
-    These are optional but have an impact on the way data is chunked and results are plotted.
-    You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
-
-
--------------
-Just the code
--------------
-
-.. nbimport::
-    :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 1 4 5 7 9 11
-
 .. _walk_through_the_quickstart:
 
------------
-Walkthrough
------------
 
-We start by loading the synthetic dataset included in the library. This synthetic dataset
-contains inputs and predictions of a binary classification model that predicts
-whether a customer will repay a loan to buy a car.
 
-The probability of the customer repaying the loan is included in the ``y_pred_proba`` column, while the
-prediction is in ``y_pred`` column.
+This Quickstart presents some of the core functionalities of NannyML on an example real-world of binary classification
+model.
 
-The model inputs are
-``car_value``, ``salary_range``,
-``debt_to_income_ratio``, ``loan_length``,
-``repaid_loan_on_prev_car``, ``size_of_downpayment`` and ``tenure``.
+-------------------------------
+Exemplary Workflow with NannyML
+-------------------------------
 
-``timestamp`` is the :term:`Timestamp` column.
 
-The data are split into a :ref:`reference period<data-drift-periods-reference>` and an
-:ref:`analysis period<data-drift-periods-analysis>`. NannyML uses the reference period to
-establish a baseline for expected model performance. The analysis period is where we estimate or
-monitor performance, as well as detect data drift.
+Loading data
+------------
 
-For more information about periods check :ref:`data-drift-periods`. A key thing to remember is that
-the analysis period doesn't need to contain the :term:`Target` data.
+We will use real-world dataset that contains inputs and predictions of a binary classification model that
+predicts whether an individual is employed. Details about the dataset can be found
+:ref:`here <dataset-real-world-ma-employment>`.
 
-Let's load and preview the data:
+The data are split into two periods: :ref:`reference <data-drift-periods-reference>` and
+:ref:`analysis<data-drift-periods-analysis>`. The reference data is used by
+NannyML to establish a baseline for model performance and feature distributions. Your model's test dataset
+can serve as the reference data. The analysis data is simply the data you want to analyze i.e. check whether the model
+maintains its performance or if feature distributions have shifted etc. This would usually be your latest production data.
+
+Let's load libraries and the data:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 1
 
-.. nbtable::
-    :path: ./example_notebooks/Quickstart.ipynb
-    :cell: 2
-
-.. nbtable::
-    :path: ./example_notebooks/Quickstart.ipynb
-    :cell: 3
-
-
-We need to make a choice about the way we will split our data into :term:`Data Chunks<Data Chunk>`.
-
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 4
+    :cells: 3
+
+.. nbtable::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cell: 4
+
+.. nbtable::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cell: 5
+
+We see that dataframes contain:
+
+- model inputs like ``AGEP`` (person age), ``SCHL`` (education level) etc.
+- ``year`` - the year data was gathered, the ``df_reference`` data covers 2015 while ``df_analysis`` ranges 2016-2018.
+- ``y_true`` - classification :term:`target<Target>`, **notice that target is not available in** ``df_analysis``.
+- ``y_pred_proba`` - analyzed model predicted probability scores.
+- ``y_pred`` - analyzed model predictions.
+
 
 Estimating Performance without Targets
-======================================
+--------------------------------------
 
-NannyML can estimate the performance on a machine learning model in production
-without access to its :term:`Target`. For more details on how to use performance estimation see
-:ref:`our tutorial on performance estimation<performance-estimation>`,
-while for more details on how the algorithm behind it works see
-:ref:`Confidence-based Performance Estimation (CBPE)<how-it-works-cbpe>`.
+ML models are deployed in production on the condition that they produce accurate enough predictions to provide
+business value. This condition is evaluated based on unseen data during model development phase.
+The main goal of ML model monitoring is thus to continuously verify whether the model maintains its anticipated
+performance in production (which is not the case most of the time [1]_).
+
+Monitoring performance is relatively straightforward when :term:`targets<Target>` are available but this is often not
+the case.
+Labels can be delayed, costly or impossible to get. In such cases, estimating
+performance is a good start of monitoring workflow. NannyML can estimate the performance of an ML model in production
+without access to targets.
+
+Before proceeding, we need to introduce the notion of :term:`data chunks<Data Chunk>`. The natural way of
+thinking
+about
+monitoring model in production is time-related. Predictions are always made at some point in time and thus have a natural order.
+However assessing the model's condition based on a single observation is unreliable
+- some performance metrics cannot be even calculated for a single data point. Therefore, we will group observations into
+chunks based on their order of occurrence. Let's define the size of the chunk that we will use throughout the
+whole analysis:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 5
+    :cells: 6
 
-.. image:: ./_static/quick-start-perf-est.svg
-
-The results indicate that the model's performance is likely to be negatively impacted
-from the second half of the analysis period.
-
-
-Detecting Data Drift
-====================
-
-NannyML allows for further investigation into potential performance issues with its data drift detection
-functionality. See :ref:`data-drift` for more details.
+For :ref:`binary classification performance estimation<binary-performance-estimation>` we will use :class:`~nannyml.performance_estimation
+.confidence_based
+.cbpe.CBPE` class (:ref:`Confidence-based Performance Estimation
+<how-it-works-cbpe>`) to estimate ``roc_auc`` metric. Let's initialize the estimator and provide the required
+parameters:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 7
 
-.. image:: ./_static/quick-start-drift-continuous.svg
+Now we will fit it on ``df_reference`` and estimate on ``df_analysis``:
 
-.. image:: ./_static/quick-start-drift-categorical.svg
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 8
 
-When there are a lot of drifted features, NannyML can also rank them according to their correlation with a chosen
-performance metric's results in order to help prioritize further investigations. For more information you can check the
-:ref:`ranking tutorial<tutorial-ranking>`.
+Most of the time it is convenient to visualize the results instead of lookin at the raw outputs:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 9
 
-.. nbtable::
-    :path: ./example_notebooks/Quickstart.ipynb
-    :cell: 10
+.. image:: ./_static/quick-start-perf-est.svg
 
-More complex data drift cases can get detected by Data Reconstruction with PCA. For more information
-see :ref:`Data Reconstruction with PCA<data-reconstruction-pca>`.
+We should take note of the significant drop in estimated performance during the latter part of the analysis period.
+Let's investigate this to determine whether we can rely on the estimation.
+
+Investigating Data Distribution Shifts
+--------------------------------------
+
+While :ref:`developing the monitored model<dataset-real-world-ma-employment>` we discovered that the primary predictors
+for this problem are the first two features, namely `AGEP` (person's age) and `SCHL` (education level). Focusing on
+these features, we will employ :ref:`the univariate drift detection module<_univariate_drift_detection>` to examine the distribution behavior of
+each
+covariate. We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class with
+required parameters, fit on ``df_reference`` and calculate on
+``df_analysis``.
+
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 11, 12
+
+.. image:: ./_static/quick-start-drift.svg
+
+Plots show JS-distance calculated between the chunk of interest and the reference data for each feature. For `AGEP`
+one can notice mild shift starting in around one-third of the analysis period and a high peak that likely corresponds
+to performance drop. Around the same time a similar peak can be notice for `SCHL`. Let's check whether the shift
+happens at the same time as the performance drop by :ref:`showing both results in single plot<compare_estimated_and_realized_performance>`:
+
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 14
+
+.. image:: ./_static/quick-start-drift-n-performance.svg
+
+Plot confirms our supposition, the main peak coincides with the strongest drop. Interesting thing to notice is that
+there is noticeable shift magnitude increase right before the estimated drop. Let's see what actually happened with
+the distributions by
+visualizing their change in the analysis period:
+
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 14
+
+.. image:: ./_static/quick-start-univariate-distribution.svg
+
+The age distribution has strongly shifted towards younger people (around 18 years old). In the education level
+feature one of the categories has doubled its relative frequency in the performance drop chunks. Since plots in the
+notebook are interactive (thery're not in the docs though) they allow for value checking by hovering over the corresponding
+sections in the stacked-bar plot. The category of interest is encoded :ref:`with value 19<dataset-real-world-ma-employment>`, which
+corresponds to people with
+*1 or more years of college credit, no degree*. I suppose that during the investigated period, there was a
+significant survey conducted at colleges and universities.
+
+
+Comparing Estimation with Realized Performance when Targets arrive
+----------
+
+The above findings enhance trust in the estimation. Once the labels are in place, we can :ref:`calculate performance<performance-calculation>`
+and
+compare with the estimation. We will use :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
+and familiar pattern: initialize, fit and calculate. Then we will plot the comparison:
 
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 11
+    :cells: 21
 
-.. image:: ./_static/quick-start-drift-multivariate.svg
+.. image:: ./_static/quick-start-estimated-and-realized.svg
 
---------
-Insights
---------
-
-With NannyML we were able to estimate performance in the absence of ground truth. The estimation has shown
-potential drop in ROC AUC in the second half of the analysis period. Univariate and multivariate
-data drift detection algorithms have identified data drift.
-
-Putting everything together, we see that 4 features exhibit data drift from the second half of the analysis period. They are
-``loan_length``, ``salary_range``, ``car_value``, ``repaid_loan_on_prev_car``.
-
-This drift is responsible for the potential negative impact in performance that we have observed in this time period.
-
----------
-What next
----------
-
-This could be further investigated by analyzing changes of distributions of the input variables. Check
-:ref:`tutorials<tutorials>` on :ref:`data drift<data-drift>` to find out how to plot distributions with NannyML.
-
-You can now try using NannyML on your own data. Our :ref:`tutorials` are a good place to find out what to do for this.
+Even though the estimation is somewhat off, we see that the realized performance has indeed sharply dropped in the
+two indicated chunks. It is also interesting to notice that the performance was relatively stable in the preceding
+period even though ``AGEP`` was already slightly shifted at that time. This confirms the need to monitor
+performance/estimated performance as not every shift impacts performance.
 
 
-.. _`LightGBM`: https://github.com/microsoft/LightGBM
-.. _`official LightGBM installation guide`: https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html
+------------
+What's next?
+------------
+
+This Quickstart presents some of the core functionalities of NannyML on an example of real-world binary classification
+data. The walk through is concise to help you getting familiar with fundamental concepts and structure of the
+library. NannyML provides other useful functionalities (like well-received :ref:`multivariate drift
+detection<multivariate_drift_detection>`) that
+can help you monitor your production models comprehensively. All :ref:`our tutorials<tutorials>` are a good place to start exploring them.
+
+If you want to know what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
+on other datasets or ML problems look through our :ref:`examples<examples>`.
+
+
+**References**
+
+.. [1] https://www.nature.com/articles/s41598-022-15245-z
