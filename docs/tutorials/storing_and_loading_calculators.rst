@@ -100,9 +100,9 @@ But, first, we define the analysis data and declare the store:
 
 Now we will use the store to load the pre-fitted calculator from the disk. By providing the optional `as_type` parameter,
 we can have the store check the type of the loaded object before returning it. If it is not an instance of `as_type`, the
-:meth:`~nml.io.store.base.Store.load` method will raise a :class:`~nannyml.exceptions.StoreException`.
+:meth:`~nannyml.io.store.base.Store.load` method will raise a :class:`~nannyml.exceptions.StoreException`.
 
-If nothing is found at the given `path`, the :meth:`~nml.io.store.base.Store.load` method will return
+If nothing is found at the given `path`, the :meth:`~nannyml.io.store.base.Store.load` method will return
 `None`.
 
 .. nbimport::

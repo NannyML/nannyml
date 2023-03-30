@@ -4,7 +4,7 @@
 Adjusting Plots
 ======================================
 
-NannyML uses Plotly [1]_ to generate figures and returns ``plotly.graph_objs._figure.Figure`` from ``.plot`` methods.
+NannyML uses `Plotly <https://plotly.com/python/>`_ to generate figures and returns `~plotly.graph_objs._figure.Figure` from :meth:`~plot` methods.
 When you need the plot to do something other than the default plotting, e.g., add another curve or indicate a specific
 time period in the figure, you can do this by updating the plot.
 
@@ -15,5 +15,3 @@ The example below adds an indicator for a particular period of interest using th
     :cells: 1
 
 .. image:: /_static/tutorials/adjust_plots/adjusting_plots_time_periods_indication.svg
-
-.. [1] https://plotly.com/python/

@@ -62,14 +62,14 @@ First, we need to instantiate it with the appropriate parameters:
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 3
 
-Next, the :meth:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator.fit` method needs
+Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs
 to be called on the reference data, which provides the baseline that the analysis data will be compared with. Then the
-:meth:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator.calculate` method will
+:meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the drift results on the provided data.
 
-The results can be filtered to only include a certain data period, method, or column by using the :meth:`~nannyml.drift.univariate.result.Result.filter` method.
+The results can be filtered to only include a certain data period, method, or column by using the :meth:`~nannyml.base.AbstractResult.filter` method.
 You can evaluate the result data by converting the results into a `DataFrame`,
-by calling the :meth:`~nannyml.drift.univariate.result.Result.to_df` method.
+by calling the :meth:`~nannyml.base.AbstractResult.to_df` method.
 By default, this will return a `DataFrame` with a multi-level index. The first level represents the column, the second level
 is the method and the third level is the values, thresholds, and alerts for that method.
 
@@ -93,7 +93,7 @@ Both the `column name` and the `method` have now been included within the column
     :cell: 7
 
 
-The drift results from the reference data are accessible though the :meth:`~nannyml.drift.univariate.result.Result.filter` method of the drift calculator results:
+The drift results from the reference data are accessible though the :meth:`~nannyml.base.AbstractResult.filter` method of the drift calculator results:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
@@ -137,8 +137,7 @@ Using the code below, we can create joyplots for the model’s continuous variab
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
     :cells: 14
 
-.. image:: _static/tutorials/detecting_data_drift/univariate_drift_detection/joyplot-continuous.svg
-
+.. image:: /_static/tutorials/detecting_data_drift/univariate_drift_detection/joyplot-continuous.svg
 
 NannyML plots stacked bar charts for categorical variables to show the variable's distribution for each chunk.
 If a variable has more than 5 categories, the top 4 are displayed and the rest are grouped together to make

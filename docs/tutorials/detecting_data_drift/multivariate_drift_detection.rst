@@ -54,9 +54,9 @@ module implements this functionality.  We need to instantiate it with appropriat
 and the timestamp column name. The features can be passed in as a simple list of strings. Alternatively, we can create a list by excluding the columns in the dataframe that are not features,
 and pass them into the argument.
 
-Next, the :meth:`~nannyml.drift.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.fit` method needs to be called on the reference data, which the results will be based on. 
+Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs to be called on the reference data, which the results will be based on. 
 Then the
-:meth:`~nannyml.drift.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.calculate` method will
+:meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the multivariate drift results on the provided data.
 
 .. nbimport::
@@ -75,7 +75,7 @@ An example of where custom imputation strategies are used can be seen below.
 
 Because our synthetic dataset does not have missing values, the results are the same in both cases.
 We can see these results of the data provided to the
-:meth:`~nannyml.drift.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator.calculate`
+:meth:`~nannyml.base.AbstractCalculator.calculate`
 method as a dataframe.
 
 .. nbimport::

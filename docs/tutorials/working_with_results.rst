@@ -129,7 +129,7 @@ Results can be visualized by using the built in plotting functionality. With a q
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
     :cells: 10
 
-To render it in our notebook we can call the ``show()`` method:
+To render it in our notebook we can call the :meth:`~plotly.graph_objects.Figure.show` method:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
