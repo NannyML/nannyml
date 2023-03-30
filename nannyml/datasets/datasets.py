@@ -26,7 +26,8 @@ def load_csv_file_to_df(local_file: str) -> DataFrame:
     """
     with resources.path(DATA_MODULE, local_file) as data:
         return read_csv(data)
-        
+
+
 def load_pq_file_to_df(local_file: str) -> DataFrame:
     """Loads a data file from within the NannyML package.
 
@@ -197,7 +198,7 @@ def load_us_census_ma_employment_data():
     """
 
     reference = load_pq_file_to_df('employment_MA_reference.pq')
-    analysis = laod_pq_file_to_df('employment_MA_analysis.pq')
+    analysis = load_pq_file_to_df('employment_MA_analysis.pq')
     analysis_tgt = load_pq_file_to_df('employment_MA_analysis_target.pq')
 
     return reference, analysis, analysis_tgt
