@@ -1,8 +1,8 @@
 .. _quick-start:
 
-=================
+==========
 Quickstart
-=================
+==========
 
 ----------------
 What is NannyML?
@@ -32,7 +32,7 @@ predicts whether an individual is employed. Details about the dataset can be fou
 
 The data are split into two periods: :ref:`reference <data-drift-periods-reference>` and
 :ref:`analysis<data-drift-periods-analysis>`. The reference data is used by
-NannyML to establish a baseline for model performance and feature distributions. Your model's test dataset
+NannyML to establish a baseline for model performance and variable distributions. Your model's test dataset
 can serve as the reference data. The analysis data is simply the data you want to analyze i.e. check whether the model
 maintains its performance or if feature distributions have shifted etc. This would usually be your latest production data.
 
@@ -54,7 +54,7 @@ Let's load libraries and the data:
     :path: ./example_notebooks/Quickstart.ipynb
     :cell: 5
 
-We see that dataframes contain:
+Dataframes contain:
 
 - model inputs like ``AGEP`` (person age), ``SCHL`` (education level) etc.
 - ``year`` - the year data was gathered, the ``df_reference`` data covers 2015 while ``df_analysis`` ranges 2016-2018.
@@ -74,7 +74,8 @@ performance in production (which is not the case most of the time [1]_).
 Monitoring performance is relatively straightforward when :term:`targets<Target>` are available but this is often not
 the case.
 Labels can be delayed, costly or impossible to get. In such cases, estimating
-performance is a good start of monitoring workflow. NannyML can estimate the performance of an ML model in production
+performance is a good start of the monitoring workflow. NannyML can estimate the performance of an ML model in
+production
 without access to targets.
 
 Before proceeding, we need to introduce the notion of :term:`data chunks<Data Chunk>`. The natural way of
@@ -90,7 +91,8 @@ whole analysis:
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 6
 
-For :ref:`binary classification performance estimation<binary-performance-estimation>` we will use :class:`~nannyml.performance_estimation
+For :ref:`binary classification model performance estimation<binary-performance-estimation>` we will use
+:class:`~nannyml.performance_estimation
 .confidence_based
 .cbpe.CBPE` class (:ref:`Confidence-based Performance Estimation
 <how-it-works-cbpe>`) to estimate ``roc_auc`` metric. Let's initialize the estimator and provide the required
@@ -106,7 +108,7 @@ Now we will fit it on ``df_reference`` and estimate on ``df_analysis``:
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 8
 
-Most of the time it is convenient to visualize the results instead of lookin at the raw outputs:
+Let's visualize the results:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -123,8 +125,8 @@ Investigating Data Distribution Shifts
 While :ref:`developing the monitored model<dataset-real-world-ma-employment>` we discovered that the primary predictors
 for this problem are the first two features, namely `AGEP` (person's age) and `SCHL` (education level). Focusing on
 these features, we will employ :ref:`the univariate drift detection module<_univariate_drift_detection>` to examine the distribution behavior of
-each
-covariate. We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class with
+these two variables. We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`
+class with
 required parameters, fit on ``df_reference`` and calculate on
 ``df_analysis``.
 
@@ -145,14 +147,14 @@ happens at the same time as the performance drop by :ref:`showing both results i
 
 .. image:: ./_static/quick-start-drift-n-performance.svg
 
-Plot confirms our supposition, the main peak coincides with the strongest drop. Interesting thing to notice is that
-there is noticeable shift magnitude increase right before the estimated drop. Let's see what actually happened with
-the distributions by
-visualizing their change in the analysis period:
+Plot confirms our supposition: the main drift peak coincides with the strongest performance drop. It is interesting
+to see that there is a noticeable shift magnitude increase right before the estimated drop happens. That could looks
+like an early sign of incoming issues. Now let's see what
+actually happened with the distributions by visualizing their change in the analysis period:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 14
+    :cells: 16
 
 .. image:: ./_static/quick-start-univariate-distribution.svg
 
@@ -161,17 +163,18 @@ feature one of the categories has doubled its relative frequency in the performa
 notebook are interactive (thery're not in the docs though) they allow for value checking by hovering over the corresponding
 sections in the stacked-bar plot. The category of interest is encoded :ref:`with value 19<dataset-real-world-ma-employment>`, which
 corresponds to people with
-*1 or more years of college credit, no degree*. I suppose that during the investigated period, there was a
+*1 or more years of college credit, no degree*. It is likely that during the investigated period, there was a
 significant survey conducted at colleges and universities.
 
 
-Comparing Estimation with Realized Performance when Targets arrive
-----------
+Comparing Estimation with Realized Performance when Targets Arrive
+------------------------------------------------------------------
 
 The above findings enhance trust in the estimation. Once the labels are in place, we can :ref:`calculate performance<performance-calculation>`
 and
-compare with the estimation. We will use :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
-and familiar pattern: initialize, fit and calculate. Then we will plot the comparison:
+compare with the estimation to verify its accuracy. We will use :class:`~nannyml.performance_calculation.calculator
+.PerformanceCalculator`
+and follow the familiar pattern: initialize, fit and calculate. Then we will plot the comparison:
 
 
 .. nbimport::
