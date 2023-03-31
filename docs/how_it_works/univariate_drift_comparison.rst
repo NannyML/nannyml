@@ -24,12 +24,10 @@ To demonstrate this, the reference data set was sampled from :math:`\mathcal{N}(
 each value of :math:`\mu` in :math:`\{0,0.1,0.2,...,7\}`. So, there is one reference sample and 71 analysis samples and each of the analysis
 samples is compared to the reference sample.
 
-We show the confidence intervals for empirical experiments like this one to demonstrate the stability of each method in comparison to the others. The confidence intervals depend
-on the  sizes of the reference and analysis samples. These were kept the same for each method within the experiments to ensure that
-the results are comparable.
+We show +/- 3 standard deviations of the mean of the analysis data set for each method to illustrate the stability of each method.
 
-In this experiment, the sample size of both the reference and analysis datasets was 1000 observations, and the number
-of trials for each value of the mean of the analysis data set was 100.
+In this experiment, the sample size of both the reference and analysis datasets was 1000 observations, and the number of trials
+for each value of the mean of the analysis data set was 500.
 
 .. image:: ../_static/univariate-comparison/shifting_mean.svg
     :width: 1400pt
@@ -54,9 +52,8 @@ Shifting the Standard Deviation of the Analysis Data Set
 ........................................................
 In this experiment, we show how each method responds as the standard deviation of the analysis set increases. The reference data set was sampled from :math:`\mathcal{N}(0, 1)` and the analysis data set
 was sampled from :math:`\mathcal{N}(0, \sigma)` for each :math:`\sigma` in :math:`\{1, 1.1, 1.2,...,10\}`.
-So, there is one reference sample and 91 analysis samples.
-The size of both the
-reference and analysis data sets was again 1000 observations and the experiment consisted of 100 trials.
+So, there is one reference sample and 91 analysis samples. The size of both the reference and analysis data sets was again 1000 observations and the experiment consisted of 500 trials.
+
 
 .. image:: ../_static/univariate-comparison/shifting_std.svg
     :width: 1400pt
@@ -65,8 +62,8 @@ In this case, Wasserstein distance again changes proportionally to the change in
 distance, the Kolmogorov-Smirnov D-statistic, and the Hellinger distance exhibit high sensitivity, even
 to small changes. However, the Hellinger distance has a slightly *softer* start than the Jensen-Shannon distance and
 the Kolmogorov-Smirnov statistic. In this experiment, the main difference between the Jensen-Shannon distance,
-the Kolmogorov-Smirnov statistic, and Hellinger distance is that the stability of the measures (illustrated by the
-confidence intervals) differs, with Jensen-Shannon distance and the Kolmogorov-Smirnov statistic exhibiting the highest relative stability of the three.
+the Kolmogorov-Smirnov statistic, and Hellinger distance is that the stability of the measures (illustrated by the bands showing the standard deviation)
+differs, with Jensen-Shannon distance exhibiting the highest relative stability of the three, followed by the Kolmogorov-Smirnov statistic and Hellinger distance in turn.
 
 We can now take a look at the behavior of the methods for smaller, more realistic shifts. Below we show data from the experiment above, but we
 truncate the domain to :math:`[1,2]`.
@@ -84,7 +81,7 @@ between the empirical cumulative density functions (ECDFs) of the two analyzed s
 drift occurring
 in one region
 of the analysis distribution *hides* drift occurring in other areas. The visualization below shows an example of such
-situation.
+a situation.
 
 In this visualization, the reference distribution is a combination of two normal distributions and thus is bimodal. On the top row, labeled Analysis 1, only the right mode of the analysis distribution shifts. On the bottom row, labeled Analysis 2,
 both the left mode and the right mode of the analysis distribution shift.
@@ -97,7 +94,7 @@ value increases as they both compare *similarity* of Empirical Probability Densi
 third column,
 which visualizes the JS statistic, we see that the largest difference between the analysis ECDF and the
 reference ECDF remains the same, which makes KS D-statistic insensitive for this type of shift.** The fourth column
-shows Wasserstein distance which looks at the area between the reference ECDF and analysis ECDF hence it catches the
+shows Wasserstein distance which looks at the area between the reference ECDF and analysis ECDF and hence it catches the
 shift and its value increases.
 
 Tradeoffs of Jensen-Shannon Distance and Hellinger Distance
@@ -138,7 +135,7 @@ On the other hand, since Wasserstein Distance quantifies the distance between di
 .. image:: ../_static/univariate-comparison/disjoint_only_emd.svg
     :width: 1400pt
 
-In this experiment, we double the distance between the reference and analysis, and we see that JS distance, the JS statistic,
+In this experiment, we double the distance between the reference and analysis, and we see that JS distance, the KS statistic,
 and Hellinger distance remain at 1 (their max value), while Wasserstein distance increases proportionally to the distance that the distribution has moved.
 This example is more of an edge case, but disjoint distributions can arise in real-world scenarios. For example, when training generative adversarial networks,
 this issue can arise, and a common remedy is using a loss function based on Wasserstein Distance.
@@ -159,7 +156,7 @@ small bit of probability density to the other distribution is still significant 
 .. image:: ../_static/univariate-comparison/outlier.svg
     :width: 1400pt
 
-In this experiment, we move one data point to increasingly extreme values, and the result is that Wasserstein Distance increase in proportion to the size of that extreme value while the
+In this experiment, we move one data point to increasingly extreme values, and the result is that Wasserstein Distance increases in proportion to the size of that extreme value while the
 other methods are not affected. In most cases changes in the overall shape of the distribution are the main focus. If
 your data can contain extreme outliers we advise against using Wasserstein distance.
 
@@ -199,7 +196,7 @@ Distribution shift is introduced in a way that the overall *distance* as measure
 and analysis
 remains the same, but the amount of
 overlap changes. The distance stays the same because, in the case visualized on the first row, one mode of the analysis distribution moves a significant distance. In the
-second case, which is visualized in row 2, each mode moves half of that distance. The JS statistic and the Wasserstein distance treat both cases
+second case, which is visualized in row 2, each mode moves half of that distance. The KS statistic and the Wasserstein distance treat both cases
 the same while Hellinger and JS distances spot the difference.
 
 
@@ -220,7 +217,8 @@ In this experiment, the proportions of each category were held constant in both 
 frequency of category “a” was always 0.5, the relative frequency of category “b” was also 0.5, and the data set size
 was held constant at 2000 observations.
 In the analysis data set, the relative frequency of category “a” was always 0.8, the relative frequency of category “b” was always 0.2, and
-the data size increased from 100 points to 1000 points, as shown below.
+the data size increased from 100 points to 1000 points, as shown below. Notably, the Chi-Squared statistic increases with the sample size while the other metrics
+do not.
 
 .. image:: ../_static/univariate-comparison/chi2_sample_size.svg
     :width: 1400pt
@@ -229,7 +227,7 @@ Behavior When a Category Slowly Disappears
 ............................................
 
 In this experiment, we show how each method behaves as a category shrinks and eventually disappears.
-We start with the reference distribution and slowly shrink category “b” while increasing proportion of category “c” .
+We start with the reference distribution and slowly shrink category “b” while increasing the proportion of category “c” .
 
 .. image:: ../_static/univariate-comparison/cat_disappears.svg
     :width: 1400pt
@@ -249,14 +247,14 @@ analysis distribution is distributed identically to the reference distribution.
 
 The interesting things to note in this experiment compared to the previous one is that:
 
- * Jensen-Shannon is less sensitive when category disappears compare to appearance of a new category,
+ * Jensen-Shannon is less sensitive when a category disappears compared to when a new category appears,
 
- * Hellinger distance behaviour when one category disappears looks symmetric to appearance of a new category,
+ * Hellinger distance behaves the same when a catgory disappears compared to when a new category appears,
 
  * Chi-square grows linearly when the new category increases its relative frequency but it grows faster when a
    category disappears.
 
- * L-infity is symmetric with respect to both situations.
+ * L-infinity is symmetric with respect to both situations.
 
 
 Effect of Sample Size on Different Drift Measures
@@ -299,7 +297,7 @@ L-infinity distance, and the Chi-squared statistic. The results are shown below:
 .. image:: ../_static/univariate-comparison/binom_and_num_cats.svg
     :width: 1400pt
 
-We see an increase in the JS distance, Hellinger distance, and the chi-squared statistic as the number of categories
+We see an increase in the JS distance, Hellinger distance, and the Chi-squared statistic as the number of categories
 increases because the small differences in the frequencies in each category due to sampling effects are summed up. Thus, the more
 terms in the sum, the higher the value. On the other hand, L-infinity distance does not increase because it only looks at the largest
 change in frequency of all the categories. For intuition, a visualization of the Hellinger distance and the L-infinity distance is shown
@@ -314,7 +312,7 @@ data sets with many categories, using the L-infinity distance may help to reduce
 Comparison of Drift Methods on Data Sets with Many Categories
 .............................................................
 
-In cases with many categories, it can be difficult to significant shift if it only occurs in a few categories. This is
+In cases with many categories, it can be difficult to detect significant shift if it only occurs in a few categories. This is
 because some methods
 (like JS distance, Hellinger distance, and the chi-squared statistic) sum a transformation of the difference between
 the relative frequency of each category. Sampling effects can cause small differences in the frequency of each category, but when summed
@@ -342,7 +340,7 @@ sample and the analysis sample with severe drift in one category, as seen below:
 
 We see that the sampling effects (the small differences in the frequencies of each category) hide the significant shift
 when using JS distance,
-Hellinger distance. On the other hand, L-infinity shows a
+Hellinger distance, and the chi-squred statistic. On the other hand, L-infinity shows a
 significant difference between the two.
 
 Results Summary (TLDR)

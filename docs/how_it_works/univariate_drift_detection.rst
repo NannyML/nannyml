@@ -175,6 +175,13 @@ where
 .. math::
     BC\left(P,Q\right) =  \int \sqrt{p(x)q(x)}dx
 
+Below we show a visual representation of Hellinger Distance.
+The shaded area represents the value of the Bhattacharya
+Coefficient which is part of the Hellinger Distance formula.
+
+.. image:: ../_static/how-it-works-hellinger.svg
+    :width: 1400pt
+
 .. _univariate-drift-detection-categorical-methods:
 
 Methods for Categorical Variables
@@ -290,6 +297,12 @@ If any data from the chunk sample have different unique values, a new bin is cre
 The new bins' relative frequency for the reference sample is set to 0.
 The relative frequency for each bin is calculated for the reference and chunk samples. Those results are then
 used to calculate the Hellinger Distance.
+
+Below we see a visualization of the Hellinger Distance for a categorical variable with three
+categories, a, b and c. The red vertical lines map to the expression within the sum in the Hellinger Distance formula.
+
+.. image:: ../_static/how-it-works-cat_hellinger.svg
+    :width: 1400pt
 
 .. _univ_cat_method_l8:
 
