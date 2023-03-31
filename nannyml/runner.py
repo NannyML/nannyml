@@ -7,18 +7,16 @@
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import date, datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
-import jinja2
 import pandas as pd
 from rich.console import Console
 
 from nannyml._typing import Result
-from nannyml.config import CalculatorConfig, Config, InputConfig, InputDataConfig, StoreConfig, WriterConfig
+from nannyml.config import Config, InputDataConfig, StoreConfig, WriterConfig
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
-from nannyml.exceptions import InvalidArgumentsException, IOException
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io import FileReader, FilesystemStore, Writer, WriterFactory
 from nannyml.io.store import Store
 from nannyml.performance_calculation import PerformanceCalculator
@@ -27,26 +25,25 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 
 
 @dataclass
-class CalculatorContext:
-    calculator: Dict[str, Any]
-    input: Dict[str, Any]
-    outputs: Optional[List[Dict[str, Any]]]
-    store: Optional[Dict[str, Any]]
-    result: Optional[Result]
+class RunContext:
+    STEPS_PER_CALCULATOR = 3
+
+    current_step: int
+    total_steps: int
+    current_calculator: str
+    current_calculator_config: Optional[Dict[str, Any]] = None
+    result: Optional[Result] = None
+
+    def increase_step(self):
+        self.current_step += 1
 
 
 @contextmanager
-def calculator_context(calculator_config: CalculatorConfig, input_config: InputConfig):
-    outputs = [_add_rendered_path(c.dict()) for c in (calculator_config.outputs or [])]
-    inputs = _add_rendered_path(input_config.dict())
-    store = _add_rendered_path(calculator_config.store.dict()) if calculator_config.store else None
-
-    yield CalculatorContext(
-        calculator=calculator_config.dict(),
-        outputs=outputs,
-        input=inputs,
-        store=store,
-        result=None,
+def run_context(config: Config):
+    yield RunContext(
+        current_step=0,
+        total_steps=len([c for c in config.calculators if c.enabled]) * RunContext.STEPS_PER_CALCULATOR,
+        current_calculator='',
     )
 
 
@@ -71,82 +68,125 @@ class RunnerLogger:
         if self.logger:
             self.logger.log(level=log_level, msg=message)
 
-        if self.console:
+        if self.console and log_level == logging.INFO:
             self.console.log(message)
 
 
-def run(
+def run(  # noqa: C901
     config: Config,
     console: Optional[Console] = None,
-    on_fit: Optional[Callable[[CalculatorContext], Any]] = None,
-    on_calculate: Optional[Callable[[CalculatorContext], Any]] = None,
-    on_success: Optional[Callable[[CalculatorContext], Any]] = None,
-    on_fail: Optional[Callable[[CalculatorContext, Optional[Exception]], Any]] = None,
+    on_fit: Optional[Callable[[RunContext], Any]] = None,
+    on_calculate: Optional[Callable[[RunContext], Any]] = None,
+    on_write: Optional[Callable[[RunContext], Any]] = None,
+    on_success: Optional[Callable[[RunContext], Any]] = None,
+    on_fail: Optional[Callable[[RunContext, Optional[Exception]], Any]] = None,
 ):
     logger = RunnerLogger(logger=logging.getLogger(__name__), console=console)
     try:
-        logger.log("reading reference data")
-        reference_data = read_data(config.input.reference_data, logger)
+        with run_context(config) as context:
+            logger.log("reading reference data", log_level=logging.DEBUG)
+            reference_data = read_data(config.input.reference_data, logger)
 
-        # read analysis data
-        logger.log("reading analysis data")
-        analysis_data = read_data(config.input.analysis_data, logger)
+            # read analysis data
+            logger.log("reading analysis data", log_level=logging.DEBUG)
+            analysis_data = read_data(config.input.analysis_data, logger)
 
-        if config.input.target_data:
-            logger.log("reading target data")
-            target_data = read_data(config.input.target_data, logger)
+            if config.input.target_data:
+                logger.log("reading target data", log_level=logging.DEBUG)
+                target_data = read_data(config.input.target_data, logger)
 
-            if config.input.target_data.join_column:
-                analysis_data = analysis_data.merge(target_data, on=config.input.target_data.join_column)
-            else:
-                analysis_data = analysis_data.join(target_data)
+                if config.input.target_data.join_column:
+                    analysis_data = analysis_data.merge(target_data, on=config.input.target_data.join_column)
+                else:
+                    analysis_data = analysis_data.join(target_data)
 
-        for calculator_config in config.calculators:
-            with calculator_context(calculator_config, config.input) as context:
-                if not calculator_config.enabled:
-                    continue
+            for calculator_config in config.calculators:
+                try:
+                    context.current_calculator_config = calculator_config.dict()
+                    context.current_calculator = calculator_config.name or calculator_config.type
 
-                writers = get_output_writers(calculator_config.outputs, logger)
+                    if not calculator_config.enabled:
+                        continue
 
-                store = get_store(calculator_config.store, logger)
+                    writers = get_output_writers(calculator_config.outputs, logger)
 
-                if calculator_config.type not in _registry:
-                    raise InvalidArgumentsException(f"unknown calculator type '{calculator_config.type}'")
+                    store = get_store(calculator_config.store, logger)
 
-                calc_cls = _registry[calculator_config.type]
-                if store and calculator_config.store:
-                    calc = store.load(filename=calculator_config.store.filename, as_type=calc_cls)
-                    if calc is None:
+                    if calculator_config.type not in _registry:
+                        raise InvalidArgumentsException(f"unknown calculator type '{calculator_config.type}'")
+
+                    # first step: load or (create + fit) calculator
+                    context.increase_step()
+                    calc_cls = _registry[calculator_config.type]
+                    if store and calculator_config.store:
+                        logger.log(
+                            f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                            f"loading calculator from store"
+                        )
+                        calc = store.load(filename=calculator_config.store.filename, as_type=calc_cls)
+                        if calc is None:
+                            logger.log(
+                                f"calculator '{context.current_calculator}' not found in store. "
+                                f"Creating, fitting and storing new instance",
+                                log_level=logging.DEBUG,
+                            )
+                            calc = calc_cls(**calculator_config.params)
+                            if on_fit:
+                                on_fit(context)
+                            calc.fit(reference_data)
+                            store.store(obj=calc, filename=calculator_config.store.filename)
+                    else:
+                        logger.log(
+                            f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                            f"creating and fitting calculator"
+                        )
                         calc = calc_cls(**calculator_config.params)
                         if on_fit:
                             on_fit(context)
                         calc.fit(reference_data)
-                        store.store(obj=calc, filename=calculator_config.store.filename)
-                else:
-                    calc = calc_cls(**calculator_config.params)
-                    if on_fit:
-                        on_fit(context)
-                    calc.fit(reference_data)
 
-                if on_calculate:
-                    on_calculate(context)
-                result = calc.calculate(analysis_data) if hasattr(calc, 'calculate') else calc.estimate(analysis_data)
-                context.result = result
+                    # second step: perform calculations
+                    context.increase_step()
+                    logger.log(
+                        f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                        f"running calculator"
+                    )
+                    if on_calculate:
+                        on_calculate(context)
+                    result = (
+                        calc.calculate(analysis_data) if hasattr(calc, 'calculate') else calc.estimate(analysis_data)
+                    )
+                    context.result = result
 
-                for writer, write_args in writers:
-                    writer.write(result, **write_args)
+                    # third step: write results
+                    context.increase_step()
+                    logger.log(
+                        f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                        f"writing out results"
+                    )
+                    if on_write:
+                        on_write(context)
 
-                if on_success:
-                    on_success(context)
+                    for writer, write_args in writers:
+                        logger.log(f"writing results with {writer} and args {write_args}", log_level=logging.DEBUG)
+                        writer.write(result, **write_args)
+
+                    if on_success:
+                        on_success(context)
+                except Exception as exc:
+                    if on_fail:
+                        on_fail(context, exc)
+                    logger.log(f"an unexpected exception occurred running '{calculator_config.type}': {exc}")
     except Exception as exc:
         raise exc
 
 
 def read_data(input_config: InputDataConfig, logger: Optional[RunnerLogger] = None) -> pd.DataFrame:
-    path = _render_path_template(input_config.path)
-    data = FileReader(filepath=path, credentials=input_config.credentials, read_args=input_config.read_args).read()
+    data = FileReader(
+        filepath=input_config.path, credentials=input_config.credentials, read_args=input_config.read_args
+    ).read()
     if logger:
-        logger.log(f"read {data.size} rows from {path}")
+        logger.log(f"read {data.size} rows from {input_config.path}")
     return data
 
 
@@ -159,9 +199,6 @@ def get_output_writers(
     writers: List[Tuple[Writer, Dict[str, Any]]] = []
 
     for writer_config in outputs_config:
-        if writer_config.params and 'path' in writer_config.params:
-            writer_config.params['path'] = _render_path_template(writer_config.params['path'])
-
         writer = WriterFactory.create(writer_config.type, writer_config.params)
         writers.append((writer, writer_config.write_args or {}))
 
@@ -170,11 +207,10 @@ def get_output_writers(
 
 def get_store(store_config: Optional[StoreConfig], logger: Optional[RunnerLogger] = None) -> Optional[Store]:
     if store_config:
-        path = _render_path_template(store_config.path)
         if logger:
-            logger.log(f"using file system store with path '{path}'")
+            logger.log(f"using file system store with path '{store_config.path}'", log_level=logging.DEBUG)
         store = FilesystemStore(
-            root_path=path,
+            root_path=store_config.path,
             credentials=store_config.credentials or {},
         )
         return store
@@ -190,26 +226,3 @@ def _get_ignore_errors(ignore_errors: bool, config: Config) -> bool:
             return config.ignore_errors
     else:
         return ignore_errors
-
-
-def _add_rendered_path(config: Dict[str, Any]) -> Dict[str, Any]:
-    if 'params' in config and 'path' in config['params']:
-        config['params']['rendered_path'] = _render_path_template(config['params']['path'])
-
-    return config
-
-
-def _render_path_template(path_template: str) -> str:
-    try:
-        env = jinja2.Environment()
-        tpl = env.from_string(path_template)
-        return tpl.render(
-            minute=datetime.strftime(datetime.today(), "%M"),
-            hour=datetime.strftime(datetime.today(), "%H"),
-            day=datetime.strftime(datetime.today(), "%d"),
-            weeknumber=date.today().isocalendar()[1],
-            month=datetime.strftime(datetime.today(), "%m"),
-            year=datetime.strftime(datetime.today(), "%Y"),
-        )
-    except Exception as exc:
-        raise IOException(f"could not render file path template: '{path_template}': {exc}")
