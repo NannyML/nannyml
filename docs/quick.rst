@@ -15,7 +15,7 @@ What is NannyML?
 
 
 
-This Quickstart presents some of the core functionalities of NannyML on an example real-world of binary classification
+This Quickstart presents some of the core functionalities of NannyML on real-world dataset with binary classification
 model.
 
 -------------------------------
@@ -33,7 +33,7 @@ predicts whether an individual is employed. Details about the dataset can be fou
 The data are split into two periods: :ref:`reference <data-drift-periods-reference>` and
 :ref:`analysis<data-drift-periods-analysis>`. The reference data is used by
 NannyML to establish a baseline for model performance and variable distributions. Your model's test dataset
-can serve as the reference data. The analysis data is simply the data you want to analyze i.e. check whether the model
+can serve as the reference data. The analysis data is the data you want to analyze i.e. check whether the model
 maintains its performance or if feature distributions have shifted etc. This would usually be your latest production data.
 
 Let's load libraries and the data:
@@ -66,26 +66,18 @@ Dataframes contain:
 Estimating Performance without Targets
 --------------------------------------
 
-ML models are deployed in production on the condition that they produce accurate enough predictions to provide
-business value. This condition is evaluated based on unseen data during model development phase.
-The main goal of ML model monitoring is thus to continuously verify whether the model maintains its anticipated
-performance in production (which is not the case most of the time [1]_).
+ML models are deployed to production once their business value and performance have been validated. This usually takes
+place in model development phase.
+The main goal of ML model monitoring is to continuously verify whether the model maintains its anticipated
+performance (which is not the case most of the time [1]_).
 
 Monitoring performance is relatively straightforward when :term:`targets<Target>` are available but this is often not
-the case.
-Labels can be delayed, costly or impossible to get. In such cases, estimating
-performance is a good start of the monitoring workflow. NannyML can estimate the performance of an ML model in
-production
-without access to targets.
+the case. Labels can be delayed, costly or impossible to get. In such cases, estimating
+performance is a good start of the monitoring workflow. NannyML can estimate the performance of an ML model without access to targets.
 
-Before proceeding, we need to introduce the notion of :term:`data chunks<Data Chunk>`. The natural way of
-thinking
-about
-monitoring model in production is time-related. Predictions are always made at some point in time and thus have a natural order.
-However assessing the model's condition based on a single observation is unreliable
-- some performance metrics cannot be even calculated for a single data point. Therefore, we will group observations into
-chunks based on their order of occurrence. Let's define the size of the chunk that we will use throughout the
-whole analysis:
+To reliably assess the performance of an ML model, we need a sufficiently big sample of data. We call this sample a
+:term:`chunk<Data Chunk>`. There are :ref:`many ways to define chunks in NannyML<chunking>`, in quickstart we will
+use size-based chunking and define the size of the chunk to be 5000 observations:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -116,18 +108,17 @@ Let's visualize the results:
 
 .. image:: ./_static/quick-start-perf-est.svg
 
-We should take note of the significant drop in estimated performance during the latter part of the analysis period.
+The estimated performance dropped significantly in the later part of the analysis.
 Let's investigate this to determine whether we can rely on the estimation.
 
 Investigating Data Distribution Shifts
 --------------------------------------
 
-While :ref:`developing the monitored model<dataset-real-world-ma-employment>` we discovered that the primary predictors
-for this problem are the first two features, namely `AGEP` (person's age) and `SCHL` (education level). Focusing on
-these features, we will employ :ref:`the univariate drift detection module<_univariate_drift_detection>` to examine the distribution behavior of
-these two variables. We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`
-class with
-required parameters, fit on ``df_reference`` and calculate on
+Once we've identified a performance issue, we will troubleshoot it. Let's focus on the first two features `AGEP` and
+`SCHL`. We will quantify potential distribution shifts for these two variables using the :ref:`univariate drift
+detection module<_univariate_drift_detection>`.
+We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`
+class with required parameters, fit on ``df_reference`` and calculate on
 ``df_analysis``.
 
 .. nbimport::
@@ -158,12 +149,11 @@ actually happened with the distributions by visualizing their change in the anal
 
 .. image:: ./_static/quick-start-univariate-distribution.svg
 
-The age distribution has strongly shifted towards younger people (around 18 years old). In the education level
-feature one of the categories has doubled its relative frequency in the performance drop chunks. Since plots in the
-notebook are interactive (thery're not in the docs though) they allow for value checking by hovering over the corresponding
-sections in the stacked-bar plot. The category of interest is encoded :ref:`with value 19<dataset-real-world-ma-employment>`, which
-corresponds to people with
-*1 or more years of college credit, no degree*. It is likely that during the investigated period, there was a
+Distribution changes in the chunks of interest are significant. The age has strongly shifted towards
+younger people (around 18 years old). In the education level feature one of the categories has doubled its relative
+frequency. Since plots are interactive when run in the notebook they allow to check corresponding values in the bar
+plots. The category which frequency has increased is encoded :ref:`with value 19<dataset-real-world-ma-employment>`, which
+corresponds to people with *1 or more years of college credit, no degree*. It is likely that during the investigated period, there was a
 significant survey conducted at colleges and universities.
 
 
@@ -183,8 +173,8 @@ and follow the familiar pattern: initialize, fit and calculate. Then we will plo
 
 .. image:: ./_static/quick-start-estimated-and-realized.svg
 
-Even though the estimation is somewhat off, we see that the realized performance has indeed sharply dropped in the
-two indicated chunks. It is also interesting to notice that the performance was relatively stable in the preceding
+We see that the realized performance has indeed sharply dropped in the
+two indicated chunks. The performance was relatively stable in the preceding
 period even though ``AGEP`` was already slightly shifted at that time. This confirms the need to monitor
 performance/estimated performance as not every shift impacts performance.
 
