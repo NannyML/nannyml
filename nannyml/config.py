@@ -2,12 +2,17 @@
 #
 #  License: Apache Software License 2.0
 import os
+from datetime import date, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import jinja2
 import yaml
 from pydantic import BaseModel
+
+from nannyml._typing import Self
+from nannyml.exceptions import IOException
 
 CONFIG_PATH_ENV_VAR_KEY = 'NML_CONFIG_PATH'
 
@@ -64,6 +69,7 @@ class StoreConfig(BaseModel):
 
 class CalculatorConfig(BaseModel):
     type: str
+    name: Optional[str] = None
     enabled: Optional[bool] = True
     outputs: Optional[List[WriterConfig]]
     store: Optional[StoreConfig]
@@ -82,12 +88,29 @@ class Config(BaseModel):
     def load(cls, config_path: Optional[str] = None):
         with open(get_config_path(config_path), "r") as config_file:
             config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
-            return Config.parse_obj(config_dict)
+            return Config.parse_obj(config_dict)._render()
 
     @classmethod
     def parse(cls, config: str):
         config_dict = yaml.safe_load(config)
-        return Config.parse_obj(config_dict)
+        return Config.parse_obj(config_dict)._render()
+
+    def _render(self) -> Self:
+        self.input.reference_data.path = _render_path_template(self.input.reference_data.path)
+        self.input.analysis_data.path = _render_path_template(self.input.analysis_data.path)
+
+        if self.input.target_data:
+            self.input.target_data.path = _render_path_template(self.input.target_data.path)
+
+        for config in self.calculators:
+            for output in config.outputs or []:
+                if output.params and 'path' in output.params:
+                    output.params['path'] = _render_path_template(output.params['path'])
+
+            if config.store:
+                config.store.path = _render_path_template(config.store.path)
+
+        return self
 
 
 def get_config_path(custom_config_path: Optional[str] = None) -> Path:
@@ -114,3 +137,19 @@ def get_config_path(custom_config_path: Optional[str] = None) -> Path:
         return cool_path
 
     raise RuntimeError('could not determine config path')
+
+
+def _render_path_template(path_template: str) -> str:
+    try:
+        env = jinja2.Environment()
+        tpl = env.from_string(path_template)
+        return tpl.render(
+            minute=datetime.strftime(datetime.today(), "%M"),
+            hour=datetime.strftime(datetime.today(), "%H"),
+            day=datetime.strftime(datetime.today(), "%d"),
+            weeknumber=date.today().isocalendar()[1],
+            month=datetime.strftime(datetime.today(), "%m"),
+            year=datetime.strftime(datetime.today(), "%Y"),
+        )
+    except Exception as exc:
+        raise IOException(f"could not render file path template: '{path_template}': {exc}")
