@@ -24,7 +24,7 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'kolmogorov_smirnov': StandardDeviationThreshold(std_lower_multiplier=None),
     'chi2': StandardDeviationThreshold(),  # currently ignored
     'jensen_shannon': ConstantThreshold(lower=None, upper=0.1),
-    'wasserstein': StandardDeviationThreshold(),
+    'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None),
     'hellinger': ConstantThreshold(lower=None, upper=0.1),
     'l_infinity': ConstantThreshold(lower=None, upper=0.1),
 }
@@ -74,9 +74,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         thresholds: dict, default={ \
-                                    'kolmogorov_smirnov': StandardDeviationThreshold(), \
+                                    'kolmogorov_smirnov': StandardDeviationThreshold(std_lower_multiplier=None), \
                                     'jensen_shannon': ConstantThreshold(upper=0.1), \
-                                    'wasserstein': StandardDeviationThreshold(), \
+                                    'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None), \
                                     'hellinger': ConstantThreshold(upper=0.1), \
                                     'l_infinity': ConstantThreshold(upper=0.1) \
                                 }
@@ -86,9 +86,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
             When a dictionary is given its values will override the default values. If no dictionary is given a default
             will be applied. The default method thresholds are as follows:
 
-                - `kolmogorov_smirnov`: `StandardDeviationThreshold()`
+                - `kolmogorov_smirnov`: `StandardDeviationThreshold(std_lower_multiplier=None)`
                 - `jensen_shannon`: `ConstantThreshold(upper=0.1)`
-                - `wasserstein`: `StandardDeviationThreshold()`
+                - `wasserstein`: `StandardDeviationThreshold(std_lower_multiplier=None)`
                 - `hellinger`: `ConstantThreshold(upper=0.1)`
                 - `l_infinity`: `ConstantThreshold(upper=0.1)`
 

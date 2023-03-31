@@ -169,8 +169,6 @@ class Figure(go.Figure):
 
         if subplot_args is None or is_single_plot:
             subplot_args = {}
-        else:
-            show_in_legend = subplot_args.get('row', 0) == 1 and subplot_args.get('col', 0) == 1
 
         del kwargs['showlegend']
 

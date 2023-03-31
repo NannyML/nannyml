@@ -98,7 +98,7 @@ def check_and_convert(
 def ensure_numpy(*args) -> Tuple:
     converted: List[Optional[np.ndarray]] = []
     for d in args:
-        if d is None:
+        if d is None or len(d) == 0:
             converted.append(None)
         elif isinstance(d, pd.Series):
             converted.append(d.to_numpy(dtype='object'))

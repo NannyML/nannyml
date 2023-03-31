@@ -67,12 +67,12 @@ def _render_string(column: Union[np.ndarray, pd.Series], render_func: Callable) 
     return np.vectorize(render_func)(column)
 
 
-def render_period_string(period_column: Union[np.ndarray, pd.Series]) -> np.ndarray:
+def render_period_string(period_column: Union[np.ndarray, pd.Series], color: Optional[str] = None) -> np.ndarray:
     return _render_string(
         period_column,
-        lambda x: f'<b style="color:{Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
+        lambda x: f'<b style="color:{color or Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
         if x == 'reference'
-        else f'<b style="color:{Colors.INDIGO_PERSIAN};line-height:60px">Analysis</b>',
+        else f'<b style="color:{color or Colors.INDIGO_PERSIAN};line-height:60px">Analysis</b>',
     )
 
 
