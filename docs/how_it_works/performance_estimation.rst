@@ -4,18 +4,20 @@
 Estimation of Performance of the Monitored Model
 ================================================
 
-This page describes the algorithms that NannyML uses to estimate performance metrics of the monitored models
-in the absence of ground truth. Currently there are two approaches. One is called Confidence-based
-Performance Estimation (CBPE) and leverages the :term:`confidence score` of the predictions. It is used to estimate
-performance of classification models as they return predictions with associated :term:`confidence score`.
-The other approach is called Direct Loss Estimation (DLE).
-The idea behind DLE is to train a :term:`nanny model` that directly
-estimates value of the :term:`loss` of the monitored model for each observation (sometimes referred to as a
-:term:`child model`). This approach is used to estimate performance of regression models as the value of :term:`loss`
-function can be calculated for single observation and turned into performance metrics (unlike classification
-metrics - one cannot calculate F1 for single prediction).
-Even if you are interested only in one of the algorithms, it
-is recommended to read the whole page in order to get full understanding of the concepts.
+This page describes the algorithms that NannyML uses to estimate performance metrics of monitored models
+in the absence of ground truth. Currently, there are two approaches. One is called Confidence-based
+Performance Estimation (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`), which leverages
+the :term:`confidence score` of the predictions. CBPE is used to estimate performance of classification models as they
+return predictions with an associated :term:`confidence score`.
+
+The other approach is called Direct Loss Estimation (:class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`).
+The idea behind DLE is to train a :term:`nanny model` that directly estimates the value of the :term:`loss` of
+the monitored model for each observation (sometimes referred to as a :term:`child model`). This approach is used to
+estimate the performance of regression models as the value of the :term:`loss` function can be calculated for a single
+observation and turned into performance metrics (unlike classification metrics - one cannot calculate F1 for a single prediction).
+
+Even if you are interested only in one of the algorithms, reading the whole page is recommended to get a full understanding
+of the concepts.
 
 .. _how-it-works-cbpe:
 
@@ -26,25 +28,26 @@ Confidence-based Performance Estimation (CBPE)
 The Intuition
 =============
 
-Classification model predictions usually come with associated uncertainty. For example, a binary classification model
+Classification model predictions usually come with an associated uncertainty. For example, a binary classification model
 typically returns two outputs for each prediction - a predicted class (binary) and a class
 probability estimate (sometimes referred to as score). The score provides information about the confidence of the
-prediction. A rule of thumb is that, the closer the score is to its lower or upper limit (usually 0 and 1), the higher
+prediction. A rule of thumb is that the closer the score is to its lower or upper limit (usually 0 and 1), the higher
 the probability that the classifier's prediction is correct. When this score is an actual probability, it can be
 directly used to estimate the probability of making an error. For instance, imagine a high-performing model which,
-for a large set of observations, returns a prediction of 1 (positive class) with a probability of 0.9. It means that
-for approximately 90% of these observations, the model is correct, while for the other 10% the model is wrong.
+for a large set of observations, returns a prediction of 1 (positive class) with a probability of 0.9. It means that the model is
+correct for approximately 90% of these observations, while for the other 10%, the model is wrong.
+
 Assuming properly calibrated probabilities, confusion matrix elements can be estimated and then used to calculate any
-performance metric. Given the :ref:`assumptions<CBPE-assumptions-limitations>` are met, CBPE provides unbiased
-estimation of performance of the monitored model based on the monitored model's outputs only (i.e. without access
+performance metric. Given the :ref:`assumptions<CBPE-assumptions-limitations>` are met, CBPE provides an unbiased
+estimation of the performance of the monitored model based on the monitored model's outputs only (i.e. without access
 to targets).
 
 
 Implementation details
 ======================
 
-Currently NannyML supports CBPE for performance estimation of binary and multiclass classification models. Sections
-below give details on implementation of CBPE for these use cases for selected metrics.
+Currently, NannyML supports :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` for performance estimation of binary and multiclass classification models.
+The sections below give details on CBPE's implementation for these use cases for selected metrics.
 
 
 Binary classification
@@ -54,7 +57,7 @@ are described below. Common notations used in the sections below are the followi
 
     :math:`n` - number of analyzed observations/predictions,
 
-    :math:`\hat{p} = Pr(y=1)` - monitored model probability estimate,
+    :math:`\hat{p} = Pr(y=1)` - probability estimate of the monitored model,
 
     :math:`y` - target label, in binary classification :math:`y\in{\{0,1\}}`,
 
@@ -70,8 +73,8 @@ Since the number of observations (:math:`n`) is known, the task comes down to es
 True Negatives (TN). The algorithm runs as follows:
 
 
-    1. Get :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote :math:`\hat{p}_j`, and predicted label from
-       :math:`\mathbf{\hat{y}}`, denote :math:`\hat{y}_j`.
+    1. Get the :math:`j`-*th* prediction from :math:`\mathbf{\hat{p}}`, denote by :math:`\hat{p}_j`, and it's corresponding
+    predicted label :math:`\hat{y}_j` from :math:`\mathbf{\hat{y}}`.
 
     2. Calculate the estimated probability that the prediction is false:
 
@@ -113,13 +116,12 @@ than a random guess certainly does not do this. Read
 more in :ref:`Limitations <CBPE-assumptions-limitations>`.
 
 A different type of metric is ROC AUC.
-To estimate it one needs values of confusion matrix elements (True
+To estimate it one needs values of the confusion matrix elements (True
 Positives, False Positives, True Negatives, False Negatives)
-for a set of all thresholds :math:`t`. This set is obtained by selecting a subset of :math:`m`
-unique values from the set of probability predictions
-:math:`\mathbf{\hat{p}}` and sorting them increasingly.
-Therefore :math:`\mathbf{t}=\{\hat{p_1}, \hat{p_2}, ..., \hat{p_m}\}` and
-:math:`\hat{p_1} < \hat{p_2} < ... < \hat{p_m}` (:math:`1 < m \leq n`).
+for a set of all thresholds :math:`t`.
+This set is obtained by selecting the :math:`m` unique values from all predicted probabilities. We then sort these values
+in increasing order. Therefore :math:`\mathbf{t}=\{\hat{p_1}, \hat{p_2}, ..., \hat{p_m}\}` where
+:math:`\hat{p_1} < \hat{p_2} < ... < \hat{p_m}` for :math:`1 < m \leq n`.
 
 The algorithm for estimating ROC AUC runs as follows:
 
@@ -159,12 +161,12 @@ The algorithm for estimating ROC AUC runs as follows:
        (i.e. for all :math:`j` from 1 to :math:`n`) so
        that confusion matrix elements are calculated for each prediction.
 
-    8. Get estimated confusion matrix elements for the whole set of predictions, e.g. for True Positives:
+    8. Get the estimated confusion matrix elements for the whole set of predictions, e.g. for True Positives:
 
     .. math::
         {TP}_i = \sum_{j=1}^{n} {TP}_{i,j}
 
-    9. Calculate estimated true positive rate and false positive rate:
+    9. Calculate the estimated true positive rate and the false positive rate:
 
     .. math::
         {TPR}_i = \frac{{TP}_i}{{TP}_i + {FN}_i}
@@ -187,9 +189,9 @@ Multiclass Classification
 A multiclass classification model outputs prediction labels (predicted class) and
 probability estimates for each class. This means that when there are three classes, for example A, B and C, the model
 output should contain four pieces of information - the predicted class (e.g. A) and three scores, one for each class.
-Assuming these scores are well calibrated probabilities, they can be used to estimate performance of the model
+Assuming these scores are well calibrated probabilities, they can be used to the estimate performance of the model
 without using targets. As an example,
-let's describe the process of estimating macro-averaged precision. Let's introduce math notation:
+let's describe the process of estimating macro-averaged precision. But, first, let's introduce math notation:
 
     :math:`n` - number of analyzed observations/predictions,
 
@@ -197,7 +199,7 @@ let's describe the process of estimating macro-averaged precision. Let's introdu
 
     :math:`k` - a particular class, :math:`k\in{\{1, ..., c\}}`,
 
-    :math:`\hat{p} = Pr(y=1)` - monitored model probability estimate,
+    :math:`\hat{p} = Pr(y=1)` - probability estimate of the monitored model,
 
     :math:`y` - target label, :math:`y\in{\{1, ..., c\}}`,
 
@@ -205,8 +207,8 @@ let's describe the process of estimating macro-averaged precision. Let's introdu
 
     The algorithm runs as follows:
 
-    1. Estimate precision for each class separately, just like in binary classification. Transform vector of
-       multiclass predictions :math:`\mathbf{\hat{y}}` to binary vector relevant for the class :math:`k` i.e.
+    1. Estimate precision for each class separately, just like in binary classification. Transform the vector of
+       multiclass predictions :math:`\mathbf{\hat{y}}` to a binary vector relevant for the class :math:`k` i.e.
        :math:`\mathbf{\hat{y}_k}` and take corresponding predicted probabilities :math:`\mathbf{\hat{p}_k}`:
 
         .. math::
@@ -233,20 +235,24 @@ just estimated as the mean of predicted probabilities corresponding to the predi
 Assumptions and Limitations
 ===========================
 
-In general, CBPE works well when estimating performance of *good* models i.e. models which most of the error is an
-irreducible error. Such models tend to return well-calibrated probabilities (or score that can be easily calibrated) and
-are less prone to concept drift which CBPE does not cope with. CBPE will handle covariate shift well.
-The detailed assumptions are:
+In general, :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` works well when estimating performance of
+*good* models i.e. models which most of the error is an irreducible error. Such models tend to return well-calibrated
+probabilities (or score that can be easily calibrated) and are less prone to :term:`concept drift` which
+CBPE does not cope with. CBPE will handle covariate shift well. The detailed assumptions are:
 
 **The monitored model returns well-calibrated probabilities.**
     Well-calibrated probabilities allow to accurately estimate confusion matrix elements and thus estimate any metric
     based on them. A model that returns perfectly calibrated probabilities
-    is an ideal probabilistic model (Bayes Classifier). One may ask if there's anything to estimate if the model is perfect?
+    is an ideal probabilistic model (Bayes Classifier).
+
+    One may ask if there's anything to estimate if the model is perfect?
     Performance of an ideal model is usually far from being equal to the maximum possible value for a given metric.
     It is lower because of the irreducible error originating from classes not being perfectly separable given the
     available data. In reality, many models are very close to a Bayes Classifier and close enough for CBPE to work.
     Usually *good models* (e.g. ROC AUC>0.9) return well-calibrated probabilities, or scores that can be accurately
-    :ref:`calibrated in postprocessing<cbpe_probability_calibration>`. There are also models considered as *poor*
+    :ref:`calibrated in postprocessing<cbpe_probability_calibration>`.
+
+    There are also models considered as *poor*
     (with performance just better than random) that still return well-calibrated probabilities. This happens when
     dominant share of the error is the irreducible error i.e. when there is not enough signal in the features to
     predict the target. Performance of all models change in time as a result of changes in the distributions of inputs (X).
@@ -264,16 +270,16 @@ The detailed assumptions are:
     the same example, this will happen when the model was trained on young people only but then it is applied to
     middle-aged people. If the true relationship
     between age and the target is nonlinear, most models will not estimate probability correctly on previously unseen data.
+
     This also depends on the type of the algorithm used and its ability to extrapolate estimation of probabilities. For
-    example Random Forest
-    model estimated probability will remain constant and equal to the one in the closest input space region covered by training
-    data. In our case this will be the probability for *the oldest patients of youngsters*. On the other hand, Logistic
-    Regression will learn a parameter (coefficient) between age and the target and then extrapolate linearly. Provided
-    that true underlying relationship is also linear, Logistic Regression model will estimate probability correctly even for unseen
-    age ranges.
+    example Random Forest model estimated probability will remain constant and equal to the one in the closest input space
+    region covered by training data. In our case this will be the probability for *the oldest patients of youngsters*.
+    On the other hand, Logistic Regression will learn a parameter (coefficient) between age and the target and then extrapolate
+    linearly. Provided that true underlying relationship is also linear, Logistic Regression model will estimate probability
+    correctly even for unseen age ranges.
 
 **There is no concept drift**.
-    While dealing well with data drift, CBPE will not work under concept drift i.e. when
+    While dealing well with data drift, CBPE will not work under :term:`concept drift` i.e. when
     P(Y|X) changes. Except
     from very specific cases, there is no way to identify concept drift without any ground truth data.
 
@@ -282,7 +288,7 @@ The detailed assumptions are:
     sample size. On top, when the sample size is small it is not just CBPE that won't work well,
     but the calculated metric (when targets are available) won't be reliable either. For example, if we evaluate a
     random model (true accuracy = 0.5) on a sample of 100 observations, for some samples we can get accuracy as high
-    as 0.65. More information can be found :ref:`here<sampling-error-introduction>`.
+    as 0.65. More information can be found in our :ref:`Reliability of results guide<sampling-error-introduction>`.
 
 
 .. _cbpe_probability_calibration:
@@ -292,8 +298,9 @@ Appendix: Probability calibration
 =================================
 
 In order to accurately estimate the performance from the model scores, they need to be well calibrated.
-If a classifier assigns a probability of 0.9 for a set of observations and 90% of these observations belong to
-the positive class, we consider that classifier to be well calibrated with respect to that subset.
+Suppose a classifier assigns a probability of 0.9 for a set of observations and 90% of these observations belong to
+the positive class. In that case, we consider that classifier to be well calibrated with respect to that subset.
+
 Most predictive models focus on performance rather than on probability estimation,
 therefore their scores are rarely calibrated.
 Examples of different models and their calibration curves are shown below [1]_:
@@ -325,36 +332,35 @@ Fitting a calibrator on model training data would introduce bias [1]_.
 
 .. _how-it-works-dle:
 
------------------------------
-Direct Loss Estimation (DLE)
------------------------------
+-----------------
+Direct Loss (DLE)
+-----------------
 
 The Intuition
 =============
 
-Long story short - the idea behind DLE is to train extra ML model that will directly estimate the value of the
-:term:`loss`
-of the monitored model that can be later turn into performance metric. For clarity we call this model a :term:`nanny
-model` and sometimes we refer to the monitored
-model as a :term:`child model`.
-Each
-prediction of the :term:`child model` has an error associated with it (the difference between the actual target and the prediction).
-For both - learning and evaluation purposes this error is modified and it becomes :term:`loss` (e.g. absolute or
+Long story short - the idea behind :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` is to train an
+extra ML model to estimate the value of the :term:`loss` of the monitored model by doing so, we can be later turn
+the difference of the estimated and actual loss into performance metric.
+For clarity we call this model a :term:`nanny model` and sometimes we refer to the monitored model as a :term:`child model`.
+
+Each prediction of the :term:`child model` has an error associated with it (the difference between the actual target and
+the prediction). For both - learning and evaluation purposes this error is modified and it becomes :term:`loss` (e.g. absolute or
 squared error for regression tasks). The value of the :term:`loss` for each prediction of the :term:`child model`
 becomes the target for the :term:`nanny model`.
 
 Isn't this exactly what gradient boosting algorithms for regression do? How can this even work? Wouldn't it
-work only if the :term:`nanny model` is smarter (more flexible) than the :term:`child model`? Good questions.
-Yes, it is similar to what
-gradient boosting does with one crucial difference. Each weak model of gradient boosting algorithm tries to find patterns
-in residuals i.e. in the actual errors. The errors have signs or directions - they can be positive (when the target is
-larger than prediction) or negative (otherwise). If there is a pattern that maps model features to residuals it can be
-used to train another weak learner and improve the overall performance of an ensemble of models. DLE tries to predict
-:term:`loss` which is directionless (like already mentioned absolute or squared error). This is a significantly
+work only if the :term:`nanny model` is smarter (more flexible) than the :term:`child model`?
+Good questions. Yes, it is similar to what gradient boosting does with one crucial difference. Each weak model of the gradient
+boosting algorithm tries to find patterns in residuals i.e. in the actual errors. The errors have signs or directions - they
+can be positive (when the target is larger than prediction) or negative (otherwise). If there is a pattern that maps model
+features to residuals, it can be used to train another weak learner and improve the overall performance of an ensemble of models.
+DLE tries to predict :term:`loss` which is directionless (like already mentioned absolute or squared error). This is a significantly
 easier problem to solve. For this reason, the :term:`nanny model` algorithm does not have to be better than the child
-algorithm, it can even be the same algorithm. Have a look at the simple example with code shown
-:ref:`implementation details<dle_implementation_details>` to see linear regression algorithm used by :term:`nanny model` that
-estimates performance of another linear regression :term:`child model`.
+algorithm. It can even be the same algorithm.
+Look at the simple example shown in
+:ref:`implementation details<dle_implementation_details>` to see a linear regression algorithm used by :term:`nanny model` to
+estimate the performance of another linear regression :term:`child model`.
 
 
 .. _dle_implementation_details:
@@ -362,8 +368,9 @@ estimates performance of another linear regression :term:`child model`.
 Implementation details
 ======================
 
-Currently NannyML supports DLE for performance estimation of regression models. The algorithm is rather simple. Let's
-denote with :math:`f` the monitored model and :math:`h` the :term:`nanny model`. Let's assume we are interested in estimating
+Currently NannyML supports :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` for performance estimation
+of regression models. The algorithm is rather simple. Let's denote with :math:`f` the monitored model and :math:`h` the
+:term:`nanny model`. Let's assume we are interested in estimating
 mean absolute error (MAE) of :math:`f` for some analysis data for which targets are not available.
 :math:`f` was trained on train data and used on reference data providing :math:`f(X_{reference})`
 predictions. Targets for reference set :math:`y_{reference}` are available. The algorithm runs as follows:
@@ -373,19 +380,21 @@ predictions. Targets for reference set :math:`y_{reference}` are available. The 
     2. Train a :term:`nanny model` on reference data. As features use the monitored model features
        :math:`X_{reference}` and
        monitored model predictions :math:`f(X_{reference})`. The target is absolute error :math:`AE_{reference}`
-       calculated in previous step. So :math:`\hat{AE} = h(X,f(X)`.
-    3. Estimate performance of :term:`child model` on analysis data: estimate absolute error for each observation
-       :math:`\hat{AE}_{reference}` with :math:`h` and calculate mean of :math:`\hat{AE}_{reference}` to get MAE.
+       calculated in previous step. So :math:`\hat{AE} = h(X,f(X))`.
+    3. Estimate performance of :term:`child model` on analysis data. Estimate absolute error for each observation
+       :math:`\hat{AE}_{reference}` with :math:`h` and, finally calculate the mean of :math:`\hat{AE}_{reference}` to get MAE.
 
 For other metrics step 1 and 3 are slightly modified. For example, for root mean squared error (RMSE) in step 1 we
-would calculate squared error while in step 3 we would calculate root of mean of all predictions.
+would calculate the squared error while in step 3 we would calculate the root of the mean of all predictions.
 
-The code below shows simple implementation of DLE approach based on an example 1d dataset with regression target with
-heteroscedastic normal noise (i.e. the variation of the noise is not constant, in this case
-it is dependent on the value of the input
-feature - see the target generating function in the code). The example here is to show that estimating directionless
-:term:`loss` value is easier than estimating the actual error. In this example, linear regression :term:`nanny model`
-estimates performance of linear regression :term:`child model`. Let's create synthetic data first:
+The code below shows a simple implementation of the DLE
+approach. We use a 1d-dataset with a continuous target with heteroscedastic normal noise
+(i.e. the variation of the noise is not constant, in this case it is dependent on the value of the input
+feature - see the target generating function in the code).
+The example here is to show that estimating directionless
+:term:`loss` value is easier than estimating the actual error. In this example, the linear regression :term:`nanny model`
+estimates the performance of linear regression :term:`child model`.
+Let's create synthetic data first:
 
 .. code-block:: python
 
@@ -428,13 +437,12 @@ Let's just fit the :term:`child model` using linear regression and see what the 
 .. image:: ../_static/how-it-works-dle-regression.svg
     :width: 400pt
 
-The relationship between ``x1`` and the target was linear (see the generating function) with coefficient equal to 2
-and as
-expected linear regression did well on finding that coefficient. We can clearly see that for values of ``x1`` close to 0
+The relationship between ``x1`` and the target was linear (see the generating function) with coefficient equal to 2.
+And as expected, linear regression did well on finding that coefficient. We can clearly see that for values of ``x1`` close to 0
 the :term:`child model` is much more accurate compared to when ``x1`` is close to 1. The :term:`child
 model` itself however does not provide this
-information together with its prediction. Unlike classification models, regression models do not provide the :term:`confidence score`.
-All we get is a point prediction.
+information together with its prediction. Unlike classification models, regression models do not provide  :term:`confidence score`.
+All we get is a prediction point.
 Fortunately we can train another model that will predict e.g. absolute error. The algorithm does not have to be smarter
 than the child algorithm - we will use linear regression again. This is possible because the distribution of absolute
 errors is not zero-centered and it is dependent on input feature ``x1``. See the histograms of errors and absolute errors:
@@ -556,14 +564,14 @@ as the monitored model. The important details of the current NannyML implementat
 Assumptions and limitations
 ===========================
 
-In general, DLE works well if there are regions in the feature space where the model performs better or worse and there
+In general, :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` works well if there are regions in the feature space where the model performs better or worse and there
 are enough observations from these regions in the reference dataset so that the :term:`nanny model` can learn this pattern.
-Just like CBPE, it will handle covariate shifts well. The detailed assumptions are:
+Just like :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`, it will handle covariate shifts well. The detailed assumptions are:
 
 
 **There is no concept drift**.
-    While dealing well with covariate shift, DLE will not work under concept drift.
-    This shouldn't happen when the :term:`child model` is has access to all the variables affecting the outcome and
+    While dealing well with covariate shift, DLE will not work under :term:`concept drift`.
+    This shouldn't happen when the :term:`child model` has access to all the variables affecting the outcome and
     the problem is stationary. An example of a stationary model would be forecasting energy demand for heating
     purposes. Since the phyiscal laws underpinning the problem are the same, energy demand based on outside temperature
     should stay the same. However if energy prices became too high and people decide to heat their houses less
@@ -584,7 +592,8 @@ Just like CBPE, it will handle covariate shifts well. The detailed assumptions a
     then the true performance of the monitored model is constant (depending on the metric used, it will be constant
     for MAE and MSE, it will change when measured e.g. with MAPE).
     Variation of true performance on the samples of data will be then an effect of :ref:`sampling error <estimation_of_standard_error>`
-    only. Heat demand forecasting model is again a good example here.
+    only.
+    Heat demand forecasting model is again a good example here.
     It is known that such models perform worse in some periods, for example in intermediate periods
     (that would be spring and autumn in Europe).
     The demand in such periods is governed by many factors that are hard to account for in the demand predicting model,
@@ -594,7 +603,7 @@ Just like CBPE, it will handle covariate shifts well. The detailed assumptions a
 
 **The sample of data used for estimation is large enough.**
     When the sample size is small, the actual performance calculated on the sample is not reliable as it is a subject of
-    random sampling effects (sampling error). Read more about it :ref:`here <estimation_of_standard_error>`.
+    random sampling effects (sampling error). Read more about it on our:ref:`sampling error guide <estimation_of_standard_error>`.
 
 
 
@@ -605,7 +614,8 @@ Other Approaches to Estimate Performance of Regression Models
 When it comes to estimating performance of classification models we believe that CBPE is the best NannyML can currently offer. It can
 still be improved (by better probability calibration etc.) which is on our radar, but in general the theory behind
 the approach is solid. We wanted to use the same for estimation of performance of regression models but it cannot be
-used directly. Unlike classification models, most regression models do not inherently provide information
+used directly.
+Unlike classification models, most regression models do not inherently provide information
 about confidence of the prediction (:term:`confidence score`). They just return a point prediction. If probability distribution was given
 together with point prediction,
 the expected error for regression models could be calculated with CBPE approach. We would then have a point prediction
@@ -630,6 +640,7 @@ fact that in Bayesian approaches one needs to set a prior for the noise distribu
 These could be set to something simple: for example that the :math:`P(y|X)`
 is normal with standard deviation being a linear combination of input features.
 Based on our experience and datasets we have seen and tested - this is not true for most of the cases.
+
 Other approaches would be more flexible - for example assumption that :math:`P(y|X)` is a mixture of Gaussians and that
 the relationship between parameters of the mixture and input features are more complex than linear (e.g. higher
 order polynomials with interactions). This on the other hand was hard to implement correctly, had issues with
@@ -644,8 +655,9 @@ Conformalized Quantile Regression
 Quantile regression is an approach that allows to get prediction intervals instead of point prediction. Any regression
 algorithm can provide quantile predictions as long as the so-called *pinball loss* can be used for training.
 In order to make sure quantiles are accurate, we have calibrated them using Conformal Prediction [7]_.
-We have tried several approaches taking advantage of conformalized quantile regression models. For example,
-we have trained two nanny models to predict two quantiles, say 0.16 and 0.84. We would then assume that
+We have tried several approaches taking advantage of conformalized quantile regression models.
+
+For example, we have trained two nanny models to predict two quantiles, say 0.16 and 0.84. We would then assume that
 :math:`P(y|X)`
 is normally distributed so by subtracting one from another we would get a value of 2 standard deviations. Having
 :math:`P(y|X)` and point prediction, the expected error could be calculated. The problem with this solution was again

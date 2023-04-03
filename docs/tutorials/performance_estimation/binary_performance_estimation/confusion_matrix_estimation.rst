@@ -27,7 +27,7 @@ Walkthrough
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
-You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
+Check out :ref:`Car Loan Dataset<dataset-synthetic-binary-car-loan>` to learn more about this dataset.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
@@ -132,14 +132,8 @@ These results can be also plotted. Our plot contains several key elements.
 * *The purple step plot* shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is 
+* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is
   calculated as the estimated performance +/- 3 times the estimated :term:`Sampling Error`.
-
-* *The blue step plot* shows the estimated performance in each chunk of the reference period. Thick squared point markers indicate 
-  the middle of these chunks.
-
-* *The low-saturated blue area* around the estimated performance in the reference period corresponds to the :term:`confidence band<Confidence Band>` which is 
-  calculated as the estimated performance +/- 3 times the estimated :term:`sampling error<Sampling Error>`.
 
 * *The gray vertical line* splits the reference and analysis periods.
 

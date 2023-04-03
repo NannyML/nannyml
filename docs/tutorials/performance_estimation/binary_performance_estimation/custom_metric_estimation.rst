@@ -21,7 +21,7 @@ Walkthrough
 --------------
 
 While NannyML offers out-of-the-box support for the estimation of a number of metrics (see which in our :ref:`binary-performance-estimation` page),
-it is also possible to create custom metrics. In this tutorial we will be creating a **balanced accuracy** metric, using 
+it is also possible to create custom metrics. In this tutorial we will be creating a **balanced accuracy** metric, using
 the :term:`confusion matrix<Confusion Matrix>` as a building block.
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
@@ -76,7 +76,7 @@ NannyML can then output a dataframe that contains all the results.
     :cell: 6
 
 From these results we will want the **value** for each component of the confusion matrix
-for each chunk of data. To do so, we simply index into the results dataframe as is done 
+for each chunk of data. To do so, we simply index into the results dataframe as is done
 below:
 
 .. nbimport::
@@ -85,7 +85,7 @@ below:
 
 Now that we have these values, we can use them to calculate the **sensitivity**
 and **specificity** for each chunk of data. We can then use these values to calculate
-the **balanced accuracy** for each chunk of data. 
+the **balanced accuracy** for each chunk of data.
 
 As a reminder, the balanced accuracy is defined as:
 

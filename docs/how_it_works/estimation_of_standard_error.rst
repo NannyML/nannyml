@@ -4,17 +4,19 @@ Calculating Sampling Error
 ==========================
 
 This page explains how NannyML calculates :term:`Sampling Error`. The effect of sampling error
-on model monitoring results is described :ref:`here<sampling-error-introduction>`.
+on model monitoring results is described in our guide of :ref:`chunk size and reliability of results<sampling-error-introduction>`.
+
 In order to quantify sampling error we rely on :term:`Standard Error`.
 The standard error of a statistic is the standard deviation of its sampling distribution. Hence below we will be discussing
-how we estimate standard error and then we will show how we define sampling error from it.
+how we estimate the standard error and then we will show how we define sampling error from it.
 
 .. _introducing_sem:
 
 Defining Sampling Error from Standard Error of the Mean
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Let us recall the example of a :ref:`random binary classification model, predicting random binary targets<sampling-error-introduction>`.
+Let us recall the example of random binary classification model, predicting random binary targets from
+our guide of :ref:`chunk size and reliability of results<sampling-error-introduction>`.
 The histogram below shows the sampling distribution of accuracy,
 which has a true value of 0.5, for samples containing 100 observations.
 
@@ -53,9 +55,9 @@ calculating standard deviation:
     >>>  np.round(np.std(accuracy_scores), 3)
     0.05
 
-With a large enough number of experiments, this approach gives precise results but it comes with a relatively high computation cost.
-There are less precise but significantly faster ways. Selecting a sample (chunk) of data and calculating performance
-for it is similar to sampling from a population and calculating a statistic.
+With a large enough number of experiments, this approach gives precise results, but it comes with a relatively high computation cost.
+There are less precise but significantly faster ways. Selecting a sample (chunk) of data and calculating its performance
+is similar to sampling from a population and calculating a statistic.
 When the statistic is a mean, the :term:`Standard Error of the Mean (SEM)<Standard Error>` formula [1]_ can be
 used to estimate the standard deviation of the sampled means:
 
@@ -65,7 +67,9 @@ used to estimate the standard deviation of the sampled means:
 In order to take advantage of the :term:`SEM formula<Standard Error>` in the analyzed example,
 the accuracy of each observation needs to be
 calculated in such a way that a mean of this observation-level accuracies equals the accuracy of the whole sample. This
-sounds complicated, but the following solution makes it simple. Accuracy of a single observation is simply equal to 1
+sounds complicated, but the following solution makes it simple.
+
+Accuracy of a single observation is simply equal to 1
 when the prediction is correct and equal to 0 otherwise. When the mean of such observation-level accuracies is
 calculated, it is equal to the sample-level accuracy, as demonstrated below:
 
@@ -75,8 +79,10 @@ calculated, it is equal to the sample-level accuracy, as demonstrated below:
     >>> np.mean(obs_level_accuracy), accuracy_score(y_true, y_pred)
     (0.5045, 0.5045)
 
-Now the :term:`SEM formula<Standard Error>` can be used directly to estimate the
-:term:`standard error<Standard Error>` of accuracy for a sample of size n. :math:`\sigma`, from the
+Now the SEM formula can be used directly to estimate the
+standard error of accuracy for a sample of size :math:`n`.
+
+:math:`\sigma`, from the
 formula above, is the standard deviation of the observation-level accuracies and :math:`n` is the sample size (chunk
 size). The code below calculates standard error with SEM and compares it with the standard error from a
 repeated experiments approach:
