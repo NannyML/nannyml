@@ -64,17 +64,29 @@ class CBPE(AbstractEstimator):
         ----------
         y_true: str
             The name of the column containing target values (that are provided in reference data during fitting).
-        y_pred_proba: ModelOutputsType
+        y_pred_proba: Union[str, Dict[str, str]]
             Name(s) of the column(s) containing your model output.
-            Pass a single string when there is only a single model output column, e.g. in binary classification cases.
-            Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
-            The dictionary maps a class/label string to the column name containing model outputs for that class/label.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name containing model outputs for that class.
         y_pred: str
             The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
+            If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         metrics: Union[str, List[str]]
             A metric or list of metrics to calculate.
+
+            Supported metrics by CBPE:
+
+                - `roc_auc`
+                - `f1`
+                - `precision`
+                - `recall`
+                - `specificity`
+                - `accuracy`
+                - `confusion_matrix` - only for binary classification tasks
+                - `business_value` - only for binary classification tasks
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -87,7 +99,7 @@ class CBPE(AbstractEstimator):
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
         calibration: str, default='isotonic'
-            Determines which calibration will be applied to the model predictions. Defaults to ``isotonic``, currently
+            Determines which calibration will be applied to the model predictions. Defaults to 'isotonic', currently
             the only supported value.
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
@@ -100,13 +112,12 @@ class CBPE(AbstractEstimator):
             'specificity': StandardDeviationThreshold(), \
             'accuracy': StandardDeviationThreshold(), \
             'confusion_matrix': StandardDeviationThreshold(), \
-            'business_cost': StandardDeviationThreshold(), \
+            'business_value': StandardDeviationThreshold(), \
         }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
-            When a dictionary is given its values will override the default values. If no dictionary is given a default
-            will be applied. The default method thresholds are as follows:
+            If no dictionary is given a default will be applied. The default method thresholds are as follows:
 
                 - `roc_auc`: `StandardDeviationThreshold()`
                 - `f1`: `StandardDeviationThreshold()`
@@ -114,28 +125,30 @@ class CBPE(AbstractEstimator):
                 - `recall`: `StandardDeviationThreshold()`
                 - `specificity`: `StandardDeviationThreshold()`
                 - `accuracy`: `StandardDeviationThreshold()`
-                - `confusion_matrix`: `StandardDeviationThreshold()`
-                - `mape`: `StandardDeviationThreshold()`
-                - `business_cost`: `StandardDeviationThreshold()`
+                - `confusion_matrix`: `StandardDeviationThreshold()` - only for binary classification tasks
+                - `business_value`: `StandardDeviationThreshold()` - only for binary classification tasks
         problem_type: Union[str, ProblemType]
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.
         normalize_confusion_matrix: str, default=None
             Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
-            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
-            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
-            of observations. If 'true', the confusion matrix will be normalized by the total number of
-            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
-            total number of observations for each predicted class.
+            'predicted'.
+
+                - None - the confusion matrix will not be normalized and the counts for each cell of the matrix will be returned.
+                - 'all' - the confusion matrix will be normalized by the total number of observations.
+                - 'true' - the confusion matrix will be normalized by the total number of observations for each true class.
+                - 'predicted' - the confusion matrix will be normalized by the total number of observations for each predicted class.
         business_value_matrix: Optional[Union[List, np.ndarray]], default=None
-            A matrix containing the business value for each combination of true and predicted class.
-            The i-th row and j-th column entry of the matrix contains the business value for predicting the
-            i-th class as the j-th class.
+            A 2x2 matrix that specifies the value of each cell in the confusion matrix.
+            The format of the business value matrix must be specified as [[value_of_TN, value_of_FP], [value_of_FN, value_of_TP]]
+
+            Required when estimating the 'business_value' metric.
         normalize_business_value: str, default=None
             Determines how the business value will be normalized. Allowed values are None and
-            'per_prediction'. If None, the business value will not be normalized and the value
-            returned will be the total value per chunk. If 'per_prediction', the value will be normalized
-            by the number of predictions in the chunk.
+            'per_prediction'.
+
+            - None - the business value will not be normalized and the value returned will be the total value per chunk.
+            - 'per_prediction' - the value will be normalized by the number of predictions in the chunk.
 
         Examples
         --------
