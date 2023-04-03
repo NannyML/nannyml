@@ -83,7 +83,6 @@ def plot_2d_compare_step_to_step(
         title=x_axis_title,
         linecolor=Colors.INDIGO_PERSIAN,
         showgrid=False,
-        showticklabels=is_time_based_x_axis(analysis_chunk_start_dates, analysis_chunk_end_dates),
         mirror=True,
         zeroline=False,
         matches='x',
