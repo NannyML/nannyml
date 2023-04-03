@@ -31,13 +31,13 @@ First we import required libraries and fetch the data with `folktables`_:
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cells: 1, 3
+    :cells: 1, 5
 
 .. nbtable::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cell: 4
+    :cell: 6
 
-Data are fetched for each year separately and column `year` is created.
+Data is fetched for each year separately and column `year` is created.
 
 Descriptions of all the variables can be found in the :ref:`appendix<variable_descriptions>`.
 
@@ -50,13 +50,13 @@ data. We will use 2014 data for training, 2015 for evaluation and 2016-2018 will
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cells: 1, 3
+    :cells: 10
 
 We now define categorical and numeric features:
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cells: 9
+    :cells: 14
 
 Since categorical features are already encoded correctly for LGBM model (non-negative, integers-like), we don't need
 any preprocessing. We will just turn them into proper ``integers``. We will also rename target column to make things
@@ -64,7 +64,7 @@ clear:
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cells: 11
+    :cells: 17
 
 
 Developing ML Model and Making Predictions
@@ -74,13 +74,13 @@ We will now fit model that will be subject to monitoring (e.g. in :ref:`quicksta
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cells: 12, 13
+    :cells: 19, 20
 
-We will also turn categorical features into proper ``dtype`` so that NannyML will correctly recognize them:
+Let's turn categorical features into proper ``dtype`` so that NannyML will correctly recognize them:
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cells: 16
+    :cells: 23
 
 Splitting and Storing the Data
 ------------------------------
@@ -90,7 +90,7 @@ NannyML repository so the data can be accessed from within the library:
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
-    :cells: 17, 18
+    :cells: 25, 26
 
 
 .. _dataset-real-world-ma-employment-feature-description:
@@ -130,14 +130,16 @@ SCHL - Educational attainment:
 - 24 .Doctorate degree
 
 
-MAR Character 1 - Marital status
+MAR Character 1 - Marital status:
+
 - 1 .Married
 - 2 .Widowed
 - 3 .Divorced
 - 4 .Separated
 - 5 .Never married or under 15 years old
 
-RELP Character 2 - Relationship
+RELP Character 2 - Relationship:
+
 - 00 .Reference person
 - 01 .Husband/wife
 - 02 .Biological son or daughter
@@ -157,11 +159,13 @@ RELP Character 2 - Relationship
 - 16 .Institutionalized group quarters population
 - 17 .Noninstitutionalized group quarters population
 
-DIS Character 1 - Disability recode
+DIS Character 1 - Disability recode:
+
 - 1 .With a disability
 - 2 .Without a disability
 
-ESP Character 1 - Employment status of parents
+ESP Character 1 - Employment status of parents:
+
 - b .N/A (not own child of householder, and not child in subfamily)
 - 1 .Living with two parents: both parents in labor force
 - 2 .Living with two parents: Father only in labor force
@@ -172,7 +176,8 @@ ESP Character 1 - Employment status of parents
 - 7 .Living with mother: Mother in the labor force
 - 8 .Living with mother: Mother not in labor force
 
-CIT Character 1 - Citizenship status
+CIT Character 1 - Citizenship status:
+
 - 1 .Born in the U.S.
 - 2 .Born in Puerto Rico, Guam, the U.S. Virgin Islands, or the
 - .Northern Marianas
@@ -186,14 +191,16 @@ MIG Character 1 - Mobility status (lived here 1 year ago)
 - 2 .No, outside US and Puerto Rico
 - 3 .No, different house in US or Puerto Rico
 
-MIL Character 1 - Military service
+MIL Character 1 - Military service:
+
 - b .N/A (less than 17 years old)
 - 1 .Now on active duty
 - 2 .On active duty in the past, but not now
 - 3 .Only on active duty for training in Reserves/National Guard
 - 4 .Never served in the military
 
-ANC Character 1 - Ancestry recode
+ANC Character 1 - Ancestry recode:
+
 - 1 .Single
 - 2 .Multiple
 - 3 .Unclassified
@@ -201,40 +208,47 @@ ANC Character 1 - Ancestry recode
 - 8 .Suppressed for data year 2018 for select PUMAs
 
 
-NATIVITY Character 1 - Nativity
+NATIVITY Character 1 - Nativity:
+
 - 1 .Native
 - 2 .Foreign born
 
-DEAR Character 1 - Hearing difficulty
+DEAR Character 1 - Hearing difficulty:
+
 - 1 .Yes
 - 2 .No
 
-DEYE Character 1 - Vision difficulty
+DEYE Character 1 - Vision difficulty:
+
 - 1 .Yes
 - 2 .No
 
-DREM Character 1 - Cognitive difficulty
+DREM Character 1 - Cognitive difficulty:
+
 - b .N/A (Less than 5 years old)
 - 1 .Yes
 - 2 .No
 
-SEX Character 1 - Sex
+SEX Character 1 - Sex:
+
 - 1 .Male
 - 2 .Female
 
-RAC1P Character 1 - Recoded detailed race code
+RAC1P Character 1 - Recoded detailed race code:
+
 - 1 .White alone
 - 2 .Black or African American alone
 - 3 .American Indian alone
 - 4 .Alaska Native alone
 - 5 .American Indian and Alaska Native tribes specified; or .American Indian or Alaska Native, not specified and no
-    other- .races
+  other .races
 - 6 .Asian alone
 - 7 .Native Hawaiian and Other Pacific Islander alone
 - 8 .Some Other Race alone
 - 9 .Two or More Races
 
-ESR - target
+ESR - target:
+
 - True - employed
 - False - unemployed
 
@@ -244,6 +258,6 @@ ESR - target
 .. [1] Ding, F. et al. (2021). Retiring Adult: New Datasets for Fair Machine Learning. Advances in
        Neural Information Processing Systems, 34.
 
-.. -`github repository`: https://github.com/NannyML/nannyml/tree/main/docs/example_notebooks
+.. _`github repository`: https://github.com/NannyML/nannyml/tree/main/docs/example_notebooks
 .. _`folktables`: https://github.com/socialfoundations/folktables
 .. _`PUMS documentation`: https://www.census.gov/programs-surveys/acs/microdata/documentation.html

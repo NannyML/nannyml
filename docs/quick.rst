@@ -61,9 +61,9 @@ Dataframes contain:
 - model inputs like ``AGEP`` (person age), ``SCHL`` (education level) etc.
 - ``year`` - the year the data was gathered, the ``df_reference`` data covers 2015 while ``df_analysis`` ranges
   from 2016 to 2018.
-- ``y_true`` - classification :term:`target<Target>`, **notice that the target is not available in** ``df_analysis``.
-- ``y_pred_proba`` - analyzed model predicted probability scores.
-- ``y_pred`` - analyzed model predictions.
+- ``employed`` - classification :term:`target<Target>`, **notice that the target is not available in** ``df_analysis``.
+- ``prediction`` - analyzed model predictions.
+- ``predicted_probability`` - analyzed model predicted probability scores.
 
 
 Estimating Performance without Targets
@@ -118,8 +118,8 @@ Let's investigate this to determine whether we can rely on the estimation.
 Investigating Data Distribution Shifts
 --------------------------------------
 
-Once we've identified a performance issue, we will troubleshoot it. Let's focus on the first two features `AGEP` and
-`SCHL`. We will quantify potential distribution shifts for these two variables using the :ref:`univariate drift
+Once we've identified a performance issue, we will troubleshoot it. We will quantify potential distribution shifts
+for all the features using the :ref:`univariate drift
 detection module<_univariate_drift_detection>`.
 We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`
 class with the required arguments, fit on ``df_reference`` and calculate on
@@ -127,44 +127,80 @@ class with the required arguments, fit on ``df_reference`` and calculate on
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 11, 12
+    :cells: 11
+
+Now let's select only features that drifted most often. We will use one of the :ref:`ranking methods<tutorial-ranking>`
+- :meth:`~nannyml.drift.ranker.AlertCountRanker.rank`:
+
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 12
+
+.. nbtable::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cell: 13
+
+The top 3 indicated features are:
+
+ - `RELP` which describes the relationship of the person with the *reference* person in the household (which usually
+   is the house owner).
+ - `AGE` - age of the person.
+ - `SCHL` - education level.
+
+Let's plot univariate drift results for these features:
+
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 14
 
 .. image:: ./_static/quick-start-drift.svg
 
-The plots show JS-distance calculated between the chunk of interest and the reference data for each feature. For `AGEP`
+The plots show JS-distance calculated between the chunk of interest and the reference data for each feature. For
+`AGEP` and `RELP`
 one can see a mild shift starting around one-third of the analysis period and a high peak that likely corresponds
 to performance drop. Around the same time a similar peak can be notice for `SCHL`. Let's check whether the shift
 happens at the same time as the performance drop by :ref:`showing both results in single plot<compare_estimated_and_realized_performance>`:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 14
+    :cells: 16
 
 .. image:: ./_static/quick-start-drift-n-performance.svg
 
-The plot confirms our supposition: the main drift peak coincides with the strongest performance drop. It is interesting
+The main drift peak indeed coincides with the strongest performance drop. It is interesting
 to see that there is a noticeable shift magnitude increase right before the estimated drop happens. That could looks
 like an early sign of incoming issues. Now let's see what
 actually happened with the distributions by visualizing their change in the analysis period:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 16
+    :cells: 18
 
 .. image:: ./_static/quick-start-univariate-distribution.svg
 
-Distribution changes in the chunks of interest are significant. The age has strongly shifted towards
-younger people (around 18 years old). In the education level feature one of the categories has doubled its relative
-frequency. Since plots are interactive when run in a notebook they allow to check corresponding values in the bar
-plots. The category which frequency has increased is encoded :ref:`with value 19<dataset-real-world-ma-employment>`, which
-corresponds to people with *1 or more years of college credit, no degree*. It is likely that during the investigated period, there was a
-significant survey conducted at colleges and universities.
+Distribution changes in the chunks of interest are significant:
+
+ - Person age (`AGEP`) - strongly shifted towards younger people (around 18 years old).
+ - Relationship to reference person in household (`RELP`) - significant change of relative frequencies of categories.
+   Since plots are interactive when run in a notebook they allow to check corresponding values in the bar
+   plots. The category that has increased its reltive frequency from around 5% in reference period to almost 70% in
+   the chunk with the strongest drift is encoded :ref:`with value
+   17<dataset-real-world-ma-employment-feature-description>`, which refers to *Noninstitutionalized group quarters
+   population*. This corresponds to people who live at group quarters other than institutions. Examples: college
+   dormitories, rooming houses, religious group houses, communes or halfway houses.
+ - Education level (`SCHL`) one of the categories has doubled its relative frequency. The category which frequency has increased is encoded :ref:`with value
+   19<dataset-real-world-ma-employment-feature-description>`, which corresponds to people with *1 or more years of college credit, no degree*.
+
+So the main responders in the drifted period are young people who finished at least a year of college but did not
+graduate and don't live at their parents' houses. It means that most likely there was a significant survey
+action conducted at dormitories of colleges/universities. These findings indicate that at least significant part of
+the shift is a covariate shift which is one of :ref:`the main assumptions of CBPE<CBPE-assumptions-limitations>`.
 
 
 Comparing Estimation with Realized Performance when Targets Arrive
 ------------------------------------------------------------------
 
-The above findings enhance trust in the estimation. Once the labels are in place, we can :ref:`calculate performance<performance-calculation>`
+Once the labels are in place, we can :ref:`calculate performance<performance-calculation>`
 and
 compare with the estimation to verify its accuracy. We will use :class:`~nannyml.performance_calculation.calculator
 .PerformanceCalculator`
@@ -173,7 +209,7 @@ and follow the familiar pattern: initialize, fit and calculate. Then we will plo
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
-    :cells: 21
+    :cells: 23
 
 .. image:: ./_static/quick-start-estimated-and-realized.svg
 
