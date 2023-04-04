@@ -39,7 +39,7 @@ First we import required libraries and fetch the data with `folktables`_:
 
 Data is fetched for each year separately and column `year` is created.
 
-Descriptions of all the variables can be found in the :ref:`appendix<variable_descriptions>`.
+Descriptions of all the variables can be found in the :ref:`appendix<dataset-real-world-ma-employment-feature-description>`.
 
 
 Defining Partitions and Preprocessing
@@ -59,8 +59,8 @@ We now define categorical and numeric features:
     :cells: 14
 
 Since categorical features are already encoded correctly for LGBM model (non-negative, integers-like), we don't need
-any preprocessing. We will just turn them into proper ``integers``. We will also rename target column to make things
-clear:
+any preprocessing. We will just turn them into proper ``integers``. We will also rename the target column and convert
+target to ``int``:
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
@@ -70,13 +70,13 @@ clear:
 Developing ML Model and Making Predictions
 ------------------------------------------
 
-We will now fit model that will be subject to monitoring (e.g. in :ref:`quickstart<quick-start>`):
+We will now fit a model that will be subject to monitoring (e.g. in :ref:`quickstart<quick-start>`):
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb
     :cells: 19, 20
 
-Let's turn categorical features into proper ``dtype`` so that NannyML will correctly recognize them:
+Let's turn categorical features into ``category`` ``dtype`` so that NannyML correctly recognizes them:
 
 .. nbimport::
     :path: ./example_notebooks/Datasets - Census Employment MA.ipynb

@@ -28,7 +28,7 @@ Loading data
 ------------
 
 We will use a real-world dataset that contains inputs and predictions of a binary classification model that
-predicts whether an individual is based on survey data. Details about the dataset can be found
+predicts whether an individual is based employed on survey data. Details about the dataset can be found
 :ref:`here <dataset-real-world-ma-employment>`.
 
 The data is split into two periods: :ref:`reference <data-drift-periods-reference>` and
@@ -130,7 +130,7 @@ class with the required arguments, fit on ``df_reference`` and calculate on
     :cells: 11
 
 Now let's select only features that drifted most often. We will use one of the :ref:`ranking methods<tutorial-ranking>`
-- :meth:`~nannyml.drift.ranker.AlertCountRanker.rank`:
+- :meth:`~nannyml.drift.ranker.AlertCountRanker`:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -142,7 +142,7 @@ Now let's select only features that drifted most often. We will use one of the :
 
 The top 3 indicated features are:
 
- - `RELP` which describes the relationship of the person with the *reference* person in the household (which usually
+ - `RELP` - the relationship of the person with the *reference* person in the household (which usually
    is the house owner).
  - `AGE` - age of the person.
  - `SCHL` - education level.
@@ -155,7 +155,7 @@ Let's plot univariate drift results for these features:
 
 .. image:: ./_static/quick-start-drift.svg
 
-The plots show JS-distance calculated between the chunk of interest and the reference data for each feature. For
+The plots show JS-distance calculated between the chunk and the reference data for each feature. For
 `AGEP` and `RELP`
 one can see a mild shift starting around one-third of the analysis period and a high peak that likely corresponds
 to performance drop. Around the same time a similar peak can be notice for `SCHL`. Let's check whether the shift
