@@ -168,9 +168,9 @@ happens at the same time as the performance drop by :ref:`showing both results i
 .. image:: ./_static/quick-start-drift-n-performance.svg
 
 The main drift peak indeed coincides with the strongest performance drop. It is interesting
-to see that there is a noticeable shift magnitude increase right before the estimated drop happens. That could looks
-like an early sign of incoming issues. Now let's see what
-actually happened with the distributions by visualizing their change in the analysis period:
+to see that there is a noticeable shift magnitude increase right before the estimated drop happens. That looks
+like an early sign of incoming issues. Now let's have closer look at changes in the distributions by visualizing them
+in the analysis period:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -178,23 +178,25 @@ actually happened with the distributions by visualizing their change in the anal
 
 .. image:: ./_static/quick-start-univariate-distribution.svg
 
-Distribution changes in the chunks of interest are significant:
+Let's summarize the shifts:
 
  - Person age (`AGEP`) - strongly shifted towards younger people (around 18 years old).
  - Relationship to reference person in household (`RELP`) - significant change of relative frequencies of categories.
-   Since plots are interactive when run in a notebook they allow to check corresponding values in the bar
-   plots. The category that has increased its reltive frequency from around 5% in reference period to almost 70% in
+   Since plots are interactive (when run in a notebook) they allow to check corresponding values in the bar
+   plots. The category that has increased its relative frequency from around 5% in reference period to almost 70% in
    the chunk with the strongest drift is encoded :ref:`with value
    17<dataset-real-world-ma-employment-feature-description>`, which refers to *Noninstitutionalized group quarters
-   population*. This corresponds to people who live at group quarters other than institutions. Examples: college
+   population*. This corresponds to people who live at group quarters other than institutions. Examples are: college
    dormitories, rooming houses, religious group houses, communes or halfway houses.
- - Education level (`SCHL`) one of the categories has doubled its relative frequency. The category which frequency has increased is encoded :ref:`with value
-   19<dataset-real-world-ma-employment-feature-description>`, which corresponds to people with *1 or more years of college credit, no degree*.
+ - Education level (`SCHL`) - one of the categories has doubled its relative frequency. This category is encoded
+   :ref:`with value 19<dataset-real-world-ma-employment-feature-description>`, which corresponds to people with *1 or
+   more years of college credit, no degree*.
 
-So the main responders in the drifted period are young people who finished at least a year of college but did not
+So the main responders in the shifted period are young people who finished at least one year of college but did not
 graduate and don't live at their parents' houses. It means that most likely there was a significant survey
 action conducted at dormitories of colleges/universities. These findings indicate that at least significant part of
-the shift is a covariate shift which is one of :ref:`the main assumptions of CBPE<CBPE-assumptions-limitations>`.
+the shift has a nature of covariate shift [2]_ which is one of :ref:`the main assumptions of
+CBPE<CBPE-assumptions-limitations>`.
 
 
 Comparing Estimation with Realized Performance when Targets Arrive
@@ -236,3 +238,5 @@ on other datasets or ML problems look through our :ref:`examples<examples>`.
 **References**
 
 .. [1] https://www.nature.com/articles/s41598-022-15245-z
+.. [2] https://www.nannyml.com/blog/types-of-data-shift
+
