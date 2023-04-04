@@ -2,7 +2,6 @@
 #
 #  License: Apache Software License 2.0
 
-"""Implementation of the CBPE estimator."""
 from __future__ import annotations
 
 import copy
@@ -37,7 +36,11 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
 
 
 class CBPE(AbstractEstimator):
-    """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
+    """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique.
+
+    CBPE leverages the confidence score of the model predictions. It is used to estimate the performance of classification
+    models as they return predictions with an associated confidence score.
+    """
 
     def __init__(
         self,
@@ -152,11 +155,10 @@ class CBPE(AbstractEstimator):
 
         Examples
         --------
+        Using CBPE to estimate the perfomance of a model for a binary classification problem.
+
         >>> import nannyml as nml
-        >>> from IPython.display import display
-        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-        >>> display(reference_df.head(3))
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> estimator = nml.CBPE(
         ...     y_pred_proba='y_pred_proba',
         ...     y_pred='y_pred',
@@ -168,13 +170,30 @@ class CBPE(AbstractEstimator):
         >>> )
         >>> estimator.fit(reference_df)
         >>> results = estimator.estimate(analysis_df)
-        >>> display(results.data)
-        >>> for metric in estimator.metrics:
-        ...     metric_fig = results.plot(kind='performance', metric=metric)
-        ...     metric_fig.show()
-        >>> for metric in estimator.metrics:
-        ...     metric_fig = results.plot(kind='performance', plot_reference=True, metric=metric)
-        ...     metric_fig.show()
+        >>> metric_fig = results.plot()
+        >>> metric_fig.show()
+
+
+        Using CBPE to estimate the perfomance of a model for a multiclass classification problem.
+
+        >>> import nannyml as nml
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_multiclass_classification_dataset()
+        >>> estimator = nml.CBPE(
+        ...     y_pred_proba={
+        ...         'prepaid_card': 'y_pred_proba_prepaid_card',
+        ...         'highstreet_card': 'y_pred_proba_highstreet_card',
+        ...         'upmarket_card': 'y_pred_proba_upmarket_card'},
+        ...     y_pred='y_pred',
+        ...     y_true='y_true',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_multiclass',
+        ...     metrics=['roc_auc', 'f1'],
+        ...     chunk_size=6000,
+        >>> )
+        >>> estimator.fit(reference_df)
+        >>> results = estimator.estimate(analysis_df)
+        >>> metric_fig = results.plot()
+        >>> metric_fig.show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
