@@ -38,8 +38,8 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
 class CBPE(AbstractEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique.
 
-    CBPE leverages the confidence score of the model predictions. It is used to estimate the performance of classification
-    models as they return predictions with an associated confidence score.
+    CBPE leverages the confidence score of the model predictions. It is used to estimate the performance of \
+    classification models as they return predictions with an associated confidence score.
     """
 
     def __init__(
@@ -71,7 +71,8 @@ class CBPE(AbstractEstimator):
             Name(s) of the column(s) containing your model output.
 
                 - For binary classification, pass a single string refering to the model output column.
-                - For multiclass classification, pass a dictionary that maps a class string to the column name containing model outputs for that class.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
         y_pred: str
             The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
@@ -137,15 +138,17 @@ class CBPE(AbstractEstimator):
             Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
             'predicted'.
 
-                - None - the confusion matrix will not be normalized and the counts for each cell of the matrix will be returned.
+                - None - the confusion matrix will not be normalized and the counts for each cell of the matrix \
+                will be returned.
                 - 'all' - the confusion matrix will be normalized by the total number of observations.
-                - 'true' - the confusion matrix will be normalized by the total number of observations for each true class.
-                - 'predicted' - the confusion matrix will be normalized by the total number of observations for each predicted class.
+                - 'true' - the confusion matrix will be normalized by the total number of observations for each true  \
+                class.
+                - 'predicted' - the confusion matrix will be normalized by the total number of observations for each \
+                predicted class.
         business_value_matrix: Optional[Union[List, np.ndarray]], default=None
             A 2x2 matrix that specifies the value of each cell in the confusion matrix.
-            The format of the business value matrix must be specified as [[value_of_TN, value_of_FP], [value_of_FN, value_of_TP]]
-
-            Required when estimating the 'business_value' metric.
+            The format of the business value matrix must be specified as [[value_of_TN, value_of_FP], \
+            [value_of_FN, value_of_TP]]. Required when estimating the 'business_value' metric.
         normalize_business_value: str, default=None
             Determines how the business value will be normalized. Allowed values are None and
             'per_prediction'.
