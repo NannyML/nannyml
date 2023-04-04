@@ -169,7 +169,7 @@ happens at the same time as the performance drop by :ref:`showing both results i
 
 The main drift peak indeed coincides with the strongest performance drop. It is interesting
 to see that there is a noticeable shift magnitude increase right before the estimated drop happens. That looks
-like an early sign of incoming issues. Now let's have closer look at changes in the distributions by visualizing them
+like an early sign of incoming issues. Now let's have a closer look at changes in the distributions by visualizing them
 in the analysis period:
 
 .. nbimport::
@@ -185,12 +185,12 @@ Let's summarize the shifts:
    Since plots are interactive (when run in a notebook) they allow to check corresponding values in the bar
    plots. The category that has increased its relative frequency from around 5% in reference period to almost 70% in
    the chunk with the strongest drift is encoded :ref:`with value
-   17<dataset-real-world-ma-employment-feature-description>`, which refers to *Noninstitutionalized group quarters
+   17<dataset-real-world-ma-employment-feature-description-RELP>`, which refers to *Noninstitutionalized group quarters
    population*. This corresponds to people who live at group quarters other than institutions. Examples are: college
    dormitories, rooming houses, religious group houses, communes or halfway houses.
  - Education level (`SCHL`) - one of the categories has doubled its relative frequency. This category is encoded
-   :ref:`with value 19<dataset-real-world-ma-employment-feature-description>`, which corresponds to people with *1 or
-   more years of college credit, no degree*.
+   :ref:`with value 19<dataset-real-world-ma-employment-feature-description-SCHL>`, which corresponds to people with
+   *1 or more years of college credit, no degree*.
 
 So the main responders in the shifted period are young people who finished at least one year of college but did not
 graduate and don't live at their parents' houses. It means that most likely there was a significant survey

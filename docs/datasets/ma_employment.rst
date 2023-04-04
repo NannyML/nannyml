@@ -12,7 +12,7 @@ To find out what requirements NannyML has for datasets, check out :ref:`Data Req
 Data Source
 ===========
 
-The dataset comes from US Census and it was obtained using `folktables`_. Feature descriptions are given in `PUMS
+The dataset comes from US Census and it was obtained using `folktables`_ [1]_. Feature descriptions are given in `PUMS
 documentation`_.
 
 Dataset Description
@@ -101,6 +101,8 @@ This description comes from `PUMS documentation`_:
 
 AGEP - age person, numeric
 
+.. _dataset-real-world-ma-employment-feature-description-SCHL:
+
 SCHL - Educational attainment:
 
 - bb .N/A (less than 3 years old)
@@ -137,6 +139,8 @@ MAR Character 1 - Marital status:
 - 3 .Divorced
 - 4 .Separated
 - 5 .Never married or under 15 years old
+
+.. _dataset-real-world-ma-employment-feature-description-RELP:
 
 RELP Character 2 - Relationship:
 
