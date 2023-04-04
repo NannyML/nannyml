@@ -1457,7 +1457,6 @@ class BinaryClassificationBusinessValue(Metric):
         self.confidence_lower_bound: Optional[float] = None
 
     def _fit(self, reference_data: pd.DataFrame):
-
         self._sampling_error_components = bse.business_value_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
@@ -1498,7 +1497,6 @@ class BinaryClassificationBusinessValue(Metric):
         return estimate_business_value(y_pred, y_pred_proba, business_value_normalization, business_value_matrix)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-
         return bse.business_value_sampling_error(
             self._sampling_error_components,
             data,
