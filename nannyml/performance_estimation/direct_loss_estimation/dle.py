@@ -30,10 +30,10 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
 
 
 class DLE(AbstractEstimator):
-    """The Direct :term:`Loss` Estimator (DLE) estimates the :term:`loss<Loss>` resulting
+    """The Direct Loss Estimator (DLE) estimates the :term:`loss<Loss>` resulting
     from the difference between the prediction and the target before the targets become known.
-    The :term:`loss<Loss>` is defined from the regression performance metric
-    specified. For all metrics used the :term:`loss<Loss>` function is positive.
+    The loss is defined from the regression performance metric
+    specified. For all metrics used the loss function is positive.
 
     It uses an internal
     `LGBMRegressor <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_
@@ -162,6 +162,8 @@ class DLE(AbstractEstimator):
         >>> )
         >>> estimator.fit(reference_df)
         >>> results = estimator.estimate(analysis_df)
+        >>> metric_fig = results.plot()
+        >>> metric_fig.show()
 
         With hyperparameter tuning, using a custom hyperparameter tuning configuration:
 
@@ -190,6 +192,8 @@ class DLE(AbstractEstimator):
         >>> )
         >>> estimator.fit(reference_df)
         >>> results = estimator.estimate(analysis_df)
+        >>> metric_fig = results.plot()
+        >>> metric_fig.show()
 
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
