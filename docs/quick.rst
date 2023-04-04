@@ -110,7 +110,7 @@ Let's visualize the results:
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 9
 
-.. image:: ./_static/quick-start-perf-est.svg
+.. image:: ./_static/quickstart/quick-start-perf-est.svg
 
 The estimated performance dropped significantly in the later part of the analysis.
 Let's investigate this to determine whether we can rely on the estimation.
@@ -120,7 +120,7 @@ Investigating Data Distribution Shifts
 
 Once we've identified a performance issue, we will troubleshoot it. We will quantify potential distribution shifts
 for all the features using the :ref:`univariate drift
-detection module<_univariate_drift_detection>`.
+detection module<univariate_drift_detection>`.
 We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`
 class with the required arguments, fit on ``df_reference`` and calculate on
 ``df_analysis``.
@@ -153,7 +153,7 @@ Let's plot univariate drift results for these features:
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 14
 
-.. image:: ./_static/quick-start-drift.svg
+.. image:: ./_static/quickstart/quick-start-drift.svg
 
 The plots show JS-distance calculated between the chunk and the reference data for each feature. For
 `AGEP` and `RELP`
@@ -165,7 +165,7 @@ happens at the same time as the performance drop by :ref:`showing both results i
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 16
 
-.. image:: ./_static/quick-start-drift-n-performance.svg
+.. image:: ./_static/quickstart/quick-start-drift-n-performance.svg
 
 The main drift peak indeed coincides with the strongest performance drop. It is interesting
 to see that there is a noticeable shift magnitude increase right before the estimated drop happens. That looks
@@ -176,7 +176,7 @@ in the analysis period:
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 18
 
-.. image:: ./_static/quick-start-univariate-distribution.svg
+.. image:: ./_static/quickstart/quick-start-univariate-distribution.svg
 
 Let's summarize the shifts:
 
@@ -213,7 +213,7 @@ and follow the familiar pattern: initialize, fit and calculate. Then we will plo
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 23
 
-.. image:: ./_static/quick-start-estimated-and-realized.svg
+.. image:: ./_static/quickstart/quick-start-estimated-and-realized.svg
 
 We see that the realized performance has indeed sharply dropped in the
 two indicated chunks. The performance was relatively stable in the preceding
