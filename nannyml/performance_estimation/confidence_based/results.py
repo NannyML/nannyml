@@ -161,6 +161,10 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         ----------
         kind: str, default='performance'
 
+        Raises
+        ------
+        InvalidArgumentsException: when an unknown plot ``kind`` is provided.
+
         Returns
         -------
         fig: :class:`plotly.graph_objs._figure.Figure`
