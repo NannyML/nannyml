@@ -32,6 +32,21 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         continuous_column_names: List[str],
         timestamp_column_name: Optional[str] = None,
     ):
+        """
+        Parameters
+        ----------
+        results_data: pd.DataFrame
+            Results data returned by a DataReconstructionDriftCalculator.
+        column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        categorical_column_names : List[str]
+            Subset of categorical features to be included in calculation.
+        continuous_column_names : List[str]
+            Subset of continuous features to be included in calculation.
+        timestamp_column_name: Optional[str], default=None
+            The name of the column containing the timestamp of the model prediction.
+            If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
+        """
         metric = Metric(display_name='Reconstruction error', column_name='reconstruction_error')
         super().__init__(results_data, [metric])
 
@@ -41,24 +56,25 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         self.timestamp_column_name = timestamp_column_name
 
     def keys(self) -> List[Key]:
+        """
+        Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`
+        """
         return [Key(properties=('reconstruction_error',), display_names=('Reconstruction error',))]
 
     @log_usage(UsageEvent.MULTIVAR_DRIFT_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
         """Renders plots for metrics returned by the multivariate data reconstruction calculator.
 
-        The different plot kinds that are available:
-
-        - ``drift``
-                plots the multivariate reconstruction error over the provided features
-                per :class:`~nannyml.chunk.Chunk`.
-
         Parameters
         ----------
-        kind: str, default=`drift`
-            The kind of plot you want to have. Value can currently only be ``drift``.
+        kind: str, default='drift'
+            The kind of plot you want to have. Value can currently only be 'drift'.
         plot_reference: bool, default=False
-            Indicates whether to include the reference period in the plot or not. Defaults to ``False``.
+            Indicates whether to include the reference period in the plot or not. Defaults to False.
+
+        Raises
+        ------
+        InvalidArgumentsException: when an unknown plot ``kind`` is provided.
 
         Returns
         -------
