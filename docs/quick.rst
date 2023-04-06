@@ -208,6 +208,13 @@ compare with the estimation to verify its accuracy. We will use the :class:`~nan
 .PerformanceCalculator`
 and follow the familiar pattern: initialize, fit and calculate. Then we will plot the comparison:
 
+.. nbimport::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cells: 20, 21
+
+.. nbtable::
+    :path: ./example_notebooks/Quickstart.ipynb
+    :cell: 22
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
