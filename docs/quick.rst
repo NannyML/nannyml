@@ -15,9 +15,7 @@ What is NannyML?
 
 
 
-This Quickstart presents some of the core functionalities of NannyML on a real-world dataset with a binary
-classification
-model.
+This Quickstart presents some of the core functionalities of NannyML.
 
 -------------------------------
 Exemplary Workflow with NannyML
@@ -56,12 +54,12 @@ Let's load the libraries and the data:
     :path: ./example_notebooks/Quickstart.ipynb
     :cell: 5
 
-Dataframes contain:
+THe dataframes contain:
 
-- model inputs like ``AGEP`` (person age), ``SCHL`` (education level) etc.
+- model inputs like *AGEP*, *SCHL*.
 - ``year`` - the year the data was gathered, the ``df_reference`` data covers 2015 while ``df_analysis`` ranges
   from 2016 to 2018.
-- ``employed`` - classification :term:`target<Target>`, **notice that the target is not available in** ``df_analysis``.
+- ``employed`` - classification :term:`target<Target>`, notice that the target is not available in ``df_analysis``.
 - ``prediction`` - analyzed model predictions.
 - ``predicted_probability`` - analyzed model predicted probability scores.
 
@@ -69,8 +67,8 @@ Dataframes contain:
 Estimating Performance without Targets
 --------------------------------------
 
-ML models are deployed to production once their business value and performance have been validated. This usually takes
-place in the model development phase.
+ML models are deployed to production once their business value and performance have been validated and tested. This
+usually takes place in the model development phase.
 The main goal of the ML model monitoring is to continuously verify whether the model maintains its anticipated
 performance (which is not the case most of the time [1]_).
 
@@ -79,7 +77,7 @@ the case. The labels can be delayed, costly or impossible to get. In such cases,
 performance is a good start of the monitoring workflow. NannyML can estimate the performance of an ML model without access to targets.
 
 To reliably assess the performance of an ML model, we need to aggregate data. We call this *aggregation* chunking and
-the result of it a :term:`chunk<Data Chunk>`. There are :ref:`many ways to define chunks in NannyML<chunking>`, in
+the result of it a :term:`chunk<Data Chunk>`. There are :ref:`many ways to define chunks in NannyML<chunking>`, in this
 quickstart we will
 use size-based chunking and define the size of the chunk to be 5000 observations:
 
@@ -87,11 +85,11 @@ use size-based chunking and define the size of the chunk to be 5000 observations
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 6
 
-For :ref:`binary classification model performance estimation<binary-performance-estimation>` we will use
+For :ref:`binary classification model performance estimation<binary-performance-estimation>` we will use the
 :class:`~nannyml.performance_estimation
 .confidence_based
 .cbpe.CBPE` class (:ref:`Confidence-based Performance Estimation
-<how-it-works-cbpe>`) to estimate ``roc_auc`` metric. Let's initialize the estimator and provide the required
+<how-it-works-cbpe>`) to estimate the ``roc_auc`` metric. Let's initialize the estimator and provide the required
 arguments:
 
 .. nbimport::
@@ -122,14 +120,15 @@ Once we've identified a performance issue, we will troubleshoot it. We will quan
 for all the features using the :ref:`univariate drift
 detection module<univariate_drift_detection>`.
 We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`
-class with the required arguments, fit on ``df_reference`` and calculate on
+class with the required arguments, fit it on ``df_reference`` and calculate on
 ``df_analysis``.
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 11
 
-Now let's select only features that drifted most often. We will use one of the :ref:`ranking methods<tutorial-ranking>`
+Now let's select only the features that drifted the most. We will use one of the :ref:`ranking
+methods<tutorial-ranking>`
 - :meth:`~nannyml.drift.ranker.AlertCountRanker`:
 
 .. nbimport::
@@ -142,10 +141,9 @@ Now let's select only features that drifted most often. We will use one of the :
 
 The top 3 indicated features are:
 
- - `RELP` - the relationship of the person with the *reference* person in the household (which usually
-   is the house owner).
- - `AGE` - age of the person.
- - `SCHL` - education level.
+ - **RELP** - the relationship of the person with the house owner.
+ - **AGE** - age of the person.
+ - **SCHL** - education level.
 
 Let's plot univariate drift results for these features:
 
@@ -155,10 +153,10 @@ Let's plot univariate drift results for these features:
 
 .. image:: ./_static/quickstart/quick-start-drift.svg
 
-The plots show JS-distance calculated between the chunk and the reference data for each feature. For
-`AGEP` and `RELP`
+The plots show JS-distance calculated between the reference data and each chunk for every feature. For
+**AGEP** and **RELP**
 one can see a mild shift starting around one-third of the analysis period and a high peak that likely corresponds
-to performance drop. Around the same time a similar peak can be notice for `SCHL`. Let's check whether the shift
+to performance drop. Around the same time a similar peak can be notice for **SCHL**. Let's check whether the shift
 happens at the same time as the performance drop by :ref:`showing both results in single plot<compare_estimated_and_realized_performance>`:
 
 .. nbimport::
@@ -180,31 +178,33 @@ in the analysis period:
 
 Let's summarize the shifts:
 
- - Person age (`AGEP`) - strongly shifted towards younger people (around 18 years old).
- - Relationship to reference person in household (`RELP`) - significant change of relative frequencies of categories.
-   Since plots are interactive (when run in a notebook) they allow to check corresponding values in the bar
+ - The distribution of person age (**AGEP**) has strongly shifted towards younger people (around 18 years old).
+ - The relative frequencies in of the categories in **RELP** have changed significantly. Since the plots are
+   interactive (when run in a notebook) they allow to check corresponding values in the bar
    plots. The category that has increased its relative frequency from around 5% in reference period to almost 70% in
    the chunk with the strongest drift is encoded :ref:`with value
    17<dataset-real-world-ma-employment-feature-description-RELP>`, which refers to *Noninstitutionalized group quarters
    population*. This corresponds to people who live at group quarters other than institutions. Examples are: college
    dormitories, rooming houses, religious group houses, communes or halfway houses.
- - Education level (`SCHL`) - one of the categories has doubled its relative frequency. This category is encoded
+ - The distribution of **SCHL** changed with one of the categories doubling its relative frequency. This category is
+   encoded
    :ref:`with value 19<dataset-real-world-ma-employment-feature-description-SCHL>`, which corresponds to people with
    *1 or more years of college credit, no degree*.
 
-So the main responders in the shifted period are young people who finished at least one year of college but did not
+So the main responders in the period with data shift are young people who finished at least one year of a college but
+did
+not
 graduate and don't live at their parents' houses. It means that most likely there was a significant survey
-action conducted at dormitories of colleges/universities. These findings indicate that at least significant part of
-the shift has a nature of covariate shift [2]_ which is one of :ref:`the main assumptions of
-CBPE<CBPE-assumptions-limitations>`.
+action conducted at dormitories of colleges/universities. These findings indicate that significant part of
+the shift has a nature of covariate shift [2]_ which :ref:`CBPE handles well<CBPE-assumptions-limitations>`.
 
 
 Comparing Estimation with Realized Performance when Targets Arrive
 ------------------------------------------------------------------
 
-Once the labels are in place, we can :ref:`calculate performance<performance-calculation>`
+Once the labels are in place, we can :ref:`calculate the realized performance<performance-calculation>`
 and
-compare with the estimation to verify its accuracy. We will use :class:`~nannyml.performance_calculation.calculator
+compare with the estimation to verify its accuracy. We will use the :class:`~nannyml.performance_calculation.calculator
 .PerformanceCalculator`
 and follow the familiar pattern: initialize, fit and calculate. Then we will plot the comparison:
 
@@ -217,7 +217,7 @@ and follow the familiar pattern: initialize, fit and calculate. Then we will plo
 
 We see that the realized performance has indeed sharply dropped in the
 two indicated chunks. The performance was relatively stable in the preceding
-period even though ``AGEP`` was already slightly shifted at that time. This confirms the need to monitor
+period even though **AGEP** was already slightly shifted at that time. This confirms the need to monitor
 performance/estimated performance as not every shift impacts performance.
 
 
@@ -229,7 +229,9 @@ This Quickstart presents some of the core functionalities of NannyML on an examp
 data. The walk through is concise to help you get familiar with fundamental concepts and structure of the
 library. NannyML provides other useful functionalities (like :ref:`multivariate drift
 detection<multivariate_drift_detection>`) that
-can help you monitor your production models comprehensively. All :ref:`our tutorials<tutorials>` are a good place to start exploring them.
+can help you monitor your models in production comprehensively. All :ref:`our tutorials<tutorials>` are a good
+place
+to start exploring them.
 
 If you want to know what is implemented under the hood - visit :ref:`how it works<how_it_works>`. Finally, if you just look for examples
 on other datasets or ML problems look through our :ref:`examples<examples>`.
