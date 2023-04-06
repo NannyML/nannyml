@@ -56,7 +56,7 @@ Let's load the libraries and the data:
 
 THe dataframes contain:
 
-- model inputs like *AGEP*, *SCHL*.
+- model inputs like **AGEP**, **SCHL**.
 - ``year`` - the year the data was gathered, the ``df_reference`` data covers 2015 while ``df_analysis`` ranges
   from 2016 to 2018.
 - ``employed`` - classification :term:`target<Target>`, notice that the target is not available in ``df_analysis``.
