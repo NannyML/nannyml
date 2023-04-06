@@ -181,7 +181,7 @@ Let's summarize the shifts:
 
  - The distribution of person age (**AGEP**) has strongly shifted towards younger people (around 18 years old).
  - The relative frequencies of the categories in **RELP** have changed significantly. Since the plots are
-   interactive (when run in a notebook), they allow to checking the corresponding values in the bar
+   interactive (when run in a notebook), they allow checking the corresponding values in the bar
    plots. The category that has increased its relative frequency from around 5% in the reference period to almost 70% in
    the chunk with the strongest drift is encoded :ref:`with value
    17<dataset-real-world-ma-employment-feature-description-RELP>`, which refers to *Noninstitutionalized group quarters
