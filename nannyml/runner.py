@@ -32,6 +32,8 @@ class RunContext:
     total_steps: int
     current_calculator: str
     current_calculator_config: Optional[Dict[str, Any]] = None
+    current_calculator_success: bool = True
+    run_success: bool = True
     result: Optional[Result] = None
 
     def increase_step(self):
@@ -78,7 +80,8 @@ def run(  # noqa: C901
     on_fit: Optional[Callable[[RunContext], Any]] = None,
     on_calculate: Optional[Callable[[RunContext], Any]] = None,
     on_write: Optional[Callable[[RunContext], Any]] = None,
-    on_success: Optional[Callable[[RunContext], Any]] = None,
+    on_calculator_complete: Optional[Callable[[RunContext], Any]] = None,
+    on_run_complete: Optional[Callable[[RunContext], Any]] = None,
     on_fail: Optional[Callable[[RunContext, Optional[Exception]], Any]] = None,
 ):
     logger = RunnerLogger(logger=logging.getLogger(__name__), console=console)
@@ -171,13 +174,23 @@ def run(  # noqa: C901
                         logger.log(f"writing results with {writer} and args {write_args}", log_level=logging.DEBUG)
                         writer.write(result, **write_args)
 
-                    if on_success:
-                        on_success(context)
+                    if on_calculator_complete:
+                        on_calculator_complete(context)
                 except Exception as exc:
+                    context.current_calculator_success = False
+                    context.run_success = False
                     if on_fail:
                         on_fail(context, exc)
                     logger.log(f"an unexpected exception occurred running '{calculator_config.type}': {exc}")
+
+            if on_run_complete:
+                on_run_complete(context)
+
     except Exception as exc:
+        context.run_success = False
+        if on_fail:
+            on_fail(context, exc)
+
         raise exc
 
 
