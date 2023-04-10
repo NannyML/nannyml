@@ -28,8 +28,8 @@ If so, the alert flag will be set to ``True`` for that chunk.
 All NannyML calculators and estimators have a ``threshold`` property that allows you to set a custom threshold for
 their metrics or inspect them.
 
-Some metrics have mathematical boundaries. The ``F1`` score for example, is limited to :math:`[0, 1]`.
-To enforce these boundaries some metrics and drift methods within NannyML have lower and upper limits.
+Some metrics have mathematical boundaries. For example, the ``F1`` score, is limited to :math:`[0, 1]`.
+To enforce these boundaries, some metrics and drift methods within NannyML have lower and upper limits.
 When calculating the threshold values during fitting, NannyML will check if the calculated threshold values fall within
 these limits. If they don't, the breaching threshold value(s) will be overridden by the theoretical limit.
 
@@ -103,8 +103,8 @@ Multipliers can make the offset smaller or larger, alternatives to the `mean` ma
     :cells: 5
     :show_output:
 
-By providing a `None` value you can disable one or more thresholds. The following example shows how to disable the
-lower threshold by setting the appropriate multiplier to `None`.
+By providing a ``None`` value you can disable one or more thresholds. The following example shows how to disable the
+lower threshold by setting the appropriate multiplier to ``None``.
 
 .. nbimport::
     :path: ./example_notebooks/How it Works - Thresholds.ipynb

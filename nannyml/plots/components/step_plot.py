@@ -9,7 +9,7 @@ from plotly.graph_objects import Figure
 
 from nannyml.plots.colors import Colors
 from nannyml.plots.components.hover import Hover
-from nannyml.plots.util import add_artificial_endpoint, check_and_convert, is_time_based_x_axis, pairwise
+from nannyml.plots.util import add_artificial_endpoint, check_and_convert, pairwise
 
 
 def metric(
@@ -34,7 +34,6 @@ def metric(
         figure.update_xaxes(
             linecolor=Colors.INDIGO_PERSIAN,
             showgrid=False,
-            showticklabels=is_time_based_x_axis(start_dates, end_dates),
             mirror=True,
             zeroline=False,
             matches='x',
