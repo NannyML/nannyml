@@ -241,7 +241,16 @@ class JensenShannonDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
-
+        """
+        Parameters
+        ----------
+        display_name : str, default='Jensen-Shannon distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='jensen-shannon'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
         self._treat_as_type: str
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
@@ -311,6 +320,18 @@ class KolmogorovSmirnovStatistic(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Kolmogorov-Smirnov statistic'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='kolmogorov-smirnov'
+            The name used to indicate the metric in columns of a DataFrame.
+        upper_threshold_limit : float, default=1.0
+            An optional upper threshold for the performance metric.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
         self._reference_data: Optional[pd.Series] = None
         self._reference_size: float
         self._qts: np.ndarray
@@ -378,6 +399,18 @@ class Chi2Statistic(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Chi2 statistic'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='chi2'
+            The name used to indicate the metric in columns of a DataFrame.
+        upper_threshold_limit : float, default=1.0
+            An optional upper threshold for the performance metric.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
         self._reference_data_vcs: pd.Series
         self._p_value: float
         self._fitted = False
@@ -429,6 +462,16 @@ class LInfinityDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='L-Infinity distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='l_infinity'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
 
         self._reference_proba: Optional[dict] = None
 
@@ -471,6 +514,16 @@ class WassersteinDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Wasserstein distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='wasserstein'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
 
         self._reference_data: Optional[pd.Series] = None
         self._reference_size: float
@@ -566,6 +619,16 @@ class HellingerDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Hellinger distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='hellinger'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
 
         self._treat_as_type: str
         self._bins: np.ndarray
