@@ -13,7 +13,7 @@ we are trying to build an intuition here, and part of it is - for example -  to 
 happen to see a selected distance metric reaching its upper limit. In all the experiments described below,
 we compare two samples of data - one of which we call a **reference** sample and the other an **analysis** sample.
 
-.. list-table:: At glance comparison of different methods
+.. list-table:: At a glance comparison of different methods
    :widths: 20 10 10 20 40
    :header-rows: 1
 
