@@ -50,6 +50,7 @@ from .datasets import (
 )
 from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
 from .data_quality import MissingValuesCalculator, UnseenValuesCalculator
+from .stats import SimpleStatsSumCalculator
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator
