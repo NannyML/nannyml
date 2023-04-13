@@ -64,7 +64,7 @@ def _validate_performance_result(performance_results: Union[CBPEResults, DLEResu
 
 
 class AlertCountRanker:
-    """Ranks features by the number of drift 'alerts' they've caused."""
+    """Ranks features by the number of drift alerts they've caused."""
 
     @log_usage(UsageEvent.RANKER_ALERT_COUNT_RUN)
     def rank(
@@ -92,9 +92,7 @@ class AlertCountRanker:
         >>> import nannyml as nml
         >>> from IPython.display import display
         >>>
-        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-        >>> target_df = nml.load_synthetic_binary_classification_dataset()[2]
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
         >>>
         >>> display(reference_df.head())
         >>>
@@ -167,6 +165,52 @@ class CorrelationRanker:
             Union[CBPEResults, DLEResults, PerformanceCalculationResults]
         ] = None,
     ) -> CorrelationRanker:
+        """Calculates the average performance during the reference period.
+        This value is saved at the `mean_reference_performance` property of the ranker.
+
+        Parameters
+        ----------
+        reference_performance_calculation_result : Union[CBPEResults, DLEResults, PerformanceCalculationResults], default=None
+            Performance results from either CBPE, DLE or the PerformanceCalculator.
+
+        Returns
+        -------
+        ranking: CorrelationRanker
+
+        Examples
+        --------
+        >>> import nannyml as nml
+        >>> from IPython.display import display
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> display(reference_df.head())
+        >>>
+        >>> column_names = [
+        >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period',
+        >>>                                                        'y_pred', 'repaid', 'identifier']]
+        >>>
+        >>> calc = nml.UnivariateStatisticalDriftCalculator(column_names=column_names,
+        >>>                                                 timestamp_column_name='timestamp')
+        >>>
+        >>> calc.fit(reference_df)
+        >>>
+        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>>
+        >>> ranker = AlertCountRanker(drift_calculation_result=results)
+        >>> ranked_features = ranker.rank(only_drifting=False)
+        >>> display(ranked_features)
+                          column_name  number_of_alerts  rank
+        1        distance_from_office                 5     1
+        2                salary_range                 5     2
+        3  public_transportation_cost                 5     3
+        4            wfh_prev_workday                 5     4
+        5                      tenure                 2     5
+        6         gas_price_per_litre                 0     6
+        7                     workday                 0     7
+        8            work_home_actual                 0     8
+        """
+
         if reference_performance_calculation_result is None:
             raise InvalidArgumentsException("reference performance calculation results can not be None.")
         _validate_performance_result(reference_performance_calculation_result)
@@ -190,6 +234,22 @@ class CorrelationRanker:
         performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
         only_drifting: bool = False,
     ):
+        """Compares the number of alerts for each feature and ranks them accordingly.
+
+        Parameters
+        ----------
+        drift_calculation_result: UnivariateResults
+            Univariate drift results.
+        performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]], default=None
+            Performance results from either CBPE, DLE or the PerformanceCalculator
+        only_drifting: bool, default=False
+            Omits features without alerts from the ranking results.
+
+        Returns
+        -------
+        ranking: pd.DataFrame
+            A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
+            second-highest rank is 2, etc.)"""
         if not self._is_fitted or self.metric is None:
             raise NotFittedException("trying to call 'rank()' on an unfitted Ranker. Please call 'fit()' first")
 
