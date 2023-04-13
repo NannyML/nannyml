@@ -1,18 +1,6 @@
 Choosing Univariate Drift Detection Methods
 ===========================================
 
-
-The data experiments on this page show how the Univariate Drift Detection methods available in NannyML
-respond to data distribution shifts of chosen type and magnitude. The main purpose is to build intuition and
-help select the right method given the type (categorical vs. continuous) and distribution of the variable that we
-want
-to monitor. Some of
-the
-distribution shifts introduced are extreme and thus not very likely to happen in real-life scenarios. But again -
-we are trying to build an intuition here, and part of it is - for example -  to show how big of a shift needs to
-happen to see a selected distance metric reaching its upper limit. In all the experiments described below,
-we compare two samples of data - one of which we call a **reference** sample and the other an **analysis** sample.
-
 .. list-table:: At a glance comparison of different methods
    :widths: 20 10 10 20 40
    :header-rows: 1
@@ -60,6 +48,17 @@ we compare two samples of data - one of which we call a **reference** sample and
      - Statistical significance
      - | False positives,
        | function of sample size
+
+The data experiments on this page show how the Univariate Drift Detection methods available in NannyML
+respond to data distribution shifts of chosen type and magnitude. The main purpose is to build intuition and
+help select the right method given the type (categorical vs. continuous) and distribution of the variable that we
+want
+to monitor. Some of
+the
+distribution shifts introduced are extreme and thus not very likely to happen in real-life scenarios. But again -
+we are trying to build an intuition here, and part of it is - for example -  to show how big of a shift needs to
+happen to see a selected distance metric reaching its upper limit. In all the experiments described below,
+we compare two samples of data - one of which we call a **reference** sample and the other an **analysis** sample.
 
 
 Comparison of Methods for Continuous Variables
