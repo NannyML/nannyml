@@ -54,7 +54,23 @@ class MulticlassClassificationAUROC(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new AUROC instance."""
+        """Creates a new AUROC instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='roc_auc',
             y_true=y_true,
@@ -130,7 +146,23 @@ class MulticlassClassificationF1(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new F1 instance."""
+        """Creates a new F1 instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='f1',
             y_true=y_true,
@@ -200,7 +232,23 @@ class MulticlassClassificationPrecision(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Precision instance."""
+        """Creates a new Precision instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='precision',
             y_true=y_true,
@@ -270,7 +318,23 @@ class MulticlassClassificationRecall(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Recall instance."""
+        """Creates a new Recall instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='recall',
             y_true=y_true,
@@ -340,7 +404,23 @@ class MulticlassClassificationSpecificity(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Specificity instance."""
+        """Creates a new Specificity instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='specificity',
             y_true=y_true,
@@ -414,7 +494,23 @@ class MulticlassClassificationAccuracy(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Accuracy instance."""
+        """Creates a new Accuracy instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='accuracy',
             y_true=y_true,
