@@ -66,30 +66,25 @@ class PerformanceCalculator(AbstractCalculator):
 
         Parameters
         ----------
+        metrics: Union[str, List[str]]
+            A metric or list of metrics to calculate.
         y_true: str
             The name of the column containing target values.
-        y_pred_proba: ModelOutputsType
+        y_pred: str
+            The name of the column containing your model predictions.
+        problem_type: Union[str, ProblemType]
+            Determines which method to use. Allowed values are:
+
+                - 'regression'
+                - 'classification_binary'
+                - 'classification_multiclass'
+        y_pred_proba: ModelOutputsType, default=None
             Name(s) of the column(s) containing your model output.
             Pass a single string when there is only a single model output column, e.g. in binary classification cases.
             Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
-        y_pred: str
-            The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
-        metrics: Union[str, List[str]]
-            A metric or list of metrics to calculate.
-        chunk_size: int, default=None
-            Splits the data into chunks containing `chunks_size` observations.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_number: int, default=None
-            Splits the data into `chunk_number` pieces.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunk_period: str, default=None
-            Splits the data according to the given period.
-            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker, default=None
-            The `Chunker` used to split the data sets into a lists of chunks.
         thresholds: dict, default={ \
             'roc_auc': StandardDeviationThreshold(), \
             'f1': StandardDeviationThreshold(), \
@@ -124,6 +119,17 @@ class PerformanceCalculator(AbstractCalculator):
                 - `msle`: `StandardDeviationThreshold()`
                 - `rmse`: `StandardDeviationThreshold()`
                 - `rmsle`: `StandardDeviationThreshold()`
+        chunk_size: int, default=None
+            Splits the data into chunks containing `chunks_size` observations.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_number: int, default=None
+            Splits the data into `chunk_number` pieces.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_period: str, default=None
+            Splits the data according to the given period.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunker : Chunker, default=None
+            The `Chunker` used to split the data sets into a lists of chunks.
         normalize_confusion_matrix: str, default=None
             Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
             'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
@@ -162,7 +168,6 @@ class PerformanceCalculator(AbstractCalculator):
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
         >>> display(results.data)
-        >>> display(results.calculator.previous_reference_results)
         >>> for metric in calc.metrics:
         ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
         ...     figure.show()
