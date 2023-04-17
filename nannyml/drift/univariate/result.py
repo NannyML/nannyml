@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+"""Contains the results of the univariate drift calculator and provides plotting functionality."""
 from __future__ import annotations
 
 import warnings
@@ -29,7 +29,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(Abstract2DResult[Method], ResultCompareMixin):
-    """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+    """Class wrapping the results of the univariate drift calculator and providing plotting functionality."""
 
     def __init__(
         self,

@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Multivariate drift detection methods for model inputs, considering multiple or all features at a time.
+"""Multivariate drift detection methods, considering multiple or all columns at a time.
 
 This package currently holds an implementation for the following multivariate drift detection methods:
 

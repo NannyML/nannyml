@@ -1,6 +1,19 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+""" This module contains the different drift detection method implementations.
+
+The :class:`~nannyml.drift.univariate.methods.MethodFactory` will convert the drift detection method names
+into an instance of the base :class:`~nannyml.drift.univariate.methods.Method` class.
+
+The :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class will perform
+the required data transformations before looping over all
+:class:`~nannyml.drift.univariate.methods.Method` instances it holds and fit each on reference data
+or calculate the drift value on analysis data.
+
+"""
+
 from __future__ import annotations
 
 import abc
@@ -23,7 +36,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Method(abc.ABC):
-    """A method to express the amount of drift between two distributions."""
+    """A method base class to express the amount of drift between two distributions."""
 
     def __init__(
         self,
