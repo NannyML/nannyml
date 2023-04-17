@@ -38,8 +38,20 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
 class CBPE(AbstractEstimator):
     """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique.
 
-    CBPE leverages the confidence score of the model predictions. It is used to estimate the performance of \
+    CBPE leverages the confidence score of the model predictions. It is used to estimate the performance of
     classification models as they return predictions with an associated confidence score.
+
+    For more information, check out the `tutorial for binary classification`_,
+    the `tutorial for multiclass classification`_ or the `deep dive`_.
+
+    .. _tutorial for binary classification:
+        https://nannyml.readthedocs.io/en/stable/tutorials/performance_estimation/binary_performance_estimation.html
+
+    .. _tutorial for multiclass classification:
+        https://nannyml.readthedocs.io/en/stable/tutorials/performance_estimation/multiclass_performance_estimation.html
+
+    .. _deep dive:
+        https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe
     """
 
     def __init__(
@@ -71,8 +83,8 @@ class CBPE(AbstractEstimator):
             Name(s) of the column(s) containing your model output.
 
                 - For binary classification, pass a single string refering to the model output column.
-                - For multiclass classification, pass a dictionary that maps a class string to the column name \
-                containing model outputs for that class.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name
+                  model outputs for that class.
         y_pred: str
             The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
@@ -108,29 +120,23 @@ class CBPE(AbstractEstimator):
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
-        thresholds: dict, default={ \
-            'roc_auc': StandardDeviationThreshold(), \
-            'f1': StandardDeviationThreshold(), \
-            'precision': StandardDeviationThreshold(), \
-            'recall': StandardDeviationThreshold(), \
-            'specificity': StandardDeviationThreshold(), \
-            'accuracy': StandardDeviationThreshold(), \
-            'confusion_matrix': StandardDeviationThreshold(), \
-            'business_value': StandardDeviationThreshold(), \
-        }
+        thresholds: dict
+            The default value is::
+
+                {
+                    'roc_auc': StandardDeviationThreshold(),
+                    'f1': StandardDeviationThreshold(),
+                    'precision': StandardDeviationThreshold(),
+                    'recall': StandardDeviationThreshold(),
+                    'specificity': StandardDeviationThreshold(),
+                    'accuracy': StandardDeviationThreshold(),
+                    'confusion_matrix': StandardDeviationThreshold(),  # only for binary classification
+                    'business_value': StandardDeviationThreshold(),  # only for binary classification
+                }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
-            If no dictionary is given a default will be applied. The default method thresholds are as follows:
-
-                - `roc_auc`: `StandardDeviationThreshold()`
-                - `f1`: `StandardDeviationThreshold()`
-                - `precision`: `StandardDeviationThreshold()`
-                - `recall`: `StandardDeviationThreshold()`
-                - `specificity`: `StandardDeviationThreshold()`
-                - `accuracy`: `StandardDeviationThreshold()`
-                - `confusion_matrix`: `StandardDeviationThreshold()` - only for binary classification tasks
-                - `business_value`: `StandardDeviationThreshold()` - only for binary classification tasks
+            If no dictionary is given a default will be applied.
         problem_type: Union[str, ProblemType]
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.
@@ -293,15 +299,6 @@ class CBPE(AbstractEstimator):
         -------
         estimator: PerformanceEstimator
             The fitted estimator.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # create a new estimator and fit it on reference data
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
-
         """
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             return self._fit_binary(reference_data)
@@ -326,15 +323,6 @@ class CBPE(AbstractEstimator):
             object where each row represents a :class:`~nannyml.chunk.Chunk`,
             containing :class:`~nannyml.chunk.Chunk` properties and the estimated metrics
             for that :class:`~nannyml.chunk.Chunk`.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # create a new estimator and fit it on reference data
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> estimates = estimator.estimate(data)
         """
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
