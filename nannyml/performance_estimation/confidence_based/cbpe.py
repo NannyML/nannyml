@@ -2,7 +2,23 @@
 #
 #  License: Apache Software License 2.0
 
-"""Implementation of the CBPE estimator."""
+"""A module with the implementation of the CBPE estimator.
+
+The estimator manages a list of :class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances,
+constructed using the :class:`~nannyml.performance_estimation.confidence_based.metrics.MetricFactory`.
+
+The estimator is then responsible for delegating the `fit` and `estimate` method calls to each of the managed
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances and building a
+:class:`~nannyml.performance_estimation.confidence_based.results.Result` object.
+
+For more information, check out the `tutorial`_ and the `deep dive`_.
+
+.. _tutorial:
+    https://nannyml.readthedocs.io/en/stable/tutorials/performance_estimation/binary_performance_estimation.html
+
+.. _deep dive:
+    https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe
+"""
 from __future__ import annotations
 
 import copy
@@ -92,31 +108,24 @@ class CBPE(AbstractEstimator):
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
-        thresholds: dict, default={ \
-            'roc_auc': StandardDeviationThreshold(), \
-            'f1': StandardDeviationThreshold(), \
-            'precision': StandardDeviationThreshold(), \
-            'recall': StandardDeviationThreshold(), \
-            'specificity': StandardDeviationThreshold(), \
-            'accuracy': StandardDeviationThreshold(), \
-            'confusion_matrix': StandardDeviationThreshold(), \
-            'business_cost': StandardDeviationThreshold(), \
-        }
+        thresholds: dict
+            The default values are::
+
+                {
+                    'roc_auc': StandardDeviationThreshold(),
+                    'f1': StandardDeviationThreshold(),
+                    'precision': StandardDeviationThreshold(),
+                    'recall': StandardDeviationThreshold(),
+                    'specificity': StandardDeviationThreshold(),
+                    'accuracy': StandardDeviationThreshold(),
+                    'confusion_matrix': StandardDeviationThreshold(),
+                    'business_cost': StandardDeviationThreshold(),
+                }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
             When a dictionary is given its values will override the default values. If no dictionary is given a default
-            will be applied. The default method thresholds are as follows:
-
-                - `roc_auc`: `StandardDeviationThreshold()`
-                - `f1`: `StandardDeviationThreshold()`
-                - `precision`: `StandardDeviationThreshold()`
-                - `recall`: `StandardDeviationThreshold()`
-                - `specificity`: `StandardDeviationThreshold()`
-                - `accuracy`: `StandardDeviationThreshold()`
-                - `confusion_matrix`: `StandardDeviationThreshold()`
-                - `mape`: `StandardDeviationThreshold()`
-                - `business_cost`: `StandardDeviationThreshold()`
+            will be applied.
         problem_type: Union[str, ProblemType]
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.

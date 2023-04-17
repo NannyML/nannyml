@@ -1,3 +1,14 @@
+"""A module containing the implementations of metrics estimated by CBPE.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator converts a list of metric names into
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances using the
+:class:`~nannyml.performance_estimation.confidence_based.metrics.MetricFactory`.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator will then loop over these
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
+and run the estimation on analysis data.
+"""
+
 import abc
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
@@ -27,7 +38,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
-    """A performance metric used to calculate realized model performance."""
+    """A base class representing a performance metric to estimate."""
 
     def __init__(
         self,
@@ -51,9 +62,10 @@ class Metric(abc.ABC):
             The name used to indicate the metric in columns of a DataFrame.
         y_pred_proba: Union[str, Dict[str, str]]
             Name(s) of the column(s) containing your model output.
-                - For binary classification, pass a single string refering to the model output column.
-                - For multiclass classification, pass a dictionary that maps a class string to the column name \
-                containing model outputs for that class.
+                - For binary classification, pass a single string referring to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name
+                  containing model outputs for that class.
+
         y_pred: str
             The name of the column containing your model predictions.
         y_true: str
@@ -63,7 +75,7 @@ class Metric(abc.ABC):
         threshold: Threshold
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         components: List[Tuple[str str]]
-            A list of (display_name, column_name) tuples
+            A list of (display_name, column_name) tuples.
         timestamp_column_name: Optional[str], default=None
             The name of the column containing the timestamp of the model prediction.
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
@@ -77,6 +89,14 @@ class Metric(abc.ABC):
             values that end up below this limit will be replaced by this limit value.
             The limit is often a theoretical constraint enforced by a specific drift detection method or performance
             metric.
+
+        Notes
+        -----
+
+        The `components` approach taken here is a quick fix to deal with metrics that return multiple values.
+        Look at the `confusion_matrix` for example: a single metric produces 4 different result sets (containing values,
+        thresholds, alerts, etc.).
+
         """
         self.name = name
 

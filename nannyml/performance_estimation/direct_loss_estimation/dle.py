@@ -46,6 +46,22 @@ class DLE(AbstractEstimator):
     `hyperparameters` parameter. You can also opt to run hyperparameter tuning using FLAML to determine hyperparameters
     for you. Tuning hyperparameters takes some time and does not guarantee better results,
     hence we don't do it by default.
+
+    The estimator manages a list of :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.Metric`
+    instances, constructed using the
+    :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.MetricFactory`.
+
+    The estimator is then responsible for delegating the `fit` and `estimate` method calls to each of the managed
+    :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.Metric` instances and building a
+    :class:`~nannyml.performance_estimation.direct_loss_estimation.results.Result` object.
+
+    For more information, check out the `tutorial`_ and the `deep dive`_.
+
+    .. _tutorial:
+        https://nannyml.readthedocs.io/en/stable/tutorials/performance_estimation/regression_performance_estimation.html
+
+    .. _deep dive:
+        https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#direct-loss-estimation-dle
     """
 
     def __init__(
@@ -119,26 +135,22 @@ class DLE(AbstractEstimator):
 
             For an overview of possible parameters for the tuning process check out the
             `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
-        thresholds: dict, default={ \
-            'mae': StandardDeviationThreshold(), \
-            'mape': StandardDeviationThreshold(), \
-            'mse': StandardDeviationThreshold(), \
-            'msle': StandardDeviationThreshold(), \
-            'rmse': StandardDeviationThreshold(), \
-            'rmsle': StandardDeviationThreshold(), \
-        }
+        thresholds: dict
+            The default values are::
+
+                {
+                    'mae': StandardDeviationThreshold(),
+                    'mape': StandardDeviationThreshold(),
+                    'mse': StandardDeviationThreshold(),
+                    'msle': StandardDeviationThreshold(),
+                    'rmse': StandardDeviationThreshold(),
+                    'rmsle': StandardDeviationThreshold(),
+                }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
             When a dictionary is given its values will override the default values. If no dictionary is given a default
-            will be applied. The default method thresholds are as follows:
-
-                - `mae`: `StandardDeviationThreshold()`
-                - `mape`: `StandardDeviationThreshold()`
-                - `mse`: `StandardDeviationThreshold()`
-                - `msle`: `StandardDeviationThreshold()`
-                - `rmse`: `StandardDeviationThreshold()`
-                - `rmsle`: `StandardDeviationThreshold()`
+            will be applied.
 
         Returns
         -------
@@ -147,7 +159,7 @@ class DLE(AbstractEstimator):
 
         Examples
         --------
-         Without hyperparameter tuning:
+        Without hyperparameter tuning:
 
         >>> import nannyml as nml
         >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
