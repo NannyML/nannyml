@@ -2,7 +2,19 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module containing ways to rank drifting features."""
+"""Module containing ways to rank features according to drift.
+
+This model allows you to rank the columns within a
+:class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` result according to their degree of drift.
+
+The following rankers are currently available:
+
+- :class:`~nannyml.drift.ranker.AlertCountRanker`: ranks the features according
+  to the number of drift detection alerts they cause.
+- :class:`~nannyml.drift.ranker.CorrelationRanker`: ranks the features according to their correlation with changes
+  in realized or estimated performance.
+
+"""
 from __future__ import annotations
 
 from typing import Optional, Union
@@ -64,7 +76,7 @@ def _validate_performance_result(performance_results: Union[CBPEResults, DLEResu
 
 
 class AlertCountRanker:
-    """Ranks features by the number of drift alerts they've caused."""
+    """Ranks the features according to the number of drift detection alerts they cause."""
 
     @log_usage(UsageEvent.RANKER_ALERT_COUNT_RUN)
     def rank(
@@ -72,7 +84,7 @@ class AlertCountRanker:
         drift_calculation_result: UnivariateResults,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
-        """Compares the number of alerts for each feature and ranks them accordingly.
+        """Ranks the features according to the number of drift detection alerts they cause.
 
         Parameters
         ----------
@@ -85,7 +97,8 @@ class AlertCountRanker:
         -------
         ranking: pd.DataFrame
             A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
-            second-highest rank is 2, etc.)
+            second-highest rank is 2, etc.). Features with the same number of alerts are ranked alphanumerically on
+            the feature name.
 
         Examples
         --------
@@ -142,50 +155,18 @@ class AlertCountRanker:
 
 
 class CorrelationRanker:
-    """Ranks features according to drift correlation with performance impact.
+    """Ranks the features according to their correlation with changes in realized or estimated performance.
 
-    Ranks the features according to the correlation of their selected drift results and
-    absolute performance change from mean reference performance on selected metric.
-    """
-
-    def __init__(self) -> None:
-        """Creates a new CorrelationRanker instance."""
-        super().__init__()
-
-        self.metric: Metric
-        self.mean_reference_performance: Optional[float] = None
-        self.absolute_performance_change: Optional[float] = None
-
-        self._is_fitted: bool = False
-
-    @log_usage(UsageEvent.RANKER_CORRELATION_FIT)
-    def fit(
-        self,
-        reference_performance_calculation_result: Optional[
-            Union[CBPEResults, DLEResults, PerformanceCalculationResults]
-        ] = None,
-    ) -> CorrelationRanker:
-        """Calculates the average performance during the reference period.
-        This value is saved at the `mean_reference_performance` property of the ranker.
-
-        Parameters
-        ----------
-        reference_performance_calculation_result : Union[CBPEResults, DLEResults, PerformanceCalculationResults], default=None
-            Performance results from either CBPE, DLE or the PerformanceCalculator.
-
-        Returns
-        -------
-        ranking: CorrelationRanker
-
-        Examples
+    Examples
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
         >>>
         >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
         >>>
-        >>> column_names = [col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period',
-        >>>                                                                    'y_pred', 'work_home_actual', 'identifier']]
+        >>> column_names = [col for col in reference_df.columns
+        >>>                 if col not in ['timestamp', 'y_pred_proba', 'period',
+        >>>                                'y_pred', 'work_home_actual', 'identifier']]
         >>>
         >>> univ_calc = nml.UnivariateDriftCalculator(column_names=column_names,
         >>>                                           timestamp_column_name='timestamp')
@@ -224,6 +205,39 @@ class CorrelationRanker:
         5                     workday              0.154622     5.151128e-01        False     6
         6            work_home_actual             -0.030899     8.971071e-01        False     7
         7                      tenure             -0.177018     4.553046e-01        False     8
+    """
+
+    def __init__(self) -> None:
+        """Creates a new CorrelationRanker instance."""
+        super().__init__()
+
+        self.metric: Metric
+        self.mean_reference_performance: Optional[float] = None
+        self.absolute_performance_change: Optional[float] = None
+
+        self._is_fitted: bool = False
+
+    @log_usage(UsageEvent.RANKER_CORRELATION_FIT)
+    def fit(
+        self,
+        reference_performance_calculation_result: Optional[
+            Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+        ] = None,
+    ) -> CorrelationRanker:
+        """Calculates the average performance during the reference period.
+        This value is saved at the `mean_reference_performance` property of the ranker.
+
+        Parameters
+        ----------
+        reference_performance_calculation_result : Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+            Results from any performance calculator or estimator, e.g.
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
+            :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+            :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`
+
+        Returns
+        -------
+        ranking: CorrelationRanker
         """
 
         if reference_performance_calculation_result is None:
@@ -254,9 +268,12 @@ class CorrelationRanker:
         Parameters
         ----------
         drift_calculation_result: UnivariateResults
-            Univariate drift results.
-        performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]], default=None
-            Performance results from either CBPE, DLE or the PerformanceCalculator
+            The univariate drift results containing the features we want to rank.
+        performance_calculation_result: Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+            Results from any performance calculator or estimator, e.g.
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
+            :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+            :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`
         only_drifting: bool, default=False
             Omits features without alerts from the ranking results.
 
@@ -264,7 +281,9 @@ class CorrelationRanker:
         -------
         ranking: pd.DataFrame
             A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
-            second-highest rank is 2, etc.)"""
+            second-highest rank is 2, etc.). Features with the same number of alerts are ranked alphanumerically on
+            the feature name.
+        """
         if not self._is_fitted or self.metric is None:
             raise NotFittedException("trying to call 'rank()' on an unfitted Ranker. Please call 'fit()' first")
 
