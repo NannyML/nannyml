@@ -22,7 +22,7 @@ Metric = namedtuple("Metric", "display_name column_name")
 
 
 class Result(Abstract1DResult[Metric], ResultCompareMixin):
-    """Contains the results of the data reconstruction drift calculation and provides plotting functionality."""
+    """Class wrapping the results of the data reconstruction drift calculator and providing plotting functionality."""
 
     def __init__(
         self,
@@ -69,8 +69,6 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         ----------
         kind: str, default='drift'
             The kind of plot you want to have. Value can currently only be 'drift'.
-        plot_reference: bool, default=False
-            Indicates whether to include the reference period in the plot or not. Defaults to False.
 
         Raises
         ------
@@ -90,14 +88,14 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>>
         >>> column_names = [col for col in reference_df.columns
-        >>>                         if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>>                 if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
         >>> calc = nml.DataReconstructionDriftCalculator(
         >>>     column_names=column_names,
         >>>     timestamp_column_name='timestamp'
         >>> )
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
-        >>> print(results.data)  # access the numbers
+        >>> print(results.to_df())  # access the data as a pd.DataFrame
                              key  start_index  ...  upper_threshold alert
         0       [0:4999]            0  ...         1.511762  True
         1    [5000:9999]         5000  ...         1.511762  True

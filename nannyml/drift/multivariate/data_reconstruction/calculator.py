@@ -2,7 +2,16 @@
 #            Nikolaos Perrakis  <nikos@nannyml.com>
 #  License: Apache Software License 2.0
 
-"""Drift calculator using Reconstruction Error as a measure of drift."""
+"""Calculates the data reconstruction error on unseen analysis data after fitting on reference data.
+
+This calculator wraps a PCA transformation. It will be fitted on reference data when the `fit` method is called.
+On calling the `calculate` method it will perform the inverse transformation on the analysis data and calculate
+the euclidian distance between the analysis data and the reconstructed version of it.
+
+This is the data reconstruction error, and it can be used as a measure of drift between
+the reference and analysis data sets.
+
+"""
 
 from typing import List, Optional, Tuple, Union
 
