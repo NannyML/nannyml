@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Contains the results of the realized performance calculation and provides plotting functionality."""
+"""Contains the results of the realized performance calculation and provides filtering and plotting functionality."""
 from __future__ import annotations
 
 import copy
@@ -22,7 +22,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(Abstract1DResult[Metric], ResultCompareMixin):
-    """Contains the results of the realized performance calculation and provides plotting functionality."""
+    """Wraps performance calculation results and provides filtering and plotting functionality."""
 
     metrics: List[Metric]
 
@@ -60,7 +60,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
                 containing model outputs for that class.
         y_true: str
             The name of the column containing target values (that are provided in reference data during fitting).
-        metrics: List[Metric]
+        metrics: List[nannyml.performance_calculation.metrics.base.Metric]
             List of metrics to evaluate.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
@@ -133,7 +133,8 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
         >>>
         >>> calc = nml.PerformanceCalculator(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
-        >>>                                  problem_type='classification_binary', timestamp_column_name='timestamp', metrics=['f1', 'roc_auc'])
+        >>>                                  problem_type='classification_binary', timestamp_column_name='timestamp',
+        >>>                                  metrics=['f1', 'roc_auc'])
         >>>
         >>> calc.fit(reference_df)
         >>>

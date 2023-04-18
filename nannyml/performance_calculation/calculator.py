@@ -2,7 +2,44 @@
 #
 #  License: Apache Software License 2.0
 
-"""Calculates realized performance metrics when target data is available."""
+"""Calculates realized performance metrics when target data is available.
+
+The performance calculator manages a list of :class:`~nannyml.performance_calculation.metrics.base.Metric` instances,
+constructed using the :class:`~nannyml.performance_calculation.metrics.base.MetricFactory`.
+The estimator is then responsible for delegating the `fit` and `estimate` method calls to each of the managed
+:class:`~nannyml.performance_calculation.metrics.base.Metric` instances and building a
+:class:`~nannyml.performance_calculation.result.Result` object.
+
+For more information, check out the `tutorials`_.
+
+.. _tutorials:
+    https://nannyml.readthedocs.io/en/stable/tutorials/performance_calculation.html
+
+Examples
+--------
+
+>>> import nannyml as nml
+>>> from IPython.display import display
+>>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+>>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+>>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+>>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+>>> display(reference_df.head(3))
+>>> calc = nml.PerformanceCalculator(
+...     y_pred_proba='y_pred_proba',
+...     y_pred='y_pred',
+...     y_true='work_home_actual',
+...     timestamp_column_name='timestamp',
+...     problem_type='classification_binary',
+...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+...     chunk_size=5000)
+>>> calc.fit(reference_df)
+>>> results = calc.calculate(analysis_df)
+>>> display(results.data)
+>>> for metric in calc.metrics:
+...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+...     figure.show()
+"""
 
 from __future__ import annotations
 
@@ -85,40 +122,31 @@ class PerformanceCalculator(AbstractCalculator):
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
-        thresholds: dict, default={ \
-            'roc_auc': StandardDeviationThreshold(), \
-            'f1': StandardDeviationThreshold(), \
-            'precision': StandardDeviationThreshold(), \
-            'recall': StandardDeviationThreshold(), \
-            'specificity': StandardDeviationThreshold(), \
-            'accuracy': StandardDeviationThreshold(), \
-            'confusion_matrix': StandardDeviationThreshold(), \
-            'business_value': StandardDeviationThreshold(), \
-            'mae': StandardDeviationThreshold(), \
-            'mape': StandardDeviationThreshold(), \
-            'mse': StandardDeviationThreshold(), \
-            'msle': StandardDeviationThreshold(), \
-            'rmse': StandardDeviationThreshold(), \
-            'rmsle': StandardDeviationThreshold(), \
-        }
+        thresholds: dict
+
+            The default values are::
+
+                {
+                    'roc_auc': StandardDeviationThreshold(),
+                    'f1': StandardDeviationThreshold(),
+                    'precision': StandardDeviationThreshold(),
+                    'recall': StandardDeviationThreshold(),
+                    'specificity': StandardDeviationThreshold(),
+                    'accuracy': StandardDeviationThreshold(),
+                    'confusion_matrix': StandardDeviationThreshold(),
+                    'business_value': StandardDeviationThreshold(),
+                    'mae': StandardDeviationThreshold(),
+                    'mape': StandardDeviationThreshold(),
+                    'mse': StandardDeviationThreshold(),
+                    'msle': StandardDeviationThreshold(),
+                    'rmse': StandardDeviationThreshold(),
+                    'rmsle': StandardDeviationThreshold(),
+                }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
             When a dictionary is given its values will override the default values. If no dictionary is given a default
-            will be applied. The default method thresholds are as follows:
-
-                - `roc_auc`: `StandardDeviationThreshold()`
-                - `f1`: `StandardDeviationThreshold()`
-                - `precision`: `StandardDeviationThreshold()`
-                - `recall`: `StandardDeviationThreshold()`
-                - `specificity`: `StandardDeviationThreshold()`
-                - `accuracy`: `StandardDeviationThreshold()`
-                - `mae`: `StandardDeviationThreshold()`
-                - `mape`: `StandardDeviationThreshold()`
-                - `mse`: `StandardDeviationThreshold()`
-                - `msle`: `StandardDeviationThreshold()`
-                - `rmse`: `StandardDeviationThreshold()`
-                - `rmsle`: `StandardDeviationThreshold()`
+            will be applied.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
