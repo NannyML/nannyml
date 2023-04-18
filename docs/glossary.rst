@@ -114,6 +114,9 @@ Glossary
     Feature
         A variable used by our machine learning model. The model inputs consist of features.
 
+    Label
+        A synonym for :term:`Target`.
+
     Latent space
         A space of reduced dimensionality, compared to the model input space, that can
         represent our input data. This space is the result of a representation
@@ -264,7 +267,7 @@ Glossary
 
     Target
         The actual outcome of the event the machine learning model is trying to predict. Also referred to as
-        :term:`Ground truth`.
+        :term:`Ground truth` or :term:`Label`.
 
     Timestamp
         Usually a single column, but it can be multiple columns where necessary.
