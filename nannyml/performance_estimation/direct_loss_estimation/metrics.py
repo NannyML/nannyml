@@ -2,6 +2,17 @@
 #
 #  License: Apache Software License 2.0
 
+"""A module containing the implementations of metrics estimated by
+:class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`.
+
+The :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` estimator
+converts a list of metric names into :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.Metric`
+instances using the :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.MetricFactory`.
+
+The :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` estimator will then loop over these
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
+and run the estimation on analysis data.
+"""
 import abc
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type

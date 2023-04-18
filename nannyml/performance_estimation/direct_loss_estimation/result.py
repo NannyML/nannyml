@@ -1,3 +1,5 @@
+"""Module containing CBPE estimation results and plotting implementations."""
+
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -15,6 +17,8 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(Abstract1DResult[Metric], ResultCompareMixin):
+    """Contains results for CBPE estimation and adds filtering and plotting functionality."""
+
     def __init__(
         self,
         results_data: pd.DataFrame,
@@ -33,7 +37,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         ----------
         results_data: pd.DataFrame
             Results data returned by a DLE estimator.
-        metrics: List[Metric]
+        metrics: List[nannyml.performance_estimation.direct_loss_estimation.metrics.Metric]
             List of metrics to evaluate.
         feature_column_names: List[str]
             A list of column names indicating which columns contain feature values.

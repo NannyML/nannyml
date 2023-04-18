@@ -24,7 +24,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(Abstract1DResult[Metric], ResultCompareMixin):
-    """Contains results for CBPE estimation and adds plotting functionality."""
+    """Contains results for CBPE estimation and adds filtering and plotting functionality."""
 
     def __init__(
         self,
@@ -42,15 +42,16 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         ----------
         results_data: pd.DataFrame
             Results data returned by a CBPE estimator.
-        metrics: List[Metric]
+
+        metrics: List[nannyml.performance_estimation.confidence_based.metrics.Metric]
             List of metrics to evaluate.
         y_pred: str
             The name of the column containing your model predictions.
         y_pred_proba: Union[str, Dict[str, str]]
             Name(s) of the column(s) containing your model output.
                 - For binary classification, pass a single string refering to the model output column.
-                - For multiclass classification, pass a dictionary that maps a class string to the column name \
-                containing model outputs for that class.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name
+                  containing model outputs for that class.
         y_true: str
             The name of the column containing target values (that are provided in reference data during fitting).
         chunker: Chunker
