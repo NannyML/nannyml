@@ -2,7 +2,16 @@
 #            Nikolaos Perrakis  <nikos@nannyml.com>
 #  License: Apache Software License 2.0
 
-"""Drift calculator using Reconstruction Error as a measure of drift."""
+"""Calculates the data reconstruction error on unseen analysis data after fitting on reference data.
+
+This calculator wraps a PCA transformation. It will be fitted on reference data when the `fit` method is called.
+On calling the `calculate` method it will perform the inverse transformation on the analysis data and calculate
+the euclidian distance between the analysis data and the reconstructed version of it.
+
+This is the data reconstruction error, and it can be used as a measure of drift between
+the reference and analysis data sets.
+
+"""
 
 from typing import List, Optional, Tuple, Union
 
@@ -68,17 +77,13 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                 The SimpleImputer used to impute continuous features in the data. Defaults to using mean value.
             threshold: Threshold, default=StandardDeviationThreshold
                 The threshold you wish to evaluate values on. Defaults to a StandardDeviationThreshold with default
-                options.
+                options. The other allowed value is ConstantThreshold.
 
 
         Examples:
             >>> import nannyml as nml
-            >>> from IPython.display import display
-            >>> # Load synthetic data
             >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
             >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
-            >>> display(reference.head())
-            >>> # Define feature columns
             >>> column_names = [
             ...     col for col in reference.columns if col not in [
             ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
@@ -90,8 +95,6 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             >>> )
             >>> calc.fit(reference)
             >>> results = calc.calculate(analysis)
-            >>> display(results.data)
-            >>> display(results.calculator.previous_reference_results)
             >>> figure = results.plot(plot_reference=True)
             >>> figure.show()
         """
@@ -383,6 +386,19 @@ def _add_alert_flag(
 
 
 def sampling_error(components: Tuple, data: pd.DataFrame) -> float:
+    """Calculates the sampling error with respect to the reference data for a given chunk of data.
+
+    Parameters
+    ----------
+    components: Tuple
+    data: pd.DataFrame
+        The data to calculate the sampling error on, with respect to the reference data.
+
+    Returns
+    -------
+    sampling_error: float
+        The expected sampling error.
+    """
     return components[0] / np.sqrt(len(data))
 
 

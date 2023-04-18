@@ -42,6 +42,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         ----------
         results_data: pd.DataFrame
             Results data returned by a CBPE estimator.
+
         metrics: List[nannyml.performance_estimation.confidence_based.metrics.Metric]
             List of metrics to evaluate.
         y_pred: str
@@ -51,7 +52,6 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
                 - For binary classification, pass a single string refering to the model output column.
                 - For multiclass classification, pass a dictionary that maps a class string to the column name
                   containing model outputs for that class.
-
         y_true: str
             The name of the column containing target values (that are provided in reference data during fitting).
         chunker: Chunker

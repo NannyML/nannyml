@@ -62,10 +62,10 @@ class Metric(abc.ABC):
             The name used to indicate the metric in columns of a DataFrame.
         y_pred_proba: Union[str, Dict[str, str]]
             Name(s) of the column(s) containing your model output.
+
                 - For binary classification, pass a single string referring to the model output column.
                 - For multiclass classification, pass a dictionary that maps a class string to the column name
                   containing model outputs for that class.
-
         y_pred: str
             The name of the column containing your model predictions.
         y_true: str
@@ -96,7 +96,6 @@ class Metric(abc.ABC):
         The `components` approach taken here is a quick fix to deal with metrics that return multiple values.
         Look at the `confusion_matrix` for example: a single metric produces 4 different result sets (containing values,
         thresholds, alerts, etc.).
-
         """
         self.name = name
 
