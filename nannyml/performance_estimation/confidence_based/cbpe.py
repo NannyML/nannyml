@@ -18,8 +18,9 @@ from nannyml.base import AbstractEstimator, _list_missing
 from nannyml.calibration import Calibrator, CalibratorFactory, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
-from nannyml.performance_estimation.confidence_based.results import SUPPORTED_METRIC_VALUES, Result
+from nannyml.performance_estimation.confidence_based.results import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -31,7 +32,7 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'specificity': StandardDeviationThreshold(),
     'accuracy': StandardDeviationThreshold(),
     'confusion_matrix': StandardDeviationThreshold(),
-    'business_cost': StandardDeviationThreshold(),
+    'business_value': StandardDeviationThreshold(),
 }
 
 
@@ -52,9 +53,10 @@ class CBPE(AbstractEstimator):
         chunker: Optional[Chunker] = None,
         calibration: Optional[str] = None,
         calibrator: Optional[Calibrator] = None,
-        normalize_confusion_matrix: Optional[str] = None,
-        business_cost_matrix: Optional[Union[List, np.ndarray]] = None,
         thresholds: Optional[Dict[str, Threshold]] = None,
+        normalize_confusion_matrix: Optional[str] = None,
+        business_value_matrix: Optional[Union[List, np.ndarray]] = None,
+        normalize_business_value: Optional[str] = None,
     ):
         """Initializes a new CBPE performance estimator.
 
@@ -90,21 +92,6 @@ class CBPE(AbstractEstimator):
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
-        problem_type: Union[str, ProblemType]
-            Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
-            'classification_multiclass'.
-        normalize_confusion_matrix: str, default=None
-            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
-            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
-            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
-            of observations. If 'true', the confusion matrix will be normalized by the total number of
-            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
-            total number of observations for each predicted class.
-        business_cost_matrix: Optional[Union[List, np.ndarray]], default=None
-            A matrix containing the business costs for each combination of true and predicted class.
-            The i-th row and j-th column entry of the matrix contains the business cost for predicting the
-            i-th class as the j-th class. The matrix must have the same number of rows and columns as the number
-            of classes in the problem.
         thresholds: dict, default={ \
             'roc_auc': StandardDeviationThreshold(), \
             'f1': StandardDeviationThreshold(), \
@@ -130,6 +117,25 @@ class CBPE(AbstractEstimator):
                 - `confusion_matrix`: `StandardDeviationThreshold()`
                 - `mape`: `StandardDeviationThreshold()`
                 - `business_cost`: `StandardDeviationThreshold()`
+        problem_type: Union[str, ProblemType]
+            Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
+            'classification_multiclass'.
+        normalize_confusion_matrix: str, default=None
+            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
+            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
+            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
+            of observations. If 'true', the confusion matrix will be normalized by the total number of
+            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
+            total number of observations for each predicted class.
+        business_value_matrix: Optional[Union[List, np.ndarray]], default=None
+            A matrix containing the business value for each combination of true and predicted class.
+            The i-th row and j-th column entry of the matrix contains the business value for predicting the
+            i-th class as the j-th class.
+        normalize_business_value: str, default=None
+            Determines how the business value will be normalized. Allowed values are None and
+            'per_prediction'. If None, the business value will not be normalized and the value
+            returned will be the total value per chunk. If 'per_prediction', the value will be normalized
+            by the number of predictions in the chunk.
 
         Examples
         --------
@@ -176,6 +182,11 @@ class CBPE(AbstractEstimator):
                 f"Binary use cases require 'normalize_confusion_matrix' to be one of {valid_normalizations}."
             )
 
+        if normalize_business_value not in [None, "per_prediction"]:
+            raise InvalidArgumentsException(
+                f"normalize_business_value must be None or 'per_prediction', but got '{normalize_business_value}'"
+            )
+
         if isinstance(problem_type, str):
             self.problem_type = ProblemType.parse(problem_type)
         else:
@@ -203,9 +214,10 @@ class CBPE(AbstractEstimator):
                     y_true=self.y_true,
                     timestamp_column_name=self.timestamp_column_name,
                     chunker=self.chunker,
-                    normalize_confusion_matrix=normalize_confusion_matrix,
-                    business_cost_matrix=business_cost_matrix,
                     threshold=self.thresholds[metric],
+                    normalize_confusion_matrix=normalize_confusion_matrix,
+                    business_value_matrix=business_value_matrix,
+                    normalize_business_value=normalize_business_value,
                 )
             )
 

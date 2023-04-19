@@ -58,7 +58,7 @@ def test_runner_executes_for_binary_classification_without_exceptions(timestamp_
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
 def test_runner_executes_for_multiclass_classification_without_exceptions(timestamp_column_name):
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
-    analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
+    analysis_with_targets = analysis.merge(analysis_targets, left_index=True, right_index=True)
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -170,7 +170,7 @@ def test_runner_executes_for_binary_classification_with_database_writer_without_
 @pytest.mark.slow
 def test_runner_executes_for_multiclass_classification_with_database_writer_without_exceptions():
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
-    analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
+    analysis_with_targets = analysis.merge(analysis_targets, left_index=True, right_index=True)
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -363,7 +363,7 @@ def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_
     )
 
     sut = estimates.plot(metric=metric).to_dict()
-    assert 'Metric (analysis)' in sut['data'][3]['name']
+    assert 'Metric' in sut['data'][3]['name']
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
@@ -382,7 +382,7 @@ def test_result_plot_with_metric_object_returns_plotly_figure(estimates, direct_
     )
 
     sut = estimates.plot(metric=_metric)
-    assert 'Metric (analysis)' in sut.to_dict()['data'][3]['name']
+    assert 'Metric' in sut.to_dict()['data'][3]['name']
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])

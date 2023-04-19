@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "nannyml"
-version = "0.8.4"
+version = "0.8.5"
 homepage = "https://github.com/nannyml/nannyml"
 description = "NannyML, Your library for monitoring model performance."
 authors = ["Niels Nuyttens <niels@nannyml.com>"]

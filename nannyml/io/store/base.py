@@ -62,8 +62,12 @@ class Store(ABC):
         Parameters
         ----------
         as_type : Optional[type]
-            When provided the `load` method will check if the loaded object is an instance of `as_type`. If it is not
-            a StoreException will be raised.
+            When provided the `load` method will check if the loaded object is an instance of `as_type` or `None`.
+            If it is not a StoreException will be raised.
+
+            The `None` will be returned when no calculator was present at the store location, for example
+            when performing the first run of NannyML (nothing was cached yet at that point).
+
             The object will be returned unchecked when the `as_type` parameter is not provided.
         load_args : Dict[str, Any]
             Additional arguments passed to the subclass `store` implementation
@@ -76,7 +80,7 @@ class Store(ABC):
         try:
             self._logger.info(f'loading object from store "{self}"')
             obj = self._load(**load_args)
-            if as_type and (obj is None or not isinstance(obj, as_type)):
+            if as_type and obj and not isinstance(obj, as_type):
                 raise StoreException(f'loaded object is not of type "{as_type}"')
             return obj
         except Exception as exc:

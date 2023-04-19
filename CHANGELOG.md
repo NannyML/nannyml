@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.8.5] - 2023-03-29
+
+### Changed
+
+- Applied new rules for visualizations. Estimated values will be the color indigo and represented with a dashed line.
+  Calculated values will be blue and have a solid line. This color coding might be overridden in comparison plots.
+  Data periods will no longer have different colors, we've added some additional text fields to the plot to indicate the data period.
+- Cleaned up legends in plots, since there will no longer be a different entry for reference and analysis periods of metrics.
+- Removed the lower threshold for default thresholds of the KS and Wasserstein drift detection methods.
+
+### Added
+
+- We've added the `business_value` metric for both estimated and realized binary classification performance. It allows
+  you to assign a value (or cost) to true positive, true negative, false positive and false negative occurrences.
+  This can help you track something like a monetary value or business impact of a model as a metric. Read more in the
+  business value tutorials ([estimated](https://nannyml.readthedocs.io/en/latest/tutorials/performance_estimation/binary_performance_estimation/business_value_estimation.html)
+  or [realized](https://nannyml.readthedocs.io/en/latest/tutorials/performance_calculation/binary_performance_calculation/business_value_calculation.html))
+  or the [how it works](https://nannyml.readthedocs.io/en/latest/how_it_works/business_value.html) page.
+
+### Fixed
+
+- Sync quickstart of the README with the dedicated quickstart page. [(#256)](https://github.com/NannyML/nannyml/issues/256)
+  Thanks [@NeoKish](https://github.com/NeoKish)!
+- Fixed incorrect code snippet order in the thresholding tutorial. [(#258)](https://github.com/NannyML/nannyml/issues/258)
+  Thanks once more to the one and only [@NeoKish](https://github.com/NeoKish)!
+- Fixed broken container build that had sneakily been going on for a while
+- Fixed incorrect confidence band color in comparison plots [(#259)](https://github.com/NannyML/nannyml/issues/259)
+- Fixed incorrect titles and missing legends in comparison plots [(#264)](https://github.com/NannyML/nannyml/issues/264)
+- Fixed an issue where numerical series marked as category would cause issues during Chi2 calculation
+
 ## [0.8.4] - 2023-03-17
 
 ### Changed

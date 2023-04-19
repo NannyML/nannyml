@@ -3,7 +3,6 @@
 #  License: Apache Software License 2.0
 from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     mean_absolute_error,
@@ -36,16 +35,16 @@ from nannyml.thresholds import Threshold
 class MAE(Metric):
     """Mean Absolute Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAE instance."""
         super().__init__(
-            display_name='MAE',
-            column_name='mae',
+            name='mae',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
             lower_threshold_limit=0,
+            components=[('MAE', 'mae')],
         )
 
         # sampling error
@@ -70,10 +69,7 @@ class MAE(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            return np.nan
-        else:
-            return mean_absolute_error(y_true, y_pred)
+        return mean_absolute_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mae_sampling_error(self._sampling_error_components, data)
@@ -83,16 +79,16 @@ class MAE(Metric):
 class MAPE(Metric):
     """Mean Absolute Percentage Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAPE instance."""
         super().__init__(
-            display_name='MAPE',
-            column_name='mape',
+            name='mape',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
             lower_threshold_limit=0,
+            components=[('MAPE', 'mape')],
         )
 
         # sampling error
@@ -117,10 +113,7 @@ class MAPE(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            return np.nan
-        else:
-            return mean_absolute_percentage_error(y_true, y_pred)
+        return mean_absolute_percentage_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mape_sampling_error(self._sampling_error_components, data)
@@ -130,16 +123,16 @@ class MAPE(Metric):
 class MSE(Metric):
     """Mean Squared Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSE instance."""
         super().__init__(
-            display_name='MSE',
-            column_name='mse',
+            name='mse',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
             lower_threshold_limit=0,
+            components=[('MSE', 'mse')],
         )
 
         # sampling error
@@ -164,10 +157,7 @@ class MSE(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            return np.nan
-        else:
-            return mean_squared_error(y_true, y_pred)
+        return mean_squared_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse_sampling_error(self._sampling_error_components, data)
@@ -177,16 +167,16 @@ class MSE(Metric):
 class MSLE(Metric):
     """Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSLE instance."""
         super().__init__(
-            display_name='MSLE',
-            column_name='msle',
+            name='msle',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
             lower_threshold_limit=0,
+            components=[('MSLE', 'msle')],
         )
 
         # sampling error
@@ -216,10 +206,7 @@ class MSLE(Metric):
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            return np.nan
-        else:
-            return mean_squared_log_error(y_true, y_pred)
+        return mean_squared_log_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return msle_sampling_error(self._sampling_error_components, data)
@@ -229,16 +216,16 @@ class MSLE(Metric):
 class RMSE(Metric):
     """Root Mean Squared Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSE instance."""
         super().__init__(
-            display_name='RMSE',
-            column_name='rmse',
+            name='rmse',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
             lower_threshold_limit=0,
+            components=[('RMSE', 'rmse')],
         )
 
         # sampling error
@@ -263,10 +250,7 @@ class RMSE(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            return np.nan
-        else:
-            return mean_squared_error(y_true, y_pred, squared=False)
+        return mean_squared_error(y_true, y_pred, squared=False)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return rmse_sampling_error(self._sampling_error_components, data)
@@ -276,16 +260,16 @@ class RMSE(Metric):
 class RMSLE(Metric):
     """Root Mean Squared Logarithmic Error metric."""
 
-    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None):
+    def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSLE instance."""
         super().__init__(
-            display_name='RMSLE',
-            column_name='rmsle',
+            name='rmsle',
             y_true=y_true,
             y_pred=y_pred,
             y_pred_proba=y_pred_proba,
             threshold=threshold,
             lower_threshold_limit=0,
+            components=[('RMSLE', 'rmsle')],
         )
 
         # sampling error
@@ -315,10 +299,7 @@ class RMSLE(Metric):
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            return np.nan
-        else:
-            return mean_squared_log_error(y_true, y_pred, squared=False)
+        return mean_squared_log_error(y_true, y_pred, squared=False)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return rmsle_sampling_error(self._sampling_error_components, data)

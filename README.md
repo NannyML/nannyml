@@ -40,8 +40,8 @@
   <img src="https://github.com/NannyML/nannyml/blob/main/media/estimate-performance-regression.gif?raw=true" alt="animated">
 </p>
 
-
 # 💡 What is NannyML?
+
 NannyML is an open-source python library that allows you to **estimate post-deployment model performance** (without access to targets), detect data drift, and intelligently link data drift alerts back to changes in model performance. Built for data scientists, NannyML has an easy-to-use interface, interactive visualizations, is completely model-agnostic and currently supports all tabular use cases, classification and **regression**.
 
 The core contributors of NannyML have researched and developed multiple novel algorithms for estimating model performance: [confidence-based performance estimation (CBPE)](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe) and [direct loss estimation (DLE)](https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#direct-loss-estimation-dle).
@@ -50,18 +50,20 @@ The nansters also invented a new approach to detect [multivariate data drift](ht
 If you like what we are working on, be sure to become a Nanster yourself, join our [community slack](https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ) <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> and support us with a GitHub <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/github.png" height='15'> star ⭐.
 
 # ☔ Why use NannyML?
+
 NannyML closes the loop with performance monitoring and post deployment data science, empowering data scientist to quickly understand and **automatically detect silent model failure**. By using NannyML, data scientists can finally maintain complete visibility and trust in their deployed machine learning models.
 Allowing you to have the following benefits:
 
-* End sleepless nights caused by not knowing your model performance 😴
-* Analyse data drift and model performance **over time**
-* Discover the **root cause** to why your models are not performing as expected
-* **No alert fatigue!** React only when necessary if model performance is impacted
-* **Painless** setup in any environment
+-   End sleepless nights caused by not knowing your model performance 😴
+-   Analyse data drift and model performance **over time**
+-   Discover the **root cause** to why your models are not performing as expected
+-   **No alert fatigue!** React only when necessary if model performance is impacted
+-   **Painless** setup in any environment
 
 # 🧠 GO DEEP
+
 | NannyML Resources                                                                                               | Description                                                                            |
-|-----------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | ☎️ **[NannyML 101]**                                                                                            | New to NannyML? Start here!                                                            |
 | 🔮 **[Performance estimation]**                                                                                 | How the magic works.                                                                   |
 | 🌍 **[Real world example]**                                                                                     | Take a look at a real-world example of NannyML.                                        |
@@ -69,20 +71,20 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                                                                                    | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                                                                                   | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                                                                             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.8.4]**                                                                                          | New features, bug fixes.                                                               |
-| 🧑‍💻 **[Contribute]**                                                                                          | How to contribute to the NannyML project and codebase.                                 |
+| 💎 **[New in v0.8.5]**                                                                                          | New features, bug fixes.                                                               |
+| 🧑‍💻 **[Contribute]**                                                                                             | How to contribute to the NannyML project and codebase.                                 |
 | <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
-[NannyML 101]: https://nannyml.readthedocs.io/en/stable/
-[Performance Estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
-[Key Concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
-[Technical Reference]:https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
-[New in v0.8.4]: https://github.com/NannyML/nannyml/releases/latest/
-[Real World Example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
-[Blog]: https://www.nannyml.com/blog
-[Newsletter]:  https://mailchi.mp/022c62281d13/postdeploymentnewsletter
-[Join Slack]: https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ
-[Contribute]: https://github.com/NannyML/nannyml/blob/main/CONTRIBUTING.rst
+[nannyml 101]: https://nannyml.readthedocs.io/en/stable/
+[performance estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
+[key concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
+[technical reference]: https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
+[new in v0.8.5]: https://github.com/NannyML/nannyml/releases/latest/
+[real world example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
+[blog]: https://www.nannyml.com/blog
+[newsletter]: https://mailchi.mp/022c62281d13/postdeploymentnewsletter
+[join slack]: https://join.slack.com/t/nannymlbeta/shared_invite/zt-16fvpeddz-HAvTsjNEyC9CE6JXbiM7BQ
+[contribute]: https://github.com/NannyML/nannyml/blob/main/CONTRIBUTING.rst
 
 # 🔱 Features
 
@@ -116,14 +118,12 @@ NannyML uses the same statistical tests to detected **model output drift**.
 
 Because NannyML can estimate performance, it is possible to weed out data drift alerts that do not impact expected performance, combatting alert fatigue. Besides linking data drift issues to drops in performance it is also possible to prioritise alerts according to other criteria using NannyML's Ranker.
 
-
 # 🚀 Getting started
 
 ### Install NannyML
 
 NannyML depends on [LightGBM](https://github.com/microsoft/LightGBM). This might require you to set install additional
 OS-specific binaries. You can follow the [official installation guide](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html).
-
 
 From PyPI:
 
@@ -135,7 +135,7 @@ From Conda:
 
 ```bash
  conda install -c conda-forge nannyml
- ```
+```
 
 Running via [Docker](https://hub.docker.com/r/nannyml/nannyml):
 
@@ -151,7 +151,7 @@ python -m pip install git+https://github.com/NannyML/nannyml
 
 ### Quick Start
 
-*The following snippet is based on our [latest release](https://github.com/NannyML/nannyml/releases/latest)*.
+_The following snippet is based on our [latest release](https://github.com/NannyML/nannyml/releases/latest)_.
 
 ```python
 import nannyml as nml
@@ -234,12 +234,12 @@ figure.show()
 
 # 📖 Documentation
 
-* Performance monitoring
-  - [Estimated performance](https://nannyml.readthedocs.io/en/main/tutorials/performance_estimation.html)
-  - [Realized performance](https://nannyml.readthedocs.io/en/main/tutorials/performance_calculation.html)
-* Drift detection
-  * [Multivariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/multivariate_drift_detection.html)
-  - [Univariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/univariate_drift_detection.html)
+-   Performance monitoring
+    -   [Estimated performance](https://nannyml.readthedocs.io/en/main/tutorials/performance_estimation.html)
+    -   [Realized performance](https://nannyml.readthedocs.io/en/main/tutorials/performance_calculation.html)
+-   Drift detection
+    -   [Multivariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/multivariate_drift_detection.html)
+    *   [Univariate feature drift](https://nannyml.readthedocs.io/en/main/tutorials/detecting_data_drift/univariate_drift_detection.html)
 
 # 🦸 Contributing and Community
 
@@ -254,7 +254,25 @@ The best place to ask for help is in the [community slack](https://join.slack.co
 If you want to stay up to date with recent changes to the NannyML library, you can subscribe to our [release notes](https://nannyml.substack.com). For thoughts on post-deployment data science from the NannyML team, feel free to visit our [blog](https://www.nannyml.com/blog). You can also sing up for our [newsletter](https://mailchi.mp/022c62281d13/postdeploymentnewsletter), which brings together the best papers, articles, news, and open-source libraries highlighting the ML challenges after deployment.
 
 # 📍 Roadmap
+
 Curious what we are working on next? Have a look at our [roadmap](https://bit.ly/nannymlroadmap). If you have any questions or if you would like to see things prioritised in a different way, let us know!
+
+# 📝 Citing NannyML
+
+To cite NannyML in academic papers, please use the following BibTeX entry.
+
+### Version 0.8.5
+
+```
+    @misc{nannyml,
+        title = {{N}anny{ML} (release 0.8.5)},
+        howpublished = {\url{https://github.com/NannyML/nannyml}},
+        month = mar,
+        year = 2023,
+        note = {NannyML, Belgium, OHL.},
+        key = {NannyML}
+    }
+```
 
 # 📄 License
 
