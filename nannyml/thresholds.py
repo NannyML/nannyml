@@ -1,9 +1,10 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+from __future__ import annotations
 import abc
 import logging
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -21,6 +22,8 @@ class Threshold(abc.ABC):
     One or both values might be `None`.
     """
 
+    _registry: ClassVar[Dict[str, Type[Threshold]]] = {}
+
     @property
     def _logger(self):
         return logging.getLogger(self.__name__)
@@ -30,6 +33,10 @@ class Threshold(abc.ABC):
 
     def __repr__(self):
         return self.__class__.__name__ + str(vars(self))
+
+    def __init_subclass__(cls, type: str, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        Threshold._registry[type] = cls
 
     @abc.abstractmethod
     def thresholds(self, data: np.ndarray, **kwargs) -> Tuple[Optional[float], Optional[float]]:
@@ -47,8 +54,21 @@ class Threshold(abc.ABC):
                 The lower and upper threshold values. One or both might be `None`.
         """
 
+    @classmethod
+    def parse_object(cls, object: Dict[str, Any]) -> Threshold:
+        """Parse object as :class:`Threshold`"""
+        type = object.pop('type', '')
 
-class ConstantThreshold(Threshold):
+        try:
+            threshold_cls = cls._registry[type]
+        except KeyError:
+            accepted_values = ', '.join(map(repr, cls._registry))
+            raise InvalidArgumentsException(f"Expected one of {accepted_values} for threshold type, but received '{type}'")
+
+        return threshold_cls(**object)
+
+
+class ConstantThreshold(Threshold, type="constant"):
     """A `Thresholder` implementation that returns a constant lower and or upper threshold value.
 
     Attributes:
@@ -107,7 +127,7 @@ class ConstantThreshold(Threshold):
             raise ThresholdException(f"lower threshold {lower} must be less than upper threshold {upper}")
 
 
-class StandardDeviationThreshold(Threshold):
+class StandardDeviationThreshold(Threshold, type="standard_deviation"):
     """A Thresholder that offsets the mean of an array by a multiple of the standard deviation of the array values.
 
     This thresholder will take the aggregate of an array of values, the mean by default and add or subtract an offset

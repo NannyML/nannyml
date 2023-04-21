@@ -9,10 +9,11 @@ from typing import Any, Dict, List, Optional
 
 import jinja2
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from nannyml._typing import Self
 from nannyml.exceptions import IOException
+from nannyml.thresholds import Threshold
 
 CONFIG_PATH_ENV_VAR_KEY = 'NML_CONFIG_PATH'
 
@@ -74,6 +75,21 @@ class CalculatorConfig(BaseModel):
     outputs: Optional[List[WriterConfig]]
     store: Optional[StoreConfig]
     params: Dict[str, Any]
+
+    @validator('params')
+    def _parse_thresholds(cls, value: Dict[str, Any]):
+        """Parse thresholds in params and convert them to :class:`Threshold`'s"""
+        # Some calculators expect `thresholds` parameter as dict
+        thresholds = value.get('thresholds', {})
+        for key, threshold in thresholds.items():
+            thresholds[key] = Threshold.parse_object(threshold)
+
+        # Multivariate calculator expects a single `threshold`
+        threshold = value.get('threshold')
+        if threshold is not None:
+            value['threshold'] = Threshold.parse_object(threshold)
+
+        return value
 
 
 class Config(BaseModel):
