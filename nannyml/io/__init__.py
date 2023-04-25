@@ -1,6 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+"""The package comprises modules that enable the storage, reading, and loading of Python objects both locally and remotely."""
 
 from .base import Reader, Writer, WriterFactory
 from .db import DatabaseWriter

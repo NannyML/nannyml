@@ -30,17 +30,17 @@ class FileWriter(Writer, abc.ABC):
         fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
-        Creates a new FileWriter
+        Creates a new ``FileWriter``
 
         Parameters
         ----------
         path : str
             The path to read data from. Can be a regular file path or contain a protocol.
-        write_args : Dict[str, Any]
+        write_args : Dict[str, Any], default=None
             Specific arguments passed along the method performing the actual writing.
-        credentials : Dict[str, Any]
+        credentials : Dict[str, Any], default=None
             Used to provide credential information following specific ``fsspec`` implementations.
-        fs_args :
+        fs_args : default=None
             Specific arguments passed along to the ``fsspec`` filesystem initializer.
         """
         super().__init__()

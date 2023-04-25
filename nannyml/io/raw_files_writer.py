@@ -14,7 +14,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 @WriterFactory.register('raw_files')
 class RawFilesWriter(FileWriter):
-    """A Writer implementation that dumps the Result contents (data and plots) on disk (local/remote/cloud)."""
+    """A :class:`~nannyml.io.file_writer.FileWriter` implementation that dumps the ``Result`` contents (data and plots) on disk (local/remote/cloud)."""
 
     def __init__(
         self,
@@ -25,20 +25,20 @@ class RawFilesWriter(FileWriter):
         fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
-        Creates a new RawFilesWriter instance
+        Creates a new ``RawFilesWriter`` instance
 
         Parameters
         ----------
         path : str
-            The directory to write the results in. Each Result being written there will end create its own subdirectory.
+            The directory to write the results in. Each ``Result`` being written there will end create its own subdirectory.
             Each of those will contain `data` and `plots` subdirectories.
         format: str
             The file format for the data export. Should be one of ``parquet`` or ``csv``.
-        write_args : Dict[str, Any]
+        write_args : Dict[str, Any], default=None
             Specific arguments passed along the method performing the actual writing.
-        credentials : Dict[str, Any]
+        credentials : Dict[str, Any], default=None
             Used to provide credential information following specific ``fsspec`` implementations.
-        fs_args :
+        fs_args : default=None
             Specific arguments passed along to the ``fsspec`` filesystem initializer.
 
         Examples
