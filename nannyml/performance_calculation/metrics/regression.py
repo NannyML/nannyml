@@ -36,7 +36,19 @@ class MAE(Metric):
     """Mean Absolute Error metric."""
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
-        """Creates a new MAE instance."""
+        """Creates a new MAE instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name of the column containing your model output.
+        """
         super().__init__(
             name='mae',
             y_true=y_true,
@@ -80,7 +92,19 @@ class MAPE(Metric):
     """Mean Absolute Percentage Error metric."""
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
-        """Creates a new MAPE instance."""
+        """Creates a new MAPE instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name of the column containing your model output.
+        """
         super().__init__(
             name='mape',
             y_true=y_true,
@@ -124,7 +148,19 @@ class MSE(Metric):
     """Mean Squared Error metric."""
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
-        """Creates a new MSE instance."""
+        """Creates a new MSE instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name of the column containing your model output.
+        """
         super().__init__(
             name='mse',
             y_true=y_true,
@@ -168,7 +204,19 @@ class MSLE(Metric):
     """Mean Squared Logarithmic Error metric."""
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
-        """Creates a new MSLE instance."""
+        """Creates a new MSLE instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name of the column containing your model output.
+        """
         super().__init__(
             name='msle',
             y_true=y_true,
@@ -217,7 +265,19 @@ class RMSE(Metric):
     """Root Mean Squared Error metric."""
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
-        """Creates a new RMSE instance."""
+        """Creates a new RMSE instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name of the column containing your model output.
+        """
         super().__init__(
             name='rmse',
             y_true=y_true,
@@ -261,7 +321,19 @@ class RMSLE(Metric):
     """Root Mean Squared Logarithmic Error metric."""
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
-        """Creates a new RMSLE instance."""
+        """Creates a new RMSLE instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name of the column containing your model output.
+        """
         super().__init__(
             name='rmsle',
             y_true=y_true,

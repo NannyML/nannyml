@@ -2,7 +2,44 @@
 #
 #  License: Apache Software License 2.0
 
-"""Calculates realized performance metrics when target data is available."""
+"""Calculates realized performance metrics when target data is available.
+
+The performance calculator manages a list of :class:`~nannyml.performance_calculation.metrics.base.Metric` instances,
+constructed using the :class:`~nannyml.performance_calculation.metrics.base.MetricFactory`.
+The estimator is then responsible for delegating the `fit` and `estimate` method calls to each of the managed
+:class:`~nannyml.performance_calculation.metrics.base.Metric` instances and building a
+:class:`~nannyml.performance_calculation.result.Result` object.
+
+For more information, check out the `tutorials`_.
+
+.. _tutorials:
+    https://nannyml.readthedocs.io/en/stable/tutorials/performance_calculation.html
+
+Examples
+--------
+
+>>> import nannyml as nml
+>>> from IPython.display import display
+>>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
+>>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
+>>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
+>>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+>>> display(reference_df.head(3))
+>>> calc = nml.PerformanceCalculator(
+...     y_pred_proba='y_pred_proba',
+...     y_pred='y_pred',
+...     y_true='work_home_actual',
+...     timestamp_column_name='timestamp',
+...     problem_type='classification_binary',
+...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+...     chunk_size=5000)
+>>> calc.fit(reference_df)
+>>> results = calc.calculate(analysis_df)
+>>> display(results.data)
+>>> for metric in calc.metrics:
+...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
+...     figure.show()
+"""
 
 from __future__ import annotations
 
@@ -66,19 +103,50 @@ class PerformanceCalculator(AbstractCalculator):
 
         Parameters
         ----------
+        metrics: Union[str, List[str]]
+            A metric or list of metrics to calculate.
         y_true: str
             The name of the column containing target values.
-        y_pred_proba: ModelOutputsType
+        y_pred: str
+            The name of the column containing your model predictions.
+        problem_type: Union[str, ProblemType]
+            Determines which method to use. Allowed values are:
+
+                - 'regression'
+                - 'classification_binary'
+                - 'classification_multiclass'
+        y_pred_proba: ModelOutputsType, default=None
             Name(s) of the column(s) containing your model output.
             Pass a single string when there is only a single model output column, e.g. in binary classification cases.
             Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
             The dictionary maps a class/label string to the column name containing model outputs for that class/label.
-        y_pred: str
-            The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
-        metrics: Union[str, List[str]]
-            A metric or list of metrics to calculate.
+        thresholds: dict
+
+            The default values are::
+
+                {
+                    'roc_auc': StandardDeviationThreshold(),
+                    'f1': StandardDeviationThreshold(),
+                    'precision': StandardDeviationThreshold(),
+                    'recall': StandardDeviationThreshold(),
+                    'specificity': StandardDeviationThreshold(),
+                    'accuracy': StandardDeviationThreshold(),
+                    'confusion_matrix': StandardDeviationThreshold(),
+                    'business_value': StandardDeviationThreshold(),
+                    'mae': StandardDeviationThreshold(),
+                    'mape': StandardDeviationThreshold(),
+                    'mse': StandardDeviationThreshold(),
+                    'msle': StandardDeviationThreshold(),
+                    'rmse': StandardDeviationThreshold(),
+                    'rmsle': StandardDeviationThreshold(),
+                }
+
+            A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
+            to a method name. This dictionary is optional.
+            When a dictionary is given its values will override the default values. If no dictionary is given a default
+            will be applied.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -90,40 +158,6 @@ class PerformanceCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
-        thresholds: dict, default={ \
-            'roc_auc': StandardDeviationThreshold(), \
-            'f1': StandardDeviationThreshold(), \
-            'precision': StandardDeviationThreshold(), \
-            'recall': StandardDeviationThreshold(), \
-            'specificity': StandardDeviationThreshold(), \
-            'accuracy': StandardDeviationThreshold(), \
-            'confusion_matrix': StandardDeviationThreshold(), \
-            'business_value': StandardDeviationThreshold(), \
-            'mae': StandardDeviationThreshold(), \
-            'mape': StandardDeviationThreshold(), \
-            'mse': StandardDeviationThreshold(), \
-            'msle': StandardDeviationThreshold(), \
-            'rmse': StandardDeviationThreshold(), \
-            'rmsle': StandardDeviationThreshold(), \
-        }
-
-            A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
-            to a method name. This dictionary is optional.
-            When a dictionary is given its values will override the default values. If no dictionary is given a default
-            will be applied. The default method thresholds are as follows:
-
-                - `roc_auc`: `StandardDeviationThreshold()`
-                - `f1`: `StandardDeviationThreshold()`
-                - `precision`: `StandardDeviationThreshold()`
-                - `recall`: `StandardDeviationThreshold()`
-                - `specificity`: `StandardDeviationThreshold()`
-                - `accuracy`: `StandardDeviationThreshold()`
-                - `mae`: `StandardDeviationThreshold()`
-                - `mape`: `StandardDeviationThreshold()`
-                - `mse`: `StandardDeviationThreshold()`
-                - `msle`: `StandardDeviationThreshold()`
-                - `rmse`: `StandardDeviationThreshold()`
-                - `rmsle`: `StandardDeviationThreshold()`
         normalize_confusion_matrix: str, default=None
             Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
             'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
@@ -162,7 +196,6 @@ class PerformanceCalculator(AbstractCalculator):
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
         >>> display(results.data)
-        >>> display(results.calculator.previous_reference_results)
         >>> for metric in calc.metrics:
         ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
         ...     figure.show()

@@ -14,7 +14,7 @@ from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException, ReaderException, WriterException
 
 HTTP_PROTOCOLS = ['http', 'https']
-CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss']
+CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss', 'az']
 
 
 class Writer(ABC):
