@@ -5,3 +5,4 @@
 """Package containing the Simple Statistics implementation."""
 
 from .sum import SimpleStatsSumCalculator
+from .avg import SimpleStatsAvgCalculator
