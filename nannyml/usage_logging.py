@@ -42,6 +42,10 @@ class UsageEvent(str, Enum):
 
     # Calculators
 
+    STATS_COUNT_FIT = "Simple Stats Count fit"
+    STATS_COUNT_RUN = "Simple Stats Count run"
+    STATS_COUNT_PLOT = "Simple Stats Count plot"
+
     STATS_STD_FIT = "Simple Stats Std fit"
     STATS_STD_RUN = "Simple Stats Std run"
     STATS_STD_PLOT = "Simple Stats Std plot"
