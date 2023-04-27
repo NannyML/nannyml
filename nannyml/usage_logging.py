@@ -42,6 +42,10 @@ class UsageEvent(str, Enum):
 
     # Calculators
 
+    STATS_SUM_FIT = "Simple Stats Sum fit"
+    STATS_SUM_RUN = "Simple Stats Sum run"
+    STATS_SUM_PLOT = "Simple Stats Sum plot"
+
     DQ_CALC_MISSING_VALUES_FIT = "Data Quality Calculator Missing Values fit"
     DQ_CALC_MISSING_VALUES_RUN = "Data Quality Calculator Missing Values run"
     DQ_CALC_MISSING_VALUES_PLOT = "Data Quality Calculator Missing Values plot"
