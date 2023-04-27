@@ -236,6 +236,7 @@ def calculate_threshold_values(
         metric_name: Optional[str], default=None
             When provided the metric name will be included within any log messages for additional clarity.
     """
+
     lower_threshold_value, upper_threshold_value = threshold.thresholds(data)
 
     if (

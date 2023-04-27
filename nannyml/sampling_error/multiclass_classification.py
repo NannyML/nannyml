@@ -348,7 +348,7 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
     return sampling_error_components[0] / np.sqrt(len(data))
 
 
-def multiclss_confusion_matrix_sampling_error_components(
+def multiclass_confusion_matrix_sampling_error_components(
     y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series], normalize_confusion_matrix: Union[str, None]
 ):
 

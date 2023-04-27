@@ -1682,7 +1682,7 @@ class MulticlassClassificationAccuracy(Metric):
             return np.NaN
 
         y_true = data[self.y_true]
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
+        y_pred, _, _ = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
         return accuracy_score(y_true, y_pred)
 
@@ -1701,6 +1701,11 @@ class MulticlassClassificationConfusionMatrix(Metric):
         **kwargs,
     ):
 
+        if isinstance(y_pred_proba, str):
+            raise ValueError(
+                "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
+            )
+
         self.classes = list(y_pred_proba.keys())
 
         super().__init__(
@@ -1717,22 +1722,14 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
 
-        # self.true_positive_lower_threshold: Optional[float] = 0
-        # self.true_positive_upper_threshold: Optional[float] = 1
-        # self.true_negative_lower_threshold: Optional[float] = 0
-        # self.true_negative_upper_threshold: Optional[float] = 1
-
-        # self.true_positive_confidence_deviation: float = 0
-        # self.true_negative_confidence_deviation: float = 0
-        # self.false_positive_confidence_deviation: float = 0
-        # self.false_negative_confidence_deviation: float = 0
-
     def _get_components(self, classes: List[str]) -> List[Tuple[str, str]]:
         components = []
 
         for true_class in classes:
             for pred_class in classes:
-                components.append((f'{true_class} predicted as {pred_class}', f'true_{true_class}_pred_{pred_class}'))
+                components.append(
+                    (f"true class: '{true_class}', predicted class: '{pred_class}'", f'true_{true_class}_pred_{pred_class}')
+                )
 
         return components
 
@@ -1748,15 +1745,10 @@ class MulticlassClassificationConfusionMatrix(Metric):
             reference_data,
         )
 
-        # classes = list(set(reference_data[self.y_true].unique()).union(set(reference_data[self.y_pred].unique())))
-
         self.alert_thresholds = self._multiclass_confusion_matrix_alert_thresholds(reference_chunks)
 
         # Calculate confidence bands
-        self.true_positive_confidence_deviation = self._true_positive_confidence_deviation(reference_chunks)
-        self.true_negative_confidence_deviation = self._true_negative_confidence_deviation(reference_chunks)
-        self.false_positive_confidence_deviation = self._false_positive_confidence_deviation(reference_chunks)
-        self.false_negative_confidence_deviation = self._false_negative_confidence_deviation(reference_chunks)
+        self.confidence_deviations = self._multiclass_confusion_matrix_confidence_deviations(reference_chunks)
 
         # Delegate to confusion matrix subclass
         self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
@@ -1765,7 +1757,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
 
-        self._confusion_matrix_sampling_error_components = bse.confusion_matrix_sampling_error_components(
+        self._confusion_matrix_sampling_error_components = mse.multiclass_confusion_matrix_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
             normalize_confusion_matrix=self.normalize_confusion_matrix,
@@ -1776,10 +1768,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
     ) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
 
         realized_chunk_performance = np.asarray(
-            [
-                self._multi_class_confusion_matrix_realized_performance(chunk.data)
-                for chunk in reference_chunks
-            ]
+            [self._multi_class_confusion_matrix_realized_performance(chunk.data) for chunk in reference_chunks]
         )
 
         alert_thresholds = {}
@@ -1801,7 +1790,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         return alert_thresholds
 
-    def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> np.ndarray:
+    def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
 
         if self.y_true not in data.columns or data[self.y_true].isna().all():
             return np.NaN
@@ -1812,49 +1801,34 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         return cm
 
-    def _true_positive_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            return np.NaN
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        if self.normalize_confusion_matrix is None:
-            return num_tp
-        elif self.normalize_confusion_matrix == 'true':
-            return num_tp / (num_tp + num_fn)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_tp / (num_tp + num_fp)
-        else:  # normalization is 'all'
-            return num_tp / len(y_true)
-
-    def _multiclass_confusion_matrix_confidence_deviation(
-        self, reference_chunks: List[Chunk], classes: List[str]
+    def _multiclass_confusion_matrix_confidence_deviations(
+        self,
+        reference_chunks: List[Chunk],
     ) -> Dict[str, float]:
-        # std of estimates for each chunk for each class
+
         confidence_deviations = {}
 
-        num_classes = len(classes)
+        num_classes = len(self.classes)
 
         for i in range(num_classes):
             for j in range(num_classes):
 
-                confidence_deviations[f'true_{classes[i]}_pred_{classes[j]}'] = np.std(
-                    [
-                        self._get_multiclass_confusion_matrix_estimate(chunk.data)[i, j]
-                        for chunk in reference_chunks
-                    ]
-                )            
+                confidence_deviations[f'true_{self.classes[i]}_pred_{self.classes[j]}'] = np.std(
+                    [self._get_multiclass_confusion_matrix_estimate(chunk.data)[i, j] for chunk in reference_chunks]
+                )
 
         return confidence_deviations
 
     def _get_multiclass_confusion_matrix_estimate(self, chunk_data: pd.DataFrame) -> np.ndarray:
-        y_pred_proba = chunk_data[self.y_pred_proba]
+
+        if isinstance(self.y_pred_proba, str):
+            raise ValueError(
+                "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
+            )
+
+        y_pred_proba = {key: chunk_data[value] for key, value in self.y_pred_proba.items()}
+
         y_pred = chunk_data[self.y_pred]
-        y_true = chunk_data[self.y_true]
 
         num_classes = len(self.classes)
 
@@ -1864,7 +1838,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
             for j in range(num_classes):
                 est_confusion_matrix[i, j] = np.mean(
                     np.where(
-                        np.logical_and(y_pred == self.classes[j], y_true == self.classes[i]),
+                        (y_pred == self.classes[j]),
                         y_pred_proba[self.classes[i]],
                         0,
                     )
@@ -1882,22 +1856,24 @@ class MulticlassClassificationConfusionMatrix(Metric):
             normalized_est_confusion_matrix = est_confusion_matrix / np.sum(est_confusion_matrix)
         else:
             raise ValueError(
-                f'normalize_confusion_matrix should be one of None, "true", "pred", or "all", but got {self.normalize_confusion_matrix}'
+                f'normalize_confusion_matrix should be one of None, "true", \
+                    "pred", or "all", but got {self.normalize_confusion_matrix}'
             )
 
         return normalized_est_confusion_matrix
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
-        
+
         chunk_record = {}
 
         estimated_cm = self._get_multiclass_confusion_matrix_estimate(chunk_data)
         realized_cm = self._multi_class_confusion_matrix_realized_performance(chunk_data)
-        sampling_error = bse.confusion_matrix_sampling_error(
-                    self._confusion_matrix_sampling_error_components,
-                    chunk_data,
-                )
-        
+
+        sampling_error = mse.multiclass_confusion_matrix_sampling_error(
+            self._confusion_matrix_sampling_error_components,
+            chunk_data,
+        )
+
         for true_class in self.classes:
             for pred_class in self.classes:
 
@@ -1909,9 +1885,13 @@ class MulticlassClassificationConfusionMatrix(Metric):
                     self.classes.index(true_class), self.classes.index(pred_class)
                 ]
 
-                chunk_record[f'realized_true_{true_class}_pred_{pred_class}'] = realized_cm[
-                    self.classes.index(true_class), self.classes.index(pred_class)
-                ]
+                # check if realized_cm is nan
+                if isinstance(realized_cm, np.ndarray):
+                    chunk_record[f'realized_true_{true_class}_pred_{pred_class}'] = realized_cm[
+                        self.classes.index(true_class), self.classes.index(pred_class)
+                    ]
+                else:
+                    chunk_record[f'realized_true_{true_class}_pred_{pred_class}'] = realized_cm
 
                 upper_confidence_boundary = (
                     estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
@@ -1920,7 +1900,9 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 )
 
                 if self.normalize_confusion_matrix is None:
-                    chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = upper_confidence_boundary
+                    chunk_record[
+                        f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'
+                    ] = upper_confidence_boundary
                 else:
                     chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
                         self.confidence_upper_bound, upper_confidence_boundary
@@ -1933,19 +1915,21 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 )
 
                 if self.normalize_confusion_matrix is None:
-                    chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = lower_confidence_boundary
+                    chunk_record[
+                        f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'
+                    ] = lower_confidence_boundary
                 else:
                     chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
                         self.confidence_lower_bound, lower_confidence_boundary
                     )
 
-                chunk_record[f'upper_threshold_true_{true_class}_pred_{pred_class}'] = (
-                    self.alert_thresholds[f'true_{true_class}_pred_{pred_class}'][1]
-                )
-                chunk_record[f'lower_threshold_true_{true_class}_pred_{pred_class}'] = (
-                    self.alert_thresholds[f'true_{true_class}_pred_{pred_class}'][0]
-                )
-                
+                chunk_record[f'upper_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
+                    f'true_{true_class}_pred_{pred_class}'
+                ][1]
+                chunk_record[f'lower_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
+                    f'true_{true_class}_pred_{pred_class}'
+                ][0]
+
                 # do alerts
                 chunk_record[f'alert_true_{true_class}_pred_{pred_class}'] = (
                     self.alert_thresholds is not None
