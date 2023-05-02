@@ -14,7 +14,7 @@ Choosing Univariate Drift Detection Methods
      - Yes
      - Yes
      - Versatile
-     - | Does not differentiate  
+     - | Does not differentiate
        | between very strong and
        | extreme drifts
    * - Hellinger
@@ -40,7 +40,7 @@ Choosing Univariate Drift Detection Methods
      - No
      - Yes
      - Statistical significance
-     - | False positives, 
+     - | False positives,
        | insensitive to changes in tails
    * - Chi-2
      - Yes

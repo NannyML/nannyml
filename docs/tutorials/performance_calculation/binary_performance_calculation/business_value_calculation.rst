@@ -63,7 +63,7 @@ the following parameter specifications:
     cell in the confusion matrix where the top left cell is the value
     of a true negative, the top right cell is the value of a false
     positive, the bottom left cell is the value of a false negative,
-    and the bottom right cell is the value of a true positive. 
+    and the bottom right cell is the value of a true positive.
   - **normalize_business_value (Optional):** how to normalize the business value.
     The normalization options are:
 
@@ -83,7 +83,7 @@ the following parameter specifications:
 
 .. note::
     When calculating **business_value**, the ``business_value_matrix`` parameter is required. The format of the :term:`business value matrix`
-    must be specified as ``[[value_of_TN, value_of_FP], [value_of_FN, value_of_TP]]``. For more information about 
+    must be specified as ``[[value_of_TN, value_of_FP], [value_of_FN, value_of_TP]]``. For more information about
     the business value matrix, check out the :ref:`Business Value "How it Works" page<business-value-deep-dive>`.
 
 The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` is fitted using the
@@ -135,7 +135,7 @@ The results can be plotted for visual inspection. Our plot contains several key 
 * *The purple step plot* shows the performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate 
+* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate
   the middle of these chunks.
 
 * *The gray vertical line* splits the reference and analysis periods.

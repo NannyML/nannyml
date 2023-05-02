@@ -246,4 +246,3 @@ on other datasets or ML problems, look through our :ref:`examples<examples>`.
 
 .. [1] https://www.nature.com/articles/s41598-022-15245-z
 .. [2] https://www.nannyml.com/blog/types-of-data-shift
-

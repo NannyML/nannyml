@@ -5,15 +5,12 @@
 
 """Tests for Drift package."""
 
-import numpy as np
 import pandas as pd
 import pytest
 
 from nannyml._typing import Result
 from nannyml.data_quality import MissingValuesCalculator
-
 from nannyml.datasets import load_synthetic_car_loan_data_quality_dataset
-
 from nannyml.exceptions import InvalidArgumentsException
 
 
@@ -29,7 +26,7 @@ def missing_value_result() -> Result:
             'loan_length',
             'repaid_loan_on_prev_car',
             'size_of_downpayment',
-            'driver_tenure'
+            'driver_tenure',
         ],
     ).fit(reference)
     return calc.calculate(data=analysis)
@@ -46,7 +43,7 @@ def test_missing_value_calculator_with_default_params_should_not_fail():  # noqa
                 'loan_length',
                 'repaid_loan_on_prev_car',
                 'size_of_downpayment',
-                'driver_tenure'
+                'driver_tenure',
             ],
         ).fit(reference)
         _ = calc.calculate(data=analysis)
@@ -65,10 +62,10 @@ def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa:
                 'loan_length',
                 'repaid_loan_on_prev_car',
                 'size_of_downpayment',
-                'driver_tenure'
+                'driver_tenure',
             ],
             timestamp_column_name='timestamp',
-            normalize=False
+            normalize=False,
         ).fit(reference)
         _ = calc.calculate(data=analysis)
     except Exception:
@@ -77,13 +74,13 @@ def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa:
 
 def test_missing_value_calculator_validates_column_names_list_elements():
     with pytest.raises(InvalidArgumentsException):
-        calc = MissingValuesCalculator(
+        _ = MissingValuesCalculator(
             column_names=[
                 'car_value',
-                {'ab':1},
+                {'ab': 1},
             ],
             timestamp_column_name='timestamp',
-            normalize=False
+            normalize=False,
         )
 
 
@@ -96,16 +93,16 @@ def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_n
             'loan_length',
             'repaid_loan_on_prev_car',
             'size_of_downpayment',
-            'driver_tenure'
+            'driver_tenure',
         ],
         timestamp_column_name='timestamp',
-        normalize=False
+        normalize=False,
     )
     with pytest.raises(InvalidArgumentsException):
         _ = calc.fit(pd.DataFrame())
 
 
-def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_when_no_data_present():  # noqa: D103, F821
+def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_when_no_data_present():  # noqa: D103
     reference, _, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
         column_names=[
@@ -115,16 +112,16 @@ def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_
             'loan_length',
             'repaid_loan_on_prev_car',
             'size_of_downpayment',
-            'driver_tenure'
+            'driver_tenure',
         ],
         timestamp_column_name='timestamp',
-        normalize=False
+        normalize=False,
     ).fit(reference_data=reference)
     with pytest.raises(InvalidArgumentsException):
         _ = calc.calculate(pd.DataFrame())
 
 
-def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103, F821
+def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103
     reference, _, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
         column_names=[
@@ -132,13 +129,13 @@ def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_c
             'missing_column',
         ],
         timestamp_column_name='timestamp',
-        normalize=False
+        normalize=False,
     )
     with pytest.raises(InvalidArgumentsException):
         _ = calc.fit(reference)
 
 
-def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103, F821
+def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
         column_names=[
@@ -148,10 +145,10 @@ def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_
             'loan_length',
             'repaid_loan_on_prev_car',
             'size_of_downpayment',
-            'driver_tenure'
+            'driver_tenure',
         ],
         timestamp_column_name='timestamp',
-        normalize=False
+        normalize=False,
     ).fit(reference_data=reference)
     with pytest.raises(InvalidArgumentsException):
         _ = calc.calculate(analysis.drop('driver_tenure', axis=1))
@@ -163,7 +160,7 @@ def test_whether_data_quality_metric_property_on_results_mv_rate(missing_value_r
 
 def test_whether_result_data_dataframe_has_proper_columns(missing_value_result):
     cols = missing_value_result.data.columns
-    assert len(cols) == 7 + 7*7
+    assert len(cols) == 7 + 7 * 7
     assert ('chunk', 'key') in cols
     assert ('chunk', 'chunk_index') in cols
     assert ('chunk', 'start_index') in cols
@@ -232,9 +229,9 @@ def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D1
             'loan_length',
             'repaid_loan_on_prev_car',
             'size_of_downpayment',
-            'driver_tenure'
+            'driver_tenure',
         ],
-        normalize=False
+        normalize=False,
     ).fit(reference)
     assert calc.calculate(data=analysis).data_quality_metric == 'missing_values_count'
 
@@ -248,29 +245,31 @@ def test_results_filtering_column_str(missing_value_result):
 
 def test_results_filtering_columns_list(missing_value_result):
     try:
-        missing_value_result.filter(column_names=[
-            'car_value',
-            'salary_range',
-            'debt_to_income_ratio',
-        ])
+        missing_value_result.filter(
+            column_names=[
+                'car_value',
+                'salary_range',
+                'debt_to_income_ratio',
+            ]
+        )
     except Exception:
         pytest.fail()
 
 
 def test_results_car_value_values(missing_value_result):
- 
+
     res = missing_value_result.filter(column_names='car_value').to_df()
-    assert list(res[('car_value', 'value')]) == [0]*20
+    assert list(res[('car_value', 'value')]) == [0] * 20
 
 
 def test_results_car_value_alerts(missing_value_result):
-    
+
     res = missing_value_result.filter(column_names='car_value').to_df()
-    assert list(res[('car_value', 'alert')]) == [False]*20
+    assert list(res[('car_value', 'alert')]) == [False] * 20
 
 
 def test_results_salary_range_values(missing_value_result):
-    
+
     res = missing_value_result.filter(column_names='salary_range').to_df()
     assert list(res[('salary_range', 'value')]) == [
         0.0998,
@@ -292,16 +291,16 @@ def test_results_salary_range_values(missing_value_result):
         0.2214,
         0.2178,
         0.2264,
-        0.2156
+        0.2156,
     ]
 
 
 def test_results_salary_range_alerts(missing_value_result):
     res = missing_value_result.filter(column_names='salary_range').to_df()
-    assert list(res[('salary_range', 'alert')]) == [False]*15 + [True]*5
+    assert list(res[('salary_range', 'alert')]) == [False] * 15 + [True] * 5
 
 
-def test_results_driver_tenure_values(missing_value_result): 
+def test_results_driver_tenure_values(missing_value_result):
     res = missing_value_result.filter(column_names='driver_tenure').to_df()
     assert list(res[('driver_tenure', 'value')]) == [
         0.1018,
@@ -323,11 +322,11 @@ def test_results_driver_tenure_values(missing_value_result):
         0.2138,
         0.2236,
         0.2296,
-        0.2134
+        0.2134,
     ]
 
 
 def test_results_driver_tenure_alerts(missing_value_result):
 
     res = missing_value_result.filter(column_names='driver_tenure').to_df()
-    assert list(res[('driver_tenure', 'alert')]) == [False]*15 + [True]*5
+    assert list(res[('driver_tenure', 'alert')]) == [False] * 15 + [True] * 5

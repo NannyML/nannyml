@@ -5,6 +5,7 @@
 
 """Module containing base classes for data quality calculations."""
 
+
 def _add_alert_flag(row_result: dict) -> bool:
     flag = False
     if row_result['upper_threshold'] is not None:

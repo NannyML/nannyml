@@ -195,7 +195,14 @@ class Abstract1DColumnsResult(AbstractResult, ABC, Generic[MetricLike]):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, column_names: Union[str, List[str]] = None, *args, **kwargs) -> Self:
+    def _filter(
+        self,
+        period: str,
+        metrics: Optional[List[str]] = None,
+        column_names: Optional[Union[str, List[str]]] = None,
+        *args,
+        **kwargs,
+    ) -> Self:
         if isinstance(column_names, str):
             column_names = [column_names]
         elif isinstance(column_names, list):

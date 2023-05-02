@@ -185,6 +185,7 @@ def load_synthetic_car_loan_dataset():
 
     return reference, analysis, analysis_gt
 
+
 def load_synthetic_car_loan_data_quality_dataset():
     """Loads the synthetic car loan binary classification dataset that contains missing values
     provided for testing the NannyML package.

@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import List, Optional, cast
+from typing import List, Optional
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -18,6 +18,7 @@ import plotly.graph_objects as go
 from nannyml._typing import Key
 from nannyml.base import Abstract1DColumnsResult
 from nannyml.chunk import Chunker
+
 # from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
@@ -43,10 +44,12 @@ class Result(Abstract1DColumnsResult, ResultCompareMixin):
         self.chunker = chunker
 
     def keys(self) -> List[Key]:
-        return [ 
+        return [
             Key(
-                properties=(column_name,), display_names=(column_name,f"{self.data_quality_metric.replace('_', ' ').title()}")
-            ) for column_name in self.column_names
+                properties=(column_name,),
+                display_names=(column_name, f"{self.data_quality_metric.replace('_', ' ').title()}"),
+            )
+            for column_name in self.column_names
         ]
 
     @log_usage(UsageEvent.DQ_CALC_UNSEEN_VALUES_PLOT)
