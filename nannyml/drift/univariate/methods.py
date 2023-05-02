@@ -48,7 +48,7 @@ class Method(abc.ABC):
         upper_threshold_limit: Optional[float] = None,
         lower_threshold_limit: Optional[float] = None,
     ):
-        """Creates a new Metric instance.
+        """Creates a new Method instance.
 
         Parameters
         ----------
@@ -57,10 +57,19 @@ class Method(abc.ABC):
             ``calculation_function``.
         column_name: str
             The name used to indicate the metric in columns of a DataFrame.
+        chunker : Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
+        computation_params : dict, default=None
+            A dictionary specifying parameter names and values to be used in the computation of the
+            drift method.
+        upper_threshold : float, default=None
+            An optional upper threshold for the data quality metric.
+        lower_threshold : float, default=None
+            An optional lower threshold for the data quality metric.
         upper_threshold_limit : float, default=None
-            An optional upper threshold for the performance metric.
-        lower_threshold_limit : float, default=None
-            An optional lower threshold for the performance metric.
+            An optional upper threshold limit for the data quality metric.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold limit for the data quality metric.
         """
         self.display_name = display_name
         self.column_name = column_name
@@ -244,7 +253,7 @@ class MethodFactory:
 class JensenShannonDistance(Method):
     """Calculates Jensen-Shannon distance.
 
-    An alert will be raised if `distance > 0.1`.
+    By default an alert will be raised if `distance > 0.1`.
     """
 
     def __init__(self, **kwargs) -> None:

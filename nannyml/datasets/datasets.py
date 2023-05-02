@@ -71,6 +71,41 @@ def load_synthetic_binary_classification_dataset():
     return reference, analysis, analysis_gt
 
 
+def load_titanic_dataset():
+    """Loads the titanic the NannyML package.
+
+    The dataset has been created by combining two sources, the kaggle dataset[1] and the
+    data world dataset[2]. Note that we have made the reference period align with the kaggle
+    train set and the analysis period align with the kaggle test set.
+
+
+    [1]: https://www.kaggle.com/competitions/titanic/data
+    [2]: https://data.world/nrippner/titanic-disaster-dataset
+
+
+    Returns
+    -------
+    reference : pd.DataFrame
+        A DataFrame containing reference period of the titanic dataset
+    analysis : pd.DataFrame
+        A DataFrame containing analysis period of the titanic dataset
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis period of
+        the titanic dataset
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_titanic_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_titanic_dataset()
+
+    """
+    reference = load_csv_file_to_df('titanic_reference.csv')
+    analysis = load_csv_file_to_df('titanic_analysis.csv')
+    analysis_gt = load_csv_file_to_df('titanic_target.csv')
+
+    return reference, analysis, analysis_gt
+
+
 def load_synthetic_multiclass_classification_dataset():
     """Loads the synthetic multiclass classification dataset provided for testing the NannyML package.
 
@@ -146,6 +181,35 @@ def load_synthetic_car_loan_dataset():
     """
     reference = load_csv_file_to_df('synthetic_car_loan_reference.csv')
     analysis = load_csv_file_to_df('synthetic_car_loan_analysis.csv')
+    analysis_gt = load_csv_file_to_df('synthetic_car_loan_analysis_target.csv')
+
+    return reference, analysis, analysis_gt
+
+
+def load_synthetic_car_loan_data_quality_dataset():
+    """Loads the synthetic car loan binary classification dataset that contains missing values
+    provided for testing the NannyML package.
+
+    Returns
+    -------
+    reference : pd.DataFrame
+        A DataFrame containing reference period of
+        synthetic car loan binary classification dataset that contains missing values
+    analysis : pd.DataFrame
+        A DataFrame containing analysis period of
+        synthetic car loan binary classification dataset that contains missing values
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis period of
+        synthetic car loan binary classification dataset that contains missing values
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_synthetic_car_loan_w_missing_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_w_missing_dataset()
+
+    """
+    reference = load_csv_file_to_df('synthetic_car_loan_dq_reference.csv')
+    analysis = load_csv_file_to_df('synthetic_car_loan_dq_analysis.csv')
     analysis_gt = load_csv_file_to_df('synthetic_car_loan_analysis_target.csv')
 
     return reference, analysis, analysis_gt

@@ -1,5 +1,6 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #            Nikolaos Perrakis  <nikos@nannyml.com>
+#
 #  License: Apache Software License 2.0
 
 """Calculates the data reconstruction error on unseen analysis data after fitting on reference data.
