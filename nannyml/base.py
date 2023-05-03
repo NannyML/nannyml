@@ -216,13 +216,9 @@ class PerColumnResult(Abstract1DResult, ABC):
         return res
 
 
-class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
-    def __init__(
-        self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], column_names: List[str] = [], *args, **kwargs
-    ):
+class Abstract2DResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
         super().__init__(results_data)
-        self.metrics = metrics
-        self.column_names = column_names
 
     @property
     def chunk_keys(self) -> pd.Series:
@@ -247,6 +243,31 @@ class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
     def _filter(
         self,
         period: str,
+        *args,
+        **kwargs,
+    ) -> Self:
+        data = self.data
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+            data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+
+        return res
+
+
+class PerMetricPerColumnResult(Abstract2DResult, ABC, Generic[MetricLike]):
+    def __init__(
+        self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], column_names: List[str] = [], *args, **kwargs
+    ):
+        super().__init__(results_data)
+        self.metrics = metrics
+        self.column_names = column_names
+
+    def _filter(
+        self,
+        period: str,
         metrics: Optional[List[str]] = None,
         column_names: Optional[List[str]] = None,
         *args,
@@ -257,16 +278,15 @@ class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
         if column_names is None:
             column_names = self.column_names
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, metrics)]], axis=1)
-        if period != 'all':
-            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+        res = super()._filter(period, args, kwargs)
 
+        data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (column_names, metrics)]], axis=1)
         data = data.reset_index(drop=True)
 
-        res = copy.deepcopy(self)
         res.data = data
         res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
         res.column_names = [c for c in self.column_names if c in column_names]
+
         return res
 
 
