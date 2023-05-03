@@ -148,6 +148,10 @@ class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
+    
+    @property
+    def chunk_start_index(self) -> pd.Series:
+        return self.data[('chunk', 'start_index')]
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         if metrics is None:
@@ -194,6 +198,10 @@ class Abstract1DColumnsResult(AbstractResult, ABC, Generic[MetricLike]):
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
+    
+    @property
+    def chunk_start_index(self) -> pd.Series:
+        return self.data[('chunk', 'start_index')]
 
     def _filter(
         self,
@@ -253,6 +261,10 @@ class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'period')]
+
+    @property
+    def chunk_start_index(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'start_index')]
 
     def _filter(
         self,
