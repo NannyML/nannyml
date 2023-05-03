@@ -124,10 +124,9 @@ class AbstractResult(ABC):
         return self.data.get(key.properties + (property_name,), default=None)
 
 
-class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
-    def __init__(self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], *args, **kwargs):
+class Abstract1DResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
         super().__init__(results_data)
-        self.metrics = metrics
 
     @property
     def chunk_keys(self) -> pd.Series:
@@ -149,23 +148,38 @@ class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
+    def _filter(self, period: str, *args, **kwargs) -> Self:
+        data = self.data
+        if period != 'all':
+            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+            data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        return res
+
+
+class PerMetricResult(Abstract1DResult, ABC, Generic[MetricLike]):
+    def __init__(self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], *args, **kwargs):
+        super().__init__(results_data)
+        self.metrics = metrics
+
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
-        if period != 'all':
-            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+        res = super()._filter(period, args, kwargs)
 
+        data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (metrics,)]], axis=1)
         data = data.reset_index(drop=True)
 
-        res = copy.deepcopy(self)
         res.data = data
         res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+
         return res
 
 
-class Abstract1DColumnsResult(AbstractResult, ABC, Generic[MetricLike]):
+class PerColumnResult(Abstract1DResult, ABC):
     def __init__(self, results_data: pd.DataFrame, column_names: Union[str, List[str]] = [], *args, **kwargs):
         super().__init__(results_data)
         if isinstance(column_names, str):
@@ -174,26 +188,6 @@ class Abstract1DColumnsResult(AbstractResult, ABC, Generic[MetricLike]):
             self.column_names = column_names
         else:
             raise TypeError("column_names should be either a column name string or a list of strings.")
-
-    @property
-    def chunk_keys(self) -> pd.Series:
-        return self.data[('chunk', 'key')]
-
-    @property
-    def chunk_start_dates(self) -> pd.Series:
-        return self.data[('chunk', 'start_date')]
-
-    @property
-    def chunk_end_dates(self) -> pd.Series:
-        return self.data[('chunk', 'end_date')]
-
-    @property
-    def chunk_indices(self) -> pd.Series:
-        return self.data[('chunk', 'chunk_index')]
-
-    @property
-    def chunk_periods(self) -> pd.Series:
-        return self.data[('chunk', 'period')]
 
     def _filter(
         self,
@@ -212,15 +206,11 @@ class Abstract1DColumnsResult(AbstractResult, ABC, Generic[MetricLike]):
         else:
             raise TypeError("column_names should be either a column name string or a list of strings.")
 
-        # is column names loc argument correct? likely
-        # data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names,)]], axis=1)
-        if period != 'all':
-            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+        res = super()._filter(period, args, kwargs)
 
+        data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (column_names,)]], axis=1)
         data = data.reset_index(drop=True)
 
-        res = copy.deepcopy(self)
         res.data = data
         res.column_names = [c for c in self.column_names if c in column_names]
         return res

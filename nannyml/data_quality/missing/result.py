@@ -16,14 +16,14 @@ with warnings.catch_warnings():
 import plotly.graph_objects as go
 
 from nannyml._typing import Key
-from nannyml.base import Abstract1DColumnsResult
+from nannyml.base import PerColumnResult
 from nannyml.chunk import Chunker
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DColumnsResult, ResultCompareMixin):
+class Result(PerColumnResult, ResultCompareMixin):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(

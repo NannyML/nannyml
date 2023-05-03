@@ -6,7 +6,7 @@ import pandas as pd
 from plotly.graph_objects import Figure
 
 from nannyml._typing import Key
-from nannyml.base import Abstract1DResult
+from nannyml.base import PerMetricResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric
@@ -16,7 +16,7 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult[Metric], ResultCompareMixin):
+class Result(PerMetricResult[Metric], ResultCompareMixin):
     """Contains results for CBPE estimation and adds filtering and plotting functionality."""
 
     def __init__(

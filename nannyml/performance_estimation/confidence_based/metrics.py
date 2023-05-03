@@ -131,7 +131,7 @@ class Metric(abc.ABC):
 
     @property
     def column_name(self) -> str:
-        return self.components[0][0]
+        return self.components[0][1]
 
     @property
     def display_names(self):
