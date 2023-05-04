@@ -2,6 +2,7 @@
 #
 #  License: Apache Software License 2.0
 from __future__ import annotations
+
 import abc
 import logging
 from typing import Any, Callable, ClassVar, Dict, Optional, Tuple, Type, Union
@@ -63,7 +64,9 @@ class Threshold(abc.ABC):
             threshold_cls = cls._registry[type]
         except KeyError:
             accepted_values = ', '.join(map(repr, cls._registry))
-            raise InvalidArgumentsException(f"Expected one of {accepted_values} for threshold type, but received '{type}'")
+            raise InvalidArgumentsException(
+                f"Expected one of {accepted_values} for threshold type, but received '{type}'"
+            )
 
         return threshold_cls(**object)
 
