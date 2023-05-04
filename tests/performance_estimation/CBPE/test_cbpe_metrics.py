@@ -2813,8 +2813,7 @@ def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
     )
     metric.fit(reference)
 
-    assert len(caplog.messages) == 4 if isinstance(metric, BinaryClassificationConfusionMatrix) else 1
     assert (
-        caplog.messages[0] == f'{metric.display_name} lower threshold value -1 overridden by '
-        f'lower threshold value limit {metric.lower_threshold_value_limit}'
+        f'{metric.display_name} lower threshold value -1 overridden by '
+        f'lower threshold value limit {metric.lower_threshold_value_limit}' in caplog.messages
     )

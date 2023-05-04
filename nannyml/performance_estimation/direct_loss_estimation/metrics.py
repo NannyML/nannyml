@@ -2,6 +2,17 @@
 #
 #  License: Apache Software License 2.0
 
+"""A module containing the implementations of metrics estimated by
+:class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`.
+
+The :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` estimator
+converts a list of metric names into :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.Metric`
+instances using the :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.MetricFactory`.
+
+The :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` estimator will then loop over these
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
+and run the estimation on analysis data.
+"""
 import abc
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
@@ -54,7 +65,7 @@ class Metric(abc.ABC):
         hyperparameters: Dict[str, Any],
         threshold: Threshold,
         upper_value_limit: Optional[float] = None,
-        lower_value_limit: float = 0.0,
+        lower_value_limit: Optional[float] = 0.0,
     ):
         """Creates a new Metric instance.
 
@@ -65,6 +76,55 @@ class Metric(abc.ABC):
             ``calculation_function``.
         column_name: str
             The name used to indicate the metric in columns of a DataFrame.
+        feature_column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        y_true: str,
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred: str,
+            The name of the column containing your model predictions.
+        chunker: Chunker,
+            The `Chunker` used to split the data sets into a lists of chunks.
+        tune_hyperparameters: bool,
+            A boolean controlling whether hypertuning should be performed on the internal regressor models
+            whilst fitting on reference data.
+            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+        hyperparameter_tuning_config: Dict[str, Any],
+            A dictionary that allows you to provide a custom hyperparameter tuning configuration when
+            `tune_hyperparameters` has been set to `True`.
+            The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
+                {
+                    "time_budget": 15,
+                    "metric": "mse",
+                    "estimator_list": ['lgbm'],
+                    "eval_method": "cv",
+                    "hpo_method": "cfo",
+                    "n_splits": 5,
+                    "task": 'regression',
+                    "seed": 1,
+                    "verbose": 0,
+                }
+
+            For an overview of possible parameters for the tuning process check out the
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        hyperparameters: Dict[str, Any],
+            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
+            been set to `True`.
+            Check out the available hyperparameter options in the
+            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+        threshold: Threshold,
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        upper_value_limit: Optional[float], default=None,
+            An optional value that serves as a limit for the lower threshold value. Any calculated lower threshold
+            values that end up below this limit will be replaced by this limit value.
+            The limit is often a theoretical constraint enforced by a specific drift detection method or performance
+            metric.
+        lower_value_limit: Optional[float], default=0.0,
+            An optional value that serves as a limit for the lower threshold value. Any calculated lower threshold
+            values that end up below this limit will be replaced by this limit value.
+            The limit is often a theoretical constraint enforced by a specific drift detection method or performance
+            metric.
+
         """
         self.display_name = display_name
         self.column_name = column_name
@@ -178,12 +238,31 @@ class Metric(abc.ABC):
         return lower_threshold_value, upper_threshold_value
 
     def alert(self, value: float) -> bool:
+        """Returns True if an estimated metric value is below a lower threshold or above an upper threshold.
+
+        Parameters
+        ----------
+        value: float
+            Value of an estimated metric.
+
+        Returns
+        -------
+        bool: bool
+        """
         return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
             self.upper_threshold_value is not None and value > self.upper_threshold_value
         )
 
     @abc.abstractmethod
     def realized_performance(self, data: pd.DataFrame) -> float:
+        """Calculates de realized performance of a model with respect of a given chunk of data.
+        The data needs to have both prediction and real targets.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate the realized performance on.
+        """
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the realized_performance method"
         )
@@ -254,7 +333,14 @@ class MetricFactory:
 
     @classmethod
     def create(cls, key: str, problem_type: ProblemType, **kwargs) -> Metric:
-        """Returns a Metric instance for a given key."""
+        """Returns a Metric instance for a given key.
+
+        Parameters
+        ----------
+        key: str
+        problem_type: ProblemType
+            Determines which method to use. Use 'regression' for regression tasks.
+        """
         if not isinstance(key, str):
             raise InvalidArgumentsException(
                 f"cannot create metric given a '{type(key)}'" "Please provide a string, function or Metric"
@@ -304,6 +390,49 @@ class MAE(Metric):
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
     ):
+        """Creates a new Mean Absolute Error (MAE) Metric instance.
+
+        Parameters
+        ----------
+        feature_column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        y_true: str,
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred: str,
+            The name of the column containing your model predictions.
+        chunker: Chunker,
+            The `Chunker` used to split the data sets into a lists of chunks.
+        tune_hyperparameters: bool,
+            A boolean controlling whether hypertuning should be performed on the internal regressor models
+            whilst fitting on reference data.
+            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+        hyperparameter_tuning_config: Dict[str, Any],
+            A dictionary that allows you to provide a custom hyperparameter tuning configuration when
+            `tune_hyperparameters` has been set to `True`.
+            The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
+                {
+                    "time_budget": 15,
+                    "metric": "mse",
+                    "estimator_list": ['lgbm'],
+                    "eval_method": "cv",
+                    "hpo_method": "cfo",
+                    "n_splits": 5,
+                    "task": 'regression',
+                    "seed": 1,
+                    "verbose": 0,
+                }
+
+            For an overview of possible parameters for the tuning process check out the
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        hyperparameters: Dict[str, Any],
+            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
+            been set to `True`.
+            Check out the available hyperparameter options in the
+            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+        threshold: Threshold,
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        """
         super().__init__(
             display_name='MAE',
             column_name='mae',
@@ -345,6 +474,18 @@ class MAE(Metric):
         return mae_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
+        """Calculates de realized performance of a model with respect of a given chunk of data.
+        The data needs to have both prediction and real targets.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate the realized performance on.
+        Returns
+        -------
+        mae: float
+        Mean Absolute Error
+        """
         y_pred, y_true = self._common_cleaning(data)
 
         if y_true is None:
@@ -366,6 +507,49 @@ class MAPE(Metric):
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
     ):
+        """Creates a new Mean Absolute Percentage Error (MAPE) Metric instance.
+
+        Parameters
+        ----------
+        feature_column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        y_true: str,
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred: str,
+            The name of the column containing your model predictions.
+        chunker: Chunker,
+            The `Chunker` used to split the data sets into a lists of chunks.
+        tune_hyperparameters: bool,
+            A boolean controlling whether hypertuning should be performed on the internal regressor models
+            whilst fitting on reference data.
+            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+        hyperparameter_tuning_config: Dict[str, Any],
+            A dictionary that allows you to provide a custom hyperparameter tuning configuration when
+            `tune_hyperparameters` has been set to `True`.
+            The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
+                {
+                    "time_budget": 15,
+                    "metric": "mse",
+                    "estimator_list": ['lgbm'],
+                    "eval_method": "cv",
+                    "hpo_method": "cfo",
+                    "n_splits": 5,
+                    "task": 'regression',
+                    "seed": 1,
+                    "verbose": 0,
+                }
+
+            For an overview of possible parameters for the tuning process check out the
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        hyperparameters: Dict[str, Any],
+            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
+            been set to `True`.
+            Check out the available hyperparameter options in the
+            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+        threshold: Threshold,
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        """
         super().__init__(
             display_name='MAPE',
             column_name='mape',
@@ -408,6 +592,18 @@ class MAPE(Metric):
         return mape_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
+        """Calculates de realized performance of a model with respect of a given chunk of data.
+        The data needs to have both prediction and real targets.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate the realized performance on.
+        Returns
+        -------
+        mae: float
+        Mean Absolute Percentage Error
+        """
         y_pred, y_true = self._common_cleaning(data)
 
         if y_true is None:
@@ -429,6 +625,49 @@ class MSE(Metric):
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
     ):
+        """Creates a new Mean Squared Error (MSE) Metric instance.
+
+        Parameters
+        ----------
+        feature_column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        y_true: str,
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred: str,
+            The name of the column containing your model predictions.
+        chunker: Chunker,
+            The `Chunker` used to split the data sets into a lists of chunks.
+        tune_hyperparameters: bool,
+            A boolean controlling whether hypertuning should be performed on the internal regressor models
+            whilst fitting on reference data.
+            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+        hyperparameter_tuning_config: Dict[str, Any],
+            A dictionary that allows you to provide a custom hyperparameter tuning configuration when
+            `tune_hyperparameters` has been set to `True`.
+            The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
+                {
+                    "time_budget": 15,
+                    "metric": "mse",
+                    "estimator_list": ['lgbm'],
+                    "eval_method": "cv",
+                    "hpo_method": "cfo",
+                    "n_splits": 5,
+                    "task": 'regression',
+                    "seed": 1,
+                    "verbose": 0,
+                }
+
+            For an overview of possible parameters for the tuning process check out the
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        hyperparameters: Dict[str, Any],
+            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
+            been set to `True`.
+            Check out the available hyperparameter options in the
+            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+        threshold: Threshold,
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        """
         super().__init__(
             display_name='MSE',
             column_name='mse',
@@ -470,6 +709,18 @@ class MSE(Metric):
         return mse_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
+        """Calculates de realized performance of a model with respect of a given chunk of data.
+        The data needs to have both prediction and real targets.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate the realized performance on.
+        Returns
+        -------
+        mae: float
+        Mean Squared Error
+        """
         y_pred, y_true = self._common_cleaning(data)
 
         if y_true is None:
@@ -491,6 +742,49 @@ class MSLE(Metric):
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
     ):
+        """Creates a new Mean Squared Log Error (MSLE) Metric instance.
+
+        Parameters
+        ----------
+        feature_column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        y_true: str,
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred: str,
+            The name of the column containing your model predictions.
+        chunker: Chunker,
+            The `Chunker` used to split the data sets into a lists of chunks.
+        tune_hyperparameters: bool,
+            A boolean controlling whether hypertuning should be performed on the internal regressor models
+            whilst fitting on reference data.
+            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+        hyperparameter_tuning_config: Dict[str, Any],
+            A dictionary that allows you to provide a custom hyperparameter tuning configuration when
+            `tune_hyperparameters` has been set to `True`.
+            The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
+                {
+                    "time_budget": 15,
+                    "metric": "mse",
+                    "estimator_list": ['lgbm'],
+                    "eval_method": "cv",
+                    "hpo_method": "cfo",
+                    "n_splits": 5,
+                    "task": 'regression',
+                    "seed": 1,
+                    "verbose": 0,
+                }
+
+            For an overview of possible parameters for the tuning process check out the
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        hyperparameters: Dict[str, Any],
+            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
+            been set to `True`.
+            Check out the available hyperparameter options in the
+            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+        threshold: Threshold,
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        """
         super().__init__(
             display_name='MSLE',
             column_name='msle',
@@ -535,6 +829,23 @@ class MSLE(Metric):
         return msle_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
+        """Calculates de realized performance of a model with respect of a given chunk of data.
+        The data needs to have both prediction and real targets.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate the realized performance on.
+
+        Raises
+        ------
+        _raise_exception_for_negative_values: when any of y_true or y_pred contain negative values.
+
+        Returns
+        -------
+        mae: float
+        Mean Squared Log Error
+        """
         y_pred, y_true = self._common_cleaning(data)
 
         if y_true is None:
@@ -559,6 +870,49 @@ class RMSE(Metric):
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
     ):
+        """Creates a new Root Mean Squared Error (RMSE) Metric instance.
+
+        Parameters
+        ----------
+        feature_column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        y_true: str,
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred: str,
+            The name of the column containing your model predictions.
+        chunker: Chunker,
+            The `Chunker` used to split the data sets into a lists of chunks.
+        tune_hyperparameters: bool,
+            A boolean controlling whether hypertuning should be performed on the internal regressor models
+            whilst fitting on reference data.
+            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+        hyperparameter_tuning_config: Dict[str, Any],
+            A dictionary that allows you to provide a custom hyperparameter tuning configuration when
+            `tune_hyperparameters` has been set to `True`.
+            The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
+                {
+                    "time_budget": 15,
+                    "metric": "mse",
+                    "estimator_list": ['lgbm'],
+                    "eval_method": "cv",
+                    "hpo_method": "cfo",
+                    "n_splits": 5,
+                    "task": 'regression',
+                    "seed": 1,
+                    "verbose": 0,
+                }
+
+            For an overview of possible parameters for the tuning process check out the
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        hyperparameters: Dict[str, Any],
+            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
+            been set to `True`.
+            Check out the available hyperparameter options in the
+            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+        threshold: Threshold,
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        """
         super().__init__(
             display_name='RMSE',
             column_name='rmse',
@@ -600,6 +954,19 @@ class RMSE(Metric):
         return rmse_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
+        """Calculates de realized performance of a model with respect of a given chunk of data.
+        The data needs to have both prediction and real targets.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate the realized performance on.
+
+        Returns
+        -------
+        rmse: float
+        Root Mean Squared Error
+        """
         y_pred, y_true = self._common_cleaning(data)
 
         if y_true is None:
@@ -621,6 +988,49 @@ class RMSLE(Metric):
         hyperparameter_tuning_config: Dict[str, Any],
         hyperparameters: Dict[str, Any],
     ):
+        """Creates a new Root Mean Squared Log Error (RMSLE) Metric instance.
+
+        Parameters
+        ----------
+        feature_column_names: List[str]
+            A list of column names indicating which columns contain feature values.
+        y_true: str,
+            The name of the column containing target values (that are provided in reference data during fitting).
+        y_pred: str,
+            The name of the column containing your model predictions.
+        chunker: Chunker,
+            The `Chunker` used to split the data sets into a lists of chunks.
+        tune_hyperparameters: bool,
+            A boolean controlling whether hypertuning should be performed on the internal regressor models
+            whilst fitting on reference data.
+            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+        hyperparameter_tuning_config: Dict[str, Any],
+            A dictionary that allows you to provide a custom hyperparameter tuning configuration when
+            `tune_hyperparameters` has been set to `True`.
+            The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
+                {
+                    "time_budget": 15,
+                    "metric": "mse",
+                    "estimator_list": ['lgbm'],
+                    "eval_method": "cv",
+                    "hpo_method": "cfo",
+                    "n_splits": 5,
+                    "task": 'regression',
+                    "seed": 1,
+                    "verbose": 0,
+                }
+
+            For an overview of possible parameters for the tuning process check out the
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+        hyperparameters: Dict[str, Any],
+            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
+            been set to `True`.
+            Check out the available hyperparameter options in the
+            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+        threshold: Threshold,
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        """
         super().__init__(
             display_name='RMSLE',
             column_name='rmsle',
@@ -665,6 +1075,23 @@ class RMSLE(Metric):
         return rmsle_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
+        """Calculates de realized performance of a model with respect of a given chunk of data.
+        The data needs to have both prediction and real targets.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            The data to calculate the realized performance on.
+
+        Raises
+        ------
+        _raise_exception_for_negative_values: when any of y_true or y_pred contain negative values.
+
+        Returns
+        -------
+        rmsle: float
+        Root Mean Squared Log Error
+        """
         y_pred, y_true = self._common_cleaning(data)
 
         if y_true is None:

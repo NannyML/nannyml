@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Contains the results of the realized performance calculation and provides plotting functionality."""
+"""Contains the results of the realized performance calculation and provides filtering and plotting functionality."""
 from __future__ import annotations
 
 import copy
@@ -11,8 +11,8 @@ from typing import Dict, List, Optional, Union, cast
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import Key, ProblemType
-from nannyml.base import Abstract1DResult
+from nannyml._typing import Key, ProblemType, Self
+from nannyml.base import PerMetricResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation import SUPPORTED_METRIC_FILTER_VALUES
 from nannyml.performance_calculation.metrics.base import Metric
@@ -21,8 +21,8 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult[Metric], ResultCompareMixin):
-    """Contains the results of the realized performance calculation and provides plotting functionality."""
+class Result(PerMetricResult[Metric], ResultCompareMixin):
+    """Wraps performance calculation results and provides filtering and plotting functionality."""
 
     metrics: List[Metric]
 
@@ -38,7 +38,39 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         reference_data: Optional[pd.DataFrame] = None,
         analysis_data: Optional[pd.DataFrame] = None,
     ):
-        """Creates a new Result instance."""
+        """Creates a new Result instance.
+
+        Parameters
+        ----------
+        results_data: pd.DataFrame
+            Results data returned by a CBPE estimator.
+        problem_type: ProblemType
+            Determines which method to use. Allowed values are:
+
+                - 'regression'
+                - 'classification_binary'
+                - 'classification_multiclass'
+        y_pred: str
+            The name of the column containing your model predictions.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        y_true: str
+            The name of the column containing target values (that are provided in reference data during fitting).
+        metrics: List[nannyml.performance_calculation.metrics.base.Metric]
+            List of metrics to evaluate.
+        timestamp_column_name: str, default=None
+            The name of the column containing the timestamp of the model prediction.
+            If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
+        reference_data: pd.DataFrame, default=None
+            The reference data used for fitting. Must have target data available.
+        analysis_data: pd.DataFrame, default=None
+            The data on which NannyML calculates the perfomance.
+
+        """
         super().__init__(results_data, metrics)
 
         self.problem_type = problem_type
@@ -52,6 +84,9 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         self.analysis_data = analysis_data
 
     def keys(self) -> List[Key]:
+        """
+        Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`
+        """
         return [
             Key(
                 properties=(component[1],),
@@ -72,17 +107,16 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         **kwargs,
     ) -> go.Figure:
         """Render realized performance metrics.
-
-            The following kinds of plots are available:
-
-        - ``performance``
-                a step plot showing the realized performance metric per :class:`~nannyml.chunk.Chunk` for
-                a given metric.
+        This function will return a :class:`plotly.graph_objects.Figure` object.
 
         Parameters
         ----------
         kind: str, default='performance'
             The kind of plot to render. Only the 'performance' plot is currently available.
+
+        Raises
+        ------
+        InvalidArgumentsException: when an unknown plot ``kind`` is provided.
 
         Returns
         -------
@@ -99,7 +133,8 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
         >>>
         >>> calc = nml.PerformanceCalculator(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
-        >>>                                  timestamp_column_name='timestamp', metrics=['f1', 'roc_auc'])
+        >>>                                  problem_type='classification_binary', timestamp_column_name='timestamp',
+        >>>                                  metrics=['f1', 'roc_auc'])
         >>>
         >>> calc.fit(reference_df)
         >>>
@@ -129,7 +164,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         """Filter the results based on the specified period and metrics."""
         if metrics is None:
             filtered_metrics = self.metrics
@@ -148,13 +183,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
 
         metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
-        if period != 'all':
-            data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-        res = copy.deepcopy(self)
-        res.data = data
+        res = super()._filter(period, metric_column_names, args, kwargs)
         res.metrics = filtered_metrics
 
         return res

@@ -11,8 +11,8 @@ from typing import List, Optional, cast
 import pandas as pd
 from plotly import graph_objects as go
 
-from nannyml._typing import Key, ModelOutputsType, ProblemType
-from nannyml.base import Abstract1DResult
+from nannyml._typing import Key, ModelOutputsType, ProblemType, Self
+from nannyml.base import PerMetricResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_FILTER_VALUES
@@ -23,8 +23,8 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult[Metric], ResultCompareMixin):
-    """Contains results for CBPE estimation and adds plotting functionality."""
+class Result(PerMetricResult[Metric], ResultCompareMixin):
+    """Contains results for CBPE estimation and adds filtering and plotting functionality."""
 
     def __init__(
         self,
@@ -37,6 +37,32 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         problem_type: ProblemType,
         timestamp_column_name: Optional[str] = None,
     ):
+        """
+        Parameters
+        ----------
+        results_data: pd.DataFrame
+            Results data returned by a CBPE estimator.
+
+        metrics: List[nannyml.performance_estimation.confidence_based.metrics.Metric]
+            List of metrics to evaluate.
+        y_pred: str
+            The name of the column containing your model predictions.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name
+                  containing model outputs for that class.
+        y_true: str
+            The name of the column containing target values (that are provided in reference data during fitting).
+        chunker: Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
+        problem_type: ProblemType
+            Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
+            'classification_multiclass'.
+        timestamp_column_name: str, default=None
+            The name of the column containing the timestamp of the model prediction.
+            If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
+        """
         super().__init__(results_data, metrics)
 
         self.y_pred = y_pred
@@ -46,7 +72,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         """Filter the results based on the specified period and metrics.
 
         This function begins by expanding the metrics to all the metrics that were specified
@@ -76,14 +102,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
 
         metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
-        if period != 'all':
-            data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-        res = copy.deepcopy(self)
-        res.data = data
-        res.metrics = filtered_metrics
+        res = super()._filter(period, metric_column_names, args, kwargs)
 
         return res
 
@@ -105,6 +124,9 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         return None
 
     def keys(self) -> List[Key]:
+        """
+        Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`
+        """
         return [
             Key(
                 properties=(component[1],),
@@ -129,9 +151,13 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         This function will return a :class:`plotly.graph_objects.Figure` object.
         The following kinds of plots are available:
 
-        - ``performance``: a line plot rendering the estimated performance per :class:`~nannyml.chunk.Chunk` after
-            applying the :meth:`~nannyml.performance_estimation.confidence_based.CBPE.calculate` method on a chunked
-            dataset.
+        Parameters
+        ----------
+        kind: str, default='performance'
+
+        Raises
+        ------
+        InvalidArgumentsException: when an unknown plot ``kind`` is provided.
 
         Returns
         -------

@@ -51,7 +51,20 @@ class BinaryClassificationAUROC(Metric):
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
-        """Creates a new AUROC instance."""
+        """Creates a new AUROC instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            refering to the model output column.
+        """
         super().__init__(
             name='roc_auc',
             y_true=y_true,
@@ -106,7 +119,20 @@ class BinaryClassificationF1(Metric):
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
-        """Creates a new F1 instance."""
+        """Creates a new F1 instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            refering to the model output column.
+        """
         super().__init__(
             name='f1',
             y_true=y_true,
@@ -161,7 +187,20 @@ class BinaryClassificationPrecision(Metric):
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
-        """Creates a new Precision instance."""
+        """Creates a new Precision instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            refering to the model output column.
+        """
         super().__init__(
             name='precision',
             y_true=y_true,
@@ -205,7 +244,20 @@ class BinaryClassificationPrecision(Metric):
 
 @MetricFactory.register(metric='recall', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
-    """Recall metric, also known as 'sensitivity'."""
+    """Recall metric, also known as 'sensitivity'.
+
+    Parameters
+    ----------
+    y_true: str
+        The name of the column containing target values.
+    y_pred: str
+        The name of the column containing your model predictions.
+    threshold: Threshold
+        The Threshold instance that determines how the lower and upper threshold values will be calculated.
+    y_pred_proba: Optional[str], default=None
+        Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+        refering to the model output column.
+    """
 
     def __init__(
         self,
@@ -269,7 +321,20 @@ class BinaryClassificationSpecificity(Metric):
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
-        """Creates a new F1 instance."""
+        """Creates a new F1 instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            refering to the model output column.
+        """
         super().__init__(
             name='specificity',
             y_true=y_true,
@@ -319,7 +384,20 @@ class BinaryClassificationSpecificity(Metric):
 
 @MetricFactory.register(metric='accuracy', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
-    """Accuracy metric."""
+    """Accuracy metric.
+
+    Parameters
+    ----------
+    y_true: str
+        The name of the column containing target values.
+    y_pred: str
+        The name of the column containing your model predictions.
+    threshold: Threshold
+        The Threshold instance that determines how the lower and upper threshold values will be calculated.
+    y_pred_proba: Optional[str], default=None
+        Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+        refering to the model output column.
+    """
 
     def __init__(
         self,
@@ -391,7 +469,26 @@ class BinaryClassificationBusinessValue(Metric):
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
-        """Creates a new Business Value instance."""
+        """Creates a new Business Value instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        business_value_matrix: Union[List, np.ndarray]
+            A 2x2 matrix that specifies the value of each cell in the confusion matrix.
+            The format of the business value matrix must be specified as [[value_of_TN, value_of_FP], \
+            [value_of_FN, value_of_TP]]. Required when estimating the 'business_value' metric.
+        normalize_business_value: Optional[str], default=None
+            Determines how the business value will be normalized. Allowed values are None and 'per_prediction'.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            refering to the model output column.
+        """
 
         if normalize_business_value not in [None, "per_prediction"]:
             raise InvalidArgumentsException(
@@ -491,7 +588,23 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
-        """Creates a new Confusion Matrix instance."""
+        """Creates a new Confusion Matrix instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        normalize_confusion_matrix: Optional[str], default=None
+            Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
+            'predicted'.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            refering to the model output column.
+        """
         super().__init__(
             name='confusion_matrix',
             y_true=y_true,
@@ -724,6 +837,18 @@ class BinaryClassificationConfusionMatrix(Metric):
             return num_fn / len(y_true)
 
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the true positives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        true_pos_info : Dict
+            A dictionary of true positive's information and its value pairs.
+        """
 
         column_name = 'true_positive'
 
@@ -743,6 +868,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return true_pos_info
 
     def get_true_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the true negatives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        true_neg_info : Dict
+            A dictionary of true negative's information and its value pairs.
+        """
 
         column_name = 'true_negative'
 
@@ -762,6 +899,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return true_neg_info
 
     def get_false_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the false positives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        false_pos_info : Dict
+            A dictionary of false positive's information and its value pairs.
+        """
 
         column_name = 'false_positive'
 
@@ -781,6 +930,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return false_pos_info
 
     def get_false_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the false negatives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        false_neg_info : Dict
+            A dictionary of false negative's information and its value pairs.
+        """
 
         column_name = 'false_negative'
 
@@ -800,6 +961,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return false_neg_info
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing the conduction matrix values for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+            chunk_record : Dict
+                A dictionary of confusion matrix metrics, value pairs.
+        """
         chunk_record = {}
 
         true_pos_info = self.get_true_pos_info(chunk_data)

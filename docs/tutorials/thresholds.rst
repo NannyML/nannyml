@@ -48,6 +48,8 @@ This snippet shows how to create an instance of the :class:`~nannyml.thresholds.
     :cells: 2
     :show_output:
 
+.. _thresholds_std:
+
 
 Standard deviation thresholds
 -----------------------------
@@ -162,31 +164,36 @@ If we check the plots, we can see that the alerts have now inverted.
 Default thresholds
 -------------------
 
-Performance metrics and drift detection methods have the following default threshold:
+Performance metrics and drift detection methods, and the missing values data quality metric
+have the following default threshold:
 
 .. code-block:: python
 
     nml.thresholds.StandardDeviationThreshold(std_lower_multiplier=3, std_upper_multiplier=3, offset_from=np.mean)
 
 
-Some drift detection methods are exceptions to this rule. They have default thresholds more attuned to distances:
+Some drift detection methods and the unseen values data quality metric are exceptions to this rule.
+They have default thresholds more attuned to their specific role and properties:
 
 .. list-table::
    :widths: 25, 25, 50
    :header-rows: 1
 
-   * - Calculator
-     - Drift method
+   * - Module
+     - Functionality
      - Default threshold
-   * - Univariate drift calculator
+   * - Univariate Drift
      - `jensen_shannon`
      - ``ConstantThreshold(upper=0.1)``
-   * - Univariate drift calculator
+   * - Univariate Drift
      - `hellinger`
      - ``ConstantThreshold(upper=0.1)``
-   * - Univariate drift calculator
+   * - Univariate Drift
      - `l_infinity`
      - ``ConstantThreshold(upper=0.1)``
+   * - Data Quality
+     - Unseen Values Calculator
+     - ``ConstantThreshold(lower=None, upper=0)``
 
 
 What's next?

@@ -155,81 +155,84 @@ _The following snippet is based on our [latest release](https://github.com/Nanny
 
 ```python
 import nannyml as nml
+import pandas as pd
 from IPython.display import display
 
-# Load synthetic data
-reference, analysis, analysis_target = nml.load_synthetic_car_loan_dataset()
-display(reference.head())
-display(analysis.head())
+# Load real-world data:
+df_reference, df_analysis, _ = nml.load_us_census_ma_employment_data()
+display(df_reference.head())
+display(df_analysis.head())
 
-# Choose a chunker or set a chunk size
+# Choose a chunker or set a chunk size:
 chunk_size = 5000
 
-# initialize, specify required data columns, fit estimator and estimate
+# initialize, specify required data columns, fit estimator and estimate:
 estimator = nml.CBPE(
-    y_pred_proba='y_pred_proba',
-    y_pred='y_pred',
-    y_true='repaid',
+    problem_type='classification_binary',
+    y_pred_proba='predicted_probability',
+    y_pred='prediction',
+    y_true='employed',
     metrics=['roc_auc'],
     chunk_size=chunk_size,
-    problem_type='classification_binary',
 )
-estimator = estimator.fit(reference)
-estimated_performance = estimator.estimate(analysis)
+estimator = estimator.fit(df_reference)
+estimated_performance = estimator.estimate(df_analysis)
 
-# Show results
+# Show results:
 figure = estimated_performance.plot()
 figure.show()
 
-# Define feature columns
-feature_column_names = [
-    col for col in reference.columns if col not in [
-        'timestamp', 'repaid',
-    ]]
-# Let's initialize the object that will perform the Univariate Drift calculations
+# Define feature columns:
+features = ['AGEP', 'SCHL', 'MAR', 'RELP', 'DIS', 'ESP', 'CIT', 'MIG', 'MIL', 'ANC',
+       'NATIVITY', 'DEAR', 'DEYE', 'DREM', 'SEX', 'RAC1P']
+
+# Initialize the object that will perform the Univariate Drift calculations:
 univariate_calculator = nml.UnivariateDriftCalculator(
-    column_names=feature_column_names,
-    treat_as_categorical=['y_pred'],
-    chunk_size=chunk_size,
-    continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
-    categorical_methods=['chi2', 'jensen_shannon'],
-)
-univariate_calculator = univariate_calculator.fit(reference)
-univariate_results = univariate_calculator.calculate(analysis)
-# Plot drift results for all continuous columns
-figure = univariate_results.filter(
-    column_names=univariate_results.continuous_column_names,
-    period='analysis',
-    methods=['jensen_shannon']).plot(kind='drift')
-figure.show()
-
-# Plot drift results for all categorical columns
-figure = univariate_results.filter(
-    column_names=univariate_results.categorical_column_names,
-    period='analysis',
-    methods=['chi2']).plot(kind='drift')
-figure.show()
-
-ranker = nml.CorrelationRanker()
-# ranker fits on one metric and reference period data only
-ranker.fit(
-    estimated_performance.filter(period='reference', metrics=['roc_auc']))
-# ranker ranks on one drift method and one performance metric
-ranked_features = ranker.rank(
-    univariate_results.filter(methods=['jensen_shannon']),
-    estimated_performance.filter(metrics=['roc_auc']),
-    only_drifting = False)
-display(ranked_features)
-
-# Let's initialize the object that will perform Data Reconstruction with PCA
-rcerror_calculator = nml.DataReconstructionDriftCalculator(
-    column_names=feature_column_names,
+    column_names=features,
     chunk_size=chunk_size
-).fit(reference_data=reference)
-# let's see Reconstruction error statistics for all available data
-rcerror_results = rcerror_calculator.calculate(analysis)
-figure = rcerror_results.plot()
+)
+
+univariate_calculator.fit(df_reference)
+univariate_drift = univariate_calculator.calculate(df_analysis)
+
+# Get features that drift the most with count-based ranker:
+alert_count_ranker = nml.AlertCountRanker()
+alert_count_ranked_features = alert_count_ranker.rank(univariate_drift)
+display(alert_count_ranked_features.head())
+
+# Plot drift results for top 3 features:
+figure = univariate_drift.filter(column_names=['RELP','AGEP', 'SCHL']).plot()
 figure.show()
+
+# Compare drift of a selected feature with estimated performance
+uni_drift_AGEP_analysis = univariate_drift.filter(column_names=['AGEP'], period='analysis')
+figure = estimated_performance.compare(uni_drift_AGEP_analysis).plot()
+figure.show()
+
+# Plot distribution changes of the selected features:
+figure = univariate_drift.filter(period='analysis', column_names=['RELP','AGEP', 'SCHL']).plot(kind='distribution')
+figure.show()
+
+# Get target data, calculate, plot and compare realized performance with estimated performance:
+_, _, analysis_targets = nml.load_us_census_ma_employment_data()
+
+df_analysis_with_targets = pd.concat([df_analysis, analysis_targets], axis=1)
+display(df_analysis_with_targets.head())
+
+performance_calculator = nml.PerformanceCalculator(
+    problem_type='classification_binary',
+    y_pred_proba='predicted_probability',
+    y_pred='prediction',
+    y_true='employed',
+    metrics=['roc_auc'],
+    chunk_size=chunk_size)
+
+performance_calculator.fit(df_reference)
+calculated_performance = performance_calculator.calculate(df_analysis_with_targets)
+
+figure = estimated_performance.filter(period='analysis').compare(calculated_performance).plot()
+figure.show()
+
 ```
 
 # 📖 Documentation

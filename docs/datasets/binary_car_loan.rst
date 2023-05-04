@@ -1,7 +1,7 @@
 .. _dataset-synthetic-binary-car-loan:
 
 ================================================
-Car Loan Synthetic Binary Classification Dataset
+Synthetic Binary Classification Car Loan Dataset
 ================================================
 
 NannyML provides a synthetic dataset describing a binary classification problem,
@@ -67,3 +67,35 @@ There are 3 columns that reference the output of the model:
 There is also an auxiliary column that is helpful but not used by the monitored model:
 
 - `timestamp`: A date column informing us of the date the prediction was made.
+
+
+Data Quality Version
+======================
+
+NannyML also provides a version of the car loan dataset that includes missing and unseen values in order to
+demonstrate the data quality modules provided by NannyML. The problem modeled and the columns included are the
+same. You can access this dataset with:
+
+.. code-block:: python
+
+    >>> import nannyml as nml
+    >>> reference, analysis, analysis_targets = nml.load_synthetic_car_loan_data_quality_dataset()
+    >>> # let's show an instance where new and missing values are present.
+    >>> display(analysis.iloc[41515:41520])
+
++-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
+|       |   car_value | salary_range   |   debt_to_income_ratio |   loan_length | repaid_loan_on_prev_car   | size_of_downpayment   |   driver_tenure | timestamp               |   y_pred_proba | period   |   y_pred |
++=======+=============+================+========================+===============+===========================+=======================+=================+=========================+================+==========+==========+
+| 41515 |       58071 | 40K - 60K €    |               0.694352 |            20 | True                      | 30%                   |        0.44644  | 2019-07-09 02:57:35.280 |           0.9  | analysis |        1 |
++-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
+| 41516 |       40317 | 20K - 20K €    |               0.581372 |             8 | True                      | 50%                   |      nan        | 2019-07-09 03:06:18.432 |           0.16 | analysis |        0 |
++-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
+| 41517 |       57487 | 40K - 60K €    |               0.703041 |             7 | True                      | 30%                   |        5.2826   | 2019-07-09 03:15:01.584 |           0.07 | analysis |        0 |
++-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
+| 41518 |       21555 | 0 - 20K €      |               0.268774 |            16 | False                     | 0%                    |        4.04887  | 2019-07-09 03:23:44.736 |           0.01 | analysis |        0 |
++-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
+| 41519 |       78265 | 40K - 60K €    |               0.71856  |            19 | True                      | 40%                   |        0.208278 | 2019-07-09 03:32:27.888 |           0.85 | analysis |        1 |
++-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
+
+The dataset has induced missing values at ``salary_range`` and ``driver_tenure`` features. And it has a new value, ``50%`` at ``size_of_downpayment`` feature.
+You can see how the dataset is used on the :ref:`data quality tutorials<data-quality>`.
