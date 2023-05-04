@@ -42,6 +42,10 @@ class UsageEvent(str, Enum):
 
     # Calculators
 
+    STATS_AVG_FIT = "Simple Stats Avg fit"
+    STATS_AVG_RUN = "Simple Stats Avg run"
+    STATS_AVG_PLOT = "Simple Stats Avg plot"
+
     STATS_SUM_FIT = "Simple Stats Sum fit"
     STATS_SUM_RUN = "Simple Stats Sum run"
     STATS_SUM_PLOT = "Simple Stats Sum plot"
