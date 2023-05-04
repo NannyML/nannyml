@@ -1,3 +1,14 @@
+"""A module containing the implementations of metrics estimated by CBPE.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator converts a list of metric names into
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances using the
+:class:`~nannyml.performance_estimation.confidence_based.metrics.MetricFactory`.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator will then loop over these
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
+and run the estimation on analysis data.
+"""
+
 import abc
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
@@ -27,7 +38,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
-    """A performance metric used to calculate realized model performance."""
+    """A base class representing a performance metric to estimate."""
 
     def __init__(
         self,
@@ -49,6 +60,42 @@ class Metric(abc.ABC):
         ----------
         name: str
             The name used to indicate the metric in columns of a DataFrame.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string referring to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name
+                  containing model outputs for that class.
+        y_pred: str
+            The name of the column containing your model predictions.
+        y_true: str
+            The name of the column containing target values (that are provided in reference data during fitting).
+        chunker: Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        components: List[Tuple[str str]]
+            A list of (display_name, column_name) tuples.
+        timestamp_column_name: Optional[str], default=None
+            The name of the column containing the timestamp of the model prediction.
+            If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
+        lower_threshold_value_limit: Optional[float], default=None
+            An optional value that serves as a limit for the lower threshold value. Any calculated lower threshold
+            values that end up below this limit will be replaced by this limit value.
+            The limit is often a theoretical constraint enforced by a specific drift detection method or performance
+            metric.
+        upper_threshold_value_limit: Optional[float], default=None
+            An optional value that serves as a limit for the lower threshold value. Any calculated lower threshold
+            values that end up below this limit will be replaced by this limit value.
+            The limit is often a theoretical constraint enforced by a specific drift detection method or performance
+            metric.
+
+        Notes
+        -----
+
+        The `components` approach taken here is a quick fix to deal with metrics that return multiple values.
+        Look at the `confusion_matrix` for example: a single metric produces 4 different result sets (containing values,
+        thresholds, alerts, etc.).
         """
         self.name = name
 
@@ -84,7 +131,7 @@ class Metric(abc.ABC):
 
     @property
     def column_name(self) -> str:
-        return self.components[0][0]
+        return self.components[0][1]
 
     @property
     def display_names(self):
@@ -157,6 +204,17 @@ class Metric(abc.ABC):
         )
 
     def alert(self, value: float) -> bool:
+        """Returns True if an estimated metric value is below a lower threshold or above an upper threshold.
+
+        Parameters
+        ----------
+        value: float
+            Value of an estimated metric.
+
+        Returns
+        -------
+        bool: bool
+        """
         return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
             self.upper_threshold_value is not None and value > self.upper_threshold_value
         )
@@ -194,6 +252,21 @@ class Metric(abc.ABC):
         return y_pred_proba, y_pred, y_true
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing the performance metrics for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+        Raises
+        ------
+            NotImplementedError: occurs when a metric has multiple componets
+
+        Returns
+        -------
+            chunk_record : Dict
+                A dictionary of perfomance metric, value pairs.
+        """
         if len(self.components) > 1:
             raise NotImplementedError(
                 "cannot use default 'get_chunk_record' implementation when a metric has multiple components."
@@ -330,6 +403,18 @@ class BinaryClassificationAUROC(Metric):
 
 
 def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
+    """Estimates the ROC AUC metric.
+
+    Parameters
+    ----------
+    y_pred_proba : pd.Series
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated ROC AUC score.
+    """
     thresholds = np.sort(y_pred_proba)
     one_min_thresholds = 1 - thresholds
 
@@ -406,6 +491,20 @@ class BinaryClassificationF1(Metric):
 
 
 def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the F1 metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated F1 score.
+    """
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
@@ -467,6 +566,20 @@ class BinaryClassificationPrecision(Metric):
 
 
 def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the Precision metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated Precision score.
+    """
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TP, FP = np.sum(tp), np.sum(fp)
@@ -526,6 +639,20 @@ class BinaryClassificationRecall(Metric):
 
 
 def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the Recall metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated Recall score.
+    """
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
     TP, FN = np.sum(tp), np.sum(fn)
@@ -586,6 +713,20 @@ class BinaryClassificationSpecificity(Metric):
 
 
 def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the Specificity metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated Specificity score.
+    """
     tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TN, FP = np.sum(tn), np.sum(fp)
@@ -880,6 +1021,18 @@ class BinaryClassificationConfusionMatrix(Metric):
             return num_fn / len(y_true)
 
     def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the true positive rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_tp_ratio : float
+            Estimated true positive rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -910,6 +1063,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_tp_ratio
 
     def get_true_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the true negative rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_tn_ratio : float
+            Estimated true negative rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -940,6 +1105,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_tn_ratio
 
     def get_false_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the false positive rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_fp_ratio : float
+            Estimated false positive rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -970,6 +1147,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_fp_ratio
 
     def get_false_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the false negative rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_fn_ratio : float
+            Estimated false negative rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -1000,6 +1189,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_fn_ratio
 
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the true positives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        true_pos_info : Dict
+            A dictionary of true positive's information and its value pairs.
+        """
         true_pos_info: Dict[str, Any] = {}
 
         estimated_true_positives = self.get_true_positive_estimate(chunk_data)
@@ -1040,6 +1241,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return true_pos_info
 
     def get_true_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the true negatives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        true_neg_info : Dict
+            A dictionary of true negative's information and its value pairs.
+        """
         true_neg_info: Dict[str, Any] = {}
 
         estimated_true_negatives = self.get_true_negative_estimate(chunk_data)
@@ -1080,6 +1293,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return true_neg_info
 
     def get_false_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the false positives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        false_pos_info : Dict
+            A dictionary of false positive's information and its value pairs.
+        """
         false_pos_info: Dict[str, Any] = {}
 
         estimated_false_positives = self.get_false_positive_estimate(chunk_data)
@@ -1121,6 +1346,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return false_pos_info
 
     def get_false_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the false negatives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        false_neg_info : Dict
+            A dictionary of false negative's information and its value pairs.
+        """
         false_neg_info: Dict[str, Any] = {}
 
         estimated_false_negatives = self.get_false_negative_estimate(chunk_data)
@@ -1239,7 +1476,6 @@ class BinaryClassificationBusinessValue(Metric):
         self.confidence_lower_bound: Optional[float] = None
 
     def _fit(self, reference_data: pd.DataFrame):
-
         self._sampling_error_components = bse.business_value_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
@@ -1280,7 +1516,6 @@ class BinaryClassificationBusinessValue(Metric):
         return estimate_business_value(y_pred, y_pred_proba, business_value_normalization, business_value_matrix)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-
         return bse.business_value_sampling_error(
             self._sampling_error_components,
             data,
@@ -1292,7 +1527,26 @@ def estimate_business_value(
     y_pred_proba: np.ndarray,
     normalize_business_value: Optional[str],
     business_value_matrix: np.ndarray,
-):
+) -> float:
+    """Estimates the Business Value metric.
+
+    Parameters
+    ----------
+    y_pred: np.ndarray
+        Predicted class labels of the sample
+    y_pred_proba: np.ndarray
+        Probability estimates of the sample for each class in the model.
+    normalize_business_value: str, default=None
+        Determines how the business value will be normalized. Allowed values are None and 'per_prediction'.
+
+            - None - the business value will not be normalized and the value returned will be the total value per chunk.
+            - 'per_prediction' - the value will be normalized by the number of predictions in the chunk.
+
+    Returns
+    -------
+    business_value: float
+        Estimated Business Value score.
+    """
 
     est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
     est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))

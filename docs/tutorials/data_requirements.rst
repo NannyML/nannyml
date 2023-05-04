@@ -4,18 +4,19 @@
 Data requirements
 ==================
 
-In this guide we'll present an overview of the different kinds of data NannyML requires to run its various features. The specifics for each feature are also covered in the various :ref:`Tutorials`, but an overview of all the different requirements is presented here for reference.
+In this guide, we'll present an overview of the different kinds of data NannyML requires to run its various features. The specifics for each feature are also covered in the :ref:`Tutorials`, but an overview of all the different requirements is presented here for reference.
 
 .. _data-drift-periods:
 
 Data Periods
 ------------
 
-NannyML works with two :term:`Data Periods<data period>`. The first one is called the :ref:`reference period<data-drift-periods-reference>`,
+NannyML works with two :term:`Data Periods<data period>`. The first one, called the :ref:`reference period<data-drift-periods-reference>`,
 is represented by the **reference dataset**, and is used to establish the expectations of the model's performance.
-The second is called the :ref:`analysis period<data-drift-periods-analysis>`, is represented by the **analysis
-dataset** which is, as the name suggests, analyzed by NannyML to check whether model performance meets the
-expectations set based on **reference dataset**.
+
+The second is called the :ref:`analysis period<data-drift-periods-analysis>`. And it is represented by the **analysis
+dataset** which, as the name suggests, is analyzed by NannyML to check whether model performance meets the
+expectations set based on the **reference dataset**.
 
 .. _data-drift-periods-reference:
 
@@ -30,6 +31,10 @@ to be stable and acceptable.
 The reference dataset contains observations for which target values
 are available, so the model performance can be calculated for this set.
 The ranges and distribution of model inputs, outputs and targets need to be well-known and validated for this set.
+For newly deployed models the reference dataset is usually the test dataset where the model was
+evaluated before entering production. For a model that has been in production for some time
+the reference dataset is usually a benchmark dataset selected from the production data of the model
+during which the model performed as expected.
 
 .. warning::
     Don't use model training data as a reference dataset. Machine learning models tend to overfit on their training data.
@@ -41,27 +46,27 @@ Analysis Period
 ^^^^^^^^^^^^^^^
 
 The analysis period is where NannyML analyzes the data drift and the performance of the monitored
-model using the knowledge gained from analyzing the reference period. In the average use case, it will
+model using the knowledge gained from studying the reference period. In the average use case, it will
 consist of the latest production data up to a desired point in the past, which should be after
 the reference period ends. The analysis period is not required to have targets available.
 
 When performing drift analysis, NannyML compares each :term:`Data Chunk` of the analysis period
 with the reference data. NannyML will flag any meaningful changes to data distributions as data drift.
 
-The analysis data does not need to contain any target values, so performance can only be estimated for it.
-If target data is provided for the analysis period, it can be used for calculating performance, but will be ignored
+The analysis data does not need to contain any target values, so performance can be estimated for it.
+If target data is provided for the analysis period, it can be used to calculate :term:`Realized Performance`, but it will be ignored
 when estimating the performance.
 
 
 Columns
 -------
 
-The following sections describe the different data columns that are required by NannyML. These will differ based on
-the type of the model being monitored, and the function being used. There will be columns that are common across model types, where others will
-be specific to a given model type. Also note that there is an expectation that the columns have the same name between reference and
+The following sections describe the different data columns that NannyML requires. These will differ based on
+the type of the model being monitored, and the function being used. There will be columns that are common across model types, whereas others will
+be specific to a given model type. Also, note that there is an expectation that the columns have the same name between reference and
 analysis datasets when they describe the same thing.
 
-We will illustrate this using the fictional ``car_loan`` model included with the library,
+We will illustrate this using the fictional *car_loan* model included with the library,
 a binary classifier trying to predict whether a prospective customer will pay off a car loan.
 
 Below we see the columns contained in our dataset.
@@ -92,7 +97,7 @@ Timestamp
 The column containing the timestamp at which the observation occurred, i.e. when the model was invoked
 using the given inputs and yielding the resulting prediction. See :term:`Timestamp`.
 
-In the sample data this is the ``timestamp`` column.
+In the sample data this is the **timestamp** column.
 
 .. note::
     **Format**
@@ -103,7 +108,7 @@ In the sample data this is the ``timestamp`` column.
 
 
 .. warning::
-    This column is optional. When a timestamp column is not provided, plots will no longer make use of a time based x-axis
+    This column is optional. When a timestamp column is not provided, plots will no longer use a time-based x-axis
     but will use the index of the chunks instead. The following plots illustrate this:
 
     .. figure:: /_static/tutorials/data_requirements/data-requirements-time-based-x-axis.svg
@@ -125,19 +130,19 @@ Target
 
 The actual outcome of the event the machine learning model is trying to predict.
 
-In the sample data this is the ``repaid`` column.
+In the sample data this is the **repaid** column.
 
-Required as part of the reference data for :ref:`performance estimation<performance-estimation>`,
-and as part of both reference and analysis data to :ref:`calculate performance<performance-calculation>`.
+Required in the reference data for :ref:`performance estimation<performance-estimation>`,
+and in both reference and analysis data to :ref:`calculate realized performance<performance-calculation>`.
 
 Features
 ^^^^^^^^
 
-The features of your model. These can be categorical or continuous and NannyML identifies this based on their
+The features of your model. These can be categorical or continuous. NannyML identifies this based on their
 declared pandas data types.
 
-In the sample data, the features are ``car_value``, ``salary_range``, ``debt_to_income_ratio``, ``loan_length``,
-``repaid_loan_on_prev_car``, ``size_of_downpayment`` and ``driver_tenure``.
+In the sample data, the features are **car_value**, **salary_range**, **debt_to_income_ratio**, **loan_length**,
+**repaid_loan_on_prev_car**, **size_of_downpayment** and **driver_tenure**.
 
 Required to :ref:`estimate performance for regression models<regression-performance-estimation>` and :ref:`detect data drift<data-drift>` on features.
 
@@ -150,28 +155,27 @@ Predicted class probabilities
 
 The :term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` that is emitted by the model, most likely a float.
 
-In the sample data this is the ``y_pred_proba`` column.
+In the sample data this is the **y_pred_proba** column.
 
 Required for running :ref:`performance estimation<performance-estimation>` on binary classification models.
 
-In multiclass classification problems there are expected to be one column of
-:term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>`
-for each class. They are required for running :ref:`performance estimation<performance-estimation>` on multi-class models.
+In multiclass classification problems each class is expected to have its own
+:term:`score<Predicted scores>` or :term:`probability<Predicted probabilities>` column. They are required for running :ref:`performance estimation<performance-estimation>` on multiclass models.
 
 Prediction class labels
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresholding) the prediction scores or probabilities.
 
-In the sample data this is the ``y_pred`` column.
+In the sample data this is the **y_pred** column.
 
-Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multi-class, and regression models.
+Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multiclass, and regression models.
 
 
 NannyML Functionality Requirements
 ----------------------------------
 
-After version 0.5 NannyML has relaxed the column requirements so that each functionality only requires what it needs.
+After version 0.5, NannyML has relaxed the column requirements so that each functionality only requires what it needs.
 You can see those requirements in the table below:
 
 +--------------+---------------------------------------------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
@@ -192,8 +196,8 @@ You can see those requirements in the table below:
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 
 
-What next
----------
+What's next
+-----------
 
 You can check out our tutorials on how to :ref:`estimate performance<performance-estimation>`,
-:ref:`calculate performance<performance-calculation>`, and :ref:`detect data drift<data-drift>`.
+:ref:`calculate realized performance<performance-calculation>`, and :ref:`detect data drift<data-drift>`.

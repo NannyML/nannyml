@@ -2,7 +2,23 @@
 #
 #  License: Apache Software License 2.0
 
-"""Implementation of the CBPE estimator."""
+"""A module with the implementation of the CBPE estimator.
+
+The estimator manages a list of :class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances,
+constructed using the :class:`~nannyml.performance_estimation.confidence_based.metrics.MetricFactory`.
+
+The estimator is then responsible for delegating the `fit` and `estimate` method calls to each of the managed
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances and building a
+:class:`~nannyml.performance_estimation.confidence_based.results.Result` object.
+
+For more information, check out the `tutorial`_ and the `deep dive`_.
+
+.. _tutorial:
+    https://nannyml.readthedocs.io/en/stable/tutorials/performance_estimation/binary_performance_estimation.html
+
+.. _deep dive:
+    https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe
+"""
 from __future__ import annotations
 
 import copy
@@ -37,7 +53,23 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
 
 
 class CBPE(AbstractEstimator):
-    """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique."""
+    """Performance estimator using the Confidence Based Performance Estimation (CBPE) technique.
+
+    CBPE leverages the confidence score of the model predictions. It is used to estimate the performance of
+    classification models as they return predictions with an associated confidence score.
+
+    For more information, check out the `tutorial for binary classification`_,
+    the `tutorial for multiclass classification`_ or the `deep dive`_.
+
+    .. _tutorial for binary classification:
+        https://nannyml.readthedocs.io/en/stable/tutorials/performance_estimation/binary_performance_estimation.html
+
+    .. _tutorial for multiclass classification:
+        https://nannyml.readthedocs.io/en/stable/tutorials/performance_estimation/multiclass_performance_estimation.html
+
+    .. _deep dive:
+        https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe
+    """
 
     def __init__(
         self,
@@ -64,17 +96,30 @@ class CBPE(AbstractEstimator):
         ----------
         y_true: str
             The name of the column containing target values (that are provided in reference data during fitting).
-        y_pred_proba: ModelOutputsType
+        y_pred_proba: Union[str, Dict[str, str]]
             Name(s) of the column(s) containing your model output.
-            Pass a single string when there is only a single model output column, e.g. in binary classification cases.
-            Pass a dictionary when working with multiple output columns, e.g. in multiclass classification cases.
-            The dictionary maps a class/label string to the column name containing model outputs for that class/label.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name
+                  model outputs for that class.
         y_pred: str
             The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
+            If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         metrics: Union[str, List[str]]
             A metric or list of metrics to calculate.
+
+            Supported metrics by CBPE:
+
+                - `roc_auc`
+                - `f1`
+                - `precision`
+                - `recall`
+                - `specificity`
+                - `accuracy`
+                - `confusion_matrix` - only for binary classification tasks
+                - `business_value` - only for binary classification tasks
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -87,63 +132,60 @@ class CBPE(AbstractEstimator):
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
         calibration: str, default='isotonic'
-            Determines which calibration will be applied to the model predictions. Defaults to ``isotonic``, currently
+            Determines which calibration will be applied to the model predictions. Defaults to 'isotonic', currently
             the only supported value.
         calibrator: Calibrator, default=None
             A specific instance of a Calibrator to be applied to the model predictions.
             If not set NannyML will use the value of the ``calibration`` variable instead.
-        thresholds: dict, default={ \
-            'roc_auc': StandardDeviationThreshold(), \
-            'f1': StandardDeviationThreshold(), \
-            'precision': StandardDeviationThreshold(), \
-            'recall': StandardDeviationThreshold(), \
-            'specificity': StandardDeviationThreshold(), \
-            'accuracy': StandardDeviationThreshold(), \
-            'confusion_matrix': StandardDeviationThreshold(), \
-            'business_cost': StandardDeviationThreshold(), \
-        }
+        thresholds: dict
+            The default values are::
+
+                {
+                    'roc_auc': StandardDeviationThreshold(),
+                    'f1': StandardDeviationThreshold(),
+                    'precision': StandardDeviationThreshold(),
+                    'recall': StandardDeviationThreshold(),
+                    'specificity': StandardDeviationThreshold(),
+                    'accuracy': StandardDeviationThreshold(),
+                    'confusion_matrix': StandardDeviationThreshold(),  # only for binary classification
+                    'business_value': StandardDeviationThreshold(),  # only for binary classification
+                }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
             When a dictionary is given its values will override the default values. If no dictionary is given a default
-            will be applied. The default method thresholds are as follows:
-
-                - `roc_auc`: `StandardDeviationThreshold()`
-                - `f1`: `StandardDeviationThreshold()`
-                - `precision`: `StandardDeviationThreshold()`
-                - `recall`: `StandardDeviationThreshold()`
-                - `specificity`: `StandardDeviationThreshold()`
-                - `accuracy`: `StandardDeviationThreshold()`
-                - `confusion_matrix`: `StandardDeviationThreshold()`
-                - `mape`: `StandardDeviationThreshold()`
-                - `business_cost`: `StandardDeviationThreshold()`
+            will be applied.
         problem_type: Union[str, ProblemType]
             Determines which CBPE implementation to use. Allowed problem type values are 'classification_binary' and
             'classification_multiclass'.
         normalize_confusion_matrix: str, default=None
             Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
-            'predicted'. If None, the confusion matrix will not be normalized and the counts for each cell of
-            the matrix will be returned. If 'all', the confusion matrix will be normalized by the total number
-            of observations. If 'true', the confusion matrix will be normalized by the total number of
-            observations for each true class. If 'predicted', the confusion matrix will be normalized by the
-            total number of observations for each predicted class.
+            'predicted'.
+
+                - None - the confusion matrix will not be normalized and the counts for each cell of the matrix \
+                will be returned.
+                - 'all' - the confusion matrix will be normalized by the total number of observations.
+                - 'true' - the confusion matrix will be normalized by the total number of observations for each true  \
+                class.
+                - 'predicted' - the confusion matrix will be normalized by the total number of observations for each \
+                predicted class.
         business_value_matrix: Optional[Union[List, np.ndarray]], default=None
-            A matrix containing the business value for each combination of true and predicted class.
-            The i-th row and j-th column entry of the matrix contains the business value for predicting the
-            i-th class as the j-th class.
+            A 2x2 matrix that specifies the value of each cell in the confusion matrix.
+            The format of the business value matrix must be specified as [[value_of_TN, value_of_FP], \
+            [value_of_FN, value_of_TP]]. Required when estimating the 'business_value' metric.
         normalize_business_value: str, default=None
             Determines how the business value will be normalized. Allowed values are None and
-            'per_prediction'. If None, the business value will not be normalized and the value
-            returned will be the total value per chunk. If 'per_prediction', the value will be normalized
-            by the number of predictions in the chunk.
+            'per_prediction'.
+
+            - None - the business value will not be normalized and the value returned will be the total value per chunk.
+            - 'per_prediction' - the value will be normalized by the number of predictions in the chunk.
 
         Examples
         --------
+        Using CBPE to estimate the perfomance of a model for a binary classification problem.
+
         >>> import nannyml as nml
-        >>> from IPython.display import display
-        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-        >>> display(reference_df.head(3))
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
         >>> estimator = nml.CBPE(
         ...     y_pred_proba='y_pred_proba',
         ...     y_pred='y_pred',
@@ -155,13 +197,30 @@ class CBPE(AbstractEstimator):
         >>> )
         >>> estimator.fit(reference_df)
         >>> results = estimator.estimate(analysis_df)
-        >>> display(results.data)
-        >>> for metric in estimator.metrics:
-        ...     metric_fig = results.plot(kind='performance', metric=metric)
-        ...     metric_fig.show()
-        >>> for metric in estimator.metrics:
-        ...     metric_fig = results.plot(kind='performance', plot_reference=True, metric=metric)
-        ...     metric_fig.show()
+        >>> metric_fig = results.plot()
+        >>> metric_fig.show()
+
+
+        Using CBPE to estimate the perfomance of a model for a multiclass classification problem.
+
+        >>> import nannyml as nml
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_multiclass_classification_dataset()
+        >>> estimator = nml.CBPE(
+        ...     y_pred_proba={
+        ...         'prepaid_card': 'y_pred_proba_prepaid_card',
+        ...         'highstreet_card': 'y_pred_proba_highstreet_card',
+        ...         'upmarket_card': 'y_pred_proba_upmarket_card'},
+        ...     y_pred='y_pred',
+        ...     y_true='y_true',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_multiclass',
+        ...     metrics=['roc_auc', 'f1'],
+        ...     chunk_size=6000,
+        >>> )
+        >>> estimator.fit(reference_df)
+        >>> results = estimator.estimate(analysis_df)
+        >>> metric_fig = results.plot()
+        >>> metric_fig.show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 
@@ -258,15 +317,6 @@ class CBPE(AbstractEstimator):
         -------
         estimator: PerformanceEstimator
             The fitted estimator.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # create a new estimator and fit it on reference data
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
-
         """
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             return self._fit_binary(reference_data)
@@ -291,15 +341,6 @@ class CBPE(AbstractEstimator):
             object where each row represents a :class:`~nannyml.chunk.Chunk`,
             containing :class:`~nannyml.chunk.Chunk` properties and the estimated metrics
             for that :class:`~nannyml.chunk.Chunk`.
-
-        Examples
-        --------
-        >>> import nannyml as nml
-        >>> ref_df, ana_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>> metadata = nml.extract_metadata(ref_df, model_type=nml.ModelType.CLASSIFICATION_BINARY)
-        >>> # create a new estimator and fit it on reference data
-        >>> estimator = nml.CBPE(model_metadata=metadata, chunk_period='W').fit(ref_df)
-        >>> estimates = estimator.estimate(data)
         """
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')

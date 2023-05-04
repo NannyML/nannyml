@@ -2,7 +2,30 @@
 #
 #  License: Apache Software License 2.0
 
-"""Calculates drift for individual features using the `Kolmogorov-Smirnov` and `chi2-contingency` statistical tests."""
+"""Calculates drift for individual columns.
+
+Supported drift detection methods are:
+
+- Kolmogorov-Smirnov statistic (continuous)
+- Wasserstein distance (continuous)
+- Chi-squared statistic (categorical)
+- L-infinity distance (categorical)
+- Jensen-Shannon distance
+- Hellinger distance
+
+For more information, check out the `tutorial`_ or the `deep dive`_.
+
+For help selecting the correct univariate drift detection method for your use case, check the `method selection guide`_.
+
+.. _tutorial:
+    https://nannyml.readthedocs.io/en/stable/tutorials/detecting_data_drift/univariate_drift_detection.html
+
+.. _deep dive:
+    https://nannyml.readthedocs.io/en/stable/how_it_works/univariate_drift_detection.html
+
+.. _method selection guide:
+    https://nannyml.readthedocs.io/en/stable/how_it_works/univariate_drift_comparison.html
+"""
 
 from __future__ import annotations
 
@@ -24,7 +47,7 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'kolmogorov_smirnov': StandardDeviationThreshold(std_lower_multiplier=None),
     'chi2': StandardDeviationThreshold(),  # currently ignored
     'jensen_shannon': ConstantThreshold(lower=None, upper=0.1),
-    'wasserstein': StandardDeviationThreshold(),
+    'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None),
     'hellinger': ConstantThreshold(lower=None, upper=0.1),
     'l_infinity': ConstantThreshold(lower=None, upper=0.1),
 }
@@ -60,8 +83,20 @@ class UnivariateDriftCalculator(AbstractCalculator):
             The name of the column containing the timestamp of the model prediction.
         categorical_methods: Union[str, List[str]], default=['jensen_shannon']
             A method name or list of method names that will be performed on categorical columns.
+            Supported methods for categorical variables:
+
+                - `jensen_shannon`
+                - `chi2`
+                - `hellinger`
+                - `l_infinity`
         continuous_methods: Union[str, List[str]], default=['jensen_shannon']
             A method name list of method names that will be performed on continuous columns.
+            Supported methods for continuous variables:
+
+                - `jensen_shannon`
+                - `kolmogorov_smirnov`
+                - `hellinger`
+                - `wasserstein`
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -73,43 +108,62 @@ class UnivariateDriftCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-        thresholds: dict, default={ \
-                                    'kolmogorov_smirnov': StandardDeviationThreshold(), \
-                                    'jensen_shannon': ConstantThreshold(upper=0.1), \
-                                    'wasserstein': StandardDeviationThreshold(), \
-                                    'hellinger': ConstantThreshold(upper=0.1), \
-                                    'l_infinity': ConstantThreshold(upper=0.1) \
-                                }
+        thresholds: dict
+
+            Defaults to::
+
+                {
+                    'kolmogorov_smirnov': StandardDeviationThreshold(std_lower_multiplier=None),
+                    'jensen_shannon': ConstantThreshold(upper=0.1),
+                    'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None),
+                    'hellinger': ConstantThreshold(upper=0.1),
+                    'l_infinity': ConstantThreshold(upper=0.1)
+                }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
             to a method name. This dictionary is optional.
             When a dictionary is given its values will override the default values. If no dictionary is given a default
             will be applied. The default method thresholds are as follows:
 
-                - `kolmogorov_smirnov`: `StandardDeviationThreshold()`
+                - `kolmogorov_smirnov`: `StandardDeviationThreshold(std_lower_multiplier=None)`
                 - `jensen_shannon`: `ConstantThreshold(upper=0.1)`
-                - `wasserstein`: `StandardDeviationThreshold()`
+                - `wasserstein`: `StandardDeviationThreshold(std_lower_multiplier=None)`
                 - `hellinger`: `ConstantThreshold(upper=0.1)`
                 - `l_infinity`: `ConstantThreshold(upper=0.1)`
 
             The `chi2` method does not support custom thresholds for now. Additional research is required to determine
             how to transition from its current p-value based implementation.
 
-        computation_params : dict, default={'kolmogorov_smirnov':{'calculation_method':{'auto', 'exact', 'estimated},
-            'n_bins':10 000}}, 'wasserstein':{'calculation_method':{'auto', 'exact', 'estimated}, 'n_bins':10 000}}
+        computation_params : dict
+
+            Defaults to::
+
+                {
+                    'kolmogorov_smirnov': {
+                        'calculation_method': 'auto',
+                        'n_bins':10 000
+                    },
+                    'wasserstein': {
+                        'calculation_method': 'auto',
+                        'n_bins':10 000
+                    }
+                }
 
             A dictionary which allows users to specify whether they want drift calculated on
             the exact reference data or an estimated distribution of the reference data obtained
             using binning techniques. Applicable only to Kolmogorov-Smirnov and Wasserstein.
 
-            `calculation_method` : Specify whether the entire or the binned reference data will be stored.
+            `calculation_method`: Specify whether the entire or the binned reference data will be stored.
+
                 The default value is `auto`.
 
                 - `auto` : Use `exact` for reference data smaller than 10 000 rows, `estimated` for larger.
                 - `exact` : Store the whole reference data.
+
                     When calculating on chunk `scipy.stats.ks_2samp(reference, chunk,  method = `exact` )`
                     is called and whole reference and chunk vectors are passed.
                 - `estimated` : Store reference data binned into `n_bins` (default=10 000).
+
                     The D-statistic will be calculated based on binned eCDF.
                     Bins are quantile-based for Kolmogorov-Smirnov and equal-width based for Wasserstein.
                     Notice that for the reference data of 10 000 rows the resulting D-statistic for exact and
@@ -117,6 +171,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
                     distribution of test statistic (as it is in the `scipy.stats.ks_2samp` with method = `asymp` ).
 
             `n_bins` : Number of bins used to bin data when calculation_method = `estimated`.
+
                 The default value is 10 000. The larger the value the more precise the calculation
                 (closer to  calculation_method = `exact` ) but more data will be stored in the fitted calculator.
 

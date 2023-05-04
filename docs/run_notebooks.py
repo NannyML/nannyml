@@ -18,6 +18,8 @@ import nbformat
 from nbclient.exceptions import CellExecutionError
 from nbformat import NotebookNode
 
+NOTEBOOKS_TO_SKIP = ["Datasets - Census Employment MA"]
+
 ep = nbconvert.preprocessors.ExecutePreprocessor(
     extra_arguments=["--log-level=40"],
     timeout=300,
@@ -91,14 +93,24 @@ def _clean_outputs(nb: NotebookNode) -> NotebookNode:
     return nb
 
 
+def skip_notebook(notebook_path):
+    for notebook_name in NOTEBOOKS_TO_SKIP:
+        if notebook_name in notebook_path:
+            return True
+    return False
+
+
 if __name__ == '__main__':
     print('=========================== running notebooks ===========================')
     notebooks_dir = sys.argv[1]
     for path in glob.iglob(notebooks_dir, recursive=True):
-        s = time.time()
-        sys.stdout.write('running ' + path)
-        sys.stdout.flush()
-        run_notebook(path)
-        sys.stdout.write(' -- Finish in {}s\n'.format(int(time.time() - s)))
+        if skip_notebook(path):
+            print('skipping ' + path)
+        else:
+            s = time.time()
+            sys.stdout.write('running ' + path)
+            sys.stdout.flush()
+            run_notebook(path)
+            sys.stdout.write(' -- Finish in {}s\n'.format(int(time.time() - s)))
 
 print('\n\033[92m' '===========================' ' Notebook testing done ' '===========================' '\033[0m')

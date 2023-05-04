@@ -108,7 +108,7 @@ When applying PCA we lose some information about our dataset.
 This means that the reconstructed data will always be slightly different compared to the original,
 and the reconstruction error reflects that.
 Because of this the valuable insight doesn't come from the value of the reconstruction
-error but from the change in reconstruction error values over time. The change tells if there is data drift.
+error but from **the change in reconstruction error values over time**. The change tells if there is data drift.
 
 This is because when there is data drift the principal components the PCA method has learnt become suboptimal.
 This will result in worse reconstruction of the new data and therefore a different reconstruction error.
@@ -121,7 +121,7 @@ The variability of reconstruction error values on a known good dataset is used t
 variance on the reconstruction error values. Any reconstruction error values outside of that
 variance represent a significant change in reconstruction error.
 
-NannyMl computes the mean and standard deviation of the reconstruction error with PCA on the reference
+NannyML computes the mean and standard deviation of the reconstruction error with PCA on the reference
 dataset based on the different results for each :term:`Data Chunk`. This establishes
 a range of expected values of reconstruction error. A threshold for significant change
 in NannyML is defined as values that are more than three standard deviations away from the mean

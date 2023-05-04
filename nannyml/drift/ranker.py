@@ -2,7 +2,19 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module containing ways to rank drifting features."""
+"""Module containing ways to rank features according to drift.
+
+This model allows you to rank the columns within a
+:class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` result according to their degree of drift.
+
+The following rankers are currently available:
+
+- :class:`~nannyml.drift.ranker.AlertCountRanker`: ranks the features according
+  to the number of drift detection alerts they cause.
+- :class:`~nannyml.drift.ranker.CorrelationRanker`: ranks the features according to their correlation with changes
+  in realized or estimated performance.
+
+"""
 from __future__ import annotations
 
 from typing import Optional, Union
@@ -64,7 +76,7 @@ def _validate_performance_result(performance_results: Union[CBPEResults, DLEResu
 
 
 class AlertCountRanker:
-    """Ranks features by the number of drift 'alerts' they've caused."""
+    """Ranks the features according to the number of drift detection alerts they cause."""
 
     @log_usage(UsageEvent.RANKER_ALERT_COUNT_RUN)
     def rank(
@@ -72,7 +84,7 @@ class AlertCountRanker:
         drift_calculation_result: UnivariateResults,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
-        """Compares the number of alerts for each feature and ranks them accordingly.
+        """Ranks the features according to the number of drift detection alerts they cause.
 
         Parameters
         ----------
@@ -85,42 +97,41 @@ class AlertCountRanker:
         -------
         ranking: pd.DataFrame
             A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
-            second-highest rank is 2, etc.)
+            second-highest rank is 2, etc.). Features with the same number of alerts are ranked alphanumerically on
+            the feature name.
 
         Examples
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
         >>>
-        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-        >>> target_df = nml.load_synthetic_binary_classification_dataset()[2]
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
         >>>
         >>> display(reference_df.head())
         >>>
         >>> column_names = [
         >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period',
-        >>>                                                        'y_pred', 'repaid', 'identifier']]
+        >>>                                                        'y_pred', 'work_home_actual', 'identifier']]
         >>>
-        >>> calc = nml.UnivariateStatisticalDriftCalculator(column_names=column_names,
-        >>>                                                 timestamp_column_name='timestamp')
+        >>> calc = nml.UnivariateDriftCalculator(column_names=column_names,
+        >>>     timestamp_column_name='timestamp')
         >>>
         >>> calc.fit(reference_df)
         >>>
         >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
         >>>
-        >>> ranker = AlertCountRanker(drift_calculation_result=results)
-        >>> ranked_features = ranker.rank(only_drifting=False)
+        >>> ranker = nml.AlertCountRanker()
+        >>> ranked_features = ranker.rank(drift_calculation_result=results, only_drifting=False)
         >>> display(ranked_features)
-                          column_name  number_of_alerts  rank
-        1        distance_from_office                 5     1
-        2                salary_range                 5     2
-        3  public_transportation_cost                 5     3
-        4            wfh_prev_workday                 5     4
-        5                      tenure                 2     5
-        6         gas_price_per_litre                 0     6
-        7                     workday                 0     7
-        8            work_home_actual                 0     8
+                number_of_alerts                 column_name  rank
+        0                      5            wfh_prev_workday     1
+        1                      5                salary_range     2
+        2                      5  public_transportation_cost     3
+        3                      5        distance_from_office     4
+        4                      0                     workday     5
+        5                      0            work_home_actual     6
+        6                      0                      tenure     7
+        7                      0         gas_price_per_litre     8
         """
         _validate_drift_result(drift_calculation_result)
 
@@ -144,10 +155,56 @@ class AlertCountRanker:
 
 
 class CorrelationRanker:
-    """Ranks features according to drift correlation with performance impact.
+    """Ranks the features according to their correlation with changes in realized or estimated performance.
 
-    Ranks the features according to the correlation of their selected drift results and
-    absolute performance change from mean reference performance on selected metric.
+    Examples
+        --------
+        >>> import nannyml as nml
+        >>> from IPython.display import display
+        >>>
+        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
+        >>>
+        >>> column_names = [col for col in reference_df.columns
+        >>>                 if col not in ['timestamp', 'y_pred_proba', 'period',
+        >>>                                'y_pred', 'work_home_actual', 'identifier']]
+        >>>
+        >>> univ_calc = nml.UnivariateDriftCalculator(column_names=column_names,
+        >>>                                           timestamp_column_name='timestamp')
+        >>>
+        >>> calc = nml.UnivariateDriftCalculator(column_names=column_names,
+        >>>                                      timestamp_column_name='timestamp')
+        >>>
+        >>> univ_calc.fit(reference_df)
+        >>> univariate_results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>>
+        >>> realized_calc = nml.PerformanceCalculator(
+        >>>     y_pred_proba='y_pred_proba',
+        >>>     y_pred='y_pred',
+        >>>     y_true='work_home_actual',
+        >>>     timestamp_column_name='timestamp',
+        >>>     problem_type='classification_binary',
+        >>>     metrics=['roc_auc'])
+        >>> realized_calc.fit(reference_df)
+        >>> realized_perf_results = realized_calc.calculate(analysis_df.merge(target_df, on='identifier'))
+        >>>
+        >>> ranker = nml.CorrelationRanker()
+        >>> # ranker fits on one metric and reference period data only
+        >>> ranker.fit(realized_perf_results.filter(period='reference'))
+        >>> # ranker ranks on one drift method and one performance metric
+        >>> correlation_ranked_features = ranker.rank(
+        >>>     univariate_results,
+        >>>     realized_perf_results,
+        >>>     only_drifting = False)
+        >>> display(correlation_ranked_features)
+                          column_name  pearsonr_correlation  pearsonr_pvalue  has_drifted  rank
+        0            wfh_prev_workday              0.929710     3.076474e-09         True     1
+        1  public_transportation_cost              0.925910     4.872173e-09         True     2
+        2                salary_range              0.921556     8.014868e-09         True     3
+        3        distance_from_office              0.920749     8.762147e-09         True     4
+        4         gas_price_per_litre              0.340076     1.423541e-01        False     5
+        5                     workday              0.154622     5.151128e-01        False     6
+        6            work_home_actual             -0.030899     8.971071e-01        False     7
+        7                      tenure             -0.177018     4.553046e-01        False     8
     """
 
     def __init__(self) -> None:
@@ -167,6 +224,22 @@ class CorrelationRanker:
             Union[CBPEResults, DLEResults, PerformanceCalculationResults]
         ] = None,
     ) -> CorrelationRanker:
+        """Calculates the average performance during the reference period.
+        This value is saved at the `mean_reference_performance` property of the ranker.
+
+        Parameters
+        ----------
+        reference_performance_calculation_result : Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+            Results from any performance calculator or estimator, e.g.
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
+            :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+            :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`
+
+        Returns
+        -------
+        ranking: CorrelationRanker
+        """
+
         if reference_performance_calculation_result is None:
             raise InvalidArgumentsException("reference performance calculation results can not be None.")
         _validate_performance_result(reference_performance_calculation_result)
@@ -190,6 +263,27 @@ class CorrelationRanker:
         performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
         only_drifting: bool = False,
     ):
+        """Compares the number of alerts for each feature and ranks them accordingly.
+
+        Parameters
+        ----------
+        drift_calculation_result: UnivariateResults
+            The univariate drift results containing the features we want to rank.
+        performance_calculation_result: Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+            Results from any performance calculator or estimator, e.g.
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
+            :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+            :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`
+        only_drifting: bool, default=False
+            Omits features without alerts from the ranking results.
+
+        Returns
+        -------
+        ranking: pd.DataFrame
+            A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
+            second-highest rank is 2, etc.). Features with the same number of alerts are ranked alphanumerically on
+            the feature name.
+        """
         if not self._is_fitted or self.metric is None:
             raise NotFittedException("trying to call 'rank()' on an unfitted Ranker. Please call 'fit()' first")
 

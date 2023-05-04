@@ -24,6 +24,7 @@ def plot_metrics(
     subplot_y_axis_title_format: str = '<b>{display_names}</b>',
     number_of_columns: Optional[int] = None,
     hover: Optional[Hover] = None,
+    **kwargs,
 ) -> Figure:
     if number_of_columns is None:
         number_of_columns = min(len(result.keys()), 1)
@@ -87,6 +88,7 @@ def plot_metrics(
             analysis_sampling_error=analysis_result.sampling_error(key),
             hover=hover,
             subplot_y_axis_title=subplot_y_axis_title_format.format(display_names=key.display_names),
+            **kwargs,
         )
 
     return figure
@@ -101,6 +103,7 @@ def plot_metric(
     x_axis_chunk_title: str = 'Chunk',
     y_axis_title: str = 'Metric',
     figure_args: Optional[Dict[str, Any]] = None,
+    **kwargs,
 ) -> Figure:
     reference_result = result.filter(period='reference')
     analysis_result = result.filter(period='analysis')
@@ -149,6 +152,7 @@ def plot_metric(
         analysis_upper_confidence_boundary=analysis_result.upper_confidence_bounds(key),
         analysis_lower_confidence_boundary=analysis_result.lower_confidence_bounds(key),
         analysis_sampling_error=analysis_result.sampling_error(key),
+        **kwargs,
     )
 
     return figure
@@ -185,6 +189,9 @@ def _plot_metric(  # noqa: C901
     col: Optional[int] = None,
     hover: Optional[Hover] = None,
     subplot_y_axis_title: Optional[str] = None,
+    color: Optional[str] = None,
+    metric_name: str = 'Metric',
+    **kwargs,
 ) -> Figure:
     if figure is None:
         figure = Figure(
@@ -220,7 +227,7 @@ def _plot_metric(  # noqa: C901
         _hover.add(np.asarray([metric_display_name] * len(reference_metric)), 'metric_name')
 
         if reference_chunk_periods is not None:
-            _hover.add(render_period_string(reference_chunk_periods), name='period')
+            _hover.add(render_period_string(reference_chunk_periods, color), name='period')
 
         if reference_alerts is not None:
             _hover.add(render_alert_string(reference_alerts), name='alert')
@@ -247,14 +254,15 @@ def _plot_metric(  # noqa: C901
             indices=reference_chunk_indices,
             start_dates=reference_chunk_start_dates,
             end_dates=reference_chunk_end_dates,
-            name='Metric (reference)',
-            color=Colors.BLUE_SKY_CRAYOLA,
+            name=metric_name,
+            color=color or Colors.BLUE_SKY_CRAYOLA,
             hover=_hover,
             # subplot_args=dict(row=row, col=col, subplot_y_axis_title=metric_display_name),
             subplot_args=dict(row=row, col=col, subplot_y_axis_title=subplot_y_axis_title or metric_display_name),
             legendgroup='metric_reference',
             showlegend=show_in_legend,
             # line_dash='dash',
+            **kwargs,
         )
     # endregion
 
@@ -273,7 +281,7 @@ def _plot_metric(  # noqa: C901
     _hover.add(np.asarray([metric_display_name] * len(analysis_metric)), 'metric_name')
 
     if analysis_chunk_periods is not None:
-        _hover.add(render_period_string(analysis_chunk_periods), name='period')
+        _hover.add(render_period_string(analysis_chunk_periods, color), name='period')
 
     if analysis_alerts is not None:
         _hover.add(render_alert_string(analysis_alerts), name='alert')
@@ -303,13 +311,13 @@ def _plot_metric(  # noqa: C901
         indices=analysis_chunk_indices,
         start_dates=analysis_chunk_start_dates,
         end_dates=analysis_chunk_end_dates,
-        name='Metric (analysis)',
-        color=Colors.INDIGO_PERSIAN,
+        name=metric_name,
+        color=color or Colors.BLUE_SKY_CRAYOLA,
         hover=_hover,
         subplot_args=dict(row=row, col=col, subplot_y_axis_title=subplot_y_axis_title or metric_display_name),
         legendgroup='metric_analysis',
-        showlegend=show_in_legend,
-        # line_dash='dash',
+        showlegend=show_in_legend and not has_reference_results,
+        **kwargs,
     )
     # endregion
 
@@ -370,7 +378,7 @@ def _plot_metric(  # noqa: C901
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
             legendgroup='thresh',
-            showlegend=show_threshold_legend,
+            showlegend=show_threshold_legend and not has_reference_results,
         )
         show_threshold_legend = False
 
@@ -384,7 +392,7 @@ def _plot_metric(  # noqa: C901
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
             legendgroup='thresh',
-            showlegend=show_threshold_legend,
+            showlegend=show_threshold_legend and not has_reference_results,
         )
         show_threshold_legend = False
     # endregion
@@ -399,8 +407,8 @@ def _plot_metric(  # noqa: C901
                 indices=reference_chunk_indices,
                 start_dates=reference_chunk_start_dates,
                 end_dates=reference_chunk_end_dates,
-                name='Sampling error (reference)',
-                color=Colors.BLUE_SKY_CRAYOLA,
+                name='Confidence band',
+                color=color or Colors.BLUE_SKY_CRAYOLA,
                 with_additional_endpoint=True,
                 subplot_args=dict(row=row, col=col),
                 showlegend=show_in_legend,
@@ -413,26 +421,55 @@ def _plot_metric(  # noqa: C901
             indices=analysis_chunk_indices,
             start_dates=analysis_chunk_start_dates,
             end_dates=analysis_chunk_end_dates,
-            name='Sampling error (analysis)',
-            color=Colors.INDIGO_PERSIAN,
+            name='Confidence band',
+            color=color or Colors.BLUE_SKY_CRAYOLA,
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
-            showlegend=show_in_legend,
+            showlegend=show_in_legend and not has_reference_results,
         )
     # endregion
 
+    # region Period separator
     if has_reference_results:
-        assert reference_chunk_indices is not None
-        reference_chunk_indices, analysis_chunk_start_dates = ensure_numpy(
-            reference_chunk_indices, analysis_chunk_start_dates
-        )
+        is_time_based = is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
+
         figure.add_period_separator(
             x=(
-                reference_chunk_indices[-1] + 1
-                if not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
-                else analysis_chunk_start_dates[0]
-            ),
-            subplot_args=dict(row=row, col=col),
+                ensure_numpy(reference_chunk_indices)[0][-1] + 1
+                if not is_time_based
+                else ensure_numpy(analysis_chunk_start_dates)[0][0]
+            )
         )
+
+        reference_period_text_x = (
+            reference_chunk_indices.mean() if not is_time_based else reference_chunk_start_dates.mean()  # type: ignore
+        )
+
+        figure.add_annotation(
+            x=reference_period_text_x,
+            xshift=10,
+            yref='y domain',
+            y=1.01,
+            text="Reference",
+            showarrow=False,
+            row=row,
+            col=col,
+        )
+
+        analyis_period_text_x = (
+            analysis_chunk_indices.mean() if not is_time_based else analysis_chunk_start_dates.mean()  # type: ignore
+        )
+
+        figure.add_annotation(
+            x=analyis_period_text_x,
+            xshift=15,
+            yref='y domain',
+            y=1.01,
+            text="Analysis",
+            showarrow=False,
+            row=row,
+            col=col,
+        )
+    # endregion
 
     return figure

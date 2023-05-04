@@ -1,6 +1,19 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+""" This module contains the different drift detection method implementations.
+
+The :class:`~nannyml.drift.univariate.methods.MethodFactory` will convert the drift detection method names
+into an instance of the base :class:`~nannyml.drift.univariate.methods.Method` class.
+
+The :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class will perform
+the required data transformations before looping over all
+:class:`~nannyml.drift.univariate.methods.Method` instances it holds and fit each on reference data
+or calculate the drift value on analysis data.
+
+"""
+
 from __future__ import annotations
 
 import abc
@@ -23,7 +36,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Method(abc.ABC):
-    """A method to express the amount of drift between two distributions."""
+    """A method base class to express the amount of drift between two distributions."""
 
     def __init__(
         self,
@@ -35,7 +48,7 @@ class Method(abc.ABC):
         upper_threshold_limit: Optional[float] = None,
         lower_threshold_limit: Optional[float] = None,
     ):
-        """Creates a new Metric instance.
+        """Creates a new Method instance.
 
         Parameters
         ----------
@@ -44,10 +57,19 @@ class Method(abc.ABC):
             ``calculation_function``.
         column_name: str
             The name used to indicate the metric in columns of a DataFrame.
+        chunker : Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
+        computation_params : dict, default=None
+            A dictionary specifying parameter names and values to be used in the computation of the
+            drift method.
+        upper_threshold : float, default=None
+            An optional upper threshold for the data quality metric.
+        lower_threshold : float, default=None
+            An optional lower threshold for the data quality metric.
         upper_threshold_limit : float, default=None
-            An optional upper threshold for the performance metric.
-        lower_threshold_limit : float, default=None
-            An optional lower threshold for the performance metric.
+            An optional upper threshold limit for the data quality metric.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold limit for the data quality metric.
         """
         self.display_name = display_name
         self.column_name = column_name
@@ -231,7 +253,7 @@ class MethodFactory:
 class JensenShannonDistance(Method):
     """Calculates Jensen-Shannon distance.
 
-    An alert will be raised if `distance > 0.1`.
+    By default an alert will be raised if `distance > 0.1`.
     """
 
     def __init__(self, **kwargs) -> None:
@@ -241,7 +263,16 @@ class JensenShannonDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
-
+        """
+        Parameters
+        ----------
+        display_name : str, default='Jensen-Shannon distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='jensen-shannon'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
         self._treat_as_type: str
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
@@ -311,6 +342,18 @@ class KolmogorovSmirnovStatistic(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Kolmogorov-Smirnov statistic'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='kolmogorov-smirnov'
+            The name used to indicate the metric in columns of a DataFrame.
+        upper_threshold_limit : float, default=1.0
+            An optional upper threshold for the performance metric.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
         self._reference_data: Optional[pd.Series] = None
         self._reference_size: float
         self._qts: np.ndarray
@@ -378,13 +421,25 @@ class Chi2Statistic(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Chi2 statistic'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='chi2'
+            The name used to indicate the metric in columns of a DataFrame.
+        upper_threshold_limit : float, default=1.0
+            An optional upper threshold for the performance metric.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
         self._reference_data_vcs: pd.Series
         self._p_value: float
         self._fitted = False
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_missing_data(reference_data)
-        self._reference_data_vcs = reference_data.value_counts()
+        self._reference_data_vcs = reference_data.value_counts().loc[lambda v: v != 0]
         self._fitted = True
         return self
 
@@ -405,9 +460,10 @@ class Chi2Statistic(Method):
         return self._p_value < 0.05
 
     def _calc_chi2(self, data: pd.Series):
+        value_counts = data.value_counts().loc[lambda v: v != 0]
         stat, p_value, _, _ = chi2_contingency(
             pd.concat(
-                [self._reference_data_vcs, data.value_counts()],
+                [self._reference_data_vcs, value_counts],
                 axis=1,
             ).fillna(0)
         )
@@ -428,6 +484,16 @@ class LInfinityDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='L-Infinity distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='l_infinity'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
 
         self._reference_proba: Optional[dict] = None
 
@@ -470,6 +536,16 @@ class WassersteinDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Wasserstein distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='wasserstein'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
 
         self._reference_data: Optional[pd.Series] = None
         self._reference_size: float
@@ -565,6 +641,16 @@ class HellingerDistance(Method):
             lower_threshold_limit=0,
             **kwargs,
         )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Hellinger distance'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='hellinger'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the performance metric.
+        """
 
         self._treat_as_type: str
         self._bins: np.ndarray

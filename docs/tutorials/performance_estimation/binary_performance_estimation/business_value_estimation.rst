@@ -27,7 +27,7 @@ Walkthrough
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
-You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
+Check out :ref:`Car Loan Dataset<dataset-synthetic-binary-car-loan>` to learn more about this dataset.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
@@ -44,51 +44,47 @@ We start by loading the dataset we'll be using:
 
 Next we create the Confidence-based Performance Estimation
 (:class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`)
-estimator and specify that we would like the "business_value"
-metric using the ``metrics`` parameter. **For the "business_value"
-metric, a 2x2 value matrix must also be specified.** The value matrix
-is a 2x2 matrix that specifies the value of each cell in the confusion
-matrix where the top left cell is the value of a true negative, the
-top right cell is the value of a false positive, the bottom left cell
-is the value of a false negative, and the bottom right cell is the
-value of a true positive. For example, if in your use case a false
-positive costs $10, the top right cell of your value matrix would be
--10. If a true positive is worth $100, the bottom right cell of your
-value matrix would be 100, and so on.
+estimator. To initialize an estimator that estimates **business_value**, we specify the following
+parameters:
 
-We also specify how we would
-like the value to be normalized using the
-``normalize_business_value`` parameter.
-The normalization options are:
+  - **y_pred_proba:** the name of the column in the reference data that
+    contains the predicted probabilities.
+  - **y_pred:** the name of the column in the reference data that
+    contains the predicted classes.
+  - **y_true:** the name of the column in the reference data that
+    contains the true classes.
+  - **timestamp_column_name (Optional):** the name of the column in the reference data that
+    contains timestamps.
+  - **metrics:** a list of metrics to estimate. In this example we
+    will estimate the ``business_value`` metric.
+  - **chunk_size (Optional):** the number of observations in each chunk of data
+    used to estimate performance. For more information about
+    :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
+  - **problem_type:** the type of problem being monitored. In this example we
+    will monitor a binary classification problem.
+  - **business_value_matrix:** a 2x2 matrix that specifies the value of each
+    cell in the confusion matrix where the top left cell is the value
+    of a true negative, the top right cell is the value of a false
+    positive, the bottom left cell is the value of a false negative,
+    and the bottom right cell is the value of a true positive.
+  - **normalize_business_value (Optional):** how to normalize the business value.
+    The normalization options are:
 
-    * ``None`` : returns the total value per chunk
-    * ``"per_prediction"`` : returns the value normalized
-      over the number of observations in a given chunk
+    * **None** : returns the total value per chunk
+    * **"per_prediction"** :  returns the total value for the chunk divided by the number of observations
+      in a given chunk.
 
+  - **thresholds (Optional):** the thresholds used to calculate the alert flag. For more information about
+    thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
 
-Additionally, we specify an
-optional :ref:`chunking<chunking>` specification. For more
-information about :term:`chunking<Data Chunk>` you can check
-the :ref:`setting up page<chunking>` and
-:ref:`advanced guide<chunk-data>`.
+.. note::
+    When estimating **business_value**, the ``business_value_matrix`` parameter is required. The format of the :term:`business value matrix`
+    must be specified as ``[[value_of_TN, value_of_FP], [value_of_FN, value_of_TP]]``. For more information about
+    the business value matrix, check out the :ref:`Business Value "How it Works" page<business-value-deep-dive>`.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
     :cells: 3
-
-
-In our example, true negatives have a value of 5,
-false positives have a value of -10, false negatives have a value of -50,
-and true positives have a value of 50.
-
-.. note::
-  The list of metrics specifies which performance metrics of the monitored model will be estimated.
-  This tutorial is specific to the ``business_value`` metric, but you can find more information about
-  other standard metrics such as ``roc_auc``, ``f1``, ``precision``, ``recall``, ``specificity``,
-  and ``accuracy`` in the
-  :ref:`estimation of standard performance metrics tutorial<standard-metric-estimation>`. Additionally,
-  you can find more information about the ``confusion_matrix`` metric in the
-  :ref:`confusion matrix estimation tutorial<confusion-matrix-estimation>`.
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimator is then fitted using the
@@ -116,37 +112,33 @@ only.
 Apart from chunk-related data, the results data have the following columns for each metric
 that was estimated:
 
- - ``value`` - the estimate of a metric for a specific chunk.
- - ``sampling_error`` - the estimate of the :term:`Sampling Error`.
- - ``realized`` - when ``target`` values are available for a chunk, the realized performance metric will also
+ - **value** - the estimate of a metric for a specific chunk.
+ - **sampling_error** - the estimate of the :term:`sampling error<Sampling Error>`.
+ - **realized** - when **target** values are available for a chunk, the realized performance metric will also
    be calculated and included within the results.
- - ``upper_confidence_boundary`` and ``lower_confidence_boundary`` - These values show the :term:`Confidence Band` of the relevant metric
-   and are equal to estimated value +/- 3 times the estimated :term:`Sampling Error`.
- - ``upper_threshold`` and ``lower_threshold`` - crossing these thresholds will raise an alert on significant
+ - **upper_confidence_boundary** and **lower_confidence_boundary** - These values show the :term:`confidence band<Confidence Band>` of the relevant metric
+   and are equal to estimated value +/- 3 times the estimated :term:`sampling error<Sampling Error>`.
+ - **upper_threshold** and **lower_threshold** - crossing these thresholds will raise an alert on significant
    performance change. The thresholds are calculated based on the actual performance of the monitored model on chunks in
-   the ``reference`` partition. The thresholds are 3 standard deviations away from the mean performance calculated on
-   chunks.
-   They are calculated during ``fit`` phase.
- - ``alert`` - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
+   the **reference** partition. The thresholds are 3 standard deviations away from the mean performance calculated on
+   the reference chunks.
+   The thresholds are calculated during **fit** phase.
+ - **alert** - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
 
+These results can be also plotted. Our plots contains several key elements.
 
-
-These results can be also plotted. Our plot contains several key elements.
-
-* The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
+* *The purple step plot* shows the estimated performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* The low-saturated purple area around the estimated performance indicates the :ref:`sampling error<estimation_of_standard_error>`.
+* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is
+  calculated as the estimated performance +/- 3 times the estimated :term:`Sampling Error`.
 
-* The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
+* *The gray vertical line* splits the reference and analysis periods.
 
-* If the estimated performance crosses the upper or lower threshold an alert is raised which is indicated by a red,
-  diamond-shaped point marker in the middle of the chunk.
+* *The red horizontal dashed lines* show upper and lower thresholds for alerting purposes.
 
-Description of tabular results above explains how the
-:term:`confidence bands<Confidence Band>` and thresholds are calculated. Additional information is shown in the hover (these are
-interactive plots, though only static views are included here).
+* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised. Alerts are caused by the estimated performance crossing the upper or lower threshold.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
@@ -154,14 +146,8 @@ interactive plots, though only static views are included here).
 
 .. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-business-value-estimation-binary-car-loan-analysis-with-ref.svg
 
-
-* The right-hand side of the plot shows the estimated performance for the analysis period.
-
-* The solid grey vertical line splits the reference and analysis periods.
-
-* On the left-hand side of the line, the actual model performance (not estimation!) is plotted with a solid light blue
-  line. This facilitates comparison of the estimation against the reference period, and sets expectations on the
-  variability of the performance.
+Additional information such as the chunk index range and chunk date range (if timestamps were provided) is shown in the hover for each chunk (these are
+interactive plots, though only static views are included here).
 
 Insights
 --------
