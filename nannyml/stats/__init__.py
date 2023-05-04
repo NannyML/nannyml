@@ -6,3 +6,4 @@
 
 from .sum import SimpleStatsSumCalculator
 from .avg import SimpleStatsAvgCalculator
+from .std import SimpleStatsStdCalculator
