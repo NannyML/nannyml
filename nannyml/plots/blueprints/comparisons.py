@@ -24,7 +24,8 @@ def plot_2d_compare_step_to_step(
     y_axis_title: str = 'Comparison',
     subplot_titles: Optional[List[str]] = None,
     number_of_columns: Optional[int] = None,
-    hover: Optional[Hover] = None,
+    hover_1: Optional[Hover] = None,
+    hover_2: Optional[Hover] = None,
     **kwargs,
 ) -> Figure:
     # validate if both result keysets are compatible for plotting
@@ -109,6 +110,8 @@ def plot_2d_compare_step_to_step(
         reference_metric_1_lower_confidence_bounds = reference_result_1.lower_confidence_bounds(key_1)
         reference_metric_2_upper_confidence_bounds = reference_result_2.upper_confidence_bounds(key_2)
         reference_metric_2_lower_confidence_bounds = reference_result_2.lower_confidence_bounds(key_2)
+        reference_metric_1_sampling_errors = reference_result_1.sampling_error(key_1)
+        reference_metric_2_sampling_errors = reference_result_2.sampling_error(key_2)
         analysis_metric_1 = analysis_result_1.values(key_1)
         analysis_metric_2 = analysis_result_2.values(key_2)
         analysis_metric_1_alerts = analysis_result_1.alerts(key_1)
@@ -117,6 +120,8 @@ def plot_2d_compare_step_to_step(
         analysis_metric_1_lower_confidence_bounds = analysis_result_1.lower_confidence_bounds(key_1)
         analysis_metric_2_upper_confidence_bounds = analysis_result_2.upper_confidence_bounds(key_2)
         analysis_metric_2_lower_confidence_bounds = analysis_result_2.lower_confidence_bounds(key_2)
+        analysis_metric_1_sampling_errors = analysis_result_1.sampling_error(key_1)
+        analysis_metric_2_sampling_errors = analysis_result_2.sampling_error(key_2)
 
         # TODO: move this logic to the `Result` and `Metric` level.
         #       This is just a quick and very dirty way to check the same "metric" is being plotted, e.g.
@@ -144,6 +149,8 @@ def plot_2d_compare_step_to_step(
             reference_metric_1_lower_confidence_bounds=reference_metric_1_lower_confidence_bounds,
             reference_metric_2_upper_confidence_bounds=reference_metric_2_upper_confidence_bounds,
             reference_metric_2_lower_confidence_bounds=reference_metric_2_lower_confidence_bounds,
+            reference_metric_1_sampling_errors=reference_metric_1_sampling_errors,
+            reference_metric_2_sampling_errors=reference_metric_2_sampling_errors,
             analysis_chunk_keys=analysis_chunk_keys,
             analysis_chunk_periods=analysis_chunk_periods,
             analysis_chunk_indices=analysis_chunk_indices,
@@ -155,7 +162,10 @@ def plot_2d_compare_step_to_step(
             analysis_metric_1_lower_confidence_bounds=analysis_metric_1_lower_confidence_bounds,
             analysis_metric_2_upper_confidence_bounds=analysis_metric_2_upper_confidence_bounds,
             analysis_metric_2_lower_confidence_bounds=analysis_metric_2_lower_confidence_bounds,
-            hover=hover,
+            analysis_metric_1_sampling_errors=analysis_metric_1_sampling_errors,
+            analysis_metric_2_sampling_errors=analysis_metric_2_sampling_errors,
+            hover_1=hover_1,
+            hover_2=hover_2,
             xaxis=x_axis,
             yaxis=y_axis,
             yaxis2=y_axis_2,
@@ -206,6 +216,8 @@ def _plot_compare_step_to_step(  # noqa: C901
     reference_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_2_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_1_sampling_errors: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_2_sampling_errors: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -217,7 +229,10 @@ def _plot_compare_step_to_step(  # noqa: C901
     analysis_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     analysis_metric_2_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
-    hover: Optional[Hover] = None,
+    analysis_metric_1_sampling_errors: Optional[Union[np.ndarray, pd.Series]] = None,
+    analysis_metric_2_sampling_errors: Optional[Union[np.ndarray, pd.Series]] = None,
+    hover_1: Optional[Hover] = None,
+    hover_2: Optional[Hover] = None,
     xaxis: Optional[str] = 'x',
     yaxis: Optional[str] = 'y',
     yaxis2: Optional[str] = 'y2',
@@ -270,11 +285,10 @@ def _plot_compare_step_to_step(  # noqa: C901
     if has_reference_results:
         # region reference metric 1
 
-        _hover = hover or Hover(
-            template='%{period}<br />'
+        _hover = hover_1 or Hover(
+            template='%{period} &nbsp; &nbsp; %{alert} <br />'
             'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
             '%{metric_name}: <b>%{metric_value}</b><br />',
-            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
             show_extra=True,
         )
 
@@ -296,6 +310,9 @@ def _plot_compare_step_to_step(  # noqa: C901
             name='x_coordinate',
         )
         _hover.add(np.round(reference_metric_1, 4), name='metric_value')
+
+        if reference_metric_1_sampling_errors is not None:
+            _hover.add(np.round(reference_metric_1_sampling_errors, 4), name='sampling_error')
 
         figure.add_metric(
             data=reference_metric_1,
@@ -334,11 +351,10 @@ def _plot_compare_step_to_step(  # noqa: C901
 
         # region reference metric 2
 
-        _hover = hover or Hover(
-            template='%{period}<br />'
+        _hover = hover_2 or Hover(
+            template='%{period} &nbsp; &nbsp; %{alert} <br />'
             'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
             '%{metric_name}: <b>%{metric_value}</b><br />',
-            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />˚'
             show_extra=True,
         )
 
@@ -362,6 +378,9 @@ def _plot_compare_step_to_step(  # noqa: C901
             name='x_coordinate',
         )
         _hover.add(np.round(reference_metric_2, 4), name='metric_value')
+
+        if reference_metric_2_sampling_errors is not None:
+            _hover.add(np.round(reference_metric_2_sampling_errors, 4), name='sampling_error')
 
         figure.add_metric(
             data=reference_metric_2,
@@ -445,20 +464,20 @@ def _plot_compare_step_to_step(  # noqa: C901
 
         # region analysis metric 1
 
-        _hover = hover or Hover(
+        _hover = hover_1 or Hover(
             template='%{period} &nbsp; &nbsp; %{alert} <br />'
             'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
             '%{metric_name}: <b>%{metric_value}</b><br />',
-            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
             show_extra=True,
         )
+
         _hover.add(np.asarray([_metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
 
         if analysis_chunk_periods is not None:
             _hover.add(render_period_string(analysis_chunk_periods, color=metric_1_color), name='period')
 
         if analysis_metric_1_alerts is not None:
-            _hover.add(render_alert_string(analysis_metric_1_alerts), name='alert')
+            _hover.add(render_alert_string(analysis_metric_1_alerts, _hover.alert_message), name='alert')
 
         if analysis_chunk_keys is not None:
             _hover.add(analysis_chunk_keys, name='chunk_key')
@@ -472,6 +491,9 @@ def _plot_compare_step_to_step(  # noqa: C901
             name='x_coordinate',
         )
         _hover.add(np.round(analysis_metric_1, 4), name='metric_value')
+
+        if analysis_metric_1_sampling_errors is not None:
+            _hover.add(np.round(analysis_metric_1_sampling_errors, 4), name='sampling_error')
 
         figure.add_metric(
             data=analysis_metric_1,
@@ -508,13 +530,14 @@ def _plot_compare_step_to_step(  # noqa: C901
         # endregion
 
         # region analysis metric 2
-        _hover = hover or Hover(
+
+        _hover = hover_2 or Hover(
             template='%{period} &nbsp; &nbsp; %{alert} <br />'
             'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
             '%{metric_name}: <b>%{metric_value}</b><br />',
-            # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
             show_extra=True,
         )
+
         _hover.add(
             np.asarray([render_metric_display_name(metric_2_display_name)] * len(analysis_metric_2)), 'metric_name'
         )
@@ -523,7 +546,7 @@ def _plot_compare_step_to_step(  # noqa: C901
             _hover.add(render_period_string(analysis_chunk_periods, color=metric_2_color), name='period')
 
         if analysis_metric_2_alerts is not None:
-            _hover.add(render_alert_string(analysis_metric_2_alerts), name='alert')
+            _hover.add(render_alert_string(analysis_metric_2_alerts, _hover.alert_message), name='alert')
 
         if analysis_chunk_keys is not None:
             _hover.add(analysis_chunk_keys, name='chunk_key')
@@ -537,6 +560,9 @@ def _plot_compare_step_to_step(  # noqa: C901
             name='x_coordinate',
         )
         _hover.add(np.round(analysis_metric_2, 4), name='metric_value')
+
+        if analysis_metric_2_sampling_errors is not None:
+            _hover.add(np.round(analysis_metric_2_sampling_errors, 4), name='sampling_error')
 
         figure.add_metric(
             data=analysis_metric_2,
@@ -661,10 +687,12 @@ def _get_plot_kwargs(result: Result, other: Result) -> Dict[str, Any]:
     if _is_estimated_result(result):
         kwargs['metric_1_color'] = Colors.BLUE_SKY_CRAYOLA if _is_estimated_result(other) else Colors.INDIGO_PERSIAN
         kwargs['metric_1_line_dash'] = 'dash'
+        kwargs['hover_1'] = Hover(alert_message='Performance degradation detected')
 
     if _is_estimated_result(other):
         kwargs['metric_2_color'] = Colors.INDIGO_PERSIAN
         kwargs['metric_2_line_dash'] = 'dash'
+        kwargs['hover_2'] = Hover(alert_message='Performance degradation detected')
 
     if not _is_estimated_result(result) and not _is_estimated_result(other):
         kwargs['metric_2_color'] = Colors.INDIGO_PERSIAN

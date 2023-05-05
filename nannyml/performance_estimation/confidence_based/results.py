@@ -17,7 +17,7 @@ from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_FILTER_VALUES
 from nannyml.performance_estimation.confidence_based.metrics import Metric
-from nannyml.plots import Colors
+from nannyml.plots import Colors, Hover
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -189,6 +189,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         if kind == 'performance':
             return plot_metrics(
                 self,
+                hover=Hover(alert_message='Performance degradation detected'),
                 title='Estimated performance <b>(CBPE)</b>',
                 subplot_title_format='Estimated <b>{display_names[1]}</b>',
                 subplot_y_axis_title_format='{display_names[1]}',

@@ -17,10 +17,19 @@ from nannyml.plots.util import has_non_null_data
 
 
 class Hover:
-    def __init__(self, template: str, show_extra: bool = False):
+    def __init__(
+        self,
+        template: str = '%{period} &nbsp; &nbsp; %{alert} <br />'
+        'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+        '%{metric_name}: <b>%{metric_value}</b><br />'
+        'Confidence band: +/- <b>%{sampling_error}</b><br />',
+        alert_message: str = 'Drift detected',
+        show_extra: bool = False,
+    ):
         self.template = template
         self.custom_column_names: List[str] = []
         self.custom_data: List[np.ndarray] = []
+        self.alert_message = alert_message
         self.show_extra: bool = show_extra
 
     def add(
@@ -76,9 +85,9 @@ def render_period_string(period_column: Union[np.ndarray, pd.Series], color: Opt
     )
 
 
-def render_alert_string(alert_column: Union[np.ndarray, pd.Series]) -> np.ndarray:
+def render_alert_string(alert_column: Union[np.ndarray, pd.Series], alert_message: str) -> np.ndarray:
     return _render_string(
-        alert_column, lambda x: '<span style="color:#AD0000">⚠ <b>Drift detected</b></span>' if x else ""
+        alert_column, lambda x: f'<span style="color:#AD0000">⚠ <b>{alert_message}</b></span>' if x else ""
     )
 
 

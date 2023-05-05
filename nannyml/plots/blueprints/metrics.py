@@ -230,7 +230,7 @@ def _plot_metric(  # noqa: C901
             _hover.add(render_period_string(reference_chunk_periods, color), name='period')
 
         if reference_alerts is not None:
-            _hover.add(render_alert_string(reference_alerts), name='alert')
+            _hover.add(render_alert_string(reference_alerts, _hover.alert_message), name='alert')
 
         if reference_chunk_keys is not None:
             _hover.add(reference_chunk_keys, name='chunk_key')
@@ -284,7 +284,7 @@ def _plot_metric(  # noqa: C901
         _hover.add(render_period_string(analysis_chunk_periods, color), name='period')
 
     if analysis_alerts is not None:
-        _hover.add(render_alert_string(analysis_alerts), name='alert')
+        _hover.add(render_alert_string(analysis_alerts, _hover.alert_message), name='alert')
 
     if analysis_chunk_keys is not None:
         _hover.add(analysis_chunk_keys, name='chunk_key')
