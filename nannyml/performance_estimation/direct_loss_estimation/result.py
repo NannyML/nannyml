@@ -10,7 +10,7 @@ from nannyml.base import PerMetricResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric
-from nannyml.plots import Colors
+from nannyml.plots import Colors, Hover
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -161,6 +161,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
                 subplot_y_axis_title_format='{display_names[1]}',
                 color=Colors.INDIGO_PERSIAN,
                 line_dash='dash',
+                hover=Hover(alert_message='Performance degradation detected'),
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")

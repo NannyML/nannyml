@@ -24,7 +24,7 @@ class Hover:
         '%{metric_name}: <b>%{metric_value}</b><br />'
         'Confidence band: +/- <b>%{sampling_error}</b><br />',
         alert_message: str = 'Drift detected',
-        show_extra: bool = False,
+        show_extra: bool = True,
     ):
         self.template = template
         self.custom_column_names: List[str] = []

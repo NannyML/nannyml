@@ -16,6 +16,7 @@ from nannyml.base import PerMetricResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation import SUPPORTED_METRIC_FILTER_VALUES
 from nannyml.performance_calculation.metrics.base import Metric
+from nannyml.plots import Hover
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -160,6 +161,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
                 title='Realized performance',
                 subplot_title_format='Realized <b>{display_names[1]}</b>',
                 subplot_y_axis_title_format='{display_names[1]}',
+                hover=Hover(alert_message='Performance degradation detected'),
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")

@@ -106,6 +106,8 @@ def plot_2d_compare_step_to_step(
     for idx, (key_1, key_2) in enumerate(items):
         reference_metric_1 = reference_result_1.values(key_1)
         reference_metric_2 = reference_result_2.values(key_2)
+        reference_metric_1_alerts = reference_result_1.alerts(key_1)
+        reference_metric_2_alerts = reference_result_2.alerts(key_2)
         reference_metric_1_upper_confidence_bounds = reference_result_1.upper_confidence_bounds(key_1)
         reference_metric_1_lower_confidence_bounds = reference_result_1.lower_confidence_bounds(key_1)
         reference_metric_2_upper_confidence_bounds = reference_result_2.upper_confidence_bounds(key_2)
@@ -145,6 +147,8 @@ def plot_2d_compare_step_to_step(
             reference_chunk_end_dates=reference_chunk_end_dates,
             reference_metric_1=reference_metric_1,
             reference_metric_2=reference_metric_2,
+            reference_metric_1_alerts=reference_metric_1_alerts,
+            reference_metric_2_alerts=reference_metric_2_alerts,
             reference_metric_1_upper_confidence_bounds=reference_metric_1_upper_confidence_bounds,
             reference_metric_1_lower_confidence_bounds=reference_metric_1_lower_confidence_bounds,
             reference_metric_2_upper_confidence_bounds=reference_metric_2_upper_confidence_bounds,
@@ -212,6 +216,8 @@ def _plot_compare_step_to_step(  # noqa: C901
     reference_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_1: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_2: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_1_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    reference_metric_2_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_1_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -298,6 +304,9 @@ def _plot_compare_step_to_step(  # noqa: C901
         if reference_chunk_periods is not None:
             _hover.add(render_period_string(reference_chunk_periods, color=metric_1_color), name='period')
 
+        if reference_metric_1_alerts is not None:
+            _hover.add(render_alert_string(reference_metric_1_alerts, _hover.alert_message), name='alert')
+
         if reference_chunk_keys is not None:
             _hover.add(reference_chunk_keys, name='chunk_key')
 
@@ -365,6 +374,9 @@ def _plot_compare_step_to_step(  # noqa: C901
 
         if reference_chunk_periods is not None:
             _hover.add(render_period_string(reference_chunk_periods, color=metric_2_color), name='period')
+
+        if reference_metric_2_alerts is not None:
+            _hover.add(render_alert_string(reference_metric_2_alerts, _hover.alert_message), name='alert')
 
         if reference_chunk_keys is not None:
             _hover.add(reference_chunk_keys, name='chunk_key')
@@ -687,11 +699,15 @@ def _get_plot_kwargs(result: Result, other: Result) -> Dict[str, Any]:
     if _is_estimated_result(result):
         kwargs['metric_1_color'] = Colors.BLUE_SKY_CRAYOLA if _is_estimated_result(other) else Colors.INDIGO_PERSIAN
         kwargs['metric_1_line_dash'] = 'dash'
+
+    if _is_performance_result(result):
         kwargs['hover_1'] = Hover(alert_message='Performance degradation detected')
 
     if _is_estimated_result(other):
         kwargs['metric_2_color'] = Colors.INDIGO_PERSIAN
         kwargs['metric_2_line_dash'] = 'dash'
+
+    if _is_performance_result(other):
         kwargs['hover_2'] = Hover(alert_message='Performance degradation detected')
 
     if not _is_estimated_result(result) and not _is_estimated_result(other):
@@ -705,6 +721,14 @@ def _is_estimated_result(result: Result) -> bool:
     from nannyml.performance_estimation.direct_loss_estimation import Result as DLEResult
 
     return isinstance(result, (CBPEResult, DLEResult))
+
+
+def _is_performance_result(result: Result) -> bool:
+    from nannyml.performance_calculation import Result as RealizedResult
+    from nannyml.performance_estimation.confidence_based import Result as CBPEResult
+    from nannyml.performance_estimation.direct_loss_estimation import Result as DLEResult
+
+    return isinstance(result, (RealizedResult, CBPEResult, DLEResult))
 
 
 class ResultComparison:
