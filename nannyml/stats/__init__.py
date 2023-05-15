@@ -7,4 +7,4 @@
 from .sum import SummaryStatsSumCalculator
 from .avg import SummaryStatsAvgCalculator
 from .std import SummaryStatsStdCalculator
-from .count import SummaryStatsCountCalculator
+from .count import SummaryStatsRowCountCalculator

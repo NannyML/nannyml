@@ -16,7 +16,7 @@ with warnings.catch_warnings():
 import plotly.graph_objects as go
 
 from nannyml._typing import Key
-from nannyml.base import PerColumnResult
+from nannyml.base import Abstract1DResult
 from nannyml.chunk import Chunker
 # from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
@@ -25,29 +25,33 @@ from nannyml.plots.components import Hover
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(PerColumnResult, ResultCompareMixin):
+class Result(Abstract1DResult, ResultCompareMixin):
     """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
 
     def __init__(
         self,
         results_data: pd.DataFrame,
-        column_names: List[str],
         simple_stats_metric: str,
         timestamp_column_name: Optional[str],
         chunker: Chunker,
     ):
-        super().__init__(results_data, column_names)
+        super().__init__(results_data)
 
         self.timestamp_column_name = timestamp_column_name
         self.simple_stats_metric = simple_stats_metric
         self.chunker = chunker
 
+    # def keys(self) -> List[Key]:
+    #     return [
+    #         Key(
+    #             properties=(column_name,), display_names=(column_name,f"{self.simple_stats_metric.replace('_', ' ').title()}")
+    #         ) for column_name in self.column_names
+    #     ]
     def keys(self) -> List[Key]:
-        return [ 
-            Key(
-                properties=(column_name,), display_names=(column_name,f"{self.simple_stats_metric.replace('_', ' ').title()}")
-            ) for column_name in self.column_names
-        ]
+        return [Key(
+            properties=(self.simple_stats_metric,),
+            display_names=(self.simple_stats_metric,f"{self.simple_stats_metric.replace('_', ' ').title()}")
+        )]
 
     @log_usage(UsageEvent.STATS_COUNT_PLOT)
     def plot(

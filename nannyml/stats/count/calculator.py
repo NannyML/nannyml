@@ -26,12 +26,11 @@ from nannyml.thresholds import (
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class SummaryStatsCountCalculator(AbstractCalculator):
-    """SummaryStatsCountCalculator implementation"""
+class SummaryStatsRowCountCalculator(AbstractCalculator):
+    """SummaryStatsRowCountCalculator implementation"""
 
     def __init__(
         self,
-        column_names: Union[str, List[str]],
         timestamp_column_name: Optional[str] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
@@ -39,13 +38,10 @@ class SummaryStatsCountCalculator(AbstractCalculator):
         chunker: Optional[Chunker] = None,
         thresholds: Optional[Threshold] = StandardDeviationThreshold(),
     ):
-        """Creates a new SummaryStatsCountCalculator instance.
+        """Creates a new SummaryStatsRowCountCalculator instance.
 
         Parameters
         ----------
-        column_names: Union[str, List[str]]
-            A string or list containing the names of features in the provided data set.
-            Missing Values will be calculated for each entry in this list.
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
         chunk_size: int
@@ -68,43 +64,30 @@ class SummaryStatsCountCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
-        >>> column_names = ['car_value', 'debt_to_income_ratio', 'driver_tenure']
-        >>> calc = nml.SummaryStatsSumCalculator(
-        ...     column_names=column_names,
+        >>> calc = nml.SummaryStatsRowCountCalculator(
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
-        >>> for column_name in res.column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        >>> res.plot().show()
         """
-        super(SummaryStatsCountCalculator, self).__init__(
+        super(SummaryStatsRowCountCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
-        if isinstance(column_names, str):
-            self.column_names = [column_names]
-        elif isinstance(column_names, list):
-            for el in column_names:
-                if not isinstance(el, str):
-                    raise InvalidArgumentsException(f"column_names elements should be either a column name string or a list of strings, found\n{el}")
-            self.column_names = column_names
-        else:
-            raise InvalidArgumentsException("column_names should be either a column name string or a list of columns names strings, found\n{column_names}")
-
 
         self.result: Optional[Result] = None
         # No sampling error
         # self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
         # threshold strategy is the same across all columns
         self.thresholds = thresholds
-        self._upper_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
-        self._lower_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+        self._upper_alert_threshold: float = 0
+        self._lower_alert_threshold: float = 0
 
         self.lower_threshold_value_limit: float = 0
         self.upper_threshold_value_limit: float = np.nan
         self.simple_stats_metric = 'rows_count'
 
 
-    def _calculate_count_value_stats(self, data: pd.Series):
+    def _calculate_count_value_stats(self, data: pd.DataFrame):
         # count vs shape have slightly different behaviors!
         # count ignores rows with missing values, infringing a bit on missing values calc but is more versatile.
         return data.shape[0]
@@ -116,27 +99,23 @@ class SummaryStatsCountCalculator(AbstractCalculator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing(self.column_names, reference_data)
-
-
         # no sampling error
         # for col in self.column_names:
         #     count_avg = self._calculate_count_value_stats(reference_data[col])
         #     self._sampling_error_components[col] = count_avg ??
 
-        for column in self.column_names:
-            reference_chunk_results = np.asarray([
-                self._calculate_count_value_stats(chunk.data[column]) for chunk in self.chunker.split(reference_data)
-            ])
-            self._lower_alert_thresholds[column], self._upper_alert_thresholds[column] = calculate_threshold_values(
-                threshold=self.thresholds,
-                data=reference_chunk_results,
-                lower_threshold_value_limit=self.lower_threshold_value_limit,
-                upper_threshold_value_limit=self.upper_threshold_value_limit,
-                logger=self._logger,
-                metric_name=self.simple_stats_metric,
-                override_using_none=True
-            )
+        reference_chunk_results = np.asarray([
+            self._calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)
+        ])
+        self._lower_alert_threshold, self._upper_alert_threshold = calculate_threshold_values(
+            threshold=self.thresholds,
+            data=reference_chunk_results,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            logger=self._logger,
+            metric_name=self.simple_stats_metric,
+            override_using_none=True
+        )
 
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
@@ -148,8 +127,6 @@ class SummaryStatsCountCalculator(AbstractCalculator):
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
-
-        _list_missing(self.column_names, data)
 
         chunks = self.chunker.split(data)
 
@@ -165,14 +142,13 @@ class SummaryStatsCountCalculator(AbstractCalculator):
                 'period': 'analysis',
             }
 
-            for column_name in self.column_names:
-                for k, v in self._calculate_for_column(chunk.data, column_name).items():
-                    row[f'{column_name}_{k}'] = v
+            for k, v in self._calculate_for_df(chunk.data).items():
+                row[f'{self.simple_stats_metric}_{k}'] = v
 
             rows.append(row)
 
         result_index = _create_multilevel_index(
-            column_names=self.column_names,
+            column0=self.simple_stats_metric,
         )
         res = pd.DataFrame(rows)
         res.columns = result_index
@@ -181,7 +157,6 @@ class SummaryStatsCountCalculator(AbstractCalculator):
         if self.result is None:
             self.result = Result(
                 results_data=res,
-                column_names=self.column_names,
                 simple_stats_metric=self.simple_stats_metric,
                 timestamp_column_name=self.timestamp_column_name,
                 chunker=self.chunker,
@@ -196,9 +171,9 @@ class SummaryStatsCountCalculator(AbstractCalculator):
 
         return self.result
 
-    def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
+    def _calculate_for_df(self, data: pd.DataFrame) -> Dict[str, Any]:
         result = {}
-        value = self._calculate_count_value_stats(data[column_name])
+        value = self._calculate_count_value_stats(data)
         result['value'] = value
         # no sampling error
         # serr = np.sqrt(
@@ -212,21 +187,21 @@ class SummaryStatsCountCalculator(AbstractCalculator):
         # result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
         # result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
 
-        result['upper_threshold'] = self._upper_alert_thresholds[column_name]
-        result['lower_threshold'] = self._lower_alert_thresholds[column_name]
+        result['upper_threshold'] = self._upper_alert_threshold
+        result['lower_threshold'] = self._lower_alert_threshold
         result['alert'] = _add_alert_flag(result)
         return result
 
 
 def _create_multilevel_index(
-    column_names,
+    column0,
 ):
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    column_tuples = [
-        (column_name, el) for column_name in column_names for el in  [
+    count_tuples = [
+        (column0, el) for el in [
             'value', 'upper_threshold', 'lower_threshold', 'alert'
         ]
     ]
-    tuples = chunk_tuples + column_tuples
+    tuples = chunk_tuples + count_tuples
     return MultiIndex.from_tuples(tuples)
