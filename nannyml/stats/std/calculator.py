@@ -26,8 +26,8 @@ from nannyml.thresholds import (
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class SimpleStatsStdCalculator(AbstractCalculator):
-    """SimpleStatsStdCalculator implementation"""
+class SummaryStatsStdCalculator(AbstractCalculator):
+    """SummaryStatsStdCalculator implementation"""
 
     def __init__(
         self,
@@ -39,7 +39,7 @@ class SimpleStatsStdCalculator(AbstractCalculator):
         chunker: Optional[Chunker] = None,
         thresholds: Optional[Threshold] = StandardDeviationThreshold(),
     ):
-        """Creates a new SimpleStatsStdCalculator instance.
+        """Creates a new SummaryStatsStdCalculator instance.
 
         Parameters
         ----------
@@ -69,7 +69,7 @@ class SimpleStatsStdCalculator(AbstractCalculator):
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
         >>> column_names = ['car_value', 'debt_to_income_ratio', 'driver_tenure']
-        >>> calc = nml.SimpleStatsSumCalculator(
+        >>> calc = nml.SummaryStatsSumCalculator(
         ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
@@ -77,7 +77,7 @@ class SimpleStatsStdCalculator(AbstractCalculator):
         >>> for column_name in res.column_names:
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
         """
-        super(SimpleStatsStdCalculator, self).__init__(
+        super(SummaryStatsStdCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
         if isinstance(column_names, str):

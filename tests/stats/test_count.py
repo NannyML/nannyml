@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from nannyml._typing import Result
-from nannyml.stats import SimpleStatsCountCalculator
+from nannyml.stats import SummaryStatsCountCalculator
 
 from nannyml.datasets import load_synthetic_car_loan_dataset
 
@@ -21,7 +21,7 @@ from nannyml.exceptions import InvalidArgumentsException
 # def status_sum_result() -> Result:
 #     reference, analysis, _ = load_synthetic_car_loan_dataset()
 
-#     calc = SimpleStatsCountCalculator(
+#     calc = SummaryStatsCountCalculator(
 #         column_names=[
 #             'car_value',
 #             'debt_to_income_ratio',
@@ -34,7 +34,7 @@ from nannyml.exceptions import InvalidArgumentsException
 def test_stats_count_calculator_with_default_params_should_not_fail():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_dataset()
     try:
-        calc = SimpleStatsCountCalculator(
+        calc = SummaryStatsCountCalculator(
             column_names=[
                 'car_value',
             ],

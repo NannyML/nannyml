@@ -52,7 +52,7 @@ from .datasets import (
 )
 from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
 from .stats import (
-    SimpleStatsSumCalculator, SimpleStatsAvgCalculator, SimpleStatsStdCalculator, SimpleStatsCountCalculator
+    SummaryStatsSumCalculator, SummaryStatsAvgCalculator, SummaryStatsStdCalculator, SummaryStatsCountCalculator
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter

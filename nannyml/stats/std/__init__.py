@@ -5,5 +5,5 @@
 
 """Module containing the Simple Statistics Average Calculator."""
 
-from .calculator import SimpleStatsStdCalculator
+from .calculator import SummaryStatsStdCalculator
 from .result import Result
