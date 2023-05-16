@@ -60,9 +60,7 @@ _logger = logging.getLogger(__name__)
 
 
 class RunnerLogger:
-    def __init__(
-        self, logger: Optional[logging.Logger] = logging.getLogger(__name__), console: Optional[Console] = None
-    ):
+    def __init__(self, logger: logging.Logger, console: Optional[Console] = None):
         self.logger = logger
         self.console = console
 
@@ -76,6 +74,7 @@ class RunnerLogger:
 
 def run(  # noqa: C901
     config: Config,
+    logger: logging.Logger = logging.getLogger(__name__),
     console: Optional[Console] = None,
     on_fit: Optional[Callable[[RunContext], Any]] = None,
     on_calculate: Optional[Callable[[RunContext], Any]] = None,
@@ -84,19 +83,19 @@ def run(  # noqa: C901
     on_run_complete: Optional[Callable[[RunContext], Any]] = None,
     on_fail: Optional[Callable[[RunContext, Optional[Exception]], Any]] = None,
 ):
-    logger = RunnerLogger(logger=logging.getLogger(__name__), console=console)
+    run_logger = RunnerLogger(logger, console)
     try:
         with run_context(config) as context:
-            logger.log("reading reference data", log_level=logging.DEBUG)
-            reference_data = read_data(config.input.reference_data, logger)
+            run_logger.log("reading reference data", log_level=logging.DEBUG)
+            reference_data = read_data(config.input.reference_data, run_logger)
 
             # read analysis data
-            logger.log("reading analysis data", log_level=logging.DEBUG)
-            analysis_data = read_data(config.input.analysis_data, logger)
+            run_logger.log("reading analysis data", log_level=logging.DEBUG)
+            analysis_data = read_data(config.input.analysis_data, run_logger)
 
             if config.input.target_data:
-                logger.log("reading target data", log_level=logging.DEBUG)
-                target_data = read_data(config.input.target_data, logger)
+                run_logger.log("reading target data", log_level=logging.DEBUG)
+                target_data = read_data(config.input.target_data, run_logger)
 
                 if config.input.target_data.join_column:
                     analysis_data = analysis_data.merge(target_data, on=config.input.target_data.join_column)
@@ -111,9 +110,9 @@ def run(  # noqa: C901
                     if not calculator_config.enabled:
                         continue
 
-                    writers = get_output_writers(calculator_config.outputs, logger)
+                    writers = get_output_writers(calculator_config.outputs, run_logger)
 
-                    store = get_store(calculator_config.store, logger)
+                    store = get_store(calculator_config.store, run_logger)
 
                     if calculator_config.type not in _registry:
                         raise InvalidArgumentsException(f"unknown calculator type '{calculator_config.type}'")
@@ -122,13 +121,13 @@ def run(  # noqa: C901
                     context.increase_step()
                     calc_cls = _registry[calculator_config.type]
                     if store and calculator_config.store:
-                        logger.log(
+                        run_logger.log(
                             f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
                             f"loading calculator from store"
                         )
                         calc = store.load(filename=calculator_config.store.filename, as_type=calc_cls)
                         if calc is None:
-                            logger.log(
+                            run_logger.log(
                                 f"calculator '{context.current_calculator}' not found in store. "
                                 f"Creating, fitting and storing new instance",
                                 log_level=logging.DEBUG,
@@ -139,7 +138,7 @@ def run(  # noqa: C901
                             calc.fit(reference_data)
                             store.store(obj=calc, filename=calculator_config.store.filename)
                     else:
-                        logger.log(
+                        run_logger.log(
                             f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
                             f"creating and fitting calculator"
                         )
@@ -150,7 +149,7 @@ def run(  # noqa: C901
 
                     # second step: perform calculations
                     context.increase_step()
-                    logger.log(
+                    run_logger.log(
                         f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
                         f"running calculator"
                     )
@@ -163,7 +162,7 @@ def run(  # noqa: C901
 
                     # third step: write results
                     context.increase_step()
-                    logger.log(
+                    run_logger.log(
                         f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
                         f"writing out results"
                     )
@@ -171,7 +170,7 @@ def run(  # noqa: C901
                         on_write(context)
 
                     for writer, write_args in writers:
-                        logger.log(f"writing results with {writer} and args {write_args}", log_level=logging.DEBUG)
+                        run_logger.log(f"writing results with {writer} and args {write_args}", log_level=logging.DEBUG)
                         writer.write(result, **write_args)
 
                     if on_calculator_complete:
@@ -181,7 +180,7 @@ def run(  # noqa: C901
                     context.run_success = False
                     if on_fail:
                         on_fail(context, exc)
-                    logger.log(f"an unexpected exception occurred running '{calculator_config.type}': {exc}")
+                    run_logger.log(f"an unexpected exception occurred running '{calculator_config.type}': {exc}")
 
             if on_run_complete:
                 on_run_complete(context)
