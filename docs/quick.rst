@@ -25,8 +25,6 @@ Exemplary Workflow with NannyML
 Loading data
 ------------
 
-We will use a real-world dataset that contains inputs and predictions of a binary classification model that
-predicts whether an individual is based employed on survey data. Details about the dataset can be found
 We will use a real-world dataset containing inputs and predictions of a binary classification model that
 predicts whether an individual is employed based on survey data. To learn more about this dataset
 check out :ref:`US Census Employment dataset <dataset-real-world-ma-employment>`.
