@@ -279,4 +279,4 @@ To cite NannyML in academic papers, please use the following BibTeX entry.
 
 # 📄 License
 
-NannyML is distributed under an Apache License Version 2.0. A complete version can be found [here](LICENSE.MD). All contributions will be distributed under this license.
+NannyML is distributed under an Apache License Version 2.0. A complete version can be found [here](LICENSE). All contributions will be distributed under this license.
