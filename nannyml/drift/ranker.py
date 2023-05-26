@@ -25,6 +25,8 @@ from scipy.stats import pearsonr
 
 from nannyml._typing import Metric
 from nannyml.drift.univariate.result import Result as UnivariateResults
+from nannyml.data_quality.missing.result import Result as MissingValueResults
+from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.performance_estimation.confidence_based.metrics import Metric as CBPEMetric
@@ -33,24 +35,33 @@ from nannyml.performance_estimation.direct_loss_estimation.result import Result 
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-def _validate_drift_result(drift_calculation_result: UnivariateResults):
-    if not isinstance(drift_calculation_result, UnivariateResults):
-        raise InvalidArgumentsException("Univariate Results object required for drift_calculation_result argument.")
+def _validate_drift_result(drift_calculation_result: Union[
+    UnivariateResults, MissingValueResults, UnseenValuesResult,
+]):
+    if not isinstance(drift_calculation_result, (
+        UnivariateResults, MissingValueResults, UnseenValuesResult
+    )):
+        raise InvalidArgumentsException(
+            f"Univariate, Data Quality or Simple Statistics Result class required for drift_calculation_result argument."
+            f"\ngot {type(drift_calculation_result)}"
+        )
 
     if drift_calculation_result.data.empty:
         raise InvalidArgumentsException('drift results contain no data to use for ranking')
 
-    if len(drift_calculation_result.categorical_method_names) > 1:
-        raise InvalidArgumentsException(
-            f"Only one categorical drift method should be present in the univariate results."
-            f"\nFound: {drift_calculation_result.categorical_method_names}"
-        )
+    if isinstance(drift_calculation_result, UnivariateResults):
 
-    if len(drift_calculation_result.continuous_method_names) > 1:
-        raise InvalidArgumentsException(
-            f"Only one continuous drift method should be present in the univariate results."
-            f"\nFound: {drift_calculation_result.continuous_method_names}"
-        )
+        if len(drift_calculation_result.categorical_method_names) > 1:
+            raise InvalidArgumentsException(
+                f"Only one categorical drift method should be present in the univariate results."
+                f"\nFound: {drift_calculation_result.categorical_method_names}"
+            )
+
+        if len(drift_calculation_result.continuous_method_names) > 1:
+            raise InvalidArgumentsException(
+                f"Only one continuous drift method should be present in the univariate results."
+                f"\nFound: {drift_calculation_result.continuous_method_names}"
+            )
 
 
 def _validate_performance_result(performance_results: Union[CBPEResults, DLEResults, PerformanceCalculationResults]):
@@ -81,7 +92,9 @@ class AlertCountRanker:
     @log_usage(UsageEvent.RANKER_ALERT_COUNT_RUN)
     def rank(
         self,
-        drift_calculation_result: UnivariateResults,
+        drift_calculation_result: Union[
+            UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult
+        ],
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Ranks the features according to the number of drift detection alerts they cause.
@@ -135,11 +148,9 @@ class AlertCountRanker:
         """
         _validate_drift_result(drift_calculation_result)
 
-        non_chunk = list(set(drift_calculation_result.data.columns.get_level_values(0)) - {'chunk'})
+        key_list = drift_calculation_result.keys()
         ranking = (
-            drift_calculation_result.filter(period='analysis')
-            .to_df()
-            .loc[:, (non_chunk, slice(None), 'alert')]
+            pd.concat([drift_calculation_result.alerts(_key) for _key in key_list], axis=1)
             .sum()
             .reset_index()[['level_0', 0]]
         )
@@ -259,7 +270,9 @@ class CorrelationRanker:
     @log_usage(UsageEvent.RANKER_CORRELATION_RUN)
     def rank(
         self,
-        drift_calculation_result: UnivariateResults,
+        drift_calculation_result: Union[
+            UnivariateResults, MissingValueResults, UnseenValuesResult
+        ],
         performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
         only_drifting: bool = False,
     ):
@@ -267,8 +280,10 @@ class CorrelationRanker:
 
         Parameters
         ----------
-        drift_calculation_result: UnivariateResults
-            The univariate drift results containing the features we want to rank.
+        drift_calculation_result: Union[
+            UnivariateResults, MissingValueResults, UnseenValuesResult,
+        ]
+            The univariate, data quality or simple statistic drift results containing the features we want to rank.
         performance_calculation_result: Union[CBPEResults, DLEResults, PerformanceCalculationResults]
             Results from any performance calculator or estimator, e.g.
             :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
@@ -294,8 +309,8 @@ class CorrelationRanker:
         _validate_drift_result(drift_calculation_result)
         _validate_performance_result(performance_calculation_result)
 
-        _drift_index = drift_calculation_result.to_df().loc[:, ('chunk', 'chunk', 'start_index')]
-        _perf_index = performance_calculation_result.to_df().loc[:, ('chunk', 'start_index')]
+        _drift_index = drift_calculation_result.chunk_start_index
+        _perf_index = performance_calculation_result.chunk_start_index
 
         if not _drift_index.equals(_perf_index):
             raise InvalidArgumentsException(
@@ -318,15 +333,15 @@ class CorrelationRanker:
         spearmanr2 = []
         has_drifted = []
 
-        for ftr in drift_calculation_result.column_names:
-            features1.append(ftr)
+        for _key in drift_calculation_result.keys():
+            features1.append(_key.display_names[0])
             tmp1 = pearsonr(
-                drift_calculation_result.to_df().loc[:, (ftr, slice(None), 'value')].to_numpy().ravel(), abs_perf_change
+                drift_calculation_result.values(_key).to_numpy().ravel(), abs_perf_change
             )
             spearmanr1.append(tmp1[0])
             spearmanr2.append(tmp1[1])
             has_drifted.append(
-                (drift_calculation_result.to_df().loc[:, (ftr, slice(None), 'alert')] == True).any()[0]  # noqa: E712
+                (drift_calculation_result.alerts(_key) == True).any()
             )
 
         ranked = pd.DataFrame(
