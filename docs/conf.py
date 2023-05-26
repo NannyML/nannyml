@@ -137,6 +137,11 @@ latex_documents = [
     (master_doc, 'nannyml.tex', 'nannyml Documentation', 'nannyml', 'manual'),
 ]
 
+# javascript files
+html_js_files = [
+    "js/mendablesearch.js",
+]
+
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
