@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.6] - 2023-05-24
+
+### Changed
+
+- Significant QA work on all the documentation, thanks [@santiviquez](https://github.com/santiviquez) and
+  [@maciejbalawejder](https://github.com/maciejbalawejder)
+- Reworked the [`nannyml.runner`](nannyml/runner.py) and the accompanying configuration format to improve flexibility (e.g. setting
+  custom initialization parameters, running a calculator multiple times, excluding a calculator, ...).
+- Added support for custom thresholds to the [`nannyml.runner`](nannyml/runner.py)
+- Simplified some of the `nannyml.io` interfaces, especially the [`nannyml.io.RawFilesWriter`](nannyml/io/raw_files_writer.py)
+- Reworked the [`nannyml.base.Result`](nannyml/base.py)
+- Totally revamped [quickstart documentation](docs/quick.rst) based on a real life dataset, thanks [@jakubnml](https://github.com/jakubnml)
+
+### Added
+
+- Added new calculators to support simple data quality metrics such as counting missing or unseen values.
+  For more information, check out the [data quality tutorials](https://nannyml.readthedocs.io/en/main/tutorials/data_quality.html).
+
+### Fixed
+
+- Fixed an issue where x-axis titles would appear on top of plots
+- Removed erroneous checks during calculation of realized regression performance metrics. [(#279)](https://github.com/NannyML/nannyml/issues/279)
+- Fixed an issue dealing with `az://` URLs in the CLI, thanks [@michael-nml](https://github.com/michael-nml) [(#283)](https://github.com/NannyML/nannyml/issues/283)
 
 ## [0.8.5] - 2023-03-29
 

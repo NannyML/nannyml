@@ -133,6 +133,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
                 display_names=(
                     f'estimated {component[0]}',
                     component[0],
+                    metric.name,
                 ),
             )
             for metric in self.metrics
