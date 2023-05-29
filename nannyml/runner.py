@@ -42,6 +42,14 @@ class RunContext:
         self.current_step += 1
 
 
+@dataclass
+class RunInput:
+    reference_data: pd.DataFrame
+    analysis_data: pd.DataFrame
+    target_data: Optional[pd.DataFrame] = None
+    target_join_column: Optional[str] = None
+
+
 @contextmanager
 def run_context(config: Config):
     yield RunContext(
@@ -78,6 +86,7 @@ class RunnerLogger:
 
 def run(  # noqa: C901
     config: Config,
+    input: Optional[RunInput] = None,
     logger: logging.Logger = logging.getLogger(__name__),
     console: Optional[Console] = None,
     on_fit: Optional[Callable[[RunContext], Any]] = None,
@@ -90,21 +99,29 @@ def run(  # noqa: C901
     run_logger = RunnerLogger(logger, console)
     try:
         with run_context(config) as context:
-            run_logger.log("reading reference data", log_level=logging.DEBUG)
-            reference_data = read_data(config.input.reference_data, run_logger)
+            if input is not None:
+                reference_data = input.reference_data
+                analysis_data = input.analysis_data
+                if input.target_data is not None:
+                    analysis_data = _add_targets_to_analysis_data(
+                        analysis_data, input.target_data, input.target_join_column
+                    )
+            elif config.input is not None:
+                run_logger.log("reading reference data", log_level=logging.DEBUG)
+                reference_data = read_data(config.input.reference_data, run_logger)
 
-            # read analysis data
-            run_logger.log("reading analysis data", log_level=logging.DEBUG)
-            analysis_data = read_data(config.input.analysis_data, run_logger)
+                # read analysis data
+                run_logger.log("reading analysis data", log_level=logging.DEBUG)
+                analysis_data = read_data(config.input.analysis_data, run_logger)
 
-            if config.input.target_data:
-                run_logger.log("reading target data", log_level=logging.DEBUG)
-                target_data = read_data(config.input.target_data, run_logger)
-
-                if config.input.target_data.join_column:
-                    analysis_data = analysis_data.merge(target_data, on=config.input.target_data.join_column)
-                else:
-                    analysis_data = analysis_data.join(target_data)
+                if config.input.target_data:
+                    run_logger.log("reading target data", log_level=logging.DEBUG)
+                    target_data = read_data(config.input.target_data, run_logger)
+                    analysis_data = _add_targets_to_analysis_data(
+                        analysis_data, target_data, config.input.target_data.join_column
+                    )
+            else:
+                raise InvalidArgumentsException("no input data provided")
 
             for calculator_config in config.calculators:
                 try:
@@ -244,3 +261,12 @@ def _get_ignore_errors(ignore_errors: bool, config: Config) -> bool:
             return config.ignore_errors
     else:
         return ignore_errors
+
+
+def _add_targets_to_analysis_data(
+    analysis_data: pd.DataFrame, target_data: pd.DataFrame, join_column: Optional[str]
+) -> pd.DataFrame:
+    if join_column is not None:
+        return analysis_data.merge(target_data, on=target_data.join_column)
+    else:
+        return analysis_data.join(target_data)

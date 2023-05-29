@@ -93,7 +93,7 @@ class CalculatorConfig(BaseModel):
 
 
 class Config(BaseModel):
-    input: InputConfig
+    input: Optional[InputConfig]
     calculators: List[CalculatorConfig]
     scheduling: Optional[SchedulingConfig]
 
