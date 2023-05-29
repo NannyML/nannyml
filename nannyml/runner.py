@@ -100,6 +100,9 @@ def run(  # noqa: C901
     try:
         with run_context(config) as context:
             if input is not None:
+                if config.input is not None:
+                    raise InvalidArgumentsException("Both config.input and input provided. Please provide only one")
+
                 reference_data = input.reference_data
                 analysis_data = input.analysis_data
                 if input.target_data is not None:
