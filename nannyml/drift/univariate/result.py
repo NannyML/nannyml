@@ -124,7 +124,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
         **kwargs,
     ) -> Result:
         # TODO: Use TypeVar with generic self instead of cast
-        result = cast(Result, super()._filter(period, methods, column_names))
+        result = cast(Result, super()._filter(period, methods, column_names, *args, **kwargs))
         method_names = [m.column_name for m in result.methods]
 
         # The `column_names` and `methods` filters can impact each other. Handled conditionally here
