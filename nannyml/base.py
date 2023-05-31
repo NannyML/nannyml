@@ -176,7 +176,7 @@ class PerMetricResult(Abstract1DResult, ABC, Generic[MetricLike]):
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
-        res = super()._filter(period, args, kwargs)
+        res = super()._filter(period, *args, **kwargs)
 
         data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (metrics,)]], axis=1)
         data = data.reset_index(drop=True)
@@ -214,7 +214,7 @@ class PerColumnResult(Abstract1DResult, ABC):
         else:
             raise TypeError("column_names should be either a column name string or a list of strings.")
 
-        res = super()._filter(period, args, kwargs)
+        res = super()._filter(period, *args, **kwargs)
 
         data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (column_names,)]], axis=1)
         data = data.reset_index(drop=True)
@@ -294,7 +294,7 @@ class PerMetricPerColumnResult(Abstract2DResult, ABC, Generic[MetricLike]):
         if column_names is None:
             column_names = self.column_names
 
-        res = super()._filter(period, args, kwargs)
+        res = super()._filter(period, *args, **kwargs)
 
         data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (column_names, metrics)]], axis=1)
         data = data.reset_index(drop=True)
