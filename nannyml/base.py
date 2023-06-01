@@ -8,7 +8,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Generic, List, Optional, Tuple, TypeVar, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -160,10 +160,21 @@ class Abstract1DResult(AbstractResult, ABC):
     def chunk_start_index(self) -> pd.Series:
         return self.data[('chunk', 'start_index')]
 
-    def _filter(self, period: str, *args, **kwargs) -> Self:
+    def _filter(
+        self,
+        period: str,
+        select_chunk_start_dates: Optional[List[Any]] = None,
+        *args,
+        **kwargs
+    ) -> Self:
+
         data = self.data
         if period != 'all':
             data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+            data = data.reset_index(drop=True)
+
+        if select_chunk_start_dates:
+            data = data.loc[data.loc[:, ('chunk', 'start_date')].isin(select_chunk_start_dates), :]
             data = data.reset_index(drop=True)
 
         res = copy.deepcopy(self)
@@ -267,12 +278,17 @@ class Abstract2DResult(AbstractResult, ABC):
     def _filter(
         self,
         period: str,
+        select_chunk_start_dates: Optional[List[Any]] = None,
         *args,
         **kwargs,
     ) -> Self:
         data = self.data
         if period != 'all':
             data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+            data = data.reset_index(drop=True)
+
+        if select_chunk_start_dates:
+            data = data.loc[data.loc[:, ('chunk', 'chunk', 'start_date')].isin(select_chunk_start_dates), :]
             data = data.reset_index(drop=True)
 
         res = copy.deepcopy(self)
