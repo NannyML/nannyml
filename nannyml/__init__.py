@@ -50,7 +50,9 @@ from .datasets import (
     load_titanic_dataset,
     load_us_census_ma_employment_data,
 )
-from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
+from .drift import (
+    AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator, PredictiveScoreRanker
+)
 from .stats import (
     SummaryStatsSumCalculator, SummaryStatsAvgCalculator, SummaryStatsStdCalculator, SummaryStatsRowCountCalculator
 )

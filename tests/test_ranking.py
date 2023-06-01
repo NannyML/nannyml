@@ -14,7 +14,7 @@ from nannyml.datasets import (
     load_synthetic_multiclass_classification_dataset,
     load_synthetic_car_loan_data_quality_dataset
 )
-from nannyml.drift.ranker import AlertCountRanker, CorrelationRanker
+from nannyml.drift.ranker import AlertCountRanker, CorrelationRanker, PredictiveScoreRanker
 from nannyml.drift.univariate import Result as UnivariateResults
 from nannyml.data_quality.missing.result import Result as MissingValueResults
 from nannyml.data_quality.missing.calculator import MissingValuesCalculator
@@ -562,5 +562,14 @@ def test_correlation_ranking_contains_rank_column_regression_estimated(  # noqa:
     sut = ranking.rank(
         sample_regression_drift_result.filter(period='all', methods=['jensen_shannon']),
         sample_regression_estimated_perf_result.filter(period='all', metrics=['rmse']),
+    )
+    assert 'rank' in sut.columns
+
+
+def test_pps_ranking_contains_rank_column(sample_regression_drift_result, sample_regression_realized_perf_result):  # noqa: D103
+    ranking = PredictiveScoreRanker()
+    sut = ranking.rank(
+        sample_regression_drift_result.filter(period='all', methods=['jensen_shannon']),
+        sample_regression_realized_perf_result.filter(period='all', metrics=['rmse']),
     )
     assert 'rank' in sut.columns
