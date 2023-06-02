@@ -24,5 +24,11 @@ The multivariate drift detection methods include:
 
 """
 from .multivariate.data_reconstruction import DataReconstructionDriftCalculator
-from .ranker import AlertCountRanker, CorrelationRanker, PredictiveScoreRanker
+from .ranker import (
+    AlertCountRanker,
+    CorrelationRanker,
+    PredictiveScoreRanker,
+    PredictiveScoreAdvancedRanker,
+    SpearmanCorrelationRanker
+)
 from .univariate import FeatureType, Method, MethodFactory, UnivariateDriftCalculator

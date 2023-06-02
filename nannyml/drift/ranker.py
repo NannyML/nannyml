@@ -21,7 +21,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
 from ppscore import score as pps_score
 
 from nannyml._typing import Metric
@@ -470,6 +470,248 @@ class PredictiveScoreRanker:
 
         # we want 1st row to be most impactful feature
         ranked.sort_values('predictive_power_score', ascending=False, inplace=True)
+        ranked.reset_index(drop=True, inplace=True)
+        ranked['rank'] = ranked.index + 1
+
+        if only_drifting:
+            ranked = ranked.loc[ranked.has_drifted == True].reset_index(drop=True)  # noqa: E712
+
+        return ranked
+
+
+class PredictiveScoreAdvancedRanker:
+    """Ranks the features according to their predictive score against performance values.
+
+    Examples
+
+    """
+    def __init__(self) -> None:
+        """Creates a new CorrelationRanker instance."""
+        super().__init__()
+
+        self.metric: Metric
+        self.mean_reference_performance: Optional[float] = None
+        self.absolute_performance_change: Optional[float] = None
+
+        self._is_fitted: bool = False
+
+    @log_usage(UsageEvent.RANKER_PREDSCORE2_FIT)
+    def fit(
+        self,
+        reference_performance_calculation_result: Optional[
+            Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+        ] = None,
+    ) -> CorrelationRanker:
+        """//
+        """
+
+        if reference_performance_calculation_result is None:
+            raise InvalidArgumentsException("reference performance calculation results can not be None.")
+        _validate_performance_result(reference_performance_calculation_result)
+
+        # we're expecting to have filtered inputs, so we should only have a single input.
+        self.metric = reference_performance_calculation_result.metrics[0]
+
+        # TODO: this will fail for estimated confusion matrix
+        metric_column_name = self.metric.name if isinstance(self.metric, CBPEMetric) else self.metric.column_name
+
+        self.mean_reference_performance = (
+            reference_performance_calculation_result.to_df().loc[:, (metric_column_name, 'value')].mean()
+        )
+        self._is_fitted = True
+        return self
+
+
+    @log_usage(UsageEvent.RANKER_PREDSCORE2_RUN)
+    def rank(
+        self,
+        drift_calculation_result: Union[
+            UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult
+        ],
+        performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
+        only_drifting: bool = False,
+    ) -> pd.DataFrame:
+        """Compares the number of alerts for each feature and ranks them accordingly.
+
+        Parameters
+        ----------
+        drift_calculation_result: Union[
+            UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult
+        ]
+            The univariate, data quality or simple statistic drift results containing the features we want to rank.
+        performance_calculation_result: Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+            Results from any performance calculator or estimator, e.g.
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
+            :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+            :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`
+        only_drifting: bool, default=False
+            Omits features without alerts from the ranking results.
+
+        Returns
+        -------
+        ranking: pd.DataFrame
+            A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
+            second-highest rank is 2, etc.). Features with the same number of alerts are ranked alphanumerically on
+            the feature name.
+        """
+        if not self._is_fitted or self.metric is None:
+            raise NotFittedException("trying to call 'rank()' on an unfitted Ranker. Please call 'fit()' first")
+
+        # Perform input validations
+        if performance_calculation_result is None:
+            raise InvalidArgumentsException("reference performance calculation results can not be None.")
+
+        _validate_drift_result(drift_calculation_result)
+        _validate_performance_result(performance_calculation_result)
+
+        _drift_index = drift_calculation_result.chunk_start_index
+        _perf_index = performance_calculation_result.chunk_start_index
+
+        if not _drift_index.equals(_perf_index):
+            raise InvalidArgumentsException(
+                "Drift and Performance results need to be filtered to the same data period."
+            )
+
+        # TODO: this will fail for estimated confusion matrix
+        metric_column_name = self.metric.name if isinstance(self.metric, CBPEMetric) else self.metric.column_name
+
+        # Start ranking calculations
+        abs_perf_change = np.abs(
+            performance_calculation_result.to_df().loc[:, (metric_column_name, 'value')].to_numpy()
+            - self.mean_reference_performance
+        )
+
+        self.absolute_performance_change = abs_perf_change
+
+        features1 = []
+        pscore1 = []
+        pscore2 = []
+        has_drifted = []
+
+        for _key in drift_calculation_result.keys():
+            features1.append(_key.display_names[0])
+            fvals = drift_calculation_result.values(_key)
+            _df = pd.DataFrame({'x': list(fvals), 'y': list(self.absolute_performance_change)})
+            tmp1 = pps_score(
+                _df, 'x', 'y'
+            )
+            pscore1.append(tmp1['ppscore'])
+            pscore2.append(tmp1['is_valid_score'])
+            has_drifted.append(
+                (drift_calculation_result.alerts(_key) == True).any()
+            )
+
+        ranked = pd.DataFrame(
+            {
+                'column_name': features1,
+                'predictive_power_score': pscore1,
+                'is_valid_score': pscore2,
+                'has_drifted': has_drifted,
+            }
+        )
+
+        # we want 1st row to be most impactful feature
+        ranked.sort_values('predictive_power_score', ascending=False, inplace=True)
+        ranked.reset_index(drop=True, inplace=True)
+        ranked['rank'] = ranked.index + 1
+
+        if only_drifting:
+            ranked = ranked.loc[ranked.has_drifted == True].reset_index(drop=True)  # noqa: E712
+
+        return ranked
+
+
+class SpearmanCorrelationRanker:
+    """Ranks the features according to their predictive score against performance values.
+
+    Examples
+
+    """
+
+
+    @log_usage(UsageEvent.RANKER_SPEARMAN_RUN)
+    def rank(
+        self,
+        drift_calculation_result: Union[
+            UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult
+        ],
+        performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
+        only_drifting: bool = False,
+    ) -> pd.DataFrame:
+        """Compares the number of alerts for each feature and ranks them accordingly.
+
+        Parameters
+        ----------
+        drift_calculation_result: Union[
+            UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult
+        ]
+            The univariate, data quality or simple statistic drift results containing the features we want to rank.
+        performance_calculation_result: Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+            Results from any performance calculator or estimator, e.g.
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
+            :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+            :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`
+        only_drifting: bool, default=False
+            Omits features without alerts from the ranking results.
+
+        Returns
+        -------
+        ranking: pd.DataFrame
+            A DataFrame containing the feature names and their ranks (the highest rank starts at 1,
+            second-highest rank is 2, etc.). Features with the same number of alerts are ranked alphanumerically on
+            the feature name.
+        """
+
+        # Perform input validations
+        if performance_calculation_result is None:
+            raise InvalidArgumentsException("reference performance calculation results can not be None.")
+
+        _validate_drift_result(drift_calculation_result)
+        _validate_performance_result(performance_calculation_result)
+
+        _drift_index = drift_calculation_result.chunk_start_index
+        _perf_index = performance_calculation_result.chunk_start_index
+
+        if not _drift_index.equals(_perf_index):
+            raise InvalidArgumentsException(
+                "Drift and Performance results need to be filtered to the same data period."
+            )
+
+        # we're expecting to have filtered inputs, so we should only have a single input.
+        _perf_metric = performance_calculation_result.metrics[0]
+        # TODO: this will fail for estimated confusion matrix
+        metric_column_name = _perf_metric.name if isinstance(_perf_metric, CBPEMetric) else _perf_metric.column_name
+
+        # perf results
+        perf_series = performance_calculation_result.to_df().loc[:, (metric_column_name, 'value')].to_numpy().ravel()
+
+        features1 = []
+        spearmanr1 = []
+        spearmanr2 = []
+        has_drifted = []
+
+        for _key in drift_calculation_result.keys():
+            features1.append(_key.display_names[0])
+            tmp1 = spearmanr(
+                drift_calculation_result.values(_key).to_numpy().ravel(), perf_series
+            )
+            spearmanr1.append(tmp1.correlation)
+            spearmanr2.append(tmp1.pvalue)
+            has_drifted.append(
+                (drift_calculation_result.alerts(_key) == True).any()
+            )
+
+        ranked = pd.DataFrame(
+            {
+                'column_name': features1,
+                'spearmanr_correlation': spearmanr1,
+                'spearmanr_pvalue': spearmanr2,
+                'has_drifted': has_drifted,
+            }
+        )
+
+        # we want 1st row to be most impactful feature
+        ranked.sort_values('spearmanr_correlation', ascending=False, inplace=True)
         ranked.reset_index(drop=True, inplace=True)
         ranked['rank'] = ranked.index + 1
 

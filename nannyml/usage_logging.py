@@ -93,7 +93,10 @@ class UsageEvent(str, Enum):
     RANKER_ALERT_COUNT_RUN = "Run ranker using alert count"
     RANKER_CORRELATION_FIT = "Fit ranker using correlation with performance"
     RANKER_CORRELATION_RUN = "Run ranker using correlation with performance"
-    RANKER_PREDSCORE_RUN = "Run ranker using predictive score"
+    RANKER_PREDSCORE_RUN = "Run ranker using predictive power score"
+    RANKER_PREDSCORE2_FIT = "Fit ranker using predictive power score with abs performance change"
+    RANKER_PREDSCORE2_RUN = "Run ranker using predictive power score with abs performance change"
+    RANKER_SPEARMAN_RUN = "Run ranker using spearman correlation"
 
     CLI_RUN = "CLI run"
 

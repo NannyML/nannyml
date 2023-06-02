@@ -51,7 +51,13 @@ from .datasets import (
     load_us_census_ma_employment_data,
 )
 from .drift import (
-    AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator, PredictiveScoreRanker
+    AlertCountRanker,
+    CorrelationRanker,
+    DataReconstructionDriftCalculator,
+    UnivariateDriftCalculator,
+    PredictiveScoreRanker,
+    PredictiveScoreAdvancedRanker,
+    SpearmanCorrelationRanker
 )
 from .stats import (
     SummaryStatsSumCalculator, SummaryStatsAvgCalculator, SummaryStatsStdCalculator, SummaryStatsRowCountCalculator
