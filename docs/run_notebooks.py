@@ -18,7 +18,6 @@ import nbformat
 from nbclient.exceptions import CellExecutionError
 from nbformat import NotebookNode
 
-
 NOTEBOOKS_TO_SKIP = ["Datasets - Census Employment MA"]
 
 ep = nbconvert.preprocessors.ExecutePreprocessor(

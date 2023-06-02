@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 import fsspec
 
+from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io.base import _get_protocol_and_path, get_filepath_str
 from nannyml.io.store.base import Store
 from nannyml.io.store.serializers import JoblibPickleSerializer, Serializer
@@ -105,30 +106,34 @@ class FilesystemStore(Store):
             _fs_args.setdefault("auto_mkdir", True)
 
         self._protocol = protocol.lower()
-        self.root_path = path
+        self.path = path
         self._storage_options = {**_credentials, **_fs_args}
         self._fs = fsspec.filesystem(self._protocol, **self._storage_options)
 
         self._serializer = serializer
 
-    def _store(self, obj, path: Optional[str] = None, **store_args):
-        if not path:
-            path = f'{obj.__module__}.{obj.__class__.__name__}.pkl'
+    def _store(self, obj, **store_args):
+        if 'filename' not in store_args:
+            raise InvalidArgumentsException("missing required parameter 'filename'")
 
-        write_path = Path(get_filepath_str(self.root_path, self._protocol)) / path
+        write_path = Path(get_filepath_str(self.path, self._protocol)) / store_args['filename']
 
         with self._fs.open(str(write_path), mode="wb") as fs_file:
             bytez = self._serializer.serialize(obj)
             fs_file.write(bytez)
 
-    def _load(self, path: str, **load_args):
+    def _load(self, **load_args):
+        if 'filename' not in load_args:
+            raise InvalidArgumentsException("missing required parameter 'filename'")
+        filename = load_args['filename']
+
         try:
-            load_path = Path(get_filepath_str(self.root_path, self._protocol)) / path
+            load_path = Path(get_filepath_str(self.path, self._protocol)) / filename
             with self._fs.open(str(load_path), mode="rb") as fs_file:
                 bytez = fs_file.read()
                 calc = self._serializer.deserialize(bytez)
                 return calc
         except FileNotFoundError:
-            p = f'{self._protocol}://{self.root_path}/{path}'
+            p = f'{self._protocol}://{self.path}/{filename}'
             self._logger.info(f'could not find file in store location "{p}", returning "None"')
             return None

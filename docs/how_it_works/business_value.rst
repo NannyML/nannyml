@@ -1,10 +1,10 @@
 .. _business-value-deep-dive:
 
 =========================================
-Business Value Estimation and Calculation 
+Business Value Estimation and Calculation
 =========================================
 
-The **business_value** metric provides a way to tie the performance of a model to 
+The **business_value** metric provides a way to tie the performance of a model to
 monetary or business oriented outcomes.
 In this page, we will discuss how the **business_value** metric works under the hood.
 
@@ -16,8 +16,8 @@ the value of a model in terms of the
 business's own metrics. At the core, if the business value (or cost) of each
 outcome in the :term:`confusion matrix<Confusion Matrix>` is known, then the business value of a
 model can either be *calculated* using the realized :term:`confusion matrix<Confusion Matrix>` if
-the ground truth labels are available or *estimated* using the 
-estimated :term:`confusion matrix<Confusion Matrix>` if the ground truth labels are not available. 
+the ground truth labels are available or *estimated* using the
+estimated :term:`confusion matrix<Confusion Matrix>` if the ground truth labels are not available.
 
 More specifically, we know that each prediction made by a binary classification models
 can be one of four outcomes:

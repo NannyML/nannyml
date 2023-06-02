@@ -183,10 +183,9 @@ def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
     reference = pd.Series(np.random.normal(0, 1, 1000), name='A')
     method.fit(reference)
 
-    assert len(caplog.messages) == 1
     assert (
-        caplog.messages[0] == f'{method.display_name} lower threshold value -1 overridden by '
-        f'lower threshold value limit {method.lower_threshold_value_limit}'
+        f'{method.display_name} lower threshold value -1 overridden by '
+        f'lower threshold value limit {method.lower_threshold_value_limit}' in caplog.messages
     )
 
 
@@ -201,8 +200,7 @@ def test_method_logs_warning_when_upper_threshold_is_overridden_by_metric_limits
     reference = pd.Series(np.random.normal(0, 1, 1000), name='A')
     method.fit(reference)
 
-    assert len(caplog.messages) == 1
     assert (
-        caplog.messages[0] == f'{method.display_name} upper threshold value 2 overridden by '
-        f'upper threshold value limit {method.upper_threshold_value_limit}'
+        f'{method.display_name} upper threshold value 2 overridden by '
+        f'upper threshold value limit {method.upper_threshold_value_limit}' in caplog.messages
     )

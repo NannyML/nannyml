@@ -67,14 +67,14 @@ to learn more about the required access key id and secret access key credentials
     :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 7
 
-This is how to use Google Cloud Storage as a backing system. See `Google Cloud documentation <https://cloud.google.com/iam/docs/creating-managing-service-account-keys>`_ 
+This is how to use Google Cloud Storage as a backing system. See `Google Cloud documentation <https://cloud.google.com/iam/docs/creating-managing-service-account-keys>`_
 to learn more about the required service account key credentials.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb
     :cells: 8
 
-This snippet illustrates how to do this using Azure Blob Storage. See `Azure support documentation <https://github.com/fsspec/adlfs#setting-credentials>`_ 
+This snippet illustrates how to do this using Azure Blob Storage. See `Azure support documentation <https://github.com/fsspec/adlfs#setting-credentials>`_
 to learn more about the required credentials.
 
 .. nbimport::
@@ -91,7 +91,7 @@ If no `path` is provided, a file will be created using a standard name within th
 
 This concludes the first part: storing the fitted calculator.
 
-When running NannyML in a new session to perform calculations on analysis data (e.g., repeated on a daily basis), we can load the pre-fitted calculator from the store. 
+When running NannyML in a new session to perform calculations on analysis data (e.g., repeated on a daily basis), we can load the pre-fitted calculator from the store.
 But, first, we define the analysis data and declare the store:
 
 .. nbimport::

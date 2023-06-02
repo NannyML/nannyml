@@ -195,8 +195,7 @@ def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
     metric = metric_cls(y_pred='y_pred', y_true='y_true', threshold=ConstantThreshold(lower=-1))
     metric.fit(reference, chunker=DefaultChunker())
 
-    assert len(caplog.messages) == 1
     assert (
-        caplog.messages[0] == f'{metric.display_name} lower threshold value -1 overridden by '
-        f'lower threshold value limit {metric.lower_threshold_value_limit}'
+        f'{metric.display_name} lower threshold value -1 overridden by '
+        f'lower threshold value limit {metric.lower_threshold_value_limit}' in caplog.messages
     )

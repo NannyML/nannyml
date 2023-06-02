@@ -15,7 +15,7 @@ with warnings.catch_warnings():
 import plotly.graph_objects as go
 
 from nannyml._typing import Key
-from nannyml.base import Abstract2DResult
+from nannyml.base import PerMetricPerColumnResult
 from nannyml.chunk import Chunker, DefaultChunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.exceptions import InvalidArgumentsException
@@ -28,7 +28,7 @@ from nannyml.thresholds import StandardDeviationThreshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract2DResult[Method], ResultCompareMixin):
+class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
     """Class wrapping the results of the univariate drift calculator and providing plotting functionality."""
 
     def __init__(

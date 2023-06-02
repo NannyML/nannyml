@@ -7,9 +7,13 @@ Glossary
 .. glossary::
 
     Alert
-        An alert refers to a variable at a particular chunk that gets flagged for possible data
-        drift. The alert is raised after the drift functionality of NannyML finds the drift
-        characteristics for this variable and chunk to be suspect.
+        An alert is an indication of whether a particular statistic calculated by NannyML is
+        abnormal and possibly warrants further investigation. During data quality, drift or
+        performance calculations lower and upper :term:`thresholds<Threshold>` can be specified to restrain the
+        expected range of the metric being calculated or estimated.
+        An alert is raised after NannyML finds the calculated metric outside of the specified range.
+
+        Note that alerts are not raised during the reference :term:`Data Period`.
 
     Business Value Matrix
         A matrix that is used to calculate the business value of a model. For binary classification,
@@ -283,9 +287,22 @@ Glossary
                 - *ISO 8601*, e.g. ``2021-10-13T08:47:23Z``
                 - *Unix-epoch* in units of seconds, e.g. ``1513393355``
 
+    Threshold
+        A threshold is an upper or lower limit for the normally expected values of a drift method, data quality metric or performance metric.
+        Outside of the range defined by the threshold values we classify the calculated value of the method or metric as abnormal in which case
+        an :term:`Alert<alert>` is raised.
+
     Univariate Drift Detection
         Drift Detection methods that use each model feature individually
         in order to detect change.
+
+    Unseen Values
+        NannyML uses Unseen Values as a data quality check for categorical features. This is done in
+        two steps. By looking at the reference :term:`Data Period` a set of expected is created for
+        each categorical feature. The second step is looking at the values present in the analysis
+        :term:`Data Period` for each categorical feature, any value not previously seen on the
+        reference period is considered Unseen Value. You can find more information at the
+        :ref:`unseen_values` tutorial.
 
 
 .. _`wikipedia KS test page`: https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test

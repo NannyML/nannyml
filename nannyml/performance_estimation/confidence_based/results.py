@@ -11,8 +11,8 @@ from typing import List, Optional, cast
 import pandas as pd
 from plotly import graph_objects as go
 
-from nannyml._typing import Key, ModelOutputsType, ProblemType
-from nannyml.base import Abstract1DResult
+from nannyml._typing import Key, ModelOutputsType, ProblemType, Self
+from nannyml.base import PerMetricResult
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_FILTER_VALUES
@@ -23,7 +23,7 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult[Metric], ResultCompareMixin):
+class Result(PerMetricResult[Metric], ResultCompareMixin):
     """Contains results for CBPE estimation and adds filtering and plotting functionality."""
 
     def __init__(
@@ -72,7 +72,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         self.problem_type = problem_type
         self.chunker = chunker
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         """Filter the results based on the specified period and metrics.
 
         This function begins by expanding the metrics to all the metrics that were specified
@@ -102,14 +102,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
 
         metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
-        if period != 'all':
-            data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-        res = copy.deepcopy(self)
-        res.data = data
-        res.metrics = filtered_metrics
+        res = super()._filter(period, metric_column_names, args, kwargs)
 
         return res
 
@@ -140,6 +133,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
                 display_names=(
                     f'estimated {component[0]}',
                     component[0],
+                    metric.name,
                 ),
             )
             for metric in self.metrics

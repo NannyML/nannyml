@@ -11,8 +11,8 @@ from typing import Dict, List, Optional, Union, cast
 import pandas as pd
 import plotly.graph_objects as go
 
-from nannyml._typing import Key, ProblemType
-from nannyml.base import Abstract1DResult
+from nannyml._typing import Key, ProblemType, Self
+from nannyml.base import PerMetricResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation import SUPPORTED_METRIC_FILTER_VALUES
 from nannyml.performance_calculation.metrics.base import Metric
@@ -21,7 +21,7 @@ from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
-class Result(Abstract1DResult[Metric], ResultCompareMixin):
+class Result(PerMetricResult[Metric], ResultCompareMixin):
     """Wraps performance calculation results and provides filtering and plotting functionality."""
 
     metrics: List[Metric]
@@ -93,6 +93,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
                 display_names=(
                     f'realized {component[0]}',
                     component[0],
+                    metric.name,
                 ),
             )
             for metric in self.metrics
@@ -164,7 +165,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide on of: ['performance'].")
 
-    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Result:
+    def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         """Filter the results based on the specified period and metrics."""
         if metrics is None:
             filtered_metrics = self.metrics
@@ -183,13 +184,7 @@ class Result(Abstract1DResult[Metric], ResultCompareMixin):
 
         metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metric_column_names,)]], axis=1)
-        if period != 'all':
-            data = data.loc[data.loc[:, ('chunk', 'period')] == period, :]
-
-        data = data.reset_index(drop=True)
-        res = copy.deepcopy(self)
-        res.data = data
+        res = super()._filter(period, metric_column_names, args, kwargs)
         res.metrics = filtered_metrics
 
         return res

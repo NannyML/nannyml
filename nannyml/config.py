@@ -2,12 +2,18 @@
 #
 #  License: Apache Software License 2.0
 import os
+from datetime import date, datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
+import jinja2
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+
+from nannyml._typing import Self
+from nannyml.exceptions import IOException
+from nannyml.thresholds import Threshold
 
 CONFIG_PATH_ENV_VAR_KEY = 'NML_CONFIG_PATH'
 
@@ -28,36 +34,10 @@ class InputConfig(BaseModel):
     target_data: Optional[TargetDataConfig]
 
 
-class RawFileWriterConfig(BaseModel):
-    path: str
-    format: str = 'parquet'
-    credentials: Optional[Dict[str, Any]]
-    write_args: Optional[Dict[str, Any]]
-
-
-class DatabaseWriterConfig(BaseModel):
-    connection_string: str
-    model_name: Optional[str]
-
-
-class PickleWriterConfig(BaseModel):
-    path: str
-    credentials: Optional[Dict[str, Any]]
-    write_args: Optional[Dict[str, Any]]
-
-
 class WriterConfig(BaseModel):
-    database: Optional[DatabaseWriterConfig]
-    raw_files: Optional[RawFileWriterConfig]
-    pickle: Optional[PickleWriterConfig]
-
-
-class ColumnMapping(BaseModel):
-    features: List[str]
-    timestamp: str
-    y_pred: str
-    y_pred_proba: Union[str, Dict[str, str], None]
-    y_true: str
+    type: str
+    params: Optional[Dict[str, Any]]
+    write_args: Optional[Dict[str, Any]]
 
 
 class ChunkerConfig(BaseModel):
@@ -82,23 +62,41 @@ class SchedulingConfig(BaseModel):
     cron: Optional[CronSchedulingConfig]
 
 
-class FileStoreConfig(BaseModel):
-    path: str
-
-
 class StoreConfig(BaseModel):
-    file: Optional[FileStoreConfig]
+    path: str
+    credentials: Optional[Dict[str, Any]]
+    filename: Optional[str]
+
+
+class CalculatorConfig(BaseModel):
+    type: str
+    name: Optional[str] = None
+    enabled: Optional[bool] = True
+    outputs: Optional[List[WriterConfig]]
+    store: Optional[StoreConfig]
+    params: Dict[str, Any]
+
+    @validator('params')
+    def _parse_thresholds(cls, value: Dict[str, Any]):
+        """Parse thresholds in params and convert them to :class:`Threshold`'s"""
+        # Some calculators expect `thresholds` parameter as dict
+        thresholds = value.get('thresholds', {})
+        for key, threshold in thresholds.items():
+            thresholds[key] = Threshold.parse_object(threshold)
+
+        # Multivariate calculator expects a single `threshold`
+        threshold = value.get('threshold')
+        if threshold is not None:
+            value['threshold'] = Threshold.parse_object(threshold)
+
+        return value
 
 
 class Config(BaseModel):
     input: InputConfig
-    output: WriterConfig
-    column_mapping: ColumnMapping
-    chunker: Optional[ChunkerConfig]
+    calculators: List[CalculatorConfig]
     scheduling: Optional[SchedulingConfig]
-    store: Optional[StoreConfig]
 
-    problem_type: str
     ignore_errors: Optional[bool]
 
     @classmethod
@@ -106,7 +104,29 @@ class Config(BaseModel):
     def load(cls, config_path: Optional[str] = None):
         with open(get_config_path(config_path), "r") as config_file:
             config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
-            return Config.parse_obj(config_dict)
+            return Config.parse_obj(config_dict)._render()
+
+    @classmethod
+    def parse(cls, config: str):
+        config_dict = yaml.safe_load(config)
+        return Config.parse_obj(config_dict)._render()
+
+    def _render(self) -> Self:
+        self.input.reference_data.path = _render_path_template(self.input.reference_data.path)
+        self.input.analysis_data.path = _render_path_template(self.input.analysis_data.path)
+
+        if self.input.target_data:
+            self.input.target_data.path = _render_path_template(self.input.target_data.path)
+
+        for config in self.calculators:
+            for output in config.outputs or []:
+                if output.params and 'path' in output.params:
+                    output.params['path'] = _render_path_template(output.params['path'])
+
+            if config.store:
+                config.store.path = _render_path_template(config.store.path)
+
+        return self
 
 
 def get_config_path(custom_config_path: Optional[str] = None) -> Path:
@@ -133,3 +153,19 @@ def get_config_path(custom_config_path: Optional[str] = None) -> Path:
         return cool_path
 
     raise RuntimeError('could not determine config path')
+
+
+def _render_path_template(path_template: str) -> str:
+    try:
+        env = jinja2.Environment()
+        tpl = env.from_string(path_template)
+        return tpl.render(
+            minute=datetime.strftime(datetime.today(), "%M"),
+            hour=datetime.strftime(datetime.today(), "%H"),
+            day=datetime.strftime(datetime.today(), "%d"),
+            weeknumber=date.today().isocalendar()[1],
+            month=datetime.strftime(datetime.today(), "%m"),
+            year=datetime.strftime(datetime.today(), "%Y"),
+        )
+    except Exception as exc:
+        raise IOException(f"could not render file path template: '{path_template}': {exc}")

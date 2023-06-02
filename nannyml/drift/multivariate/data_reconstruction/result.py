@@ -12,7 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml._typing import Key
-from nannyml.base import Abstract1DResult
+from nannyml.base import PerMetricResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metric
@@ -21,7 +21,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 Metric = namedtuple("Metric", "display_name column_name")
 
 
-class Result(Abstract1DResult[Metric], ResultCompareMixin):
+class Result(PerMetricResult[Metric], ResultCompareMixin):
     """Class wrapping the results of the data reconstruction drift calculator and providing plotting functionality."""
 
     def __init__(
