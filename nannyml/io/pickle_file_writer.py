@@ -13,7 +13,11 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 @WriterFactory.register('pickle')
 class PickleFileWriter(FileWriter):
-    """A :class:`~nannyml.io.file_writer.FileWriter` implementation that writes ``Results`` to disk (local/remote/cloud) as a pickle file."""
+    """Writes ``Results`` to disk (local/remote/cloud) as a pickle file.
+
+    A :class:`~nannyml.io.file_writer.FileWriter` implementation that pickles a `Result` object and writes the
+    resulting bytestream to local or cloud storage.
+    """
 
     def __init__(
         self,

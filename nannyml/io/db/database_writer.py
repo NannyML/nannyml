@@ -12,14 +12,13 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 @WriterFactory.register('database')  # registration name matches property used in configuration file
 class DatabaseWriter(Writer):
-    """A :class:`~nannyml.io.base.Writer` implementation that writes a ``Result`` as a list of values into a database table.
+    """A :class:`~nannyml.io.base.Writer` implementation that writes a ``Result`` into a database table.
 
-    The ``Result`` class is transformed into a list of *DbMetric* objects by an appropriate :class:`~nannyml.io.db.mappers.Mapper` instance. 
+    The ``Result`` class is transformed into a list of *DbMetric* objects
+    by an appropriate :class:`~nannyml.io.db.mappers.Mapper` instance.
     These *DbMetrics* are written into a database table, specific to the ``Result`` class.
 
-
-
-    Any database that is supported by *SQLAlchemy* is compatible.
+    This supports any database that is compatible with *SQLAlchemy*.
     """
 
     def __init__(

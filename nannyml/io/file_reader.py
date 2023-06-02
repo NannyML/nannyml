@@ -14,7 +14,7 @@ from nannyml.io.base import Reader, _get_protocol_and_path, get_filepath_str
 
 
 class FileReader(Reader):
-    """A :class:`~nannyml.io.base.Reader` implementation that retrieves data from a file (either local or cloud based)."""
+    """A :class:`~nannyml.io.base.Reader` implementation that reads a local or cloud-based file."""
 
     def __init__(
         self,

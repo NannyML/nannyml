@@ -14,11 +14,7 @@ from nannyml.io.base import Writer, _get_protocol_and_path
 
 
 class FileWriter(Writer, abc.ABC):
-    """An abstract Writer implementation that writes results out to a filesystem (either local or remote / cloud).
-
-    This abstract base class provides a helper ``_write_bytes_to_filesystem`` function that helps to implement the
-    abstract ``_write`` function.
-    """
+    """An abstract Writer implementation that writes results out to a filesystem (either local or remote / cloud)."""
 
     _logger = logging.getLogger(__name__)
 

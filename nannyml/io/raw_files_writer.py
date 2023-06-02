@@ -14,7 +14,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 @WriterFactory.register('raw_files')
 class RawFilesWriter(FileWriter):
-    """A :class:`~nannyml.io.file_writer.FileWriter` implementation that dumps the ``Result`` contents (data and plots) on disk (local/remote/cloud)."""
+    """Writes `Result` data and plots to disk (local/remote/cloud)."""
 
     def __init__(
         self,
@@ -25,12 +25,13 @@ class RawFilesWriter(FileWriter):
         fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
-        Creates a new ``RawFilesWriter`` instance
+        Creates a new ``RawFilesWriter`` instance.
 
         Parameters
         ----------
         path : str
-            The directory to write the results in. Each ``Result`` being written there will end create its own subdirectory.
+            The directory to write the results in.
+            Each ``Result`` being written there will end create its own subdirectory.
             Each of those will contain `data` and `plots` subdirectories.
         format: str
             The file format for the data export. Should be one of ``parquet`` or ``csv``.
