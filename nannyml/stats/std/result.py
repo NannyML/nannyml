@@ -88,10 +88,4 @@ class Result(PerColumnResult, ResultCompareMixin):
             title='Values Standard Deviation',
             subplot_title_format='{display_names[1]} for <b>{display_names[0]}</b>',
             subplot_y_axis_title_format='{display_names[1]}',
-            hover=Hover(
-                template='%{period} &nbsp; &nbsp; %{alert} <br />'
-                'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
-                '%{metric_name}: <b>%{metric_value}</b><b r />',
-                show_extra=True,
-            ),
         )
