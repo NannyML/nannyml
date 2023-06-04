@@ -92,8 +92,7 @@ class SummaryStatsSumCalculator(AbstractCalculator):
         
 
         self.result: Optional[Result] = None
-        # No sampling error
-        # self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+        self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
         # threshold strategy is the same across all columns
         self.thresholds = thresholds
         self._upper_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
@@ -125,10 +124,8 @@ class SummaryStatsSumCalculator(AbstractCalculator):
             raise InvalidArgumentsException(f"Cannot calculate sum for categorical columns:\n {categorical_column_names}")
 
 
-        # no sampling error
-        # for col in self.column_names:
-        #     count_nan, count_tot = self._calculate_sum_value_stats(reference_data[col])
-        #     self._sampling_error_components[col] = count_nan if self.normalize else count_nan/count_tot
+        for col in self.column_names:
+            self._sampling_error_components[col] = reference_data[col].std()
 
         for column in self.column_names:
             reference_chunk_results = np.asarray([
@@ -206,18 +203,9 @@ class SummaryStatsSumCalculator(AbstractCalculator):
         result = {}
         value = self._calculate_sum_value_stats(data[column_name])
         result['value'] = value
-        # no sampling error
-        # serr = np.sqrt(
-        #     self._sampling_error_components[column_name] * (1 - self._sampling_error_components[column_name])
-        # )
-        # if self.normalize:
-        #     result['sampling_error'] = serr/np.sqrt(tot)
-        # else:
-        #     result['sampling_error'] = serr*np.sqrt(tot)
-
-        # result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
-        # result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
-
+        result['sampling_error'] = self._sampling_error_components[column_name]*np.sqrt(data.shape[0])
+        result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
+        result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
         result['upper_threshold'] = self._upper_alert_thresholds[column_name]
         result['lower_threshold'] = self._lower_alert_thresholds[column_name]
         result['alert'] = _add_alert_flag(result)
@@ -231,7 +219,13 @@ def _create_multilevel_index(
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
     column_tuples = [
         (column_name, el) for column_name in column_names for el in  [
-            'value', 'upper_threshold', 'lower_threshold', 'alert'
+            'value',
+            'sampling_error',
+            'upper_confidence_boundary',
+            'lower_confidence_boundary',
+            'upper_threshold',
+            'lower_threshold',
+            'alert',
         ]
     ]
     tuples = chunk_tuples + column_tuples
