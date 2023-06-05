@@ -17,6 +17,7 @@ The following rankers are currently available:
 """
 from __future__ import annotations
 
+import logging
 from typing import Optional, Union
 
 import numpy as np
@@ -24,9 +25,9 @@ import pandas as pd
 from scipy.stats import pearsonr
 
 from nannyml._typing import Metric
-from nannyml.drift.univariate.result import Result as UnivariateResults
 from nannyml.data_quality.missing.result import Result as MissingValueResults
 from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
+from nannyml.drift.univariate.result import Result as UnivariateResults
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.performance_estimation.confidence_based.metrics import Metric as CBPEMetric
@@ -34,53 +35,54 @@ from nannyml.performance_estimation.confidence_based.results import Result as CB
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
 from nannyml.usage_logging import UsageEvent, log_usage
 
+RankableResult = Union[UnivariateResults, MissingValueResults, UnseenValuesResult]
+PerformanceResult = Union[CBPEResults, DLEResults, PerformanceCalculationResults]
 
-def _validate_drift_result(drift_calculation_result: Union[
-    UnivariateResults, MissingValueResults, UnseenValuesResult,
-]):
-    if not isinstance(drift_calculation_result, (
-        UnivariateResults, MissingValueResults, UnseenValuesResult
-    )):
+_logger = logging.getLogger(__name__)
+
+
+def _validate_drift_result(rankable_result: RankableResult):
+    if not isinstance(rankable_result, (UnivariateResults, MissingValueResults, UnseenValuesResult)):
         raise InvalidArgumentsException(
-            f"Univariate, Data Quality or Simple Statistics Result class required for drift_calculation_result argument."
-            f"\ngot {type(drift_calculation_result)}"
+            f"`rankable_result` should be one of `[UnivariateResults, MissingValueResults, UnseenValuesResult]`."
+            f"\ngot {str(type(rankable_result))}"
         )
 
-    if drift_calculation_result.data.empty:
+    if rankable_result.empty:
         raise InvalidArgumentsException('drift results contain no data to use for ranking')
 
-    if isinstance(drift_calculation_result, UnivariateResults):
+    if isinstance(rankable_result, UnivariateResults):
 
-        if len(drift_calculation_result.categorical_method_names) > 1:
+        if len(rankable_result.categorical_method_names) > 1:
             raise InvalidArgumentsException(
                 f"Only one categorical drift method should be present in the univariate results."
-                f"\nFound: {drift_calculation_result.categorical_method_names}"
+                f"\nFound: {rankable_result.categorical_method_names}"
             )
 
-        if len(drift_calculation_result.continuous_method_names) > 1:
+        if len(rankable_result.continuous_method_names) > 1:
             raise InvalidArgumentsException(
                 f"Only one continuous drift method should be present in the univariate results."
-                f"\nFound: {drift_calculation_result.continuous_method_names}"
+                f"\nFound: {rankable_result.continuous_method_names}"
             )
 
 
-def _validate_performance_result(performance_results: Union[CBPEResults, DLEResults, PerformanceCalculationResults]):
+def _validate_performance_result(performance_result: PerformanceResult):
     """Validate Inputs before performing ranking.
 
     Parameters
     ----------
-    performance_results: Performance Estimation or Calculation results. Can be an instance of:
+    performance_result: Performance Estimation or Calculation results. Can be an instance of:
             nml.performance_estimation.confidence_based.results.Result,
             nml.performance_estimation.direct_loss_estimation.result.Result,
             nml.performance_calculation.result.Result
     """
 
-    if not isinstance(performance_results, (CBPEResults, DLEResults, PerformanceCalculationResults)):
+    if not isinstance(performance_result, (CBPEResults, DLEResults, PerformanceCalculationResults)):
         raise InvalidArgumentsException(
             "Estimated or Realized Performance results object required for performance_results argument."
         )
 
-    if len(performance_results.metrics) != 1:
+    if len(performance_result.metrics) != 1:
         raise InvalidArgumentsException(
             "Just one metric should be present in performance_results used to rank CorrelationRanker."
         )
@@ -92,16 +94,14 @@ class AlertCountRanker:
     @log_usage(UsageEvent.RANKER_ALERT_COUNT_RUN)
     def rank(
         self,
-        drift_calculation_result: Union[
-            UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult
-        ],
+        rankable_result: RankableResult,
         only_drifting: bool = False,
     ) -> pd.DataFrame:
         """Ranks the features according to the number of drift detection alerts they cause.
 
         Parameters
         ----------
-        drift_calculation_result : nannyml.driQft.univariate.Result
+        rankable_result : RankableResult
             The result of a univariate drift calculation.
         only_drifting : bool, default=False
             Omits features without alerts from the ranking results.
@@ -146,13 +146,11 @@ class AlertCountRanker:
         6                      0                      tenure     7
         7                      0         gas_price_per_litre     8
         """
-        _validate_drift_result(drift_calculation_result)
+        _validate_drift_result(rankable_result)
 
-        key_list = drift_calculation_result.keys()
+        key_list = rankable_result.keys()
         ranking = (
-            pd.concat([drift_calculation_result.alerts(_key) for _key in key_list], axis=1)
-            .sum()
-            .reset_index()[['level_0', 0]]
+            pd.concat([rankable_result.alerts(_key) for _key in key_list], axis=1).sum().reset_index()[['level_0', 0]]
         )
         ranking = ranking.groupby('level_0').sum()
         ranking.columns = ['number_of_alerts']
@@ -231,9 +229,7 @@ class CorrelationRanker:
     @log_usage(UsageEvent.RANKER_CORRELATION_FIT)
     def fit(
         self,
-        reference_performance_calculation_result: Optional[
-            Union[CBPEResults, DLEResults, PerformanceCalculationResults]
-        ] = None,
+        reference_performance_calculation_result: Optional[PerformanceResult] = None,
     ) -> CorrelationRanker:
         """Calculates the average performance during the reference period.
         This value is saved at the `mean_reference_performance` property of the ranker.
@@ -270,21 +266,17 @@ class CorrelationRanker:
     @log_usage(UsageEvent.RANKER_CORRELATION_RUN)
     def rank(
         self,
-        drift_calculation_result: Union[
-            UnivariateResults, MissingValueResults, UnseenValuesResult
-        ],
-        performance_calculation_result: Optional[Union[CBPEResults, DLEResults, PerformanceCalculationResults]] = None,
+        rankable_result: RankableResult,
+        performance_result: Optional[PerformanceResult] = None,
         only_drifting: bool = False,
     ):
         """Compares the number of alerts for each feature and ranks them accordingly.
 
         Parameters
         ----------
-        drift_calculation_result: Union[
-            UnivariateResults, MissingValueResults, UnseenValuesResult,
-        ]
+        rankable_result: RankableResult
             The univariate, data quality or simple statistic drift results containing the features we want to rank.
-        performance_calculation_result: Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+        performance_result: PerformanceResult
             Results from any performance calculator or estimator, e.g.
             :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
             :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
@@ -303,14 +295,14 @@ class CorrelationRanker:
             raise NotFittedException("trying to call 'rank()' on an unfitted Ranker. Please call 'fit()' first")
 
         # Perform input validations
-        if performance_calculation_result is None:
+        if performance_result is None:
             raise InvalidArgumentsException("reference performance calculation results can not be None.")
 
-        _validate_drift_result(drift_calculation_result)
-        _validate_performance_result(performance_calculation_result)
+        _validate_drift_result(rankable_result)
+        _validate_performance_result(performance_result)
 
-        _drift_index = drift_calculation_result.chunk_start_index
-        _perf_index = performance_calculation_result.chunk_start_index
+        _drift_index = rankable_result.chunk_start_indices
+        _perf_index = performance_result.chunk_start_indices
 
         if not _drift_index.equals(_perf_index):
             raise InvalidArgumentsException(
@@ -322,7 +314,7 @@ class CorrelationRanker:
 
         # Start ranking calculations
         abs_perf_change = np.abs(
-            performance_calculation_result.to_df().loc[:, (metric_column_name, 'value')].to_numpy()
+            performance_result.to_df().loc[:, (metric_column_name, 'value')].to_numpy()
             - self.mean_reference_performance
         )
 
@@ -333,16 +325,19 @@ class CorrelationRanker:
         spearmanr2 = []
         has_drifted = []
 
-        for _key in drift_calculation_result.keys():
+        for _key in rankable_result.keys():
             features1.append(_key.display_names[0])
-            tmp1 = pearsonr(
-                drift_calculation_result.values(_key).to_numpy().ravel(), abs_perf_change
-            )
+            values = rankable_result.values(_key)
+            if values is None or values.empty:
+                _logger.info(f"skipped ranking `None` rankable values for key '{_key}'")
+                break
+
+            tmp1 = pearsonr(values.to_numpy().ravel(), abs_perf_change)
             spearmanr1.append(tmp1[0])
             spearmanr2.append(tmp1[1])
-            has_drifted.append(
-                (drift_calculation_result.alerts(_key) == True).any()
-            )
+
+            alerts = rankable_result.alerts(_key)
+            has_drifted.append(alerts.any() if alerts is not None else False)
 
         ranked = pd.DataFrame(
             {
@@ -353,7 +348,7 @@ class CorrelationRanker:
             }
         )
 
-        # we want 1st row to be most impactful feature
+        # we want first row to be the most impactful feature
         ranked.sort_values('pearsonr_correlation', ascending=False, inplace=True)
         ranked.reset_index(drop=True, inplace=True)
         ranked['rank'] = ranked.index + 1
