@@ -14,4 +14,3 @@ Example Datasets
     datasets/regression.rst
     datasets/california.rst
     datasets/titanic.rst
-    datasets/binary.rst
