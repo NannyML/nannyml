@@ -16,18 +16,18 @@ from nannyml.io.store.serializers import JoblibPickleSerializer, Serializer
 class FilesystemStore(Store):
     """A Store implementation that uses a local or remote file system for persistence.
 
-    Any object is first serialized using an instance of the `Serializer` class. The resulting bytes are then written
-    onto a file system.
+    Any object is first serialized using an instance of the :class:`~nannyml.io.store.serializers.Serializer` class.
+    The resulting bytes are then written onto a file system.
 
-    The `FilesystemStore` uses `fsspec` under the covers, allowing it to support a wide range of local and remote
+    The ``FilesystemStore`` uses `fsspec` under the covers, allowing it to support a wide range of local and remote
     filesystems. These include (but are not limited to) S3, Google Cloud Storage and Azure Blob Storage.
     In order to these remote filesystems, additional credentials can be passed along.
 
     Examples
     ---------
     Using S3 as a backing filesystem.
-    See https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html to learn more about the
-    required access key id and secret access key credentials.
+    See `AWS documentation <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html>`_ to
+    learn more about the required access key id and secret access key credentials.
 
     >>> store = FilesystemStore(
     ...     root_path='s3://my-bucket-name/some/path',
@@ -40,8 +40,8 @@ class FilesystemStore(Store):
     ... )
 
     Using Google Cloud Storage (GCS) as a backing filesystem.
-    See https://cloud.google.com/iam/docs/creating-managing-service-account-keys to learn more about the required
-    service account key credentials.
+    See `Google Cloud documentation <https://cloud.google.com/iam/docs/creating-managing-service-account-keys>`_
+    to learn more about the required service account key credentials.
 
     >>> store = FilesystemStore(
     ...     root_path='gs://my-bucket-name/some/path',
@@ -49,7 +49,8 @@ class FilesystemStore(Store):
     ... )
 
     Using Azure Blob Storage as a backing filesystem.
-    See https://github.com/fsspec/adlfs#setting-credentials to learn more about the required credentials.
+    See `Azure support documentation <https://github.com/fsspec/adlfs#setting-credentials>`_ to learn more about
+    the required credentials.
 
     >>> store = FilesystemStore(
     ...     root_path='abfs://my-container-name/some/path',
@@ -90,9 +91,10 @@ class FilesystemStore(Store):
             Optional dictionary of initialization parameters passed along when creating an internal `fsspec.filesystem`
             instance.
         serializer : Serializer, default=JoblibPickleSerializer()
-            An optional `Serializer` instance that will be used to convert an object into a byte representation and
-            the other way around. The default uses the `JoblibPickleSerializer`, which internally relies on `joblib`
-            and it's pickling functionality.
+            An optional :class:`~nannyml.io.store.serializers.Serializer` instance that will be used to convert
+            an object into a byte representation and the other way around.
+            The default uses the :class:`~nannyml.io.store.serializers.JoblibPickleSerializer`,
+            which internally relies on *joblib* and it's pickling functionality.
         """
         super().__init__()
 

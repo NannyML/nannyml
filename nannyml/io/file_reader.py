@@ -14,7 +14,7 @@ from nannyml.io.base import Reader, _get_protocol_and_path, get_filepath_str
 
 
 class FileReader(Reader):
-    """A Reader implementation that retrieves data from a file (either local or cloud based)."""
+    """A :class:`~nannyml.io.base.Reader` implementation that reads a local or cloud-based file."""
 
     def __init__(
         self,
@@ -24,17 +24,17 @@ class FileReader(Reader):
         fs_args: Optional[Dict[str, Any]] = None,
     ):
         """
-        Creates a new FileReader instance.
+        Creates a new ``FileReader`` instance.
 
         Parameters
         ----------
         filepath : str
             The path to read data from. Can be a regular file path or contain a protocol.
-        read_args : Dict[str, Any]
+        read_args : Dict[str, Any], default=None
             Specific arguments passed along to the methods doing the actual reading (mostly Pandas-based).
-        credentials : Dict[str, Any]
+        credentials : Dict[str, Any], default=None
             Used to provide credential information following specific ``fsspec`` implementations.
-        fs_args :
+        fs_args : default=None
             Specific arguments passed along to the ``fsspec`` filesystem initializer.
 
         Examples
