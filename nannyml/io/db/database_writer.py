@@ -12,12 +12,13 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 @WriterFactory.register('database')  # registration name matches property used in configuration file
 class DatabaseWriter(Writer):
-    """A Writer implementation that writes a Result as a list of values into a database table.
+    """A :class:`~nannyml.io.base.Writer` implementation that writes a ``Result`` into a database table.
 
-    The Result class is transformed into a list of DbMetric objects by an appropriate Mapper instance.
-    These DbMetrics are written into a database table, specific to the Result class.
+    The ``Result`` class is transformed into a list of *DbMetric* objects
+    by an appropriate :class:`~nannyml.io.db.mappers.Mapper` instance.
+    These *DbMetrics* are written into a database table, specific to the ``Result`` class.
 
-    Any database that is supported by SQLAlchemy is currently supported.
+    This supports any database that is compatible with *SQLAlchemy*.
     """
 
     def __init__(
@@ -27,18 +28,18 @@ class DatabaseWriter(Writer):
         model_name: Optional[str] = None,
     ):
         """
-        Creates a new DatabaseWriter instance.
+        Creates a new ``DatabaseWriter`` instance.
 
         Parameters
         ----------
-        connection_string : str
+        connection_string: str
             The connection string that configures the connection to the database.
             Might contain user credentials as well.
-        connection_options : Dict[str, Any]
-            Additional options passed along to the underlying SQLAlchemy engine.
-        model_name : str
+        connection_options: Dict[str, Any], default=None
+            Additional options passed along to the underlying *SQLAlchemy* engine.
+        model_name: str, default=None
             An optional name for the model being monitored. When given this will cause a record to be created in the
-            ``models`` table and having each DbMetric link to that one. This allows easy filtering and dropdown
+            ``models`` table and having each *DbMetric* link to that one. This allows easy filtering and dropdown
             population in data visualization tools in case of multiple models exporting into the same database
             structure.
 

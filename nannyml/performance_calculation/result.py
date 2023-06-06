@@ -184,7 +184,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
 
         metric_column_names = [name for metric in filtered_metrics for name in metric.column_names]
 
-        res = super()._filter(period, metric_column_names, args, kwargs)
+        res = super()._filter(period, metric_column_names, *args, **kwargs)
         res.metrics = filtered_metrics
 
         return res

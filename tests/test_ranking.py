@@ -8,13 +8,18 @@ import copy
 import pandas as pd
 import pytest
 
+from nannyml.data_quality.missing.calculator import MissingValuesCalculator
+from nannyml.data_quality.missing.result import Result as MissingValueResults
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
+    load_synthetic_car_loan_data_quality_dataset,
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
     load_synthetic_car_loan_data_quality_dataset
 )
 from nannyml.drift.ranker import AlertCountRanker, CorrelationRanker
+
+# from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
 from nannyml.drift.univariate import Result as UnivariateResults
 from nannyml.data_quality.missing.result import Result as MissingValueResults
 from nannyml.data_quality.missing.calculator import MissingValuesCalculator
@@ -218,7 +223,9 @@ def sample_missing_value_result() -> MissingValueResults:
             'driver_tenure',
         ],
     ).fit(reference)
-    return calc.calculate(data=analysis)
+    missing_values = calc.calculate(data=analysis)
+    assert isinstance(missing_values, MissingValueResults)
+    return missing_values
 
 
 def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(  # noqa: D103
@@ -227,7 +234,7 @@ def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_resul
     ranking = AlertCountRanker()
     result = copy.deepcopy(sample_drift_result).filter(methods=['jensen_shannon'])
     result.data = pd.DataFrame(columns=['f1', 'f2', 'f3', 'f4'])
-    with pytest.raises(InvalidArgumentsException, match='drift results contain no data'):
+    with pytest.raises(InvalidArgumentsException, match='rankable_result contains no data to use for ranking'):
         ranking.rank(result)
 
 
@@ -235,7 +242,7 @@ def test_alert_count_ranking_raises_invalid_drift_object(sample_realized_perf_re
     ranking = AlertCountRanker()
     with pytest.raises(
         InvalidArgumentsException,
-        match='Univariate, Data Quality or Simple Statistics Result class required for drift_calculation_result argument.'
+        match=r"`rankable_result` should be one of `\[UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult\]`",
     ):
         ranking.rank(
             sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
@@ -303,6 +310,22 @@ def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_re
     assert 'rank' in sut.columns
 
 def test_correlation_ranking_contains_rank_column_on_dq_results(sample_missing_value_result, sample_realized_perf_result):  # noqa: D103
+    ranking = CorrelationRanker()
+    ranking.fit(
+        reference_performance_calculation_result=sample_realized_perf_result.filter(
+            period='reference', metrics=['roc_auc']
+        ),
+    )
+    sut = ranking.rank(
+        sample_missing_value_result,
+        sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
+    )
+    assert 'rank' in sut.columns
+
+
+def test_correlation_ranking_contains_rank_column_on_dq_results(
+    sample_missing_value_result, sample_realized_perf_result
+):  # noqa: D103
     ranking = CorrelationRanker()
     ranking.fit(
         reference_performance_calculation_result=sample_realized_perf_result.filter(

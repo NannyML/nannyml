@@ -14,6 +14,8 @@ from rich.console import Console
 
 from nannyml._typing import Result
 from nannyml.config import Config, InputDataConfig, StoreConfig, WriterConfig
+from nannyml.data_quality.missing import MissingValuesCalculator
+from nannyml.data_quality.unseen import UnseenValuesCalculator
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
@@ -55,6 +57,8 @@ _registry: Dict[str, Type] = {
     'performance': PerformanceCalculator,
     'cbpe': CBPE,
     'dle': DLE,
+    'missing_values': MissingValuesCalculator,
+    'unseen_values': UnseenValuesCalculator,
 }
 _logger = logging.getLogger(__name__)
 

@@ -45,7 +45,7 @@ class Serializer(ABC):
         """
         try:
             self._logger.debug(f'serializing object {obj}')
-            return self._serialize(obj, args, kwargs)
+            return self._serialize(obj, *args, **kwargs)
         except Exception as exc:
             raise SerializeException(f'an unexpected exception occurred when serializing "{obj}": {exc}')
 
@@ -73,7 +73,7 @@ class Serializer(ABC):
         """
         try:
             self._logger.debug('deserializing bytes')
-            return self._deserialize(bytez, args, kwargs)
+            return self._deserialize(bytez, *args, **kwargs)
         except Exception as exc:
             raise SerializeException(f'an unexpected exception occurred when deserializing: {exc}')
 

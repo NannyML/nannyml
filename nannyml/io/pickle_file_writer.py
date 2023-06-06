@@ -14,7 +14,11 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 @WriterFactory.register('pickle')
 class PickleFileWriter(FileWriter):
-    """A Writer implementation that writes Results to disk (local/remote/cloud) as a pickle file."""
+    """Writes ``Results`` to disk (local/remote/cloud) as a pickle file.
+
+    A :class:`~nannyml.io.file_writer.FileWriter` implementation that pickles a `Result` object and writes the
+    resulting bytestream to local or cloud storage.
+    """
 
     def __init__(
         self,
@@ -30,9 +34,9 @@ class PickleFileWriter(FileWriter):
         path : str
             The directory in which to output the generated pickle file. The name of the pickle file will equal
             the fully qualified result class name with a `pkl` extension, e.g. `nannyml.drift.univariate.result.pkl`
-        credentials : Dict[str, Any]
+        credentials : Dict[str, Any] default=None
             Used to provide credential information following specific ``fsspec`` implementations.
-        fs_args :
+        fs_args : default=None
             Specific arguments passed along to the ``fsspec`` filesystem initializer.
 
         Examples

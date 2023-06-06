@@ -24,7 +24,7 @@ class Mapper(abc.ABC):
 
     @abc.abstractmethod
     def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
-        """Maps a result to a list of Metric entities."""
+        """Maps a result to a list of :class:`~nannyml.io.db.entities.Metric` entities."""
 
 
 def _fully_qualified_class_name(result):
@@ -32,7 +32,7 @@ def _fully_qualified_class_name(result):
 
 
 class MapperFactory:
-    """A factory class that produces Mapper instances for a given Result subclass."""
+    """A factory class that produces :class:`~nannyml.io.db.mappers.Mapper` instances for a given Result subclass."""
 
     registry: Dict[str, Type[Mapper]] = {}
 
@@ -42,7 +42,7 @@ class MapperFactory:
 
     @classmethod
     def create(cls, result, kwargs: Optional[Dict[str, Any]] = None) -> Mapper:
-        """Returns a Mapper instance for a given result class."""
+        """Returns an instance for a given result class."""
 
         if kwargs is None:
             kwargs = {}
