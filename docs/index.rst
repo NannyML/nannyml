@@ -23,6 +23,7 @@ Welcome to NannyML's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   landing_page 
    installing_nannyml
    quick
    tutorials
