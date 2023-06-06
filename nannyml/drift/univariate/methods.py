@@ -137,7 +137,7 @@ class Method(abc.ABC):
         """
         return self._calculate(data)
 
-    def _calculate(self, data: pd.Series):
+    def _calculate(self, data: pd.Series) -> float:
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _calculate method"
         )
@@ -305,6 +305,9 @@ class JensenShannonDistance(Method):
 
     def _calculate(self, data: pd.Series):
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
+        data = _remove_missing_data(data)
+        if data.empty:
+            return float('nan')
         if self._treat_as_type == 'cont':
             len_data = len(data)
             data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
@@ -387,6 +390,8 @@ class KolmogorovSmirnovStatistic(Method):
 
     def _calculate(self, data: pd.Series):
         data = _remove_missing_data(data)
+        if data.empty:
+            return float('nan')
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
@@ -445,6 +450,8 @@ class Chi2Statistic(Method):
 
     def _calculate(self, data: pd.Series):
         data = _remove_missing_data(data)
+        if data.empty:
+            return float('nan')
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
@@ -510,6 +517,8 @@ class LInfinityDistance(Method):
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
         data = _remove_missing_data(data)
+        if data.empty:
+            return float('nan')
         data_labels = data.unique()
         data_ratios = {label: (data == label).sum() / len(data) for label in data_labels}
 
@@ -584,6 +593,8 @@ class WassersteinDistance(Method):
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
         data = _remove_missing_data(data)
+        if data.empty:
+            return float('nan')
         if (
             self.calculation_method == 'auto' and self._reference_size >= 10_000
         ) or self.calculation_method == 'estimated':
@@ -685,6 +696,8 @@ class HellingerDistance(Method):
 
     def _calculate(self, data: pd.Series):
         data = _remove_missing_data(data)
+        if data.empty:
+            return float('nan')
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
         if self._treat_as_type == 'cont':
             len_data = len(data)

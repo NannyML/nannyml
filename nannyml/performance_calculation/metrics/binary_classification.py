@@ -732,7 +732,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
-    def _calculate_true_positives(self, data: pd.DataFrame):
+    def _calculate_true_positives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
 
         y_true = data[self.y_true]
@@ -744,6 +744,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
 
         num_tp = np.sum(np.logical_and(y_pred, y_true))
         num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
@@ -758,7 +760,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         else:  # normalize_confusion_matrix == 'all'
             return num_tp / len(y_true)
 
-    def _calculate_true_negatives(self, data: pd.DataFrame) -> int:
+    def _calculate_true_negatives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
 
         y_true = data[self.y_true]
@@ -770,6 +772,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
 
         num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
         num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
@@ -784,7 +788,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         else:  # normalize_confusion_matrix == 'all'
             return num_tn / len(y_true)
 
-    def _calculate_false_positives(self, data: pd.DataFrame) -> int:
+    def _calculate_false_positives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
 
         y_true = data[self.y_true]
@@ -796,6 +800,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
 
         num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
         num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
@@ -810,7 +816,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         else:  # normalize_confusion_matrix == 'all'
             return num_fp / len(y_true)
 
-    def _calculate_false_negatives(self, data: pd.DataFrame) -> int:
+    def _calculate_false_negatives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
 
         y_true = data[self.y_true]
@@ -822,6 +828,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
 
         num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
         num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
@@ -893,7 +901,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_neg_info[f'{column_name}_upper_threshold'] = self.true_negative_upper_threshold
         true_neg_info[f'{column_name}_lower_threshold'] = self.true_negative_lower_threshold
         true_neg_info[f'{column_name}_alert'] = (
-            self.true_negative_lower_threshold is not None and self.true_negative_lower_threshold > realized_tn
+            (self.true_negative_lower_threshold is not None and self.true_negative_lower_threshold > realized_tn)
         ) or (self.true_negative_upper_threshold is not None and self.true_negative_upper_threshold < realized_tn)
 
         return true_neg_info
