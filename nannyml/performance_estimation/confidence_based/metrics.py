@@ -415,7 +415,7 @@ def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
     metric: float
         Estimated ROC AUC score.
     """
-    thresholds = np.sort(y_pred_proba)
+    thresholds = np.append(np.sort(y_pred_proba), 1)
     one_min_thresholds = 1 - thresholds
 
     TP = np.cumsum(thresholds[::-1])[::-1]
