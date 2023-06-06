@@ -42,19 +42,19 @@ A sample of the dataset can be seen below.
 
 The model uses 7 features:
 
-- `car_age`: A numerical feature. The age of the car in years.
-- `km_driven`: A numerical feature. The number of kilometers a car has drived.
-- `price_new`: A numerical feature. The price of the car in Euros when it was new.
-- `accident_count`: A numerical feature. The number of accidents the car has been involved in.
-- `door_count`: A numerical feature. The number of doors the car has. If it is a hatchback, the door count is increased by 1.
-- `fuel`: A categorical feature describing whether the car uses gas, diesel or electricity as fuel.
-- `transmission`: A categorical feature describing whether the car uses manual or automatic transmission.
+- **car_age** - a numerical feature. The age of the car in years.
+- **km_driven** - a numerical feature. The number of kilometers a car has drived.
+- **price_new** - a numerical feature. The price of the car in Euros when it was new.
+- **accident_count** - a numerical feature. The number of accidents the car has been involved in.
+- **door_count** - a numerical feature. The number of doors the car has. If it is a hatchback, the door count is increased by 1.
+- **fuel** - a categorical feature describing whether the car uses gas, diesel or electricity as fuel.
+- **transmission** - a categorical feature describing whether the car uses manual or automatic transmission.
 
 
-The model predicts the predicted price of the car at the `y_pred` column.
-The `y_true` is the :term:`Target` column describing the actual value of the car.
+The model predicts the predicted price of the car at the **y_pred** column.
+The **y_true** is the :term:`Target` column describing the actual value of the car.
 
 
 There is also an auxiliary column that is helpful but not used by the monitored model:
 
-- `timestamp`: A date column informing us of the date the prediction was made.
+- **timestamp** - a date column informing us of the date the prediction was made.

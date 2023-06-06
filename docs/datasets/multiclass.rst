@@ -42,27 +42,27 @@ A sample of the dataset can be seen below.
 
 The model uses 7 features:
 
-- `acq_channel`: A categorical feature with 5 categories describing the acquisition channel for the new customer.
+- **acq_channel** - a categorical feature with 5 categories describing the acquisition channel for the new customer.
   Organic refers to customers brought on by the company whereas Partner1-4 refers to customers brought on by
   outside partners.
-- `app_behavioral_score`:  A numerical feature. This score is determined by characteristics derived from how the
+- **app_behavioral_score** - a numerical feature. This score is determined by characteristics derived from how the
   new customer filled in and submitted their application.
-- `requested_credit_limit`: A numerical feature. The credit limit the customer selected as appropriate for their
+- **requested_credit_limit** - a numerical feature. The credit limit the customer selected as appropriate for their
   needs.
-- `app_channel`: A categorical feature with 3 categories describing how the application was submitted. It can
+- **app_channel** - a categorical feature with 3 categories describing how the application was submitted. It can
   be in-store, from the website or from a mobile device.
-- `credit_bureau_score`: A numerical feature. The credit score provided by the credit bureau that assesses the credit
+- **credit_bureau_score** - a numerical feature. The credit score provided by the credit bureau that assesses the credit
   worthiness of the new customer. The higher the score the more credit-worthy the customer.
-- `stated_income`: A numerical feature. The yearly income of the customer, as stated by them.
-- `is_customer`:  A categorical feature with 2 categories describing whether the new customer has an existing
+- **stated_income** - a numerical feature. The yearly income of the customer, as stated by them.
+- **is_customer** - a categorical feature with 2 categories describing whether the new customer has an existing
   relationship with the business.
 
-The model predicts a probability for all classes with the `y_pred_proba_prepaid_card`,
-`y_pred_proba_highstreet_card`, `y_pred_proba_upmarket_card` columns.
-A class prediction is also available from the `y_pred` column. The `y_true` is the :term:`Target` column
+The model predicts a probability for all classes with the **y_pred_proba_prepaid_card**,
+**y_pred_proba_highstreet_card**, **y_pred_proba_upmarket_card** columns.
+A class prediction is also available from the **y_pred** column. The **y_true** is the :term:`Target` column
 with the most appropriate product choice for a given customer.
 
 
 There is also an auxiliary column that is helpful but not used by the monitored model:
 
-- `timestamp`: A date column informing us of the date the prediction was made.
+- **timestamp** - a date column informing us of the date the prediction was made.

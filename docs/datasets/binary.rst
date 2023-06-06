@@ -39,24 +39,24 @@ A sample of the dataset can be seen below.
 
 The model uses 7 features:
 
-- `distance_from_office`: A numerical feature. The distance in kilometers from the employee's house to the workplace.
-- `salary_range`: A categorical feature with 4 categories that identify the range the employee's yearly income falls within.
-- `gas_price_per_litre`: A numerical feature. The price of gas per litre close to the employee's residence.
-- `public_transportation_cost`: A numerical feature. The price, in euros, of public transportation from
+- **distance_from_office** - a numerical feature. The distance in kilometers from the employee's house to the workplace.
+- **salary_range** - a categorical feature with 4 categories that identify the range the employee's yearly income falls within.
+- **gas_price_per_litre** - a numerical feature. The price of gas per litre close to the employee's residence.
+- **public_transportation_cost** - a numerical feature. The price, in euros, of public transportation from
   the employee's residence to the workplace.
-- `wfh_prev_workday`: A categorical feature with 2 categories, stating whether the employee worked from home
+- **wfh_prev_workday** - a categorical feature with 2 categories, stating whether the employee worked from home
   the previous workday.
-- `workday`: A categorical feature with 5 categories. The day of the week where we want to predict whether the employee
+- **workday** - a categorical feature with 5 categories. The day of the week where we want to predict whether the employee
   will work from home.
-- `tenure`: A numerical feature describing how many years the employee has been at the company.
+- **tenure** - a numerical feature describing how many years the employee has been at the company.
 
-The model predicts the probability of the employee working from home, recorded in the `y_pred_proba` column.
-A binary prediction is also available from the `y_pred` column. The `work_home_actual` is the :term:`Target` column describing
+The model predicts the probability of the employee working from home, recorded in the **y_pred_proba** column.
+A binary prediction is also available from the **y_pred** column. The **work_home_actual** is the :term:`Target` column describing
 what actually happened.
 
 
 There are also two auxiliary columns that are helpful but not used by the monitored model:
 
-- `identifier`: A unique number referencing each employee. This is very useful for joining the target
+- **identifier** - a unique number referencing each employee. This is very useful for joining the target
   results on the analysis dataset, when we want to :ref:`compare estimated with realized performace.<compare_estimated_and_realized_performance>`.
-- `timestamp`: A date column informing us of the date the prediction was made.
+- **timestamp** - a date column informing us of the date the prediction was made.

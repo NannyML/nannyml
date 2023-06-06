@@ -46,25 +46,25 @@ A sample of the dataset can be seen below.
 
 The dataset has 13 features:
 
-- `Pclass`: A proxy for socio-economic status, 1 is Upper, 2 is Middle and 3 is Lower class.
-- `Age`: Passenger's age. Fractional if less than one. If it is estimated it is in the form of xx.5.
-- `SibSp`: Number of Siblings (brother, sister, stepbrother or stepsister) or spouses (husband or wife - mistresses and fiances were ignored) aboard.
-- `Parch`: Number of parent (mother, father) or children (daughter, son, stepdaughter, stepson) aboard. Children who travelled only with a nanny have Parch=0.
+- **Pclass** - a proxy for socio-economic status, 1 is Upper, 2 is Middle and 3 is Lower class.
+- **Age** - passenger's age. Fractional if less than one. If it is estimated it is in the form of xx.5.
+- **SibSp** - number of Siblings (brother, sister, stepbrother or stepsister) or spouses (husband or wife - mistresses and fiances were ignored) aboard.
+- **Parch** - number of parent (mother, father) or children (daughter, son, stepdaughter, stepson) aboard. Children who travelled only with a nanny have Parch=0.
   the employee's residence to the workplace.
-- `Ticket`: Passenger's Ticket Number.
-- `Fare`: Passenger's Fare.
-- `Cabin`: Passenger's cabin  number.
-- `Embarked`: Passenger's port of embarkation (C = Cherbourg; Q = Queenstown; S = Southampton)
-- `boat`: Lifeboar information if the passenger survived.
-- `body`: Body number if the passenger did not survive and a body was recovered.
-- `home.dest`: Passenger's domicile and destination information, if available.
+- **Ticket** - passenger's Ticket Number.
+- **Fare** - passenger's Fare.
+- **Cabin** - passenger's cabin  number.
+- **Embarked** - passenger's port of embarkation (C = Cherbourg; Q = Queenstown; S = Southampton)
+- **boat** - lifeboar information if the passenger survived.
+- **body** - body number if the passenger did not survive and a body was recovered.
+- **home.dest** - passenger's domicile and destination information, if available.
 
-The `Survived` column tells us whether the passenger survived and is what we call the :term:`Target` column.
+The **Survived** column tells us whether the passenger survived and is what we call the :term:`Target` column.
 
 
 There is also an auxiliary column that kaggle_ uses and we have kept for compatibility:
 
-- `PassengerId`: A unique number referencing each passenger. This is very useful for joining the target
+- **PassengerId** - a unique number referencing each passenger. This is very useful for joining the target
   results on the analysis dataset.
 
 The titanic dataset is used by NannyML at the :ref:`Data Quality Tutorials<data-quality>` showcasing our Missing values

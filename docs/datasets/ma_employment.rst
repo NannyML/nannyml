@@ -112,11 +112,11 @@ This description comes from `PUMS documentation`_:
 - ``4`` - Grade 1
 - ``5`` - Grade 2
 - ``6`` - Grade 3
-- ``7`` .Grade 4
-- ``8`` -Grade 5
-- ``9`` -Grade 6
-- ``10`` -Grade 7
-- ``11`` -Grade 8
+- ``7`` - Grade 4
+- ``8`` - Grade 5
+- ``9`` - Grade 6
+- ``10`` - Grade 7
+- ``11`` - Grade 8
 - ``12`` - Grade 9
 - ``13`` - Grade 10
 - ``14`` - Grade 11
@@ -187,8 +187,9 @@ This description comes from `PUMS documentation`_:
 - ``4`` - U.S. citizen by naturalization
 - ``5`` - Not a citizen of the U.S.
 
-**MIG** - Mobility status (lived here 1 year ago)
--  ``N/A`` - less than 1 year old
+**MIG** - Mobility status (lived here 1 year ago):
+
+- ``N/A`` - less than 1 year old
 - ``1`` - Yes, same house (nonmovers)
 - ``2`` - No, outside US and Puerto Rico
 - ``3`` - No, different house in US or Puerto Rico
