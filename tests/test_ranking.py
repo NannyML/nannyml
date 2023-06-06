@@ -242,7 +242,7 @@ def test_alert_count_ranking_raises_invalid_drift_object(sample_realized_perf_re
     ranking = AlertCountRanker()
     with pytest.raises(
         InvalidArgumentsException,
-        match=r"`rankable_result` should be one of `\[UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult\]`",
+        match=r"`rankable_result` should be one of `\[UnivariateResults, MissingValueResults, UnseenValuesResult, StatsAvgResult, StatsCountResult, StatsStdResults, StatsSumResult, StatsMedianResults\]`",
     ):
         ranking.rank(
             sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),

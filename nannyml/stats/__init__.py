@@ -8,3 +8,4 @@ from .sum import SummaryStatsSumCalculator
 from .avg import SummaryStatsAvgCalculator
 from .std import SummaryStatsStdCalculator
 from .count import SummaryStatsRowCountCalculator
+from .median import SummaryStatsMedianCalculator

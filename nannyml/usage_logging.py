@@ -58,6 +58,10 @@ class UsageEvent(str, Enum):
     STATS_SUM_RUN = "Simple Stats Sum run"
     STATS_SUM_PLOT = "Simple Stats Sum plot"
 
+    STATS_MEDIAN_FIT = "Simple Stats Median fit"
+    STATS_MEDIAN_RUN = "Simple Stats Median run"
+    STATS_MEDIAN_PLOT = "Simple Stats Median plot"
+
     DQ_CALC_MISSING_VALUES_FIT = "Data Quality Calculator Missing Values fit"
     DQ_CALC_MISSING_VALUES_RUN = "Data Quality Calculator Missing Values run"
     DQ_CALC_MISSING_VALUES_PLOT = "Data Quality Calculator Missing Values plot"
