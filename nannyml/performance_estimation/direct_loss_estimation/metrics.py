@@ -467,6 +467,8 @@ class MAE(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        # clip negative predictions to 0
+        observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -585,6 +587,8 @@ class MAPE(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        # clip negative predictions to 0
+        observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -702,6 +706,8 @@ class MSE(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        # clip negative predictions to 0
+        observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -822,6 +828,8 @@ class MSLE(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        # clip negative predictions to 0
+        observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
         return chunk_level_estimate
 
@@ -947,6 +955,8 @@ class RMSE(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        # clip negative predictions to 0
+        observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.sqrt(np.mean(observation_level_estimates))
         return chunk_level_estimate
 
@@ -1068,6 +1078,8 @@ class RMSLE(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        # clip negative predictions to 0
+        observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.sqrt(np.mean(observation_level_estimates))
         return chunk_level_estimate
 
