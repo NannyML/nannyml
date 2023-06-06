@@ -215,7 +215,9 @@ def sample_missing_value_result() -> MissingValueResults:
             'driver_tenure',
         ],
     ).fit(reference)
-    return calc.calculate(data=analysis)
+    missing_values = calc.calculate(data=analysis)
+    assert isinstance(missing_values, MissingValueResults)
+    return missing_values
 
 
 def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(  # noqa: D103
