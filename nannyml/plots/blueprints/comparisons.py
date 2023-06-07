@@ -614,7 +614,7 @@ def render_display_name(metric_display_name: Union[str, Tuple]):
     if not isinstance(metric_display_name, str):
         if len(metric_display_name) == 1:
             return f'<b>{metric_display_name[0]}</b>'
-        elif len(metric_display_name) == 2:
+        elif len(metric_display_name) >= 2:
             return f'<b>{metric_display_name[1]}</b> ({metric_display_name[0]})'
         else:
             return ', '.join(metric_display_name)
@@ -626,7 +626,7 @@ def render_metric_display_name(metric_display_name: Union[str, Tuple]):
     if not isinstance(metric_display_name, str):
         if len(metric_display_name) == 1:
             return f'<b>{metric_display_name[0]}</b>'
-        elif len(metric_display_name) == 2:
+        elif len(metric_display_name) >= 2:
             return f'<b>{metric_display_name[1]}</b>'
     else:
         return f'<b>{metric_display_name}</b>'
