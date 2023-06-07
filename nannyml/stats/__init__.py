@@ -4,8 +4,8 @@
 
 """Package containing the Simple Statistics implementation."""
 
-from .sum import SummaryStatsSumCalculator
 from .avg import SummaryStatsAvgCalculator
-from .std import SummaryStatsStdCalculator
 from .count import SummaryStatsRowCountCalculator
 from .median import SummaryStatsMedianCalculator
+from .std import SummaryStatsStdCalculator
+from .sum import SummaryStatsSumCalculator

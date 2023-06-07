@@ -4,25 +4,18 @@
 
 """Simple Statistics Average Calculator"""
 
-from typing import List, Optional, Tuple, Union, Dict, Any
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
 from pandas import MultiIndex
 
-from nannyml.base import (
-    AbstractCalculator,
-    _list_missing,
-    _split_features_by_type
-)
-from nannyml.data_quality.base import _add_alert_flag
+from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
-from .result import Result
 from nannyml.exceptions import InvalidArgumentsException
-# from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-from nannyml.thresholds import (
-    StandardDeviationThreshold, Threshold, calculate_threshold_values
-)
+from nannyml.stats.base import _add_alert_flag
+from nannyml.stats.count.result import Result
+from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
@@ -36,7 +29,7 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        thresholds: Optional[Threshold] = StandardDeviationThreshold(),
+        threshold: Threshold = StandardDeviationThreshold(),
     ):
         """Creates a new SummaryStatsRowCountCalculator instance.
 
@@ -55,7 +48,7 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-        thresholds: Appropriate `Threshold` subclass.
+        threshold: Appropriate `Threshold` subclass.
             Defines alert thresholds strategy.
             Defaults to StandardDeviationThreshold()
 
@@ -78,20 +71,13 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         # No sampling error
         # self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
         # threshold strategy is the same across all columns
-        self.thresholds = thresholds
-        self._upper_alert_threshold: float = 0
-        self._lower_alert_threshold: float = 0
+        self.threshold = threshold
+        self._upper_alert_threshold: Optional[float] = 0
+        self._lower_alert_threshold: Optional[float] = 0
 
         self.lower_threshold_value_limit: float = 0
         self.upper_threshold_value_limit: float = np.nan
         self.simple_stats_metric = 'rows_count'
-
-
-    def _calculate_count_value_stats(self, data: pd.DataFrame):
-        # count vs shape have slightly different behaviors!
-        # count ignores rows with missing values, infringing a bit on missing values calc but is more versatile.
-        return data.shape[0]
-
 
     @log_usage(UsageEvent.STATS_COUNT_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
@@ -104,17 +90,17 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         #     count_avg = self._calculate_count_value_stats(reference_data[col])
         #     self._sampling_error_components[col] = count_avg ??
 
-        reference_chunk_results = np.asarray([
-            self._calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)
-        ])
+        reference_chunk_results = np.asarray(
+            [_calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)]
+        )
         self._lower_alert_threshold, self._upper_alert_threshold = calculate_threshold_values(
-            threshold=self.thresholds,
+            threshold=self.threshold,
             data=reference_chunk_results,
             lower_threshold_value_limit=self.lower_threshold_value_limit,
             upper_threshold_value_limit=self.upper_threshold_value_limit,
             logger=self._logger,
             metric_name=self.simple_stats_metric,
-            override_using_none=True
+            override_using_none=True,
         )
 
         self.result = self._calculate(data=reference_data)
@@ -173,7 +159,7 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
 
     def _calculate_for_df(self, data: pd.DataFrame) -> Dict[str, Any]:
         result = {}
-        value = self._calculate_count_value_stats(data)
+        value = _calculate_count_value_stats(data)
         result['value'] = value
         # no sampling error
         # serr = np.sqrt(
@@ -198,10 +184,12 @@ def _create_multilevel_index(
 ):
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    count_tuples = [
-        (column0, el) for el in [
-            'value', 'upper_threshold', 'lower_threshold', 'alert'
-        ]
-    ]
+    count_tuples = [(column0, el) for el in ['value', 'upper_threshold', 'lower_threshold', 'alert']]
     tuples = chunk_tuples + count_tuples
     return MultiIndex.from_tuples(tuples)
+
+
+def _calculate_count_value_stats(data: pd.DataFrame):
+    # count vs shape have slightly different behaviors!
+    # count ignores rows with missing values, infringing a bit on missing values calc but is more versatile.
+    return data.shape[0]

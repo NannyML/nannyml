@@ -7,3 +7,7 @@
 
 from .calculator import UnseenValuesCalculator
 from .result import Result
+
+
+def d():
+    return None

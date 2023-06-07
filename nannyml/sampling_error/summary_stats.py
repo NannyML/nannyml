@@ -6,7 +6,8 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from scipy.stats import moment, gaussian_kde
+from scipy.stats import gaussian_kde, moment
+
 
 def summary_stats_std_sampling_error_components(col: pd.Series) -> Tuple:
     """
@@ -24,7 +25,7 @@ def summary_stats_std_sampling_error_components(col: pd.Series) -> Tuple:
     """
     std = col.std()
     moment_4th = moment(col.to_numpy(), 4)
-    return (std,moment_4th)
+    return (std, moment_4th)
 
 
 def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
@@ -45,8 +46,9 @@ def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
     _std = sampling_error_components[0]
     _mu4 = sampling_error_components[1]
     _size = col.shape[0]
-    err_var = np.sqrt((1/_size)*(_mu4-((_size-3)*(_std**4)/(_size-1))))
-    return  (1/(2*_std))*err_var
+    err_var = np.sqrt((1 / _size) * (_mu4 - ((_size - 3) * (_std**4) / (_size - 1))))
+    return (1 / (2 * _std)) * err_var
+
 
 def summary_stats_median_sampling_error_components(col: pd.Series) -> Tuple:
     """
@@ -65,7 +67,7 @@ def summary_stats_median_sampling_error_components(col: pd.Series) -> Tuple:
     median = col.median()
     kernel = gaussian_kde(col)
     fmedian = kernel.evaluate(median)[0]
-    return (median,fmedian)
+    return (median, fmedian)
 
 
 def summary_stats_median_sampling_error(sampling_error_components, col) -> float:
@@ -87,8 +89,8 @@ def summary_stats_median_sampling_error(sampling_error_components, col) -> float
     sampling_error: float
 
     """
-    median = sampling_error_components[0]
+    # median = sampling_error_components[0]  # TODO: check if this can be removed with Nikoss
     fmedian = sampling_error_components[1]
     _size = col.shape[0]
-    err = np.sqrt(1/(4*_size*(fmedian**2)))
+    err = np.sqrt(1 / (4 * _size * (fmedian**2)))
     return err

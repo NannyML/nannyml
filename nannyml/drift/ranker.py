@@ -26,20 +26,18 @@ from scipy.stats import pearsonr
 
 from nannyml._typing import Metric
 from nannyml.data_quality.missing.result import Result as MissingValueResults
-from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
-from nannyml.drift.univariate.result import Result as UnivariateResults
-from nannyml.data_quality.missing.result import Result as MissingValueResults
 from nannyml.data_quality.unseen.result import Result as UnseenValuesResults
-from nannyml.stats.avg.result import Result as StatsAvgResults
-from nannyml.stats.count import Result as StatsCountResults
-from nannyml.stats.std import Result as StatsStdResults
-from nannyml.stats.sum import Result as StatsSumResults
-from nannyml.stats.median import Result as StatsMedianResults
+from nannyml.drift.univariate.result import Result as UnivariateResults
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.performance_estimation.confidence_based.metrics import Metric as CBPEMetric
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResults
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
+from nannyml.stats.avg.result import Result as StatsAvgResults
+from nannyml.stats.count import Result as StatsCountResults
+from nannyml.stats.median import Result as StatsMedianResults
+from nannyml.stats.std import Result as StatsStdResults
+from nannyml.stats.sum import Result as StatsSumResults
 from nannyml.usage_logging import UsageEvent, log_usage
 
 RankableResult = Union[
@@ -50,7 +48,7 @@ RankableResult = Union[
     StatsCountResults,
     StatsStdResults,
     StatsSumResults,
-    StatsMedianResults
+    StatsMedianResults,
 ]
 PerformanceResults = Union[CBPEResults, DLEResults, PerformanceCalculationResults]
 
@@ -58,11 +56,23 @@ _logger = logging.getLogger(__name__)
 
 
 def _validate_drift_result(rankable_result: RankableResult):
-    if not isinstance(rankable_result, (
-        UnivariateResults, MissingValueResults, UnseenValuesResults, StatsAvgResults, StatsCountResults, StatsStdResults, StatsSumResults, StatsMedianResults
-    )):
+    if not isinstance(
+        rankable_result,
+        (
+            UnivariateResults,
+            MissingValueResults,
+            UnseenValuesResults,
+            StatsAvgResults,
+            StatsCountResults,
+            StatsStdResults,
+            StatsSumResults,
+            StatsMedianResults,
+        ),
+    ):
         raise InvalidArgumentsException(
-            f"`rankable_result` should be one of `[UnivariateResults, MissingValueResults, UnseenValuesResults, StatsAvgResults, StatsCountResults, StatsStdResults, StatsSumResults, StatsMedianResults]`."
+            f"`rankable_result` should be one of `[UnivariateResults, MissingValueResults, "
+            f"UnseenValuesResults, StatsAvgResults, StatsCountResults, StatsStdResults, "
+            f"StatsSumResults, StatsMedianResults]`."
             f"\ngot {str(type(rankable_result))}"
         )
 

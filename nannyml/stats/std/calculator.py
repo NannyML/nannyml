@@ -4,30 +4,24 @@
 
 """Simple Statistics Average Calculator"""
 
-from typing import List, Optional, Tuple, Union, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from pandas import MultiIndex
 
-from nannyml.base import (
-    AbstractCalculator,
-    _list_missing,
-    _split_features_by_type
-)
-from nannyml.data_quality.base import _add_alert_flag
+from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from .result import Result
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-from nannyml.thresholds import (
-    StandardDeviationThreshold, Threshold, calculate_threshold_values
-)
-from nannyml.usage_logging import UsageEvent, log_usage
-from nannyml.sampling_error.summary_stats import(
+from nannyml.sampling_error.summary_stats import (
+    summary_stats_std_sampling_error,
     summary_stats_std_sampling_error_components,
-    summary_stats_std_sampling_error
 )
+from nannyml.stats.base import _add_alert_flag
+from nannyml.stats.std.result import Result
+from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
+from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class SummaryStatsStdCalculator(AbstractCalculator):
@@ -41,7 +35,7 @@ class SummaryStatsStdCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        thresholds: Optional[Threshold] = StandardDeviationThreshold(),
+        threshold: Threshold = StandardDeviationThreshold(),
     ):
         """Creates a new SummaryStatsStdCalculator instance.
 
@@ -63,7 +57,7 @@ class SummaryStatsStdCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-        thresholds: Appropriate `Threshold` subclass.
+        threshold: Threshold
             Defines alert thresholds strategy.
             Defaults to StandardDeviationThreshold()
 
@@ -89,28 +83,28 @@ class SummaryStatsStdCalculator(AbstractCalculator):
         elif isinstance(column_names, list):
             for el in column_names:
                 if not isinstance(el, str):
-                    raise InvalidArgumentsException(f"column_names elements should be either a column name string or a list of strings, found\n{el}")
+                    raise InvalidArgumentsException(
+                        f"column_names elements should be either a column name string or a list of strings, found\n{el}"
+                    )
             self.column_names = column_names
         else:
-            raise InvalidArgumentsException("column_names should be either a column name string or a list of columns names strings, found\n{column_names}")
+            raise InvalidArgumentsException(
+                "column_names should be either a column name string or a list of columns names strings, "
+                f"found {column_names}"
+            )
 
         self.result: Optional[Result] = None
         # Standard Error of Standard Deviation, https://stats.stackexchange.com/a/157305
         # CR Rao (1973) Linear Statistical Inference and its Applications 2nd Ed, John Wiley & Sons, NY
         self._sampling_error_components: Dict[str, Tuple] = {column_name: () for column_name in self.column_names}
         # threshold strategy is the same across all columns
-        self.thresholds = thresholds
-        self._upper_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
-        self._lower_alert_thresholds: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
+        self.threshold = threshold
+        self._upper_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
+        self._lower_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
 
         self.lower_threshold_value_limit: float = np.nan
         self.upper_threshold_value_limit: float = np.nan
         self.simple_stats_metric = 'values_std'
-
-
-    def _calculate_std_value_stats(self, data: pd.Series):  
-        return data.std()
-
 
     @log_usage(UsageEvent.STATS_STD_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
@@ -120,27 +114,27 @@ class SummaryStatsStdCalculator(AbstractCalculator):
 
         _list_missing(self.column_names, reference_data)
 
-        continuous_column_names, categorical_column_names = _split_features_by_type(
-            reference_data, self.column_names
-        )
+        continuous_column_names, categorical_column_names = _split_features_by_type(reference_data, self.column_names)
         if len(categorical_column_names) >= 1:
-            raise InvalidArgumentsException(f"Cannot calculate standard deviation for categorical columns:\n {categorical_column_names}")
+            raise InvalidArgumentsException(
+                f"Cannot calculate standard deviation for categorical columns:\n {categorical_column_names}"
+            )
 
         for col in self.column_names:
             self._sampling_error_components[col] = summary_stats_std_sampling_error_components(reference_data[col])
 
         for column in self.column_names:
-            reference_chunk_results = np.asarray([
-                self._calculate_std_value_stats(chunk.data[column]) for chunk in self.chunker.split(reference_data)
-            ])
+            reference_chunk_results = np.asarray(
+                [_calculate_std_value_stats(chunk.data[column]) for chunk in self.chunker.split(reference_data)]
+            )
             self._lower_alert_thresholds[column], self._upper_alert_thresholds[column] = calculate_threshold_values(
-                threshold=self.thresholds,
+                threshold=self.threshold,
                 data=reference_chunk_results,
                 lower_threshold_value_limit=self.lower_threshold_value_limit,
                 upper_threshold_value_limit=self.upper_threshold_value_limit,
                 logger=self._logger,
                 metric_name=self.simple_stats_metric,
-                override_using_none=True
+                override_using_none=True,
             )
 
         self.result = self._calculate(data=reference_data)
@@ -203,11 +197,10 @@ class SummaryStatsStdCalculator(AbstractCalculator):
 
     def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
         result = {}
-        value = self._calculate_std_value_stats(data[column_name])
+        value = _calculate_std_value_stats(data[column_name])
         result['value'] = value
         result['sampling_error'] = summary_stats_std_sampling_error(
-            self._sampling_error_components[column_name],
-            data[column_name]
+            self._sampling_error_components[column_name], data[column_name]
         )
         result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
         result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
@@ -224,7 +217,9 @@ def _create_multilevel_index(
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
     column_tuples = [
-        (column_name, el) for column_name in column_names for el in  [
+        (column_name, el)
+        for column_name in column_names
+        for el in [
             'value',
             'sampling_error',
             'upper_confidence_boundary',
@@ -236,3 +231,7 @@ def _create_multilevel_index(
     ]
     tuples = chunk_tuples + column_tuples
     return MultiIndex.from_tuples(tuples)
+
+
+def _calculate_std_value_stats(data: pd.Series):
+    return data.std()

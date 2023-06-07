@@ -51,13 +51,17 @@ from .datasets import (
     load_us_census_ma_employment_data,
 )
 from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
-from .stats import (
-    SummaryStatsSumCalculator, SummaryStatsAvgCalculator, SummaryStatsStdCalculator, SummaryStatsRowCountCalculator, SummaryStatsMedianCalculator
-)
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, DLE
+from .stats import (
+    SummaryStatsAvgCalculator,
+    SummaryStatsMedianCalculator,
+    SummaryStatsRowCountCalculator,
+    SummaryStatsStdCalculator,
+    SummaryStatsSumCalculator,
+)
 from .usage_logging import UsageEvent, disable_usage_logging, enable_usage_logging, log_usage
 
 # read any .env files to import environment variables

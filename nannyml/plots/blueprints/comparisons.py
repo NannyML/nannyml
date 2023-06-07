@@ -639,13 +639,13 @@ class ResultCompareMixin:
         )
 
     def _get_title(self, other: Result):
+        from nannyml.data_quality.missing.result import Result as MissingValueResult
+        from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
         from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
         from nannyml.drift.univariate import Result as UnivariateDriftResult
         from nannyml.performance_calculation import Result as RealizedPerformanceResult
         from nannyml.performance_estimation.confidence_based import Result as CBPEResult
         from nannyml.performance_estimation.direct_loss_estimation import Result as DLEResult
-        from nannyml.data_quality.missing.result import Result as MissingValueResult
-        from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
         from nannyml.stats.avg.result import Result as StatsAvgResult
         from nannyml.stats.count import Result as StatsCountResult
         from nannyml.stats.std import Result as StatsStdResult

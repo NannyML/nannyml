@@ -5,17 +5,10 @@
 
 """Tests for Drift package."""
 
-import numpy as np
-import pandas as pd
 import pytest
 
-from nannyml._typing import Result
-from nannyml.stats import SummaryStatsRowCountCalculator
-
 from nannyml.datasets import load_synthetic_car_loan_dataset
-
-from nannyml.exceptions import InvalidArgumentsException
-
+from nannyml.stats import SummaryStatsRowCountCalculator
 
 # @pytest.fixture(scope="module")
 # def status_sum_result() -> Result:
@@ -34,8 +27,7 @@ from nannyml.exceptions import InvalidArgumentsException
 def test_stats_count_calculator_with_default_params_should_not_fail():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_dataset()
     try:
-        calc = SummaryStatsRowCountCalculator(
-        ).fit(reference)
+        calc = SummaryStatsRowCountCalculator().fit(reference)
         _ = calc.calculate(data=analysis)
     except Exception:
         pytest.fail()

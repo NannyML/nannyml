@@ -8,26 +8,25 @@ import copy
 import pandas as pd
 import pytest
 
-from nannyml.data_quality.missing.calculator import MissingValuesCalculator
-from nannyml.data_quality.missing.result import Result as MissingValueResults
+from nannyml.data_quality.missing import MissingValuesCalculator
+from nannyml.data_quality.missing import Result as MissingValueResults
+from nannyml.data_quality.unseen import Result as UnseenValueResults
+from nannyml.data_quality.unseen import UnseenValuesCalculator
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_car_loan_data_quality_dataset,
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
-    load_synthetic_car_loan_data_quality_dataset
 )
 from nannyml.drift.ranker import AlertCountRanker, CorrelationRanker
 
-# from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
-from nannyml.drift.univariate import Result as UnivariateResults
-from nannyml.data_quality.missing.result import Result as MissingValueResults
-from nannyml.data_quality.missing.calculator import MissingValuesCalculator
 # from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
 # from nannyml.stats.avg.result import Result as StatsAvgResult
 # from nannyml.stats.count import Result as StatsCountResult
 # from nannyml.stats.std import Result as StatsStdResults
 # from nannyml.stats.sum import Result as StatsSumResult
+# from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
+from nannyml.drift.univariate import Result as UnivariateResults
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.calculator import PerformanceCalculator
@@ -228,6 +227,18 @@ def sample_missing_value_result() -> MissingValueResults:
     return missing_values
 
 
+@pytest.fixture(scope="module")
+def sample_unseen_value_result() -> UnseenValueResults:
+    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+
+    calc = UnseenValuesCalculator(
+        column_names=['salary_range', 'repaid_loan_on_prev_car'],
+    ).fit(reference)
+    unseen_values = calc.calculate(data=analysis)
+    assert isinstance(unseen_values, UnseenValueResults)
+    return unseen_values
+
+
 def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(  # noqa: D103
     sample_drift_result,
 ):
@@ -309,7 +320,10 @@ def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_re
     )
     assert 'rank' in sut.columns
 
-def test_correlation_ranking_contains_rank_column_on_dq_results(sample_missing_value_result, sample_realized_perf_result):  # noqa: D103
+
+def test_correlation_ranking_contains_rank_column_on_dq_missing_value_results(
+    sample_missing_value_result, sample_realized_perf_result
+):  # noqa: D103
     ranking = CorrelationRanker()
     ranking.fit(
         reference_performance_calculation_result=sample_realized_perf_result.filter(
@@ -323,8 +337,8 @@ def test_correlation_ranking_contains_rank_column_on_dq_results(sample_missing_v
     assert 'rank' in sut.columns
 
 
-def test_correlation_ranking_contains_rank_column_on_dq_results(
-    sample_missing_value_result, sample_realized_perf_result
+def test_correlation_ranking_contains_rank_column_on_dq_unseen_value_results(
+    sample_unseen_value_result, sample_realized_perf_result
 ):  # noqa: D103
     ranking = CorrelationRanker()
     ranking.fit(
@@ -333,7 +347,7 @@ def test_correlation_ranking_contains_rank_column_on_dq_results(
         ),
     )
     sut = ranking.rank(
-        sample_missing_value_result,
+        sample_unseen_value_result,
         sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
     )
     assert 'rank' in sut.columns

@@ -5,17 +5,10 @@
 
 """Tests for Drift package."""
 
-import numpy as np
-import pandas as pd
 import pytest
 
-from nannyml._typing import Result
-from nannyml.stats import SummaryStatsAvgCalculator
-
 from nannyml.datasets import load_synthetic_car_loan_dataset
-
-from nannyml.exceptions import InvalidArgumentsException
-
+from nannyml.stats import SummaryStatsAvgCalculator
 
 # @pytest.fixture(scope="module")
 # def status_sum_result() -> Result:
@@ -35,11 +28,7 @@ def test_stats_avg_calculator_with_default_params_should_not_fail():  # noqa: D1
     reference, analysis, _ = load_synthetic_car_loan_dataset()
     try:
         calc = SummaryStatsAvgCalculator(
-            column_names=[
-                'car_value',
-                'debt_to_income_ratio',
-                'driver_tenure'
-            ],
+            column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure'],
         ).fit(reference)
         _ = calc.calculate(data=analysis)
     except Exception:
