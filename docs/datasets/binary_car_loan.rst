@@ -39,34 +39,34 @@ A sample of the dataset can be seen below.
 
 The model uses 7 features:
 
-- `car_value`: A numerical feature representing the price of the car.
+- **car_value** - a numerical feature representing the price of the car.
 
-- `salary_range`: A categorical feature with 4 categories that identify the range
+- **salary_range** - a categorical feature with 4 categories that identify the range
   the employee's yearly income falls within.
 
-- `debt_to_income_ratio`: A numerical feature representing the ratio of debt to income from the customer.
+- **debt_to_income_ratio** - a numerical feature representing the ratio of debt to income from the customer.
 
-- `loan_length`: A numerical feature representing in how many months the customer wants to repay the loan.
+- **loan_length** - a numerical feature representing in how many months the customer wants to repay the loan.
 
-- `repaid_loan_on_prev_car`: A categorical feature with 2 categories, stating whether the customer
+- **repaid_loan_on_prev_car** - a categorical feature with 2 categories, stating whether the customer
   repaid or not a previous loan.
 
-- `size_of_downpayment`: A categorical feature with 10 categories, representing the percentage in increments of 10%
+- **size_of_downpayment** - a categorical feature with 10 categories, representing the percentage in increments of 10%
   of the size of the downpayment of the car value.
 
-- `tenure`: A numerical feature describing how many years the costumer has been driving.
+- **tenure** - a numerical feature describing how many years the costumer has been driving.
 
 
 There are 3 columns that reference the output of the model:
 
-- `y_pred_proba`: The model predicted probability of the customer repaying the loan.
-- `y_pred`: The model prediction in binary form.
-- `repaid`: The :term:`Target` column describing if the customer actually repaid the loan.
+- **y_pred_proba** - the model predicted probability of the customer repaying the loan.
+- **y_pred** - the model prediction in binary form.
+- **repaid** - the :term:`Target` column describing if the customer actually repaid the loan.
 
 
 There is also an auxiliary column that is helpful but not used by the monitored model:
 
-- `timestamp`: A date column informing us of the date the prediction was made.
+- **timestamp** - a date column informing us of the date the prediction was made.
 
 
 Data Quality Version
@@ -97,5 +97,5 @@ same. You can access this dataset with:
 | 41519 |       78265 | 40K - 60K €    |               0.71856  |            19 | True                      | 40%                   |        0.208278 | 2019-07-09 03:32:27.888 |           0.85 | analysis |        1 |
 +-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
 
-The dataset has induced missing values at ``salary_range`` and ``driver_tenure`` features. And it has a new value, ``50%`` at ``size_of_downpayment`` feature.
+The dataset has induced missing values at **salary_range** and **driver_tenure** features. And it has a new value, ``50%`` at **size_of_downpayment** feature.
 You can see how the dataset is used on the :ref:`data quality tutorials<data-quality>`.
