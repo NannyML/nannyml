@@ -5,27 +5,27 @@
 """Custom exceptions."""
 
 
-class InvalidArgumentsException(BaseException):
+class InvalidArgumentsException(Exception):
     """An exception indicating that the inputs for a function are invalid."""
 
 
-class ChunkerException(BaseException):
+class ChunkerException(Exception):
     """An exception indicating an error occurred somewhere during chunking."""
 
 
-class MissingMetadataException(BaseException):
+class MissingMetadataException(Exception):
     """An exception indicating metadata columns are missing from the dataframe being processed."""
 
 
-class InvalidReferenceDataException(BaseException):
+class InvalidReferenceDataException(Exception):
     """An exception indicating the reference data provided are invalid."""
 
 
-class CalculatorException(BaseException):
+class CalculatorException(Exception):
     """An exception indicating an error occurred during calculation."""
 
 
-class EstimatorException(BaseException):
+class EstimatorException(Exception):
     """An exception indicating an error occurred during estimation."""
 
 
@@ -33,33 +33,33 @@ class CalculatorNotFittedException(CalculatorException):
     """An exception indicating a calculator was not fitted before using it in calculations."""
 
 
-class NotFittedException(BaseException):
+class NotFittedException(Exception):
     """An exception indicating an object was not fitted before using it."""
 
 
-class WriterException(BaseException):
+class WriterException(Exception):
     """An exception indicating something went wrong whilst trying to write out results."""
 
 
-class ReaderException(BaseException):
+class ReaderException(Exception):
     """An exception indicating something went wrong whilst trying to read out data."""
 
 
-class IOException(BaseException):
+class IOException(Exception):
     """An exception indicating something went wrong during IO."""
 
 
-class StoreException(BaseException):
+class StoreException(Exception):
     """An exception indicating something went wrong whilst using a store."""
 
 
-class SerializeException(BaseException):
+class SerializeException(Exception):
     """An exception occurring when serialization some object went wrong."""
 
 
-class DeserializeException(BaseException):
+class DeserializeException(Exception):
     """An exception occurring when deserialization some object went wrong."""
 
 
-class ThresholdException(BaseException):
+class ThresholdException(Exception):
     """An exception occurring during threshold creation or calculation."""
