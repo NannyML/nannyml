@@ -190,6 +190,8 @@ def run(  # noqa: C901
                 on_run_complete(context)
 
     except Exception as exc:
+        context.current_calculator = None
+        context.current_calculator_config = None
         context.run_success = False
         if on_fail:
             on_fail(context, exc)
