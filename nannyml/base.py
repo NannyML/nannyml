@@ -18,10 +18,9 @@ from nannyml._typing import Key, Metric, Result, Self
 from nannyml.chunk import Chunker, ChunkerFactory
 from nannyml.exceptions import (
     CalculatorException,
-    CalculatorNotFittedException,
     EstimatorException,
     InvalidArgumentsException,
-    InvalidReferenceDataException,
+    NannyMLException,
 )
 
 MetricLike = TypeVar('MetricLike', bound=Metric)
@@ -88,6 +87,8 @@ class AbstractResult(ABC):
             metrics = [metrics]
         try:
             return self._filter(period, metrics, *args, **kwargs)
+        except NannyMLException:
+            raise
         except Exception as exc:
             raise CalculatorException(f"could not read result data: {exc}")
 
@@ -352,9 +353,7 @@ class AbstractCalculator(ABC):
         try:
             self._logger.debug(f"fitting {str(self)}")
             return self._fit(reference_data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except InvalidReferenceDataException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
@@ -365,9 +364,7 @@ class AbstractCalculator(ABC):
             self._logger.debug(f"calculating {str(self)}")
             data = data.copy()
             return self._calculate(data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except CalculatorNotFittedException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
@@ -433,6 +430,8 @@ class AbstractEstimatorResult(ABC):
             metrics = [metrics]
         try:
             return self._filter(period, metrics, *args, **kwargs)
+        except NannyMLException:
+            raise
         except Exception as exc:
             raise EstimatorException(f"could not read result data: {exc}")
 
@@ -494,9 +493,7 @@ class AbstractEstimator(ABC):
             self._logger.info(f"fitting {str(self)}")
             reference_data = reference_data.copy()
             return self._fit(reference_data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except InvalidReferenceDataException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
@@ -507,9 +504,7 @@ class AbstractEstimator(ABC):
             self._logger.info(f"estimating {str(self)}")
             data = data.copy()
             return self._estimate(data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except CalculatorNotFittedException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
