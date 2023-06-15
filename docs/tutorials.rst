@@ -14,6 +14,7 @@ Tutorials
     tutorials/detecting_data_drift
     tutorials/ranking
     tutorials/data_quality
+    tutorials/summary_stats
     tutorials/storing_and_loading_calculators
     tutorials/working_with_results
     tutorials/adjusting_plots
