@@ -181,10 +181,6 @@ def test_metric_values_without_timestamp_are_calculated_correctly(no_timestamp_m
 )
 def test_metric_values_with_partial_targets_are_calculated_correctly(partial_target_metrics, metric, expected):
     metric_values = partial_target_metrics.loc[:, (metric, 'value')]
-    import logging
-
-    logging.warning(str(metric_values))
-    logging.warning(str(expected))
     assert np.array_equal(round(metric_values, 5), expected, equal_nan=True)
 
 
