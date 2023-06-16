@@ -12,8 +12,6 @@ Just The Code
     :path: ./example_notebooks/Tutorial - Stats - Avg.ipynb
     :cells: 1 3 4 6
 
-.. _missing_values_walkthrough:
-
 Walkthrough
 -----------
 
@@ -70,11 +68,11 @@ represents resulting information such as the data quality metric values, the ale
     :cell: 5
 
 More information on accessing the information contained in the
-:class:`~nannyml.data_quality.missing.result.Result`
+:class:`~nannyml.stats.avg.result.Result`
 can be found on the :ref:`working_with_results` page.
 
 The next step is visualizing the results, which is done using the
-:meth:`~nannyml.data_quality.missing.result.Result.plot` method.
+:meth:`~nannyml.stats.avg.result.Result.plot` method.
 It is recommended to filter results for each column and plot separately.
 
 .. nbimport::
