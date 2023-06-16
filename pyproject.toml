@@ -17,6 +17,7 @@ classifiers=[
     'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
 ]
 packages = [
     { include = "nannyml" },
@@ -34,16 +35,22 @@ pandas = [
     {version="^1.5", python=">=3.8,<3.12"}
 ]
 python-dateutil = "^2.8.2"
-scikit-learn = "^1.0.2"
+scikit-learn = [
+    {version="^1.0.2", python=">=3.7,<3.8"},
+    {version="^1.2", python=">=3.8,<3.12"}
+]
 joblib = "^1.1.0"
 category-encoders = "^2.3.0"
 matplotlib = "^3.5.1"
 plotly = "^5.6.0"
 scipy = [
     {version="^1.7.3", python=">=3.7,<3.8"},
-    {version="^1.10.1", python=">=3.8,<3.12"}
+    {version="^1.10", python=">=3.8,<3.12"}
 ]
-numpy = "^1.21,<1.25"
+numpy = [
+    {version="^1.21", python=">=3.7,<3.8"},
+    {version="^1.24", python=">=3.8,<3.12"}
+]
 seaborn = "^0.11.2"
 kaleido = "0.2.1"
 pyarrow = "^12.0.0"
