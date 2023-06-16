@@ -194,6 +194,12 @@ They have default thresholds more attuned to their specific role and properties:
    * - Data Quality
      - Unseen Values Calculator
      - ``ConstantThreshold(lower=None, upper=0)``
+   * - Data Quality
+     - Missing Values Calculator
+     - ``StandardDeviationThreshold()``
+   * - Summary Stats
+     - all calculators
+     - ``StandardDeviationThreshold()``
 
 
 What's next?

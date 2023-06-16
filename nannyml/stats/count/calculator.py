@@ -89,7 +89,7 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
 
     def _calculate_count_value_stats(self, data: pd.DataFrame):
         # count vs shape have slightly different behaviors!
-        # count ignores rows with missing values, infringing a bit on missing values calc but is more versatile.
+        # count ignores rows with missing values, infringing a bit on missing values calc so shape
         return data.shape[0]
 
 
@@ -98,11 +98,6 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
-
-        # no sampling error
-        # for col in self.column_names:
-        #     count_avg = self._calculate_count_value_stats(reference_data[col])
-        #     self._sampling_error_components[col] = count_avg ??
 
         reference_chunk_results = np.asarray([
             self._calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)
@@ -175,18 +170,6 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         result = {}
         value = self._calculate_count_value_stats(data)
         result['value'] = value
-        # no sampling error
-        # serr = np.sqrt(
-        #     self._sampling_error_components[column_name] * (1 - self._sampling_error_components[column_name])
-        # )
-        # if self.normalize:
-        #     result['sampling_error'] = serr/np.sqrt(tot)
-        # else:
-        #     result['sampling_error'] = serr*np.sqrt(tot)
-
-        # result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
-        # result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
-
         result['upper_threshold'] = self._upper_alert_threshold
         result['lower_threshold'] = self._lower_alert_threshold
         result['alert'] = _add_alert_flag(result)

@@ -91,5 +91,5 @@ What Next
 We can also inspect the dataset for other Summary Statistics such as :ref:`sum_stats_avg`.
 We can also inspect the dataset using :ref:`Data Quality<data-quality>`
 functionality provided by NannyML.
-Last but not least we can look for any :term:`Data Drift` present in the dataset using
+Last but not least, we can look for any :term:`Data Drift` present in the dataset using
 :ref:`data-drift` functionality of NannyML.

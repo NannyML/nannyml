@@ -32,6 +32,9 @@ def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
     Calculate sampling error for Summary Stats Standard Deviation
     using reference data.
 
+    Standard Error of Standard Deviation, https://stats.stackexchange.com/a/157305
+    CR Rao (1973) Linear Statistical Inference and its Applications 2nd Ed, John Wiley & Sons, NY
+
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
