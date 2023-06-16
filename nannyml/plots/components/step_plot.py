@@ -105,6 +105,15 @@ def _add_metric_line(
     if subplot_args is not None:
         kwargs.update(dict(col=subplot_args.get('col'), row=subplot_args.get('row')))
 
+    # When we have missing values in the data, insert additional points with the preceding Y-value to draw the
+    # "horizontal" pieces
+    nans = np.isnan(data)
+    if nans.any():
+        indices = np.where(nans)[0]
+        indices = indices[indices > 0]
+        x = np.insert(x, indices, x[indices])
+        data = np.insert(data, indices, data[indices - 1])
+
     figure.add_scatter(
         name=name,
         mode='lines',

@@ -257,12 +257,16 @@ class MetricFactory:
         return inner_wrapper
 
 
-def _common_data_cleaning(y_true, y_pred):
+def _common_data_cleaning(y_true: pd.Series, y_pred: Union[pd.Series, pd.DataFrame]):
     y_true, y_pred = (
-        pd.Series(y_true).reset_index(drop=True),
-        pd.Series(y_pred).reset_index(drop=True),
+        y_true.reset_index(drop=True),
+        y_pred.reset_index(drop=True),
     )
-    y_true = y_true[~y_pred.isna()]
+
+    if isinstance(y_pred, pd.DataFrame):
+        y_true = y_true[~y_pred.isna().all(axis=1)]
+    else:
+        y_true = y_true[~y_pred.isna()]
     y_pred.dropna(inplace=True)
 
     y_pred = y_pred[~y_true.isna()]

@@ -328,11 +328,17 @@ class CorrelationRanker:
         for _key in rankable_result.keys():
             features1.append(_key.display_names[0])
             values = rankable_result.values(_key)
+
             if values is None or values.empty:
                 _logger.info(f"skipped ranking `None` rankable values for key '{_key}'")
                 break
 
-            tmp1 = pearsonr(values.to_numpy().ravel(), abs_perf_change)
+            # Remove NaN values
+            feature_nan, perf_nan = np.isnan(values.to_numpy()), np.isnan(abs_perf_change)
+            filtered_values = values[~(feature_nan | perf_nan)]
+            filtered_perf_change = abs_perf_change[~(feature_nan | perf_nan)]
+
+            tmp1 = pearsonr(filtered_values.ravel(), filtered_perf_change)
             spearmanr1.append(tmp1[0])
             spearmanr2.append(tmp1[1])
 

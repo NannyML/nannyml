@@ -1596,8 +1596,26 @@ def _get_multiclass_uncalibrated_predictions(data: pd.DataFrame, y_pred: str, y_
     return data[y_pred], data[class_probability_columns], labels
 
 
+class _MulticlassClassificationMetric(Metric):
+    """Base class for multiclass classification metrics."""
+
+    def _ensure_targets(self, data: pd.DataFrame) -> Optional[pd.DataFrame]:
+        """Ensures that the data contains the target column and that it doesn't contain all NaNs.
+
+        Any rows in the input where the target is NaN are dropped.
+        """
+        if self.y_true not in data.columns:
+            return None
+
+        na = data[self.y_true].isna()
+        if na.all():
+            return None
+        else:
+            return data[~na]
+
+
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationAUROC(Metric):
+class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1645,17 +1663,17 @@ class MulticlassClassificationAUROC(Metric):
         return mse.auroc_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
+        return roc_auc_score(data[self.y_true], y_pred_probas, multi_class='ovr', average='macro', labels=labels)
 
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationF1(Metric):
+class MulticlassClassificationF1(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1702,17 +1720,17 @@ class MulticlassClassificationF1(Metric):
         return mse.f1_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+        return f1_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationPrecision(Metric):
+class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1759,17 +1777,17 @@ class MulticlassClassificationPrecision(Metric):
         return mse.precision_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+        return precision_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationRecall(Metric):
+class MulticlassClassificationRecall(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1816,17 +1834,17 @@ class MulticlassClassificationRecall(Metric):
         return mse.recall_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+        return recall_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationSpecificity(Metric):
+class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1873,13 +1891,13 @@ class MulticlassClassificationSpecificity(Metric):
         return mse.specificity_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        mcm = multilabel_confusion_matrix(data[self.y_true], y_pred, labels=labels)
         tn_sum = mcm[:, 0, 0]
         fp_sum = mcm[:, 0, 1]
         class_wise_specificity = tn_sum / (tn_sum + fp_sum)
@@ -1887,7 +1905,7 @@ class MulticlassClassificationSpecificity(Metric):
 
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationAccuracy(Metric):
+class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1932,10 +1950,10 @@ class MulticlassClassificationAccuracy(Metric):
         return mse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return accuracy_score(y_true, y_pred)
+        return accuracy_score(data[self.y_true], y_pred)

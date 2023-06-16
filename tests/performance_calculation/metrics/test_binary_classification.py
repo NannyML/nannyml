@@ -3,8 +3,9 @@
 #  License: Apache Software License 2.0
 
 """Unit tests for performance metrics."""
-from typing import Tuple
+from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -35,8 +36,7 @@ def binary_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D
     return ref_df, ana_df, tgt_df
 
 
-@pytest.fixture(scope='module')
-def performance_calculator() -> PerformanceCalculator:
+def performance_calculator(timestamp_column_name: Optional[str] = 'timestamp') -> PerformanceCalculator:
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
@@ -58,34 +58,26 @@ def performance_calculator() -> PerformanceCalculator:
 
 
 @pytest.fixture(scope='module')
-def realized_performance_metrics(performance_calculator, binary_data) -> pd.DataFrame:
-    performance_calculator.fit(binary_data[0])
-    results = performance_calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(
-        period='analysis'
-    )
+def realized_performance_metrics(binary_data) -> pd.DataFrame:
+    calculator = performance_calculator().fit(binary_data[0])
+    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(period='analysis')
     return results.data
 
 
 @pytest.fixture(scope='module')
 def no_timestamp_metrics(binary_data):
-    calc = PerformanceCalculator(
-        y_pred_proba='y_pred_proba',
-        y_pred='y_pred',
-        y_true='work_home_actual',
-        metrics=[
-            'roc_auc',
-            'f1',
-            'precision',
-            'recall',
-            'specificity',
-            'accuracy',
-            'business_value',
-            'confusion_matrix',
-        ],
-        business_value_matrix=[[0, -10], [5, 0]],
-        problem_type='classification_binary',
-    ).fit(binary_data[0])
+    calc = performance_calculator(timestamp_column_name=None).fit(binary_data[0])
     results = calc.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(period='analysis')
+    return results.data
+
+
+@pytest.fixture(scope='module')
+def partial_target_metrics(binary_data):
+    partial_targets = binary_data[2][: len(binary_data[2]) // 2]
+    analysis_data = binary_data[1].merge(partial_targets, on='identifier', how='left')
+
+    calc = performance_calculator().fit(binary_data[0])
+    results = calc.calculate(analysis_data).filter(period='analysis')
     return results.data
 
 
@@ -169,6 +161,27 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
 def test_metric_values_without_timestamp_are_calculated_correctly(no_timestamp_metrics, metric, expected):
     metric_values = no_timestamp_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
+
+
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        ('roc_auc', [0.97096, 0.97025, 0.97628, 0.96772, 0.96989, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('f1', [0.92186, 0.92124, 0.92678, 0.91684, 0.92356, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('precision', [0.96729, 0.96607, 0.96858, 0.96819, 0.9661, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('recall', [0.88051, 0.88039, 0.88843, 0.87067, 0.8846, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('specificity', [0.9681, 0.9701, 0.97277, 0.9718, 0.96864, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('accuracy', [0.9228, 0.926, 0.9318, 0.9216, 0.9264, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('business_value', [775, 710, 655, 895, 670, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('true_positive', [2277, 2164, 2158, 2161, 2223, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('false_positive', [77, 76, 70, 71, 78, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('true_negative', [2337, 2466, 2501, 2447, 2409, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('false_negative', [309, 294, 271, 321, 290, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+    ],
+)
+def test_metric_values_with_partial_targets_are_calculated_correctly(partial_target_metrics, metric, expected):
+    metric_values = partial_target_metrics.loc[:, (metric, 'value')]
+    assert np.array_equal(round(metric_values, 5), expected, equal_nan=True)
 
 
 @pytest.mark.parametrize(

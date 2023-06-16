@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     mean_absolute_error,
@@ -80,6 +81,8 @@ class MAE(Metric):
         y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if y_true.empty or y_pred.empty:
+            return np.nan
 
         return mean_absolute_error(y_true, y_pred)
 
@@ -136,6 +139,8 @@ class MAPE(Metric):
         y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if y_true.empty or y_pred.empty:
+            return np.nan
 
         return mean_absolute_percentage_error(y_true, y_pred)
 
@@ -192,6 +197,8 @@ class MSE(Metric):
         y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if y_true.empty or y_pred.empty:
+            return np.nan
 
         return mean_squared_error(y_true, y_pred)
 
@@ -248,6 +255,8 @@ class MSLE(Metric):
         y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if y_true.empty or y_pred.empty:
+            return np.nan
 
         # TODO: include option to drop negative values as well?
 
@@ -309,6 +318,8 @@ class RMSE(Metric):
         y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if y_true.empty or y_pred.empty:
+            return np.nan
 
         return mean_squared_error(y_true, y_pred, squared=False)
 
@@ -365,6 +376,8 @@ class RMSLE(Metric):
         y_pred = data[self.y_pred]
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if y_true.empty or y_pred.empty:
+            return np.nan
 
         # TODO: include option to drop negative values as well?
 
