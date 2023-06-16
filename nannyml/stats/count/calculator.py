@@ -161,7 +161,7 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
 
     def _calculate_for_df(self, data: pd.DataFrame) -> Dict[str, Any]:
         result = {}
-        value = _calculate_count_value_stats(data)
+        value = self._calculate_count_value_stats(data)
         result['value'] = value
         result['upper_threshold'] = self._upper_alert_threshold
         result['lower_threshold'] = self._lower_alert_threshold
