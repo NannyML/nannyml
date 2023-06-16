@@ -112,11 +112,12 @@ class Config(BaseModel):
         return Config.parse_obj(config_dict)._render()
 
     def _render(self) -> Self:
-        self.input.reference_data.path = _render_path_template(self.input.reference_data.path)
-        self.input.analysis_data.path = _render_path_template(self.input.analysis_data.path)
+        if self.input is not None:
+            self.input.reference_data.path = _render_path_template(self.input.reference_data.path)
+            self.input.analysis_data.path = _render_path_template(self.input.analysis_data.path)
 
-        if self.input.target_data:
-            self.input.target_data.path = _render_path_template(self.input.target_data.path)
+            if self.input.target_data:
+                self.input.target_data.path = _render_path_template(self.input.target_data.path)
 
         for config in self.calculators:
             for output in config.outputs or []:
