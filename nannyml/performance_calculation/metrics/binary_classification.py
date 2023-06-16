@@ -744,7 +744,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+        if y_true.empty or y_pred.empty:
             return np.nan
 
         num_tp = np.sum(np.logical_and(y_pred, y_true))
@@ -772,7 +772,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+        if y_true.empty or y_pred.empty:
             return np.nan
 
         num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
@@ -800,7 +800,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+        if y_true.empty or y_pred.empty:
             return np.nan
 
         num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
@@ -828,7 +828,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+        if y_true.empty or y_pred.empty:
             return np.nan
 
         num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
