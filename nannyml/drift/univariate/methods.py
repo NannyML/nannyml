@@ -307,7 +307,7 @@ class JensenShannonDistance(Method):
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
         data = _remove_missing_data(data)
         if data.empty:
-            return float('nan')
+            return np.nan
         if self._treat_as_type == 'cont':
             len_data = len(data)
             data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
@@ -391,7 +391,7 @@ class KolmogorovSmirnovStatistic(Method):
     def _calculate(self, data: pd.Series):
         data = _remove_missing_data(data)
         if data.empty:
-            return float('nan')
+            return np.nan
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
@@ -451,7 +451,7 @@ class Chi2Statistic(Method):
     def _calculate(self, data: pd.Series):
         data = _remove_missing_data(data)
         if data.empty:
-            return float('nan')
+            return np.nan
         if not self._fitted:
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
@@ -518,7 +518,7 @@ class LInfinityDistance(Method):
             )
         data = _remove_missing_data(data)
         if data.empty:
-            return float('nan')
+            return np.nan
         data_labels = data.unique()
         data_ratios = {label: (data == label).sum() / len(data) for label in data_labels}
 
@@ -594,7 +594,7 @@ class WassersteinDistance(Method):
             )
         data = _remove_missing_data(data)
         if data.empty:
-            return float('nan')
+            return np.nan
         if (
             self.calculation_method == 'auto' and self._reference_size >= 10_000
         ) or self.calculation_method == 'estimated':
@@ -697,7 +697,7 @@ class HellingerDistance(Method):
     def _calculate(self, data: pd.Series):
         data = _remove_missing_data(data)
         if data.empty:
-            return float('nan')
+            return np.nan
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
         if self._treat_as_type == 'cont':
             len_data = len(data)
