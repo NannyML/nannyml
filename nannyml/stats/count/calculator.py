@@ -79,20 +79,22 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         self.upper_threshold_value_limit: float = np.nan
         self.simple_stats_metric = 'rows_count'
 
+
+    def _calculate_count_value_stats(self, data: pd.DataFrame):
+        # count vs shape have slightly different behaviors!
+        # count ignores rows with missing values, infringing a bit on missing values calc so shape
+        return data.shape[0]
+
+
     @log_usage(UsageEvent.STATS_COUNT_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        # no sampling error
-        # for col in self.column_names:
-        #     count_avg = self._calculate_count_value_stats(reference_data[col])
-        #     self._sampling_error_components[col] = count_avg ??
-
-        reference_chunk_results = np.asarray(
-            [_calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)]
-        )
+        reference_chunk_results = np.asarray([
+            self._calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)
+        ])
         self._lower_alert_threshold, self._upper_alert_threshold = calculate_threshold_values(
             threshold=self.threshold,
             data=reference_chunk_results,
@@ -161,18 +163,6 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         result = {}
         value = _calculate_count_value_stats(data)
         result['value'] = value
-        # no sampling error
-        # serr = np.sqrt(
-        #     self._sampling_error_components[column_name] * (1 - self._sampling_error_components[column_name])
-        # )
-        # if self.normalize:
-        #     result['sampling_error'] = serr/np.sqrt(tot)
-        # else:
-        #     result['sampling_error'] = serr*np.sqrt(tot)
-
-        # result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
-        # result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
-
         result['upper_threshold'] = self._upper_alert_threshold
         result['lower_threshold'] = self._lower_alert_threshold
         result['alert'] = _add_alert_flag(result)
@@ -188,8 +178,3 @@ def _create_multilevel_index(
     tuples = chunk_tuples + count_tuples
     return MultiIndex.from_tuples(tuples)
 
-
-def _calculate_count_value_stats(data: pd.DataFrame):
-    # count vs shape have slightly different behaviors!
-    # count ignores rows with missing values, infringing a bit on missing values calc but is more versatile.
-    return data.shape[0]

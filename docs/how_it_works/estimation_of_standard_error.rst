@@ -176,6 +176,68 @@ The p-value takes into account sizes of compared samples and in a sense it conta
 additional information about sampling errors is not needed. To make sure you
 interpret p-values correctly have a look at the American Statistical Association statement on p-values [2]_.
 
+
+Summary Statistics
+******************
+
+The :ref:`summary-stats` calculated by NannyML are also affected by Sampling error.
+
+
+Average
+-------
+
+The :ref:`sum_stats_avg` standard error calculations are an application of what
+we disccused at :ref:`introducing_sem`.
+
+
+Summation
+---------
+
+The :ref:`sum_stats_sum` standard error calculations are also straghtfoward.
+Through a simple application of error propagation:
+
+    .. math::
+        \delta f(x) = \sqrt{
+            \left( \frac{\partial f}{\partial x}  \delta x \right)^2
+        }
+
+which means that the standard error of the sum is the standard error of the mean multiplied by sample size.
+
+
+Stnadard Deviation
+------------------
+
+The standard error of the variance of a random variable is given by the following exact formula:
+
+    .. math::
+        \delta (s^2) = \sqrt{
+            \frac{1}{n} \left( \mu_4 - \frac{n-3}{n-1} \sigma^4\right)
+        }
+
+where :math:`\mu_4` is the 4th central moment.
+Using error propagation we can calculate the standard error of the standard deviation:
+
+    .. math::
+        \delta s = \frac{1}{2 s} \delta s^2
+
+
+Median
+------
+
+For the standard error of the median we rely on asymptotic approximation meaning that our
+estimation will be incorrect for smaller sample sizes.
+
+The standard error of the median asymptotically tends towards:
+
+    .. math::
+        \delta \mathrm{median} = \sqrt{
+            \frac{1}{4nf^2(m)}
+        }
+
+where :math:`f` is the probability density function of the random variable in quetion and
+:math:`f(m)` is its value at the estimated median value.
+
+
 .. _limitations_sem:
 
 Assumptions and Limitations
