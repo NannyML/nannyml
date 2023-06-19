@@ -26,30 +26,58 @@ from scipy.stats import pearsonr
 
 from nannyml._typing import Metric
 from nannyml.data_quality.missing.result import Result as MissingValueResults
-from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
+from nannyml.data_quality.unseen.result import Result as UnseenValuesResults
 from nannyml.drift.univariate.result import Result as UnivariateResults
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.performance_calculation.result import Result as PerformanceCalculationResults
 from nannyml.performance_estimation.confidence_based.metrics import Metric as CBPEMetric
 from nannyml.performance_estimation.confidence_based.results import Result as CBPEResults
 from nannyml.performance_estimation.direct_loss_estimation.result import Result as DLEResults
+from nannyml.stats.avg.result import Result as StatsAvgResults
+from nannyml.stats.count import Result as StatsCountResults
+from nannyml.stats.median import Result as StatsMedianResults
+from nannyml.stats.std import Result as StatsStdResults
+from nannyml.stats.sum import Result as StatsSumResults
 from nannyml.usage_logging import UsageEvent, log_usage
 
-RankableResult = Union[UnivariateResults, MissingValueResults, UnseenValuesResult]
-PerformanceResult = Union[CBPEResults, DLEResults, PerformanceCalculationResults]
+RankableResult = Union[
+    UnivariateResults,
+    MissingValueResults,
+    UnseenValuesResults,
+    StatsAvgResults,
+    StatsCountResults,
+    StatsStdResults,
+    StatsSumResults,
+    StatsMedianResults,
+]
+PerformanceResults = Union[CBPEResults, DLEResults, PerformanceCalculationResults]
 
 _logger = logging.getLogger(__name__)
 
 
 def _validate_drift_result(rankable_result: RankableResult):
-    if not isinstance(rankable_result, (UnivariateResults, MissingValueResults, UnseenValuesResult)):
+    if not isinstance(
+        rankable_result,
+        (
+            UnivariateResults,
+            MissingValueResults,
+            UnseenValuesResults,
+            StatsAvgResults,
+            StatsCountResults,
+            StatsStdResults,
+            StatsSumResults,
+            StatsMedianResults,
+        ),
+    ):
         raise InvalidArgumentsException(
-            f"`rankable_result` should be one of `[UnivariateResults, MissingValueResults, UnseenValuesResult]`."
+            f"`rankable_result` should be one of `[UnivariateResults, MissingValueResults, "
+            f"UnseenValuesResults, StatsAvgResults, StatsCountResults, StatsStdResults, "
+            f"StatsSumResults, StatsMedianResults]`."
             f"\ngot {str(type(rankable_result))}"
         )
 
     if rankable_result.empty:
-        raise InvalidArgumentsException('drift results contain no data to use for ranking')
+        raise InvalidArgumentsException('rankable_result contains no data to use for ranking')
 
     if isinstance(rankable_result, UnivariateResults):
 
@@ -66,7 +94,7 @@ def _validate_drift_result(rankable_result: RankableResult):
             )
 
 
-def _validate_performance_result(performance_result: PerformanceResult):
+def _validate_performance_result(performance_result: PerformanceResults):
     """Validate Inputs before performing ranking.
 
     Parameters
@@ -229,7 +257,7 @@ class CorrelationRanker:
     @log_usage(UsageEvent.RANKER_CORRELATION_FIT)
     def fit(
         self,
-        reference_performance_calculation_result: Optional[PerformanceResult] = None,
+        reference_performance_calculation_result: Optional[PerformanceResults] = None,
     ) -> CorrelationRanker:
         """Calculates the average performance during the reference period.
         This value is saved at the `mean_reference_performance` property of the ranker.
@@ -267,7 +295,7 @@ class CorrelationRanker:
     def rank(
         self,
         rankable_result: RankableResult,
-        performance_result: Optional[PerformanceResult] = None,
+        performance_result: Optional[PerformanceResults] = None,
         only_drifting: bool = False,
     ):
         """Compares the number of alerts for each feature and ranks them accordingly.
@@ -276,7 +304,7 @@ class CorrelationRanker:
         ----------
         rankable_result: RankableResult
             The univariate, data quality or simple statistic drift results containing the features we want to rank.
-        performance_result: PerformanceResult
+        performance_result: PerformanceResults
             Results from any performance calculator or estimator, e.g.
             :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`
             :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`

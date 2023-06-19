@@ -15,6 +15,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 @WriterFactory.register('raw_files')
 class RawFilesWriter(FileWriter):
     """Writes `Result` data and plots to disk (local/remote/cloud)."""
+
     def __init__(
         self,
         path: str,

@@ -3,11 +3,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Package containing the Data Quality Calculators implementation."""
+"""Module containing the Simple Statistics Average Calculator."""
 
-from .calculator import UnseenValuesCalculator
+from .calculator import SummaryStatsAvgCalculator
 from .result import Result
-
-
-def d():
-    return None

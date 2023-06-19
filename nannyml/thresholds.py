@@ -87,7 +87,7 @@ class ConstantThreshold(Threshold, type="constant"):
     Examples:
         >>> data = np.array(range(10))
         >>> t = ConstantThreshold(lower=None, upper=0.1)
-        >>> lower, upper = t.thresholds()
+        >>> lower, upper = t.threshold()
         >>> print(lower, upper)
         None 0.1
     """
@@ -144,7 +144,7 @@ class StandardDeviationThreshold(Threshold, type="standard_deviation"):
     Examples:
         >>> data = np.array(range(10))
         >>> t = ConstantThreshold(lower=None, upper=0.1)
-        >>> lower, upper = t.thresholds()
+        >>> lower, upper = t.threshold()
         >>> print(lower, upper)
         -4.116843969807043 13.116843969807043
     """

@@ -42,6 +42,26 @@ class UsageEvent(str, Enum):
 
     # Calculators
 
+    STATS_COUNT_FIT = "Simple Stats Count fit"
+    STATS_COUNT_RUN = "Simple Stats Count run"
+    STATS_COUNT_PLOT = "Simple Stats Count plot"
+
+    STATS_STD_FIT = "Simple Stats Std fit"
+    STATS_STD_RUN = "Simple Stats Std run"
+    STATS_STD_PLOT = "Simple Stats Std plot"
+
+    STATS_AVG_FIT = "Simple Stats Avg fit"
+    STATS_AVG_RUN = "Simple Stats Avg run"
+    STATS_AVG_PLOT = "Simple Stats Avg plot"
+
+    STATS_SUM_FIT = "Simple Stats Sum fit"
+    STATS_SUM_RUN = "Simple Stats Sum run"
+    STATS_SUM_PLOT = "Simple Stats Sum plot"
+
+    STATS_MEDIAN_FIT = "Simple Stats Median fit"
+    STATS_MEDIAN_RUN = "Simple Stats Median run"
+    STATS_MEDIAN_PLOT = "Simple Stats Median plot"
+
     DQ_CALC_MISSING_VALUES_FIT = "Data Quality Calculator Missing Values fit"
     DQ_CALC_MISSING_VALUES_RUN = "Data Quality Calculator Missing Values run"
     DQ_CALC_MISSING_VALUES_PLOT = "Data Quality Calculator Missing Values plot"
