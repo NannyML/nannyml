@@ -43,7 +43,7 @@ which has a true value of 0.5, for samples containing 100 observations.
     >>> plt.hist(accuracy_scores, bins=20, density=True)
     >>> plt.title("Accuracy of random classifier\n for randomly selected samples of 100 observations.");
 
-.. image:: ../_static/deep_dive_data_chunks_stability_of_accuracy.svg
+.. image:: ../_static/how-it-works/chunks_stability_of_accuracy.svg
     :width: 400pt
 
 Calculating standard error for the example above is simple. Since the (10 000) sampling experiments are already done

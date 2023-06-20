@@ -165,7 +165,6 @@ class AlertCountRanker:
         ...     univariate_results.filter(methods=['jensen_shannon']),
         ...     only_drifting = False)
         >>> display(alert_count_ranked_features)
-
                 number_of_alerts                 column_name  rank
         0                      5                y_pred_proba     1
         1                      5                salary_range     2
