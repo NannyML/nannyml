@@ -5,7 +5,7 @@ Chunking Considerations
 
 
 For an introduction on :term:`Chunks<Data Chunk>` please have a look at our
-:ref:`chunking tutorial Chunking<chunking>`. This guide focuses on the
+:ref:`chunking tutorial<chunking>`. This guide focuses on the
 potential issues that may arise from using chunks. They are described below.
 
 
@@ -20,13 +20,16 @@ far from optimal, but it is a reasonable minimum. If there are less than 6 chunk
 
 .. code-block:: python
 
+    >>> import nannyml as nml
+    >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
     >>> cbpe = nml.CBPE(
     ...     y_pred_proba='y_pred_proba',
     ...     y_pred='y_pred',
-    ...     y_true='work_home_actual',
+    ...     y_true='repaid',
     ...     timestamp_column_name='timestamp',
     ...     chunk_number=5,
-    ...     metrics=['roc_auc']
+    ...     metrics=['roc_auc'],
+    ...     problem_type='classification_binary',
     >>> ).fit(reference_data=reference)
     >>> est_perf = cbpe.estimate(analysis)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or continue at your own risk.
@@ -84,7 +87,7 @@ stronger for more complex metrics like ROC AUC.
     >>> plt.hist(accuracy_scores, bins=20, density=True)
     >>> plt.title("Accuracy of random classifier\n for randomly selected samples of 100 observations.");
 
-.. image:: ../_static/deep_dive_data_chunks_stability_of_accuracy.svg
+.. image:: ../_static/how-it-works/chunks_stability_of_accuracy.svg
     :width: 400pt
 
 
