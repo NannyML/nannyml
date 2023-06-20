@@ -145,34 +145,38 @@ class AlertCountRanker:
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> display(reference_df.head())
-        >>>
+        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
+        >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
         >>> column_names = [
-        >>>     col for col in reference_df.columns if col not in ['timestamp', 'y_pred_proba', 'period',
-        >>>                                                        'y_pred', 'work_home_actual', 'identifier']]
-        >>>
-        >>> calc = nml.UnivariateDriftCalculator(column_names=column_names,
-        >>>     timestamp_column_name='timestamp')
-        >>>
-        >>> calc.fit(reference_df)
-        >>>
-        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
-        >>>
-        >>> ranker = nml.AlertCountRanker()
-        >>> ranked_features = ranker.rank(drift_calculation_result=results, only_drifting=False)
-        >>> display(ranked_features)
+        ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car', 'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
+        >>> ]
+        >>> univ_calc = nml.UnivariateDriftCalculator(
+        ...     column_names=column_names,
+        ...     treat_as_categorical=['y_pred', 'repaid'],
+        ...     timestamp_column_name='timestamp',
+        ...     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        ...     categorical_methods=['chi2', 'jensen_shannon'],
+        ...     chunk_size=5000
+        >>> )
+        >>> univ_calc.fit(reference_df)
+        >>> univariate_results = univ_calc.calculate(analysis_full_df)
+        >>> alert_count_ranker = nml.AlertCountRanker()
+        >>> alert_count_ranked_features = alert_count_ranker.rank(
+        ...     univariate_results.filter(methods=['jensen_shannon']),
+        ...     only_drifting = False)
+        >>> display(alert_count_ranked_features)
+
                 number_of_alerts                 column_name  rank
-        0                      5            wfh_prev_workday     1
+        0                      5                y_pred_proba     1
         1                      5                salary_range     2
-        2                      5  public_transportation_cost     3
-        3                      5        distance_from_office     4
-        4                      0                     workday     5
-        5                      0            work_home_actual     6
-        6                      0                      tenure     7
-        7                      0         gas_price_per_litre     8
+        2                      5     repaid_loan_on_prev_car     3
+        3                      5                 loan_length     4
+        4                      0                   car_value     5
+        5                      0                      y_pred     6
+        6                      0         size_of_downpayment     7
+        7                      0                      repaid     8
+        8                      0               driver_tenure     9
+        9                      0        debt_to_income_ratio     10
         """
         _validate_drift_result(rankable_result)
 
@@ -198,50 +202,52 @@ class CorrelationRanker:
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> column_names = [col for col in reference_df.columns
-        >>>                 if col not in ['timestamp', 'y_pred_proba', 'period',
-        >>>                                'y_pred', 'work_home_actual', 'identifier']]
-        >>>
-        >>> univ_calc = nml.UnivariateDriftCalculator(column_names=column_names,
-        >>>                                           timestamp_column_name='timestamp')
-        >>>
-        >>> calc = nml.UnivariateDriftCalculator(column_names=column_names,
-        >>>                                      timestamp_column_name='timestamp')
-        >>>
+        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
+        >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
+        >>> column_names = [
+        ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car', 'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
+        >>> ]
+        >>> univ_calc = nml.UnivariateDriftCalculator(
+        ...     column_names=column_names,
+        ...     treat_as_categorical=['y_pred', 'repaid'],
+        ...     timestamp_column_name='timestamp',
+        ...     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+        ...     categorical_methods=['chi2', 'jensen_shannon'],
+        ...     chunk_size=5000
+        >>> )
         >>> univ_calc.fit(reference_df)
-        >>> univariate_results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
-        >>>
+        >>> univariate_results = univ_calc.calculate(analysis_full_df)
         >>> realized_calc = nml.PerformanceCalculator(
-        >>>     y_pred_proba='y_pred_proba',
-        >>>     y_pred='y_pred',
-        >>>     y_true='work_home_actual',
-        >>>     timestamp_column_name='timestamp',
-        >>>     problem_type='classification_binary',
-        >>>     metrics=['roc_auc'])
+        ...     y_pred_proba='y_pred_proba',
+        ...     y_pred='y_pred',
+        ...     y_true='repaid',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_binary',
+        ...     metrics=['roc_auc', 'recall',],
+        ...     chunk_size=5000)
         >>> realized_calc.fit(reference_df)
-        >>> realized_perf_results = realized_calc.calculate(analysis_df.merge(target_df, on='identifier'))
-        >>>
-        >>> ranker = nml.CorrelationRanker()
+        >>> realized_perf_results = realized_calc.calculate(analysis_full_df)
+        >>> ranker2 = nml.CorrelationRanker()
         >>> # ranker fits on one metric and reference period data only
-        >>> ranker.fit(realized_perf_results.filter(period='reference'))
+        >>> ranker2.fit(
+        ...     realized_perf_results.filter(period='reference', metrics=['recall']))
         >>> # ranker ranks on one drift method and one performance metric
-        >>> correlation_ranked_features = ranker.rank(
-        >>>     univariate_results,
-        >>>     realized_perf_results,
-        >>>     only_drifting = False)
-        >>> display(correlation_ranked_features)
+        >>> correlation_ranked_features2 = ranker2.rank(
+        ...     univariate_results.filter(period='analysis', methods=['jensen_shannon']),
+        ...     realized_perf_results.filter(period='analysis', metrics=['recall']),
+        ...     only_drifting = False)
+        >>> display(correlation_ranked_features2)
                           column_name  pearsonr_correlation  pearsonr_pvalue  has_drifted  rank
-        0            wfh_prev_workday              0.929710     3.076474e-09         True     1
-        1  public_transportation_cost              0.925910     4.872173e-09         True     2
-        2                salary_range              0.921556     8.014868e-09         True     3
-        3        distance_from_office              0.920749     8.762147e-09         True     4
-        4         gas_price_per_litre              0.340076     1.423541e-01        False     5
-        5                     workday              0.154622     5.151128e-01        False     6
-        6            work_home_actual             -0.030899     8.971071e-01        False     7
-        7                      tenure             -0.177018     4.553046e-01        False     8
+        0     repaid_loan_on_prev_car               0.96897      3.90719e-06         True     1
+        1                y_pred_proba              0.966157      5.50918e-06         True     2
+        2                 loan_length              0.965298      6.08385e-06         True     3
+        3                   car_value              0.963623      7.33185e-06         True     4
+        4                salary_range              0.963456      7.46561e-06         True     5
+        5         size_of_downpayment              0.308948         0.385072        False     6
+        6        debt_to_income_ratio              0.307373         0.387627        False     7
+        7                      y_pred             -0.357571         0.310383        False     8
+        8                      repaid             -0.395842         0.257495        False     9
+        9               driver_tenure             -0.575807        0.0815202        False     10
     """
 
     def __init__(self) -> None:
