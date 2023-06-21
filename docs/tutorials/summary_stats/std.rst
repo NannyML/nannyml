@@ -32,7 +32,7 @@ We begin by loading the :ref:`synthetic car loan dataset<dataset-synthetic-binar
     :path: ./example_notebooks/Tutorial - Stats - Std.ipynb
     :cell: 2
 
-The :class:`~nannyml.stats.avg.calculator.SummaryStatsStdCalculator` class implements
+The :class:`~nannyml.stats.std.calculator.SummaryStatsStdCalculator` class implements
 the functionality needed for standard deviation values calculations.
 We need to instantiate it with appropriate parameters:
 
@@ -47,15 +47,15 @@ We need to instantiate it with appropriate parameters:
     :path: ./example_notebooks/Tutorial - Stats - Std.ipynb
     :cells: 3
 
-Next, the :meth:`~nannyml.stats.avg.calculator.SummaryStatsStdCalculator.fit` method needs
+Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs
 to be called on the reference data, which provides the baseline that the analysis data will be
 compared with for :term:`alert<Alert>` generation. Then the
-:meth:`~nannyml.stats.std.calculator.SummaryStatsStdCalculator.calculate` method will
+:meth:`~nannyml.base.AbstractCalculator.calculate`.calculate` method will
 calculate the data quality results on the data provided to it.
 
 The results can be filtered to only include a certain data period, method or column by using the ``filter`` method.
 You can evaluate the result data by converting the results into a `DataFrame`,
-by calling the :meth:`~nannyml.stats.std.result.Result.to_df` method.
+by calling the :meth:`~nannyml.base.AbstractResult.to_df` method.
 By default this will return a `DataFrame` with a multi-level index. The first level represents the column, the second level
 represents resulting information such as the data quality metric values, the alert thresholds or the associated sampling error.
 
