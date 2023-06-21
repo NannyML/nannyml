@@ -20,25 +20,23 @@ Examples
 
 >>> import nannyml as nml
 >>> from IPython.display import display
->>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
->>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
->>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
->>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+>>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
+>>> analysis_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
 >>> display(reference_df.head(3))
 >>> calc = nml.PerformanceCalculator(
 ...     y_pred_proba='y_pred_proba',
 ...     y_pred='y_pred',
-...     y_true='work_home_actual',
+...     y_true='repaid',
 ...     timestamp_column_name='timestamp',
 ...     problem_type='classification_binary',
 ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
 ...     chunk_size=5000)
 >>> calc.fit(reference_df)
 >>> results = calc.calculate(analysis_df)
->>> display(results.data)
->>> for metric in calc.metrics:
-...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
-...     figure.show()
+>>> display(results.filter(period='analysis').to_df())
+>>> display(results.filter(period='reference').to_df())
+>>> figure = results.plot()
+>>> figure.show()
 """
 
 from __future__ import annotations
@@ -180,25 +178,23 @@ class PerformanceCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df = nml.load_synthetic_binary_classification_dataset()[0]
-        >>> analysis_df = nml.load_synthetic_binary_classification_dataset()[1]
-        >>> analysis_target_df = nml.load_synthetic_binary_classification_dataset()[2]
-        >>> analysis_df = analysis_df.merge(analysis_target_df, on='identifier')
+        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
+        >>> analysis_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
         >>> display(reference_df.head(3))
         >>> calc = nml.PerformanceCalculator(
         ...     y_pred_proba='y_pred_proba',
         ...     y_pred='y_pred',
-        ...     y_true='work_home_actual',
+        ...     y_true='repaid',
         ...     timestamp_column_name='timestamp',
         ...     problem_type='classification_binary',
         ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         ...     chunk_size=5000)
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)
-        >>> display(results.data)
-        >>> for metric in calc.metrics:
-        ...     figure = results.plot(kind='performance', plot_reference=True, metric=metric)
-        ...     figure.show()
+        >>> display(results.filter(period='analysis').to_df())
+        >>> display(results.filter(period='reference').to_df())
+        >>> figure = results.plot()
+        >>> figure.show()
         """
         super().__init__(chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name)
 

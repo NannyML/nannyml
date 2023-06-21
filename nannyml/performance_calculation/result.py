@@ -130,30 +130,24 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         Examples
         --------
         >>> import nannyml as nml
-        >>>
-        >>> reference_df, analysis_df, target_df = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> calc = nml.PerformanceCalculator(y_true='work_home_actual', y_pred='y_pred', y_pred_proba='y_pred_proba',
-        >>>                                  problem_type='classification_binary', timestamp_column_name='timestamp',
-        >>>                                  metrics=['f1', 'roc_auc'])
-        >>>
+        >>> from IPython.display import display
+        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
+        >>> analysis_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
+        >>> display(reference_df.head(3))
+        >>> calc = nml.PerformanceCalculator(
+        ...     y_pred_proba='y_pred_proba',
+        ...     y_pred='y_pred',
+        ...     y_true='repaid',
+        ...     timestamp_column_name='timestamp',
+        ...     problem_type='classification_binary',
+        ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        ...     chunk_size=5000)
         >>> calc.fit(reference_df)
-        >>>
-        >>> results = calc.calculate(analysis_df.merge(target_df, on='identifier'))
-        >>> print(results.data)
-                     key  start_index  ...  roc_auc_upper_threshold roc_auc_alert
-        0       [0:4999]            0  ...                  0.97866         False
-        1    [5000:9999]         5000  ...                  0.97866         False
-        2  [10000:14999]        10000  ...                  0.97866         False
-        3  [15000:19999]        15000  ...                  0.97866         False
-        4  [20000:24999]        20000  ...                  0.97866         False
-        5  [25000:29999]        25000  ...                  0.97866          True
-        6  [30000:34999]        30000  ...                  0.97866          True
-        7  [35000:39999]        35000  ...                  0.97866          True
-        8  [40000:44999]        40000  ...                  0.97866          True
-        9  [45000:49999]        45000  ...                  0.97866          True
-        >>> for metric in calc.metrics:
-        >>>     results.plot(metric=metric, plot_reference=True).show()
+        >>> results = calc.calculate(analysis_df)
+        >>> display(results.filter(period='analysis').to_df())
+        >>> display(results.filter(period='reference').to_df())
+        >>> figure = results.plot()
+        >>> figure.show()
         """
         if kind == 'performance':
             return plot_metrics(
