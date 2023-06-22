@@ -85,8 +85,8 @@ class Metric(abc.ABC):
             The limit is often a theoretical constraint enforced by a specific drift detection method or performance
             metric.
         upper_threshold_value_limit: Optional[float], default=None
-            An optional value that serves as a limit for the lower threshold value. Any calculated lower threshold
-            values that end up below this limit will be replaced by this limit value.
+            An optional value that serves as a limit for the upper threshold value. Any calculated upper threshold
+            values that end up above this limit will be replaced by this limit value.
             The limit is often a theoretical constraint enforced by a specific drift detection method or performance
             metric.
 
@@ -374,6 +374,7 @@ class BinaryClassificationAUROC(Metric):
             threshold=threshold,
             components=[('ROC AUC', 'roc_auc')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -461,6 +462,7 @@ class BinaryClassificationF1(Metric):
             threshold=threshold,
             components=[('F1', 'f1')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1
         )
 
         # sampling error
@@ -535,6 +537,7 @@ class BinaryClassificationPrecision(Metric):
             threshold=threshold,
             components=[('Precision', 'precision')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -609,6 +612,7 @@ class BinaryClassificationRecall(Metric):
             threshold=threshold,
             components=[('Recall', 'recall')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -682,6 +686,7 @@ class BinaryClassificationSpecificity(Metric):
             threshold=threshold,
             components=[('Specificity', 'specificity')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -756,6 +761,7 @@ class BinaryClassificationAccuracy(Metric):
             threshold=threshold,
             components=[('Accuracy', 'accuracy')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
