@@ -462,7 +462,7 @@ class BinaryClassificationF1(Metric):
             threshold=threshold,
             components=[('F1', 'f1')],
             lower_threshold_value_limit=0,
-            upper_threshold_value_limit=1
+            upper_threshold_value_limit=1,
         )
 
         # sampling error

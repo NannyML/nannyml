@@ -148,7 +148,8 @@ class AlertCountRanker:
         >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
         >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
         >>> column_names = [
-        ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car', 'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
+        ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
+        ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
         >>> ]
         >>> univ_calc = nml.UnivariateDriftCalculator(
         ...     column_names=column_names,
@@ -204,7 +205,8 @@ class CorrelationRanker:
         >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
         >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
         >>> column_names = [
-        ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car', 'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
+        ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
+        ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
         >>> ]
         >>> univ_calc = nml.UnivariateDriftCalculator(
         ...     column_names=column_names,

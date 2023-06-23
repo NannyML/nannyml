@@ -31,7 +31,7 @@ A sample of the dataset can be seen below.
 .. nbtable::
     :path: ./example_notebooks/Datasets - Multiclass.ipynb
     :cell: 2
-  
+
 The model uses 7 features:
 
 - **acq_channel** - a categorical feature with 5 categories describing the acquisition channel for the new customer.
