@@ -16,12 +16,7 @@ import plotly.graph_objects
 
 from nannyml._typing import Key, Metric, Result, Self
 from nannyml.chunk import Chunker, ChunkerFactory
-from nannyml.exceptions import (
-    CalculatorException,
-    EstimatorException,
-    InvalidArgumentsException,
-    NannyMLException,
-)
+from nannyml.exceptions import CalculatorException, EstimatorException, InvalidArgumentsException, NannyMLException
 
 MetricLike = TypeVar('MetricLike', bound=Metric)
 

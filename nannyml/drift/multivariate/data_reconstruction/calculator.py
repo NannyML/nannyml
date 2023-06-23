@@ -82,22 +82,23 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
 
         Examples:
-            >>> import nannyml as nml
-            >>> reference = nml.load_synthetic_binary_classification_dataset()[0]
-            >>> analysis = nml.load_synthetic_binary_classification_dataset()[1]
-            >>> column_names = [
-            ...     col for col in reference.columns if col not in [
-            ...         'timestamp', 'y_pred_proba', 'period', 'y_pred', 'work_home_actual', 'identifier'
-            ...     ]]
-            >>> calc = nml.DataReconstructionDriftCalculator(
-            ...     column_names=column_names,
-            ...     timestamp_column_name='timestamp',
-            ...     chunk_size=5000
-            >>> )
-            >>> calc.fit(reference)
-            >>> results = calc.calculate(analysis)
-            >>> figure = results.plot(plot_reference=True)
-            >>> figure.show()
+        >>> import nannyml as nml
+        >>> # Load synthetic data
+        >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
+        >>> non_feature_columns = ['timestamp', 'y_pred_proba', 'y_pred', 'repaid']
+        >>> feature_column_names = [
+        ...     col for col in reference.columns
+        ...     if col not in non_feature_columns
+        >>> ]
+        >>> calc = nml.DataReconstructionDriftCalculator(
+        ...     column_names=feature_column_names,
+        ...     timestamp_column_name='timestamp',
+        ...     chunk_size=5000
+        >>> )
+        >>> calc.fit(reference)
+        >>> results = calc.calculate(analysis)
+        >>> figure = results.plot()
+        >>> figure.show()
         """
         super(DataReconstructionDriftCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

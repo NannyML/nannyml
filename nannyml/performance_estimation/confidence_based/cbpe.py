@@ -185,18 +185,22 @@ class CBPE(AbstractEstimator):
         Using CBPE to estimate the perfomance of a model for a binary classification problem.
 
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
+        >>> from IPython.display import display
+        >>> reference_df = nml.load_synthetic_car_loan_dataset()[0]
+        >>> analysis_df = nml.load_synthetic_car_loan_dataset()[1]
+        >>> display(reference_df.head(3))
         >>> estimator = nml.CBPE(
         ...     y_pred_proba='y_pred_proba',
         ...     y_pred='y_pred',
-        ...     y_true='work_home_actual',
+        ...     y_true='repaid',
         ...     timestamp_column_name='timestamp',
-        ...     metrics=['roc_auc', 'f1'],
+        ...     metrics=['roc_auc', 'accuracy', 'f1'],
         ...     chunk_size=5000,
         ...     problem_type='classification_binary',
         >>> )
         >>> estimator.fit(reference_df)
         >>> results = estimator.estimate(analysis_df)
+        >>> display(results.filter(period='analysis').to_df())
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
 

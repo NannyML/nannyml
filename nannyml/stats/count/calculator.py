@@ -79,12 +79,10 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         self.upper_threshold_value_limit: float = np.nan
         self.simple_stats_metric = 'rows_count'
 
-
     def _calculate_count_value_stats(self, data: pd.DataFrame):
         # count vs shape have slightly different behaviors!
         # count ignores rows with missing values, infringing a bit on missing values calc so shape
         return data.shape[0]
-
 
     @log_usage(UsageEvent.STATS_COUNT_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
@@ -92,9 +90,9 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        reference_chunk_results = np.asarray([
-            self._calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)
-        ])
+        reference_chunk_results = np.asarray(
+            [self._calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)]
+        )
         self._lower_alert_threshold, self._upper_alert_threshold = calculate_threshold_values(
             threshold=self.threshold,
             data=reference_chunk_results,
@@ -177,4 +175,3 @@ def _create_multilevel_index(
     count_tuples = [(column0, el) for el in ['value', 'upper_threshold', 'lower_threshold', 'alert']]
     tuples = chunk_tuples + count_tuples
     return MultiIndex.from_tuples(tuples)
-

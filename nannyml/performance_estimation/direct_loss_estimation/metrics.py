@@ -115,8 +115,8 @@ class Metric(abc.ABC):
         threshold: Threshold,
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         upper_value_limit: Optional[float], default=None,
-            An optional value that serves as a limit for the lower threshold value. Any calculated lower threshold
-            values that end up below this limit will be replaced by this limit value.
+            An optional value that serves as a limit for the upper threshold value. Any calculated upper threshold
+            values that end up above this limit will be replaced by this limit value.
             The limit is often a theoretical constraint enforced by a specific drift detection method or performance
             metric.
         lower_value_limit: Optional[float], default=0.0,

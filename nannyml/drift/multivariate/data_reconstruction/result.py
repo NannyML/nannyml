@@ -85,30 +85,22 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_binary_classification_dataset()
-        >>>
-        >>> column_names = [col for col in reference_df.columns
-        >>>                 if col not in ['y_pred', 'y_pred_proba', 'work_home_actual', 'timestamp']]
+        >>> # Load synthetic data
+        >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
+        >>> non_feature_columns = ['timestamp', 'y_pred_proba', 'y_pred', 'repaid']
+        >>> feature_column_names = [
+        ...     col for col in reference.columns
+        ...     if col not in non_feature_columns
+        >>> ]
         >>> calc = nml.DataReconstructionDriftCalculator(
-        >>>     column_names=column_names,
-        >>>     timestamp_column_name='timestamp'
+        ...     column_names=feature_column_names,
+        ...     timestamp_column_name='timestamp',
+        ...     chunk_size=5000
         >>> )
-        >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
-        >>> print(results.to_df())  # access the data as a pd.DataFrame
-                             key  start_index  ...  upper_threshold alert
-        0       [0:4999]            0  ...         1.511762  True
-        1    [5000:9999]         5000  ...         1.511762  True
-        2  [10000:14999]        10000  ...         1.511762  True
-        3  [15000:19999]        15000  ...         1.511762  True
-        4  [20000:24999]        20000  ...         1.511762  True
-        5  [25000:29999]        25000  ...         1.511762  True
-        6  [30000:34999]        30000  ...         1.511762  True
-        7  [35000:39999]        35000  ...         1.511762  True
-        8  [40000:44999]        40000  ...         1.511762  True
-        9  [45000:49999]        45000  ...         1.511762  True
-        >>> fig = results.plot(plot_reference=True)
-        >>> fig.show()
+        >>> calc.fit(reference)
+        >>> results = calc.calculate(analysis)
+        >>> figure = results.plot()
+        >>> figure.show()
         """
         if kind == 'drift':
             return plot_metric(

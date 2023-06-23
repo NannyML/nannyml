@@ -61,15 +61,15 @@ We need to instantiate it with appropriate parameters:
     :path: ./example_notebooks/Tutorial - Unseen Values.ipynb
     :cells: 3
 
-Next, the :meth:`~nannyml.data_quality.unseen.calculator.UnseenValuesCalculator.fit` method needs
+Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs
 to be called on the reference data, which provides the baseline that the analysis data will be
 compared with for :term:`alert<Alert>` generation. Then the
-:meth:`~nannyml.data_quality.unseen.calculator.UnseenValuesCalculator.calculate` method will
+:meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the data quality results on the data provided to it.
 
 The results can be filtered to only include a certain data period, method or column by using the ``filter`` method.
 You can evaluate the result data by converting the results into a `DataFrame`,
-by calling the :meth:`~nannyml.data_quality.unseen.result.Result.to_df` method.
+by calling the :meth:`~nannyml.base.AbstractResult.to_df` method.
 By default this will return a `DataFrame` with a multi-level index. The first level represents the column, the second level
 represents resulting information such as the data quality metric values and the alert thresholds.
 
