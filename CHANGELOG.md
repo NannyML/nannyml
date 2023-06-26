@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2023-06-26
+
+### Changed
+
+- Updated API docs for the `nannyml.io` package, thanks [@maciejbalawejder](https://github.com/maciejbalawejder) [(#286)](https://github.com/NannyML/nannyml/issues/286)
+- Restricted versions of `numpy` to be `<1.25`, since there seems to be a change in the `roc_auc` calculation somehow [(#301)](https://github.com/NannyML/nannyml/issues/301)
+
+### Added
+
+- Support for Data Quality calculators in the CLI runner
+- Support for Data Quality results in `Ranker` implementations [(#297)](https://github.com/NannyML/nannyml/issues/297)
+- Support `mendable` in the docs [(#295)](https://github.com/NannyML/nannyml/issues/295)
+- Documentation landing page [(#303)](https://github.com/NannyML/nannyml/issues/303)
+- Support for calculations with delayed targets [(#306)](https://github.com/NannyML/nannyml/issues/306)
+
+### Fixed
+
+- Small changes to quickstart, thanks [@NeoKish](https://github.com/NeoKish) [(#291)](https://github.com/NannyML/nannyml/issues/291)
+- Fix an issue passing `*args` and `**kwargs` in `Result.filter()` and subclasses [(#298)](https://github.com/NannyML/nannyml/issues/298)
+- Double listing of the binary dataset documentation page
+- Add missing thresholds to `roc_auc` in `CBPE` [(#294)](https://github.com/NannyML/nannyml/issues/294)
+- Fix plotting issue due to introduction of additional values in the 'display names tuple' [(#305)](https://github.com/NannyML/nannyml/issues/305)
+- Fix broken exception handling due to inheriting from `BaseException` and not `Exception` [(#307)](https://github.com/NannyML/nannyml/issues/307)
+
 ## [0.8.6] - 2023-05-24
 
 ### Changed
