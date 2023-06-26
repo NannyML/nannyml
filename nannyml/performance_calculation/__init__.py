@@ -2,7 +2,13 @@
 #
 #  License: Apache Software License 2.0
 
-"""Module containing the performance calculation implementation."""
+"""Module containing the performance calculation implementation.
+
+For more information, check out the `tutorials`_.
+
+.. _tutorials:
+    https://nannyml.readthedocs.io/en/stable/tutorials/performance_calculation.html
+"""
 
 SUPPORTED_CLASSIFICATION_METRIC_VALUES = [
     'roc_auc',

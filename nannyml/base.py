@@ -16,13 +16,7 @@ import plotly.graph_objects
 
 from nannyml._typing import Key, Metric, Result, Self
 from nannyml.chunk import Chunker, ChunkerFactory
-from nannyml.exceptions import (
-    CalculatorException,
-    CalculatorNotFittedException,
-    EstimatorException,
-    InvalidArgumentsException,
-    InvalidReferenceDataException,
-)
+from nannyml.exceptions import CalculatorException, EstimatorException, InvalidArgumentsException, NannyMLException
 
 MetricLike = TypeVar('MetricLike', bound=Metric)
 
@@ -88,6 +82,8 @@ class AbstractResult(ABC):
             metrics = [metrics]
         try:
             return self._filter(period, metrics, *args, **kwargs)
+        except NannyMLException:
+            raise
         except Exception as exc:
             raise CalculatorException(f"could not read result data: {exc}")
 
@@ -124,10 +120,9 @@ class AbstractResult(ABC):
         return self.data.get(key.properties + (property_name,), default=None)
 
 
-class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
-    def __init__(self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], *args, **kwargs):
+class Abstract1DResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
         super().__init__(results_data)
-        self.metrics = metrics
 
     @property
     def chunk_keys(self) -> pd.Series:
@@ -142,6 +137,14 @@ class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
         return self.data[('chunk', 'end_date')]
 
     @property
+    def chunk_start_indices(self) -> pd.Series:
+        return self.data[('chunk', 'start_index')]
+
+    @property
+    def chunk_end_indices(self) -> pd.Series:
+        return self.data[('chunk', 'end_index')]
+
+    @property
     def chunk_indices(self) -> pd.Series:
         return self.data[('chunk', 'chunk_index')]
 
@@ -149,29 +152,81 @@ class Abstract1DResult(AbstractResult, ABC, Generic[MetricLike]):
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'period')]
 
+    @property
+    def chunk_start_index(self) -> pd.Series:
+        return self.data[('chunk', 'start_index')]
+
+    def _filter(self, period: str, *args, **kwargs) -> Self:
+        data = self.data
+        if period != 'all':
+            data = self.data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+            data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+        return res
+
+
+class PerMetricResult(Abstract1DResult, ABC, Generic[MetricLike]):
+    def __init__(self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], *args, **kwargs):
+        super().__init__(results_data)
+        self.metrics = metrics
+
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (metrics,)]], axis=1)
-        if period != 'all':
-            data = data.loc[self.data.loc[:, ('chunk', 'period')] == period, :]
+        res = super()._filter(period, *args, **kwargs)
 
+        data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (metrics,)]], axis=1)
         data = data.reset_index(drop=True)
 
-        res = copy.deepcopy(self)
         res.data = data
         res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+
         return res
 
 
-class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
-    def __init__(
-        self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], column_names: List[str] = [], *args, **kwargs
-    ):
+class PerColumnResult(Abstract1DResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, column_names: Union[str, List[str]] = [], *args, **kwargs):
         super().__init__(results_data)
-        self.metrics = metrics
-        self.column_names = column_names
+        if isinstance(column_names, str):
+            self.column_names = [column_names]
+        elif isinstance(column_names, list):
+            self.column_names = column_names
+        else:
+            raise TypeError("column_names should be either a column name string or a list of strings.")
+
+    def _filter(
+        self,
+        period: str,
+        metrics: Optional[List[str]] = None,
+        column_names: Optional[Union[str, List[str]]] = None,
+        *args,
+        **kwargs,
+    ) -> Self:
+        if isinstance(column_names, str):
+            column_names = [column_names]
+        elif isinstance(column_names, list):
+            pass
+        elif column_names is None:
+            column_names = self.column_names
+        else:
+            raise TypeError("column_names should be either a column name string or a list of strings.")
+
+        res = super()._filter(period, *args, **kwargs)
+
+        data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (column_names,)]], axis=1)
+        data = data.reset_index(drop=True)
+
+        res.data = data
+        res.column_names = [c for c in self.column_names if c in column_names]
+        return res
+
+
+class Abstract2DResult(AbstractResult, ABC):
+    def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
+        super().__init__(results_data)
 
     @property
     def chunk_keys(self) -> pd.Series:
@@ -186,12 +241,49 @@ class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
         return self.data[('chunk', 'chunk', 'end_date')]
 
     @property
+    def chunk_start_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'start_index')]
+
+    @property
+    def chunk_end_indices(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'end_index')]
+
+    @property
     def chunk_indices(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'chunk_index')]
 
     @property
     def chunk_periods(self) -> pd.Series:
         return self.data[('chunk', 'chunk', 'period')]
+
+    @property
+    def chunk_start_index(self) -> pd.Series:
+        return self.data[('chunk', 'chunk', 'start_index')]
+
+    def _filter(
+        self,
+        period: str,
+        *args,
+        **kwargs,
+    ) -> Self:
+        data = self.data
+        if period != 'all':
+            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+            data = data.reset_index(drop=True)
+
+        res = copy.deepcopy(self)
+        res.data = data
+
+        return res
+
+
+class PerMetricPerColumnResult(Abstract2DResult, ABC, Generic[MetricLike]):
+    def __init__(
+        self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], column_names: List[str] = [], *args, **kwargs
+    ):
+        super().__init__(results_data)
+        self.metrics = metrics
+        self.column_names = column_names
 
     def _filter(
         self,
@@ -206,16 +298,15 @@ class Abstract2DResult(AbstractResult, ABC, Generic[MetricLike]):
         if column_names is None:
             column_names = self.column_names
 
-        data = pd.concat([self.data.loc[:, (['chunk'])], self.data.loc[:, (column_names, metrics)]], axis=1)
-        if period != 'all':
-            data = data.loc[self.data.loc[:, ('chunk', 'chunk', 'period')] == period, :]
+        res = super()._filter(period, *args, **kwargs)
 
+        data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (column_names, metrics)]], axis=1)
         data = data.reset_index(drop=True)
 
-        res = copy.deepcopy(self)
         res.data = data
         res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
         res.column_names = [c for c in self.column_names if c in column_names]
+
         return res
 
 
@@ -265,9 +356,7 @@ class AbstractCalculator(ABC):
         try:
             self._logger.debug(f"fitting {str(self)}")
             return self._fit(reference_data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except InvalidReferenceDataException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
@@ -278,9 +367,7 @@ class AbstractCalculator(ABC):
             self._logger.debug(f"calculating {str(self)}")
             data = data.copy()
             return self._calculate(data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except CalculatorNotFittedException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")
@@ -346,6 +433,8 @@ class AbstractEstimatorResult(ABC):
             metrics = [metrics]
         try:
             return self._filter(period, metrics, *args, **kwargs)
+        except NannyMLException:
+            raise
         except Exception as exc:
             raise EstimatorException(f"could not read result data: {exc}")
 
@@ -407,9 +496,7 @@ class AbstractEstimator(ABC):
             self._logger.info(f"fitting {str(self)}")
             reference_data = reference_data.copy()
             return self._fit(reference_data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except InvalidReferenceDataException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
@@ -420,9 +507,7 @@ class AbstractEstimator(ABC):
             self._logger.info(f"estimating {str(self)}")
             data = data.copy()
             return self._estimate(data, *args, **kwargs)
-        except InvalidArgumentsException:
-            raise
-        except CalculatorNotFittedException:
+        except NannyMLException:
             raise
         except Exception as exc:
             raise CalculatorException(f"failed while calculating {str(self)}.\n{exc}")

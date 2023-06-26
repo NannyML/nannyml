@@ -54,6 +54,14 @@ class Result(Protocol):
         ...
 
     @property
+    def chunk_start_indices(self) -> pd.Series:
+        ...
+
+    @property
+    def chunk_end_indices(self) -> pd.Series:
+        ...
+
+    @property
     def chunk_indices(self) -> pd.Series:
         ...
 

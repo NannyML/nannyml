@@ -5,27 +5,31 @@
 """Custom exceptions."""
 
 
-class InvalidArgumentsException(BaseException):
+class NannyMLException(Exception):
+    """Base class for all NannyML exceptions."""
+
+
+class InvalidArgumentsException(NannyMLException):
     """An exception indicating that the inputs for a function are invalid."""
 
 
-class ChunkerException(BaseException):
+class ChunkerException(NannyMLException):
     """An exception indicating an error occurred somewhere during chunking."""
 
 
-class MissingMetadataException(BaseException):
+class MissingMetadataException(NannyMLException):
     """An exception indicating metadata columns are missing from the dataframe being processed."""
 
 
-class InvalidReferenceDataException(BaseException):
+class InvalidReferenceDataException(NannyMLException):
     """An exception indicating the reference data provided are invalid."""
 
 
-class CalculatorException(BaseException):
+class CalculatorException(NannyMLException):
     """An exception indicating an error occurred during calculation."""
 
 
-class EstimatorException(BaseException):
+class EstimatorException(NannyMLException):
     """An exception indicating an error occurred during estimation."""
 
 
@@ -33,33 +37,33 @@ class CalculatorNotFittedException(CalculatorException):
     """An exception indicating a calculator was not fitted before using it in calculations."""
 
 
-class NotFittedException(BaseException):
+class NotFittedException(NannyMLException):
     """An exception indicating an object was not fitted before using it."""
 
 
-class WriterException(BaseException):
+class WriterException(NannyMLException):
     """An exception indicating something went wrong whilst trying to write out results."""
 
 
-class ReaderException(BaseException):
+class ReaderException(NannyMLException):
     """An exception indicating something went wrong whilst trying to read out data."""
 
 
-class IOException(BaseException):
+class IOException(NannyMLException):
     """An exception indicating something went wrong during IO."""
 
 
-class StoreException(BaseException):
+class StoreException(NannyMLException):
     """An exception indicating something went wrong whilst using a store."""
 
 
-class SerializeException(BaseException):
+class SerializeException(NannyMLException):
     """An exception occurring when serialization some object went wrong."""
 
 
-class DeserializeException(BaseException):
+class DeserializeException(NannyMLException):
     """An exception occurring when deserialization some object went wrong."""
 
 
-class ThresholdException(BaseException):
+class ThresholdException(NannyMLException):
     """An exception occurring during threshold creation or calculation."""

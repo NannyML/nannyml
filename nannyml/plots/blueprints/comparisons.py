@@ -614,7 +614,7 @@ def render_display_name(metric_display_name: Union[str, Tuple]):
     if not isinstance(metric_display_name, str):
         if len(metric_display_name) == 1:
             return f'<b>{metric_display_name[0]}</b>'
-        elif len(metric_display_name) == 2:
+        elif len(metric_display_name) >= 2:
             return f'<b>{metric_display_name[1]}</b> ({metric_display_name[0]})'
         else:
             return ', '.join(metric_display_name)
@@ -626,7 +626,7 @@ def render_metric_display_name(metric_display_name: Union[str, Tuple]):
     if not isinstance(metric_display_name, str):
         if len(metric_display_name) == 1:
             return f'<b>{metric_display_name[0]}</b>'
-        elif len(metric_display_name) == 2:
+        elif len(metric_display_name) >= 2:
             return f'<b>{metric_display_name[1]}</b>'
     else:
         return f'<b>{metric_display_name}</b>'
@@ -639,11 +639,17 @@ class ResultCompareMixin:
         )
 
     def _get_title(self, other: Result):
+        from nannyml.data_quality.missing.result import Result as MissingValueResult
+        from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
         from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
         from nannyml.drift.univariate import Result as UnivariateDriftResult
         from nannyml.performance_calculation import Result as RealizedPerformanceResult
         from nannyml.performance_estimation.confidence_based import Result as CBPEResult
         from nannyml.performance_estimation.direct_loss_estimation import Result as DLEResult
+        from nannyml.stats.avg.result import Result as StatsAvgResult
+        from nannyml.stats.count import Result as StatsCountResult
+        from nannyml.stats.std import Result as StatsStdResult
+        from nannyml.stats.sum import Result as StatsSumResult
 
         _result_title_names: Dict[type, Any] = {
             UnivariateDriftResult: "Univariate drift",
@@ -651,6 +657,12 @@ class ResultCompareMixin:
             RealizedPerformanceResult: "Realized performance",
             CBPEResult: "Estimated performance (CBPE)",
             DLEResult: "Estimated performance (DLE)",
+            MissingValueResult: "Missing Values",
+            UnseenValuesResult: "Unseen Values",
+            StatsAvgResult: "Statistics, Average",
+            StatsCountResult: "Statistics, Count",
+            StatsStdResult: "Statistics, Standard Deviation",
+            StatsSumResult: "Statistics, Sum",
         }
 
         return f"<b>{_result_title_names[type(self)]}</b> vs. <b>{_result_title_names[type(other)]}</b>"

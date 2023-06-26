@@ -5,499 +5,271 @@
 """Used as an access point to start using NannyML in its most simple form."""
 
 import logging
-import sys
-from pathlib import Path
-from typing import Any, Dict, Optional
+from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import pandas as pd
 from rich.console import Console
-from rich.progress import Progress
 
-from nannyml._typing import ProblemType
-from nannyml.chunk import Chunker
+from nannyml._typing import Result
+from nannyml.config import Config, InputDataConfig, StoreConfig, WriterConfig
+from nannyml.data_quality.missing import MissingValuesCalculator
+from nannyml.data_quality.unseen import UnseenValuesCalculator
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.io.base import Writer
-from nannyml.io.raw_files_writer import RawFilesWriter
+from nannyml.io import FileReader, FilesystemStore, Writer, WriterFactory
 from nannyml.io.store import Store
-from nannyml.performance_calculation import (
-    SUPPORTED_CLASSIFICATION_METRIC_VALUES,
-    SUPPORTED_REGRESSION_METRIC_VALUES,
-    PerformanceCalculator,
-)
+from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
-from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES as CBPE_SUPPORTED_METRICS
 from nannyml.performance_estimation.direct_loss_estimation import DLE
-from nannyml.performance_estimation.direct_loss_estimation import SUPPORTED_METRIC_VALUES as DLE_SUPPORTED_METRICS
 
+
+@dataclass
+class RunContext:
+    STEPS_PER_CALCULATOR = 3
+
+    current_step: int
+    total_steps: int
+    current_calculator: str
+    current_calculator_config: Optional[Dict[str, Any]] = None
+    current_calculator_success: bool = True
+    run_success: bool = True
+    result: Optional[Result] = None
+
+    def increase_step(self):
+        self.current_step += 1
+
+
+@dataclass
+class RunInput:
+    reference_data: pd.DataFrame
+    analysis_data: pd.DataFrame
+    target_data: Optional[pd.DataFrame] = None
+    target_join_column: Optional[str] = None
+
+
+@contextmanager
+def run_context(config: Config):
+    yield RunContext(
+        current_step=0,
+        total_steps=len([c for c in config.calculators if c.enabled]) * RunContext.STEPS_PER_CALCULATOR,
+        current_calculator='',
+    )
+
+
+_registry: Dict[str, Type] = {
+    'univariate_drift': UnivariateDriftCalculator,
+    'multivariate_drift': DataReconstructionDriftCalculator,
+    'performance': PerformanceCalculator,
+    'cbpe': CBPE,
+    'dle': DLE,
+    'missing_values': MissingValuesCalculator,
+    'unseen_values': UnseenValuesCalculator,
+}
 _logger = logging.getLogger(__name__)
 
 
-def run(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    store: Optional[Store] = None,
-    ignore_errors: bool = True,
-    run_in_console: bool = False,
-):
-    with Progress() as progress:
-        _run_statistical_univariate_feature_drift_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
+class RunnerLogger:
+    def __init__(self, logger: logging.Logger, console: Optional[Console] = None):
+        self.logger = logger
+        self.console = console
 
-        _run_data_reconstruction_multivariate_feature_drift_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
+    def log(self, message: object, log_level: int = logging.INFO):
+        if self.logger:
+            self.logger.log(level=log_level, msg=message)
 
-        _run_realized_performance_calculator(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
-
-        _run_cbpe_performance_estimation(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
-
-        _run_dle_performance_estimation(
-            reference_data,
-            analysis_data,
-            column_mapping,
-            problem_type,
-            chunker,
-            writer,
-            store,
-            ignore_errors,
-            console=progress.console,
-        )
-
-        progress.console.line(2)
-        if isinstance(writer, RawFilesWriter):
-            progress.console.rule()
-            progress.console.log(f"view results in {Path(writer.filepath)}")
+        if self.console and log_level == logging.INFO:
+            self.console.log(message)
 
 
-def _run_statistical_univariate_feature_drift_calculator(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    store: Optional[Store],
-    ignore_errors: bool,
+def run(  # noqa: C901
+    config: Config,
+    input: Optional[RunInput] = None,
+    logger: logging.Logger = logging.getLogger(__name__),
     console: Optional[Console] = None,
+    on_fit: Optional[Callable[[RunContext], Any]] = None,
+    on_calculate: Optional[Callable[[RunContext], Any]] = None,
+    on_write: Optional[Callable[[RunContext], Any]] = None,
+    on_calculator_complete: Optional[Callable[[RunContext], Any]] = None,
+    on_run_complete: Optional[Callable[[RunContext], Any]] = None,
+    on_fail: Optional[Callable[[RunContext, Optional[Exception]], Any]] = None,
 ):
-    if console:
-        console.rule('[cyan]UnivariateStatisticalDriftCalculator[/]')
+    run_logger = RunnerLogger(logger, console)
     try:
-        calc: Optional[UnivariateDriftCalculator] = None  # calculator to load or create
-        calc_path = 'univariate_drift/calculator.pkl'  # the path to load or store the calculator in the store
+        with run_context(config) as context:
+            if input is not None:
+                if config.input is not None:
+                    raise InvalidArgumentsException("Both config.input and input provided. Please provide only one")
 
-        if store:  # we have a store defined, let's try to load the fitted calculator from there
-            if console:
-                console.log('loading calculator from store')
-            calc = store.load(path=calc_path, as_type=UnivariateDriftCalculator)
+                reference_data = input.reference_data
+                analysis_data = input.analysis_data
+                if input.target_data is not None:
+                    analysis_data = _add_targets_to_analysis_data(
+                        analysis_data, input.target_data, input.target_join_column
+                    )
+            elif config.input is not None:
+                run_logger.log("reading reference data", log_level=logging.DEBUG)
+                reference_data = read_data(config.input.reference_data, run_logger)
 
-        if not calc:  # no store or no fitted calculator was in the store
-            if console:
-                console.log('no fitted calculator found in store')
-                console.log('fitting new calculator on reference data')
-            if problem_type == ProblemType.CLASSIFICATION_BINARY:
-                y_pred_proba_column_names = [column_mapping['y_pred_proba']]
-            elif problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
-                y_pred_proba_column_names = list(column_mapping['y_pred_proba'].values())
+                # read analysis data
+                run_logger.log("reading analysis data", log_level=logging.DEBUG)
+                analysis_data = read_data(config.input.analysis_data, run_logger)
+
+                if config.input.target_data:
+                    run_logger.log("reading target data", log_level=logging.DEBUG)
+                    target_data = read_data(config.input.target_data, run_logger)
+                    analysis_data = _add_targets_to_analysis_data(
+                        analysis_data, target_data, config.input.target_data.join_column
+                    )
             else:
-                y_pred_proba_column_names = []
+                raise InvalidArgumentsException("no input data provided")
 
-            calc = UnivariateDriftCalculator(
-                column_names=(column_mapping['features'] + [column_mapping['y_pred']] + y_pred_proba_column_names),
-                timestamp_column_name=column_mapping.get('timestamp', None),
-                chunker=chunker,
-                categorical_methods=['chi2', 'jensen_shannon', 'l_infinity'],
-                continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
-            )
-            calc.fit(reference_data)
+            for calculator_config in config.calculators:
+                try:
+                    context.current_calculator_config = calculator_config.dict()
+                    context.current_calculator = calculator_config.name or calculator_config.type
 
-            if store:
-                store.store(calc, path=calc_path)
-                if console:
-                    console.log('storing fitted calculator to store')
+                    if not calculator_config.enabled:
+                        continue
 
-        # raise RuntimeError("🔥 something's not right there... 🔥")
+                    writers = get_output_writers(calculator_config.outputs, run_logger)
 
-        if console:
-            console.log('calculating on analysis data')
-        results = calc.calculate(analysis_data)
+                    store = get_store(calculator_config.store, run_logger)
 
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            plots = {f'{kind}': results.plot(kind=kind) for kind in ['drift', 'distribution']}
+                    if calculator_config.type not in _registry:
+                        raise InvalidArgumentsException(f"unknown calculator type '{calculator_config.type}'")
+
+                    # first step: load or (create + fit) calculator
+                    context.increase_step()
+                    calc_cls = _registry[calculator_config.type]
+                    if store and calculator_config.store:
+                        run_logger.log(
+                            f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                            f"loading calculator from store"
+                        )
+                        calc = store.load(filename=calculator_config.store.filename, as_type=calc_cls)
+                        if calc is None:
+                            run_logger.log(
+                                f"calculator '{context.current_calculator}' not found in store. "
+                                f"Creating, fitting and storing new instance",
+                                log_level=logging.DEBUG,
+                            )
+                            calc = calc_cls(**calculator_config.params)
+                            if on_fit:
+                                on_fit(context)
+                            calc.fit(reference_data)
+                            store.store(obj=calc, filename=calculator_config.store.filename)
+                    else:
+                        run_logger.log(
+                            f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                            f"creating and fitting calculator"
+                        )
+                        calc = calc_cls(**calculator_config.params)
+                        if on_fit:
+                            on_fit(context)
+                        calc.fit(reference_data)
+
+                    # second step: perform calculations
+                    context.increase_step()
+                    run_logger.log(
+                        f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                        f"running calculator"
+                    )
+                    if on_calculate:
+                        on_calculate(context)
+                    result = (
+                        calc.calculate(analysis_data) if hasattr(calc, 'calculate') else calc.estimate(analysis_data)
+                    )
+                    context.result = result
+
+                    # third step: write results
+                    context.increase_step()
+                    run_logger.log(
+                        f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
+                        f"writing out results"
+                    )
+                    if on_write:
+                        on_write(context)
+
+                    for writer, write_args in writers:
+                        run_logger.log(f"writing results with {writer} and args {write_args}", log_level=logging.DEBUG)
+                        writer.write(result, **write_args)
+
+                    if on_calculator_complete:
+                        on_calculator_complete(context)
+                except Exception as exc:
+                    context.current_calculator_success = False
+                    context.run_success = False
+                    if on_fail:
+                        on_fail(context, exc)
+                    run_logger.log(f"an unexpected exception occurred running '{calculator_config.type}': {exc}")
+
+            if on_run_complete:
+                on_run_complete(context)
+
     except Exception as exc:
-        msg = f"Failed to run statistical univariate feature drift calculator: {exc}"
-        if console:
-            console.log(msg, style='red')
-        else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
+        context.current_calculator = None
+        context.current_calculator_config = None
+        context.run_success = False
+        if on_fail:
+            on_fail(context, exc)
 
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='statistical_univariate_feature_drift')
+        raise exc
 
 
-def _run_data_reconstruction_multivariate_feature_drift_calculator(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    chunker: Chunker,
-    writer: Writer,
-    store: Optional[Store],
-    ignore_errors: bool,
-    console: Optional[Console] = None,
-):
-    if console:
-        console.rule('[cyan]DataReconstructionDriftCalculator[/]')
-    try:
-        calc: Optional[DataReconstructionDriftCalculator] = None  # calculator to load or create
-        calc_path = 'data_reconstruction/calculator.pkl'  # the path to load or store the calculator in the store
-
-        if store:  # we have a store defined, let's try to load the fitted calculator from there
-            if console:
-                console.log('loading calculator from store')
-            calc = store.load(path=calc_path, as_type=DataReconstructionDriftCalculator)
-
-        if not calc:  # no store or no fitted calculator was in the store
-            if console:
-                console.log('no fitted calculator found in store')
-                console.log('fitting new calculator on reference data')
-            calc = DataReconstructionDriftCalculator(
-                column_names=column_mapping['features'],
-                timestamp_column_name=column_mapping.get('timestamp', None),
-                chunker=chunker,
-            )
-            calc.fit(reference_data)
-            if store:
-                store.store(calc, path=calc_path)
-                if console:
-                    console.log('storing fitted calculator to store')
-
-        if console:
-            console.log('calculating on analysis data')
-        results = calc.calculate(analysis_data)
-
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            plots = {f'{kind}': results.plot(kind='drift') for kind in ['drift']}
-    except Exception as exc:
-        msg = f"Failed to run data reconstruction multivariate feature drift calculator: {exc}"
-        if console:
-            console.log(msg, style='red')
-        else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
-
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='data_reconstruction_multivariate_feature_drift')
+def read_data(input_config: InputDataConfig, logger: Optional[RunnerLogger] = None) -> pd.DataFrame:
+    data = FileReader(
+        filepath=input_config.path, credentials=input_config.credentials, read_args=input_config.read_args
+    ).read()
+    if logger:
+        logger.log(f"read {data.size} rows from {input_config.path}")
+    return data
 
 
-def _run_realized_performance_calculator(  # noqa: C901
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    store: Optional[Store],
-    ignore_errors: bool,
-    console: Optional[Console] = None,
-):
-    if console:
-        console.rule('[cyan]PerformanceCalculator[/]')
+def get_output_writers(
+    outputs_config: Optional[List[WriterConfig]], logger: Optional[RunnerLogger] = None
+) -> List[Tuple[Writer, Dict[str, Any]]]:
+    if not outputs_config:
+        return []
 
-    if column_mapping['y_true'] not in analysis_data.columns:
-        _logger.info(
-            f"target values column '{column_mapping['y_true']}' not present in analysis data. "
-            "Skipping realized performance calculation."
+    writers: List[Tuple[Writer, Dict[str, Any]]] = []
+
+    for writer_config in outputs_config:
+        writer = WriterFactory.create(writer_config.type, writer_config.params)
+        writers.append((writer, writer_config.write_args or {}))
+
+    return writers
+
+
+def get_store(store_config: Optional[StoreConfig], logger: Optional[RunnerLogger] = None) -> Optional[Store]:
+    if store_config:
+        if logger:
+            logger.log(f"using file system store with path '{store_config.path}'", log_level=logging.DEBUG)
+        store = FilesystemStore(
+            root_path=store_config.path,
+            credentials=store_config.credentials or {},
         )
-        if console:
-            console.log(
-                f"target values column '{column_mapping['y_true']}' not present in analysis data. "
-                "Skipping realized performance calculation.",
-                style='yellow',
-            )
-        return
-    try:
-        calc: Optional[PerformanceCalculator] = None  # calculator to load or create
-        calc_path = 'realized_performance/calculator.pkl'  # the path to load or store the calculator in the store
+        return store
 
-        if store:  # we have a store defined, let's try to load the fitted calculator from there
-            if console:
-                console.log('loading calculator from store')
-            calc = store.load(path=calc_path, as_type=PerformanceCalculator)
+    return None
 
-        if not calc:  # no store or no fitted calculator was in the store
-            if problem_type in [ProblemType.CLASSIFICATION_BINARY]:
-                # requires a non-default parameter 'business_value_matrix'
-                metrics = [
-                    metric for metric in SUPPORTED_CLASSIFICATION_METRIC_VALUES if metric not in ['business_value']
-                ]
-            elif problem_type in [ProblemType.CLASSIFICATION_MULTICLASS]:
-                metrics = [
-                    metric
-                    for metric in SUPPORTED_CLASSIFICATION_METRIC_VALUES
-                    if metric not in ['business_value', 'confusion_matrix']
-                ]
-            elif problem_type in [ProblemType.REGRESSION]:
-                metrics = SUPPORTED_REGRESSION_METRIC_VALUES
-            else:
-                raise InvalidArgumentsException(f"unsupported problem type '{problem_type}'")
 
-            if console:
-                console.log('no fitted calculator found in store')
-                console.log('fitting new calculator on reference data')
-            calc = PerformanceCalculator(
-                y_true=column_mapping['y_true'],
-                y_pred=column_mapping['y_pred'],
-                y_pred_proba=column_mapping.get('y_pred_proba', None),
-                timestamp_column_name=column_mapping.get('timestamp', None),
-                chunker=chunker,
-                metrics=metrics,
-                problem_type=problem_type,
-            )
-            calc.fit(reference_data)
-            if store:
-                store.store(calc, path=calc_path)
-                if console:
-                    console.log('storing fitted calculator to store')
-
-        if console:
-            console.log('calculating on analysis data')
-        results = calc.calculate(analysis_data)
-
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            plots = {f'{kind}': results.plot(kind) for kind in ['performance']}
-    except Exception as exc:
-        msg = f"Failed to run realized performance calculator: {exc}"
-        if console:
-            console.log(msg, style='red')
+def _get_ignore_errors(ignore_errors: bool, config: Config) -> bool:
+    if ignore_errors is None:
+        if config.ignore_errors is None:
+            return False
         else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
-
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='realized_performance')
+            return config.ignore_errors
+    else:
+        return ignore_errors
 
 
-def _run_cbpe_performance_estimation(  # noqa: C901
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    store: Optional[Store],
-    ignore_errors: bool,
-    console: Optional[Console] = None,
-):
-    if console:
-        console.rule('[cyan]Confidence Base Performance Estimator[/]')
-
-    if problem_type not in [ProblemType.CLASSIFICATION_BINARY, ProblemType.CLASSIFICATION_MULTICLASS]:
-        _logger.info(f"CBPE does not support '{problem_type.name}' problems. Skipping CBPE estimation.")
-        if console:
-            console.log(
-                f"CBPE does not support '{problem_type.name}' problems. Skipping CBPE estimation.",
-                style='yellow',
-            )
-        return
-
-    try:
-        estimator: Optional[CBPE] = None  # estimator to load or create
-        estimator_path = 'cbpe/estimator.pkl'  # the path to load or store the estimator in the store
-
-        if store:  # we have a store defined, let's try to load the fitted calculator from there
-            if console:
-                console.log('loading estimator from store')
-            estimator = store.load(path=estimator_path, as_type=CBPE)
-
-        if not estimator:  # no store or no fitted calculator was in the store
-            if problem_type in [ProblemType.CLASSIFICATION_BINARY]:
-                # requires a non-default parameter 'business_value_matrix'
-                metrics = [metric for metric in CBPE_SUPPORTED_METRICS if metric not in ['business_value']]
-            elif problem_type in [ProblemType.CLASSIFICATION_MULTICLASS]:
-                metrics = [
-                    metric for metric in CBPE_SUPPORTED_METRICS if metric not in ['business_value', 'confusion_matrix']
-                ]
-            else:
-                raise InvalidArgumentsException(f"unsupported problem type '{problem_type}'")
-
-            if console:
-                console.log('no fitted estimator found in store')
-                console.log('fitting new estimator on reference data')
-            estimator = CBPE(
-                y_true=column_mapping['y_true'],
-                y_pred=column_mapping['y_pred'],
-                y_pred_proba=column_mapping['y_pred_proba'],
-                timestamp_column_name=column_mapping.get('timestamp', None),
-                problem_type=problem_type,
-                chunker=chunker,
-                metrics=metrics,
-            )
-            estimator.fit(reference_data)
-            if store:
-                store.store(estimator, path=estimator_path)
-                if console:
-                    console.log('storing fitted estimator to store')
-
-        if console:
-            console.log('estimating on analysis data')
-        results = estimator.estimate(analysis_data)
-
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            plots = {f'{kind}': results.plot(kind) for kind in ['performance']}
-
-    except Exception as exc:
-        msg = f"Failed to run CBPE performance estimator: {exc}"
-        if console:
-            console.log(msg, style='red')
-        else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
-
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='confidence_based_performance_estimator')
-
-
-def _run_dle_performance_estimation(
-    reference_data: pd.DataFrame,
-    analysis_data: pd.DataFrame,
-    column_mapping: Dict[str, Any],
-    problem_type: ProblemType,
-    chunker: Chunker,
-    writer: Writer,
-    store: Optional[Store],
-    ignore_errors: bool,
-    console: Optional[Console] = None,
-):
-    if console:
-        console.rule('[cyan]Direct Loss Estimator[/]')
-
-    if problem_type not in [ProblemType.REGRESSION]:
-        _logger.info(f"DLE does not support '{problem_type.name}' problems. Skipping DLE estimation.")
-        if console:
-            console.log(
-                f"DLE does not support '{problem_type.name}' problems. Skipping DLE estimation.",
-                style='yellow',
-            )
-        return
-
-    try:
-        estimator: Optional[DLE] = None  # estimator to load or create
-        estimator_path = 'cbpe/estimator.pkl'  # the path to load or store the estimator in the store
-
-        if store:  # we have a store defined, let's try to load the fitted calculator from there
-            if console:
-                console.log('loading estimator from store')
-            estimator = store.load(path=estimator_path, as_type=DLE)
-
-        if not estimator:  # no store or no fitted calculator was in the store
-            if console:
-                console.log('no fitted estimator found in store')
-                console.log('fitting new estimator on reference data')
-            estimator = DLE(
-                feature_column_names=column_mapping['features'],
-                y_true=column_mapping['y_true'],
-                y_pred=column_mapping['y_pred'],
-                timestamp_column_name=column_mapping.get('timestamp', None),
-                chunker=chunker,
-                metrics=DLE_SUPPORTED_METRICS,
-            )
-            estimator.fit(reference_data)
-            if store:
-                store.store(estimator, path=estimator_path)
-                if console:
-                    console.log('storing fitted estimator to store')
-
-        if console:
-            console.log('estimating on analysis data')
-        results = estimator.estimate(analysis_data)
-
-        plots = {}
-        if isinstance(writer, RawFilesWriter):
-            if console:
-                console.log('generating result plots')
-            plots = {f'{kind}': results.plot(kind) for kind in ['performance']}
-    except Exception as exc:
-        msg = f"Failed to run DLE performance estimator: {exc}"
-        if console:
-            console.log(msg, style='red')
-        else:
-            _logger.error(msg)
-        if ignore_errors:
-            return
-        else:
-            sys.exit(1)
-
-    if console:
-        console.log('writing results')
-    writer.write(result=results, plots=plots, calculator_name='direct_loss_estimator')
+def _add_targets_to_analysis_data(
+    analysis_data: pd.DataFrame, target_data: pd.DataFrame, join_column: Optional[str]
+) -> pd.DataFrame:
+    if join_column is not None:
+        return analysis_data.merge(target_data, on=target_data.join_column)
+    else:
+        return analysis_data.join(target_data)

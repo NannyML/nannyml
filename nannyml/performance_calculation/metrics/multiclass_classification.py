@@ -25,7 +25,7 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 from nannyml._typing import ProblemType, class_labels, model_output_column_names
 from nannyml.base import _list_missing
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
 from nannyml.sampling_error.multiclass_classification import (
     accuracy_sampling_error,
     accuracy_sampling_error_components,
@@ -58,7 +58,23 @@ class MulticlassClassificationAUROC(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new AUROC instance."""
+        """Creates a new AUROC instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='roc_auc',
             y_true=y_true,
@@ -113,6 +129,7 @@ class MulticlassClassificationAUROC(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if y_true.nunique() <= 1:
             return np.nan
         else:
@@ -134,7 +151,23 @@ class MulticlassClassificationF1(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new F1 instance."""
+        """Creates a new F1 instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='f1',
             y_true=y_true,
@@ -183,6 +216,7 @@ class MulticlassClassificationF1(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
@@ -204,7 +238,23 @@ class MulticlassClassificationPrecision(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Precision instance."""
+        """Creates a new Precision instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='precision',
             y_true=y_true,
@@ -253,6 +303,7 @@ class MulticlassClassificationPrecision(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
@@ -274,7 +325,23 @@ class MulticlassClassificationRecall(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Recall instance."""
+        """Creates a new Recall instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='recall',
             y_true=y_true,
@@ -323,6 +390,7 @@ class MulticlassClassificationRecall(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
@@ -344,7 +412,23 @@ class MulticlassClassificationSpecificity(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Specificity instance."""
+        """Creates a new Specificity instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='specificity',
             y_true=y_true,
@@ -393,6 +477,7 @@ class MulticlassClassificationSpecificity(Metric):
                 f"could not calculate metric {self.display_name}: prediction column contains no data"
             )
 
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:
@@ -418,7 +503,23 @@ class MulticlassClassificationAccuracy(Metric):
         y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
         **kwargs,
     ):
-        """Creates a new Accuracy instance."""
+        """Creates a new Accuracy instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
         super().__init__(
             name='accuracy',
             y_true=y_true,
@@ -459,6 +560,7 @@ class MulticlassClassificationAccuracy(Metric):
                 f"could not calculate metric '{self.display_name}': " "prediction column contains no data"
             )
 
+        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             return np.nan
         else:

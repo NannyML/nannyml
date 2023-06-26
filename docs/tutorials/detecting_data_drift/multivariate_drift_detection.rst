@@ -54,7 +54,7 @@ module implements this functionality.  We need to instantiate it with appropriat
 and the timestamp column name. The features can be passed in as a simple list of strings. Alternatively, we can create a list by excluding the columns in the dataframe that are not features,
 and pass them into the argument.
 
-Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs to be called on the reference data, which the results will be based on. 
+Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs to be called on the reference data, which the results will be based on.
 Then the
 :meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the multivariate drift results on the provided data.

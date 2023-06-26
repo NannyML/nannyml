@@ -7,8 +7,9 @@ Example Datasets
 .. toctree::
     :maxdepth: 2
 
-    datasets/binary.rst
+    datasets/ma_employment.rst
     datasets/binary_car_loan.rst
     datasets/multiclass.rst
-    datasets/california.rst
     datasets/regression.rst
+    datasets/california.rst
+    datasets/titanic.rst

@@ -14,11 +14,11 @@ from nannyml._typing import Result
 from nannyml.exceptions import InvalidArgumentsException, ReaderException, WriterException
 
 HTTP_PROTOCOLS = ['http', 'https']
-CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss']
+CLOUD_PROTOCOLS = ['s3', 'gcs', 'gs', 'adl', 'abfs', 'abfss', 'az']
 
 
 class Writer(ABC):
-    """Base class for writing Result instances to an external medium such as disk, database or API."""
+    """Base class for writing ``Result`` instances to an external medium such as disk, database or API."""
 
     @property
     def _logger(self) -> logging.Logger:
@@ -44,10 +44,10 @@ class Writer(ABC):
 
 
 class WriterFactory:
-    """A factory class that produces Writer instances for a given ``key``.
+    """A factory class that produces :class:`~nannyml.io.base.Writer` instances for a given ``key``.
 
     The value for this ``key`` is passed along explicitly by the user, either by providing it directly during
-    ``Writer`` initialization or passed along in the ``nann.yml`` configuration file.
+    :class:`~nannyml.io.base.Writer` initialization or passed along in the ``nann.yml`` configuration file.
     """
 
     registry: Dict[str, Type[Writer]] = {}
@@ -58,7 +58,7 @@ class WriterFactory:
 
     @classmethod
     def create(cls, key, kwargs: Optional[Dict[str, Any]] = None) -> Writer:
-        """Returns a Writer instance for a given string."""
+        """Returns a :class:`~nannyml.io.base.Writer` instance for a given string."""
 
         if kwargs is None:
             kwargs = {}
@@ -111,6 +111,7 @@ def _get_protocol_and_path(filepath: str) -> Tuple[str, str]:
     path = parsed_path.path
 
     if protocol in HTTP_PROTOCOLS:
+        path = filepath.split("://", 1)[-1]
         return protocol, path
 
     if protocol == "file":

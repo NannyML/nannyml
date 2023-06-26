@@ -212,11 +212,37 @@ def dle_estimated_performance_for_regression_result():
         lazy_fixture('dle_estimated_performance_for_regression_result'),
     ],
 )
-def test_raw_files_writer_raises_no_exceptions_when_writing(result):
+def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            writer = RawFilesWriter(path=tmpdir, format="parquet")
-            writer.write(result, plots={}, calculator_name='test')
+            writer = RawFilesWriter(path=tmpdir)
+            writer.write(result, filename='export.pq')
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'result',
+    [
+        lazy_fixture('univariate_drift_for_binary_classification_result'),
+        lazy_fixture('univariate_drift_for_multiclass_classification_result'),
+        lazy_fixture('univariate_drift_for_regression_result'),
+        lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
+        lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
+        lazy_fixture('data_reconstruction_drift_for_regression_result'),
+        lazy_fixture('realized_performance_for_binary_classification_result'),
+        lazy_fixture('realized_performance_for_multiclass_classification_result'),
+        lazy_fixture('realized_performance_for_regression_result'),
+        lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
+        lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
+        lazy_fixture('dle_estimated_performance_for_regression_result'),
+    ],
+)
+def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            writer = RawFilesWriter(path=tmpdir)
+            writer.write(result, filename='export.csv', format='csv')
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
@@ -267,6 +293,6 @@ def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             writer = PickleFileWriter(path=tmpdir)
-            writer.write(result)
+            writer.write(result, filename='export.pkl')
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")

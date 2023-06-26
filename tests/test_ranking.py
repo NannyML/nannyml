@@ -8,12 +8,24 @@ import copy
 import pandas as pd
 import pytest
 
+from nannyml.data_quality.missing import MissingValuesCalculator
+from nannyml.data_quality.missing import Result as MissingValueResults
+from nannyml.data_quality.unseen import Result as UnseenValueResults
+from nannyml.data_quality.unseen import UnseenValuesCalculator
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
+    load_synthetic_car_loan_data_quality_dataset,
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
 from nannyml.drift.ranker import AlertCountRanker, CorrelationRanker
+
+# from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
+# from nannyml.stats.avg.result import Result as StatsAvgResult
+# from nannyml.stats.count import Result as StatsCountResult
+# from nannyml.stats.std import Result as StatsStdResults
+# from nannyml.stats.sum import Result as StatsSumResult
+# from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
 from nannyml.drift.univariate import Result as UnivariateResults
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
@@ -195,20 +207,53 @@ def sample_regression_realized_perf_result() -> PerformanceCalculationResults:  
     return realized_performance
 
 
+@pytest.fixture(scope="module")
+def sample_missing_value_result() -> MissingValueResults:
+    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+
+    calc = MissingValuesCalculator(
+        column_names=[
+            'car_value',
+            'salary_range',
+            'debt_to_income_ratio',
+            'loan_length',
+            'repaid_loan_on_prev_car',
+            'size_of_downpayment',
+            'driver_tenure',
+        ],
+    ).fit(reference)
+    missing_values = calc.calculate(data=analysis)
+    assert isinstance(missing_values, MissingValueResults)
+    return missing_values
+
+
+@pytest.fixture(scope="module")
+def sample_unseen_value_result() -> UnseenValueResults:
+    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+
+    calc = UnseenValuesCalculator(
+        column_names=['salary_range', 'repaid_loan_on_prev_car'],
+    ).fit(reference)
+    unseen_values = calc.calculate(data=analysis)
+    assert isinstance(unseen_values, UnseenValueResults)
+    return unseen_values
+
+
 def test_alert_count_ranking_raises_invalid_arguments_exception_when_drift_result_is_empty(  # noqa: D103
     sample_drift_result,
 ):
     ranking = AlertCountRanker()
     result = copy.deepcopy(sample_drift_result).filter(methods=['jensen_shannon'])
     result.data = pd.DataFrame(columns=['f1', 'f2', 'f3', 'f4'])
-    with pytest.raises(InvalidArgumentsException, match='drift results contain no data'):
+    with pytest.raises(InvalidArgumentsException, match='rankable_result contains no data to use for ranking'):
         ranking.rank(result)
 
 
 def test_alert_count_ranking_raises_invalid_drift_object(sample_realized_perf_result):  # noqa: D103
     ranking = AlertCountRanker()
     with pytest.raises(
-        InvalidArgumentsException, match='Univariate Results object required for drift_calculation_result argument.'
+        InvalidArgumentsException,
+        match=r"`rankable_result` should be one of",
     ):
         ranking.rank(
             sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
@@ -235,6 +280,12 @@ def test_alert_count_ranking_raises_multiple_continuous_drift_metrics(sample_dri
 def test_alert_count_ranking_contains_rank_column(sample_drift_result):  # noqa: D103
     ranking = AlertCountRanker()
     sut = ranking.rank(sample_drift_result.filter(methods=['jensen_shannon']))
+    assert 'rank' in sut.columns
+
+
+def test_alert_count_ranking_contains_rank_column_on_dq_results(sample_missing_value_result):  # noqa: D103
+    ranking = AlertCountRanker()
+    sut = ranking.rank(sample_missing_value_result)
     assert 'rank' in sut.columns
 
 
@@ -265,6 +316,38 @@ def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_re
     )
     sut = ranking.rank(
         sample_drift_result.filter(period='all', methods=['jensen_shannon']),
+        sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
+    )
+    assert 'rank' in sut.columns
+
+
+def test_correlation_ranking_contains_rank_column_on_dq_missing_value_results(
+    sample_missing_value_result, sample_realized_perf_result
+):  # noqa: D103
+    ranking = CorrelationRanker()
+    ranking.fit(
+        reference_performance_calculation_result=sample_realized_perf_result.filter(
+            period='reference', metrics=['roc_auc']
+        ),
+    )
+    sut = ranking.rank(
+        sample_missing_value_result,
+        sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
+    )
+    assert 'rank' in sut.columns
+
+
+def test_correlation_ranking_contains_rank_column_on_dq_unseen_value_results(
+    sample_unseen_value_result, sample_realized_perf_result
+):  # noqa: D103
+    ranking = CorrelationRanker()
+    ranking.fit(
+        reference_performance_calculation_result=sample_realized_perf_result.filter(
+            period='reference', metrics=['roc_auc']
+        ),
+    )
+    sut = ranking.rank(
+        sample_unseen_value_result,
         sample_realized_perf_result.filter(period='all', metrics=['roc_auc']),
     )
     assert 'rank' in sut.columns

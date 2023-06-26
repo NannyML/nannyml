@@ -34,10 +34,23 @@ class Metric(abc.ABC):
 
         Parameters
         ----------
+        name: str
+            The name used to indicate the metric in columns of a DataFrame.
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
         components: List[Tuple[str, str]]
             A list of (display_name, column_name) tuples. The
             display_name is used for display purposes, while the
             column_name is used for column names in the output.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[Union[str, Dict[str, str]]], default=None
+            Name(s) of the column(s) containing your model output.
+            - For binary classification, pass a single string refering to the model output column.
+            - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
         upper_threshold_limit : float, default=None
             An optional upper threshold for the performance metric.
         lower_threshold_limit : float, default=None
@@ -134,6 +147,16 @@ class Metric(abc.ABC):
         )
 
     def alert(self, value: float) -> bool:
+        """Returns True if a calculated metric value is below a lower threshold or above an upper threshold.
+
+        Parameters
+        ----------
+        value: float
+            Value of a calculated metric.
+        Returns
+        -------
+        bool: bool
+        """
         return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
             self.upper_threshold_value is not None and value > self.upper_threshold_value
         )
@@ -234,12 +257,16 @@ class MetricFactory:
         return inner_wrapper
 
 
-def _common_data_cleaning(y_true, y_pred):
+def _common_data_cleaning(y_true: pd.Series, y_pred: Union[pd.Series, pd.DataFrame]):
     y_true, y_pred = (
-        pd.Series(y_true).reset_index(drop=True),
-        pd.Series(y_pred).reset_index(drop=True),
+        y_true.reset_index(drop=True),
+        y_pred.reset_index(drop=True),
     )
-    y_true = y_true[~y_pred.isna()]
+
+    if isinstance(y_pred, pd.DataFrame):
+        y_true = y_true[~y_pred.isna().all(axis=1)]
+    else:
+        y_true = y_true[~y_pred.isna()]
     y_pred.dropna(inplace=True)
 
     y_pred = y_pred[~y_true.isna()]

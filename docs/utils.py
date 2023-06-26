@@ -3,9 +3,15 @@
 #
 #  License: Apache Software License 2.0
 
+import pandas as pd
+
+
+def print_table(df):
+    print(df.to_markdown(tablefmt="grid", stralign='left', numalign='left'))
+
 
 def print_multi_index_markdown(df):
-    print(_format_multiindex_df(df).to_markdown(tablefmt='grid', stralign='left', numalign='left'))
+    print_table(_format_multiindex_df(df))
 
 
 def _format_multiindex_columns(df):
@@ -43,3 +49,11 @@ def _format_multiindex_df(df):
     single_level_data = df.copy(deep=True)
     single_level_data.columns = headers
     return single_level_data
+
+
+def print_some_of_the_columns_only_markdown(df, left=2, right=5):
+    to_display = df.head().copy()
+    to_display = pd.concat(
+        [to_display.iloc[:, :left], pd.Series(['...'] * 5, name='...'), to_display.iloc[:, -right:]], axis=1
+    )
+    print_table(to_display)

@@ -1,3 +1,14 @@
+"""A module containing the implementations of metrics estimated by CBPE.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator converts a list of metric names into
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances using the
+:class:`~nannyml.performance_estimation.confidence_based.metrics.MetricFactory`.
+
+The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator will then loop over these
+:class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
+and run the estimation on analysis data.
+"""
+
 import abc
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
@@ -27,7 +38,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
 class Metric(abc.ABC):
-    """A performance metric used to calculate realized model performance."""
+    """A base class representing a performance metric to estimate."""
 
     def __init__(
         self,
@@ -49,6 +60,42 @@ class Metric(abc.ABC):
         ----------
         name: str
             The name used to indicate the metric in columns of a DataFrame.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string referring to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name
+                  containing model outputs for that class.
+        y_pred: str
+            The name of the column containing your model predictions.
+        y_true: str
+            The name of the column containing target values (that are provided in reference data during fitting).
+        chunker: Chunker
+            The `Chunker` used to split the data sets into a lists of chunks.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        components: List[Tuple[str str]]
+            A list of (display_name, column_name) tuples.
+        timestamp_column_name: Optional[str], default=None
+            The name of the column containing the timestamp of the model prediction.
+            If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
+        lower_threshold_value_limit: Optional[float], default=None
+            An optional value that serves as a limit for the lower threshold value. Any calculated lower threshold
+            values that end up below this limit will be replaced by this limit value.
+            The limit is often a theoretical constraint enforced by a specific drift detection method or performance
+            metric.
+        upper_threshold_value_limit: Optional[float], default=None
+            An optional value that serves as a limit for the upper threshold value. Any calculated upper threshold
+            values that end up above this limit will be replaced by this limit value.
+            The limit is often a theoretical constraint enforced by a specific drift detection method or performance
+            metric.
+
+        Notes
+        -----
+
+        The `components` approach taken here is a quick fix to deal with metrics that return multiple values.
+        Look at the `confusion_matrix` for example: a single metric produces 4 different result sets (containing values,
+        thresholds, alerts, etc.).
         """
         self.name = name
 
@@ -84,7 +131,7 @@ class Metric(abc.ABC):
 
     @property
     def column_name(self) -> str:
-        return self.components[0][0]
+        return self.components[0][1]
 
     @property
     def display_names(self):
@@ -157,6 +204,17 @@ class Metric(abc.ABC):
         )
 
     def alert(self, value: float) -> bool:
+        """Returns True if an estimated metric value is below a lower threshold or above an upper threshold.
+
+        Parameters
+        ----------
+        value: float
+            Value of an estimated metric.
+
+        Returns
+        -------
+        bool: bool
+        """
         return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
             self.upper_threshold_value is not None and value > self.upper_threshold_value
         )
@@ -194,6 +252,21 @@ class Metric(abc.ABC):
         return y_pred_proba, y_pred, y_true
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing the performance metrics for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+        Raises
+        ------
+            NotImplementedError: occurs when a metric has multiple componets
+
+        Returns
+        -------
+            chunk_record : Dict
+                A dictionary of perfomance metric, value pairs.
+        """
         if len(self.components) > 1:
             raise NotImplementedError(
                 "cannot use default 'get_chunk_record' implementation when a metric has multiple components."
@@ -301,6 +374,7 @@ class BinaryClassificationAUROC(Metric):
             threshold=threshold,
             components=[('ROC AUC', 'roc_auc')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -330,7 +404,19 @@ class BinaryClassificationAUROC(Metric):
 
 
 def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
-    thresholds = np.sort(y_pred_proba)
+    """Estimates the ROC AUC metric.
+
+    Parameters
+    ----------
+    y_pred_proba : pd.Series
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated ROC AUC score.
+    """
+    thresholds = np.append(np.sort(y_pred_proba), 1)
     one_min_thresholds = 1 - thresholds
 
     TP = np.cumsum(thresholds[::-1])[::-1]
@@ -376,6 +462,7 @@ class BinaryClassificationF1(Metric):
             threshold=threshold,
             components=[('F1', 'f1')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -406,6 +493,20 @@ class BinaryClassificationF1(Metric):
 
 
 def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the F1 metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated F1 score.
+    """
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
@@ -436,6 +537,7 @@ class BinaryClassificationPrecision(Metric):
             threshold=threshold,
             components=[('Precision', 'precision')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -467,6 +569,20 @@ class BinaryClassificationPrecision(Metric):
 
 
 def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the Precision metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated Precision score.
+    """
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TP, FP = np.sum(tp), np.sum(fp)
@@ -496,6 +612,7 @@ class BinaryClassificationRecall(Metric):
             threshold=threshold,
             components=[('Recall', 'recall')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -526,6 +643,20 @@ class BinaryClassificationRecall(Metric):
 
 
 def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the Recall metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated Recall score.
+    """
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
     TP, FN = np.sum(tp), np.sum(fn)
@@ -555,6 +686,7 @@ class BinaryClassificationSpecificity(Metric):
             threshold=threshold,
             components=[('Specificity', 'specificity')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -586,6 +718,20 @@ class BinaryClassificationSpecificity(Metric):
 
 
 def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+    """Estimates the Specificity metric.
+
+    Parameters
+    ----------
+    y_pred: pd.DataFrame
+        Predicted class labels of the sample
+    y_pred_proba: pd.DataFrame
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated Specificity score.
+    """
     tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TN, FP = np.sum(tn), np.sum(fp)
@@ -615,6 +761,7 @@ class BinaryClassificationAccuracy(Metric):
             threshold=threshold,
             components=[('Accuracy', 'accuracy')],
             lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -880,6 +1027,18 @@ class BinaryClassificationConfusionMatrix(Metric):
             return num_fn / len(y_true)
 
     def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the true positive rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_tp_ratio : float
+            Estimated true positive rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -910,6 +1069,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_tp_ratio
 
     def get_true_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the true negative rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_tn_ratio : float
+            Estimated true negative rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -940,6 +1111,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_tn_ratio
 
     def get_false_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the false positive rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_fp_ratio : float
+            Estimated false positive rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -970,6 +1153,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_fp_ratio
 
     def get_false_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
+        """Estimates the false negative rate for a given chunk of data.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        normalized_est_fn_ratio : float
+            Estimated false negative rate.
+        """
         y_pred_proba = chunk_data[self.y_pred_proba]
         y_pred = chunk_data[self.y_pred]
 
@@ -1000,6 +1195,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return normalized_est_fn_ratio
 
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the true positives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        true_pos_info : Dict
+            A dictionary of true positive's information and its value pairs.
+        """
         true_pos_info: Dict[str, Any] = {}
 
         estimated_true_positives = self.get_true_positive_estimate(chunk_data)
@@ -1040,6 +1247,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return true_pos_info
 
     def get_true_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the true negatives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        true_neg_info : Dict
+            A dictionary of true negative's information and its value pairs.
+        """
         true_neg_info: Dict[str, Any] = {}
 
         estimated_true_negatives = self.get_true_negative_estimate(chunk_data)
@@ -1080,6 +1299,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return true_neg_info
 
     def get_false_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the false positives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        false_pos_info : Dict
+            A dictionary of false positive's information and its value pairs.
+        """
         false_pos_info: Dict[str, Any] = {}
 
         estimated_false_positives = self.get_false_positive_estimate(chunk_data)
@@ -1121,6 +1352,18 @@ class BinaryClassificationConfusionMatrix(Metric):
         return false_pos_info
 
     def get_false_neg_info(self, chunk_data: pd.DataFrame) -> Dict:
+        """Returns a dictionary containing infomation about the false negatives for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data : pd.DataFrame
+            A pandas dataframe containing the data for a given chunk.
+
+        Returns
+        -------
+        false_neg_info : Dict
+            A dictionary of false negative's information and its value pairs.
+        """
         false_neg_info: Dict[str, Any] = {}
 
         estimated_false_negatives = self.get_false_negative_estimate(chunk_data)
@@ -1239,7 +1482,6 @@ class BinaryClassificationBusinessValue(Metric):
         self.confidence_lower_bound: Optional[float] = None
 
     def _fit(self, reference_data: pd.DataFrame):
-
         self._sampling_error_components = bse.business_value_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
@@ -1280,7 +1522,6 @@ class BinaryClassificationBusinessValue(Metric):
         return estimate_business_value(y_pred, y_pred_proba, business_value_normalization, business_value_matrix)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-
         return bse.business_value_sampling_error(
             self._sampling_error_components,
             data,
@@ -1292,7 +1533,26 @@ def estimate_business_value(
     y_pred_proba: np.ndarray,
     normalize_business_value: Optional[str],
     business_value_matrix: np.ndarray,
-):
+) -> float:
+    """Estimates the Business Value metric.
+
+    Parameters
+    ----------
+    y_pred: np.ndarray
+        Predicted class labels of the sample
+    y_pred_proba: np.ndarray
+        Probability estimates of the sample for each class in the model.
+    normalize_business_value: str, default=None
+        Determines how the business value will be normalized. Allowed values are None and 'per_prediction'.
+
+            - None - the business value will not be normalized and the value returned will be the total value per chunk.
+            - 'per_prediction' - the value will be normalized by the number of predictions in the chunk.
+
+    Returns
+    -------
+    business_value: float
+        Estimated Business Value score.
+    """
 
     est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
     est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
@@ -1342,8 +1602,26 @@ def _get_multiclass_uncalibrated_predictions(data: pd.DataFrame, y_pred: str, y_
     return data[y_pred], data[class_probability_columns], labels
 
 
+class _MulticlassClassificationMetric(Metric):
+    """Base class for multiclass classification metrics."""
+
+    def _ensure_targets(self, data: pd.DataFrame) -> Optional[pd.DataFrame]:
+        """Ensures that the data contains the target column and that it doesn't contain all NaNs.
+
+        Any rows in the input where the target is NaN are dropped.
+        """
+        if self.y_true not in data.columns:
+            return None
+
+        na = data[self.y_true].isna()
+        if na.all():
+            return None
+        else:
+            return data[~na]
+
+
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationAUROC(Metric):
+class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1391,17 +1669,17 @@ class MulticlassClassificationAUROC(Metric):
         return mse.auroc_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
+        return roc_auc_score(data[self.y_true], y_pred_probas, multi_class='ovr', average='macro', labels=labels)
 
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationF1(Metric):
+class MulticlassClassificationF1(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1448,17 +1726,17 @@ class MulticlassClassificationF1(Metric):
         return mse.f1_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+        return f1_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationPrecision(Metric):
+class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1505,17 +1783,17 @@ class MulticlassClassificationPrecision(Metric):
         return mse.precision_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+        return precision_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationRecall(Metric):
+class MulticlassClassificationRecall(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1562,17 +1840,17 @@ class MulticlassClassificationRecall(Metric):
         return mse.recall_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+        return recall_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationSpecificity(Metric):
+class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1619,13 +1897,13 @@ class MulticlassClassificationSpecificity(Metric):
         return mse.specificity_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
 
-        y_true = data[self.y_true]
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        mcm = multilabel_confusion_matrix(data[self.y_true], y_pred, labels=labels)
         tn_sum = mcm[:, 0, 0]
         fp_sum = mcm[:, 0, 1]
         class_wise_specificity = tn_sum / (tn_sum + fp_sum)
@@ -1633,7 +1911,7 @@ class MulticlassClassificationSpecificity(Metric):
 
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationAccuracy(Metric):
+class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1678,13 +1956,11 @@ class MulticlassClassificationAccuracy(Metric):
         return mse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        data = self._ensure_targets(data)
+        if data is None:
             return np.NaN
-
-        y_true = data[self.y_true]
         y_pred, _, _ = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-
-        return accuracy_score(y_true, y_pred)
+        return accuracy_score(data[self.y_true], y_pred)
 
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)

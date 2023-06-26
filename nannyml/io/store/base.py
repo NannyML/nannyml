@@ -20,7 +20,7 @@ class Store(ABC):
 
     This abstract base class does not restrict in any way how the storage mechanism should work.
 
-    The only implementation currently is the :class:`nannyml.io.store.file_store.FilesystemStore`.
+    The only implementation currently is the :class:`~nannyml.io.store.file_store.FilesystemStore`.
     """
 
     @property
@@ -61,7 +61,7 @@ class Store(ABC):
 
         Parameters
         ----------
-        as_type : Optional[type]
+        as_type : Optional[type], default=None
             When provided the `load` method will check if the loaded object is an instance of `as_type` or `None`.
             If it is not a StoreException will be raised.
 
@@ -87,5 +87,5 @@ class Store(ABC):
             raise StoreException(f'an unexpected exception occurred when loading object: {exc}')
 
     @abstractmethod
-    def _load(self, path: str, **load_args):
+    def _load(self, **load_args):
         ...
