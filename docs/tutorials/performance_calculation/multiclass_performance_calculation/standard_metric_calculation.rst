@@ -1,8 +1,8 @@
 .. _multiclass-standard-metric-calculation:
 
-================================================================
-Monitoring Realized Performance for Multiclass Classification
-================================================================
+======================================================================
+Calculating Standard Performance Metrics for Multiclass Classification
+======================================================================
 
 .. note::
     The following example uses :term:`timestamps<Timestamp>`.

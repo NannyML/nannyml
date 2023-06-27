@@ -1,8 +1,9 @@
 .. _multiclass-confusion-matrix-estimation:
 
-========================================================================================
+==================================================================
 Estimating Confusion Matrix Elements for Multiclass Classification
-========================================================================================
+==================================================================
+
 This tutorial explains how to use NannyML to estimate the :term:`confusion matrix<Confusion Matrix>` for multiclass classification
 models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
@@ -162,8 +163,6 @@ What's next
 -----------
 
 The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
-
-You can learn more about the Confidence Based Performance Estimation and its limitations in the
-:ref:`How it Works page<performance-estimation-deep-dive>`.
-
-
+When the target values become available we can use
+:ref:`realized performance calculation<multiclass-confusion-matrix-calculation>` to
+:ref:`compare realized and estimated confusion matrix results<compare_estimated_and_realized_performance>`.

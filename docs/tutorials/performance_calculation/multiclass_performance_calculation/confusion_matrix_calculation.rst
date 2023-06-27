@@ -1,8 +1,8 @@
 .. _multiclass-confusion-matrix-calculation:
 
-========================================================================================
+===================================================================
 Calculating Confusion Matrix Elements for Multiclass Classification
-========================================================================================
+===================================================================
 
 This tutorial explains how to use NannyML to calculate the :term:`confusion matrix<Confusion Matrix>` for multiclass classification
 models.
