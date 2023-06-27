@@ -135,11 +135,5 @@ What's next
 -----------
 
 The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
-When the target values become    available they can be :ref:`compared with the estimated
-results<compare_estimated_and_realized_performance>`.
-
-You can learn more about the Confidence Based Performance Estimation and its limitations in the
-:ref:`How it Works page<performance-estimation-deep-dive>`.
-
-And if targets are available or become available, you can learn more about *calculating* confusion
-matrix elements in the :ref:`confusion-matrix-calculation` tutorial.
+When the target values become available we can
+:ref:`compared realized and estimated custom performance metric results<compare_estimated_and_realized_performance>`.
