@@ -66,6 +66,7 @@ class StoreConfig(BaseModel):
     path: str
     credentials: Optional[Dict[str, Any]]
     filename: Optional[str]
+    invalidate: bool = False
 
 
 class CalculatorConfig(BaseModel):
