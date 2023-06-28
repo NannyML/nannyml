@@ -149,10 +149,15 @@ def run(  # noqa: C901
                             f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "
                             f"loading calculator from store"
                         )
-                        calc = store.load(filename=calculator_config.store.filename, as_type=calc_cls)
+                        if calculator_config.store.invalidate:
+                            calc = None
+                        else:
+                            calc = store.load(filename=calculator_config.store.filename, as_type=calc_cls)
+
                         if calc is None:
+                            reason = 'invalidated' if calculator_config.store.invalidate else 'not found in store'
                             run_logger.log(
-                                f"calculator '{context.current_calculator}' not found in store. "
+                                f"calculator '{context.current_calculator}' {reason}. "
                                 f"Creating, fitting and storing new instance",
                                 log_level=logging.DEBUG,
                             )
