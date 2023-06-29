@@ -161,3 +161,23 @@ class DLEPerformanceMetric(Metric, table=True):  # type: ignore[call-arg]
 
     #: The lower alerting threshold value
     lower_threshold: Optional[float]
+
+
+class UnseenValuesMetric(Metric, table=True):
+    __tablename__ = "unseen_values_metrics"
+
+    #: The upper alerting threshold value
+    upper_threshold: Optional[float]
+
+    #: The lower alerting threshold value
+    lower_threshold: Optional[float]
+
+
+class MissingValuesMetric(Metric, table=True):
+    __tablename__ = "missing_values_metrics"
+
+    #: The upper alerting threshold value
+    upper_threshold: Optional[float]
+
+    #: The lower alerting threshold value
+    lower_threshold: Optional[float]
