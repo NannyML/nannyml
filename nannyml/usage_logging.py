@@ -247,7 +247,9 @@ def _get_system_information() -> Dict[str, Any]:
 
 
 def _get_runtime_environment():
-    if _is_running_in_docker():
+    if _is_running_in_kubernetes():
+        return 'kubernetes'
+    elif _is_running_in_docker():
         return 'docker'
     elif _is_running_in_notebook():
         return 'notebook'
@@ -266,7 +268,7 @@ def _is_running_in_docker():
     return False
 
 
-def is_running_in_kubernetes():
+def _is_running_in_kubernetes():
     return Path('/var/run/secrets/kubernetes.io/').exists()
 
 
