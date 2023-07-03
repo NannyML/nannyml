@@ -266,6 +266,10 @@ def _is_running_in_docker():
     return False
 
 
+def is_running_in_kubernetes():
+    return Path('/var/run/secrets/kubernetes.io/').exists()
+
+
 # Inspired by
 # https://github.com/zenml-io/zenml/blob/275109da08b783d5d2cd508b5f703aed0c66e485/src/zenml/environment.py#L182
 # and https://stackoverflow.com/a/39662359
