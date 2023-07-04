@@ -8,6 +8,12 @@ Quickstart
 What is NannyML?
 ----------------
 
+.. raw:: html
+
+    <a target="_blank" href="https://colab.research.google.com/github/NannyML/nannyml/blob/main/docs/example_notebooks/Quickstart.ipynb">
+        <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+    </a>
+
 .. include:: ./common/quickstart_what_is_nannyml.rst
 
 
