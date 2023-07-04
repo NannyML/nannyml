@@ -3,7 +3,7 @@ Full Monitoring Workflow - Regression: NYC Green Taxi Dataset
 =============================================================
 .. raw:: html
 
-    <a target="_blank" href="https://colab.research.google.com/github/NannyML/nannyml/blob/main/docs/example_notebooks/Examples%20California%20Housing.ipynb">
+    <a target="_blank" href="https://colab.research.google.com/github/NannyML/nannyml/blob/main/docs/example_notebooks/Examples%20Green%20Taxi.ipynb">
         <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>
 
