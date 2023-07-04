@@ -20,7 +20,7 @@ We will use it to estimate the model's performance with unseen data and run mult
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 1
+    :cells: 2
 
 Load the data
 =============
@@ -40,11 +40,11 @@ Other columns were omitted because of having multiple missing values, having the
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 2
+    :cells: 3
 
 .. nbtable::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cell: 3
+    :cell: 4
 
 
 Preprocessing the data
@@ -59,7 +59,7 @@ Before modeling, we will do some preprocessing:
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 4
+    :cells: 5
 
 Now, let's split the data. When training an ML model, we often split the data into 2 (train, test) or 3 (train, validation, test) sets. But, since the final goal of
 this tutorial is to learn how to monitor an ML model with unseen "production" data, we will split the original data into three parts:
@@ -75,11 +75,11 @@ But let's not worry too much about it (yet). We will return later to this when l
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 5
+    :cells: 6
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 6
+    :cells: 7
 
 Exploring the training data
 ===========================
@@ -92,7 +92,7 @@ So, let's take a closer look by plotting a box plot and a histogram of the tip a
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 7
+    :cells: 8
     :show_output:
 
 .. image:: ../_static/example_green_taxi_tip_amount_boxplot.svg
@@ -107,7 +107,7 @@ A big group of people does not leave tips, and another one does. We can see a ga
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 8
+    :cells: 9
     :show_output:
 
 Training a model
@@ -117,7 +117,7 @@ We will train an LGBMRegressor with its default parameters.
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 9
+    :cells: 10
 
 Evaluating the model
 ====================
@@ -126,14 +126,14 @@ To evaluate the model, we will compare its train and test Mean Absolute Error wi
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 10
+    :cells: 11
 
 Below we plotted two scatter plots, one with the actual and predicted values for training and a similar one with the predicted values for the testing data.
 Both mean absolute errors are relatively low, meaning the model performs well enough for this use case.
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 11
+    :cells: 12
 
 .. image:: ../_static/example_green_taxi_model_val.png
 
@@ -147,7 +147,7 @@ to predict the tip amount than the pick-up location.
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 12
+    :cells: 13
 
 .. image:: ../_static/example_green_taxi_feature_importance.svg
 
@@ -160,7 +160,7 @@ We will later use NannyML to check how well the model performs on this data.
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 13
+    :cells: 14
     :show_output:
 
 Analysing ML model performance in production
@@ -173,7 +173,7 @@ We need to create a reference and analysis set to properly analyze the model per
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 14
+    :cells: 15
 
 Estimating the model's performance
 ==================================
@@ -193,11 +193,11 @@ check out `Estimating Performance for Classification <https://nannyml.readthedoc
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 15
+    :cells: 16
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 16
+    :cells: 17
 
 .. image:: ../_static/example_green_taxi_dle.svg
 
@@ -231,11 +231,11 @@ documentation `Data Reconstruction with PCA Deep Dive <https://nannyml.readthedo
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 17
+    :cells: 18
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 18
+    :cells: 19
 
 .. image:: ../_static/example_green_taxi_pca_error.svg
 
@@ -255,17 +255,17 @@ analysis periods in search for drift in any relevant feature.
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 19
+    :cells: 20
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 20
+    :cells: 21
 
 .. image:: ../_static/example_green_taxi_location_udc.svg
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 21
+    :cells: 22
 
 .. image:: ../_static/example_green_taxi_pickup_udc.svg
 
@@ -281,7 +281,7 @@ But, If you want to check if the other features drifted, you can run the followi
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 22
+    :cells: 23
 
 .. image:: ../_static/example_green_taxi_all_udc.svg
 
@@ -293,7 +293,7 @@ In the cell below, we calculate the realized performance and compare it with Nan
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
-    :cells: 23
+    :cells: 24
 
 .. image:: ../_static/example_green_taxi_dle_vs_realized.svg
 
