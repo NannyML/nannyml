@@ -264,7 +264,7 @@ def calculate_threshold_values(
     if (
         lower_threshold_value_limit is not None
         and lower_threshold_value is not None
-        and lower_threshold_value < lower_threshold_value_limit
+        and lower_threshold_value <= lower_threshold_value_limit
     ):
         override_value = None if override_using_none else lower_threshold_value_limit
         if logger:
@@ -277,7 +277,7 @@ def calculate_threshold_values(
     if (
         upper_threshold_value_limit is not None
         and upper_threshold_value is not None
-        and upper_threshold_value > upper_threshold_value_limit
+        and upper_threshold_value >= upper_threshold_value_limit
     ):
         override_value = None if override_using_none else upper_threshold_value_limit
         if logger:

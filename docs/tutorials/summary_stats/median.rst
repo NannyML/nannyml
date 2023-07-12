@@ -36,12 +36,20 @@ The :class:`~nannyml.stats.avg.calculator.SummaryStatsMedianCalculator` class im
 the functionality needed for median values calculations.
 We need to instantiate it with appropriate parameters:
 
-- The names of the columns to be evaluated.
-- Optionally, the name of the column containing the observation timestamps.
-- Optionally, a chunking approach or a predefined chunker. If neither is provided, the default
-  chunker creating 10 chunks will be used.
-- Optionally, a threshold strategy to modify the default one. See available threshold options
-  :ref:`here<thresholds>`.
+- **column_names:** A list with the names of columns to be evaluated.
+- **timestamp_column_name (Optional):** The name of the column in the reference data that
+  contains timestamps.
+- **chunk_size (Optional):** The number of observations in each chunk of data
+  used. Only one chunking argument needs to be provided. For more information about
+  :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
+- **chunk_number (Optional):** The number of chunks to be created out of data provided for each
+  :ref:`period<data-drift-periods>`.
+- **chunk_period (Optional):** The time period based on which we aggregate the provided data in
+  order to create chunks.
+- **chunker (Optional):** A NannyML :class:`~nannyml.chunk.Chunker` object that will handle the aggregation
+  provided data in order to create chunks.
+- **threshold (Optional):** The threshold strategy used to calculate the alert threshold limits.
+  For more information about thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Stats - Median.ipynb
