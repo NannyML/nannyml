@@ -49,14 +49,34 @@ We begin by loading some synthetic data provided in the NannyML package. This is
 The :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class implements the functionality needed for univariate drift detection.
 First, we need to instantiate it with the appropriate parameters:
 
-- The names of the columns to be evaluated.
-- A list of methods to use on continuous columns. You can chose from :ref:`kolmogorov_smirnov<univ_cont_method_ks>`,
-  :ref:`jensen_shannon<univariate-drift-detection-cont-jensen-shannon>`, :ref:`wasserstein<univariate-drift-detection-cont-wasserstein>`
-  and :ref:`hellinger<univariate-drift-detection-cont-hellinger>`.
-- A list of methods to use on categorical columns. You can choose from :ref:`chi2<univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>`,
+- **column_names:** A list with the names of columns to be evaluated.
+- **treat_as_categorical (Optional):** A list of column names to treat as categorical columns.
+- **timestamp_column_name (Optional):** The name of the column in the reference data that
+  contains timestamps.
+- **categorical_methods (Optional):** A list of methods to use on categorical columns.
+  You can choose from :ref:`chi2<univ_cat_method_chi2>`, :ref:`jensen_shannon<univ_cat_method_js>`,
   :ref:`l_infinity<univ_cat_method_l8>`, and :ref:`hellinger<univ_cat_method_hellinger>`.
-- Optionally, the name of the column containing the observation timestamps.
-- Optionally, a chunking approach or a predefined chunker. If neither is provided, the default chunker creating 10 chunks will be used.
+- **continuous_methods (Optional):** A list of methods to use on continuous columns.
+  You can chose from :ref:`kolmogorov_smirnov<univ_cont_method_ks>`,
+  :ref:`jensen_shannon<univariate-drift-detection-cont-jensen-shannon>`,
+  :ref:`wasserstein<univariate-drift-detection-cont-wasserstein>`
+  and :ref:`hellinger<univariate-drift-detection-cont-hellinger>`.
+- **chunk_size (Optional):** The number of observations in each chunk of data
+  used. Only one chunking argument needs to be provided. For more information about
+  :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
+- **chunk_number (Optional):** The number of chunks to be created out of data provided for each
+  :ref:`period<data-drift-periods>`.
+- **chunk_period (Optional):** The time period based on which we aggregate the provided data in
+  order to create chunks.
+- **chunker (Optional):** A NannyML :class:`~nannyml.chunk.Chunker` object that will handle the aggregation
+  provided data in order to create chunks.
+- **thresholds (Optional):** A dictionary allowing users to set a custom threshold strategy for each method.
+  It links a `Threshold` subclass to a method name.
+  For more information about thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
+- **computation_params (Optional):** A dictionary which allows users to specify whether they want drift calculated on
+  the exact reference data or an estimated distribution of the reference data obtained
+  using binning techniques. Applicable only to Kolmogorov-Smirnov and Wasserstein. For more information look
+  :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Univariate.ipynb
