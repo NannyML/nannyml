@@ -100,7 +100,7 @@ NannyML can also **track the realised performance** of your machine learning mod
 
 To detect **multivariate feature drift** NannyML uses [PCA-based data reconstruction](https://nannyml.readthedocs.io/en/main/how_it_works/data_reconstruction.html). Changes in the resulting reconstruction error are monitored over time and data drift alerts are logged when the reconstruction error in a certain period exceeds a threshold. This threshold is calculated based on the reconstruction error observed in the reference period.
 
-<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/drift-guide-multivariate.svg"></p>
+<p><img src="https://raw.githubusercontent.com/NannyML/nannyml/main/docs/_static/butterfly-multivariate-drift.svg"></p>
 
 NannyML utilises statistical tests to detect **univariate feature drift**. We have just added a bunch of new univariate tests including Jensen-Shannon Distance and L-Infinity Distance, check out the [comprehensive list](https://nannyml.readthedocs.io/en/stable/how_it_works/univariate_drift_detection.html#methods-for-continuous-features). The results of these tests are tracked over time, properly corrected to counteract multiplicity and overlayed on the temporal feature distributions. (It is also possible to visualise the test-statistics over time, to get a notion of the drift magnitude.)
 
