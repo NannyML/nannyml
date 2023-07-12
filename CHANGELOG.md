@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2023-07-12
+
+### Changed
+
+- Updated Mendable client library version to deal with styling overrides in the RTD documentation theme
+- Removed superfluous limits for confidence bands in the CBPE class (these are present in the metric classes instead)
+- Threshold value limiting behaviour (e.g. overriding a value and emitting a warning) will be triggered not only when
+the value crosses the threshold but also when it is equal to the threshold value. This is because we interpret the
+threshold as a theoretical maximum.
+
+### Added
+
+- Added a new example notebook walking through a full use case using the NYC Green Taxi dataset, based on the blog of [@santiviquez](https://github.com/santiviquez)
+
+### Fixed
+
+- Fixed broken Docker container build due to changes in public Poetry installation procedure
+- Fixed broken image source link in the README, thanks [@NeoKish](https://github.com/NeoKish)!
+
 ## [0.9.0] - 2023-06-26
 
 ### Changed
