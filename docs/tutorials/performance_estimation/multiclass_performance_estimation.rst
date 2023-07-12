@@ -140,7 +140,5 @@ What's next
 -----------
 
 The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
-When the target results become available they can be :ref:`compared with the estimated results<compare_estimated_and_realized_performance>`.
-
-You can learn more about the Confidence Based Performance Estimation and its limitations in the
-:ref:`How it Works page<performance-estimation-deep-dive>`.
+When the target values become available we can
+:ref:`compared realized and performance results<compare_estimated_and_realized_performance>`.

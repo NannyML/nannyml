@@ -20,6 +20,8 @@ When the :term:`targets<Target>` become available, the quality of estimations pr
 
 The beginning of the code below is similar to the one in :ref:`tutorial on
 performance calculation with binary classification data<binary-performance-calculation>`.
+while this tutorial uses the **roc_auc** metric, any metric estimated and calculated by NannyML can
+be used for comparison.
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
