@@ -19,7 +19,7 @@ Just The Code
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
-    :cells: 1 3 4 6 8
+    :cells: 1 3 4 6
 
 .. admonition:: **Advanced configuration**
     :class: hint

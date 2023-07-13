@@ -7,8 +7,8 @@ Full Monitoring Workflow - Regression: NYC Green Taxi Dataset
         <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>
 
-In this tutorial, we will use the `NYC Green Taxi Dataset <https://api.openml.org/d/42729>`_ to build a machine-learning model that predicts the tip amount a passenger 
-will leave after a taxi ride. Later, we will use NannyML to monitor this model and measure its performance with unseen production data. Additionally, 
+In this tutorial, we will use the `NYC Green Taxi Dataset <https://api.openml.org/d/42729>`_ to build a machine-learning model that predicts the tip amount a passenger
+will leave after a taxi ride. Later, we will use NannyML to monitor this model and measure its performance with unseen production data. Additionally,
 we will investigate plausible reasons for the performance drop using data drift detection methods.
 
 
@@ -68,7 +68,7 @@ this tutorial is to learn how to monitor an ML model with unseen "production" da
 - test: data from the **second week** of December 2016
 - prod: data from **the third and fourth weeks** of December 2016
 
-The production dataset will help us simulate a real-case scenario where a trained model is used in a production environment. Typically, production data don't contain targets. 
+The production dataset will help us simulate a real-case scenario where a trained model is used in a production environment. Typically, production data don't contain targets.
 This is why monitoring the model performance on it is a challenging task.
 
 But let's not worry too much about it (yet). We will return later to this when learning how to estimate model performance.
@@ -87,7 +87,7 @@ Exploring the training data
 Let's quickly explore the train data to ensure we understand it and check that everything makes sense. Since we are building a model that can predict the tip amount
 that the customers will leave at the end of the ride is essential that we look at how the distribution looks.
 
-The table below shows that the most common tip amount is close to \$2. However, we also observe a high max value of \$250, meaning there are probably some outliers. 
+The table below shows that the most common tip amount is close to \$2. However, we also observe a high max value of \$250, meaning there are probably some outliers.
 So, let's take a closer look by plotting a box plot and a histogram of the tip amount column.
 
 .. nbimport::
@@ -161,7 +161,6 @@ We will later use NannyML to check how well the model performs on this data.
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
     :cells: 14
-    :show_output:
 
 Analysing ML model performance in production
 ============================================
