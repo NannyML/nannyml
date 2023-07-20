@@ -251,6 +251,11 @@ class Metric(abc.ABC):
         y_pred = y_pred[mask]
         y_true = y_true[mask] if y_true is not None else None
 
+        # NaN values have been dropped. Try to infer types again
+        y_pred_proba = y_pred_proba.infer_objects()
+        y_pred = y_pred.infer_objects()
+        y_true = y_true.infer_objects() if y_true is not None else None
+
         return y_pred_proba, y_pred, y_true
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
