@@ -180,6 +180,27 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
     assert sut.loc[1, ('chunk', 'targets_missing_rate')] == 0.9
 
 
+def test_calculator_calculate_should_support_partial_bool_targets(data, performance_calculator):
+    """Test that the calculator supports partial bool targets.
+
+    Pandas converts bool columns to object dtype when they contain NaN values. This previously resulted in problems
+    when calculating the performance metrics. This test ensures that the calculator supports partial bool targets.
+    """
+    ref_data = data[0]
+    analysis_data = data[1].merge(data[2], on='identifier')
+
+    # Convert target column to bool dtype
+    analysis_data = analysis_data.astype({'work_home_actual': 'bool'})
+
+    # Drop 10% of the target values in the first chunk
+    analysis_data.loc[0:499, 'work_home_actual'] = np.NAN
+
+    performance_calculator.fit(reference_data=ref_data)
+    performance_calculator.calculate(analysis_data)
+
+    # No further checks needed, if the above code runs without errors, the test passes.
+
+
 @pytest.mark.parametrize(
     'custom_thresholds',
     [
