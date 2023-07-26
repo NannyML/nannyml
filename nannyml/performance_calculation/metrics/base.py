@@ -272,4 +272,8 @@ def _common_data_cleaning(y_true: pd.Series, y_pred: Union[pd.Series, pd.DataFra
     y_pred = y_pred[~y_true.isna()]
     y_true.dropna(inplace=True)
 
+    # NaN values have been dropped. Try to infer types again
+    y_pred = y_pred.infer_objects()
+    y_true = y_true.infer_objects()
+
     return y_true, y_pred
