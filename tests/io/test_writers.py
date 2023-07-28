@@ -195,6 +195,29 @@ def dle_estimated_performance_for_regression_result():
     return result
 
 
+@pytest.fixture(scope='module')
+def missing_values_for_binary_classification_result():
+    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
+    calc = MissingValuesCalculator(
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+        timestamp_column_name='timestamp',
+    ).fit(reference_df)
+    result = calc.estimate(analysis_df.join(analysis_targets_df))
+    return result
+
+
+@pytest.fixture(scope='module')
+def unseen_values_for_binary_classification_result():
+    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
+    calc = UnseenValuesCalculator(
+        # categorical features as described in https://nannyml.readthedocs.io/en/stable/datasets/binary_car_loan.html#dataset-description
+        column_names=['salary_range', 'repaid_loan_on_prev_car', 'size_of_downpayment'],
+        timestamp_column_name='timestamp',
+    ).fit(reference_df)
+    result = calc.estimate(analysis_df.join(analysis_targets_df))
+    return result
+
+
 @pytest.mark.parametrize(
     'result',
     [
@@ -262,6 +285,8 @@ def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_database_writer_raises_no_exceptions_when_writing(result):
