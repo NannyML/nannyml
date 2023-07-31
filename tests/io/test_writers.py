@@ -236,6 +236,8 @@ def unseen_values_for_binary_classification_result():
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):
@@ -262,6 +264,8 @@ def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):
@@ -315,6 +319,8 @@ def test_database_writer_raises_no_exceptions_when_writing(result):
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
