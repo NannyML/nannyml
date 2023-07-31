@@ -205,7 +205,7 @@ def missing_values_for_binary_classification_result():
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.join(analysis_targets_df))
+    result = calc.calculate(analysis_df.join(analysis_targets_df))
     return result
 
 
@@ -217,7 +217,7 @@ def unseen_values_for_binary_classification_result():
         column_names=['salary_range', 'repaid_loan_on_prev_car', 'size_of_downpayment'],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.join(analysis_targets_df))
+    result = calc.calculate(analysis_df.join(analysis_targets_df))
     return result
 
 
