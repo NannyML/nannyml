@@ -364,9 +364,9 @@ class DLEMapper(Mapper):
 
 @MapperFactory.register(UnseenValuesResult)
 class UnseenValuesResultMapper:
-    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
+    def map_to_entity(self, result, **metric_args) -> List[UnseenValuesMetric]:
         def _parse(
-            metric_name: str,
+            column_name: str,
             start_date: datetime,
             end_date: datetime,
             value,
@@ -377,7 +377,8 @@ class UnseenValuesResultMapper:
             timestamp = start_date + (end_date - start_date) / 2
 
             return UnseenValuesMetric(
-                metric_name=metric_name,
+                column_name=column_name,
+                metric_name="count",
                 start_timestamp=start_date,
                 end_timestamp=end_date,
                 timestamp=timestamp,
@@ -394,22 +395,24 @@ class UnseenValuesResultMapper:
                 'timestamp column to be specified and present'
             )
 
-        res: List[Metric] = []
+        columns: List[str] = list(
+            filter(lambda col: col != 'chunk', result.to_df().columns.get_level_values(0).drop_duplicates())
+        )
 
-        for metric in [metric.column_name for metric in result.metrics]:
-            res += (
+        for column in columns:
+            res: List[Metric] = (
                 result.filter(period='analysis')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),
                         ('chunk', 'end_date'),
-                        (metric, 'value'),
-                        (metric, 'upper_threshold'),
-                        (metric, 'lower_threshold'),
-                        (metric, 'alert'),
+                        (column, 'value'),
+                        (column, 'upper_threshold'),
+                        (column, 'lower_threshold'),
+                        (column, 'alert'),
                     ]
                 ]
-                .apply(lambda r: _parse(metric, *r), axis=1)
+                .apply(lambda r: _parse(column, *r), axis=1)
                 .to_list()
             )
 
@@ -418,20 +421,21 @@ class UnseenValuesResultMapper:
 
 @MapperFactory.register(MissingValuesResult)
 class MissingValuesResultMapper:
-    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
+    def map_to_entity(self, result, **metric_args) -> List[MissingValuesMetric]:
         def _parse(
-            metric_name: str,
+            column_name: str,
             start_date: datetime,
             end_date: datetime,
             value,
             upper_threshold,
             lower_threshold,
             alert: bool,
-        ) -> MissingValuesMetric:
+        ) -> UnseenValuesMetric:
             timestamp = start_date + (end_date - start_date) / 2
 
-            return UnseenValuesMetric(
-                metric_name=metric_name,
+            return MissingValuesMetric(
+                column_name=column_name,
+                metric_name="count",
                 start_timestamp=start_date,
                 end_timestamp=end_date,
                 timestamp=timestamp,
@@ -448,22 +452,24 @@ class MissingValuesResultMapper:
                 'timestamp column to be specified and present'
             )
 
-        res: List[Metric] = []
+        columns: List[str] = list(
+            filter(lambda col: col != 'chunk', result.to_df().columns.get_level_values(0).drop_duplicates())
+        )
 
-        for metric in [metric.column_name for metric in result.metrics]:
-            res += (
+        for column in columns:
+            res: List[Metric] = (
                 result.filter(period='analysis')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),
                         ('chunk', 'end_date'),
-                        (metric, 'value'),
-                        (metric, 'upper_threshold'),
-                        (metric, 'lower_threshold'),
-                        (metric, 'alert'),
+                        (column, 'value'),
+                        (column, 'upper_threshold'),
+                        (column, 'lower_threshold'),
+                        (column, 'alert'),
                     ]
                 ]
-                .apply(lambda r: _parse(metric, *r), axis=1)
+                .apply(lambda r: _parse(column, *r), axis=1)
                 .to_list()
             )
 
