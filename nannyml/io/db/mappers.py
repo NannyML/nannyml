@@ -400,7 +400,7 @@ class UnseenValuesResultMapper:
         )
 
         for column in columns:
-            res: List[Metric] = (
+            res: List[UnseenValuesMetric] = (
                 result.filter(period='analysis')
                 .to_df()[
                     [
@@ -430,7 +430,7 @@ class MissingValuesResultMapper:
             upper_threshold,
             lower_threshold,
             alert: bool,
-        ) -> UnseenValuesMetric:
+        ) -> MissingValuesMetric:
             timestamp = start_date + (end_date - start_date) / 2
 
             return MissingValuesMetric(
@@ -457,7 +457,7 @@ class MissingValuesResultMapper:
         )
 
         for column in columns:
-            res: List[Metric] = (
+            res: List[MissingValuesMetric] = (
                 result.filter(period='analysis')
                 .to_df()[
                     [

@@ -213,7 +213,8 @@ def missing_values_for_binary_classification_result():
 def unseen_values_for_binary_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
     calc = UnseenValuesCalculator(
-        # categorical features as described in https://nannyml.readthedocs.io/en/stable/datasets/binary_car_loan.html#dataset-description
+        # categorical features as described in
+        # https://nannyml.readthedocs.io/en/stable/datasets/binary_car_loan.html#dataset-description
         column_names=['salary_range', 'repaid_loan_on_prev_car', 'size_of_downpayment'],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
