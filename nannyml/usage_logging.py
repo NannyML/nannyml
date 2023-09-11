@@ -243,7 +243,12 @@ def _get_system_information() -> Dict[str, Any]:
         "runtime_environment": _get_runtime_environment(),
         "python_version": platform.python_version(),
         "nannyml_version": __version__,
+        "nannyml_cloud": _is_nannyml_cloud(),
     }
+
+
+def _is_nannyml_cloud():
+    return 'NML_CLOUD' in os.environ
 
 
 def _get_runtime_environment():
