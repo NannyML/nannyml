@@ -247,6 +247,10 @@ def _get_system_information() -> Dict[str, Any]:
 
 
 def _get_runtime_environment():
+    if _is_running_in_aks():
+        return 'aks'
+    if _is_running_in_eks():
+        return 'eks'
     if _is_running_in_kubernetes():
         return 'kubernetes'
     elif _is_running_in_docker():
@@ -270,6 +274,32 @@ def _is_running_in_docker():
 
 def _is_running_in_kubernetes():
     return Path('/var/run/secrets/kubernetes.io/').exists()
+
+
+def _is_running_in_aks():
+    import requests
+
+    try:
+        metadata = requests.get(
+            'http://169.254.169.254/metadata/instance?api-version=2021-02-01', headers={'Metadata': 'true'}
+        )
+        return metadata.status_code == 200
+    except Exception:
+        return False
+
+
+def _is_running_in_eks():
+    import requests
+
+    try:
+        token = requests.put(
+            'http://169.254.169.254/latest/api/token', headers={'X-aws-ec2-metadata-token-ttl-seconds': 21600}
+        ).raw()
+
+        metadata = requests.get('http://169.254.169.254/latest/meta-data/', headers={'X-aws-ec2-metadata-token': token})
+        return metadata.status_code == 200
+    except Exception:
+        return False
 
 
 # Inspired by
