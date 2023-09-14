@@ -297,12 +297,10 @@ def _is_running_in_eks():
     import requests
 
     try:
-        token = requests.put(
-            'http://169.254.169.254/latest/api/token', headers={'X-aws-ec2-metadata-token-ttl-seconds': 21600}
-        ).raw()
-
-        metadata = requests.get('http://169.254.169.254/latest/meta-data/', headers={'X-aws-ec2-metadata-token': token})
-        return metadata.status_code == 200
+        token_request = requests.put(
+            'http://169.254.169.254/latest/api/token', headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'}
+        )
+        return token_request.status_code == 200
     except Exception:
         return False
 
