@@ -266,3 +266,27 @@ def load_us_census_ma_employment_data():
     analysis_tgt = load_pq_file_to_df('employment_MA_analysis_target.pq')
 
     return reference, analysis, analysis_tgt
+
+def load_hotel_booking_dataset():
+    """Loads the hotel booking dataset provided for testing the NannyML package.
+
+    Returns
+    -------
+    reference : pd.DataFrame
+        A DataFrame containing reference period of hotel booking dataset
+    analysis : pd.DataFrame
+        A DataFrame containing analysis period of hotel booking dataset
+    analysis_tgt : pd.DataFrame
+        A DataFrame containing target values for the analysis period of hotel booking
+
+    Examples
+    --------
+    >>> from nannyml.datasets import load_hotel_booking_dataset
+    >>> reference_df, analysis_df, analysis_targets_df = load_hotel_booking_dataset()
+
+    """
+    reference = load_csv_file_to_df('hotel_booking_reference.csv')
+    analysis = load_csv_file_to_df('hotel_booking_analysis.csv')
+    analysis_gt = load_csv_file_to_df('hotel_booking_analysis_targets.csv')
+
+    return reference, analysis, analysis_gt
