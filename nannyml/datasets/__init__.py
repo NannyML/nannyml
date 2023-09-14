@@ -13,4 +13,5 @@ from .datasets import (
     load_synthetic_multiclass_classification_dataset,
     load_titanic_dataset,
     load_us_census_ma_employment_data,
+    load_hotel_booking_dataset,
 )
