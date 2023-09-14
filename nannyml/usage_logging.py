@@ -237,6 +237,7 @@ def log_usage(
     return logging_decorator
 
 
+@functools.cached_property
 def _get_system_information() -> Dict[str, Any]:
     return {
         "os_type": platform.system(),
