@@ -38,3 +38,4 @@ repos:
           - types-python-dateutil
           - types-click
           - sqlmodel
+          - types-requests

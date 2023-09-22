@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 import pandas as pd
 from rich.console import Console
 
-from nannyml._typing import Result, Estimator, Calculator
+from nannyml._typing import Calculator, Estimator, Result
 from nannyml.config import Config, InputDataConfig, StoreConfig, WriterConfig
 from nannyml.data_quality.missing import MissingValuesCalculator
 from nannyml.data_quality.unseen import UnseenValuesCalculator

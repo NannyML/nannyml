@@ -68,7 +68,7 @@ try:
     import nannyml_premium
 
     logging.getLogger().debug('loaded "nannyml_premium" package')
-except Exception as exc:
+except Exception:
     pass
 
 # read any .env files to import environment variables
