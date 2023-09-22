@@ -7,12 +7,12 @@
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pandas as pd
 from rich.console import Console
 
-from nannyml._typing import Result
+from nannyml._typing import Result, Estimator, Calculator
 from nannyml.config import Config, InputDataConfig, StoreConfig, WriterConfig
 from nannyml.data_quality.missing import MissingValuesCalculator
 from nannyml.data_quality.unseen import UnseenValuesCalculator
@@ -59,16 +59,25 @@ def run_context(config: Config):
     )
 
 
-_registry: Dict[str, Type] = {
-    'univariate_drift': UnivariateDriftCalculator,
-    'multivariate_drift': DataReconstructionDriftCalculator,
-    'performance': PerformanceCalculator,
-    'cbpe': CBPE,
-    'dle': DLE,
-    'missing_values': MissingValuesCalculator,
-    'unseen_values': UnseenValuesCalculator,
-}
 _logger = logging.getLogger(__name__)
+
+
+class CalculatorFactory:
+    """A factory class that produces Metric instances based on a given magic string or a metric specification."""
+
+    registry: Dict[str, Type] = {
+        'univariate_drift': UnivariateDriftCalculator,
+        'multivariate_drift': DataReconstructionDriftCalculator,
+        'performance': PerformanceCalculator,
+        'cbpe': CBPE,
+        'dle': DLE,
+        'missing_values': MissingValuesCalculator,
+        'unseen_values': UnseenValuesCalculator,
+    }
+
+    @classmethod
+    def register(cls, name: str, calculator_type: Union[Type[Calculator], Type[Estimator]]):
+        cls.registry[name] = calculator_type
 
 
 class RunnerLogger:
@@ -138,12 +147,12 @@ def run(  # noqa: C901
 
                     store = get_store(calculator_config.store, run_logger)
 
-                    if calculator_config.type not in _registry:
+                    if calculator_config.type not in CalculatorFactory.registry:
                         raise InvalidArgumentsException(f"unknown calculator type '{calculator_config.type}'")
 
                     # first step: load or (create + fit) calculator
                     context.increase_step()
-                    calc_cls = _registry[calculator_config.type]
+                    calc_cls = CalculatorFactory.registry[calculator_config.type]
                     if store and calculator_config.store:
                         run_logger.log(
                             f"[{context.current_step}/{context.total_steps}] '{context.current_calculator}': "

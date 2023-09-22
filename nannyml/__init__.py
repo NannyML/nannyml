@@ -64,6 +64,13 @@ from .stats import (
 )
 from .usage_logging import UsageEvent, disable_usage_logging, enable_usage_logging, log_usage
 
+try:
+    import nannyml_premium
+
+    logging.getLogger().debug('loaded "nannyml_premium" package')
+except Exception as exc:
+    pass
+
 # read any .env files to import environment variables
 load_dotenv()
 
