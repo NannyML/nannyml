@@ -1,13 +1,17 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+import os
 import tempfile
 
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
+from nannyml.data_quality.missing import MissingValuesCalculator
+from nannyml.data_quality.unseen import UnseenValuesCalculator
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
+    load_synthetic_car_loan_data_quality_dataset,
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
@@ -195,6 +199,30 @@ def dle_estimated_performance_for_regression_result():
     return result
 
 
+@pytest.fixture(scope='module')
+def missing_values_for_binary_classification_result():
+    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
+    calc = MissingValuesCalculator(
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+        timestamp_column_name='timestamp',
+    ).fit(reference_df)
+    result = calc.calculate(analysis_df.join(analysis_targets_df))
+    return result
+
+
+@pytest.fixture(scope='module')
+def unseen_values_for_binary_classification_result():
+    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
+    calc = UnseenValuesCalculator(
+        # categorical features as described in
+        # https://nannyml.readthedocs.io/en/stable/datasets/binary_car_loan.html#dataset-description
+        column_names=['salary_range', 'repaid_loan_on_prev_car', 'size_of_downpayment'],
+        timestamp_column_name='timestamp',
+    ).fit(reference_df)
+    result = calc.calculate(analysis_df.join(analysis_targets_df))
+    return result
+
+
 @pytest.mark.parametrize(
     'result',
     [
@@ -210,6 +238,8 @@ def dle_estimated_performance_for_regression_result():
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):
@@ -236,6 +266,8 @@ def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):
@@ -262,6 +294,8 @@ def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_database_writer_raises_no_exceptions_when_writing(result):
@@ -287,6 +321,8 @@ def test_database_writer_raises_no_exceptions_when_writing(result):
         lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'),
         lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
         lazy_fixture('dle_estimated_performance_for_regression_result'),
+        lazy_fixture('missing_values_for_binary_classification_result'),
+        lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
 def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
@@ -296,3 +332,60 @@ def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
             writer.write(result, filename='export.pkl')
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+@pytest.mark.parametrize(
+    'result, table_name, expected_row_count',
+    [
+        (lazy_fixture('univariate_drift_for_binary_classification_result'), 'univariate_drift_metrics', 110),
+        (lazy_fixture('univariate_drift_for_multiclass_classification_result'), 'univariate_drift_metrics', 110),
+        (lazy_fixture('univariate_drift_for_regression_result'), 'univariate_drift_metrics', 80),
+        (
+            lazy_fixture('data_reconstruction_drift_for_binary_classification_result'),
+            'data_reconstruction_feature_drift_metrics',
+            10,
+        ),
+        (
+            lazy_fixture('data_reconstruction_drift_for_multiclass_classification_result'),
+            'data_reconstruction_feature_drift_metrics',
+            10,
+        ),
+        (
+            lazy_fixture('data_reconstruction_drift_for_regression_result'),
+            'data_reconstruction_feature_drift_metrics',
+            10,
+        ),
+        (lazy_fixture('realized_performance_for_binary_classification_result'), 'realized_performance_metrics', 40),
+        (
+            lazy_fixture('realized_performance_for_multiclass_classification_result'),
+            'realized_performance_metrics',
+            40,
+        ),
+        (lazy_fixture('realized_performance_for_regression_result'), 'realized_performance_metrics', 40),
+        (lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'), 'cbpe_performance_metrics', 20),
+        (
+            lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
+            'cbpe_performance_metrics',
+            20,
+        ),
+        (lazy_fixture('dle_estimated_performance_for_regression_result'), 'dle_performance_metrics', 20),
+        (lazy_fixture('missing_values_for_binary_classification_result'), 'missing_values_metrics', 90),
+        (lazy_fixture('unseen_values_for_binary_classification_result'), 'unseen_values_metrics', 30),
+    ],
+)
+def test_database_writer_exports_correctly(result, table_name, expected_row_count):
+    try:
+        writer = DatabaseWriter(connection_string='sqlite:///test.db', model_name='test')
+        writer.write(result)
+
+        import sqlite3
+
+        with sqlite3.connect("test.db", uri=True) as db:
+            res = db.cursor().execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
+            assert res[0] == expected_row_count
+
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+    finally:
+        os.remove('test.db')
