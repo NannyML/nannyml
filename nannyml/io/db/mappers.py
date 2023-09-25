@@ -232,7 +232,7 @@ class RealizedPerformanceMapper(Mapper):
                 'timestamp column to be specified and present'
             )
 
-        res: List[Metric] = []
+        res: List[DbMetric] = []
 
         for metric in [metric.column_name for metric in result.metrics]:
             res += (
@@ -340,7 +340,7 @@ class DLEMapper(Mapper):
                 'timestamp column to be specified and present'
             )
 
-        res: List[Metric] = []
+        res: List[DbMetric] = []
 
         for metric in [metric.column_name for metric in result.metrics]:
             res += (
@@ -364,7 +364,7 @@ class DLEMapper(Mapper):
 
 @MapperFactory.register(UnseenValuesResult)
 class UnseenValuesResultMapper:
-    def map_to_entity(self, result, **metric_args) -> List[UnseenValuesMetric]:
+    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
         def _parse(
             column_name: str,
             start_date: datetime,
@@ -399,8 +399,10 @@ class UnseenValuesResultMapper:
             filter(lambda col: col != 'chunk', result.to_df().columns.get_level_values(0).drop_duplicates())
         )
 
+        res: List[DbMetric] = []
+
         for column in columns:
-            res: List[UnseenValuesMetric] = (
+            res += (
                 result.filter(period='analysis')
                 .to_df()[
                     [
@@ -421,7 +423,7 @@ class UnseenValuesResultMapper:
 
 @MapperFactory.register(MissingValuesResult)
 class MissingValuesResultMapper:
-    def map_to_entity(self, result, **metric_args) -> List[MissingValuesMetric]:
+    def map_to_entity(self, result, **metric_args) -> List[DbMetric]:
         def _parse(
             column_name: str,
             start_date: datetime,
@@ -456,8 +458,10 @@ class MissingValuesResultMapper:
             filter(lambda col: col != 'chunk', result.to_df().columns.get_level_values(0).drop_duplicates())
         )
 
+        res: List[DbMetric] = []
+
         for column in columns:
-            res: List[MissingValuesMetric] = (
+            res += (
                 result.filter(period='analysis')
                 .to_df()[
                     [
