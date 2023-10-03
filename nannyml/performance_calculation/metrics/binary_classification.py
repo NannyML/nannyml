@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
+import warnings
 
 from nannyml._typing import ProblemType
 from nannyml.base import _list_missing
@@ -99,6 +100,7 @@ class BinaryClassificationAUROC(Metric):
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if y_true.nunique() <= 1:
+            warnings.warn("Calculated ROC-AUC score contains NaN values.")
             return np.nan
         else:
             return roc_auc_score(y_true, y_pred)
@@ -167,6 +169,7 @@ class BinaryClassificationF1(Metric):
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated F1-score contains NaN values.")
             return np.nan
         else:
             return f1_score(y_true, y_pred)
@@ -234,6 +237,7 @@ class BinaryClassificationPrecision(Metric):
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Precision score contains NaN values.")
             return np.nan
         else:
             return precision_score(y_true, y_pred)
@@ -301,6 +305,7 @@ class BinaryClassificationRecall(Metric):
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Recall score contains NaN values.")
             return np.nan
         else:
             return recall_score(y_true, y_pred)
@@ -373,6 +378,7 @@ class BinaryClassificationSpecificity(Metric):
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Specificity score contains NaN values.")
             return np.nan
         else:
             tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
@@ -446,6 +452,7 @@ class BinaryClassificationAccuracy(Metric):
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Accuracy score contains NaN values.")
             return np.nan
         else:
             tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
@@ -564,6 +571,7 @@ class BinaryClassificationBusinessValue(Metric):
         business_value = num_tp * tp_value + num_tn * tn_value + num_fp * fp_value + num_fn * fn_value
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Business Value contains NaN values.")
             return np.nan
         else:
             if self.normalize_business_value is None:
@@ -745,6 +753,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if y_true.empty or y_pred.empty:
+            warnings.warn("Calculated true_positives contain NaN values.")
             return np.nan
 
         num_tp = np.sum(np.logical_and(y_pred, y_true))
@@ -773,6 +782,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if y_true.empty or y_pred.empty:
+            warnings.warn("Calculated true_negatives contain NaN values.")
             return np.nan
 
         num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
@@ -801,6 +811,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if y_true.empty or y_pred.empty:
+            warnings.warn("Calculated false_positives contain NaN values.")
             return np.nan
 
         num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
@@ -829,6 +840,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if y_true.empty or y_pred.empty:
+            warnings.warn("Calculated false_negatives contain NaN values.")
             return np.nan
 
         num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
