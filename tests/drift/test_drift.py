@@ -322,6 +322,7 @@ def test_univariate_drift_calculator_without_custom_thresholds():
             'hellinger': ConstantThreshold(lower=1, upper=2),
             'jensen_shannon': ConstantThreshold(lower=1, upper=2),
             'l_infinity': ConstantThreshold(lower=1, upper=2),
+            'psi': ConstantThreshold(lower=1, upper=2),
         },
     ],
 )

@@ -12,6 +12,7 @@ Supported drift detection methods are:
 - L-infinity distance (categorical)
 - Jensen-Shannon distance
 - Hellinger distance
+- Population Stability Index (continuous)
 
 For more information, check out the `tutorial`_ or the `deep dive`_.
 
@@ -50,6 +51,7 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None),
     'hellinger': ConstantThreshold(lower=None, upper=0.1),
     'l_infinity': ConstantThreshold(lower=None, upper=0.1),
+    'psi': ConstantThreshold(lower=None, upper=0.25),
 }
 
 
@@ -97,6 +99,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
                 - `kolmogorov_smirnov`
                 - `hellinger`
                 - `wasserstein`
+                - `psi`
         chunk_size: int
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -118,6 +121,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
                     'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None),
                     'hellinger': ConstantThreshold(upper=0.1),
                     'l_infinity': ConstantThreshold(upper=0.1)
+                    'psi': ConstantThreshold(upper=0.25)
                 }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
@@ -130,6 +134,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
                 - `wasserstein`: `StandardDeviationThreshold(std_lower_multiplier=None)`
                 - `hellinger`: `ConstantThreshold(upper=0.1)`
                 - `l_infinity`: `ConstantThreshold(upper=0.1)`
+                - `psi`: `ConstantThreshold(upper=0.25)`
 
             The `chi2` method does not support custom thresholds for now. Additional research is required to determine
             how to transition from its current p-value based implementation.

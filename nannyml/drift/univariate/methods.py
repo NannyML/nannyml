@@ -271,7 +271,7 @@ class JensenShannonDistance(Method):
         column_name: str, default='jensen-shannon'
             The name used to indicate the metric in columns of a DataFrame.
         lower_threshold_limit : float, default=0
-            An optional lower threshold for the performance metric.
+            An optional lower threshold for the drift metric.
         """
         self._treat_as_type: str
         self._bins: np.ndarray
@@ -353,9 +353,9 @@ class KolmogorovSmirnovStatistic(Method):
         column_name: str, default='kolmogorov-smirnov'
             The name used to indicate the metric in columns of a DataFrame.
         upper_threshold_limit : float, default=1.0
-            An optional upper threshold for the performance metric.
+            An optional upper threshold for the drift metric.
         lower_threshold_limit : float, default=0
-            An optional lower threshold for the performance metric.
+            An optional lower threshold for the drift metric.
         """
         self._reference_data: Optional[pd.Series] = None
         self._reference_size: float
@@ -434,9 +434,9 @@ class Chi2Statistic(Method):
         column_name: str, default='chi2'
             The name used to indicate the metric in columns of a DataFrame.
         upper_threshold_limit : float, default=1.0
-            An optional upper threshold for the performance metric.
+            An optional upper threshold for the drift metric.
         lower_threshold_limit : float, default=0
-            An optional lower threshold for the performance metric.
+            An optional lower threshold for the drift metric.
         """
         self._reference_data_vcs: pd.Series
         self._p_value: float
@@ -499,7 +499,7 @@ class LInfinityDistance(Method):
         column_name: str, default='l_infinity'
             The name used to indicate the metric in columns of a DataFrame.
         lower_threshold_limit : float, default=0
-            An optional lower threshold for the performance metric.
+            An optional lower threshold for the drift metric.
         """
 
         self._reference_proba: Optional[dict] = None
@@ -553,7 +553,7 @@ class WassersteinDistance(Method):
         column_name: str, default='wasserstein'
             The name used to indicate the metric in columns of a DataFrame.
         lower_threshold_limit : float, default=0
-            An optional lower threshold for the performance metric.
+            An optional lower threshold for the drift metric.
         """
 
         self._reference_data: Optional[pd.Series] = None
@@ -660,7 +660,7 @@ class HellingerDistance(Method):
         column_name: str, default='hellinger'
             The name used to indicate the metric in columns of a DataFrame.
         lower_threshold_limit : float, default=0
-            An optional lower threshold for the performance metric.
+            An optional lower threshold for the drift metric.
         """
 
         self._treat_as_type: str
@@ -719,3 +719,70 @@ class HellingerDistance(Method):
         del reference_proba_in_bins
 
         return distance
+
+@MethodFactory.register(key='psi', feature_type=FeatureType.CONTINUOUS)
+class PSI(Method):
+    """Calculates the Population Stability Index (PSI) between two distributions."""
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(
+            display_name='Population Stability Index',
+            column_name='psi',
+            lower_threshold_limit=0,
+            **kwargs,
+        )
+        """
+        Parameters
+        ----------
+        display_name : str, default='Population Stability Index'
+            The name of the metric. Used to display in plots.
+        column_name: str, default='psi'
+            The name used to indicate the metric in columns of a DataFrame.
+        lower_threshold_limit : float, default=0
+            An optional lower threshold for the drift metric.
+        """
+
+        self._reference_bins = None
+
+    def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
+        #pick optimal bin size using freedman diaconis rule
+        data = np.array(reference_data)
+        IQR = np.percentile(data, 75) - np.percentile(data, 25)
+        n = len(data)
+        bin_width = 2 * IQR * n**(-1/3)
+        bin_num = int(np.ceil((data.max() - data.min()) / bin_width))
+
+        reference_data = _remove_missing_data(reference_data)
+        _, self._reference_bins = np.histogram(reference_data, bins=bin_num, density=True)
+
+
+        # Calculate bin frequencies for the reference data
+        self._reference_count, _ = np.histogram(reference_data, bins=self._reference_bins)
+        self._reference_proba = self._reference_count / len(reference_data)
+
+        return self
+
+    def _calculate(self, data: pd.Series):
+        if self._reference_bins is None:
+            raise NotFittedException(
+                "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
+            )
+        data = _remove_missing_data(data)
+        if data.empty:
+            return np.nan
+
+        # Calculate bin frequencies for the analysis data
+        data_counts, _ = np.histogram(data, bins=self._reference_bins)
+        data_probs = data_counts / len(data)
+
+        # Use the previously calculated bin frequencies for the reference data
+        ref_probs = self._reference_proba
+
+        psi_values = [
+            (data_prob - ref_prob) * np.log(data_prob / ref_prob)
+            if ref_prob > 1e-10 and data_prob > 1e-10
+            else 0
+            for data_prob, ref_prob in zip(data_probs, ref_probs)
+        ]
+
+        return sum(psi_values)
