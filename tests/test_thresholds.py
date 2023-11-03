@@ -72,7 +72,7 @@ def test_standard_deviation_threshold_init_sets_default_instance_attributes():
 
     assert sut.std_lower_multiplier == 3
     assert sut.std_upper_multiplier == 3
-    assert sut.offset_from == np.mean
+    assert sut.offset_from == np.nanmean
 
 
 @pytest.mark.parametrize(
