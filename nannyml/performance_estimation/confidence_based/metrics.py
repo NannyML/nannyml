@@ -11,6 +11,7 @@ and run the estimation on analysis data.
 
 import abc
 import logging
+import warnings
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -718,10 +719,14 @@ class BinaryClassificationSpecificity(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("Calculated Specificity score contains NaN values.")
             return np.NaN
-
-        conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
-        return conf_matrix[1, 1] / (conf_matrix[1, 0] + conf_matrix[1, 1])
+        elif (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Specificity score contains NaN values.")
+            return np.nan
+        else:
+            tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+            return tn / (tn + fp)
 
 
 def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
