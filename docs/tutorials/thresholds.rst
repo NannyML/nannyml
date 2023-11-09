@@ -46,7 +46,6 @@ This snippet shows how to create an instance of the :class:`~nannyml.thresholds.
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
     :cells: 2
-    :show_output:
 
 .. _thresholds_std:
 
@@ -72,7 +71,6 @@ This snippet shows how to create an instance of the :class:`~nannyml.thresholds.
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Thresholds.ipynb
     :cells: 3
-    :show_output:
 
 
 Setting custom thresholds for calculators and estimators

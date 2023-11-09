@@ -208,16 +208,16 @@ the database, in this case, an `SQLite` database.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 11
+    :cells: 20
 
 A quick inspection shows that the database was populated and contains the univariate drift calculation results.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 12
+    :cells: 21
     :show_output:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
-    :cells: 13
+    :cells: 22
     :show_output:

@@ -284,8 +284,6 @@ class CBPE(AbstractEstimator):
                 )
             )
 
-        self.confidence_upper_bound = 1
-        self.confidence_lower_bound = 0
         self.needs_calibration: bool = False
 
         if calibrator is None:

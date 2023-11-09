@@ -50,12 +50,30 @@ Let's start by loading some synthetic data provided by the NannyML package and s
     :cell: 2
 
 The :class:`~nannyml.drift.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
-module implements this functionality.  We need to instantiate it with appropriate parameters - the column names of the features we want to run drift detection on,
-and the timestamp column name. The features can be passed in as a simple list of strings. Alternatively, we can create a list by excluding the columns in the dataframe that are not features,
-and pass them into the argument.
+module implements this functionality. We need to instantiate it with appropriate parameters:
 
-Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs to be called on the reference data, which the results will be based on.
-Then the
+- **column_names:** A list with the column names of the features we want to run drift detection on.
+- **timestamp_column_name (Optional):** The name of the column in the reference data that
+  contains timestamps.
+- **n_components (Optional):** The n_components parameter as passed to the sklearn `PCA constructor`_.
+- **chunk_size (Optional):** The number of observations in each chunk of data
+  used. Only one chunking argument needs to be provided. For more information about
+  :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
+- **chunk_number (Optional):** The number of chunks to be created out of data provided for each
+  :ref:`period<data-drift-periods>`.
+- **chunk_period (Optional):** The time period based on which we aggregate the provided data in
+  order to create chunks.
+- **chunker (Optional):** A NannyML :class:`~nannyml.chunk.Chunker` object that will handle the aggregation
+  provided data in order to create chunks.
+- **imputer_categorical (Optional):** An sklearn `SimpleImputer`_ object specifying an appropriate strategy
+  for imputing missing values for categorical features.
+- **imputer_continuous (Optional):** An sklearn `SimpleImputer`_ object specifying an appropriate strategy
+  for imputing missing values for continuous features.
+- **threshold (Optional):** The threshold strategy used to calculate the alert threshold limits.
+  For more information about thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
+
+Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs to be called on the reference data,
+which the results will be based on. Then the
 :meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the multivariate drift results on the provided data.
 
@@ -101,11 +119,8 @@ NannyML can also visualize the multivariate drift results in a plot. Our plot co
 
 * The purple step plot shows the reconstruction error in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
-
 * The low-saturated purple area around the reconstruction error indicates the :ref:`sampling error<estimation_of_standard_error>`.
-
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
-
 * If the reconstruction error crosses the upper or lower threshold an alert is raised which is indicated with a red,
   low-saturated background across the whole width of the relevant chunk. A red, diamond-shaped point marker additionally indicates this in the middle of the chunk.
 
@@ -117,9 +132,6 @@ NannyML can also visualize the multivariate drift results in a plot. Our plot co
 
 The multivariate drift results provide a concise summary of where data drift
 is happening in our input data.
-
-.. _SimpleImputer: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
-
 
 Insights
 --------
@@ -137,3 +149,6 @@ estimate the impact of the observed changes.
 
 For more information on how multivariate drift detection works, the
 :ref:`Data Reconstruction with PCA<data-reconstruction-pca>` explanation page gives more details.
+
+.. _`PCA constructor`: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+.. _`SimpleImputer`: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html

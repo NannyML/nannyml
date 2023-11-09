@@ -31,7 +31,7 @@ __email__ = 'niels@nannyml.com'
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.9.0'
+__version__ = '0.9.1'
 
 import logging
 
@@ -63,6 +63,13 @@ from .stats import (
     SummaryStatsSumCalculator,
 )
 from .usage_logging import UsageEvent, disable_usage_logging, enable_usage_logging, log_usage
+
+try:
+    import nannyml_premium
+
+    logging.getLogger().debug('loaded "nannyml_premium" package')
+except Exception:
+    pass
 
 # read any .env files to import environment variables
 load_dotenv()

@@ -237,17 +237,24 @@ class Metric(abc.ABC):
 
         y_pred_proba = data[y_pred_proba_column_name]
         y_pred = data[self.y_pred]
+        y_true = data[self.y_true] if clean_targets else None
 
-        y_pred_proba.dropna(inplace=True)
-
+        # Create mask to filter out NaN values
+        mask = ~(y_pred.isna() | y_pred_proba.isna())
         if clean_targets:
-            y_true = data[self.y_true]
-            y_true = y_true[~y_pred_proba.isna()]
-            y_pred_proba = y_pred_proba[~y_true.isna()]
-            y_pred = y_pred[~y_true.isna()]
-            y_true.dropna(inplace=True)
-        else:
-            y_true = None
+            mask = mask | ~(y_true.isna())
+
+        # Drop missing values (NaN/None)
+        y_pred_proba = y_pred_proba[mask]
+        y_pred = y_pred[mask]
+        if clean_targets:
+            y_true = y_true[mask]
+
+        # NaN values have been dropped. Try to infer types again
+        y_pred_proba = y_pred_proba.infer_objects()
+        y_pred = y_pred.infer_objects()
+        if clean_targets:
+            y_true = y_true.infer_objects()
 
         return y_pred_proba, y_pred, y_true
 

@@ -105,8 +105,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         if kind == 'drift':
             return plot_metric(
                 self,
-                title='Multivariate drift (PCA reconstruction error)',
-                metric_display_name='Data reconstruction drift',
+                title='Multivariate Drift (PCA Reconstruction Error)',
+                metric_display_name='Reconstruction Error',
                 metric_column_name='reconstruction_error',
             )
         else:

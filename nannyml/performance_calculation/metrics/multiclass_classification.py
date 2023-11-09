@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Tuple, Union  # noqa: TYP001
 
 import numpy as np
 import pandas as pd
+import warnings
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -131,6 +132,7 @@ class MulticlassClassificationAUROC(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if y_true.nunique() <= 1:
+            warnings.warn("Calculated ROC-AUC score contains NaN values.")
             return np.nan
         else:
             return roc_auc_score(y_true, y_pred, multi_class='ovr', average='macro', labels=labels)
@@ -218,6 +220,7 @@ class MulticlassClassificationF1(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated F1-score contains NaN values.")
             return np.nan
         else:
             return f1_score(y_true, y_pred, average='macro', labels=labels)
@@ -305,6 +308,7 @@ class MulticlassClassificationPrecision(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Precision score contains NaN values.")
             return np.nan
         else:
             return precision_score(y_true, y_pred, average='macro', labels=labels)
@@ -392,6 +396,7 @@ class MulticlassClassificationRecall(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Recall score contains NaN values.")
             return np.nan
         else:
             return recall_score(y_true, y_pred, average='macro', labels=labels)
@@ -479,6 +484,7 @@ class MulticlassClassificationSpecificity(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Specificity score contains NaN values.")
             return np.nan
         else:
             MCM = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
@@ -562,6 +568,7 @@ class MulticlassClassificationAccuracy(Metric):
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            warnings.warn("Calculated Accuracy score contains NaN values.")
             return np.nan
         else:
             return accuracy_score(y_true, y_pred)
