@@ -19,6 +19,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    confusion_matrix,
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
@@ -39,8 +40,11 @@ from nannyml.sampling_error.multiclass_classification import (
     recall_sampling_error_components,
     specificity_sampling_error,
     specificity_sampling_error_components,
+    multiclass_confusion_matrix_sampling_error,
+    multiclass_confusion_matrix_sampling_error_components,
 )
-from nannyml.thresholds import Threshold
+from nannyml.thresholds import Threshold, calculate_threshold_values
+from nannyml.chunk import Chunker
 
 
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
@@ -571,3 +575,159 @@ class MulticlassClassificationAccuracy(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return accuracy_sampling_error(self._sampling_error_components, data)
+
+
+@MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationConfusionMatrix(Metric):
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
+        normalize_confusion_matrix: Optional[str] = None,
+        **kwargs,
+    ):
+
+        """Creates a new confusion matrix instance."""
+        super().__init__(
+            name='confusion_matrix',
+            y_true=y_true,
+            y_pred=y_pred,
+            threshold=threshold,
+            y_pred_proba=y_pred_proba,
+            components=[("None", "none")],
+        )
+
+        self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
+
+        self.classes: Optional[List[str]] = None
+
+    def __str__(self):
+        return "confusion_matrix"
+
+    def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
+
+        # _fit
+        # realized perf on chunks
+        # set thresholds
+
+        self._fit(reference_data)
+
+        reference_chunks = chunker.split(reference_data)
+        reference_chunk_results = np.asarray([self._calculate(chunk.data) for chunk in reference_chunks])
+
+        self.alert_thresholds = self._multiclass_confusion_matrix_alert_thresholds(
+            reference_chunk_results=reference_chunk_results,
+        )
+
+    def _multiclass_confusion_matrix_alert_thresholds(
+        self,
+        reference_chunk_results: np.ndarray,
+    ) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
+        """Calculate the alert thresholds for the confusion matrix.
+
+        Args:
+            reference_chunk_results: The confusion matrix for each chunk of the reference data.
+
+        Returns:
+            The alert thresholds for the confusion matrix.
+        """
+        alert_thresholds = {}
+
+        if self.classes is None:
+            raise ValueError("classes must be set before calling this method")
+
+        num_classes = len(self.classes)
+
+        for i in range(num_classes):
+            for j in range(num_classes):
+                lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+                    threshold=self.threshold,
+                    data=reference_chunk_results[:, i, j],
+                    lower_threshold_value_limit=self.lower_threshold_value_limit,
+                    upper_threshold_value_limit=self.upper_threshold_value_limit,
+                )
+                alert_thresholds[f'true_{self.classes[i]}_pred_{self.classes[j]}'] = (
+                    lower_threshold_value,
+                    upper_threshold_value,
+                )
+
+        return alert_thresholds
+
+    def _fit(self, reference_data: pd.DataFrame):
+        _list_missing([self.y_true, self.y_pred], reference_data)
+
+        self.sampling_error_components = multiclass_confusion_matrix_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        )
+
+        self.classes = sorted(reference_data[self.y_true].unique())
+
+        self.components = self._get_components(self.classes)
+
+    def _get_components(self, classes: List[str]) -> List[Tuple[str, str]]:
+        components = []
+
+        for true_class in classes:
+            for pred_class in classes:
+                components.append(
+                    (f"true class: '{true_class}', predicted class: '{pred_class}'", f'true_{true_class}_pred_{pred_class}')
+                )
+
+        return components
+
+    def _calculate(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
+        _list_missing([self.y_true, self.y_pred], data)
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        if y_pred.isna().all().any():
+            raise InvalidArgumentsException(
+                f"could not calculate metric {self.display_name}: prediction column contains no data"
+            )
+
+        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
+            return np.nan
+        else:
+            cm = confusion_matrix(y_true, y_pred, labels=self.classes, normalize=self.normalize_confusion_matrix)
+            return cm
+
+    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict[str, Union[float, bool]]:
+
+        if self.classes is None:
+            raise ValueError("classes must be set before calling this method")
+
+        sampling_errors = multiclass_confusion_matrix_sampling_error(self.sampling_error_components, chunk_data)
+        realized_cm = self._calculate(chunk_data)
+
+        if isinstance(realized_cm, float):
+            realized_cm = np.full((len(self.classes), len(self.classes)), np.nan)
+
+        chunk_record = {}
+
+        for true_class in self.classes:
+            for pred_class in self.classes:
+
+                column_name = f'true_{true_class}_pred_{pred_class}'
+
+                chunk_record[f"{column_name}_sampling_error"] = sampling_errors[
+                    self.classes.index(true_class), self.classes.index(pred_class)
+                ]
+
+                chunk_record[f"{column_name}"] = realized_cm[
+                    self.classes.index(true_class), self.classes.index(pred_class)
+                ]
+
+                lower_threshold, upper_threshold = self.alert_thresholds[f"true_{true_class}_pred_{pred_class}"]
+                chunk_record[f"{column_name}_upper_threshold"] = upper_threshold
+                chunk_record[f"{column_name}_lower_threshold"] = lower_threshold
+
+                chunk_record[f"{column_name}_alert"] = (
+                    self.alert_thresholds is not None and (chunk_record[f"{column_name}"] < lower_threshold)
+                ) or (self.alert_thresholds is not None and (chunk_record[f"{column_name}"] > upper_threshold))
+
+        return chunk_record

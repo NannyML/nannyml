@@ -23,6 +23,7 @@ from nannyml.performance_calculation.metrics.multiclass_classification import (
     MulticlassClassificationPrecision,
     MulticlassClassificationRecall,
     MulticlassClassificationSpecificity,
+    MulticlassClassificationConfusionMatrix,
 )
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
@@ -45,7 +46,7 @@ def performance_calculator() -> PerformanceCalculator:
         },
         y_pred='y_pred',
         y_true='y_true',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix'],
         problem_type='classification_multiclass',
     )
 
@@ -60,7 +61,7 @@ def realized_performance_metrics(multiclass_data) -> pd.DataFrame:
         },
         y_pred='y_pred',
         y_true='y_true',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix'],
         problem_type='classification_multiclass',
     ).fit(multiclass_data[0])
     results = performance_calculator.calculate(
@@ -87,6 +88,7 @@ def no_timestamp_metrics(performance_calculator, multiclass_data) -> pd.DataFram
         ('recall', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationRecall),
         ('specificity', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationSpecificity),
         ('accuracy', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationAccuracy),
+        ('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS, MulticlassClassificationConfusionMatrix),
     ],
 )
 def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, problem_type, metric):  # noqa: D103
@@ -120,6 +122,15 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         ('recall', [0.75103, 0.76315, 0.75848, 0.75899, 0.75798, 0.55783, 0.56017, 0.56594, 0.56472, 0.56277]),
         ('specificity', [0.87555, 0.88151, 0.87937, 0.87963, 0.87899, 0.77991, 0.78068, 0.78422, 0.78342, 0.78243]),
         ('accuracy', [0.75117, 0.763, 0.75867, 0.75917, 0.758, 0.56083, 0.56233, 0.56983, 0.56783, 0.566]),
+        ('true_upmarket_card_pred_upmarket_card', [1490, 1524, 1544, 1528, 1567, 1165, 1120, 1147, 1166, 1173]),
+        ('true_upmarket_card_pred_prepaid_card', [245, 234, 224, 201, 229, 372, 382, 382, 377, 371]),
+        ('true_upmarket_card_pred_highstreet_card', [245, 252, 251, 262, 242, 525, 508, 535, 513, 513]),
+        ('true_prepaid_card_pred_upmarket_card', [204, 201, 200, 246, 194, 448, 419, 416, 440, 436]),
+        ('true_prepaid_card_pred_prepaid_card', [1560, 1518, 1557, 1577, 1493, 878, 908, 875, 888, 869]),
+        ('true_prepaid_card_pred_highstreet_card', [274, 237, 264, 237, 270, 539, 595, 550, 539, 568]),
+        ('true_highstreet_card_pred_upmarket_card', [250, 237, 259, 251, 277, 330, 318, 302, 312, 326]),
+        ('true_highstreet_card_pred_prepaid_card', [275, 261, 250, 248, 240, 421, 404, 396, 412, 390]),
+        ('true_highstreet_card_pred_highstreet_card', [1457, 1536, 1451, 1450, 1488, 1322, 1346, 1397, 1353, 1354]),
     ],
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
@@ -136,6 +147,15 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
         ('recall', [0.75103, 0.76315, 0.75848, 0.75899, 0.75798, 0.55783, 0.56017, 0.56594, 0.56472, 0.56277]),
         ('specificity', [0.87555, 0.88151, 0.87937, 0.87963, 0.87899, 0.77991, 0.78068, 0.78422, 0.78342, 0.78243]),
         ('accuracy', [0.75117, 0.763, 0.75867, 0.75917, 0.758, 0.56083, 0.56233, 0.56983, 0.56783, 0.566]),
+        ('true_upmarket_card_pred_upmarket_card', [1490, 1524, 1544, 1528, 1567, 1165, 1120, 1147, 1166, 1173]),
+        ('true_upmarket_card_pred_prepaid_card', [245, 234, 224, 201, 229, 372, 382, 382, 377, 371]),
+        ('true_upmarket_card_pred_highstreet_card', [245, 252, 251, 262, 242, 525, 508, 535, 513, 513]),
+        ('true_prepaid_card_pred_upmarket_card', [204, 201, 200, 246, 194, 448, 419, 416, 440, 436]),
+        ('true_prepaid_card_pred_prepaid_card', [1560, 1518, 1557, 1577, 1493, 878, 908, 875, 888, 869]),
+        ('true_prepaid_card_pred_highstreet_card', [274, 237, 264, 237, 270, 539, 595, 550, 539, 568]),
+        ('true_highstreet_card_pred_upmarket_card', [250, 237, 259, 251, 277, 330, 318, 302, 312, 326]),
+        ('true_highstreet_card_pred_prepaid_card', [275, 261, 250, 248, 240, 421, 404, 396, 412, 390]),
+        ('true_highstreet_card_pred_highstreet_card', [1457, 1536, 1451, 1450, 1488, 1322, 1346, 1397, 1353, 1354]),
     ],
 )
 def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_metrics, metric, expected):

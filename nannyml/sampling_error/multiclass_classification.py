@@ -2,10 +2,11 @@
 #            Jakub Bialek    <jabub@nannyml.com>
 #
 #  License: Apache Software License 2.0
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import confusion_matrix
 
 
 def _standard_deviation_of_variances(components: List[Tuple], data) -> float:
@@ -345,3 +346,59 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
 
     """
     return sampling_error_components[0] / np.sqrt(len(data))
+
+
+def multiclass_confusion_matrix_sampling_error_components(
+    y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series], normalize_confusion_matrix: Union[str, None]
+):
+
+    cm = confusion_matrix(y_true_reference, y_pred_reference)
+
+    true_marginal = cm.sum(axis=1)[:, None]
+    pred_marginal = cm.sum(axis=0)[None, :]
+
+    num_observations = len(y_true_reference)
+
+    if normalize_confusion_matrix == 'true':
+        relevant_proportions = true_marginal / num_observations
+    elif normalize_confusion_matrix == 'pred':
+        relevant_proportions = pred_marginal / num_observations
+    elif normalize_confusion_matrix == 'all':
+        relevant_proportions = 1
+    else:
+        relevant_proportions = None
+
+    n_rows, n_cols = cm.shape
+
+    stds = np.zeros((n_rows, n_cols))
+
+    for i in range(n_rows):
+        for j in range(n_cols):
+
+            if normalize_confusion_matrix == 'true':
+                obs_level_array = np.zeros(true_marginal[i, 0], dtype=int)
+            elif normalize_confusion_matrix == 'pred':
+                obs_level_array = np.zeros(pred_marginal[0, j], dtype=int)
+            elif normalize_confusion_matrix == 'all':
+                obs_level_array = np.zeros(num_observations, dtype=int)
+            else:
+                obs_level_array = np.zeros(num_observations, dtype=int)
+
+            end_index = cm[i, j]
+            obs_level_array[:end_index] = 1
+
+            stds[i, j] = np.std(obs_level_array)
+
+    return stds, relevant_proportions
+
+
+def multiclass_confusion_matrix_sampling_error(sampling_error_components: Tuple, data):
+
+    reference_stds, relevant_proportions = sampling_error_components
+
+    if relevant_proportions is None:
+        standard_errors = (reference_stds / np.sqrt(len(data))) * len(data)
+    else:
+        standard_errors = reference_stds / np.sqrt(len(data) * relevant_proportions)
+
+    return standard_errors
