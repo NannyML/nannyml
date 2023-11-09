@@ -1766,7 +1766,7 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
 
-        if data[self.y_true] is None:
+        if data is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
             return np.NaN
 
@@ -1829,7 +1829,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
 
-        if data[self.y_true] is None:
+        if data is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized F1 score.")
             return np.NaN
 
@@ -1896,7 +1896,7 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
 
-        if data[self.y_true] is None:
+        if data is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
             return np.NaN
 
@@ -1963,7 +1963,7 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
 
-        if data[self.y_true] is None:
+        if data is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized recall.")
             return np.NaN
 
@@ -2030,7 +2030,7 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
 
-        if data[self.y_true] is None:
+        if data is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
             return np.NaN
 
@@ -2099,7 +2099,7 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
 
-        if data[self.y_true] is None:
+        if data is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
             return np.NaN
 
@@ -2222,8 +2222,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return alert_thresholds
 
     def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
-
-        if data[self.y_true] is None:
+        if data is None or self.y_true not in data.columns:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
             return np.NaN
 
