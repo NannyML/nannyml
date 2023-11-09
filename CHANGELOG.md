@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+### Added
+
+- Added support for directly estimating the confusion matrix of multiclass classification models using CBPE.
+  Big thanks to our appreciated alumnus [@cartgr](https://github.com/cartgr) for the effort (and sorry it took soooo long). [(#287)](https://github.com/NannyML/nannyml/issues/287)
+
+### Fixed
+
 ## [0.9.1] - 2023-07-12
 
 ### Changed
