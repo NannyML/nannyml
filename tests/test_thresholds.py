@@ -153,3 +153,11 @@ def test_standard_deviation_threshold_raises_threshold_exception_when_negative_l
 def test_standard_deviation_threshold_raises_threshold_exception_when_negative_upper_multiplier_given():
     with pytest.raises(ThresholdException, match="'std_upper_multiplier' should be greater than 0 but got value -1"):
         _ = StandardDeviationThreshold(0, -1)
+
+
+def test_standard_deviation_threshold_deals_with_nan_values():
+    t = StandardDeviationThreshold()
+    upper, lower = t.thresholds(np.asarray([-1, 1, np.nan, 1, np.nan]))
+
+    assert not np.isnan(upper)
+    assert not np.isnan(lower)
