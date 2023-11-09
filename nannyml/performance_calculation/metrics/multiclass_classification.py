@@ -7,24 +7,25 @@
 #  License: Apache Software License 2.0
 
 """Module containing metric utilities and implementations."""
+import warnings
 from typing import Dict, List, Optional, Tuple, Union  # noqa: TYP001
 
 import numpy as np
 import pandas as pd
-import warnings
 from sklearn.metrics import (
     accuracy_score,
+    confusion_matrix,
     f1_score,
     multilabel_confusion_matrix,
     precision_score,
     recall_score,
     roc_auc_score,
-    confusion_matrix,
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 from nannyml._typing import ProblemType, class_labels, model_output_column_names
 from nannyml.base import _list_missing
+from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
 from nannyml.sampling_error.multiclass_classification import (
@@ -34,17 +35,16 @@ from nannyml.sampling_error.multiclass_classification import (
     auroc_sampling_error_components,
     f1_sampling_error,
     f1_sampling_error_components,
+    multiclass_confusion_matrix_sampling_error,
+    multiclass_confusion_matrix_sampling_error_components,
     precision_sampling_error,
     precision_sampling_error_components,
     recall_sampling_error,
     recall_sampling_error_components,
     specificity_sampling_error,
     specificity_sampling_error_components,
-    multiclass_confusion_matrix_sampling_error,
-    multiclass_confusion_matrix_sampling_error_components,
 )
 from nannyml.thresholds import Threshold, calculate_threshold_values
-from nannyml.chunk import Chunker
 
 
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
@@ -674,7 +674,10 @@ class MulticlassClassificationConfusionMatrix(Metric):
         for true_class in classes:
             for pred_class in classes:
                 components.append(
-                    (f"true class: '{true_class}', predicted class: '{pred_class}'", f'true_{true_class}_pred_{pred_class}')
+                    (
+                        f"true class: '{true_class}', predicted class: '{pred_class}'",
+                        f'true_{true_class}_pred_{pred_class}',
+                    )
                 )
 
         return components
