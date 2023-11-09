@@ -1,8 +1,8 @@
 .. _multiclass_standard-metric-estimation:
 
-=====================================================================
-Estimating Standard Performance Metrics for Multiclass Classification
-=====================================================================
+====================================================
+Estimating Performance for Multiclass Classification
+====================================================
 
 This tutorial explains how to use NannyML to estimate the performance of binary classification
 models in the absence of target data. To find out how :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimates performance, read the :ref:`explanation of Confidence-based
@@ -19,7 +19,7 @@ Just The Code
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Performance - Multiclass Classification.ipynb
-    :cells: 1 3 4 6 8
+    :cells: 1 3 4 6
 
 .. admonition:: **Advanced configuration**
     :class: hint
@@ -140,6 +140,5 @@ What's next
 -----------
 
 The :ref:`Data Drift<data-drift>` functionality can help us to understand whether data drift is causing the performance problem.
-When the target values become available we can use
-:ref:`realized performance calculation<multiclass-standard-metric-calculation>` to
-:ref:`compare realized and estimated confusion matrix results<compare_estimated_and_realized_performance>`.
+When the target values become available we can
+:ref:`compared realized and performance results<compare_estimated_and_realized_performance>`.
