@@ -11,6 +11,7 @@ and run the estimation on analysis data.
 
 import abc
 import logging
+import warnings
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -402,6 +403,11 @@ class BinaryClassificationAUROC(Metric):
         y_pred_proba, _, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
             return np.NaN
 
         return roc_auc_score(y_true, y_pred_proba)
@@ -494,6 +500,15 @@ class BinaryClassificationF1(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized F1 score.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized F1 score.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized F1 score.")
             return np.NaN
 
         return f1_score(y_true=y_true, y_pred=y_pred)
@@ -570,6 +585,15 @@ class BinaryClassificationPrecision(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
             return np.NaN
 
         return precision_score(y_true=y_true, y_pred=y_pred)
@@ -644,6 +668,15 @@ class BinaryClassificationRecall(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized recall.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as recall precision.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as recall precision.")
             return np.NaN
 
         return recall_score(y_true=y_true, y_pred=y_pred)
@@ -718,10 +751,19 @@ class BinaryClassificationSpecificity(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
             return np.NaN
 
-        conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
-        return conf_matrix[1, 1] / (conf_matrix[1, 0] + conf_matrix[1, 1])
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
+            return np.NaN
+
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+        return tn / (tn + fp)
 
 
 def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
@@ -797,6 +839,15 @@ class BinaryClassificationAccuracy(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
             return np.NaN
 
         return accuracy_score(y_true=y_true, y_pred=y_pred)
@@ -961,6 +1012,15 @@ class BinaryClassificationConfusionMatrix(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
             return np.NaN
 
         num_tp = np.sum(np.logical_and(y_pred, y_true))
@@ -980,6 +1040,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
             return np.NaN
 
         num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
@@ -999,6 +1060,15 @@ class BinaryClassificationConfusionMatrix(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
             return np.NaN
 
         num_tp = np.sum(np.logical_and(y_pred, y_true))
@@ -1018,6 +1088,15 @@ class BinaryClassificationConfusionMatrix(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
             return np.NaN
 
         num_tp = np.sum(np.logical_and(y_pred, y_true))
@@ -1500,6 +1579,15 @@ class BinaryClassificationBusinessValue(Metric):
         _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
 
         if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized business value.")
+            return np.NaN
+
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized business value.")
+            return np.NaN
+
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized business value.")
             return np.NaN
 
         tp_value = self.business_value_matrix[1, 1]
@@ -1677,7 +1765,13 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
+
         if data is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
+            return np.NaN
+
+        if data[self.y_true].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
             return np.NaN
 
         _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
@@ -1734,7 +1828,17 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
+
         if data is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized F1 score.")
+            return np.NaN
+
+        if data[self.y_true].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized F1 score.")
+            return np.NaN
+
+        if data[self.y_pred].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized F1 score.")
             return np.NaN
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
@@ -1791,7 +1895,17 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
+
         if data is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
+            return np.NaN
+
+        if data[self.y_true].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
+            return np.NaN
+
+        if data[self.y_pred].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
             return np.NaN
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
@@ -1848,7 +1962,17 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
+
         if data is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized recall.")
+            return np.NaN
+
+        if data[self.y_true].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized recall.")
+            return np.NaN
+
+        if data[self.y_pred].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized recall.")
             return np.NaN
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
@@ -1905,7 +2029,17 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
+
         if data is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
+            return np.NaN
+
+        if data[self.y_true].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
+            return np.NaN
+
+        if data[self.y_pred].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
             return np.NaN
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
@@ -1964,8 +2098,19 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         data = self._ensure_targets(data)
+
         if data is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
             return np.NaN
+
+        if data[self.y_true].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+
+        if data[self.y_pred].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
+
         y_pred, _, _ = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
         return accuracy_score(data[self.y_true], y_pred)
 
@@ -2011,7 +2156,10 @@ class MulticlassClassificationConfusionMatrix(Metric):
         for true_class in classes:
             for pred_class in classes:
                 components.append(
-                    (f"true class: '{true_class}', predicted class: '{pred_class}'", f'true_{true_class}_pred_{pred_class}')
+                    (
+                        f"true class: '{true_class}', predicted class: '{pred_class}'",
+                        f'true_{true_class}_pred_{pred_class}',
+                    )
                 )
 
         return components
@@ -2074,8 +2222,16 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return alert_thresholds
 
     def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
+        if data is None or self.y_true not in data.columns:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
+            return np.NaN
 
-        if self.y_true not in data.columns or data[self.y_true].isna().all():
+        if data[self.y_true].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
+            return np.NaN
+
+        if data[self.y_pred].nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
             return np.NaN
 
         cm = confusion_matrix(
