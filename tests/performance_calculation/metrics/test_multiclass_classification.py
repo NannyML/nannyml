@@ -24,6 +24,7 @@ from nannyml.performance_calculation.metrics.multiclass_classification import (
     MulticlassClassificationPrecision,
     MulticlassClassificationRecall,
     MulticlassClassificationSpecificity,
+    MulticlassClassificationConfusionMatrix,
 )
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 

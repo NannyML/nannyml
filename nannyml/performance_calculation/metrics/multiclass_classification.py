@@ -43,8 +43,11 @@ from nannyml.sampling_error.multiclass_classification import (
     recall_sampling_error_components,
     specificity_sampling_error,
     specificity_sampling_error_components,
+    multiclass_confusion_matrix_sampling_error,
+    multiclass_confusion_matrix_sampling_error_components,
 )
 from nannyml.thresholds import Threshold, calculate_threshold_values
+from nannyml.chunk import Chunker
 
 
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
