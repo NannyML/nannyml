@@ -51,15 +51,15 @@ We can formalize the intuition above as follows:
     \text{business value} = \sum_{i=1}^{n} \sum_{j=1}^{n} \text{business_value}_{i,j} \times \text{confusion_matrix}_{i,j}
 
 where :math:`\text{business_value}_{i,j}` is the business value of a cell in the :term:`confusion matrix<Confusion Matrix>`, and :math:`\text{confusion_matrix}_{i,j}` is the count of observations
-in that cell of the :term:`confusion matrix<Confusion Matrix>`.
+in that cell of the :term:`confusion matrix<Confusion Matrix>`. We use the `sklearn confusion matrix representation`_ that assuming label 0 is negative and label 1 is positive.
 
 Since we are in the binary classification case, :math:`n=2`, and the :term:`confusion matrix<Confusion Matrix>` is:
 
 .. math::
 
     \begin{bmatrix}
-    \text{# of true positives} & \text{# of false positives} \\
-    \text{# of false negatives} & \text{# of true negatives}
+    \text{# of true negatives} & \text{# of false positives} \\
+    \text{# of false negatives} & \text{# of true positives}
     \end{bmatrix}
 
 And the :term:`business value matrix` is:
@@ -67,18 +67,18 @@ And the :term:`business value matrix` is:
 .. math::
 
     \begin{bmatrix}
-    \text{value of a true positive} & \text{value of a false positive} \\
-    \text{value of a false negative} & \text{value of a true negative}
+    \text{value of a true negative} & \text{value of a false positive} \\
+    \text{value of a false negative} & \text{value of a true positive}
     \end{bmatrix}
 
 The business value of a binary classification model can thus be generally expressed as:
 
 .. math::
 
-    \text{business value} = (\text{value of a true positive}) \cdot (\text{# of true positives}) \\
+    \text{business value} = (\text{value of a true negative}) \cdot (\text{# of true negatives}) \\
     + (\text{value of a false positive}) \cdot (\text{# of false positives}) \\
     + (\text{value of a false negative}) \cdot (\text{# of false negatives}) \\
-    + (\text{value of a true negative}) \cdot (\text{# of true negatives})
+    + (\text{value of a true positive}) \cdot (\text{# of true positives})
 
 Calculation of Business Value For Binary Classification
 -------------------------------------------------------
@@ -111,3 +111,6 @@ and then divided by the number of predictions in a given chunk.
 Normalization is supported for both estimation and calculation of business value.
 Check out the :ref:`business-value-calculation` tutorial and the :ref:`business-value-estimation` tutorial
 for examples of how to normalize the business value metric.
+
+
+.. _`sklearn confusion matrix representation`: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html
