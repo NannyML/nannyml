@@ -145,14 +145,14 @@ class AlertCountRanker:
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
-        >>> column_names = [
+        >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
+        >>> analysis_full_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
+        >>> feature_column_names = [
         ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
         ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
         >>> ]
         >>> univ_calc = nml.UnivariateDriftCalculator(
-        ...     column_names=column_names,
+        ...     column_names=feature_column_names,
         ...     treat_as_categorical=['y_pred', 'repaid'],
         ...     timestamp_column_name='timestamp',
         ...     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
@@ -202,14 +202,14 @@ class CorrelationRanker:
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
-        >>> column_names = [
+        >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
+        >>> analysis_full_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
+        >>> feature_column_names = [
         ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
         ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
         >>> ]
         >>> univ_calc = nml.UnivariateDriftCalculator(
-        ...     column_names=column_names,
+        ...     column_names=feature_column_names,
         ...     treat_as_categorical=['y_pred', 'repaid'],
         ...     timestamp_column_name='timestamp',
         ...     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],

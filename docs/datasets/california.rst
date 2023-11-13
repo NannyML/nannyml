@@ -108,17 +108,17 @@ The data are now being split to satisfy NannyML format requirements.
     >>> df_for_nanny = df[df['partition']!='train'].reset_index(drop=True)
     >>> df_for_nanny['partition'] = df_for_nanny['partition'].map({'test':'reference', 'production':'analysis'})
 
-    >>> reference = df_for_nanny[df_for_nanny['partition']=='reference'].copy()
-    >>> analysis = df_for_nanny[df_for_nanny['partition']=='analysis'].copy()
-    >>> analysis_target = analysis[['clf_target']].copy()
-    >>> analysis = analysis.drop('clf_target', axis=1)
+    >>> reference_df = df_for_nanny[df_for_nanny['partition']=='reference'].copy()
+    >>> analysis_df = df_for_nanny[df_for_nanny['partition']=='analysis'].copy()
+    >>> analysis_targets_df = analysis_df[['clf_target']].copy()
+    >>> analysis_df = analysis_df.drop('clf_target', axis=1)
 
     >>> # dropping partition column that is now removed from requirements.
-    >>> reference.drop('partition', axis=1, inplace=True)
-    >>> analysis.drop('partition', axis=1, inplace=True)
+    >>> reference_df.drop('partition', axis=1, inplace=True)
+    >>> analysis_df.drop('partition', axis=1, inplace=True)
 
-The ``reference`` dataframe represents the reference :term:`Data Period` and the ``analysis``
-dataframe represents the analysis period. The ``analysis_target`` dataframe contains the targets
+The ``reference_df`` dataframe represents the reference :term:`Data Period` and the ``analysis_df``
+dataframe represents the analysis period. The ``analysis_targets_df`` dataframe contains the targets
 for the analysis period, which is provided separately.
 
 

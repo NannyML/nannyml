@@ -38,7 +38,7 @@ In order to monitor a model, NannyML needs to learn about it from a reference da
 subject to actual analysis, provided as the analysis dataset.You can read more about this in our section on
 :ref:`data periods<data-drift-periods>`.
 
-The ``analysis_target_df`` dataframe contains the target results of the analysis period. This is kept separate in the
+The ``analysis_targets_df`` dataframe contains the target results of the analysis period. This is kept separate in the
 synthetic data because it is not used during :ref:`performance estimation<performance-estimation>`.
 But it is required to calculate the :term:`Realized Performance`, so the first thing we need to in this case is set up the
 right data in the right dataframes.

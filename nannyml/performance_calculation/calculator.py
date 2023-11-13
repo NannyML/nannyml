@@ -20,8 +20,8 @@ Examples
 
 >>> import nannyml as nml
 >>> from IPython.display import display
->>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
->>> analysis_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
+>>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
+>>> analysis_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
 >>> display(reference_df.head(3))
 >>> calc = nml.PerformanceCalculator(
 ...     y_pred_proba='y_pred_proba',
@@ -178,8 +178,8 @@ class PerformanceCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
+        >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
+        >>> analysis_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
         >>> display(reference_df.head(3))
         >>> calc = nml.PerformanceCalculator(
         ...     y_pred_proba='y_pred_proba',

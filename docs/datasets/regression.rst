@@ -23,8 +23,8 @@ A sample of the dataset can be seen below.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_targets = nml.datasets.load_synthetic_car_price_dataset()
-    >>> display(reference.head())
+    >>> reference_df, analysis_df, analysis_targets_df = nml.datasets.load_synthetic_car_price_dataset()
+    >>> display(reference_df.head())
 
 +----+-----------+-------------+-------------+------------------+--------------+----------+----------------+----------+----------+-------------------------+
 |    |   car_age |   km_driven |   price_new |   accident_count |   door_count | fuel     | transmission   |   y_true |   y_pred | timestamp               |
