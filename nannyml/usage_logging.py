@@ -141,6 +141,9 @@ class SegmentUsageTracker(UsageLogger):
 
         segment_analytics.max_retries = 1
 
+        segment_analytics.timeout = 3
+        segment_analytics.max_retries = 1
+
         if machine_metadata is not None:
             self._identify(machine_metadata)
 
@@ -252,16 +255,17 @@ def _is_nannyml_cloud():
 
 
 def _get_runtime_environment():
-    if _is_running_in_aks():
-        return 'aks'
-    if _is_running_in_eks():
-        return 'eks'
-    if _is_running_in_kubernetes():
-        return 'kubernetes'
+    if _is_running_in_notebook():
+        return 'notebook'
     elif _is_running_in_docker():
         return 'docker'
-    elif _is_running_in_notebook():
-        return 'notebook'
+    elif _is_running_in_kubernetes():
+        if _is_running_in_aks():
+            return 'aks'
+        elif _is_running_in_eks():
+            return 'eks'
+        else:
+            return 'kubernetes'
     else:
         return 'native'
 
@@ -286,7 +290,7 @@ def _is_running_in_aks():
 
     try:
         metadata = requests.get(
-            'http://169.254.169.254/metadata/instance?api-version=2021-02-01', headers={'Metadata': 'true'}
+            'http://169.254.169.254/metadata/instance?api-version=2021-02-01', headers={'Metadata': 'true'}, timeout=5
         )
         return metadata.status_code == 200
     except Exception:
@@ -298,7 +302,9 @@ def _is_running_in_eks():
 
     try:
         token = requests.put(
-            'http://169.254.169.254/latest/api/token', headers={'X-aws-ec2-metadata-token-ttl-seconds': 21600}
+            'http://169.254.169.254/latest/api/token',
+            headers={'X-aws-ec2-metadata-token-ttl-seconds': 21600},
+            timeout=5,
         ).raw()
 
         metadata = requests.get('http://169.254.169.254/latest/meta-data/', headers={'X-aws-ec2-metadata-token': token})

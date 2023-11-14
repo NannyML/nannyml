@@ -153,7 +153,7 @@ class StandardDeviationThreshold(Threshold, type="standard_deviation"):
         self,
         std_lower_multiplier: Optional[Union[float, int]] = 3,
         std_upper_multiplier: Optional[Union[float, int]] = 3,
-        offset_from: Callable[[np.ndarray], Any] = np.mean,
+        offset_from: Callable[[np.ndarray], Any] = np.nanmean,
     ):
         """Creates a new StandardDeviationThreshold instance.
 
@@ -166,7 +166,7 @@ class StandardDeviationThreshold(Threshold, type="standard_deviation"):
                 The number the standard deviation of the input array will be multiplied with to form the upper offset.
                 This value will be added to the aggregate of the input array.
                 Defaults to 3.
-            offset_from: Callable[[np.ndarray], Any], default=np.mean
+            offset_from: Callable[[np.ndarray], Any], default=np.nanmean
                 A function that will be applied to the input array to aggregate it into a single value.
                 Adding the upper offset to this value will yield the upper threshold, subtracting the lower offset
                 will yield the lower threshold.
@@ -180,7 +180,7 @@ class StandardDeviationThreshold(Threshold, type="standard_deviation"):
 
     def thresholds(self, data: np.ndarray, **kwargs) -> Tuple[Optional[float], Optional[float]]:
         aggregate = self.offset_from(data)
-        std = np.std(data)
+        std = np.nanstd(data)
 
         lower_threshold = aggregate - std * self.std_lower_multiplier if self.std_lower_multiplier is not None else None
 
@@ -259,6 +259,7 @@ def calculate_threshold_values(
         metric_name: Optional[str], default=None
             When provided the metric name will be included within any log messages for additional clarity.
     """
+
     lower_threshold_value, upper_threshold_value = threshold.thresholds(data)
 
     if (
