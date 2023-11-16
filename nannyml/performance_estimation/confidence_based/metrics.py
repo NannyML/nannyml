@@ -1581,31 +1581,24 @@ class BinaryClassificationBusinessValue(Metric):
         if y_true is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized business value.")
             return np.NaN
-
-        if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized business value.")
+        if y_true.shape[0] == 0:
+            warnings.warn("Calculated Business Value contains NaN values.")
             return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized business value.")
-            return np.NaN
-
+        
         tp_value = self.business_value_matrix[1, 1]
         tn_value = self.business_value_matrix[0, 0]
         fp_value = self.business_value_matrix[0, 1]
         fn_value = self.business_value_matrix[1, 0]
+        bv_array = np.array(
+            [[tn_value,fp_value], [fn_value,tp_value]]
+        )
 
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        business_value = num_tp * tp_value + num_tn * tn_value + num_fp * fp_value + num_fn * fn_value
-
-        if self.normalize_business_value is None:
-            return business_value
-        else:  # normalize must be 'per_prediction'
-            return business_value / len(y_true)
+        cm = confusion_matrix(y_true, y_pred)
+        if self.normalize_business_value == 'per_prediction':
+            with np.errstate(all="ignore"):
+                cm = cm / cm.sum(axis=0, keepdims=True)
+            cm = np.nan_to_num(cm)
+        return (bv_array*cm).sum()
 
     def _estimate(self, chunk_data: pd.DataFrame) -> float:
         y_pred_proba = chunk_data[self.y_pred_proba]
@@ -1653,20 +1646,23 @@ def estimate_business_value(
     est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
     est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
     est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+    cm = np.array(
+        [[est_tn_ratio, est_fp_ratio], [est_fn_ratio, est_tp_ratio]]
+    )*len(y_pred)
+    if normalize_business_value == 'per_prediction':
+        with np.errstate(all="ignore"):
+            cm = cm / cm.sum(axis=0, keepdims=True)
+        cm = np.nan_to_num(cm)
 
     tp_value = business_value_matrix[1, 1]
     tn_value = business_value_matrix[0, 0]
     fp_value = business_value_matrix[0, 1]
     fn_value = business_value_matrix[1, 0]
-
-    business_value = (
-        est_tn_ratio * tn_value + est_tp_ratio * tp_value + est_fp_ratio * fp_value + est_fn_ratio * fn_value
+    bv_array = np.array(
+        [[tn_value,fp_value], [fn_value,tp_value]]
     )
 
-    if normalize_business_value is None:
-        return business_value * len(y_pred)
-    else:  # normalize must be 'per_prediciton'
-        return business_value
+    return (bv_array*cm).sum()
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):

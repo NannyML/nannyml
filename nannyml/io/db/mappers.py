@@ -234,7 +234,9 @@ class RealizedPerformanceMapper(Mapper):
 
         res: List[DbMetric] = []
 
-        for metric in [metric.column_name for metric in result.metrics]:
+        column_names = [column_name for metric in result.metrics for column_name in metric.column_names]
+
+        for metric in column_names:
             res += (
                 result.filter(partition='analysis')
                 .to_df()[
@@ -288,7 +290,7 @@ class CBPEMapper(Mapper):
 
         res: List[Metric] = []
 
-        for metric in [component[1] for metric in result.metrics for component in metric.components]:
+        for metric in [column_name for metric in result.metrics for column_name in metric.column_names]:
             res += (
                 result.filter(period='analysis')
                 .to_df()[
