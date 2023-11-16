@@ -27,8 +27,8 @@ A sample of the dataset can be seen below.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_targets = nml.load_titanic_dataset()
-    >>> reference.head()
+    >>> reference_df, analysis_df, analysis_targets_df = nml.load_titanic_dataset()
+    >>> reference_df.head()
 
 +----+---------------+----------+-----------------------------------------------------+--------+-------+---------+---------+------------------+---------+---------+------------+--------+--------+---------------------------------------------------+------------+
 |    | PassengerId   | Pclass   | Name                                                | Sex    | Age   | SibSp   | Parch   | Ticket           | Fare    | Cabin   | Embarked   | boat   | body   | home.dest                                         | Survived   |

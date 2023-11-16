@@ -21,7 +21,7 @@ far from optimal, but it is a reasonable minimum. If there are less than 6 chunk
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
+    >>> reference_df, analysis_df, _ = nml.load_synthetic_car_loan_dataset()
     >>> cbpe = nml.CBPE(
     ...     y_pred_proba='y_pred_proba',
     ...     y_pred='y_pred',
@@ -30,8 +30,8 @@ far from optimal, but it is a reasonable minimum. If there are less than 6 chunk
     ...     chunk_number=5,
     ...     metrics=['roc_auc'],
     ...     problem_type='classification_binary',
-    >>> ).fit(reference_data=reference)
-    >>> est_perf = cbpe.estimate(analysis)
+    >>> ).fit(reference_data=reference_df)
+    >>> est_perf = cbpe.estimate(analysis_df)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or continue at your own risk.
 
 

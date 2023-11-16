@@ -23,8 +23,8 @@ A sample of the dataset can be seen below.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_targets = nml.load_synthetic_car_loan_dataset()
-    >>> display(reference.head(3))
+    >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
+    >>> display(reference_df.head(3))
 
 
 +----+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+----------------+----------+----------+-------------------------+
@@ -79,9 +79,9 @@ same. You can access this dataset with:
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference, analysis, analysis_targets = nml.load_synthetic_car_loan_data_quality_dataset()
+    >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_data_quality_dataset()
     >>> # let's show an instance where new and missing values are present.
-    >>> display(analysis.iloc[41515:41520])
+    >>> display(analysis_df.iloc[41515:41520])
 
 +-------+-------------+----------------+------------------------+---------------+---------------------------+-----------------------+-----------------+-------------------------+----------------+----------+----------+
 |       |   car_value | salary_range   |   debt_to_income_ratio |   loan_length | repaid_loan_on_prev_car   | size_of_downpayment   |   driver_tenure | timestamp               |   y_pred_proba | period   |   y_pred |
