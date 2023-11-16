@@ -112,7 +112,7 @@ def realized_performance_for_binary_classification_result():
         y_true='work_home_actual',
         problem_type='classification_binary',
         timestamp_column_name='timestamp',
-        metrics=['roc_auc', 'f1'],
+        metrics=['roc_auc', 'f1', 'confusion_matrix'],
     ).fit(reference_df)
     result = calc.calculate(analysis_df.merge(analysis_targets_df, on='identifier'))
     return result
@@ -160,7 +160,7 @@ def cbpe_estimated_performance_for_binary_classification_result():
         y_true='work_home_actual',
         problem_type='classification_binary',
         timestamp_column_name='timestamp',
-        metrics=['roc_auc', 'f1'],
+        metrics=['roc_auc', 'f1', 'confusion_matrix'],
     ).fit(reference_df)
     result = calc.estimate(analysis_df.merge(analysis_targets_df, on='identifier'))
     return result
@@ -355,14 +355,14 @@ def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
             'data_reconstruction_feature_drift_metrics',
             10,
         ),
-        (lazy_fixture('realized_performance_for_binary_classification_result'), 'realized_performance_metrics', 40),
+        (lazy_fixture('realized_performance_for_binary_classification_result'), 'realized_performance_metrics', 120),
         (
             lazy_fixture('realized_performance_for_multiclass_classification_result'),
             'realized_performance_metrics',
             40,
         ),
         (lazy_fixture('realized_performance_for_regression_result'), 'realized_performance_metrics', 40),
-        (lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'), 'cbpe_performance_metrics', 20),
+        (lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'), 'cbpe_performance_metrics', 60),
         (
             lazy_fixture('cbpe_estimated_performance_for_multiclass_classification_result'),
             'cbpe_performance_metrics',
@@ -383,6 +383,36 @@ def test_database_writer_exports_correctly(result, table_name, expected_row_coun
         with sqlite3.connect("test.db", uri=True) as db:
             res = db.cursor().execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
             assert res[0] == expected_row_count
+
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+    finally:
+        os.remove('test.db')
+
+
+@pytest.mark.parametrize(
+    'result, table_name',
+    [
+        (lazy_fixture('realized_performance_for_binary_classification_result'), 'realized_performance_metrics'),
+        (lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'), 'cbpe_performance_metrics'),
+    ],
+)
+def test_database_writer_deals_with_metric_components(result, table_name):
+    try:
+        writer = DatabaseWriter(connection_string='sqlite:///test.db', model_name='test')
+        writer.write(result.filter(metrics=['confusion_matrix']))
+
+        import sqlite3
+
+        with sqlite3.connect("test.db", uri=True) as db:
+            res = db.cursor().execute(f"SELECT DISTINCT metric_name FROM {table_name}").fetchall()
+            sut = [row[0] for row in res]
+
+            assert 'true_positive' in sut
+            assert 'false_positive' in sut
+            assert 'true_negative' in sut
+            assert 'false_negative' in sut
 
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
