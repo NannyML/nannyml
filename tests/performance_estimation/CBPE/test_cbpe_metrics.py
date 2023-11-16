@@ -66,7 +66,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_true_negative': [9468.107941981285, 13200.5981195499],
                     'estimated_false_positive': [567.0359356949585, 1267.8197989638852],
                     'estimated_false_negative': [475.8920580187156, 994.4018804500995],
-                    'estimated_business_value': [5.311587813417551, 5.182996015004686],
+                    'estimated_business_value': [10.579896199609875, 9.956118766770157],
                 }
             ),
         ),
@@ -196,7 +196,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_true_negative': [0.47340539709906426, 0.44001993731833],
                     'estimated_false_positive': [0.02835179678474793, 0.04226065996546284],
                     'estimated_false_negative': [0.02379460290093578, 0.03314672934833665],
-                    'estimated_business_value': [5.311587813417551, 5.182996015004686],
+                    'estimated_business_value': [10.579896199609875, 9.956118766770157],
                 }
             ),
         ),

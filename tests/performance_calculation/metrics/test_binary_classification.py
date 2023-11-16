@@ -63,6 +63,42 @@ def realized_performance_metrics(binary_data) -> pd.DataFrame:
     results = calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(period='analysis')
     return results.data
 
+@pytest.fixture(scope='module')
+def realized_performance_alt_cm_pred(binary_data) -> pd.DataFrame:
+    calculator = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred_proba='y_pred_proba',
+        y_pred='y_pred',
+        y_true='work_home_actual',
+        metrics=[
+            'business_value',
+            'confusion_matrix',
+        ],
+        business_value_matrix=[[-50, -10], [-5, 10]],
+        normalize_business_value='per_prediction',
+        normalize_confusion_matrix='pred',
+        problem_type='classification_binary',
+    ).fit(binary_data[0])
+    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(period='analysis')
+    return results.data
+
+@pytest.fixture(scope='module')
+def realized_performance_alt_cm_true(binary_data) -> pd.DataFrame:
+    calculator = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred_proba='y_pred_proba',
+        y_pred='y_pred',
+        y_true='work_home_actual',
+        metrics=[
+            'confusion_matrix',
+        ],
+        # business_value_matrix=[[-50, -10], [-5, 10]],
+        # normalize_business_value='per_prediction',
+        normalize_confusion_matrix='true',
+        problem_type='classification_binary',
+    ).fit(binary_data[0])
+    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='identifier')).filter(period='analysis')
+    return results.data
 
 @pytest.fixture(scope='module')
 def no_timestamp_metrics(binary_data):
@@ -139,6 +175,33 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
     metric_values = realized_performance_metrics.loc[:, (metric, 'value')]
+    assert (round(metric_values, 5) == expected).all()
+
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        ('business_value', [-35.39910, -35.88509, -36.22902, -35.41763, -35.84284, -33.57896, -33.25318, -33.17897, -33.84430, -33.12941]),
+        ('true_positive', [0.96729, 0.96607, 0.96858, 0.96819, 0.96610, 0.94932, 0.95777, 0.95012, 0.95718, 0.94271]),
+        ('false_positive', [0.03271, 0.03393, 0.03142, 0.03181, 0.03390, 0.05068, 0.04223, 0.04988, 0.04282, 0.05729]),
+        ('true_negative', [0.88322, 0.89348, 0.90224, 0.88403, 0.89255, 0.83479, 0.83130, 0.82625, 0.84417, 0.82186]),
+        ('false_negative', [0.11678, 0.10652, 0.09776, 0.11597, 0.10745, 0.16521, 0.16870, 0.17375, 0.15583, 0.17814]),
+    ],
+)
+def test_alt_cm_pred_values_are_calculated_correctly(realized_performance_alt_cm_pred, metric, expected):
+    metric_values = realized_performance_alt_cm_pred.loc[:, (metric, 'value')]
+    assert (round(metric_values, 5) == expected).all()
+
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        ('true_positive', [0.88051, 0.88039, 0.88843, 0.87067, 0.88460, 0.81017, 0.80832, 0.79904, 0.81950, 0.80383]),
+        ('false_positive', [0.03190, 0.02990, 0.02723, 0.02820, 0.03136, 0.04315, 0.03636, 0.04205, 0.03614, 0.05121]),
+        ('true_negative', [0.96810, 0.97010, 0.97277, 0.97180, 0.96864, 0.95685, 0.96364, 0.95795, 0.96386, 0.94879]),
+        ('false_negative', [0.11949, 0.11961, 0.11157, 0.12933, 0.11540, 0.18983, 0.19168, 0.20096, 0.18050, 0.19617]),
+    ],
+)
+def test_alt_cm_true_values_are_calculated_correctly(realized_performance_alt_cm_true, metric, expected):
+    metric_values = realized_performance_alt_cm_true.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
 

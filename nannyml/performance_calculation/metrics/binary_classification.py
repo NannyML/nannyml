@@ -557,27 +557,28 @@ class BinaryClassificationBusinessValue(Metric):
             )
 
         y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        if y_true is None:
+            warnings.warn("Calculated Business Value contains NaN values.")
+            return np.NaN
+        if y_true.shape[0] == 0:
+            warnings.warn("Calculated Business Value contains NaN values.")
+            return np.NaN
 
         tp_value = self.business_value_matrix[1, 1]
         tn_value = self.business_value_matrix[0, 0]
         fp_value = self.business_value_matrix[0, 1]
         fn_value = self.business_value_matrix[1, 0]
+        bv_array = np.array(
+            [[tn_value,fp_value], [fn_value,tp_value]]
+        )
 
-        num_tp = num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+        cm = confusion_matrix(y_true, y_pred)
+        if self.normalize_business_value == 'per_prediction':
+            with np.errstate(all="ignore"):
+                cm = cm / cm.sum(axis=0, keepdims=True)
+            cm = np.nan_to_num(cm)
 
-        business_value = num_tp * tp_value + num_tn * tn_value + num_fp * fp_value + num_fn * fn_value
-
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Business Value contains NaN values.")
-            return np.nan
-        else:
-            if self.normalize_business_value is None:
-                return business_value
-            else:  # normalize must be 'per_prediction'
-                return business_value / len(y_true)
+        return (bv_array*cm).sum()
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return business_value_sampling_error(self._sampling_error_components, data)

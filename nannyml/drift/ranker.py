@@ -199,56 +199,56 @@ class CorrelationRanker:
     """Ranks the features according to their correlation with changes in realized or estimated performance.
 
     Examples
-        --------
-        >>> import nannyml as nml
-        >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
-        >>> column_names = [
-        ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
-        ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
-        >>> ]
-        >>> univ_calc = nml.UnivariateDriftCalculator(
-        ...     column_names=column_names,
-        ...     treat_as_categorical=['y_pred', 'repaid'],
-        ...     timestamp_column_name='timestamp',
-        ...     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
-        ...     categorical_methods=['chi2', 'jensen_shannon'],
-        ...     chunk_size=5000
-        >>> )
-        >>> univ_calc.fit(reference_df)
-        >>> univariate_results = univ_calc.calculate(analysis_full_df)
-        >>> realized_calc = nml.PerformanceCalculator(
-        ...     y_pred_proba='y_pred_proba',
-        ...     y_pred='y_pred',
-        ...     y_true='repaid',
-        ...     timestamp_column_name='timestamp',
-        ...     problem_type='classification_binary',
-        ...     metrics=['roc_auc', 'recall',],
-        ...     chunk_size=5000)
-        >>> realized_calc.fit(reference_df)
-        >>> realized_perf_results = realized_calc.calculate(analysis_full_df)
-        >>> ranker2 = nml.CorrelationRanker()
-        >>> # ranker fits on one metric and reference period data only
-        >>> ranker2.fit(
-        ...     realized_perf_results.filter(period='reference', metrics=['recall']))
-        >>> # ranker ranks on one drift method and one performance metric
-        >>> correlation_ranked_features2 = ranker2.rank(
-        ...     univariate_results.filter(period='analysis', methods=['jensen_shannon']),
-        ...     realized_perf_results.filter(period='analysis', metrics=['recall']),
-        ...     only_drifting = False)
-        >>> display(correlation_ranked_features2)
-                          column_name  pearsonr_correlation  pearsonr_pvalue  has_drifted  rank
-        0     repaid_loan_on_prev_car               0.96897      3.90719e-06         True     1
-        1                y_pred_proba              0.966157      5.50918e-06         True     2
-        2                 loan_length              0.965298      6.08385e-06         True     3
-        3                   car_value              0.963623      7.33185e-06         True     4
-        4                salary_range              0.963456      7.46561e-06         True     5
-        5         size_of_downpayment              0.308948         0.385072        False     6
-        6        debt_to_income_ratio              0.307373         0.387627        False     7
-        7                      y_pred             -0.357571         0.310383        False     8
-        8                      repaid             -0.395842         0.257495        False     9
-        9               driver_tenure             -0.575807        0.0815202        False     10
+    --------
+    >>> import nannyml as nml
+    >>> from IPython.display import display
+    >>> reference_df, analysis_df, analysis_target_df = nml.load_synthetic_car_loan_dataset()
+    >>> analysis_full_df = analysis_df.merge(analysis_target_df, left_index=True, right_index=True)
+    >>> column_names = [
+    ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
+    ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
+    >>> ]
+    >>> univ_calc = nml.UnivariateDriftCalculator(
+    ...     column_names=column_names,
+    ...     treat_as_categorical=['y_pred', 'repaid'],
+    ...     timestamp_column_name='timestamp',
+    ...     continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
+    ...     categorical_methods=['chi2', 'jensen_shannon'],
+    ...     chunk_size=5000
+    >>> )
+    >>> univ_calc.fit(reference_df)
+    >>> univariate_results = univ_calc.calculate(analysis_full_df)
+    >>> realized_calc = nml.PerformanceCalculator(
+    ...     y_pred_proba='y_pred_proba',
+    ...     y_pred='y_pred',
+    ...     y_true='repaid',
+    ...     timestamp_column_name='timestamp',
+    ...     problem_type='classification_binary',
+    ...     metrics=['roc_auc', 'recall',],
+    ...     chunk_size=5000)
+    >>> realized_calc.fit(reference_df)
+    >>> realized_perf_results = realized_calc.calculate(analysis_full_df)
+    >>> ranker2 = nml.CorrelationRanker()
+    >>> # ranker fits on one metric and reference period data only
+    >>> ranker2.fit(
+    ...     realized_perf_results.filter(period='reference', metrics=['recall']))
+    >>> # ranker ranks on one drift method and one performance metric
+    >>> correlation_ranked_features2 = ranker2.rank(
+    ...     univariate_results.filter(period='analysis', methods=['jensen_shannon']),
+    ...     realized_perf_results.filter(period='analysis', metrics=['recall']),
+    ...     only_drifting = False)
+    >>> display(correlation_ranked_features2)
+                        column_name  pearsonr_correlation  pearsonr_pvalue  has_drifted  rank
+    0     repaid_loan_on_prev_car               0.96897      3.90719e-06         True     1
+    1                y_pred_proba              0.966157      5.50918e-06         True     2
+    2                 loan_length              0.965298      6.08385e-06         True     3
+    3                   car_value              0.963623      7.33185e-06         True     4
+    4                salary_range              0.963456      7.46561e-06         True     5
+    5         size_of_downpayment              0.308948         0.385072        False     6
+    6        debt_to_income_ratio              0.307373         0.387627        False     7
+    7                      y_pred             -0.357571         0.310383        False     8
+    8                      repaid             -0.395842         0.257495        False     9
+    9               driver_tenure             -0.575807        0.0815202        False     10
     """
 
     def __init__(self) -> None:
