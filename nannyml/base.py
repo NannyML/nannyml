@@ -533,12 +533,17 @@ def _column_is_categorical(column: pd.Series) -> bool:
     return column.dtype in ['object', 'string', 'category', 'bool']
 
 
-def _remove_missing_data(column: pd.Series):
-    if isinstance(column, pd.Series):
-        column = column.dropna().reset_index(drop=True)
-    else:
-        column = column[~np.isnan(column)]
-    return column
+def _clean_data(*data: Union[pd.Series, pd.DataFrame]) -> Tuple[pd.DataFrame, ...]:
+    """Remove rows with NaN values from the given data."""
+    mask = np.ones(len(data[0]), dtype=bool)
+    for df in data:
+        if isinstance(df, pd.DataFrame):
+            mask &= ~df.isna().all(axis=1)
+        else:
+            mask &= ~df.isna()
+
+    # NaN values have been dropped. Try to infer types again
+    return tuple(df[mask].reset_index(drop=True).infer_objects() for df in data)
 
 
 def _column_is_continuous(column: pd.Series) -> bool:

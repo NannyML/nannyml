@@ -9,10 +9,10 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 
 from nannyml._typing import ProblemType
-from nannyml.base import _list_missing
+from nannyml.base import _clean_data, _list_missing
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.binary_classification import (
     accuracy_sampling_error,
     accuracy_sampling_error_components,
@@ -97,7 +97,7 @@ class BinaryClassificationAUROC(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred_proba]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
 
         if y_true.nunique() <= 1:
             warnings.warn("Calculated ROC-AUC score contains NaN values.")
@@ -166,7 +166,7 @@ class BinaryClassificationF1(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated F1-score contains NaN values.")
@@ -234,7 +234,7 @@ class BinaryClassificationPrecision(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Precision score contains NaN values.")
@@ -302,7 +302,7 @@ class BinaryClassificationRecall(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Recall score contains NaN values.")
@@ -375,7 +375,7 @@ class BinaryClassificationSpecificity(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Specificity score contains NaN values.")
@@ -449,7 +449,7 @@ class BinaryClassificationAccuracy(Metric):
                 f"could not calculate metric '{self.display_name}': " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Accuracy score contains NaN values.")
@@ -556,7 +556,7 @@ class BinaryClassificationBusinessValue(Metric):
                 f"could not calculate metric '{self.name}': " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true is None:
             warnings.warn("Calculated Business Value contains NaN values.")
             return np.NaN
@@ -752,7 +752,7 @@ class BinaryClassificationConfusionMatrix(Metric):
                 "could not calculate metric true_positive. prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated true_positives contain NaN values.")
             return np.nan
@@ -781,7 +781,7 @@ class BinaryClassificationConfusionMatrix(Metric):
                 "could not calculate metric true_negative. prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated true_negatives contain NaN values.")
             return np.nan
@@ -810,7 +810,7 @@ class BinaryClassificationConfusionMatrix(Metric):
                 "could not calculate metric false_positive. prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated false_positives contain NaN values.")
             return np.nan
@@ -839,7 +839,7 @@ class BinaryClassificationConfusionMatrix(Metric):
                 "could not calculate metric false_negative. prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated false_negatives contain NaN values.")
             return np.nan

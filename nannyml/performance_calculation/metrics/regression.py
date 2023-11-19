@@ -13,8 +13,8 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _list_missing, _raise_exception_for_negative_values
-from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
+from nannyml.base import _clean_data, _list_missing, _raise_exception_for_negative_values
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
     mae_sampling_error_components,
@@ -80,7 +80,7 @@ class MAE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -138,7 +138,7 @@ class MAPE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -196,7 +196,7 @@ class MSE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -254,7 +254,7 @@ class MSLE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -317,7 +317,7 @@ class RMSE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -375,7 +375,7 @@ class RMSLE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
+        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
