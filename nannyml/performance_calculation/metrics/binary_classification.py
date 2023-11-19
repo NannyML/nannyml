@@ -367,11 +367,6 @@ class BinaryClassificationSpecificity(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                f"could not calculate metric {self.display_name}: " "prediction column contains no data"
-            )
-
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Specificity score contains NaN values.")
             return np.nan
@@ -439,11 +434,6 @@ class BinaryClassificationAccuracy(Metric):
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
-
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                f"could not calculate metric '{self.display_name}': " "prediction column contains no data"
-            )
 
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Accuracy score contains NaN values.")
@@ -546,14 +536,6 @@ class BinaryClassificationBusinessValue(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                f"could not calculate metric '{self.name}': " "prediction column contains no data"
-            )
-
-        if y_true is None:
-            warnings.warn("Calculated Business Value contains NaN values.")
-            return np.NaN
         if y_true.shape[0] == 0:
             warnings.warn("Calculated Business Value contains NaN values.")
             return np.NaN
@@ -742,11 +724,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                "could not calculate metric true_positive. prediction column contains no data"
-            )
-
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated true_positives contain NaN values.")
             return np.nan
@@ -770,11 +747,6 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
-
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                "could not calculate metric true_negative. prediction column contains no data"
-            )
 
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated true_negatives contain NaN values.")
@@ -800,10 +772,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                "could not calculate metric false_positive. prediction column contains no data"
-            )
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated false_positives contain NaN values.")
             return np.nan
@@ -827,11 +795,6 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
-
-        if y_pred.isna().all():
-            raise InvalidArgumentsException(
-                "could not calculate metric false_negative. prediction column contains no data"
-            )
 
         if y_true.empty or y_pred.empty:
             warnings.warn("Calculated false_negatives contain NaN values.")
