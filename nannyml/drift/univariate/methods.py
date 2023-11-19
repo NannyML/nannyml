@@ -278,6 +278,7 @@ class JensenShannonDistance(Method):
         self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
+        reference_data, = _clean_data(reference_data)
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
