@@ -13,7 +13,7 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _clean_data, _list_missing, _raise_exception_for_negative_values
+from nannyml.base import _remove_nans, _list_missing, _raise_exception_for_negative_values
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
@@ -76,11 +76,11 @@ class MAE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -134,11 +134,11 @@ class MAPE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -192,11 +192,11 @@ class MSE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -250,11 +250,11 @@ class MSLE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -313,11 +313,11 @@ class RMSE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 
@@ -371,11 +371,11 @@ class RMSLE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        y_true, y_pred = _clean_data(y_true, y_pred)
         if y_true.empty or y_pred.empty:
             return np.nan
 

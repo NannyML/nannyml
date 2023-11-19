@@ -29,7 +29,7 @@ from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
 
 from nannyml._typing import Self
-from nannyml.base import _clean_data, _column_is_categorical
+from nannyml.base import _remove_nans, _column_is_categorical
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.thresholds import Threshold, calculate_threshold_values
@@ -278,7 +278,7 @@ class JensenShannonDistance(Method):
         self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
-        reference_data, = _clean_data(reference_data)
+        reference_data = _remove_nans(reference_data)
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
@@ -306,7 +306,7 @@ class JensenShannonDistance(Method):
 
     def _calculate(self, data: pd.Series):
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
-        data, = _clean_data(data)
+        data = _remove_nans(data)
         if data.empty:
             return np.nan
         if self._treat_as_type == 'cont':
@@ -375,7 +375,7 @@ class KolmogorovSmirnovStatistic(Method):
             self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
-        reference_data, = _clean_data(reference_data)
+        reference_data = _remove_nans(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
@@ -390,7 +390,7 @@ class KolmogorovSmirnovStatistic(Method):
         return self
 
     def _calculate(self, data: pd.Series):
-        data, = _clean_data(data)
+        data = _remove_nans(data)
         if data.empty:
             return np.nan
         if not self._fitted:
@@ -444,13 +444,13 @@ class Chi2Statistic(Method):
         self._fitted = False
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
-        reference_data, = _clean_data(reference_data)
+        reference_data = _remove_nans(reference_data)
         self._reference_data_vcs = reference_data.value_counts().loc[lambda v: v != 0]
         self._fitted = True
         return self
 
     def _calculate(self, data: pd.Series):
-        data, = _clean_data(data)
+        data = _remove_nans(data)
         if data.empty:
             return np.nan
         if not self._fitted:
@@ -506,7 +506,7 @@ class LInfinityDistance(Method):
         self._reference_proba: Optional[dict] = None
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
-        reference_data, = _clean_data(reference_data)
+        reference_data = _remove_nans(reference_data)
         ref_labels = reference_data.unique()
         self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
 
@@ -517,7 +517,7 @@ class LInfinityDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        data, = _clean_data(data)
+        data = _remove_nans(data)
         if data.empty:
             return np.nan
         data_labels = data.unique()
@@ -575,7 +575,7 @@ class WassersteinDistance(Method):
             self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
-        reference_data, = _clean_data(reference_data)
+        reference_data = _remove_nans(reference_data)
         if (self.calculation_method == 'auto' and len(reference_data) < 10_000) or self.calculation_method == 'exact':
             self._reference_data = reference_data
         else:
@@ -593,7 +593,7 @@ class WassersteinDistance(Method):
             raise NotFittedException(
                 "tried to call 'calculate' on an unfitted method " f"{self.display_name}. Please run 'fit' first"
             )
-        data, = _clean_data(data)
+        data = _remove_nans(data)
         if data.empty:
             return np.nan
         if (
@@ -669,7 +669,7 @@ class HellingerDistance(Method):
         self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
-        reference_data, = _clean_data(reference_data)
+        reference_data = _remove_nans(reference_data)
         if _column_is_categorical(reference_data):
             treat_as_type = 'cat'
         else:
@@ -696,7 +696,7 @@ class HellingerDistance(Method):
         return self
 
     def _calculate(self, data: pd.Series):
-        data, = _clean_data(data)
+        data = _remove_nans(data)
         if data.empty:
             return np.nan
         reference_proba_in_bins = copy(self._reference_proba_in_bins)

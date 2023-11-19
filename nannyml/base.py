@@ -8,7 +8,7 @@ from __future__ import annotations
 import copy
 import logging
 from abc import ABC, abstractmethod
-from typing import Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Generic, Iterable, List, Optional, Tuple, TypeVar, Union, overload
 
 import numpy as np
 import pandas as pd
@@ -533,17 +533,38 @@ def _column_is_categorical(column: pd.Series) -> bool:
     return column.dtype in ['object', 'string', 'category', 'bool']
 
 
-def _clean_data(*data: Union[pd.Series, pd.DataFrame]) -> Tuple[pd.DataFrame, ...]:
-    """Remove rows with NaN values from the given data."""
-    mask = np.ones(len(data[0]), dtype=bool)
-    for df in data:
-        if isinstance(df, pd.DataFrame):
-            mask &= ~df.isna().all(axis=1)
-        else:
-            mask &= ~df.isna()
+@overload
+def _remove_nans(data: pd.Series, columns: None) -> pd.Series:
+    ...
+
+@overload
+def _remove_nans(data: pd.DataFrame, columns: Optional[Iterable[Union[str, Iterable[str]]]]) -> pd.DataFrame:
+    ...
+
+
+def _remove_nans(
+    data: Union[pd.Series, pd.DataFrame], columns: Optional[Iterable[Union[str, Iterable[str]]]] = None
+) -> Tuple[pd.DataFrame, ...]:
+    """Remove rows with NaN values in the specified columns.
+
+    If no columns are given, drop rows with NaN values in any column. If columns are given, drop rows with NaN values
+    in the specified columns. If a set of columns is given, drop rows with NaN values in all of the columns in the set.
+    """
+    # If no columns are given, drop rows with NaN values in any columns
+    if columns is None:
+        mask = ~data.isna()
+        if isinstance(mask, pd.DataFrame):
+            mask = mask.all(axis=1)
+    else:
+        mask = np.ones(len(data), dtype=bool)
+        for column_selector in columns:
+            nans = data[column_selector].isna()
+            if isinstance(nans, pd.DataFrame):
+                nans = nans.all(axis=1)
+            mask &= ~nans
 
     # NaN values have been dropped. Try to infer types again
-    return tuple(df[mask].reset_index(drop=True).infer_objects() for df in data)
+    return data[mask].reset_index(drop=True).infer_objects()
 
 
 def _column_is_continuous(column: pd.Series) -> bool:
