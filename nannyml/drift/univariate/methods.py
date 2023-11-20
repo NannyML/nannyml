@@ -503,12 +503,11 @@ class LInfinityDistance(Method):
             An optional lower threshold for the performance metric.
         """
 
-        self._reference_proba: Optional[dict] = None
+        self._reference_proba: Optional[pd.Series] = None
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_nans(reference_data)
-        ref_labels = reference_data.unique()
-        self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
+        self._reference_proba = reference_data.value_counts(normalize=True)
 
         return self
 
@@ -520,16 +519,9 @@ class LInfinityDistance(Method):
         data = _remove_nans(data)
         if data.empty:
             return np.nan
-        data_labels = data.unique()
-        data_ratios = {label: (data == label).sum() / len(data) for label in data_labels}
 
-        union_labels = set(self._reference_proba.keys()) | set(data_labels)
-
-        differences = {}
-        for label in union_labels:
-            differences[label] = np.abs(self._reference_proba.get(label, 0) - data_ratios.get(label, 0))
-
-        return max(differences.values())
+        analysis_data_ratio = data.value_counts(normalize=True)
+        return self._reference_proba.sub(analysis_data_ratio, fill_value=0).abs().max()
 
 
 @MethodFactory.register(key='wasserstein', feature_type=FeatureType.CONTINUOUS)
