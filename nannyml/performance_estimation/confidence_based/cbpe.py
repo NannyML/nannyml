@@ -83,7 +83,7 @@ class CBPE(AbstractEstimator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        calibration: Optional[str] = None,
+        calibration: str = 'isotonic',
         calibrator: Optional[Calibrator] = None,
         thresholds: Optional[Dict[str, Threshold]] = None,
         normalize_confusion_matrix: Optional[str] = None,

@@ -3,12 +3,20 @@
 #  License: Apache Software License 2.0
 
 """Unit tests for the calibration module."""
+from unittest.mock import Mock
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from nannyml.calibration import IsotonicCalibrator, _get_bin_index_edges, needs_calibration
+from nannyml.calibration import CalibratorFactory, IsotonicCalibrator, _get_bin_index_edges, needs_calibration
 from nannyml.exceptions import InvalidArgumentsException
+
+
+class DummyCalibrator(Mock):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.kwargs = kwargs
 
 
 @pytest.mark.parametrize('vector_size,bin_count', [(0, 0), (0, 1), (1, 1), (2, 1), (3, 5)])
@@ -70,3 +78,73 @@ def test_needs_calibration_returns_false_when_roc_auc_score_equals_one():  # noq
     y_pred_proba = y_true
     sut = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator())
     assert sut is False
+
+
+def test_calibrator_factory_has_isotonic_calibrator_by_default():
+    sut = CalibratorFactory._registry
+    assert len(sut) == 1
+    assert 'isotonic' in sut
+    assert sut['isotonic'] == IsotonicCalibrator
+
+
+def test_register_new_calibrator():
+    CalibratorFactory.register_calibrator("dummy", DummyCalibrator)
+
+    sut = CalibratorFactory._registry
+
+    assert "dummy" in sut
+    assert sut["dummy"] == DummyCalibrator
+
+
+def test_calibrator_factory_emits_warning_on_overwrite():
+    CalibratorFactory.register(key='dummy')(DummyCalibrator)
+
+    with pytest.warns(UserWarning) as record:
+        CalibratorFactory.register(key='dummy')(DummyCalibrator)
+
+    sut = CalibratorFactory._registry
+    assert 'dummy' in sut
+    assert "re-registering calibrator with key 'dummy'" in str(record[0].message)
+
+
+def test_calibrator_factory_overwrites_existing_entries():
+    CalibratorFactory.register(key='isotonic')(DummyCalibrator)
+
+    sut = CalibratorFactory._registry
+
+    assert len(sut) == 1
+    assert 'isotonic' in sut
+    assert sut['isotonic'] == DummyCalibrator
+
+
+def test_calibrator_factory_create_existing_calibrator():
+    CalibratorFactory.register(key='dummy')(DummyCalibrator)
+
+    sut = CalibratorFactory.create('dummy')
+    assert isinstance(sut, DummyCalibrator)
+
+
+def test_calibrator_factory_create_nonexistent_calibrator():
+    with pytest.raises(InvalidArgumentsException):
+        CalibratorFactory.create("nonexistent")
+
+
+def test_calibrator_factory_create_default_calibrator():
+    sut = CalibratorFactory.create()
+    assert isinstance(sut, IsotonicCalibrator)
+
+
+def test_calibrator_factory_passes_keyword_args_to_calibrator_constructor():
+    CalibratorFactory.register(key='dummy')(DummyCalibrator)
+
+    calibrator = CalibratorFactory.create('dummy', foo='bar', baz=1)
+
+    assert isinstance(calibrator, DummyCalibrator)
+
+    sut = calibrator.kwargs
+
+    assert 'foo' in sut
+    assert sut['foo'] == 'bar'
+
+    assert 'baz' in sut
+    assert sut['baz'] == 1
