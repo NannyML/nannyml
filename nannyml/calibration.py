@@ -20,7 +20,7 @@ from nannyml.exceptions import InvalidArgumentsException
 class Calibrator(abc.ABC):
     """Class that is able to calibrate ``y_pred_proba`` scores into probabilities."""
 
-    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray, *args, **kwargs):
         """Fits the calibrator using a reference data set.
 
         Parameters
@@ -32,7 +32,7 @@ class Calibrator(abc.ABC):
         """
         raise NotImplementedError
 
-    def calibrate(self, y_pred_proba: np.ndarray):
+    def calibrate(self, y_pred_proba: np.ndarray, *args, **kwargs):
         """Perform calibration of prediction scores.
 
         Parameters
@@ -126,7 +126,7 @@ class IsotonicCalibrator(Calibrator):
         regressor = IsotonicRegression(out_of_bounds="clip", increasing=True)
         self._regressor = regressor
 
-    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray, *args, **kwargs):
         """Fits the calibrator using a reference data set.
 
         Parameters
@@ -138,7 +138,7 @@ class IsotonicCalibrator(Calibrator):
         """
         self._regressor.fit(y_pred_proba, y_true)
 
-    def calibrate(self, y_pred_proba: np.ndarray):
+    def calibrate(self, y_pred_proba: np.ndarray, *args, **kwargs):
         """Perform calibration of prediction scores.
 
         Parameters
@@ -152,11 +152,11 @@ class IsotonicCalibrator(Calibrator):
 class NoopCalibrator(Calibrator):
     """A Calibrator subclass that simply returns the inputs unaltered."""
 
-    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+    def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray, *args, **kwargs):
         """Fit nothing and just return the calibrator."""
         return self
 
-    def calibrate(self, y_pred_proba: np.ndarray):
+    def calibrate(self, y_pred_proba: np.ndarray, *args, **kwargs):
         """Calibrate nothing and just return the original ``y_pred_proba`` inputs."""
         return np.asarray(y_pred_proba)
 
