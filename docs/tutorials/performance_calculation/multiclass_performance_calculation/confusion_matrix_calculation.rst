@@ -128,7 +128,7 @@ The results can be plotted for visual inspection. Our plot contains several key 
 * *The purple step plot* shows the performance in each chunk of the analysis period. Thick squared point
   markers indicate the middle of these chunks.
 
-* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate 
+* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate
   the middle of these chunks.
 
 * *The gray vertical line* splits the reference and analysis periods.

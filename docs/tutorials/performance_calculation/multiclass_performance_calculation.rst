@@ -17,7 +17,7 @@ For more information about estimating these metrics, refer to the :ref:`multicla
 
 We also support the following *complex* metric for multiclass classification performance calculation:
 
-    * **confusion_matrix** 
+    * **confusion_matrix**
 
 For more information about estimating this metrics, refer to the :ref:`multiclass-confusion-matrix-estimation` section.
 

@@ -351,7 +351,6 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
 def multiclass_confusion_matrix_sampling_error_components(
     y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series], normalize_confusion_matrix: Union[str, None]
 ):
-
     cm = confusion_matrix(y_true_reference, y_pred_reference)
 
     true_marginal = cm.sum(axis=1)[:, None]
@@ -374,7 +373,6 @@ def multiclass_confusion_matrix_sampling_error_components(
 
     for i in range(n_rows):
         for j in range(n_cols):
-
             if normalize_confusion_matrix == 'true':
                 obs_level_array = np.zeros(true_marginal[i, 0], dtype=int)
             elif normalize_confusion_matrix == 'pred':
@@ -393,7 +391,6 @@ def multiclass_confusion_matrix_sampling_error_components(
 
 
 def multiclass_confusion_matrix_sampling_error(sampling_error_components: Tuple, data):
-
     reference_stds, relevant_proportions = sampling_error_components
 
     if relevant_proportions is None:

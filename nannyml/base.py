@@ -537,6 +537,7 @@ def _column_is_categorical(column: pd.Series) -> bool:
 def _remove_nans(data: pd.Series) -> pd.Series:
     ...
 
+
 @overload
 def _remove_nans(data: pd.DataFrame, columns: Optional[Iterable[Union[str, Iterable[str]]]]) -> pd.DataFrame:
     ...

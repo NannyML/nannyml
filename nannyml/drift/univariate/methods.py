@@ -29,7 +29,7 @@ from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
 
 from nannyml._typing import Self
-from nannyml.base import _remove_nans, _column_is_categorical
+from nannyml.base import _column_is_categorical, _remove_nans
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.thresholds import Threshold, calculate_threshold_values
