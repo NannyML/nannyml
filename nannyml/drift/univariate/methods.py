@@ -507,8 +507,7 @@ class LInfinityDistance(Method):
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_nans(reference_data)
-        ref_labels = reference_data.unique()
-        self._reference_proba = {label: (reference_data == label).sum() / len(reference_data) for label in ref_labels}
+        self._reference_proba = reference_data.value_counts(normalize=True)
 
         return self
 
@@ -520,16 +519,14 @@ class LInfinityDistance(Method):
         data = _remove_nans(data)
         if data.empty:
             return np.nan
-        data_labels = data.unique()
-        data_ratios = {label: (data == label).sum() / len(data) for label in data_labels}
+        analysis_data_ratio = data.value_counts(normalize=True)
 
-        union_labels = set(self._reference_proba.keys()) | set(data_labels)
+        # Unify indices so reference and analysis have an entry for all labels
+        unified_index = self._reference_proba.index.union(analysis_data_ratio.index)
+        reference_data_ratio = self._reference_proba.reindex(unified_index, fill_value=0)
+        analysis_data_ratio = analysis_data_ratio.reindex(unified_index, fill_value=0)
 
-        differences = {}
-        for label in union_labels:
-            differences[label] = np.abs(self._reference_proba.get(label, 0) - data_ratios.get(label, 0))
-
-        return max(differences.values())
+        return (reference_data_ratio - analysis_data_ratio).abs().max()
 
 
 @MethodFactory.register(key='wasserstein', feature_type=FeatureType.CONTINUOUS)
