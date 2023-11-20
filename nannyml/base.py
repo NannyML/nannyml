@@ -534,7 +534,7 @@ def _column_is_categorical(column: pd.Series) -> bool:
 
 
 @overload
-def _remove_nans(data: pd.Series, columns: None) -> pd.Series:
+def _remove_nans(data: pd.Series) -> pd.Series:
     ...
 
 @overload
