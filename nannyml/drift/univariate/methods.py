@@ -503,7 +503,7 @@ class LInfinityDistance(Method):
             An optional lower threshold for the performance metric.
         """
 
-        self._reference_proba: Optional[dict] = None
+        self._reference_proba: Optional[pd.Series] = None
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_nans(reference_data)
