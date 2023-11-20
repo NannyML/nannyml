@@ -13,6 +13,13 @@ from nannyml.calibration import CalibratorFactory, IsotonicCalibrator, _get_bin_
 from nannyml.exceptions import InvalidArgumentsException
 
 
+@pytest.fixture(autouse=True)
+def calibrator_factory():
+    # hack our way out of singleton side effects in tests.
+    # we could replace this with a proper singleton pattern, but seems overkill for just tests?
+    CalibratorFactory._registry = {'isotonic': IsotonicCalibrator}
+
+
 class DummyCalibrator(Mock):
     def __init__(self, **kwargs):
         super().__init__()
