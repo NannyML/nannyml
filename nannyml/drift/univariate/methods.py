@@ -519,14 +519,9 @@ class LInfinityDistance(Method):
         data = _remove_nans(data)
         if data.empty:
             return np.nan
+
         analysis_data_ratio = data.value_counts(normalize=True)
-
-        # Unify indices so reference and analysis have an entry for all labels
-        unified_index = self._reference_proba.index.union(analysis_data_ratio.index)
-        reference_data_ratio = self._reference_proba.reindex(unified_index, fill_value=0)
-        analysis_data_ratio = analysis_data_ratio.reindex(unified_index, fill_value=0)
-
-        return (reference_data_ratio - analysis_data_ratio).abs().max()
+        return self._reference_proba.sub(analysis_data_ratio, fill_value=0).abs().max()
 
 
 @MethodFactory.register(key='wasserstein', feature_type=FeatureType.CONTINUOUS)
