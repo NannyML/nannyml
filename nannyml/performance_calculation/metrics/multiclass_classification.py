@@ -24,10 +24,10 @@ from sklearn.metrics import (
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 from nannyml._typing import ProblemType, class_labels, model_output_column_names
-from nannyml.base import _list_missing
+from nannyml.base import _remove_nans, _list_missing
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.performance_calculation.metrics.base import Metric, MetricFactory, _common_data_cleaning
+from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.multiclass_classification import (
     accuracy_sampling_error,
     accuracy_sampling_error_components,
@@ -116,6 +116,7 @@ class MulticlassClassificationAUROC(Metric):
             )
 
         _list_missing([self.y_true] + model_output_column_names(self.y_pred_proba), data)
+        data = _remove_nans(data, (self.y_true, self.y_pred_proba.values()))
 
         labels, class_probability_columns = [], []
         for label in sorted(list(self.y_pred_proba.keys())):
@@ -123,19 +124,18 @@ class MulticlassClassificationAUROC(Metric):
             class_probability_columns.append(self.y_pred_proba[label])
 
         y_true = data[self.y_true]
-        y_pred = data[class_probability_columns]
+        y_pred_proba = data[class_probability_columns]
 
-        if y_pred.isna().all().any():
+        if y_pred_proba.isna().all().any():
             raise InvalidArgumentsException(
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if y_true.nunique() <= 1:
             warnings.warn("Calculated ROC-AUC score contains NaN values.")
             return np.nan
         else:
-            return roc_auc_score(y_true, y_pred, multi_class='ovr', average='macro', labels=labels)
+            return roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average='macro', labels=labels)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return auroc_sampling_error(self._sampling_error_components, data)
@@ -208,6 +208,7 @@ class MulticlassClassificationF1(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
         y_true = data[self.y_true]
@@ -218,7 +219,6 @@ class MulticlassClassificationF1(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated F1-score contains NaN values.")
             return np.nan
@@ -296,6 +296,7 @@ class MulticlassClassificationPrecision(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
         y_true = data[self.y_true]
@@ -306,7 +307,6 @@ class MulticlassClassificationPrecision(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Precision score contains NaN values.")
             return np.nan
@@ -384,6 +384,7 @@ class MulticlassClassificationRecall(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
         y_true = data[self.y_true]
@@ -394,7 +395,6 @@ class MulticlassClassificationRecall(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Recall score contains NaN values.")
             return np.nan
@@ -472,6 +472,7 @@ class MulticlassClassificationSpecificity(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
         y_true = data[self.y_true]
@@ -482,7 +483,6 @@ class MulticlassClassificationSpecificity(Metric):
                 f"could not calculate metric {self.display_name}: prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Specificity score contains NaN values.")
             return np.nan
@@ -557,6 +557,7 @@ class MulticlassClassificationAccuracy(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], data)
+        data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -566,7 +567,6 @@ class MulticlassClassificationAccuracy(Metric):
                 f"could not calculate metric '{self.display_name}': " "prediction column contains no data"
             )
 
-        y_true, y_pred = _common_data_cleaning(y_true, y_pred)
         if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
             warnings.warn("Calculated Accuracy score contains NaN values.")
             return np.nan

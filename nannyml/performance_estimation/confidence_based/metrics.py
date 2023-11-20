@@ -31,6 +31,7 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels
+from nannyml.base import _remove_nans
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
@@ -234,30 +235,13 @@ class Metric(abc.ABC):
                 )
             y_pred_proba_column_name = self.y_pred_proba
 
+        data = _remove_nans(data, [self.y_pred, y_pred_proba_column_name])
+
         clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
-
-        y_pred_proba = data[y_pred_proba_column_name]
-        y_pred = data[self.y_pred]
-        y_true = data[self.y_true] if clean_targets else None
-
-        # Create mask to filter out NaN values
-        mask = ~(y_pred.isna() | y_pred_proba.isna())
         if clean_targets:
-            mask = mask | ~(y_true.isna())
+            data = _remove_nans(data, [self.y_true])
 
-        # Drop missing values (NaN/None)
-        y_pred_proba = y_pred_proba[mask]
-        y_pred = y_pred[mask]
-        if clean_targets:
-            y_true = y_true[mask]
-
-        # NaN values have been dropped. Try to infer types again
-        y_pred_proba = y_pred_proba.infer_objects()
-        y_pred = y_pred.infer_objects()
-        if clean_targets:
-            y_true = y_true.infer_objects()
-
-        return y_pred_proba, y_pred, y_true
+        return data[y_pred_proba_column_name], data[self.y_pred], (data[self.y_true] if clean_targets else None)
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
         """Returns a dictionary containing the performance metrics for a given chunk.
@@ -1584,7 +1568,7 @@ class BinaryClassificationBusinessValue(Metric):
         if y_true.shape[0] == 0:
             warnings.warn("Calculated Business Value contains NaN values.")
             return np.NaN
-        
+
         tp_value = self.business_value_matrix[1, 1]
         tn_value = self.business_value_matrix[0, 0]
         fp_value = self.business_value_matrix[0, 1]

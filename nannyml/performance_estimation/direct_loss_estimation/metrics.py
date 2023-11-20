@@ -29,7 +29,7 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _raise_exception_for_negative_values
+from nannyml.base import _raise_exception_for_negative_values, _remove_nans
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error.regression import (
@@ -271,18 +271,14 @@ class Metric(abc.ABC):
         """Establishes equality by comparing all properties."""
         return self.display_name == other.display_name and self.column_name == other.column_name
 
-    def _common_cleaning(self, data: pd.DataFrame) -> Tuple[pd.Series, pd.Series]:
+    def _common_cleaning(self, data: pd.DataFrame) -> Tuple[pd.Series, Optional[pd.Series]]:
+        data = _remove_nans(data, [self.y_pred])
+
         clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
-
-        y_pred = data[self.y_pred]
         if clean_targets:
-            y_true = data[self.y_true]
-            y_pred = y_pred[~y_true.isna()]
-            y_true.dropna(inplace=True)
-        else:
-            y_true = None
+            data = _remove_nans(data, [self.y_pred, self.y_true])
 
-        return y_pred, y_true
+        return data[self.y_pred], (data[self.y_true] if clean_targets else None)
 
     def _train_direct_error_estimation_model(
         self,

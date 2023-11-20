@@ -39,7 +39,7 @@ from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_t
 from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.drift.univariate.result import Result
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -271,34 +271,45 @@ class UnivariateDriftCalculator(AbstractCalculator):
             if column_name not in self.categorical_column_names:
                 self.categorical_column_names.append(column_name)
 
+        timestamps = reference_data[self.timestamp_column_name] if self.timestamp_column_name else None
         for column_name in self.continuous_column_names:
-            self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(
-                    key=method,
-                    feature_type=FeatureType.CONTINUOUS,
-                    chunker=self.chunker,
-                    computation_params=self.computation_params or {},
-                    threshold=self.thresholds[method],
-                ).fit(
-                    reference_data=reference_data[column_name],
-                    timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
-                )
-                for method in self.continuous_method_names
-            ]
+            methods = []
+            for method in self.continuous_method_names:
+                try:
+                    methods.append(
+                        MethodFactory.create(
+                            key=method,
+                            feature_type=FeatureType.CONTINUOUS,
+                            chunker=self.chunker,
+                            computation_params=self.computation_params or {},
+                            threshold=self.thresholds[method],
+                        ).fit(
+                            reference_data=reference_data[column_name],
+                            timestamps=timestamps,
+                        )
+                    )
+                except Exception as ex:
+                    raise CalculatorException(f"Failed to fit method {method} for column {column_name}: {ex!r}") from ex
+            self._column_to_models_mapping[column_name] = methods
 
         for column_name in self.categorical_column_names:
-            self._column_to_models_mapping[column_name] += [
-                MethodFactory.create(
-                    key=method,
-                    feature_type=FeatureType.CATEGORICAL,
-                    chunker=self.chunker,
-                    threshold=self.thresholds[method],
-                ).fit(
-                    reference_data=reference_data[column_name],
-                    timestamps=reference_data[self.timestamp_column_name] if self.timestamp_column_name else None,
-                )
-                for method in self.categorical_method_names
-            ]
+            methods = []
+            for method in self.categorical_method_names:
+                try:
+                    methods.append(
+                        MethodFactory.create(
+                            key=method,
+                            feature_type=FeatureType.CATEGORICAL,
+                            chunker=self.chunker,
+                            threshold=self.thresholds[method],
+                        ).fit(
+                            reference_data=reference_data[column_name],
+                            timestamps=timestamps,
+                        )
+                    )
+                except Exception as ex:
+                    raise CalculatorException(f"Failed to fit method {method} for column {column_name}: {ex!r}") from ex
+            self._column_to_models_mapping[column_name] = methods
 
         self.result = self._calculate(reference_data)
         self.result.data['chunk', 'chunk', 'period'] = 'reference'
