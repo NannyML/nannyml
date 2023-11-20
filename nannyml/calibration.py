@@ -5,7 +5,8 @@
 
 """Calibrating model scores into probabilities."""
 import abc
-from typing import Any, Callable, List, Optional, Tuple
+import warnings
+from typing import Any, Callable, Dict, List, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -45,10 +46,10 @@ class Calibrator(abc.ABC):
 class CalibratorFactory:
     """Factory class to aid in construction of Calibrators."""
 
-    _calibrators = {'isotonic': lambda args: IsotonicCalibrator()}
+    _registry: Dict[str, Type[Calibrator]] = {}
 
     @classmethod
-    def register_calibrator(cls, key: str, create_calibrator: Callable):
+    def register_calibrator(cls, key: str, calibrator: Type[Calibrator]):
         """Registers a new calibrator to the index.
 
         This index associates a certain key with a function that can be used to construct a new Calibrator instance.
@@ -58,17 +59,28 @@ class CalibratorFactory:
         key: str
             The key used to retrieve a Calibrator. When providing a key that is already in the index, the value
             will be overwritten.
-        create_calibrator: Callable
+        calibrator: Type[Calibrator]
             A function that - given a ``**kwargs`` argument - create a new instance of a Calibrator subclass.
 
         Examples
         --------
-        >>> CalibratorFactory.register_calibrator('isotonic', lambda kwargs: IsotonicCalibrator())
+        >>> CalibratorFactory.register_calibrator('isotonic', IsotonicCalibrator)
         """
-        cls._calibrators[key] = create_calibrator
+        cls._registry[key] = calibrator
 
     @classmethod
-    def create(cls, key: Optional[str], **kwargs):
+    def register(cls, key: str) -> Callable:
+        def inner_wrapper(wrapped_class: Type[Calibrator]) -> Type[Calibrator]:
+            if key in cls._registry:
+                warnings.warn(f"re-registering calibrator with key '{key}'")
+
+            cls._registry[key] = wrapped_class
+            return wrapped_class
+
+        return inner_wrapper
+
+    @classmethod
+    def create(cls, key: str = 'isotonic', **kwargs):
         """Creates a new Calibrator given a key value and optional keyword args.
 
         If the provided key equals ``None``, then a new instance of the default Calibrator (IsotonicCalibrator)
@@ -78,7 +90,7 @@ class CalibratorFactory:
 
         Parameters
         ----------
-        key : str
+        key : str, default='isotonic'
             The key used to retrieve a Calibrator. When providing a key that is already in the index, the value
             will be overwritten.
         kwargs : dict
@@ -94,18 +106,18 @@ class CalibratorFactory:
         --------
         >>> calibrator = CalibratorFactory.create('isotonic', kwargs={'foo': 'bar'})
         """
-        default = IsotonicCalibrator()
-        if key is None:
-            return default
-
-        if key not in cls._calibrators:
+        if key not in cls._registry:
             raise InvalidArgumentsException(
-                f"calibrator {key} unknown. " f"Please provide one of the following: {cls._calibrators.keys()}"
+                f"calibrator '{key}' unknown. " f"Please provide one of the following: {cls._registry.keys()}"
             )
 
-        return cls._calibrators.get(key, default)
+        calibrator_class = cls._registry.get(key)
+        assert calibrator_class
+
+        return calibrator_class(**kwargs)
 
 
+@CalibratorFactory.register('isotonic')
 class IsotonicCalibrator(Calibrator):
     """Calibrates using IsotonicRegression model."""
 

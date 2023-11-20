@@ -13,7 +13,7 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _remove_nans, _list_missing, _raise_exception_for_negative_values
+from nannyml.base import _list_missing, _raise_exception_for_negative_values, _remove_nans
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.regression import (
     mae_sampling_error,

@@ -201,7 +201,6 @@ def test_results_repaid_loan_on_prev_car_alerts(unseen_value_result):
 
 
 def test_results_size_of_downpayment_values(unseen_value_result):
-
     res = unseen_value_result.filter(column_names='size_of_downpayment').to_df()
     assert list(res[('size_of_downpayment', 'value')]) == [0] * 10 + [
         0.0094,

@@ -80,7 +80,6 @@ def _validate_drift_result(rankable_result: RankableResult):
         raise InvalidArgumentsException('rankable_result contains no data to use for ranking')
 
     if isinstance(rankable_result, UnivariateResults):
-
         if len(rankable_result.categorical_method_names) > 1:
             raise InvalidArgumentsException(
                 f"Only one categorical drift method should be present in the univariate results."

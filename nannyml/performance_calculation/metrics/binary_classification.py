@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 
 from nannyml._typing import ProblemType
-from nannyml.base import _remove_nans, _list_missing
+from nannyml.base import _list_missing, _remove_nans
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
@@ -544,9 +544,7 @@ class BinaryClassificationBusinessValue(Metric):
         tn_value = self.business_value_matrix[0, 0]
         fp_value = self.business_value_matrix[0, 1]
         fn_value = self.business_value_matrix[1, 0]
-        bv_array = np.array(
-            [[tn_value,fp_value], [fn_value,tp_value]]
-        )
+        bv_array = np.array([[tn_value, fp_value], [fn_value, tp_value]])
 
         cm = confusion_matrix(y_true, y_pred)
         if self.normalize_business_value == 'per_prediction':
@@ -554,7 +552,7 @@ class BinaryClassificationBusinessValue(Metric):
                 cm = cm / cm.sum(axis=0, keepdims=True)
             cm = np.nan_to_num(cm)
 
-        return (bv_array*cm).sum()
+        return (bv_array * cm).sum()
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return business_value_sampling_error(self._sampling_error_components, data)

@@ -257,19 +257,16 @@ def test_results_filtering_columns_list(missing_value_result):
 
 
 def test_results_car_value_values(missing_value_result):
-
     res = missing_value_result.filter(column_names='car_value').to_df()
     assert list(res[('car_value', 'value')]) == [0] * 20
 
 
 def test_results_car_value_alerts(missing_value_result):
-
     res = missing_value_result.filter(column_names='car_value').to_df()
     assert list(res[('car_value', 'alert')]) == [False] * 20
 
 
 def test_results_salary_range_values(missing_value_result):
-
     res = missing_value_result.filter(column_names='salary_range').to_df()
     assert list(res[('salary_range', 'value')]) == [
         0.0998,
@@ -327,6 +324,5 @@ def test_results_driver_tenure_values(missing_value_result):
 
 
 def test_results_driver_tenure_alerts(missing_value_result):
-
     res = missing_value_result.filter(column_names='driver_tenure').to_df()
     assert list(res[('driver_tenure', 'alert')]) == [False] * 15 + [True] * 5

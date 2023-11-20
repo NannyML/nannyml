@@ -19,11 +19,11 @@ from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.multiclass_classification import (
     MulticlassClassificationAccuracy,
     MulticlassClassificationAUROC,
+    MulticlassClassificationConfusionMatrix,
     MulticlassClassificationF1,
     MulticlassClassificationPrecision,
     MulticlassClassificationRecall,
     MulticlassClassificationSpecificity,
-    MulticlassClassificationConfusionMatrix,
 )
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 

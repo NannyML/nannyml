@@ -225,7 +225,6 @@ def _plot_compare_step_to_step(  # noqa: C901
     metric_2_color=Colors.BLUE_SKY_CRAYOLA,
     **kwargs,
 ) -> Figure:
-
     _metric_1_kwargs = {k.replace('metric_1_', ''): v for k, v in kwargs.items() if k.startswith('metric_1_')}
     _metric_2_kwargs = {k.replace('metric_2_', ''): v for k, v in kwargs.items() if k.startswith('metric_2_')}
 
@@ -442,7 +441,6 @@ def _plot_compare_step_to_step(  # noqa: C901
         # endregion
 
     if has_analysis_results:
-
         # region analysis metric 1
 
         _hover = hover or Hover(
@@ -693,7 +691,6 @@ def _is_estimated_result(result: Result) -> bool:
 
 class ResultComparison:
     def __init__(self, result: Result, other: Result, plot_kwargs: Dict[str, Any], title: Optional[str] = None):
-
         if len(result.keys()) != 1 or len(result.keys()) != 1:
             raise InvalidArgumentsException(
                 f"you're comparing {len(result.keys())} metrics to {len(result.keys())} "

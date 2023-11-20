@@ -1573,16 +1573,14 @@ class BinaryClassificationBusinessValue(Metric):
         tn_value = self.business_value_matrix[0, 0]
         fp_value = self.business_value_matrix[0, 1]
         fn_value = self.business_value_matrix[1, 0]
-        bv_array = np.array(
-            [[tn_value,fp_value], [fn_value,tp_value]]
-        )
+        bv_array = np.array([[tn_value, fp_value], [fn_value, tp_value]])
 
         cm = confusion_matrix(y_true, y_pred)
         if self.normalize_business_value == 'per_prediction':
             with np.errstate(all="ignore"):
                 cm = cm / cm.sum(axis=0, keepdims=True)
             cm = np.nan_to_num(cm)
-        return (bv_array*cm).sum()
+        return (bv_array * cm).sum()
 
     def _estimate(self, chunk_data: pd.DataFrame) -> float:
         y_pred_proba = chunk_data[self.y_pred_proba]
@@ -1630,9 +1628,7 @@ def estimate_business_value(
     est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
     est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
     est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
-    cm = np.array(
-        [[est_tn_ratio, est_fp_ratio], [est_fn_ratio, est_tp_ratio]]
-    )*len(y_pred)
+    cm = np.array([[est_tn_ratio, est_fp_ratio], [est_fn_ratio, est_tp_ratio]]) * len(y_pred)
     if normalize_business_value == 'per_prediction':
         with np.errstate(all="ignore"):
             cm = cm / cm.sum(axis=0, keepdims=True)
@@ -1642,11 +1638,9 @@ def estimate_business_value(
     tn_value = business_value_matrix[0, 0]
     fp_value = business_value_matrix[0, 1]
     fn_value = business_value_matrix[1, 0]
-    bv_array = np.array(
-        [[tn_value,fp_value], [fn_value,tp_value]]
-    )
+    bv_array = np.array([[tn_value, fp_value], [fn_value, tp_value]])
 
-    return (bv_array*cm).sum()
+    return (bv_array * cm).sum()
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
@@ -2108,7 +2102,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
         normalize_confusion_matrix: Optional[str] = None,
         **kwargs,
     ):
-
         if isinstance(y_pred_proba, str):
             raise ValueError(
                 "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
@@ -2167,7 +2160,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return
 
     def _fit(self, reference_data: pd.DataFrame):
-
         self._confusion_matrix_sampling_error_components = mse.multiclass_confusion_matrix_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
@@ -2177,7 +2169,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
     def _multiclass_confusion_matrix_alert_thresholds(
         self, reference_chunks: List[Chunk]
     ) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
-
         realized_chunk_performance = np.asarray(
             [self._multi_class_confusion_matrix_realized_performance(chunk.data) for chunk in reference_chunks]
         )
@@ -2224,14 +2215,12 @@ class MulticlassClassificationConfusionMatrix(Metric):
         self,
         reference_chunks: List[Chunk],
     ) -> Dict[str, float]:
-
         confidence_deviations = {}
 
         num_classes = len(self.classes)
 
         for i in range(num_classes):
             for j in range(num_classes):
-
                 confidence_deviations[f'true_{self.classes[i]}_pred_{self.classes[j]}'] = np.std(
                     [self._get_multiclass_confusion_matrix_estimate(chunk.data)[i, j] for chunk in reference_chunks]
                 )
@@ -2239,7 +2228,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return confidence_deviations
 
     def _get_multiclass_confusion_matrix_estimate(self, chunk_data: pd.DataFrame) -> np.ndarray:
-
         if isinstance(self.y_pred_proba, str):
             raise ValueError(
                 "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
@@ -2282,7 +2270,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return normalized_est_confusion_matrix
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
-
         chunk_record = {}
 
         estimated_cm = self._get_multiclass_confusion_matrix_estimate(chunk_data)
@@ -2295,7 +2282,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         for true_class in self.classes:
             for pred_class in self.classes:
-
                 chunk_record[f'estimated_true_{true_class}_pred_{pred_class}'] = estimated_cm[
                     self.classes.index(true_class), self.classes.index(pred_class)
                 ]

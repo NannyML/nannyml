@@ -24,7 +24,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 from nannyml._typing import ProblemType, class_labels, model_output_column_names
-from nannyml.base import _remove_nans, _list_missing
+from nannyml.base import _list_missing, _remove_nans
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
@@ -35,14 +35,14 @@ from nannyml.sampling_error.multiclass_classification import (
     auroc_sampling_error_components,
     f1_sampling_error,
     f1_sampling_error_components,
+    multiclass_confusion_matrix_sampling_error,
+    multiclass_confusion_matrix_sampling_error_components,
     precision_sampling_error,
     precision_sampling_error_components,
     recall_sampling_error,
     recall_sampling_error_components,
     specificity_sampling_error,
     specificity_sampling_error_components,
-    multiclass_confusion_matrix_sampling_error,
-    multiclass_confusion_matrix_sampling_error_components,
 )
 from nannyml.thresholds import Threshold, calculate_threshold_values
 
@@ -588,7 +588,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
         normalize_confusion_matrix: Optional[str] = None,
         **kwargs,
     ):
-
         """Creates a new confusion matrix instance."""
         super().__init__(
             name='confusion_matrix',
@@ -607,7 +606,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return "confusion_matrix"
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
-
         # _fit
         # realized perf on chunks
         # set thresholds
@@ -700,7 +698,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
             return cm
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict[str, Union[float, bool]]:
-
         if self.classes is None:
             raise ValueError("classes must be set before calling this method")
 
@@ -714,7 +711,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         for true_class in self.classes:
             for pred_class in self.classes:
-
                 column_name = f'true_{true_class}_pred_{pred_class}'
 
                 chunk_record[f"{column_name}_sampling_error"] = sampling_errors[
