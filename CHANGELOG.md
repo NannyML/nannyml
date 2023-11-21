@@ -4,16 +4,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.10.0] - 2023-11-21
 
 ### Changed
+
+- Telemetry now detects AKS and EKS and NannyML Cloud runtimes. [(#325)](https://github.com/NannyML/nannyml/issues/325)
+- Runner was refactored, so it can be extended with premium NannyML calculators and estimators. [(#325)](https://github.com/NannyML/nannyml/issues/325)
+- Sped up telemetry reporting to ensure it doesn't hinder performance.
+- Some love for the docs as [@santiviquez](https://github.com/santiviquez) tediously standardized variable names. [(#338)](https://github.com/NannyML/nannyml/issues/338)
+- Optimize calculations for L-infinity method. [[(#340)](https://github.com/NannyML/nannyml/issues/340)]
+- Refactored the `CalibratorFactory` to align with our other factory implementations. [[(#341)](https://github.com/NannyML/nannyml/issues/341)]
+- Updated the `Calibrator` interface with `*args` and `**kwargs` for easier extension.
+- Small refactor to the `ResultComparisonMixin` to allow easier extension.
 
 ### Added
 
 - Added support for directly estimating the confusion matrix of multiclass classification models using CBPE.
   Big thanks to our appreciated alumnus [@cartgr](https://github.com/cartgr) for the effort (and sorry it took soooo long). [(#287)](https://github.com/NannyML/nannyml/issues/287)
+- Added `DatabaseWriter` support for results from `MissingValuesCaclulator` and `UnseenValuesCalculator`. Some
+  excellent work by [@bgalvao](https://github.com/bgalvao), thanks for being a long-time user and supporter!
+
 
 ### Fixed
+
+- Fix issues with calculation and filtering in performance calculation and estimation. [(#321)](https://github.com/NannyML/nannyml/issues/321)
+- Fix multivariate reconstruction error plot labels. [(#323)](https://github.com/NannyML/nannyml/issues/323)
+- Log a warning when performance metrics for a chunk will return `NaN` value. [(#326)](https://github.com/NannyML/nannyml/issues/326)
+- Fix issues with ReadTheDocs build failing
+- Fix erroneous `specificity` calculation, both realized and estimated. Well spotted [@nikml](https://github.com/nikml)! [(#334)](https://github.com/NannyML/nannyml/issues/334)
+- Fix threshold computation when dealing with `NaN` values. Major thanks to the eagle-eyed [@giodavoli](https://github.com/giodavoli). [(#333)](https://github.com/NannyML/nannyml/issues/333)
+- Fix exports for confusion matrix metrics using the `DatabaseWriter`. An inspiring commit that lead to some other changes.
+  Great job [@shezadkhan137](https://github.com/shezadkhan137)! [(#335)](https://github.com/NannyML/nannyml/issues/335)
+- Fix incorrect normalization for the business value metric in realized and estimated performance. [(#337)](https://github.com/NannyML/nannyml/issues/337)
+- Fix handling `NaN` values when fitting univariate drift. [[(#340)](https://github.com/NannyML/nannyml/issues/340)]
 
 ## [0.9.1] - 2023-07-12
 
