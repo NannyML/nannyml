@@ -227,10 +227,10 @@ def test_cbpe_defaults_to_isotonic_calibrator_when_none_given():  # noqa: D103
 
 def test_cbpe_uses_custom_calibrator_when_provided():  # noqa: D103
     class TestCalibrator(Calibrator):
-        def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray):
+        def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray, *args, **kwargs):
             pass
 
-        def calibrate(self, y_pred_proba: np.ndarray):
+        def calibrate(self, y_pred_proba: np.ndarray, *args, **kwargs):
             pass
 
     estimator = CBPE(

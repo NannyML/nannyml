@@ -633,10 +633,11 @@ def render_metric_display_name(metric_display_name: Union[str, Tuple]):
 class ResultCompareMixin:
     def compare(self, other: Result):
         return ResultComparison(
-            self, other, title=self._get_title(other), plot_kwargs=_get_plot_kwargs(self, other)  # type: ignore
+            self, other, title=self.get_title(other), plot_kwargs=_get_plot_kwargs(self, other)  # type: ignore
         )
 
-    def _get_title(self, other: Result):
+    @property
+    def titles(self) -> Dict[type, str]:
         from nannyml.data_quality.missing.result import Result as MissingValueResult
         from nannyml.data_quality.unseen.result import Result as UnseenValuesResult
         from nannyml.drift.multivariate.data_reconstruction import Result as DataReconstructionDriftResult
@@ -649,7 +650,7 @@ class ResultCompareMixin:
         from nannyml.stats.std import Result as StatsStdResult
         from nannyml.stats.sum import Result as StatsSumResult
 
-        _result_title_names: Dict[type, Any] = {
+        _titles: Dict[type, Any] = {
             UnivariateDriftResult: "Univariate drift",
             DataReconstructionDriftResult: "Multivariate drift",
             RealizedPerformanceResult: "Realized performance",
@@ -663,7 +664,10 @@ class ResultCompareMixin:
             StatsSumResult: "Statistics, Sum",
         }
 
-        return f"<b>{_result_title_names[type(self)]}</b> vs. <b>{_result_title_names[type(other)]}</b>"
+        return _titles
+
+    def get_title(self, other: Result):
+        return f"<b>{self.titles[type(self)]}</b> vs. <b>{self.titles[type(other)]}</b>"
 
 
 def _get_plot_kwargs(result: Result, other: Result) -> Dict[str, Any]:
