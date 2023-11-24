@@ -91,9 +91,9 @@ model input data and ignores any random noise that is usually present.
 
 The third step is decompressing the data we just compressed.
 This is done using the inverse PCA transformation which transforms the data from latent space
-back to the prepocessed model input space.
+back to the preprocessed model input space.
 
-Then, the euclidean distance between the original data points and their re-cosntructed counterparts
+Then, the euclidean distance between the original data points and their re-constructed counterparts
 is computed. The resulting distances are then aggregated to get their average. The resulting
 number is called :term:`Reconstruction Error`.
 

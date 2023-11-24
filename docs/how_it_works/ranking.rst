@@ -44,7 +44,7 @@ the average performance during the reference period. This value is saved at the 
 
 Then we proceed with the :meth:`~nannyml.drift.ranking.CorrelationRanking.rank` method where we provide
 the chosen univariate drift and performance results. The performance results are preprocessed
-in order to caclulate the absolute difference of observed performance values with the mean performance
+in order to calculate the absolute difference of observed performance values with the mean performance
 on reference. We can see how this transformation affects the performance values below:
 
 .. nbimport::

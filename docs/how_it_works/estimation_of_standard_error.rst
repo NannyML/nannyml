@@ -187,13 +187,13 @@ Average
 -------
 
 The :ref:`sum_stats_avg` standard error calculations are an application of what
-we disccused at :ref:`introducing_sem`.
+we discussed at :ref:`introducing_sem`.
 
 
 Summation
 ---------
 
-The :ref:`sum_stats_sum` standard error calculations are also straghtfoward.
+The :ref:`sum_stats_sum` standard error calculations are also straightforward.
 Through a simple application of error propagation:
 
     .. math::
@@ -234,7 +234,7 @@ The standard error of the median asymptotically tends towards:
             \frac{1}{4nf^2(m)}
         }
 
-where :math:`f` is the probability density function of the random variable in quetion and
+where :math:`f` is the probability density function of the random variable in question and
 :math:`f(m)` is its value at the estimated median value.
 
 
