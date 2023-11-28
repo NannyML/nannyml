@@ -299,7 +299,7 @@ The interesting things to note in this experiment compared to the previous one a
 
  * Jensen-Shannon is less sensitive when a category disappears compared to when a new category appears,
 
- * Hellinger distance behaves the same when a catgory disappears compared to when a new category appears,
+ * Hellinger distance behaves the same when a category disappears compared to when a new category appears,
 
  * Chi-square grows linearly when the new category increases its relative frequency but it grows faster when a
    category disappears.

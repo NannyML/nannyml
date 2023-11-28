@@ -573,7 +573,7 @@ Just like :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`, i
     While dealing well with covariate shift, DLE will not work under :term:`concept drift`.
     This shouldn't happen when the :term:`child model` has access to all the variables affecting the outcome and
     the problem is stationary. An example of a stationary model would be forecasting energy demand for heating
-    purposes. Since the phyiscal laws underpinning the problem are the same, energy demand based on outside temperature
+    purposes. Since the physical laws underpinning the problem are the same, energy demand based on outside temperature
     should stay the same. However if energy prices became too high and people decide to heat their houses less
     because they couldn't pay, then our model would experience concept drift.
 
