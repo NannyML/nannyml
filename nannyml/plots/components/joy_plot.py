@@ -150,6 +150,7 @@ def joy(
     data_distributions: pd.DataFrame,
     color: str,
     name: str,
+    chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -158,7 +159,9 @@ def joy(
     plot_quartiles: bool = True,
     **kwargs,
 ) -> go.Figure:
-    chunk_indices, chunk_start_dates, chunk_end_dates = ensure_numpy(chunk_indices, chunk_start_dates, chunk_end_dates)
+    chunk_keys, chunk_indices, chunk_start_dates, chunk_end_dates = ensure_numpy(
+        chunk_keys, chunk_indices, chunk_start_dates, chunk_end_dates
+    )
     joy_overlap = 1
 
     if subplot_args is None:
@@ -228,7 +231,7 @@ def joy(
         if plot_quartiles:
             for kde_quartile in kde_quartiles:
                 hover = Hover(template='Chunk %{chunk_key}: %{x_coordinate}, <b>%{quartile}</b>')
-                hover.add(row['chunk_key'], name='chunk_key')
+                hover.add(chunk_keys[i] if chunk_keys.any() else row['chunk_key'], name='chunk_key')
                 hover.add(
                     render_x_coordinate(chunk_indices, chunk_start_dates, chunk_end_dates)[i], name='x_coordinate'
                 )
@@ -259,6 +262,7 @@ def alert(
     color: str,
     name: str,
     alerts: Union[np.ndarray, pd.Series],
+    chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -269,6 +273,7 @@ def alert(
 ) -> go.Figure:
     data = pd.DataFrame(
         {
+            'chunk_keys': chunk_keys,
             'chunk_indices': chunk_indices,
             'chunk_start_dates': chunk_start_dates,
             'chunk_end_dates': chunk_end_dates,
@@ -282,6 +287,7 @@ def alert(
         alerts_data[data_distributions.columns],
         color,
         name,
+        alerts_data['chunk_keys'],
         alerts_data['chunk_start_dates'],
         alerts_data['chunk_end_dates'],
         alerts_data['chunk_indices'],
