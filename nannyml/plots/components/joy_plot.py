@@ -231,7 +231,7 @@ def joy(
         if plot_quartiles:
             for kde_quartile in kde_quartiles:
                 hover = Hover(template='Chunk %{chunk_key}: %{x_coordinate}, <b>%{quartile}</b>')
-                hover.add(chunk_keys[i] if chunk_keys.any() else row['chunk_key'], name='chunk_key')
+                hover.add(chunk_keys[i] if chunk_keys is not None else row['chunk_key'], name='chunk_key')
                 hover.add(
                     render_x_coordinate(chunk_indices, chunk_start_dates, chunk_end_dates)[i], name='x_coordinate'
                 )
