@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from nannyml import Chunker
-from nannyml._typing import Key, Result
+from nannyml._typing import Key
 from nannyml.base import PerColumnResult
 from nannyml.drift.univariate.result import Result as DriftResult
 from nannyml.exceptions import InvalidArgumentsException
@@ -30,7 +30,7 @@ class Result(PerColumnResult):
     def keys(self) -> List[Key]:
         return [Key(properties=(c,), display_names=(c,)) for c in self.column_names]
 
-    def plot(self, drift_result: Optional[Result] = None, *args, **kwargs) -> go.Figure:
+    def plot(self, drift_result: Optional[DriftResult] = None, *args, **kwargs) -> go.Figure:
         """
         Creates a "joyplot over time" visualization to illustrate continuous distribution changes over time.
 
