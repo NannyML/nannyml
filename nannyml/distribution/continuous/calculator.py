@@ -187,6 +187,10 @@ def calculate_chunk_distributions(
         lambda row: [(q[0], q[1] / row['kde_density_global_max']) for q in row['kde_quartiles']], axis=1
     )
 
+    # TODO: Consider removing redundant columns to reduce fitted calculator memory usage
+    # The kde calculator creates issues for pickling the calculator. We don't need it anymore, so removing it here
+    del data['kde']
+
     return data
 
 
