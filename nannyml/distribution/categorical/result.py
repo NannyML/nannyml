@@ -101,12 +101,16 @@ class Result(AbstractResult):
     # def chunk_periods_for_key(self, key: Key) -> Optional[pd.Series]:
     #     return self._get_property_for_key(key, 'period')
 
-    @overload
-    def value_counts(self, key: Key) -> pd.DataFrame:
-        (column_name,) = key.properties
-        return self.value_counts(column_name)
+    def value_counts(self, key: Optional[Key] = None, column_name: Optional[str] = None) -> pd.DataFrame:
+        if not key and not column_name:
+            raise InvalidArgumentsException(
+                "cannot retrieve value counts when key and column_name are both not set. "
+                "Please provide either a key or a column."
+            )
 
-    def value_counts(self, column_name: str) -> pd.DataFrame:
+        if key:
+            (column_name,) = key.properties
+
         data = self.filter(column_names=[column_name]).data
         res = data[
             [
