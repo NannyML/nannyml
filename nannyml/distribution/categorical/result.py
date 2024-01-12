@@ -332,14 +332,14 @@ def _plot_categorical_distribution_with_alerts(
             row=row,
             col=col,
             column_name=column_name,
-            reference_value_counts=reference_result.value_counts(column_name),
+            reference_value_counts=reference_result.value_counts(column_name=column_name),
             reference_alerts=None,
             reference_chunk_keys=reference_result.chunk_keys,
             reference_chunk_periods=reference_result.chunk_periods,
             reference_chunk_indices=reference_result.chunk_indices,
             reference_chunk_start_dates=reference_result.chunk_start_dates,
             reference_chunk_end_dates=reference_result.chunk_end_dates,
-            analysis_value_counts=analysis_result.value_counts(column_name),
+            analysis_value_counts=analysis_result.value_counts(column_name=column_name),
             analysis_alerts=analysis_alerts,
             analysis_chunk_keys=analysis_result.chunk_keys,
             analysis_chunk_periods=analysis_result.chunk_periods,
@@ -408,6 +408,7 @@ def _plot_stacked_bar(
 
         assert reference_chunk_indices is not None
         analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
+        analysis_value_counts['chunk_indices'] += max(reference_chunk_indices) + 1
 
     figure = stacked_bar(
         figure=figure,
@@ -428,7 +429,7 @@ def _plot_stacked_bar(
             alerts=analysis_alerts,
             stacked_bar_table=analysis_value_counts,
             color=Colors.RED_IMPERIAL,
-            chunk_indices=analysis_chunk_indices,
+            chunk_indices=analysis_chunk_indices.reset_index(drop=True),
             chunk_start_dates=analysis_chunk_start_dates.reset_index(drop=True),
             chunk_end_dates=analysis_chunk_end_dates,
             showlegend=True,
