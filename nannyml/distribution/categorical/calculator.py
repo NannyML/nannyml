@@ -1,4 +1,4 @@
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ class CategoricalDistributionCalculator(AbstractCalculator):
             timestamp_column_name,
         )
 
-        self.column_names = column_names
+        self.column_names = column_names if isinstance(column_names, List) else [column_names]
         self.result: Optional[Result] = None
         self._was_fitted: bool = False
 

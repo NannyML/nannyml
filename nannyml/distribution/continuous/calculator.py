@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -31,7 +31,7 @@ class ContinuousDistributionCalculator(AbstractCalculator):
             timestamp_column_name,
         )
 
-        self.column_names = column_names
+        self.column_names = column_names if isinstance(column_names, List) else [column_names]
         self.result: Optional[Result] = None
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:

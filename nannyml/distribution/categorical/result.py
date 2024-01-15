@@ -1,19 +1,20 @@
 import copy
 import math
-from typing import List, Optional, Union, Dict, Any, overload
-from typing_extensions import Self
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
+from typing_extensions import Self
 
 from nannyml import Chunker
 from nannyml._typing import Key
 from nannyml.base import AbstractResult
 from nannyml.drift.univariate.result import Result as DriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots import is_time_based_x_axis, Colors, Figure, Hover
-from nannyml.plots.components.stacked_bar_plot import stacked_bar, alert as stacked_bar_alert
+from nannyml.plots import Colors, Figure, is_time_based_x_axis
+from nannyml.plots.components.stacked_bar_plot import alert as stacked_bar_alert
+from nannyml.plots.components.stacked_bar_plot import stacked_bar
 
 
 class Result(AbstractResult):
@@ -170,7 +171,7 @@ class Result(AbstractResult):
             else _plot_categorical_distribution(self)
         )
 
-    def check_is_compatible_with(self, drift_result: DriftResult) -> bool:
+    def check_is_compatible_with(self, drift_result: DriftResult):
         # Check if all distribution columns are present in the drift result
         drift_column_names = set([col for tup in drift_result.keys() for col, _ in tup])
         distribution_column_names = set(self.column_names)
@@ -244,10 +245,6 @@ def _plot_categorical_distribution(
         reference_result = result.filter(period='reference', column_names=[column_name])
         analysis_result = result.filter(period='analysis', column_names=[column_name])
 
-        analysis_chunk_start_dates = analysis_result.chunk_start_dates
-        analysis_chunk_end_dates = analysis_result.chunk_end_dates
-        x_axis_is_time_based = is_time_based_x_axis(analysis_chunk_start_dates, analysis_chunk_end_dates)
-
         figure = _plot_stacked_bar(
             figure=figure,
             row=row,
@@ -265,8 +262,8 @@ def _plot_categorical_distribution(
             analysis_chunk_keys=analysis_result.chunk_keys,
             analysis_chunk_periods=analysis_result.chunk_periods,
             analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_chunk_start_dates,
-            analysis_chunk_end_dates=analysis_chunk_end_dates,
+            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
+            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
         )
 
     return figure
@@ -274,7 +271,7 @@ def _plot_categorical_distribution(
 
 def _plot_categorical_distribution_with_alerts(
     result: Result,
-    drift_result: Optional[DriftResult] = None,
+    drift_result: DriftResult,
     title: Optional[str] = 'Column distributions',
     figure: Optional[go.Figure] = None,
     x_axis_time_title: str = 'Time',
@@ -407,8 +404,11 @@ def _plot_stacked_bar(
         )
 
         assert reference_chunk_indices is not None
-        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
+        analysis_chunk_indices = (analysis_chunk_indices + (max(reference_chunk_indices) + 1)).reset_index(drop=True)
         analysis_value_counts['chunk_indices'] += max(reference_chunk_indices) + 1
+
+        if analysis_chunk_start_dates is not None:
+            analysis_chunk_start_dates = analysis_chunk_start_dates.reset_index(drop=True)
 
     figure = stacked_bar(
         figure=figure,
@@ -429,8 +429,8 @@ def _plot_stacked_bar(
             alerts=analysis_alerts,
             stacked_bar_table=analysis_value_counts,
             color=Colors.RED_IMPERIAL,
-            chunk_indices=analysis_chunk_indices.reset_index(drop=True),
-            chunk_start_dates=analysis_chunk_start_dates.reset_index(drop=True),
+            chunk_indices=analysis_chunk_indices,
+            chunk_start_dates=analysis_chunk_start_dates,
             chunk_end_dates=analysis_chunk_end_dates,
             showlegend=True,
             legendgroup=column_name,

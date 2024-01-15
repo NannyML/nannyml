@@ -1,5 +1,5 @@
 import math
-from typing import List, Optional, Dict, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -10,8 +10,9 @@ from nannyml._typing import Key
 from nannyml.base import PerColumnResult
 from nannyml.drift.univariate.result import Result as DriftResult
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.plots import is_time_based_x_axis, Hover, Colors, Figure
-from nannyml.plots.components.joy_plot import joy, alert as joy_alert
+from nannyml.plots import Colors, Figure, Hover, is_time_based_x_axis
+from nannyml.plots.components.joy_plot import alert as joy_alert
+from nannyml.plots.components.joy_plot import joy
 
 
 class Result(PerColumnResult):
@@ -58,7 +59,7 @@ class Result(PerColumnResult):
             else _plot_continuous_distribution(self)
         )
 
-    def check_is_compatible_with(self, drift_result: DriftResult) -> bool:
+    def check_is_compatible_with(self, drift_result: DriftResult):
         # Check if all distribution columns are present in the drift result
         drift_column_names = set([col for tup in drift_result.keys() for col, _ in tup])
         distribution_column_names = set(self.column_names)
@@ -132,10 +133,6 @@ def _plot_continuous_distribution(
 
         (column_name,) = key.properties
 
-        analysis_chunk_start_dates = analysis_result.chunk_start_dates
-        analysis_chunk_end_dates = analysis_result.chunk_end_dates
-        x_axis_is_time_based = is_time_based_x_axis(analysis_chunk_start_dates, analysis_chunk_end_dates)
-
         figure = _plot_joyplot(
             figure=figure,
             row=row,
@@ -153,8 +150,8 @@ def _plot_continuous_distribution(
             analysis_chunk_keys=analysis_result.chunk_keys,
             analysis_chunk_periods=analysis_result.chunk_periods,
             analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_chunk_start_dates,
-            analysis_chunk_end_dates=analysis_chunk_end_dates,
+            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
+            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
         )
 
     return figure
@@ -162,7 +159,7 @@ def _plot_continuous_distribution(
 
 def _plot_continuous_distribution_with_alerts(
     result: Result,
-    drift_result: Optional[DriftResult] = None,
+    drift_result: DriftResult,
     title: Optional[str] = 'Column distributions',
     figure: Optional[go.Figure] = None,
     x_axis_time_title: str = 'Time',
@@ -212,10 +209,6 @@ def _plot_continuous_distribution_with_alerts(
 
         (column_name, method_name) = drift_key.properties
 
-        analysis_chunk_start_dates = analysis_result.chunk_start_dates
-        analysis_chunk_end_dates = analysis_result.chunk_end_dates
-        x_axis_is_time_based = is_time_based_x_axis(analysis_chunk_start_dates, analysis_chunk_end_dates)
-
         # reference_alerts = drift_result.filter(period='reference').alerts(drift_key)
         analysis_alerts = drift_result.filter(period='analysis').alerts(drift_key)
 
@@ -236,8 +229,8 @@ def _plot_continuous_distribution_with_alerts(
             analysis_chunk_keys=analysis_result.chunk_keys,
             analysis_chunk_periods=analysis_result.chunk_periods,
             analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_chunk_start_dates,
-            analysis_chunk_end_dates=analysis_chunk_end_dates,
+            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
+            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
         )
 
     return figure
