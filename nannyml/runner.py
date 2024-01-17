@@ -24,6 +24,11 @@ from nannyml.io.store import Store
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.direct_loss_estimation import DLE
+from nannyml.stats.avg.calculator import SummaryStatsAvgCalculator
+from nannyml.stats.count.calculator import SummaryStatsRowCountCalculator
+from nannyml.stats.median.calculator import SummaryStatsMedianCalculator
+from nannyml.stats.sum.calculator import SummaryStatsSumCalculator
+from nannyml.stats.std.calculator import SummaryStatsStdCalculator
 
 
 @dataclass
@@ -73,6 +78,11 @@ class CalculatorFactory:
         'dle': DLE,
         'missing_values': MissingValuesCalculator,
         'unseen_values': UnseenValuesCalculator,
+        'summary_stats_avg': SummaryStatsAvgCalculator,
+        'summary_stats_row_count': SummaryStatsRowCountCalculator,
+        'summary_stats_median': SummaryStatsMedianCalculator,
+        'summary_stats_std': SummaryStatsStdCalculator,
+        'summary_stats_sum': SummaryStatsSumCalculator,
     }
 
     @classmethod
