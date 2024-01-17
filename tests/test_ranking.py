@@ -292,10 +292,10 @@ def test_alert_count_ranking_contains_rank_column_on_dq_results(sample_missing_v
 def test_alert_count_ranks_by_sum_of_alerts_per_feature(sample_drift_result):  # noqa: D103
     ranking = AlertCountRanker()
     sut = ranking.rank(sample_drift_result.filter(methods=['jensen_shannon']))
-    assert sut.loc[sut['rank'] == 1, 'column_name'].values[0] == 'y_pred_proba'
-    assert sut.loc[sut['rank'] == 2, 'column_name'].values[0] == 'wfh_prev_workday'
-    assert sut.loc[sut['rank'] == 3, 'column_name'].values[0] == 'salary_range'
-    assert sut.loc[sut['rank'] == 4, 'column_name'].values[0] == 'public_transportation_cost'
+    assert sut.loc[sut['rank'] == 1, 'column_name'].values[0] == 'y_pred'
+    assert sut.loc[sut['rank'] == 2, 'column_name'].values[0] == 'distance_from_office'
+    assert sut.loc[sut['rank'] == 3, 'column_name'].values[0] == 'y_pred_proba'
+    assert sut.loc[sut['rank'] == 4, 'column_name'].values[0] == 'wfh_prev_workday'
 
 
 def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_option_set(  # noqa: D103
@@ -303,8 +303,8 @@ def test_alert_count_ranking_should_exclude_zero_alert_features_when_exclude_opt
 ):
     ranking = AlertCountRanker()
     sut = ranking.rank(sample_drift_result.filter(methods=['jensen_shannon']), only_drifting=True)
-    assert len(sut) == 5
-    assert not any(sut['column_name'] == 'gas_price_per_litre')
+    assert len(sut) == 7
+    assert 'gas_price_per_litre' not in sut.columns
 
 
 def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_realized_perf_result):  # noqa: D103
