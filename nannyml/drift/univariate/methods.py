@@ -443,6 +443,14 @@ class Chi2Statistic(Method):
         self._p_value: float
         self._fitted = False
 
+    def fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
+        super().fit(reference_data, timestamps)
+
+        # Thresholding is based on p-values. Ignoring all custom thresholding and disable plotting a threshold
+        self.lower_threshold_value = None
+        self.upper_threshold_value = None
+        return self
+
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_nans(reference_data)
         self._reference_data_vcs = reference_data.value_counts().loc[lambda v: v != 0]
@@ -462,9 +470,6 @@ class Chi2Statistic(Method):
         return stat
 
     def alert(self, value: float):
-        self.lower_threshold_value = None  # ignoring all custom thresholding, disable plotting a threshold
-        self.upper_threshold_value = None  # ignoring all custom thresholding, disable plotting a threshold
-
         return self._p_value < 0.05
 
     def _calc_chi2(self, data: pd.Series):

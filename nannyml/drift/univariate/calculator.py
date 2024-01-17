@@ -40,16 +40,16 @@ from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.drift.univariate.result import Result
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
-from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold, Threshold
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'kolmogorov_smirnov': StandardDeviationThreshold(std_lower_multiplier=None),
-    'chi2': StandardDeviationThreshold(),  # currently ignored
-    'jensen_shannon': ConstantThreshold(lower=None, upper=0.1),
+    'chi2': StandardDeviationThreshold(std_lower_multiplier=None),  # currently ignored
+    'jensen_shannon': StandardDeviationThreshold(std_lower_multiplier=None),
     'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None),
-    'hellinger': ConstantThreshold(lower=None, upper=0.1),
-    'l_infinity': ConstantThreshold(lower=None, upper=0.1),
+    'hellinger': StandardDeviationThreshold(std_lower_multiplier=None),
+    'l_infinity': StandardDeviationThreshold(std_lower_multiplier=None),
 }
 
 
