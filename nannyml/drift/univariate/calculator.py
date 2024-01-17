@@ -40,7 +40,7 @@ from nannyml.chunk import Chunker
 from nannyml.drift.univariate.methods import FeatureType, Method, MethodFactory
 from nannyml.drift.univariate.result import Result
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
-from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold, Threshold
+from nannyml.thresholds import StandardDeviationThreshold, Threshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
