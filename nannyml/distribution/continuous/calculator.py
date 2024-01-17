@@ -22,6 +22,7 @@ class ContinuousDistributionCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
+        points_per_joy_plot: Optional[int] = None,
     ):
         super().__init__(
             chunk_size,
@@ -33,6 +34,7 @@ class ContinuousDistributionCalculator(AbstractCalculator):
 
         self.column_names = column_names if isinstance(column_names, List) else [column_names]
         self.result: Optional[Result] = None
+        self.points_per_joy_plot = points_per_joy_plot
 
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         self.result = self._calculate(reference_data)
@@ -50,7 +52,10 @@ class ContinuousDistributionCalculator(AbstractCalculator):
 
         for column in self.column_names:
             column_distributions_per_chunk = calculate_chunk_distributions(
-                data[column], self.chunker, data.get(self.timestamp_column_name, default=None)
+                data[column],
+                self.chunker,
+                data.get(self.timestamp_column_name, default=None),
+                points_per_joy_plot=self.points_per_joy_plot,
             )
             column_distributions_per_chunk.drop(columns=['key', 'chunk_index'], inplace=True)
             for c in column_distributions_per_chunk.columns:
@@ -83,16 +88,16 @@ def _get_kde(array, cut=3, clip=(-np.inf, np.inf)):
         return None
 
 
-def _get_kde_support(kde):
+def _get_kde_support(kde, points_per_joy_plot: Optional[int] = None):
     if kde is not None:  # pragma: no cover
-        return kde.support[::5]
+        return kde.support[:: (len(kde.support) // (points_per_joy_plot or 50))]
     else:
         return np.array([])
 
 
-def _get_kde_density(kde):
+def _get_kde_density(kde, points_per_joy_plot: Optional[int] = None):
     if kde is not None:  # pragma: no cover
-        return kde.density[::5]
+        return kde.density[:: (len(kde.support) // (points_per_joy_plot or 50))]
     else:
         return np.array([])
 
@@ -124,6 +129,7 @@ def calculate_chunk_distributions(
     kde_cut=3,
     kde_clip=(-np.inf, np.inf),
     post_kde_clip=None,
+    points_per_joy_plot: Optional[int] = None,
 ):
     if isinstance(data, np.ndarray):
         data = pd.Series(data, name='data')
@@ -152,8 +158,8 @@ def calculate_chunk_distributions(
         .reset_index()
     )
 
-    data['kde_support'] = data['kde'].apply(lambda kde: _get_kde_support(kde))
-    data['kde_density'] = data['kde'].apply(lambda kde: _get_kde_density(kde))
+    data['kde_support'] = data['kde'].apply(lambda kde: _get_kde_support(kde, points_per_joy_plot))
+    data['kde_density'] = data['kde'].apply(lambda kde: _get_kde_density(kde, points_per_joy_plot))
     data['kde_cdf'] = data[['kde_support', 'kde_density']].apply(
         lambda row: _get_kde_cdf(row['kde_support'], row['kde_density'] if len(row['kde_support']) > 0 else []),
         axis=1,
