@@ -170,8 +170,8 @@ have the following default threshold:
     nml.thresholds.StandardDeviationThreshold(std_lower_multiplier=3, std_upper_multiplier=3, offset_from=np.mean)
 
 
-Some drift detection methods and the unseen values data quality metric are exceptions to this rule.
-They have default thresholds more attuned to their specific role and properties:
+The unseen values data quality metric is an exception to this rule.
+It ahs default thresholds more attuned to its specific role and properties:
 
 .. list-table::
    :widths: 25, 25, 50
@@ -180,24 +180,9 @@ They have default thresholds more attuned to their specific role and properties:
    * - Module
      - Functionality
      - Default threshold
-   * - Univariate Drift
-     - `jensen_shannon`
-     - ``ConstantThreshold(upper=0.1)``
-   * - Univariate Drift
-     - `hellinger`
-     - ``ConstantThreshold(upper=0.1)``
-   * - Univariate Drift
-     - `l_infinity`
-     - ``ConstantThreshold(upper=0.1)``
    * - Data Quality
      - Unseen Values Calculator
      - ``ConstantThreshold(lower=None, upper=0)``
-   * - Data Quality
-     - Missing Values Calculator
-     - ``StandardDeviationThreshold()``
-   * - Summary Stats
-     - all calculators
-     - ``StandardDeviationThreshold()``
 
 
 What's next?
