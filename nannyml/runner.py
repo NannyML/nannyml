@@ -29,8 +29,8 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 from nannyml.stats.avg.calculator import SummaryStatsAvgCalculator
 from nannyml.stats.count.calculator import SummaryStatsRowCountCalculator
 from nannyml.stats.median.calculator import SummaryStatsMedianCalculator
-from nannyml.stats.sum.calculator import SummaryStatsSumCalculator
 from nannyml.stats.std.calculator import SummaryStatsStdCalculator
+from nannyml.stats.sum.calculator import SummaryStatsSumCalculator
 
 
 @dataclass

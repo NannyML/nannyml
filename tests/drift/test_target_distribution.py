@@ -147,7 +147,7 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
     analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
 
     calc = UnivariateDriftCalculator(column_names=['y_true'], timestamp_column_name='timestamp').fit(reference)
-    result = calc.calculate(analysis.join(analysis_targets)).filter(period='analysis')
+    result = calc.calculate(analysis.merge(analysis_targets, on='id')).filter(period='analysis')
     print(round(result.data[('y_true', 'jensen_shannon', 'value')], 5))
     assert (
         round(result.data[('y_true', 'jensen_shannon', 'value')], 5)
@@ -322,7 +322,7 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
         column_names=['y_true'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.join(analysis_targets))
+    results = calc.calculate(analysis.merge(analysis_targets, on='id'))
     sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'statistical_target_drift']
     pd.testing.assert_frame_equal(expected, sut)
@@ -487,7 +487,7 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
         column_names=['work_home_actual'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    results = calc.calculate(analysis.merge(analysis_targets, on='id'))
     sut = results.filter(period='analysis').to_df()[
         [('chunk', 'chunk', 'key'), ('work_home_actual', 'jensen_shannon', 'value')]
     ]
@@ -785,7 +785,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
     reference['work_home_actual'] = reference['work_home_actual'].astype('category')
     analysis_targets['work_home_actual'] = analysis_targets['work_home_actual'].astype('category')
     calc = UnivariateDriftCalculator(column_names=['work_home_actual'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier')).filter(period=period)
+    sut = calc.calculate(analysis.merge(analysis_targets, on='id')).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -835,7 +835,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.join(analysis_targets)).filter(period=period)
+    sut = calc.calculate(analysis.merge(analysis_targets, on='id')).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)

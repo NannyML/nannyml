@@ -56,7 +56,7 @@ def performance_result(data) -> Result:
         problem_type='classification_binary',
     ).fit(reference_data=data[0])
 
-    ref_with_tgt = data[1].merge(data[2], on='identifier')
+    ref_with_tgt = data[1].merge(data[2], on='id')
     return calc.calculate(ref_with_tgt)
 
 
@@ -142,7 +142,7 @@ def test_calculator_calculate_should_include_chunk_information_columns(data):  #
         problem_type='classification_binary',
     ).fit(reference_data=data[0])
 
-    ref_with_tgt = data[1].merge(data[2], on='identifier')
+    ref_with_tgt = data[1].merge(data[2], on='id')
     sut = calc.calculate(ref_with_tgt)
 
     assert ('chunk', 'key') in sut.data.columns
@@ -156,7 +156,7 @@ def test_calculator_calculate_should_include_chunk_information_columns(data):  #
 def test_calculator_calculate_should_include_target_completeness_rate(data):  # noqa: D103
     # Let's artificially modify the target completeness of different chunks.
     ref_data = data[0]
-    data = data[1].merge(data[2], on='identifier')
+    data = data[1].merge(data[2], on='id')
 
     # Drop 10% of the target values in the first chunk
     data.loc[0:499, 'work_home_actual'] = np.NAN
@@ -187,7 +187,7 @@ def test_calculator_calculate_should_support_partial_bool_targets(data, performa
     when calculating the performance metrics. This test ensures that the calculator supports partial bool targets.
     """
     ref_data = data[0]
-    analysis_data = data[1].merge(data[2], on='identifier')
+    analysis_data = data[1].merge(data[2], on='id')
 
     # Convert target column to bool dtype
     analysis_data = analysis_data.astype({'work_home_actual': 'bool'})
@@ -282,7 +282,7 @@ def test_performance_calculator_with_default_thresholds():
 def test_calculator_returns_distinct_but_consistent_results_when_reused(data, performance_calculator):
     reference, analysis, target = data
 
-    data = analysis.merge(target, on='identifier')
+    data = analysis.merge(target, on='id')
     performance_calculator.fit(reference)
     result1 = performance_calculator.calculate(data)
     result2 = performance_calculator.calculate(data)
@@ -334,7 +334,7 @@ def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # n
     calc = PerformanceCalculator(
         y_true='y_true', y_pred='y_pred', problem_type=ProblemType.REGRESSION, metrics=['mae', 'mape'], **calc_args
     ).fit(reference)
-    sut = calc.calculate(analysis.join(analysis_targets))
+    sut = calc.calculate(analysis.merge(analysis_targets, on='id'))
 
     try:
         _ = sut.plot(**plot_args)
@@ -404,7 +404,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         metrics=['roc_auc', 'f1'],
         **calc_args,
     ).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='identifier'))
+    sut = calc.calculate(analysis.merge(analysis_targets, on='id'))
 
     try:
         _ = sut.plot(**plot_args)
