@@ -115,7 +115,7 @@ def _get_kde_quartiles(cdf, kde_support, kde_density):
         quartiles = []
         for quartile in [0.25, 0.50, 0.75]:
             quartile_index = np.abs(cdf - quartile).argmin()
-            quartiles.append((kde_support[quartile_index], kde_density[quartile_index]))
+            quartiles.append((kde_support[quartile_index], kde_density[quartile_index], cdf[quartile_index]))
         return quartiles
     else:
         return []
@@ -190,7 +190,7 @@ def calculate_chunk_distributions(
         lambda row: np.divide(np.array(row['kde_density']), row['kde_density_global_max']), axis=1
     )
     data['kde_quartiles_scaled'] = data[['kde_quartiles', 'kde_density_global_max']].apply(
-        lambda row: [(q[0], q[1] / row['kde_density_global_max']) for q in row['kde_quartiles']], axis=1
+        lambda row: [(q[0], q[1] / row['kde_density_global_max'], q[2]) for q in row['kde_quartiles']], axis=1
     )
 
     # TODO: Consider removing redundant columns to reduce fitted calculator memory usage
