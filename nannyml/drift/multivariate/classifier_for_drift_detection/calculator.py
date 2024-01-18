@@ -35,6 +35,8 @@ from nannyml.usage_logging import UsageEvent, log_usage
 from lightgbm import LGBMClassifier
 from flaml import AutoML
 
+import warnings
+
 DEFAULT_LGBM_HYPERPARAMS = {
     'boosting_type': 'gbdt',
     'class_weight': None,
@@ -60,7 +62,7 @@ DEFAULT_LGBM_HYPERPARAMS = {
 
 DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG = {
     "time_budget": 120,
-    "metric": "auc",
+    "metric": "roc_auc",
     "estimator_list": ['lgbm'],
     "eval_method": "cv",
     "hpo_method": "cfo",
@@ -306,15 +308,19 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         df_X_transformed = pd.DataFrame(X_transformed, columns=features_out)
 
         if self.tune_hyperparameters:
-            automl = AutoML()
-            # TODO: Using categorical_feature
-            automl.fit(
-                df_X_transformed,
-                y,
-                **self.hyperparameter_tuning_config,
-                categorical_feature=self.categorical_column_names
-            )
-            self.hyperparameters = {**automl.model.estimator.get_params()}
+            with warnings.catch_warnings():
+                # Ingore lightgbm's UserWarning: Using categorical_feature in Dataset.
+                # We explicitly use that feature, don't spam the user
+                warnings.filterwarnings("ignore", message="Using categorical_feature in Dataset.")
+                automl = AutoML()
+                # TODO: Using categorical_feature
+                automl.fit(
+                    df_X_transformed,
+                    y,
+                    **self.hyperparameter_tuning_config,
+                    categorical_feature=self.categorical_column_names
+                )
+                self.hyperparameters = {**automl.model.estimator.get_params()}
 
         skf = StratifiedKFold(n_splits=self.cv_folds_num)
         all_preds = []
@@ -324,8 +330,12 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
             _try = y[train_index]
             _tsx = df_X_transformed.iloc[test_index]
             _tsy = y[test_index]
-            model = LGBMClassifier(**self.hyperparameters)
-            model.fit(_trx, _try, categorical_feature=self.categorical_column_names)
+            with warnings.catch_warnings():
+                # Ingore lightgbm's UserWarning: Using categorical_feature in Dataset.
+                # We explicitly use that feature, don't spam the user
+                warnings.filterwarnings("ignore", message="Using categorical_feature in Dataset.")
+                model = LGBMClassifier(**self.hyperparameters)
+                model.fit(_trx, _try, categorical_feature=self.categorical_column_names)
             preds = model.predict_proba(_tsx)[:, 1]
             all_preds.append(preds)
             all_tgts.append(_tsy)
