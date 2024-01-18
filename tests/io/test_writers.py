@@ -27,7 +27,7 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 def univariate_drift_for_binary_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = UnivariateDriftCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp', 'work_home_actual']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'work_home_actual', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -38,7 +38,7 @@ def univariate_drift_for_binary_classification_result():
 def univariate_drift_for_multiclass_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -49,7 +49,7 @@ def univariate_drift_for_multiclass_classification_result():
 def univariate_drift_for_regression_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -61,7 +61,7 @@ def data_reconstruction_drift_for_binary_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = DataReconstructionDriftCalculator(
         column_names=[
-            col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_pred_proba', 'work_home_actual']
+            col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_pred_proba', 'work_home_actual', 'id']
         ],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
@@ -84,6 +84,7 @@ def data_reconstruction_drift_for_multiclass_classification_result():
                 'y_pred_proba_highstreet_card',
                 'y_pred_proba_prepaid_card',
                 'y_true',
+                'id',
             ]
         ],
         timestamp_column_name='timestamp',
@@ -96,7 +97,7 @@ def data_reconstruction_drift_for_multiclass_classification_result():
 def data_reconstruction_drift_for_regression_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = DataReconstructionDriftCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
     result = calc.calculate(analysis_df)
@@ -114,7 +115,7 @@ def realized_performance_for_binary_classification_result():
         timestamp_column_name='timestamp',
         metrics=['roc_auc', 'f1', 'confusion_matrix'],
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='identifier'))
+    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -133,7 +134,7 @@ def realized_performance_for_multiclass_classification_result():
         problem_type='classification_multiclass',
         metrics=['roc_auc', 'f1'],
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, left_index=True, right_index=True))
+    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -147,7 +148,7 @@ def realized_performance_for_regression_result():
         problem_type='regression',
         metrics=['mae', 'mape'],
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.join(analysis_targets_df))
+    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -162,7 +163,7 @@ def cbpe_estimated_performance_for_binary_classification_result():
         timestamp_column_name='timestamp',
         metrics=['roc_auc', 'f1', 'confusion_matrix'],
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='identifier'))
+    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -181,7 +182,7 @@ def cbpe_estimated_performance_for_multiclass_classification_result():
         problem_type='classification_multiclass',
         metrics=['roc_auc', 'f1'],
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.merge(analysis_targets_df, left_index=True, right_index=True))
+    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -189,13 +190,13 @@ def cbpe_estimated_performance_for_multiclass_classification_result():
 def dle_estimated_performance_for_regression_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = DLE(
-        feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+        feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
         y_pred='y_pred',
         y_true='y_true',
         timestamp_column_name='timestamp',
         metrics=['mae', 'mape'],
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.join(analysis_targets_df))
+    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -203,10 +204,10 @@ def dle_estimated_performance_for_regression_result():
 def missing_values_for_binary_classification_result():
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
-        column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true']],
+        column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.join(analysis_targets_df))
+    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -219,7 +220,7 @@ def unseen_values_for_binary_classification_result():
         column_names=['salary_range', 'repaid_loan_on_prev_car', 'size_of_downpayment'],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.join(analysis_targets_df))
+    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
     return result
 
 
@@ -337,7 +338,7 @@ def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
 @pytest.mark.parametrize(
     'result, table_name, expected_row_count',
     [
-        (lazy_fixture('univariate_drift_for_binary_classification_result'), 'univariate_drift_metrics', 110),
+        (lazy_fixture('univariate_drift_for_binary_classification_result'), 'univariate_drift_metrics', 100),
         (lazy_fixture('univariate_drift_for_multiclass_classification_result'), 'univariate_drift_metrics', 110),
         (lazy_fixture('univariate_drift_for_regression_result'), 'univariate_drift_metrics', 80),
         (

@@ -42,9 +42,7 @@ def sample_drift_result() -> UnivariateResults:  # noqa: D103
     reference, analysis, _ = load_synthetic_binary_classification_dataset()
     calc = UnivariateDriftCalculator(
         timestamp_column_name='timestamp',
-        column_names=[
-            col for col in reference.columns if col not in ['timestamp', 'identifier', 'work_home_actual', 'period']
-        ],
+        column_names=[col for col in reference.columns if col not in ['timestamp', 'id', 'work_home_actual', 'period']],
         continuous_methods=['kolmogorov_smirnov', 'jensen_shannon'],
         categorical_methods=['chi2', 'jensen_shannon'],
         chunk_size=5000,
@@ -57,7 +55,7 @@ def sample_drift_result() -> UnivariateResults:  # noqa: D103
 @pytest.fixture(scope='module')
 def sample_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D103
     reference, analysis, analysis_target = load_synthetic_binary_classification_dataset()
-    analysis = analysis.merge(analysis_target, on='identifier')
+    analysis = analysis.merge(analysis_target, on='id')
 
     # initialize, fit and calculate realized performance
     realized = PerformanceCalculator(
@@ -191,7 +189,7 @@ def sample_regression_estimated_perf_result() -> DLEResults:  # noqa: D103
 @pytest.fixture(scope='module')
 def sample_regression_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D103
     reference, analysis, analysis_target = load_synthetic_car_price_dataset()
-    analysis = analysis.join(analysis_target)
+    analysis = analysis.merge(analysis_target, on='id')
     # initialize, fit and calculate realized performance
     calc = PerformanceCalculator(
         y_pred='y_pred',
