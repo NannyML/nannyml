@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Tests for Drift package."""
+"""Tests for Multivariate Data Reconstruction package."""
 
 import numpy as np
 import pandas as pd

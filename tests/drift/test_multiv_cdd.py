@@ -5,21 +5,15 @@
 
 """Tests for Multivariate Classifier for Drift Detection package."""
 
-import numpy as np
 import pandas as pd
 import pytest
-# from sklearn.impute import SimpleImputer
 from typing import Tuple
 
-from nannyml._typing import Result
-from nannyml.chunk import PeriodBasedChunker, SizeBasedChunker
+# from nannyml._typing import Result
 from nannyml.drift.multivariate.classifier_for_drift_detection.calculator import ClassifierForDriftDetectionCalculator
 from nannyml.datasets import (
     load_synthetic_car_loan_dataset,
-    # load_synthetic_multiclass_classification_dataset,
 )
-# from nannyml.drift.univariate import UnivariateDriftCalculator
-# from nannyml.performance_estimation.confidence_based import CBPE
 
 column_names1 = [
     'salary_range',
@@ -37,7 +31,9 @@ def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: 
     ref_df, ana_df, _ = load_synthetic_car_loan_dataset()
     return ref_df.head(15_000), ana_df.tail(10_000)
 
+
 def test_default_cdd_run(binary_classification_data):
+    """Test a default run of CDD."""
     reference, analysis, = binary_classification_data
     calc = ClassifierForDriftDetectionCalculator(
         feature_column_names=column_names1,
@@ -45,8 +41,7 @@ def test_default_cdd_run(binary_classification_data):
     )
     calc.fit(reference)
     results = calc.calculate(analysis)
-    print(results.categorical_column_names)
-    print(results.to_df())
-    # print(results.to_df()[:,6:])
-    assert list(results.to_df().loc[:,("cdd_discrimination", "value")].round(4)) == [0.5020, 0.5002, 0.5174, 0.9108, 0.9136]
-    assert list(results.to_df().loc[:,("cdd_discrimination", "alert")]) == [False, False, False, True, True]
+    assert list(
+        results.to_df().loc[:, ("cdd_discrimination", "value")].round(4)
+    ) == [0.5020, 0.5002, 0.5174, 0.9108, 0.9136]
+    assert list(results.to_df().loc[:, ("cdd_discrimination", "alert")]) == [False, False, False, True, True]

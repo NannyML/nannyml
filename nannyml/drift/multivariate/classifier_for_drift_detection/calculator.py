@@ -14,11 +14,10 @@ the reference and analysis data sets.
 
 """
 
-from typing import List, Optional, Tuple, Union, Dict, Any
+from typing import List, Optional, Union, Dict, Any
 
 import numpy as np
 import pandas as pd
-# from category_encoders import CountEncoder
 from pandas import MultiIndex
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.compose import ColumnTransformer
@@ -71,9 +70,12 @@ DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG = {
     "verbose": 0,
 }
 
+
 class ClassifierForDriftDetectionCalculator(AbstractCalculator):
-    """ClassifierForDriftDetectionCalculator implementation using Drift Detection Classifier's
-    performance as a measure of drift."""
+    """ClassifierForDriftDetectionCalculator implementation.
+
+    Uses Drift Detection Classifier's cross validated performance as a measure of drift.
+    """
 
     def __init__(
         self,
@@ -90,39 +92,48 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG,
         threshold: Threshold = ConstantThreshold(lower=0.45, upper=0.65),
     ):
-        """Creates a new ClassifierForDriftDetectionCalculator instance.
+        """Create a new ClassifierForDriftDetectionCalculator instance.
 
         Parameters:
-            feature_column_names: List[str]
-                A list containing the names of features in the provided data set. All of these features will be used by
-                the multivariate classifier for drift detection to calculate an aggregate drift score.
-            timestamp_column_name: str, default=None
-                The name of the column containing the timestamp of the model prediction.
-            chunk_size: int, default=None
-                Splits the data into chunks containing `chunks_size` observations.
-                Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-            chunk_number: int, default=None
-                Splits the data into `chunk_number` pieces.
-                Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-            chunk_period: str, default=None
-                Splits the data according to the given period.
-                Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-            chunker : Chunker, default=None
-                The `Chunker` used to split the data sets into a lists of chunks.
-            hyperparameters : Dict[str, Any], default = None
+        -----------
+        feature_column_names: List[str]
+            A list containing the names of features in the provided data set. All of these features will be used by
+            the multivariate classifier for drift detection to calculate an aggregate drift score.
+        treat_as_categorical: Optional[Union[str, List[str]]], default=None
+            A list containing the names of features in the provi,ded data set that should be treated as categorical.
+            Needs not be exhaustive.
+        timestamp_column_name:  Optional[str], default=None
+            The name of the column containing the timestamp of the model prediction.
+        chunk_size: int, default=None
+            Splits the data into chunks containing `chunks_size` observations.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_number: int, default=None
+            Splits the data into `chunk_number` pieces.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunk_period: str, default=None
+            Splits the data according to the given period.
+            Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
+        chunker : Chunker, default=None
+            The `Chunker` used to split the data sets into a lists of chunks.
+        cv_folds_num: Optional[int]
+            Number of cross-validation folds to use when calculating CDD discrimination score.
+        hyperparameters : Dict[str, Any], default = None
             A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
             been set to `True`.
             Check out the available hyperparameter options in the
-            `LightGBM documentation <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRegressor.html>`_.
+            `LightGBM docs <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html>`_.
         tune_hyperparameters : bool, default = False
             A boolean controlling whether hypertuning should be performed on the internal regressor models
             whilst fitting on reference data.
-            Tuning hyperparameters takes some time and does not guarantee better results, hence it defaults to `False`.
+            Tuning hyperparameters takes some time and does not guarantee better results,
+            hence it defaults to `False`.
+        threshold: Threshold, default=ConstantThreshold
+            The threshold you wish to evaluate values on. Defaults to a ConstantThreshold with lower value
+            of 0.45 and uppper value of 0.65.
         hyperparameter_tuning_config : Dict[str, Any], default = None
             A dictionary that allows you to provide a custom hyperparameter tuning configuration when
             `tune_hyperparameters` has been set to `True`.
             The following dictionary is the default tuning configuration. It can be used as a template to modify::
-
                 {
                     "time_budget": 15,
                     "metric": "mse",
@@ -134,15 +145,11 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
                     "seed": 1,
                     "verbose": 0,
                 }
-
             For an overview of possible parameters for the tuning process check out the
             `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
-        threshold: Threshold, default=StandardDeviationThreshold
-            The threshold you wish to evaluate values on. Defaults to a StandardDeviationThreshold with default
-            options. The other allowed value is ConstantThreshold.
 
-
-        Examples:
+        Example:
+        --------
         >>> import nannyml as nml
         >>> # Load synthetic data
         >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
@@ -180,7 +187,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         self.hyperparameters = hyperparameters
         self.tune_hyperparameters = tune_hyperparameters
         self.hyperparameter_tuning_config = hyperparameter_tuning_config
-        self.cv_folds_num: int = cv_folds_num
+        self.cv_folds_num = cv_folds_num
 
         self.threshold = threshold
 
@@ -216,11 +223,8 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
                 self.continuous_column_names.remove(column_name)
             if column_name not in self.categorical_column_names:
                 self.categorical_column_names.append(column_name)
-        
-        self._reference_X = reference_data[self.feature_column_names]
 
-        # # Calculate thresholds
-        # self._lower_alert_threshold, self._upper_alert_threshold = self._calculate_alert_thresholds(reference_data)
+        self._reference_X = reference_data[self.feature_column_names]
 
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
@@ -229,7 +233,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
 
     @log_usage(UsageEvent.CDD_CALC_RUN)
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
-        """Calculates the data CDD calculator metric for a given data set."""
+        """Calculate the data CDD calculator metric for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -270,17 +274,10 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         else:
             res = self._populate_alert_thresholds(res)
             self.result = self.result.filter(period='reference')
-            # res = res[_create_multilevel_index().values] # why? do this?
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
         return self.result
 
     def _calculate_chunk(self, data: pd.DataFrame):
-        # continuous_features,
-        # categorical_features,
-        # tune_hyperparameters,
-        # hyperparameter_tuning_config,
-        # hyperparameters,
-        # cv_folds_num
 
         chunk_X = data[self.feature_column_names]
         reference_X = self._reference_X
@@ -297,21 +294,26 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
 
         # preprocess categorical features
         pipe = Pipeline([
-                ('ordinal_encoder', OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1))
-            ])
+            ('ordinal_encoder', OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1))
+        ])
         column_transformer = ColumnTransformer(
-            [('categorical', pipe, self.categorical_column_names),],
+            [('categorical', pipe, self.categorical_column_names)],
             remainder='passthrough',
             verbose_feature_names_out=False
         )
         X_transformed = column_transformer.fit_transform(X)
         features_out = list(column_transformer.get_feature_names_out())
-        df_X_transformed = pd.DataFrame(X_transformed, columns = features_out)
+        df_X_transformed = pd.DataFrame(X_transformed, columns=features_out)
 
         if self.tune_hyperparameters:
             automl = AutoML()
-            #TODO: Using categorical_feature
-            automl.fit(X_train, y_train, **self.hyperparameter_tuning_config, categorical_feature=self.categorical_column_names)
+            # TODO: Using categorical_feature
+            automl.fit(
+                df_X_transformed,
+                y,
+                **self.hyperparameter_tuning_config,
+                categorical_feature=self.categorical_column_names
+            )
             self.hyperparameters = {**automl.model.estimator.get_params()}
 
         skf = StratifiedKFold(n_splits=self.cv_folds_num)
@@ -324,7 +326,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
             _tsy = y[test_index]
             model = LGBMClassifier(**self.hyperparameters)
             model.fit(_trx, _try, categorical_feature=self.categorical_column_names)
-            preds = model.predict_proba(_tsx)[:,1]
+            preds = model.predict_proba(_tsx)[:, 1]
             all_preds.append(preds)
             all_tgts.append(_tsy)
 
@@ -349,6 +351,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
             upper_threshold_value_limit=self._upper_threshold_value_limit,
             logger=self._logger
         )
+
     def _populate_alert_thresholds(self, result_data: pd.DataFrame) -> pd.DataFrame:
         result_data[('cdd_discrimination', 'upper_threshold')] = self.upper_threshold_value
         result_data[('cdd_discrimination', 'lower_threshold')] = self.lower_threshold_value

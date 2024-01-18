@@ -22,7 +22,7 @@ Metric = namedtuple("Metric", "display_name column_name")
 
 
 class Result(PerMetricResult[Metric], ResultCompareMixin):
-    """Class wrapping the results of the data reconstruction drift calculator and providing plotting functionality."""
+    """Class wrapping the results of the classifier for drift detection and providing plotting functionality."""
 
     def __init__(
         self,
@@ -32,11 +32,12 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         continuous_column_names: List[str],
         timestamp_column_name: Optional[str] = None,
     ):
-        """
+        """Initialize a ClassifierForDriftDetectionCalculator results object.
+
         Parameters
         ----------
         results_data: pd.DataFrame
-            Results data returned by a DataReconstructionDriftCalculator.
+            Results data returned by a ClassifierForDriftDetectionCalculator.
         column_names: List[str]
             A list of column names indicating which columns contain feature values.
         categorical_column_names : List[str]
@@ -56,14 +57,12 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         self.timestamp_column_name = timestamp_column_name
 
     def keys(self) -> List[Key]:
-        """
-        Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`
-        """
+        """Create a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
         return [Key(properties=('reconstruction_error',), display_names=('Reconstruction error',))]
 
     @log_usage(UsageEvent.CDD_RESULTS_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
-        """Renders plots for metrics returned by the multivariate data reconstruction calculator.
+        """Render plots for metrics returned by the multivariate data reconstruction calculator.
 
         Parameters
         ----------
