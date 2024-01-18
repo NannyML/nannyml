@@ -114,7 +114,7 @@ def _get_kde_quartiles(cdf, kde_support, kde_density):
     if len(cdf) > 0:
         quartiles = []
         for quartile in [0.25, 0.50, 0.75]:
-            quartile_index = np.abs(cdf - quartile).argmin()
+            quartile_index = np.argmax(cdf >= quartile)
             quartiles.append((kde_support[quartile_index], kde_density[quartile_index], cdf[quartile_index]))
         return quartiles
     else:
