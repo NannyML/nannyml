@@ -304,7 +304,7 @@ class FakeEstimator(AbstractEstimator):
 def test_dle_for_regression_with_timestamps(calculator_opts, expected):
     ref_df, ana_df, _ = load_synthetic_car_price_dataset()
     dle = DLE(
-        feature_column_names=[col for col in ref_df.columns if col not in ['timestamp', 'y_true', 'y_pred']],
+        feature_column_names=[col for col in ref_df.columns if col not in ['timestamp', 'y_true', 'y_pred', 'id']],
         y_pred='y_pred',
         y_true='y_true',
         metrics=['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle'],
