@@ -150,8 +150,9 @@ evaluate whether performance changes are significant or are just caused by sampl
 Multivariate Drift Detection with PCA
 *************************************
 
-:term:`Standard Error` for :ref:`Multivariate Drift Detection<multivariate_drift_detection>` is calculated using the approach
-introduced in :ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`. For each observation the
+:term:`Standard Error` for :ref:`Multivariate Drift - Data Reconstruction with PCA<multivariate_drift_detection_pca>`
+is calculated using the approach introduced in :ref:`Adapting Standard Error of the Mean Formula<introducing_sem>`.
+For each observation the
 multivariate drift detection with PCA process calculates a :term:`reconstruction error<Reconstruction Error>` value.
 The mean of those values for all observations in a chunk is the reconstruction error per chunk.
 The process is described in detail in :ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.

@@ -237,7 +237,7 @@ What's next?
 This Quickstart presents some of the core functionalities of NannyML on an example of real-world binary classification
 data. The walk-through is concise to help you get familiar with the fundamental concepts and structure of the
 library. NannyML provides other useful functionalities (like :ref:`multivariate drift
-detection<multivariate_drift_detection>`) that
+detection<multivariate_drift_detection_pca>`) that
 can help you monitor your models in production comprehensively. All of our :ref:`tutorials<tutorials>` are an excellent
 place
 to start exploring them.

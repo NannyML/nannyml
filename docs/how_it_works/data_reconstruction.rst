@@ -6,7 +6,7 @@ Data Reconstruction with PCA
 
 Here we will explain why data reconstruction with PCA is useful, and how it is performed.
 For information on how to use this feature of the library, read the tutorial on
-:ref:`Multivariate Data Drift Detection<multivariate_drift_detection>`.
+:ref:`Multivariate Drift - Data Reconstruction with PCA<multivariate_drift_detection_pca>`.
 
 Limitations of Univariate Drift Detection
 -----------------------------------------
@@ -144,4 +144,5 @@ The change in the butterfly dataset is now clearly visible through the change in
 reconstruction error, while our earlier univariate approach detected no change.
 
 For more information on using Reconstruction Error with PCA check
-the :ref:`Multivariate Drift Detection<multivariate_drift_detection>` tutorial.
+the :ref:`Multivariate Drift - Data Reconstruction with PCA<multivariate_drift_detection_pca>`
+tutorial.

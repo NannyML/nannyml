@@ -1,0 +1,148 @@
+.. _multivariate_drift_detection_pca:
+
+============================
+Data Reconstruction with PCA
+============================
+
+The first multivariate drift detection method of NannyML is Data Reconstruction with PCA.
+For a detailed explanation of the method see
+:ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+
+Just The Code
+-------------
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cells: 1 3 4 6 8
+
+.. admonition:: **Advanced configuration**
+    :class: hint
+
+    - To learn how :class:`~nannyml.chunk.Chunk` works and to set up custom chunkings check out the :ref:`chunking tutorial <chunking>`
+    - To learn how :class:`~nannyml.thresholds.ConstantThreshold` works and to set up custom threshold check out the :ref:`thresholds tutorial <thresholds>`
+
+Walkthrough
+-----------
+
+Data Reconstruction with PCA returns a single number, measuring the :term:`Reconstruction Error`.
+The changes in this value reflect a change in the structure of the model inputs.
+
+NannyML calculates the reconstruction error over time for the monitored model, and raises an alert if the
+values get outside a range defined by the variance in the reference :ref:`data period<data-drift-periods>`.
+
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data subject to actual analysis, provided as the analysis dataset.
+You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
+
+Let's start by loading some synthetic data provided by the NannyML package and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cells: 1
+
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cell: 2
+
+The :class:`~nannyml.drift.multivariate.data_reconstruction.calculator.DataReconstructionDriftCalculator`
+module implements this functionality. We need to instantiate it with appropriate parameters:
+
+- **column_names:** A list with the column names of the features we want to run drift detection on.
+- **timestamp_column_name (Optional):** The name of the column in the reference data that
+  contains timestamps.
+- **n_components (Optional):** The n_components parameter as passed to the sklearn `PCA constructor`_.
+- **chunk_size (Optional):** The number of observations in each chunk of data
+  used. Only one chunking argument needs to be provided. For more information about
+  :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.
+- **chunk_number (Optional):** The number of chunks to be created out of data provided for each
+  :ref:`period<data-drift-periods>`.
+- **chunk_period (Optional):** The time period based on which we aggregate the provided data in
+  order to create chunks.
+- **chunker (Optional):** A NannyML :class:`~nannyml.chunk.Chunker` object that will handle the aggregation
+  provided data in order to create chunks.
+- **imputer_categorical (Optional):** An sklearn `SimpleImputer`_ object specifying an appropriate strategy
+  for imputing missing values for categorical features.
+- **imputer_continuous (Optional):** An sklearn `SimpleImputer`_ object specifying an appropriate strategy
+  for imputing missing values for continuous features.
+- **threshold (Optional):** The threshold strategy used to calculate the alert threshold limits.
+  For more information about thresholds, check out the :ref:`thresholds tutorial<thresholds>`.
+
+Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs to be called on the reference data,
+which the results will be based on. Then the
+:meth:`~nannyml.base.AbstractCalculator.calculate` method will
+calculate the multivariate drift results on the provided data.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cells: 3
+
+Any missing values in our data need to be imputed. The default :term:`Imputation` implemented by NannyML imputes
+the most frequent value for categorical features and the mean for continuous features. These defaults can be
+overridden with an instance of `SimpleImputer`_ class, in which case NannyML will perform the imputation as instructed.
+
+An example of where custom imputation strategies are used can be seen below.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cells: 10
+
+Because our synthetic dataset does not have missing values, the results are the same in both cases.
+We can see these results of the data provided to the
+:meth:`~nannyml.base.AbstractCalculator.calculate`
+method as a dataframe.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cells: 4
+
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cell: 5
+
+The drift results from the reference data are accessible from the properties of the results object:
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cells: 6
+
+.. nbtable::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cell: 7
+
+
+NannyML can also visualize the multivariate drift results in a plot. Our plot contains several key elements.
+
+* The purple step plot shows the reconstruction error in each chunk of the analysis period. Thick squared point
+  markers indicate the middle of these chunks.
+* The low-saturated purple area around the reconstruction error indicates the :ref:`sampling error<estimation_of_standard_error>`.
+* The red horizontal dashed lines show upper and lower thresholds for alerting purposes.
+* If the reconstruction error crosses the upper or lower threshold an alert is raised.
+  A red, diamond-shaped point marker additionally indicates this in the middle of the chunk.
+
+.. nbimport::
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
+    :cells: 8
+
+.. image:: /_static/tutorials/detecting_data_drift/multivariate_drift_detection/pca-reconstruction-error.svg
+
+The multivariate drift results provide a concise summary of where data drift
+is happening in our input data.
+
+Insights
+--------
+
+Using this method of detecting drift, we can identify changes that we may not have seen using solely univariate methods.
+
+What Next
+---------
+
+After reviewing the results, we want to look at the :ref:`drift results of individual features<univariate_drift_detection>`
+to see what changed in the model's features individually.
+
+The :ref:`Performance Estimation<performance-estimation>` functionality can be used to
+estimate the impact of the observed changes.
+
+For more information on how multivariate drift detection works, the
+:ref:`Data Reconstruction with PCA<data-reconstruction-pca>` explanation page gives more details.
+
+.. _`PCA constructor`: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
+.. _`SimpleImputer`: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html

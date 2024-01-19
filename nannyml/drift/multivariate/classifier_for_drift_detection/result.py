@@ -17,6 +17,7 @@ from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metric
 from nannyml.usage_logging import UsageEvent, log_usage
+from nannyml.plots.components import Hover
 
 Metric = namedtuple("Metric", "display_name column_name")
 
@@ -58,11 +59,11 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
 
     def keys(self) -> List[Key]:
         """Create a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
-        return [Key(properties=('reconstruction_error',), display_names=('Reconstruction error',))]
+        return [Key(properties=('cdd_discrimination',), display_names=('CDD discrimination value',))]
 
     @log_usage(UsageEvent.CDD_RESULTS_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
-        """Render plots for metrics returned by the multivariate data reconstruction calculator.
+        """Render plots for metrics returned by the multivariate classifier for drift detection.
 
         Parameters
         ----------
@@ -104,9 +105,15 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         if kind == 'drift':
             return plot_metric(
                 self,
-                title='Multivariate Drift (PCA Reconstruction Error)',
-                metric_display_name='Reconstruction Error',
-                metric_column_name='reconstruction_error',
+                title='Classifier for Drift Detection',
+                metric_display_name='CDD discrimination value',
+                metric_column_name='cdd_discrimination',
+                hover=Hover(
+                    template='%{period} &nbsp; &nbsp; %{alert} <br />'
+                    'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+                    '%{metric_name}: <b>%{metric_value}</b><b r />',
+                    show_extra=True,
+                ),
             )
         else:
             raise InvalidArgumentsException(f"unknown plot kind '{kind}'. " f"Please provide one of: ['drift'].")

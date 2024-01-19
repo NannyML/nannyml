@@ -100,9 +100,9 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         -----------
         feature_column_names: List[str]
             A list containing the names of features in the provided data set. All of these features will be used by
-            the multivariate classifier for drift detection to calculate an aggregate drift score.
+            the multivariate classifier for drift detection to calculate an aggregate drift metric.
         treat_as_categorical: Optional[Union[str, List[str]]], default=None
-            A list containing the names of features in the provi,ded data set that should be treated as categorical.
+            A list containing the names of features in the provided data set that should be treated as categorical.
             Needs not be exhaustive.
         timestamp_column_name:  Optional[str], default=None
             The name of the column containing the timestamp of the model prediction.
@@ -118,10 +118,9 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
         cv_folds_num: Optional[int]
-            Number of cross-validation folds to use when calculating CDD discrimination score.
+            Number of cross-validation folds to use when calculating CDD discrimination value.
         hyperparameters : Dict[str, Any], default = None
-            A dictionary used to provide your own custom hyperparameters when `tune_hyperparameters` has
-            been set to `True`.
+            A dictionary used to provide your own custom hyperparameters when training the discrimination model.
             Check out the available hyperparameter options in the
             `LightGBM docs <https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMClassifier.html>`_.
         tune_hyperparameters : bool, default = False
@@ -148,7 +147,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
                     "verbose": 0,
                 }
             For an overview of possible parameters for the tuning process check out the
-            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl#automl-objects>`_.
+            `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl/automl>`_.
 
         Example:
         --------
