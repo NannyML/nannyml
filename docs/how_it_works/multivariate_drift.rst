@@ -1,12 +1,12 @@
-.. _data-reconstruction-pca:
+.. _how-multiv-drift:
 
 ============================
-Data Reconstruction with PCA
+Multivariate Drift Detection
 ============================
 
-Here we will explain why data reconstruction with PCA is useful, and how it is performed.
-For information on how to use this feature of the library, read the tutorial on
-:ref:`Multivariate Drift - Data Reconstruction with PCA<multivariate_drift_detection_pca>`.
+Here we describe in detail NannyML's multivariate drift detection methods
+helping build a deeper understanding of how they work. But first, let's see
+why they are needed.
 
 Limitations of Univariate Drift Detection
 -----------------------------------------
@@ -32,7 +32,7 @@ The "butterfly" dataset, introduced below, demonstrates this.
 Let's see first how we can construct an instance of the Butterfly dataset.
 
 .. nbimport::
-    :path: ./example_notebooks/How It Works - Data Reconstruction with PCA.ipynb
+    :path: ./example_notebooks/How It Works - Multivariate Drift.ipynb
     :cells: 1
 
 The key property of the butterfly dataset is the data drift on its first two features.
@@ -42,10 +42,10 @@ but are now negatively correlated. The following code creates a plot that clearl
 resulting data drift.
 
 .. nbimport::
-    :path: ./example_notebooks/How It Works - Data Reconstruction with PCA.ipynb
+    :path: ./example_notebooks/How It Works - Multivariate Drift.ipynb
     :cells: 2
 
-.. image:: ../_static/butterfly-scatterplot.svg
+.. image:: ../_static/how-it-works/butterfly-scatterplot.svg
 
 
 The plot shows that the univariate distribution of features `feature1` and
@@ -57,16 +57,18 @@ Using NannyML to compute and plot the univariate
 drift statistics shows that on the individual feature level no changes are visible.
 
 .. nbimport::
-    :path: ./example_notebooks/How It Works - Data Reconstruction with PCA.ipynb
+    :path: ./example_notebooks/How It Works - Multivariate Drift.ipynb
     :cells: 4
 
-.. image:: ../_static/butterfly-univariate-drift-distributions.svg
+.. image:: ../_static/how-it-works/butterfly-univariate-drift-distributions.svg
 
 These results make it clear that the univariate distribution results do not detect any drift.
 However, we know there is data drift in the butterfly dataset. As mentioned, the correlation between features
 `feature1` and `feature2` has changed from positive to negative.
 A methodology that is able to identify this change is needed. This is where :term:`Multivariate Drift Detection`
 using Data Reconstruction with PCA can be applied.
+
+.. _how-multiv-drift-pca:
 
 Data Reconstruction with PCA
 ----------------------------
@@ -99,7 +101,7 @@ number is called :term:`Reconstruction Error`.
 
 
 Understanding Reconstruction Error with PCA
--------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As PCA learns the internal structure of the data, a significant change in the reconstruction error means
 that the learned structure no longer accurately approximates the current data structure. This indicates data drift.
@@ -131,14 +133,14 @@ Reconstruction Error with PCA on the butterfly dataset
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now that we have a better understanding of Reconstruction Error with PCA, let's see
-what it does on the butterfly dataset.
+how it performs on the butterfly dataset.
 
 
 .. nbimport::
-    :path: ./example_notebooks/How It Works - Data Reconstruction with PCA.ipynb
+    :path: ./example_notebooks/How It Works - Multivariate Drift.ipynb
     :cells: 6
 
-.. image:: ../_static/butterfly-multivariate-drift.svg
+.. image:: ../_static/how-it-works/butterfly-multivariate-drift-pca.svg
 
 The change in the butterfly dataset is now clearly visible through the change in the
 reconstruction error, while our earlier univariate approach detected no change.
@@ -146,3 +148,68 @@ reconstruction error, while our earlier univariate approach detected no change.
 For more information on using Reconstruction Error with PCA check
 the :ref:`Multivariate Drift - Data Reconstruction with PCA<multivariate_drift_detection_pca>`
 tutorial.
+
+.. _how-multiv-drift-cdd:
+
+Classifier for Drift Detection
+------------------------------
+
+Classifier for drift detection is an implementation of domain classifiers, as it in called
+in `relevant literature`_. NannyML uses a LightGBM classifier to distinguish between
+the reference data and the examined chunk data. Similar to data reconstruction with PCA
+this method is also able to capture complex changes in our data. The algorithm implementing 
+Classifier for Drift Detection follows the steps described below.
+
+It's important to note that the process described below is repeated for each :term:`Data Chunk`.
+The first step is data preparation. We assign label 0 to reference data and label 1 to chunk data.
+We use the model inputs as features and concatenate the reference and chunk data.
+Duplicate rows are removed once, keeping the one coming from the chunk data. That is so
+when we are estimating on reference data we get meaningful results. Subsequently
+categorical data are encoded, as integers, since that works well with LightGBM.
+
+To assess the domain classifier's discrimination performance we are using
+it's cross valdated AUROC performance. We do so with the following steps.
+An optional preparation step is to do hyperparameter tuning. We are performing
+hyperparameter optimization once, on the combined data and store
+the resulting optimal hyperparameters. Hyperparameters can also be provided
+by the user. If nothing is specified LightGBM defaults are used.
+The next step uses sklearn's `StratifiedKFold` to split the data. For each fold split we
+train a `LGBMClassifier` and save it's predicted score in the validation fold.
+We then use the predictions across all folds to calculate the resulting AUROC score.
+
+The higher the AUROC score the easier it is to distinguish the datasets, hence the
+more different they are.
+
+
+Understanding Classifier for Drift Detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Classifier for Drift Detection method relines on a machine learning
+algorithm to distinguish between the reference and the chunk data.
+We are using a LightGBM Classifier. Because of the versatility
+of this approach the classifier is quite sensitive to shifts in the data.
+Moreover the classifier's behavior is non linear. Hence we shouldn't
+directly translate classifier AUROC values to possible performance impact.
+It is better to rely on :ref:`performance estimation<performance-estimation>`
+methods for that.
+
+Classifier for Drift Detection on the butterfly dataset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Now that we have a better understanding of Classifier for Drift Detection, let's see
+how it performs on the butterfly dataset.
+
+.. nbimport::
+    :path: ./example_notebooks/How It Works - Multivariate Drift.ipynb
+    :cells: 8
+
+.. image:: ../_static/how-it-works/butterfly-multivariate-drift-cdd.svg
+
+The change in the butterfly dataset is now clearly visible through the change in the
+classifier's AUROC, while our earlier univariate approach detected no change.
+
+For more information on using Classifier for Drift Detection check
+the :ref:`Multivariate Drift - Classifier for Drift Detection<multivariate_drift_detection_cdd>`
+tutorial.
+
+.. _`relevant literature`: https://arxiv.org/abs/1810.11953

@@ -1,4 +1,5 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  Author:   Nikolaos Perrakis  <nikos@nannyml.com>
 #
 #  License: Apache Software License 2.0
 
@@ -33,12 +34,12 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         continuous_column_names: List[str],
         timestamp_column_name: Optional[str] = None,
     ):
-        """Initialize a ClassifierForDriftDetectionCalculator results object.
+        """Initialize a DriftDetectionClassifierCalculator results object.
 
         Parameters
         ----------
         results_data: pd.DataFrame
-            Results data returned by a ClassifierForDriftDetectionCalculator.
+            Results data returned by a DriftDetectionClassifierCalculator.
         column_names: List[str]
             A list of column names indicating which columns contain feature values.
         categorical_column_names : List[str]
@@ -49,7 +50,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             The name of the column containing the timestamp of the model prediction.
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         """
-        metric = Metric(display_name='Classifier for Drift Detection', column_name='cdd_discrimination')
+        metric = Metric(display_name='Classifier for Drift Detection', column_name='classifier_auroc')
         super().__init__(results_data, [metric])
 
         self.column_names = column_names
@@ -59,7 +60,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
 
     def keys(self) -> List[Key]:
         """Create a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
-        return [Key(properties=('cdd_discrimination',), display_names=('CDD discrimination value',))]
+        return [Key(properties=('classifier_auroc',), display_names=('Classifier AUROC ',))]
 
     @log_usage(UsageEvent.CDD_RESULTS_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
@@ -86,19 +87,19 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         --------
         >>> import nannyml as nml
         >>> # Load synthetic data
-        >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
-        >>> non_feature_columns = ['timestamp', 'y_pred_proba', 'y_pred', 'repaid']
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_loan_dataset()
+        >>> # Define feature columns
         >>> feature_column_names = [
-        ...     col for col in reference.columns
+        ...     col for col in reference_df.columns
         ...     if col not in non_feature_columns
         >>> ]
-        >>> calc = nml.DataReconstructionDriftCalculator(
-        ...     column_names=feature_column_names,
+        >>> calc = nml.DriftDetectionClassifierCalculator(
+        ...     feature_column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
         ...     chunk_size=5000
         >>> )
-        >>> calc.fit(reference)
-        >>> results = calc.calculate(analysis)
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
         >>> figure = results.plot()
         >>> figure.show()
         """
@@ -106,8 +107,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             return plot_metric(
                 self,
                 title='Classifier for Drift Detection',
-                metric_display_name='CDD discrimination value',
-                metric_column_name='cdd_discrimination',
+                metric_display_name='Classifier AUROC ',
+                metric_column_name='classifier_auroc',
                 hover=Hover(
                     template='%{period} &nbsp; &nbsp; %{alert} <br />'
                     'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'

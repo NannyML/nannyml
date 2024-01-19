@@ -53,7 +53,7 @@ classification or regression can be handled in the same way.
     :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
     :cell: 2
 
-The :class:`~nannyml.drift.multivariate.classifier_for_drift_dection.calculator.ClassifierForDriftDetectionCalculator`
+The :class:`~nannyml.drift.multivariate.classifier_for_drift_dection.calculator.DriftDetectionClassifierCalculator`
 module implements this functionality. We need to instantiate it with appropriate parameters:
 
 - **feature_column_names:** A list with the column names of the features we want to run drift detection on.

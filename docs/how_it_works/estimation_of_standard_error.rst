@@ -155,7 +155,7 @@ is calculated using the approach introduced in :ref:`Adapting Standard Error of 
 For each observation the
 multivariate drift detection with PCA process calculates a :term:`reconstruction error<Reconstruction Error>` value.
 The mean of those values for all observations in a chunk is the reconstruction error per chunk.
-The process is described in detail in :ref:`How it works: Data Reconstruction with PCA Chunking<data-reconstruction-pca>`.
+The process is described in detail in :ref:`How it works: Data Reconstruction with PCA Chunking<how-multiv-drift>`.
 Therefore the standard error of the mean formula can be used without any intermediate steps. We calculate the standard error
 of the mean of reconstruction error values within a chunk by dividing the standard deviation of
 reconstruction error for each observation on the reference dataset with the square root of the size of the chunk of interest.

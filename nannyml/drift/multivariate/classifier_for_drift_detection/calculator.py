@@ -73,8 +73,8 @@ DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG = {
 }
 
 
-class ClassifierForDriftDetectionCalculator(AbstractCalculator):
-    """ClassifierForDriftDetectionCalculator implementation.
+class DriftDetectionClassifierCalculator(AbstractCalculator):
+    """DriftDetectionClassifierCalculator implementation.
 
     Uses Drift Detection Classifier's cross validated performance as a measure of drift.
     """
@@ -94,7 +94,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG,
         threshold: Threshold = ConstantThreshold(lower=0.45, upper=0.65),
     ):
-        """Create a new ClassifierForDriftDetectionCalculator instance.
+        """Create a new DriftDetectionClassifierCalculator instance.
 
         Parameters:
         -----------
@@ -135,6 +135,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
             A dictionary that allows you to provide a custom hyperparameter tuning configuration when
             `tune_hyperparameters` has been set to `True`.
             The following dictionary is the default tuning configuration. It can be used as a template to modify::
+
                 {
                     "time_budget": 15,
                     "metric": "mse",
@@ -146,6 +147,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
                     "seed": 1,
                     "verbose": 0,
                 }
+
             For an overview of possible parameters for the tuning process check out the
             `FLAML documentation <https://microsoft.github.io/FLAML/docs/reference/automl/automl>`_.
 
@@ -153,23 +155,23 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> # Load synthetic data
-        >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
-        >>> non_feature_columns = ['timestamp', 'y_pred_proba', 'y_pred', 'repaid']
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_loan_dataset()
+        >>> # Define feature columns
         >>> feature_column_names = [
-        ...     col for col in reference.columns
+        ...     col for col in reference_df.columns
         ...     if col not in non_feature_columns
         >>> ]
-        >>> calc = nml.DataReconstructionDriftCalculator(
-        ...     column_names=feature_column_names,
+        >>> calc = nml.DriftDetectionClassifierCalculator(
+        ...     feature_column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
         ...     chunk_size=5000
         >>> )
-        >>> calc.fit(reference)
-        >>> results = calc.calculate(analysis)
+        >>> calc.fit(reference_df)
+        >>> results = calc.calculate(analysis_df)
         >>> figure = results.plot()
         >>> figure.show()
         """
-        super(ClassifierForDriftDetectionCalculator, self).__init__(
+        super(DriftDetectionClassifierCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
         if isinstance(feature_column_names, str):
@@ -252,7 +254,7 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
                     'end_date': chunk.end_datetime,
                     'period': 'analysis',
                     # 'sampling_error': sampling_error(self._sampling_error_components, chunk.data),
-                    'cdd_discrimination_value': self._calculate_chunk(data=chunk.data),
+                    'classifier_auroc_value': self._calculate_chunk(data=chunk.data),
                 }
                 for chunk in chunks
             ]
@@ -355,20 +357,20 @@ class ClassifierForDriftDetectionCalculator(AbstractCalculator):
     def _set_metric_thresholds(self, result_data: pd.DataFrame):
         self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
             threshold=self.threshold,
-            data=result_data.loc[:, ('cdd_discrimination', 'value')],
+            data=result_data.loc[:, ('classifier_auroc', 'value')],
             lower_threshold_value_limit=self._lower_threshold_value_limit,
             upper_threshold_value_limit=self._upper_threshold_value_limit,
             logger=self._logger
         )
 
     def _populate_alert_thresholds(self, result_data: pd.DataFrame) -> pd.DataFrame:
-        result_data[('cdd_discrimination', 'upper_threshold')] = self.upper_threshold_value
-        result_data[('cdd_discrimination', 'lower_threshold')] = self.lower_threshold_value
-        result_data[('cdd_discrimination', 'alert')] = result_data.apply(
+        result_data[('classifier_auroc', 'upper_threshold')] = self.upper_threshold_value
+        result_data[('classifier_auroc', 'lower_threshold')] = self.lower_threshold_value
+        result_data[('classifier_auroc', 'alert')] = result_data.apply(
             lambda row: True
             if (
-                row[('cdd_discrimination', 'value')] > row[('cdd_discrimination', 'upper_threshold')]
-                or row[('cdd_discrimination', 'value')] < row[('cdd_discrimination', 'lower_threshold')]
+                row[('classifier_auroc', 'value')] > row[('classifier_auroc', 'upper_threshold')]
+                or row[('classifier_auroc', 'value')] < row[('classifier_auroc', 'lower_threshold')]
             )
             else False,
             axis=1,
@@ -391,7 +393,7 @@ def _create_multilevel_index(include_thresholds: bool = False):
             'alert',
         ]
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    reconstruction_tuples = [('cdd_discrimination', column_name) for column_name in results_column_names]
+    reconstruction_tuples = [('classifier_auroc', column_name) for column_name in results_column_names]
 
     tuples = chunk_tuples + reconstruction_tuples
 

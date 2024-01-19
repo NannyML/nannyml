@@ -6,7 +6,7 @@ Data Reconstruction with PCA
 
 The first multivariate drift detection method of NannyML is Data Reconstruction with PCA.
 For a detailed explanation of the method see
-:ref:`Data Reconstruction with PCA Deep Dive<data-reconstruction-pca>`.
+:ref:`Data Reconstruction with PCA Deep Dive<how-multiv-drift>`.
 
 Just The Code
 -------------
@@ -142,7 +142,7 @@ The :ref:`Performance Estimation<performance-estimation>` functionality can be u
 estimate the impact of the observed changes.
 
 For more information on how multivariate drift detection works, the
-:ref:`Data Reconstruction with PCA<data-reconstruction-pca>` explanation page gives more details.
+:ref:`Data Reconstruction with PCA<how-multiv-drift>` explanation page gives more details.
 
 .. _`PCA constructor`: https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
 .. _`SimpleImputer`: https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html
