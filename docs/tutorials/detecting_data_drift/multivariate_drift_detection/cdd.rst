@@ -5,7 +5,7 @@ Classifier for Drift Detection
 ==============================
 
 The second multivariate drift detection method of NannyML is Classifier for Drift Detection.
-This method trains a classification model, named discriminator, to differentiate between data from the reference
+This method trains a classification model to differentiate between data from the reference
 dataset and the chunk dataset. Cross Validation is used for training.
 The discriminator's performance, measured by AUROC, on the cross valdated folds is
 the multivariate drift measure. When there is no data drift the datasets
@@ -34,16 +34,15 @@ The method returns a single number, measuring the discrimination capability of t
 Any increase in the discrimination value above 0.5 reflects a change in the structure of the model inputs.
 
 NannyML calculates the discrimination value for the monitored model's inputs, and raises an alert if the
-values get outside the  pre-defined range of `[0.45, 0.65]`. This range can be adjusted by specifying
-a threshold strategy appropriate for the user's data.
+values get outside the  pre-defined range of ``[0.45, 0.65]``. If needed this range can be adjusted by specifying
+a threshold strategy more appropriate for the user's data.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset.
 Then it can monitor the data subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
-Let's start by loading some synthetic data provided by the NannyML package and setting it up as our reference
-and analysis dataframes. This synthetic data is for a binary classification model, but multi-class
-classification or regression can be handled in the same way.
+Let's start by loading some synthetic data provided by the NannyML package set it up as our reference and analysis dataframes.
+This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
@@ -53,7 +52,7 @@ classification or regression can be handled in the same way.
     :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
     :cell: 2
 
-The :class:`~nannyml.drift.multivariate.classifier_for_drift_dection.calculator.DriftDetectionClassifierCalculator`
+The :class:`~nannyml.drift.multivariate.classifier_for_drift_detection.calculator.DriftDetectionClassifierCalculator`
 module implements this functionality. We need to instantiate it with appropriate parameters:
 
 - **feature_column_names:** A list with the column names of the features we want to run drift detection on.

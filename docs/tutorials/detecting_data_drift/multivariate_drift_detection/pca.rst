@@ -33,7 +33,8 @@ values get outside a range defined by the variance in the reference :ref:`data p
 In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data subject to actual analysis, provided as the analysis dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
-Let's start by loading some synthetic data provided by the NannyML package and setting it up as our reference and analysis dataframes. This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
+Let's start by loading some synthetic data provided by the NannyML package set it up as our reference and analysis dataframes.
+This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Drift - Multivariate.ipynb
