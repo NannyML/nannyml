@@ -20,8 +20,6 @@ import numpy as np
 import pandas as pd
 from pandas import MultiIndex
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
 
@@ -296,17 +294,13 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
         X.drop('__target__', axis=1, inplace=True)
 
         # preprocess categorical features
-        pipe = Pipeline([
-            ('ordinal_encoder', OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1))
-        ])
-        column_transformer = ColumnTransformer(
-            [('categorical', pipe, self.categorical_column_names)],
-            remainder='passthrough',
-            verbose_feature_names_out=False
-        )
-        X_transformed = column_transformer.fit_transform(X)
-        features_out = list(column_transformer.get_feature_names_out())
-        df_X_transformed = pd.DataFrame(X_transformed, columns=features_out)
+        enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+        X_cont = X[self.continuous_column_names]
+        X_cat = pd.DataFrame({
+            col_name: enc.fit_transform(X[[col_name]]).ravel() for col_name in self.categorical_column_names
+        })
+        df_X_transformed = pd.concat([X_cat,X_cont], axis=1)
+        del X
 
         if self.tune_hyperparameters:
             with warnings.catch_warnings():
