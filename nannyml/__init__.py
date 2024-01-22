@@ -50,6 +50,7 @@ from .datasets import (
     load_titanic_dataset,
     load_us_census_ma_employment_data,
 )
+from .distribution import CategoricalDistributionCalculator, ContinuousDistributionCalculator
 from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter

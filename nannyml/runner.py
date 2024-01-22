@@ -16,6 +16,8 @@ from nannyml._typing import Calculator, Estimator, Result
 from nannyml.config import Config, InputDataConfig, StoreConfig, WriterConfig
 from nannyml.data_quality.missing import MissingValuesCalculator
 from nannyml.data_quality.unseen import UnseenValuesCalculator
+from nannyml.distribution.categorical import CategoricalDistributionCalculator
+from nannyml.distribution.continuous import ContinuousDistributionCalculator
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
@@ -78,6 +80,8 @@ class CalculatorFactory:
         'dle': DLE,
         'missing_values': MissingValuesCalculator,
         'unseen_values': UnseenValuesCalculator,
+        'continuous_distribution': ContinuousDistributionCalculator,
+        'categorical_distribution': CategoricalDistributionCalculator,
         'summary_stats_avg': SummaryStatsAvgCalculator,
         'summary_stats_row_count': SummaryStatsRowCountCalculator,
         'summary_stats_median': SummaryStatsMedianCalculator,

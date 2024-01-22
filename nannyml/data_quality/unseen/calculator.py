@@ -219,6 +219,7 @@ class UnseenValuesCalculator(AbstractCalculator):
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
             self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.data.sort_index(inplace=True)
 
         return self.result
 
