@@ -5,12 +5,10 @@ Classifier for Drift Detection
 ==============================
 
 The second multivariate drift detection method of NannyML is Classifier for Drift Detection.
-This method trains a classification model to differentiate between data from the reference
-dataset and the chunk dataset. Cross Validation is used for training.
-The discriminator's performance, measured by AUROC, on the cross valdated folds is
-the multivariate drift measure. When there is no data drift the datasets
-can't discerned and we get a value of 0.5. The more drift there is, the higher
-the returned measure will be.
+It provides a measure of how easy it is to discriminate the reference data from the examined chunk data.
+You can read more about on the :ref:`How it works: Classifier for Drift Detection<how-multiv-drift-cdd>` section.
+When there is no data drift the datasets can't discerned and we get a value of 0.5.
+The more drift there is, the higher the returned measure will be, up to a value of 1.
 
 Just The Code
 -------------

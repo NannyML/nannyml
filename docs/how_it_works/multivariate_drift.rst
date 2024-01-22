@@ -154,26 +154,35 @@ tutorial.
 Classifier for Drift Detection
 ------------------------------
 
-Classifier for drift detection is an implementation of domain classifiers, as it is called
-in `relevant literature`_. NannyML uses a LightGBM classifier to distinguish between
-the reference data and the examined chunk data. Similar to data reconstruction with PCA
-this method is also able to capture complex changes in our data. The algorithm implementing 
-Classifier for Drift Detection follows the steps described below.
+Classifier for drift detection provides a measure of how easy it is to discriminate
+the reference data from the examined chunk data. It is an implementation of domain classifiers, as 
+they are called in `relevant literature`_, using a LightGBM classifier.
+As a measure of discrimination performance NannyML uses the cross-validated AUROC score.
+Similar to data reconstruction with PCA this method is also able to capture complex changes in our data. 
 
+The algorithm implementing Classifier for Drift Detection follows the steps described below.
 Please note that the process described below is repeated for each :term:`Data Chunk`.
-First, we prepare the data by assigning label 0 to reference data and label 1 to chunk data.
-We use the model inputs as features and concatenate the reference and chunk data.
-Duplicate rows are removed once, keeping the one coming from the chunk data.
-This ensures that when we estimate on reference data, we get meaningful results.
-Finally, categorical data are encoded as integers, since this works well with LightGBM.
+The process consists of two basic parts, data preprocessing and classifier cross validation.
 
-To evaluate the domain classifier's discrimination performance, we use its cross-validated AUROC score.
-We follow these steps to do so: First, we optionally perform hyperparameter tuning.
-We perform hyperparameter optimization once on the combined data and store the resulting optimal hyperparameters.
-Users can also provide hyperparameters. If nothing is specified, LightGBM defaults are used.
-Next, we use sklearn's `StratifiedKFold`  to split the data. For each fold split,
-we train an `LGBMClassifier` and save its predicted score in the validation fold.
-Finally, we use the predictions across all folds to calculate the resulting AUROC score
+The data pre-processing part consists of the following steps:
+
+- Assigning label 0 to reference data and label 1 to chunk data rows.
+- Use the model inputs as features.
+- Concatenate resulting data.
+- Remove duplicate rows once. We are keeping the rows comping from chunk data in
+  order to get meaningful results when we use the method on reference data chunks.
+- Encode categorical data as integers for better compatibility with LightGBM.
+
+The classifier cross validation part consists of the following steps:
+
+- Hyperparameter tuning. This step is optional. It uses the dataset created from the previous
+  step and stores the resulting optimal hyperparameters.
+- If hyperparameter tuning is not requested, user specified hyperpatameters can be used
+  instead of the default LightGBM optioms.
+- sklearn's `StratifiedKFold` is used to split the data into folds.
+- For each validation fold split NannyML trains an `LGBMClassifier` and save its predicted
+  score in the validation fold.
+- The predictions across all folds are used to calculate the resulting AUROC score.
 
 The higher the AUROC score the easier it is to distinguish the datasets, hence the
 more different they are.
