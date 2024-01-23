@@ -176,12 +176,11 @@ The data pre-processing part consists of the following steps:
 The classifier cross validation part uses the data created and consists of the following steps:
 
 - Optionally, hyperparameter tuning is performed. The hyperparameters learnt during
-  this step will be used in the model training steps below.
-- If hyperparameter tuning is not requested, user specified hyperpatameters can be used
-  instead of the default LightGBM optioms.
-- sklearn's `StratifiedKFold` is used to split the data into folds.
-- For each validation fold split NannyML trains an `LGBMClassifier` and save its predicted
-  score in the validation fold.
+  this step will be used in the model training steps below. If hyperparameter tuning
+  is not requested, user specified hyperpatameters can be used instead of the default LightGBM optioms.
+- Stratified split is used to split the data into validation folds
+- For each split NannyML trains an `LGBMClassifier` and saves its predicted
+  scores in the validation fold.
 - The predictions across all folds are used to calculate the resulting AUROC score.
 
 The higher the AUROC score the easier it is to distinguish the datasets, hence the
