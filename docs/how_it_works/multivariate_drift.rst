@@ -173,10 +173,10 @@ The data pre-processing part consists of the following steps:
   order to get meaningful results when we use the method on reference data chunks.
 - Encode categorical data as integers for better compatibility with LightGBM.
 
-The classifier cross validation part consists of the following steps:
+The classifier cross validation part uses the data created and consists of the following steps:
 
-- Hyperparameter tuning. This step is optional. It uses the dataset created from the previous
-  step and stores the resulting optimal hyperparameters.
+- Optionally, hyperparameter tuning is performed. The hyperparameters learnt during
+  this step will be used in the model training steps below.
 - If hyperparameter tuning is not requested, user specified hyperpatameters can be used
   instead of the default LightGBM optioms.
 - sklearn's `StratifiedKFold` is used to split the data into folds.
