@@ -1,4 +1,5 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
+#  Author:   Nikolaos Perrakis  <nikos@nannyml.com>
 #
 #  License: Apache Software License 2.0
 
@@ -119,8 +120,6 @@ class Metric(abc.ABC):
 
         self.confidence_deviation: Optional[float] = None
 
-        self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
-
         self.confidence_upper_bound: Optional[float] = 1.0
         self.confidence_lower_bound: Optional[float] = 0.0
 
@@ -167,19 +166,6 @@ class Metric(abc.ABC):
 
         reference_chunks = self.chunker.split(reference_data)
 
-        # Calculate confidence bands
-        self.confidence_deviation = self._confidence_deviation(reference_chunks)
-
-        # Calculate alert thresholds
-        reference_chunk_results = np.asarray([self._realized_performance(chunk.data) for chunk in reference_chunks])
-        self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
-            threshold=self.threshold,
-            data=reference_chunk_results,
-            lower_threshold_value_limit=self.lower_threshold_value_limit,
-            upper_threshold_value_limit=self.upper_threshold_value_limit,
-            logger=self._logger,
-            metric_name=self.display_name,
-        )
         return
 
     @abc.abstractmethod
@@ -226,10 +212,26 @@ class Metric(abc.ABC):
         )
 
     def __eq__(self, other):
+        """Compares two Metric instances.
+
+        They are considered equal when their components are equal.
+
+        Parameters
+        ----------
+        other: Metric
+            The other Metric instance you're comparing to.
+
+        Returns
+        -------
+        is_equal: bool
+        """
         return self.components == other.components
 
     def _common_cleaning(
-        self, data: pd.DataFrame, y_pred_proba_column_name: Optional[str] = None
+        self,
+        data: pd.DataFrame,
+        y_pred_proba_column_name: Optional[str] = None,
+        optional_column: Optional[str] = None
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if y_pred_proba_column_name is None:
             if not isinstance(self.y_pred_proba, str):
@@ -245,9 +247,19 @@ class Metric(abc.ABC):
         if clean_targets:
             data = _remove_nans(data, [self.y_true])
 
-        return data[y_pred_proba_column_name], data[self.y_pred], (data[self.y_true] if clean_targets else None)
+        return (
+            data[y_pred_proba_column_name],
+            data[self.y_pred],
+            data[self.y_true] if clean_targets else None,
+            data[optional_column] if optional_column else None,
+        )
 
-    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+    def get_chunk_record(
+        self,
+        chunk_data_outputs: pd.DataFrame,
+        reference_data_outputs: pd.DataFrame,
+        reference_weights: np.ndarray
+    ) -> Dict:
         """Returns a dictionary containing the performance metrics for a given chunk.
 
         Parameters
@@ -269,34 +281,23 @@ class Metric(abc.ABC):
             )
 
         column_name = self.components[0][1]
-
         chunk_record = {}
-
-        estimated_metric_value = self._estimate(chunk_data)
-
-        metric_estimate_sampling_error = self._sampling_error(chunk_data)
-
+        estimated_metric_value = self._estimate(reference_data_outputs, reference_weights)
+        metric_estimate_sampling_error = self._sampling_error(chunk_data_outputs)
         chunk_record[f'estimated_{column_name}'] = estimated_metric_value
-
         chunk_record[f'sampling_error_{column_name}'] = metric_estimate_sampling_error
-
-        chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
-
+        chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data_outputs)
         chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
             self.confidence_upper_bound or np.inf,
             estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
-
         chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
             self.confidence_lower_bound or -np.inf,
             estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
-
-        chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
-        chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
-
-        chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
-
+        # chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
+        # chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
+        # chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
         return chunk_record
 
 
@@ -348,6 +349,77 @@ class MetricFactory:
         return inner_wrapper
 
 
+
+@MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_BINARY)
+class BinaryClassificationAccuracy(Metric):
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            name='accuracy',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Accuracy', 'accuracy')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
+        )
+
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
+    def _fit(self, reference_data: pd.DataFrame):
+        self._sampling_error_components = bse.accuracy_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_reference=reference_data[self.y_pred],
+        )
+
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
+        # don't expect weights to have issues.
+        return accuracy_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return bse.accuracy_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
+        return accuracy_score(y_true=y_true, y_pred=y_pred)
+
+
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     def __init__(
@@ -382,63 +454,34 @@ class BinaryClassificationAUROC(Metric):
             y_pred_proba_reference=reference_data[self.y_pred_proba],
         )
 
-    def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-
-        return estimate_roc_auc(y_pred_proba)
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
+        reference_data_outputs['reference_weights'] = reference_weights
+        y_pred_proba, _, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        # don't expect weights to have issues.
+        return roc_auc_score(y_true=y_true, y_score=y_pred_proba, sample_weight=weights)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        y_pred_proba, _, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
+        y_pred_proba, _, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
             return np.NaN
-
         if y_true.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
             return np.NaN
-
         return roc_auc_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.auroc_sampling_error(self._sampling_error_components, data)
-
-
-def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
-    """Estimates the ROC AUC metric.
-
-    Parameters
-    ----------
-    y_pred_proba : pd.Series
-        Probability estimates of the sample for each class in the model.
-
-    Returns
-    -------
-    metric: float
-        Estimated ROC AUC score.
-    """
-    thresholds = np.append(np.sort(y_pred_proba), 1)
-    one_min_thresholds = 1 - thresholds
-
-    TP = np.cumsum(thresholds[::-1])[::-1]
-    FP = np.cumsum(one_min_thresholds[::-1])[::-1]
-
-    thresholds_with_zero = np.insert(thresholds, 0, 0, axis=0)[:-1]
-    one_min_thresholds_with_zero = np.insert(one_min_thresholds, 0, 0, axis=0)[:-1]
-
-    FN = np.cumsum(thresholds_with_zero)
-    TN = np.cumsum(one_min_thresholds_with_zero)
-
-    non_duplicated_thresholds = np.diff(np.insert(thresholds, 0, -1, axis=0)).astype(bool)
-    TP = TP[non_duplicated_thresholds]
-    FP = FP[non_duplicated_thresholds]
-    FN = FN[non_duplicated_thresholds]
-    TN = TN[non_duplicated_thresholds]
-
-    tpr = TP / (TP + FN)
-    fpr = FP / (FP + TN)
-    metric = auc(fpr, tpr)
-    return metric
 
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_BINARY)
@@ -475,54 +518,40 @@ class BinaryClassificationF1(Metric):
             y_pred_reference=reference_data[self.y_pred],
         )
 
-    def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
-
-        return estimate_f1(y_pred, y_pred_proba)
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
+        # don't expect weights to have issues.
+        return f1_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.f1_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
+        _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized F1 score.")
             return np.NaN
-
         if y_true.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_true', returning NaN as realized F1 score.")
             return np.NaN
-
         if y_pred.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized F1 score.")
             return np.NaN
-
         return f1_score(y_true=y_true, y_pred=y_pred)
-
-
-def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
-    """Estimates the F1 metric.
-
-    Parameters
-    ----------
-    y_pred: pd.DataFrame
-        Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
-        Probability estimates of the sample for each class in the model.
-
-    Returns
-    -------
-    metric: float
-        Estimated F1 score.
-    """
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
-    fn = np.where(y_pred == 0, y_pred_proba, 0)
-    TP, FP, FN = np.sum(tp), np.sum(fp), np.sum(fn)
-    metric = TP / (TP + 0.5 * (FP + FN))
-    return metric
 
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_BINARY)
@@ -558,55 +587,41 @@ class BinaryClassificationPrecision(Metric):
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],
         )
-        pass
 
-    def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
-
-        return estimate_precision(y_pred, y_pred_proba)
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
+        # don't expect weights to have issues.
+        return precision_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.precision_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
+        _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
             return np.NaN
-
         if y_true.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
             return np.NaN
-
         if y_pred.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
             return np.NaN
-
         return precision_score(y_true=y_true, y_pred=y_pred)
-
-
-def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
-    """Estimates the Precision metric.
-
-    Parameters
-    ----------
-    y_pred: pd.DataFrame
-        Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
-        Probability estimates of the sample for each class in the model.
-
-    Returns
-    -------
-    metric: float
-        Estimated Precision score.
-    """
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
-    TP, FP = np.sum(tp), np.sum(fp)
-    metric = TP / (TP + FP)
-    return metric
 
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_BINARY)
@@ -643,53 +658,40 @@ class BinaryClassificationRecall(Metric):
             y_pred_reference=reference_data[self.y_pred],
         )
 
-    def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
-
-        return estimate_recall(y_pred, y_pred_proba)
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
+        # don't expect weights to have issues.
+        return recall_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.recall_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
+        _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized recall.")
             return np.NaN
-
         if y_true.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_true', returning NaN as recall precision.")
             return np.NaN
-
         if y_pred.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_pred', returning NaN as recall precision.")
             return np.NaN
-
         return recall_score(y_true=y_true, y_pred=y_pred)
-
-
-def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
-    """Estimates the Recall metric.
-
-    Parameters
-    ----------
-    y_pred: pd.DataFrame
-        Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
-        Probability estimates of the sample for each class in the model.
-
-    Returns
-    -------
-    metric: float
-        Estimated Recall score.
-    """
-    tp = np.where(y_pred == 1, y_pred_proba, 0)
-    fn = np.where(y_pred == 0, y_pred_proba, 0)
-    TP, FN = np.sum(tp), np.sum(fn)
-    metric = TP / (TP + FN)
-    return metric
 
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_BINARY)
@@ -726,119 +728,42 @@ class BinaryClassificationSpecificity(Metric):
             y_pred_reference=reference_data[self.y_pred],
         )
 
-    def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
-
-        return estimate_specificity(y_pred, y_pred_proba)
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
+        # don't expect weights to have issues.
+        tn, fp, fn, tp = confusion_matrix(y_true=y_true, y_pred=y_pred, sample_weight=weights).ravel()
+        return tn / (tn + fp)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.specificity_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
+        _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
             return np.NaN
-
         if y_true.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
             return np.NaN
-
         if y_pred.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
             return np.NaN
-
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
         return tn / (tn + fp)
-
-
-def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
-    """Estimates the Specificity metric.
-
-    Parameters
-    ----------
-    y_pred: pd.DataFrame
-        Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
-        Probability estimates of the sample for each class in the model.
-
-    Returns
-    -------
-    metric: float
-        Estimated Specificity score.
-    """
-    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
-    fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
-    TN, FP = np.sum(tn), np.sum(fp)
-    metric = TN / (TN + FP)
-    return metric
-
-
-@MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_BINARY)
-class BinaryClassificationAccuracy(Metric):
-    def __init__(
-        self,
-        y_pred_proba: ModelOutputsType,
-        y_pred: str,
-        y_true: str,
-        chunker: Chunker,
-        threshold: Threshold,
-        timestamp_column_name: Optional[str] = None,
-        **kwargs,
-    ):
-        super().__init__(
-            name='accuracy',
-            y_pred_proba=y_pred_proba,
-            y_pred=y_pred,
-            y_true=y_true,
-            timestamp_column_name=timestamp_column_name,
-            chunker=chunker,
-            threshold=threshold,
-            components=[('Accuracy', 'accuracy')],
-            lower_threshold_value_limit=0,
-            upper_threshold_value_limit=1,
-        )
-
-        # sampling error
-        self._sampling_error_components: Tuple = ()
-
-    def _fit(self, reference_data: pd.DataFrame):
-        self._sampling_error_components = bse.accuracy_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-        )
-
-    def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
-
-        tp = np.where(y_pred == 1, y_pred_proba, 0)
-        tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
-        TP, TN = np.sum(tp), np.sum(tn)
-        metric = (TP + TN) / len(y_pred)
-        return metric
-
-    def _sampling_error(self, data: pd.DataFrame) -> float:
-        return bse.accuracy_sampling_error(self._sampling_error_components, data)
-
-    def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
-            return np.NaN
-
-        if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
-            return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
-            return np.NaN
-
-        return accuracy_score(y_true=y_true, y_pred=y_pred)
 
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
@@ -873,42 +798,8 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
 
-        self.true_positive_lower_threshold: Optional[float] = 0
-        self.true_positive_upper_threshold: Optional[float] = 1
-        self.true_negative_lower_threshold: Optional[float] = 0
-        self.true_negative_upper_threshold: Optional[float] = 1
-
-    def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
-        """Fits a Metric on reference data.
-        Parameters
-        ----------
-        reference_data: pd.DataFrame
-            The reference data used for fitting. Must have target data available.
-        """
-        # Calculate alert thresholds
-        reference_chunks = self.chunker.split(
-            reference_data,
-        )
-
-        self.true_positive_lower_threshold, self.true_positive_upper_threshold = self._true_positive_alert_thresholds(
-            reference_chunks
-        )
-        self.true_negative_lower_threshold, self.true_negative_upper_threshold = self._true_negative_alert_thresholds(
-            reference_chunks
-        )
-        (
-            self.false_positive_lower_threshold,
-            self.false_positive_upper_threshold,
-        ) = self._false_positive_alert_thresholds(reference_chunks)
-        (
-            self.false_negative_lower_threshold,
-            self.false_negative_upper_threshold,
-        ) = self._false_negative_alert_thresholds(reference_chunks)
-
-        # Delegate to confusion matrix subclass
-        self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
-
-        return
+        if self.normalize_confusion_matrix is not None:
+            self.upper_threshold_value_limit = 1
 
     def _fit(self, reference_data: pd.DataFrame):
         self._true_positive_sampling_error_components = bse.true_positive_sampling_error_components(
@@ -932,341 +823,47 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
-    def _true_positive_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
-        realized_chunk_performance = np.asarray(
-            [self._true_positive_realized_performance(chunk.data) for chunk in reference_chunks]
-        )
-        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
-            threshold=self.threshold,
-            data=realized_chunk_performance,
-            lower_threshold_value_limit=self.lower_threshold_value_limit,
-            upper_threshold_value_limit=self.upper_threshold_value_limit,
-            logger=self._logger,
-            metric_name=self.display_name,
-        )
-
-        return lower_threshold_value, upper_threshold_value
-
-    def _true_negative_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
-        realized_chunk_performance = np.asarray(
-            [self._true_negative_realized_performance(chunk.data) for chunk in reference_chunks]
-        )
-        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
-            threshold=self.threshold,
-            data=realized_chunk_performance,
-            lower_threshold_value_limit=self.lower_threshold_value_limit,
-            upper_threshold_value_limit=self.upper_threshold_value_limit,
-            logger=self._logger,
-            metric_name=self.display_name,
-        )
-
-        return lower_threshold_value, upper_threshold_value
-
-    def _false_positive_alert_thresholds(
-        self, reference_chunks: List[Chunk]
-    ) -> Tuple[Optional[float], Optional[float]]:
-        realized_chunk_performance = np.asarray(
-            [self._false_positive_realized_performance(chunk.data) for chunk in reference_chunks]
-        )
-        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
-            threshold=self.threshold,
-            data=realized_chunk_performance,
-            lower_threshold_value_limit=self.lower_threshold_value_limit,
-            upper_threshold_value_limit=self.upper_threshold_value_limit,
-            logger=self._logger,
-            metric_name=self.display_name,
-        )
-
-        return lower_threshold_value, upper_threshold_value
-
-    def _false_negative_alert_thresholds(
-        self, reference_chunks: List[Chunk]
-    ) -> Tuple[Optional[float], Optional[float]]:
-        realized_chunk_performance = np.asarray(
-            [self._false_negative_realized_performance(chunk.data) for chunk in reference_chunks]
-        )
-        lower_threshold_value, upper_threshold_value = calculate_threshold_values(
-            threshold=self.threshold,
-            data=realized_chunk_performance,
-            lower_threshold_value_limit=self.lower_threshold_value_limit,
-            upper_threshold_value_limit=self.upper_threshold_value_limit,
-            logger=self._logger,
-            metric_name=self.display_name,
-        )
-
-        return lower_threshold_value, upper_threshold_value
-
-    def _true_positive_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
+    def _realized_performance_cm_elements(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
             return np.NaN
-
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
             return np.NaN
-
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
             return np.NaN
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        if self.normalize_confusion_matrix is None:
-            return num_tp
-        elif self.normalize_confusion_matrix == 'true':
-            return num_tp / (num_tp + num_fn)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_tp / (num_tp + num_fp)
-        else:  # normalization is 'all'
-            return num_tp / len(y_true)
-
-    def _true_negative_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        return (tn, fp, fn, tp)
+    
+    def _estimate_cm_elements(
+        self,
+        reference_data_outputs: pd.DataFrame,
+        reference_weights: np.ndarray
+    ):
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
             return np.NaN
-
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        if self.normalize_confusion_matrix is None:
-            return num_tn
-        elif self.normalize_confusion_matrix == 'true':
-            return num_tn / (num_tn + num_fp)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_tn / (num_tn + num_fn)
-        else:
-            return num_tn / len(y_true)
-
-    def _false_positive_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
-            return np.NaN
-
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
             return np.NaN
-
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
             return np.NaN
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-
-        if self.normalize_confusion_matrix is None:
-            return num_fp
-        elif self.normalize_confusion_matrix == 'true':
-            return num_fp / (num_fp + num_tn)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_fp / (num_fp + num_tp)
-        else:
-            return num_fp / len(y_true)
-
-    def _false_negative_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
-
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        if self.normalize_confusion_matrix is None:
-            return num_fn
-        elif self.normalize_confusion_matrix == 'true':
-            return num_fn / (num_fn + num_tp)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_fn / (num_fn + num_tn)
-        else:
-            return num_fn / len(y_true)
-
-    def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
-        """Estimates the true positive rate for a given chunk of data.
-
-        Parameters
-        ----------
-        chunk_data : pd.DataFrame
-            A pandas dataframe containing the data for a given chunk.
-
-        Returns
-        -------
-        normalized_est_tp_ratio : float
-            Estimated true positive rate.
-        """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
-
-        if self.normalize_confusion_matrix is None:
-            normalized_est_tp_ratio = est_tp_ratio * len(y_pred)
-
-        elif self.normalize_confusion_matrix == 'all':
-            normalized_est_tp_ratio = est_tp_ratio
-
-        elif self.normalize_confusion_matrix == 'true':
-            normalizer = 1 / (est_tp_ratio + est_fn_ratio)
-            normalized_est_tp_ratio = est_tp_ratio * normalizer
-
-        elif self.normalize_confusion_matrix == 'pred':
-            normalizer = 1 / (est_tp_ratio + est_fp_ratio)
-            normalized_est_tp_ratio = est_tp_ratio * normalizer
-
-        else:
-            raise InvalidArgumentsException(
-                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
-                f"but got '{self.normalize_confusion_matrix}"
-            )
-
-        return normalized_est_tp_ratio
-
-    def get_true_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
-        """Estimates the true negative rate for a given chunk of data.
-
-        Parameters
-        ----------
-        chunk_data : pd.DataFrame
-            A pandas dataframe containing the data for a given chunk.
-
-        Returns
-        -------
-        normalized_est_tn_ratio : float
-            Estimated true negative rate.
-        """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
-
-        if self.normalize_confusion_matrix is None:
-            normalized_est_tn_ratio = est_tn_ratio * len(y_pred)
-
-        elif self.normalize_confusion_matrix == 'all':
-            normalized_est_tn_ratio = est_tn_ratio
-
-        elif self.normalize_confusion_matrix == 'true':
-            normalizer = 1 / (est_tn_ratio + est_fp_ratio)
-            normalized_est_tn_ratio = est_tn_ratio * normalizer
-
-        elif self.normalize_confusion_matrix == 'pred':
-            normalizer = 1 / (est_tn_ratio + est_fn_ratio)
-            normalized_est_tn_ratio = est_tn_ratio * normalizer
-
-        else:
-            raise InvalidArgumentsException(
-                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
-                f"but got '{self.normalize_confusion_matrix}"
-            )
-
-        return normalized_est_tn_ratio
-
-    def get_false_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
-        """Estimates the false positive rate for a given chunk of data.
-
-        Parameters
-        ----------
-        chunk_data : pd.DataFrame
-            A pandas dataframe containing the data for a given chunk.
-
-        Returns
-        -------
-        normalized_est_fp_ratio : float
-            Estimated false positive rate.
-        """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
-
-        if self.normalize_confusion_matrix is None:
-            normalized_est_fp_ratio = est_fp_ratio * len(y_pred)
-
-        elif self.normalize_confusion_matrix == 'all':
-            normalized_est_fp_ratio = est_fp_ratio
-
-        elif self.normalize_confusion_matrix == 'true':
-            normalizer = 1 / (est_tn_ratio + est_fp_ratio)
-            normalized_est_fp_ratio = est_fp_ratio * normalizer
-
-        elif self.normalize_confusion_matrix == 'pred':
-            normalizer = 1 / (est_tp_ratio + est_fp_ratio)
-            normalized_est_fp_ratio = est_fp_ratio * normalizer
-
-        else:
-            raise InvalidArgumentsException(
-                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
-                f"but got '{self.normalize_confusion_matrix}"
-            )
-
-        return normalized_est_fp_ratio
-
-    def get_false_negative_estimate(self, chunk_data: pd.DataFrame) -> float:
-        """Estimates the false negative rate for a given chunk of data.
-
-        Parameters
-        ----------
-        chunk_data : pd.DataFrame
-            A pandas dataframe containing the data for a given chunk.
-
-        Returns
-        -------
-        normalized_est_fn_ratio : float
-            Estimated false negative rate.
-        """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
-
-        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
-        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
-
-        if self.normalize_confusion_matrix is None:
-            normalized_est_fn_ratio = est_fn_ratio * len(y_pred)
-
-        elif self.normalize_confusion_matrix == 'all':
-            normalized_est_fn_ratio = est_fn_ratio
-
-        elif self.normalize_confusion_matrix == 'true':
-            normalizer = 1 / (est_tp_ratio + est_fn_ratio)
-            normalized_est_fn_ratio = est_fn_ratio * normalizer
-
-        elif self.normalize_confusion_matrix == 'pred':
-            normalizer = 1 / (est_tn_ratio + est_fn_ratio)
-            normalized_est_fn_ratio = est_fn_ratio * normalizer
-
-        else:
-            raise InvalidArgumentsException(
-                f"'normalize_confusion_matrix' should be None, 'true', 'pred' or 'all' "
-                f"but got '{self.normalize_confusion_matrix}"
-            )
-
-        return normalized_est_fn_ratio
+        tn, fp, fn, tp = confusion_matrix(
+            y_true,
+            y_pred,
+            normalize=self.normalize_confusion_matrix,
+            sample_weight=weights
+        ).ravel()
+        return (tn, fp, fn, tp)
 
     def get_true_pos_info(self, chunk_data: pd.DataFrame) -> Dict:
         """Returns a dictionary containing infomation about the true positives for a given chunk.
@@ -1283,39 +880,29 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         true_pos_info: Dict[str, Any] = {}
 
-        estimated_true_positives = self.get_true_positive_estimate(chunk_data)
+        etn, efp, efn, etp = self.__estimated_cm_elements
+        rtn, rfp, rfn, rtp = self.__realized_cm_elements
 
         sampling_error_true_positives = bse.true_positive_sampling_error(
             self._true_positive_sampling_error_components, chunk_data
         )
 
-        true_pos_info['estimated_true_positive'] = estimated_true_positives
+        true_pos_info['estimated_true_positive'] = etp
         true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
-        true_pos_info['realized_true_positive'] = self._true_positive_realized_performance(chunk_data)
+        true_pos_info['realized_true_positive'] = rtp
 
         if self.normalize_confusion_matrix is None:
             true_pos_info['upper_confidence_boundary_true_positive'] = (
-                estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives
+                etp + SAMPLING_ERROR_RANGE * sampling_error_true_positives
             )
         else:
             true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
                 self.confidence_upper_bound,
-                estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
+                etp + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
             )
 
         true_pos_info['lower_confidence_boundary_true_positive'] = np.maximum(
-            self.confidence_lower_bound, estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
-        )
-
-        true_pos_info['upper_threshold_true_positive'] = self.true_positive_upper_threshold
-        true_pos_info['lower_threshold_true_positive'] = self.true_positive_lower_threshold
-
-        true_pos_info['alert_true_positive'] = (
-            self.true_positive_upper_threshold is not None
-            and estimated_true_positives > self.true_positive_upper_threshold
-        ) or (
-            self.true_positive_lower_threshold is not None
-            and estimated_true_positives < self.true_positive_lower_threshold
+            self.confidence_lower_bound, etp - SAMPLING_ERROR_RANGE * sampling_error_true_positives
         )
 
         return true_pos_info
@@ -1335,39 +922,29 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         true_neg_info: Dict[str, Any] = {}
 
-        estimated_true_negatives = self.get_true_negative_estimate(chunk_data)
+        etn, efp, efn, etp = self.__estimated_cm_elements
+        rtn, rfp, rfn, rtp = self.__realized_cm_elements
 
         sampling_error_true_negatives = bse.true_negative_sampling_error(
             self._true_negative_sampling_error_components, chunk_data
         )
 
-        true_neg_info['estimated_true_negative'] = estimated_true_negatives
+        true_neg_info['estimated_true_negative'] = etn
         true_neg_info['sampling_error_true_negative'] = sampling_error_true_negatives
-        true_neg_info['realized_true_negative'] = self._true_negative_realized_performance(chunk_data)
+        true_neg_info['realized_true_negative'] = rtn
 
         if self.normalize_confusion_matrix is None:
             true_neg_info['upper_confidence_boundary_true_negative'] = (
-                estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives
+                etn + SAMPLING_ERROR_RANGE * sampling_error_true_negatives
             )
         else:
             true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
                 self.confidence_upper_bound,
-                estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
+                etn + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
             )
 
         true_neg_info['lower_confidence_boundary_true_negative'] = np.maximum(
-            self.confidence_lower_bound, estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
-        )
-
-        true_neg_info['upper_threshold_true_negative'] = self.true_negative_upper_threshold
-        true_neg_info['lower_threshold_true_negative'] = self.true_negative_lower_threshold
-
-        true_neg_info['alert_true_negative'] = (
-            self.true_negative_upper_threshold is not None
-            and estimated_true_negatives > self.true_negative_upper_threshold
-        ) or (
-            self.true_negative_lower_threshold is not None
-            and estimated_true_negatives < self.true_negative_lower_threshold
+            self.confidence_lower_bound, etn - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
         )
 
         return true_neg_info
@@ -1387,40 +964,30 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         false_pos_info: Dict[str, Any] = {}
 
-        estimated_false_positives = self.get_false_positive_estimate(chunk_data)
+        etn, efp, efn, etp = self.__estimated_cm_elements
+        rtn, rfp, rfn, rtp = self.__realized_cm_elements
 
         sampling_error_false_positives = bse.false_positive_sampling_error(
             self._false_positive_sampling_error_components, chunk_data
         )
 
-        false_pos_info['estimated_false_positive'] = estimated_false_positives
+        false_pos_info['estimated_false_positive'] = efp
         false_pos_info['sampling_error_false_positive'] = sampling_error_false_positives
-        false_pos_info['realized_false_positive'] = self._false_positive_realized_performance(chunk_data)
+        false_pos_info['realized_false_positive'] = rfp
 
         if self.normalize_confusion_matrix is None:
             false_pos_info['upper_confidence_boundary_false_positive'] = (
-                estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives
+                efp + SAMPLING_ERROR_RANGE * sampling_error_false_positives
             )
         else:
             false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
                 self.confidence_upper_bound,
-                estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
+                efp + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
             )
 
         false_pos_info['lower_confidence_boundary_false_positive'] = np.maximum(
             self.confidence_lower_bound,
-            estimated_false_positives - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
-        )
-
-        false_pos_info['upper_threshold_false_positive'] = self.false_positive_upper_threshold
-        false_pos_info['lower_threshold_false_positive'] = self.false_positive_lower_threshold
-
-        false_pos_info['alert_false_positive'] = (
-            self.false_positive_upper_threshold is not None
-            and estimated_false_positives > self.false_positive_upper_threshold
-        ) or (
-            self.false_positive_lower_threshold is not None
-            and estimated_false_positives < self.false_positive_lower_threshold
+            efp - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
         )
 
         return false_pos_info
@@ -1440,45 +1007,45 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         false_neg_info: Dict[str, Any] = {}
 
-        estimated_false_negatives = self.get_false_negative_estimate(chunk_data)
+        etn, efp, efn, etp = self.__estimated_cm_elements
+        rtn, rfp, rfn, rtp = self.__realized_cm_elements
 
         sampling_error_false_negatives = bse.false_negative_sampling_error(
             self._false_negative_sampling_error_components, chunk_data
         )
 
-        false_neg_info['estimated_false_negative'] = estimated_false_negatives
+        false_neg_info['estimated_false_negative'] = efn
         false_neg_info['sampling_error_false_negative'] = sampling_error_false_negatives
-        false_neg_info['realized_false_negative'] = self._false_negative_realized_performance(chunk_data)
+        false_neg_info['realized_false_negative'] = rfn
 
         if self.normalize_confusion_matrix is None:
             false_neg_info['upper_confidence_boundary_false_negative'] = (
-                estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives
+                efn + SAMPLING_ERROR_RANGE * sampling_error_false_negatives
             )
         else:
             false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
                 self.confidence_upper_bound,
-                estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
+                efn + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
             )
 
         false_neg_info['lower_confidence_boundary_false_negative'] = np.maximum(
             self.confidence_lower_bound,
-            estimated_false_negatives - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
-        )
-
-        false_neg_info['upper_threshold_false_negative'] = self.false_negative_upper_threshold
-        false_neg_info['lower_threshold_false_negative'] = self.false_negative_lower_threshold
-
-        false_neg_info['alert_false_negative'] = (
-            self.false_negative_upper_threshold is not None
-            and estimated_false_negatives > self.false_negative_upper_threshold
-        ) or (
-            self.false_negative_lower_threshold is not None
-            and estimated_false_negatives < self.false_negative_lower_threshold
+            efn - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
         )
 
         return false_neg_info
 
-    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+    def get_chunk_record(
+        self,
+        chunk_data_outputs: pd.DataFrame,
+        reference_data_outputs: pd.DataFrame,
+        reference_weights: np.ndarray
+    ) -> Dict:
+        self.__realized_cm_elements = self._realized_performance_cm_elements(chunk_data)
+        self.__estimated_cm_elements = self._estimate_cm_elements(
+            reference_data_outputs, reference_weights
+        )
+        
         chunk_record = {}
 
         true_pos_info = self.get_true_pos_info(chunk_data)
@@ -1493,6 +1060,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info = self.get_false_neg_info(chunk_data)
         chunk_record.update(false_neg_info)
 
+        self.__realized_cm_elements = None
+        self.__estimated_cm_elements = None
         return chunk_record
 
     def _estimate(self, data: pd.DataFrame):
@@ -1549,9 +1118,6 @@ class BinaryClassificationBusinessValue(Metric):
         self.business_value_matrix = business_value_matrix
         self.normalize_business_value: Optional[str] = normalize_business_value
 
-        self.lower_threshold: Optional[float] = 0
-        self.upper_threshold: Optional[float] = 1
-
         self.confidence_upper_bound: Optional[float] = None
         self.confidence_lower_bound: Optional[float] = None
 
@@ -1564,7 +1130,7 @@ class BinaryClassificationBusinessValue(Metric):
         )
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
 
         if y_true is None:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized business value.")
@@ -1586,65 +1152,42 @@ class BinaryClassificationBusinessValue(Metric):
             cm = np.nan_to_num(cm)
         return (bv_array * cm).sum()
 
-    def _estimate(self, chunk_data: pd.DataFrame) -> float:
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray) -> float:
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_column_name=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            return np.NaN
 
-        business_value_normalization = self.normalize_business_value
-        business_value_matrix = self.business_value_matrix
+        cm = confusion_matrix(y_true, y_pred, sample_weight=weights)
 
-        return estimate_business_value(y_pred, y_pred_proba, business_value_normalization, business_value_matrix)
+        tp_value = self.business_value_matrix[1, 1]
+        tn_value = self.business_value_matrix[0, 0]
+        fp_value = self.business_value_matrix[0, 1]
+        fn_value = self.business_value_matrix[1, 0]
+        bv_array = np.array([[tn_value, fp_value], [fn_value, tp_value]])
+
+        if self.normalize_business_value == 'per_prediction':
+            with np.errstate(all="ignore"):
+                cm = cm / cm.sum(axis=0, keepdims=True)
+            cm = np.nan_to_num(cm)
+        return (bv_array * cm).sum()
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.business_value_sampling_error(
             self._sampling_error_components,
             data,
         )
-
-
-def estimate_business_value(
-    y_pred: np.ndarray,
-    y_pred_proba: np.ndarray,
-    normalize_business_value: Optional[str],
-    business_value_matrix: np.ndarray,
-) -> float:
-    """Estimates the Business Value metric.
-
-    Parameters
-    ----------
-    y_pred: np.ndarray
-        Predicted class labels of the sample
-    y_pred_proba: np.ndarray
-        Probability estimates of the sample for each class in the model.
-    normalize_business_value: str, default=None
-        Determines how the business value will be normalized. Allowed values are None and 'per_prediction'.
-
-            - None - the business value will not be normalized and the value returned will be the total value per chunk.
-            - 'per_prediction' - the value will be normalized by the number of predictions in the chunk.
-
-    Returns
-    -------
-    business_value: float
-        Estimated Business Value score.
-    """
-
-    est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
-    est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-    est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-    est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
-    cm = np.array([[est_tn_ratio, est_fp_ratio], [est_fn_ratio, est_tp_ratio]]) * len(y_pred)
-    if normalize_business_value == 'per_prediction':
-        with np.errstate(all="ignore"):
-            cm = cm / cm.sum(axis=0, keepdims=True)
-        cm = np.nan_to_num(cm)
-
-    tp_value = business_value_matrix[1, 1]
-    tn_value = business_value_matrix[0, 0]
-    fp_value = business_value_matrix[0, 1]
-    fn_value = business_value_matrix[1, 0]
-    bv_array = np.array([[tn_value, fp_value], [fn_value, tp_value]])
-
-    return (bv_array * cm).sum()
 
 
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
