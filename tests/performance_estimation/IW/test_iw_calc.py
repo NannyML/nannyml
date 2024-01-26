@@ -32,7 +32,7 @@ def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: 
 @pytest.fixture
 def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_multiclass_classification_dataset()
-    return ref_df, ana_df
+    return ref_df.head(15_000), ana_df.tail(5_000)
 
 
 @pytest.fixture
@@ -416,31 +416,6 @@ def test_iw_for_binary_classification_does_not_output_confidence_bounds_outside_
     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
 
-# def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
-#     monkeypatch, multiclass_classification_data
-# ):
-#     reference, analysis = multiclass_classification_data
-#     estimator = CBPE(  # type: ignore
-#         timestamp_column_name='timestamp',
-#         y_true='y_true',
-#         y_pred='y_pred',
-#         y_pred_proba={
-#             'prepaid_card': 'y_pred_proba_prepaid_card',
-#             'highstreet_card': 'y_pred_proba_highstreet_card',
-#             'upmarket_card': 'y_pred_proba_upmarket_card',
-#         },
-#         metrics=['roc_auc'],
-#         problem_type='classification_multiclass',
-#     ).fit(reference)
-#     results = estimator.estimate(pd.concat([reference, analysis]))
-#     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
-#     results.data = results.filter(period='reference').to_df()
-#     results = estimator.estimate(analysis)
-#     sut = results.filter(period='analysis').to_df()
-#     assert all(sut.loc[:, ('roc_auc', 'lower_confidence_boundary')] >= new_lower_bound)
-#     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
-
-
 # def test_cpbe_result_filter_should_preserve_data_with_default_args(estimates):
 #     filtered_result = estimates.filter()
 #     assert filtered_result.data.equals(estimates.data)
@@ -711,3 +686,88 @@ def test_cbpe_with_default_thresholds():
     sut = est.thresholds
 
     assert sut == DEFAULT_THRESHOLDS
+
+
+def test_iw_will_not_fail_on_mc_synthetic_sample(multiclass_classification_data):  # noqa: D103
+    reference, analysis = multiclass_classification_data
+    try:
+        estimator = IW(  # type: ignore
+            timestamp_column_name='timestamp',
+            feature_column_names=[
+                "app_behavioral_score",
+                "requested_credit_limit",
+                "credit_bureau_score",
+                "stated_income",
+                "acq_channel",
+                "app_channel",
+                "is_customer"
+            ],
+            y_true='y_true',
+            y_pred='y_pred',
+            y_pred_proba={
+                'prepaid_card': 'y_pred_proba_prepaid_card',
+                'highstreet_card': 'y_pred_proba_highstreet_card',
+                'upmarket_card': 'y_pred_proba_upmarket_card'},
+            metrics=['accuracy'],
+            problem_type='classification_multiclass',
+            chunk_size=5_000
+        )
+        estimator.fit(reference)
+        _ = estimator.estimate(analysis)
+    except Exception as exc:
+        pytest.fail(f'unexpected exception was raised: {exc}')
+
+
+@pytest.mark.parametrize('metric', ['accuracy', 'roc_auc', 'f1', 'precision', 'recall', 'specificity'])
+def test_iw_runs_for_all_mc_metrics(multiclass_classification_data, metric):  # noqa: D103
+    reference, analysis = multiclass_classification_data
+    try:
+        estimator = IW(  # type: ignore
+            timestamp_column_name='timestamp',
+            feature_column_names=[
+                "app_behavioral_score",
+                "requested_credit_limit",
+                "credit_bureau_score",
+                "stated_income",
+                "acq_channel",
+                "app_channel",
+                "is_customer"
+            ],
+            y_true='y_true',
+            y_pred='y_pred',
+            y_pred_proba={
+                'prepaid_card': 'y_pred_proba_prepaid_card',
+                'highstreet_card': 'y_pred_proba_highstreet_card',
+                'upmarket_card': 'y_pred_proba_upmarket_card'},
+            metrics=[metric],
+            problem_type='classification_multiclass',
+            chunk_size=5_000
+        ).fit(reference)
+        _ = estimator.estimate(pd.concat([reference, analysis]))
+    except Exception as e:
+        pytest.fail(f'an unexpected exception occurred: {e}')
+
+
+# def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
+#     monkeypatch, multiclass_classification_data
+# ):
+#     reference, analysis = multiclass_classification_data
+#     estimator = CBPE(  # type: ignore
+#         timestamp_column_name='timestamp',
+#         y_true='y_true',
+#         y_pred='y_pred',
+#         y_pred_proba={
+#             'prepaid_card': 'y_pred_proba_prepaid_card',
+#             'highstreet_card': 'y_pred_proba_highstreet_card',
+#             'upmarket_card': 'y_pred_proba_upmarket_card',
+#         },
+#         metrics=['roc_auc'],
+#         problem_type='classification_multiclass',
+#     ).fit(reference)
+#     results = estimator.estimate(pd.concat([reference, analysis]))
+#     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
+#     results.data = results.filter(period='reference').to_df()
+#     results = estimator.estimate(analysis)
+#     sut = results.filter(period='analysis').to_df()
+#     assert all(sut.loc[:, ('roc_auc', 'lower_confidence_boundary')] >= new_lower_bound)
+#     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)

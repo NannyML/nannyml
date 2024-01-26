@@ -35,7 +35,7 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
-from nannyml._typing import ModelOutputsType, ProblemType, class_labels
+from nannyml._typing import ModelOutputsType, ProblemType, class_labels, model_output_column_names
 from nannyml.base import _remove_nans
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
@@ -279,7 +279,6 @@ class Metric(abc.ABC):
             raise NotImplementedError(
                 "cannot use default 'get_chunk_record' implementation when a metric has multiple components."
             )
-
         column_name = self.components[0][1]
         chunk_record = {}
         estimated_metric_value = self._estimate(reference_data_outputs, reference_weights)
@@ -392,13 +391,13 @@ class BinaryClassificationAccuracy(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         # don't expect weights to have issues.
         return accuracy_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
@@ -409,13 +408,13 @@ class BinaryClassificationAccuracy(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return accuracy_score(y_true=y_true, y_pred=y_pred)
 
@@ -462,10 +461,10 @@ class BinaryClassificationAUROC(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         # don't expect weights to have issues.
         return roc_auc_score(y_true=y_true, y_score=y_pred_proba, sample_weight=weights)
@@ -473,10 +472,10 @@ class BinaryClassificationAUROC(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         y_pred_proba, _, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         return roc_auc_score(y_true, y_pred_proba)
 
@@ -526,13 +525,13 @@ class BinaryClassificationF1(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         # don't expect weights to have issues.
         return f1_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
@@ -543,13 +542,13 @@ class BinaryClassificationF1(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized F1 score.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized F1 score.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized F1 score.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return f1_score(y_true=y_true, y_pred=y_pred)
 
@@ -596,13 +595,13 @@ class BinaryClassificationPrecision(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         # don't expect weights to have issues.
         return precision_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
@@ -613,13 +612,13 @@ class BinaryClassificationPrecision(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return precision_score(y_true=y_true, y_pred=y_pred)
 
@@ -666,13 +665,13 @@ class BinaryClassificationRecall(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         # don't expect weights to have issues.
         return recall_score(y_true=y_true, y_pred=y_pred, sample_weight=weights)
@@ -683,13 +682,13 @@ class BinaryClassificationRecall(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized recall.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as recall precision.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as recall precision.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return recall_score(y_true=y_true, y_pred=y_pred)
 
@@ -736,13 +735,13 @@ class BinaryClassificationSpecificity(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         # don't expect weights to have issues.
         tn, fp, fn, tp = confusion_matrix(y_true=y_true, y_pred=y_pred, sample_weight=weights).ravel()
@@ -754,13 +753,13 @@ class BinaryClassificationSpecificity(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
         return tn / (tn + fp)
@@ -826,14 +825,14 @@ class BinaryClassificationConfusionMatrix(Metric):
     def _realized_performance_cm_elements(self, data: pd.DataFrame) -> float:
         _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
-            return np.NaN
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return (np.NaN, np.NaN, np.NaN, np.NaN)
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
-            return np.NaN
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return (np.NaN, np.NaN, np.NaN, np.NaN)
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
-            return np.NaN
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return (np.NaN, np.NaN, np.NaN, np.NaN)
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return (tn, fp, fn, tp)
     
@@ -849,14 +848,14 @@ class BinaryClassificationConfusionMatrix(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
-            return np.NaN
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return (np.NaN, np.NaN, np.NaN, np.NaN)
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
-            return np.NaN
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return (np.NaN, np.NaN, np.NaN, np.NaN)
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
-            return np.NaN
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return (np.NaN, np.NaN, np.NaN, np.NaN)
         tn, fp, fn, tp = confusion_matrix(
             y_true,
             y_pred,
@@ -1160,13 +1159,13 @@ class BinaryClassificationBusinessValue(Metric):
             optional_column='reference_weights'
         )
         if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
         if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
 
         cm = confusion_matrix(y_true, y_pred, sample_weight=weights)
@@ -1196,380 +1195,51 @@ def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pre
             "multiclass model outputs should be of type Dict[str, str].\n"
             f"'{y_pred_proba}' is of type '{type(y_pred_proba)}'"
         )
-
     classes = sorted(y_pred_proba.keys())
     y_preds = list(label_binarize(data[y_pred], classes=classes).T)
-
     y_pred_probas = [data[y_pred_proba[clazz]] for clazz in classes]
     return y_preds, y_pred_probas, classes
-
-
-def _get_multiclass_uncalibrated_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
-    if not isinstance(y_pred_proba, dict):
-        raise CalculatorException(
-            "multiclass model outputs should be of type Dict[str, str].\n"
-            f"'{y_pred_proba}' is of type '{type(y_pred_proba)}'"
-        )
-
-    labels, class_probability_columns = [], []
-    for label in sorted(y_pred_proba.keys()):
-        labels.append(label)
-        class_probability_columns.append(f'uncalibrated_{y_pred_proba[label]}')
-    return data[y_pred], data[class_probability_columns], labels
 
 
 class _MulticlassClassificationMetric(Metric):
     """Base class for multiclass classification metrics."""
 
-    def _ensure_targets(self, data: pd.DataFrame) -> Optional[pd.DataFrame]:
-        """Ensures that the data contains the target column and that it doesn't contain all NaNs.
-
-        Any rows in the input where the target is NaN are dropped.
-        """
-        if self.y_true not in data.columns:
-            return None
-
-        na = data[self.y_true].isna()
-        if na.all():
-            return None
-        else:
-            return data[~na]
-
-
-@MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
-    def __init__(
+    def _common_cleaning(
         self,
-        y_pred_proba: ModelOutputsType,
-        y_pred: str,
-        y_true: str,
-        chunker: Chunker,
-        threshold: Threshold,
-        timestamp_column_name: Optional[str] = None,
-        **kwargs,
-    ):
-        super().__init__(
-            name='roc_auc',
-            y_pred_proba=y_pred_proba,
-            y_pred=y_pred,
-            y_true=y_true,
-            timestamp_column_name=timestamp_column_name,
-            chunker=chunker,
-            threshold=threshold,
-            components=[('ROC AUC', 'roc_auc')],
+        data: pd.DataFrame,
+        y_pred_proba_columns_dict: Optional[dict] = None,
+        optional_column: Optional[str] = None
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Multiclass implementation of _common_cleaning."""
+
+        if y_pred_proba_columns_dict is None:
+            y_pred_proba_columns_dict = self.y_pred_proba
+        if y_pred_proba_columns_dict is None:
+            y_pred_proba_columns_dict = {}
+        elif not isinstance(y_pred_proba_columns_dict, dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type '{type(self.y_pred_proba)}'. "
+                f"Multiclass use cases require 'y_pred_proba' to be a dictionary."
+            )
+
+        labels, class_probability_columns = [], []
+        for label in sorted(y_pred_proba_columns_dict.keys()):
+            labels.append(label)
+            class_probability_columns.append(f'{y_pred_proba_columns_dict[label]}')
+
+        data = _remove_nans(data, [self.y_pred] + class_probability_columns)
+
+        clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
+        if clean_targets:
+            data = _remove_nans(data, [self.y_true])
+
+        return (
+            data[class_probability_columns] if len(class_probability_columns) > 0 else None,
+            data[self.y_pred],
+            data[self.y_true] if clean_targets else None,
+            data[optional_column] if optional_column else None,
+            labels
         )
-        # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
-        self.y_pred_proba: Dict[str, str]
-
-        # sampling error
-        self._sampling_error_components: List[Tuple] = []
-
-    def _fit(self, reference_data: pd.DataFrame):
-        classes = class_labels(self.y_pred_proba)
-        binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]
-
-        self._sampling_error_components = mse.auroc_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
-        )
-
-    def _estimate(self, data: pd.DataFrame):
-        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        ovr_estimates = []
-        for y_pred_proba_class in y_pred_probas:
-            ovr_estimates.append(estimate_roc_auc(y_pred_proba_class))
-        multiclass_roc_auc = np.mean(ovr_estimates)
-        return multiclass_roc_auc
-
-    def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.auroc_sampling_error(self._sampling_error_components, data)
-
-    def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
-
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
-            return np.NaN
-
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
-            return np.NaN
-
-        _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-
-        return roc_auc_score(data[self.y_true], y_pred_probas, multi_class='ovr', average='macro', labels=labels)
-
-
-@MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationF1(_MulticlassClassificationMetric):
-    def __init__(
-        self,
-        y_pred_proba: ModelOutputsType,
-        y_pred: str,
-        y_true: str,
-        chunker: Chunker,
-        threshold: Threshold,
-        timestamp_column_name: Optional[str] = None,
-        **kwargs,
-    ):
-        super().__init__(
-            name='f1',
-            y_pred_proba=y_pred_proba,
-            y_pred=y_pred,
-            y_true=y_true,
-            timestamp_column_name=timestamp_column_name,
-            chunker=chunker,
-            threshold=threshold,
-            components=[('F1', 'f1')],
-        )
-
-        # sampling error:
-        self._sampling_error_components: List[Tuple] = []
-
-    def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.f1_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
-        )
-
-    def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        ovr_estimates = []
-        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-            ovr_estimates.append(estimate_f1(y_pred, y_pred_proba))
-        multiclass_metric = np.mean(ovr_estimates)
-
-        return multiclass_metric
-
-    def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.f1_sampling_error(self._sampling_error_components, data)
-
-    def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
-
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized F1 score.")
-            return np.NaN
-
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized F1 score.")
-            return np.NaN
-
-        if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized F1 score.")
-            return np.NaN
-
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-
-        return f1_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
-
-
-@MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
-    def __init__(
-        self,
-        y_pred_proba: ModelOutputsType,
-        y_pred: str,
-        y_true: str,
-        chunker: Chunker,
-        threshold: Threshold,
-        timestamp_column_name: Optional[str] = None,
-        **kwargs,
-    ):
-        super().__init__(
-            name='precision',
-            y_pred_proba=y_pred_proba,
-            y_pred=y_pred,
-            y_true=y_true,
-            timestamp_column_name=timestamp_column_name,
-            chunker=chunker,
-            threshold=threshold,
-            components=[('Precision', 'precision')],
-        )
-
-        # sampling error
-        self._sampling_error_components: List[Tuple] = []
-
-    def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.precision_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
-        )
-
-    def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        ovr_estimates = []
-        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-            ovr_estimates.append(estimate_precision(y_pred, y_pred_proba))
-        multiclass_metric = np.mean(ovr_estimates)
-
-        return multiclass_metric
-
-    def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.precision_sampling_error(self._sampling_error_components, data)
-
-    def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
-
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
-            return np.NaN
-
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
-            return np.NaN
-
-        if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
-            return np.NaN
-
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-
-        return precision_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
-
-
-@MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationRecall(_MulticlassClassificationMetric):
-    def __init__(
-        self,
-        y_pred_proba: ModelOutputsType,
-        y_pred: str,
-        y_true: str,
-        chunker: Chunker,
-        threshold: Threshold,
-        timestamp_column_name: Optional[str] = None,
-        **kwargs,
-    ):
-        super().__init__(
-            name='recall',
-            y_pred_proba=y_pred_proba,
-            y_pred=y_pred,
-            y_true=y_true,
-            timestamp_column_name=timestamp_column_name,
-            chunker=chunker,
-            threshold=threshold,
-            components=[('Recall', 'recall')],
-        )
-
-        # sampling error
-        self._sampling_error_components: List[Tuple] = []
-
-    def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.recall_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
-        )
-
-    def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        ovr_estimates = []
-        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-            ovr_estimates.append(estimate_recall(y_pred, y_pred_proba))
-        multiclass_metric = np.mean(ovr_estimates)
-
-        return multiclass_metric
-
-    def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.recall_sampling_error(self._sampling_error_components, data)
-
-    def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
-
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized recall.")
-            return np.NaN
-
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized recall.")
-            return np.NaN
-
-        if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized recall.")
-            return np.NaN
-
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-
-        return recall_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
-
-
-@MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
-    def __init__(
-        self,
-        y_pred_proba: ModelOutputsType,
-        y_pred: str,
-        y_true: str,
-        chunker: Chunker,
-        threshold: Threshold,
-        timestamp_column_name: Optional[str] = None,
-        **kwargs,
-    ):
-        super().__init__(
-            name='specificity',
-            y_pred_proba=y_pred_proba,
-            y_pred=y_pred,
-            y_true=y_true,
-            timestamp_column_name=timestamp_column_name,
-            chunker=chunker,
-            threshold=threshold,
-            components=[('Specificity', 'specificity')],
-        )
-
-        # sampling error
-        self._sampling_error_components: List[Tuple] = []
-
-    def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.specificity_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
-        )
-
-    def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        ovr_estimates = []
-        for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
-            ovr_estimates.append(estimate_specificity(y_pred, y_pred_proba))
-        multiclass_metric = np.mean(ovr_estimates)
-
-        return multiclass_metric
-
-    def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.specificity_sampling_error(self._sampling_error_components, data)
-
-    def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
-
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
-            return np.NaN
-
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
-            return np.NaN
-
-        if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
-            return np.NaN
-
-        y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-
-        mcm = multilabel_confusion_matrix(data[self.y_true], y_pred, labels=labels)
-        tn_sum = mcm[:, 0, 0]
-        fp_sum = mcm[:, 0, 1]
-        class_wise_specificity = tn_sum / (tn_sum + fp_sum)
-        return np.mean(class_wise_specificity)
 
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
@@ -1607,37 +1277,414 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
             y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
         )
 
-    def _estimate(self, data: pd.DataFrame):
-        y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        y_preds_array = np.asarray(y_preds).T
-        y_pred_probas_array = np.asarray(y_pred_probas).T
-        probability_of_predicted = np.max(y_preds_array * y_pred_probas_array, axis=1)
-        return np.mean(probability_of_predicted)
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray) -> float:
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights, _ = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_columns_dict=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        return accuracy_score(y_true, y_pred, sample_weight=weights)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return mse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
-
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+        _, y_pred, y_true, _, _ = self._common_cleaning(data)
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
-
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-
-        if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
+        return accuracy_score(y_true, y_pred)
 
-        y_pred, _, _ = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-        return accuracy_score(data[self.y_true], y_pred)
+
+@MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            name='roc_auc',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('ROC AUC', 'roc_auc')],
+        )
+        if not isinstance(self.y_pred_proba, dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type '{type(self.y_pred_proba)}'. "
+                f"Multiclass use cases require 'y_pred_proba' to be a dictionary."
+            )
+        self._sampling_error_components: List[Tuple] = []
+
+    def _fit(self, reference_data: pd.DataFrame):
+        classes = class_labels(self.y_pred_proba)
+        binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
+        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]
+        self._sampling_error_components = mse.auroc_sampling_error_components(
+            y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
+        )
+
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray) -> float:
+        reference_data_outputs['reference_weights'] = reference_weights
+        y_pred_probas, _, y_true, weights, labels = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_columns_dict=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        return roc_auc_score(
+            y_true=y_true,
+            y_score=y_pred_probas,
+            average='macro',
+            multi_class='ovr',
+            sample_weight=weights,
+            labels=labels
+        )
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return mse.auroc_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        y_pred_probas, _, y_true, _, labels = self._common_cleaning(data)
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        return roc_auc_score(y_true=y_true, y_score=y_pred_probas, average='macro', multi_class='ovr', labels=labels)
+
+
+@MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationF1(_MulticlassClassificationMetric):
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            name='f1',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('F1', 'f1')],
+        )
+        # sampling error:
+        self._sampling_error_components: List[Tuple] = []
+
+    def _fit(self, reference_data: pd.DataFrame):
+        label_binarizer = LabelBinarizer()
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+        self._sampling_error_components = mse.f1_sampling_error_components(
+            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        )
+
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray) -> float:
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights, labels = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_columns_dict=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        return f1_score(
+            y_true=y_true,
+            y_pred=y_pred,
+            average='macro',
+            sample_weight=weights,
+            labels=labels
+        )
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return mse.f1_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true, _, labels = self._common_cleaning(data)
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+
+
+@MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            name='precision',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Precision', 'precision')],
+        )
+        # sampling error
+        self._sampling_error_components: List[Tuple] = []
+
+    def _fit(self, reference_data: pd.DataFrame):
+        label_binarizer = LabelBinarizer()
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+        self._sampling_error_components = mse.precision_sampling_error_components(
+            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        )
+
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray) -> float:
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights, labels = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_columns_dict=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        return precision_score(
+            y_true=y_true,
+            y_pred=y_pred,
+            average='macro',
+            sample_weight=weights,
+            labels=labels
+        )
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return mse.precision_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true, _, labels = self._common_cleaning(data)
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+
+
+@MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationRecall(_MulticlassClassificationMetric):
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            name='recall',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Recall', 'recall')],
+        )
+        # sampling error
+        self._sampling_error_components: List[Tuple] = []
+
+    def _fit(self, reference_data: pd.DataFrame):
+        label_binarizer = LabelBinarizer()
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+        self._sampling_error_components = mse.recall_sampling_error_components(
+            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        )
+
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray) -> float:
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights, labels = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_columns_dict=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        return recall_score(
+            y_true=y_true,
+            y_pred=y_pred,
+            average='macro',
+            sample_weight=weights,
+            labels=labels
+        )
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return mse.recall_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true, _, labels = self._common_cleaning(data)
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
+
+
+@MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            name='specificity',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Specificity', 'specificity')],
+        )
+        # sampling error
+        self._sampling_error_components: List[Tuple] = []
+
+    def _fit(self, reference_data: pd.DataFrame):
+        label_binarizer = LabelBinarizer()
+        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+        self._sampling_error_components = mse.specificity_sampling_error_components(
+            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        )
+
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray) -> float:
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights, labels = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_columns_dict=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels, sample_weight=weights)
+        tn_sum = mcm[:, 0, 0]
+        fp_sum = mcm[:, 0, 1]
+        class_wise_specificity = tn_sum / (tn_sum + fp_sum)
+        return np.mean(class_wise_specificity)
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return mse.specificity_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        _, y_pred, y_true, _, labels = self._common_cleaning(data)
+        if y_true is None:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        tn_sum = mcm[:, 0, 0]
+        fp_sum = mcm[:, 0, 1]
+        class_wise_specificity = tn_sum / (tn_sum + fp_sum)
+        return np.mean(class_wise_specificity)
 
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationConfusionMatrix(Metric):
+class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1667,12 +1714,12 @@ class MulticlassClassificationConfusionMatrix(Metric):
             components=self._get_components(self.classes),
             lower_threshold_value_limit=0,
         )
-
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
+        if self.normalize_confusion_matrix is not None:
+            self.upper_threshold_value_limit = 1
 
     def _get_components(self, classes: List[str]) -> List[Tuple[str, str]]:
         components = []
-
         for true_class in classes:
             for pred_class in classes:
                 components.append(
@@ -1681,30 +1728,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                         f'true_{true_class}_pred_{pred_class}',
                     )
                 )
-
         return components
-
-    def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
-        """Fits a Metric on reference data.
-        Parameters
-        ----------
-        reference_data: pd.DataFrame
-            The reference data used for fitting. Must have target data available.
-        """
-        # Calculate alert thresholds
-        reference_chunks = self.chunker.split(
-            reference_data,
-        )
-
-        self.alert_thresholds = self._multiclass_confusion_matrix_alert_thresholds(reference_chunks)
-
-        # Calculate confidence bands
-        self.confidence_deviations = self._multiclass_confusion_matrix_confidence_deviations(reference_chunks)
-
-        # Delegate to confusion matrix subclass
-        self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
-
-        return
 
     def _fit(self, reference_data: pd.DataFrame):
         self._confusion_matrix_sampling_error_components = mse.multiclass_confusion_matrix_sampling_error_components(
@@ -1713,49 +1737,41 @@ class MulticlassClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
-    def _multiclass_confusion_matrix_alert_thresholds(
-        self, reference_chunks: List[Chunk]
-    ) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
-        realized_chunk_performance = np.asarray(
-            [self._multi_class_confusion_matrix_realized_performance(chunk.data) for chunk in reference_chunks]
-        )
+    # def _multiclass_confusion_matrix_alert_thresholds(
+    #     self, reference_chunks: List[Chunk]
+    # ) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
+    #     realized_chunk_performance = np.asarray(
+    #         [self._multi_class_confusion_matrix_realized_performance(chunk.data) for chunk in reference_chunks]
+    #     )
+    #     alert_thresholds = {}
+    #     num_classes = len(self.classes)
+    #     for i in range(num_classes):
+    #         for j in range(num_classes):
+    #             lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+    #                 threshold=self.threshold,
+    #                 data=realized_chunk_performance[:, i, j],
+    #                 lower_threshold_value_limit=self.lower_threshold_value_limit,
+    #                 upper_threshold_value_limit=self.upper_threshold_value_limit,
+    #             )
+    #             alert_thresholds[f'true_{self.classes[i]}_pred_{self.classes[j]}'] = (
+    #                 lower_threshold_value,
+    #                 upper_threshold_value,
+    #             )
+    #     return alert_thresholds
 
-        alert_thresholds = {}
-
-        num_classes = len(self.classes)
-
-        for i in range(num_classes):
-            for j in range(num_classes):
-                lower_threshold_value, upper_threshold_value = calculate_threshold_values(
-                    threshold=self.threshold,
-                    data=realized_chunk_performance[:, i, j],
-                    lower_threshold_value_limit=self.lower_threshold_value_limit,
-                    upper_threshold_value_limit=self.upper_threshold_value_limit,
-                )
-                alert_thresholds[f'true_{self.classes[i]}_pred_{self.classes[j]}'] = (
-                    lower_threshold_value,
-                    upper_threshold_value,
-                )
-
-        return alert_thresholds
-
-    def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
+    def _realized_multiclass_confusion_matrix(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
         if data is None or self.y_true not in data.columns:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
-
         if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-
         if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
-
         cm = confusion_matrix(
             data[self.y_true], data[self.y_pred], labels=self.classes, normalize=self.normalize_confusion_matrix
         )
-
         return cm
 
     def _multiclass_confusion_matrix_confidence_deviations(
@@ -1774,59 +1790,44 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         return confidence_deviations
 
-    def _get_multiclass_confusion_matrix_estimate(self, chunk_data: pd.DataFrame) -> np.ndarray:
-        if isinstance(self.y_pred_proba, str):
-            raise ValueError(
-                "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
-            )
+    def _estimate_multiclass_confusion_matrix(
+        self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray
+    ) -> np.ndarray:
+        reference_data_outputs['reference_weights'] = reference_weights
+        _, y_pred, y_true, weights, labels = self._common_cleaning(
+            reference_data_outputs,
+            y_pred_proba_columns_dict=self.y_pred_proba,
+            optional_column='reference_weights'
+        )
+        if reference_data_outputs is None or self.y_true not in data.columns:
+            warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
+            return np.NaN
+        if y_pred.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
+            return np.NaN
+        cm = confusion_matrix(
+            y_true, y_pred, labels=self.classes, normalize=self.normalize_confusion_matrix, sample_weight=weights
+        )
+        return cm
 
-        y_pred_proba = {key: chunk_data[value] for key, value in self.y_pred_proba.items()}
-
-        y_pred = chunk_data[self.y_pred]
-
-        num_classes = len(self.classes)
-
-        est_confusion_matrix = np.zeros((num_classes, num_classes))
-
-        for i in range(num_classes):
-            for j in range(num_classes):
-                est_confusion_matrix[i, j] = np.mean(
-                    np.where(
-                        (y_pred == self.classes[j]),
-                        y_pred_proba[self.classes[i]],
-                        0,
-                    )
-                )
-
-        if self.normalize_confusion_matrix is None:
-            normalized_est_confusion_matrix = est_confusion_matrix * len(y_pred)
-
-        elif self.normalize_confusion_matrix == 'true':
-            normalized_est_confusion_matrix = est_confusion_matrix / np.sum(est_confusion_matrix, axis=1)[:, None]
-
-        elif self.normalize_confusion_matrix == 'pred':
-            normalized_est_confusion_matrix = est_confusion_matrix / np.sum(est_confusion_matrix, axis=0)[None, :]
-        elif self.normalize_confusion_matrix == 'all':
-            normalized_est_confusion_matrix = est_confusion_matrix / np.sum(est_confusion_matrix)
-        else:
-            raise ValueError(
-                f'normalize_confusion_matrix should be one of None, "true", \
-                    "pred", or "all", but got {self.normalize_confusion_matrix}'
-            )
-
-        return normalized_est_confusion_matrix
-
-    def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
+    def get_chunk_record(
+        self,
+        chunk_data_outputs: pd.DataFrame,
+        reference_data_outputs: pd.DataFrame,
+        reference_weights: np.ndarray
+    ) -> Dict:
         chunk_record = {}
-
-        estimated_cm = self._get_multiclass_confusion_matrix_estimate(chunk_data)
-        realized_cm = self._multi_class_confusion_matrix_realized_performance(chunk_data)
-
+        estimated_cm = self._get_multiclass_confusion_matrix_estimate(
+            reference_data_outputs, reference_weights
+        )
+        realized_cm = self._realized_multiclass_confusion_matrix(chunk_data_outputs)
         sampling_error = mse.multiclass_confusion_matrix_sampling_error(
             self._confusion_matrix_sampling_error_components,
             chunk_data,
         )
-
         for true_class in self.classes:
             for pred_class in self.classes:
                 chunk_record[f'estimated_true_{true_class}_pred_{pred_class}'] = estimated_cm[
@@ -1850,7 +1851,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
                     + SAMPLING_ERROR_RANGE
                     * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
-
                 if self.normalize_confusion_matrix is None:
                     chunk_record[
                         f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'
@@ -1865,7 +1865,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
                     - SAMPLING_ERROR_RANGE
                     * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
-
                 if self.normalize_confusion_matrix is None:
                     chunk_record[
                         f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'
@@ -1875,29 +1874,27 @@ class MulticlassClassificationConfusionMatrix(Metric):
                         self.confidence_lower_bound, lower_confidence_boundary
                     )
 
-                chunk_record[f'upper_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
-                    f'true_{true_class}_pred_{pred_class}'
-                ][1]
-                chunk_record[f'lower_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
-                    f'true_{true_class}_pred_{pred_class}'
-                ][0]
-
-                # do alerts
-                chunk_record[f'alert_true_{true_class}_pred_{pred_class}'] = (
-                    self.alert_thresholds is not None
-                    and (
-                        estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
-                        > self.alert_thresholds[f'true_{true_class}_pred_{pred_class}'][1]
-                    )
-                    or (
-                        self.alert_thresholds is not None
-                        and (
-                            estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
-                            < self.alert_thresholds[f'true_{true_class}_pred_{pred_class}'][0]
-                        )
-                    )
-                )
-
+                # chunk_record[f'upper_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
+                #     f'true_{true_class}_pred_{pred_class}'
+                # ][1]
+                # chunk_record[f'lower_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
+                #     f'true_{true_class}_pred_{pred_class}'
+                # ][0]
+                # # do alerts
+                # chunk_record[f'alert_true_{true_class}_pred_{pred_class}'] = (
+                #     self.alert_thresholds is not None
+                #     and (
+                #         estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
+                #         > self.alert_thresholds[f'true_{true_class}_pred_{pred_class}'][1]
+                #     )
+                #     or (
+                #         self.alert_thresholds is not None
+                #         and (
+                #             estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
+                #             < self.alert_thresholds[f'true_{true_class}_pred_{pred_class}'][0]
+                #         )
+                #     )
+                # )
         return chunk_record
 
     def _estimate(self, data: pd.DataFrame):

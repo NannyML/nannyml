@@ -591,17 +591,8 @@ class IW(AbstractEstimator):
     
     def _set_metric_thresholds(self, result_data: pd.DataFrame) -> List:
         updated_metrics = []
-        single_component_metric_names = [
-            'f1',
-            'roc_auc',
-            'accuracy',
-            'precision',
-            'recall',
-            'specificity',
-            'business_value',
-        ]
         for metric in self.metrics:
-            if metric.name in single_component_metric_names:
+            if metric.name is not "confusion_matrix":
                 metric.lower_threshold_value, metric.upper_threshold_value = calculate_threshold_values(
                     threshold=metric.threshold,
                     data=result_data.loc[:, (metric.column_name, 'realized')],
@@ -611,46 +602,71 @@ class IW(AbstractEstimator):
                     metric_name=metric.display_name,
                 )
                 updated_metrics.append(metric)
-            elif metric.name == "confusion_matrix":
-                metric.true_positive_lower_threshold, metric.true_positive_upper_threshold = calculate_threshold_values(
-                    threshold=metric.threshold,
-                    data=result_data.loc[:, ("true_positive", "realized")],
-                    lower_threshold_value_limit=metric.lower_threshold_value_limit,
-                    upper_threshold_value_limit=metric.upper_threshold_value_limit,
-                    logger=self._logger,
-                    metric_name="true_positive",  # component 0 // to iterate
-                )
-                metric.true_negative_lower_threshold, metric.true_negative_upper_threshold = calculate_threshold_values(
-                    threshold=metric.threshold,
-                    data=result_data.loc[:, ("true_negative", "realized")],
-                    lower_threshold_value_limit=metric.lower_threshold_value_limit,
-                    upper_threshold_value_limit=metric.upper_threshold_value_limit,
-                    logger=self._logger,
-                    metric_name="true_negative",  # component 1 // to iterate
-                )
-                (
-                    metric.false_positive_lower_threshold,
-                    metric.false_positive_upper_threshold,
-                ) = calculate_threshold_values(
-                    threshold=metric.threshold,
-                    data=result_data.loc[:, ("false_positive", "realized")],
-                    lower_threshold_value_limit=metric.lower_threshold_value_limit,
-                    upper_threshold_value_limit=metric.upper_threshold_value_limit,
-                    logger=self._logger,
-                    metric_name="false_positive",  # component 2 // to iterate
-                )
-                (
-                    metric.false_negative_lower_threshold,
-                    metric.false_negative_upper_threshold,
-                ) = calculate_threshold_values(
-                    threshold=metric.threshold,
-                    data=result_data.loc[:, ("false_negative", "realized")],
-                    lower_threshold_value_limit=metric.lower_threshold_value_limit,
-                    upper_threshold_value_limit=metric.upper_threshold_value_limit,
-                    logger=self._logger,
-                    metric_name="false_negative",  # component 3 // to iterate
-                )
-                updated_metrics.append(metric)
+            else:
+                if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
+                    metric.true_positive_lower_threshold, metric.true_positive_upper_threshold = calculate_threshold_values(
+                        threshold=metric.threshold,
+                        data=result_data.loc[:, ("true_positive", "realized")],
+                        lower_threshold_value_limit=metric.lower_threshold_value_limit,
+                        upper_threshold_value_limit=metric.upper_threshold_value_limit,
+                        logger=self._logger,
+                        metric_name="true_positive",  # component 0 // to iterate
+                    )
+                    metric.true_negative_lower_threshold, metric.true_negative_upper_threshold = calculate_threshold_values(
+                        threshold=metric.threshold,
+                        data=result_data.loc[:, ("true_negative", "realized")],
+                        lower_threshold_value_limit=metric.lower_threshold_value_limit,
+                        upper_threshold_value_limit=metric.upper_threshold_value_limit,
+                        logger=self._logger,
+                        metric_name="true_negative",  # component 1 // to iterate
+                    )
+                    (
+                        metric.false_positive_lower_threshold,
+                        metric.false_positive_upper_threshold,
+                    ) = calculate_threshold_values(
+                        threshold=metric.threshold,
+                        data=result_data.loc[:, ("false_positive", "realized")],
+                        lower_threshold_value_limit=metric.lower_threshold_value_limit,
+                        upper_threshold_value_limit=metric.upper_threshold_value_limit,
+                        logger=self._logger,
+                        metric_name="false_positive",  # component 2 // to iterate
+                    )
+                    (
+                        metric.false_negative_lower_threshold,
+                        metric.false_negative_upper_threshold,
+                    ) = calculate_threshold_values(
+                        threshold=metric.threshold,
+                        data=result_data.loc[:, ("false_negative", "realized")],
+                        lower_threshold_value_limit=metric.lower_threshold_value_limit,
+                        upper_threshold_value_limit=metric.upper_threshold_value_limit,
+                        logger=self._logger,
+                        metric_name="false_negative",  # component 3 // to iterate
+                    )
+                    updated_metrics.append(metric)
+                elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
+                    ###
+                    realized_chunk_performance = np.asarray(
+                        [self._multi_class_confusion_matrix_realized_performance(chunk.data) for chunk in reference_chunks]
+                    )
+
+                    alert_thresholds_dict = {}
+                    num_classes = len(self.classes)
+                    for i in range(num_classes):
+                        for j in range(num_classes):
+                            lower_threshold_value, upper_threshold_value = calculate_threshold_values(
+                                threshold=self.threshold,
+                                # data=realized_chunk_performance[:, i, j],
+                                data=result_data.loc[:, (f"true_{self.classes[i]}_pred_{self.classes[j]}", "realized")],
+                                lower_threshold_value_limit=self.lower_threshold_value_limit,
+                                upper_threshold_value_limit=self.upper_threshold_value_limit,
+                            )
+                            alert_thresholds_dict[f"true_{self.classes[i]}_pred_{self.classes[j]}"] = (
+                                lower_threshold_value,
+                                upper_threshold_value,
+                            )
+                    metric.alert_thresholds_dict = alert_thresholds_dict
+                    updated_metrics.append(metric)
+                    ###
 
         return updated_metrics
 
