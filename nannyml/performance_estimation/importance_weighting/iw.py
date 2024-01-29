@@ -25,6 +25,7 @@ from __future__ import annotations
 import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 from collections import defaultdict
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -52,6 +53,29 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'accuracy': StandardDeviationThreshold(),
     'confusion_matrix': StandardDeviationThreshold(),
     'business_value': StandardDeviationThreshold(),
+}
+
+DEFAULT_LGBM_HYPERPARAMS = {
+    'boosting_type': 'gbdt',
+    'class_weight': None,
+    'colsample_bytree': 1.0,
+    'importance_type': 'split',
+    'learning_rate': 0.1,
+    'max_depth': -1,
+    'min_child_samples': 20,
+    'min_child_weight': 0.001,
+    'min_split_gain': 0.0,
+    'n_estimators': 100,
+    'n_jobs': -1,
+    'num_leaves': 31,
+    'objective': None,
+    'random_state': 16,
+    'reg_alpha': 0.0,
+    'reg_lambda': 0.0,
+    'silent': 'warn',
+    'subsample': 1.0,
+    'subsample_for_bin': 200000,
+    'subsample_freq': 0
 }
 
 
@@ -105,7 +129,7 @@ class IW(AbstractEstimator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        hyperparameters: Optional[Dict[str, Any]] = None,
+        hyperparameters: Optional[Dict[str, Any]] = DEFAULT_LGBM_HYPERPARAMS,
         tune_hyperparameters: bool = False,
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = None,
         thresholds: Optional[Dict[str, Threshold]] = None,
@@ -480,7 +504,7 @@ class IW(AbstractEstimator):
         # drop duplicate columns
         dfx['__target__'] = npy
         dfx = dfx.drop_duplicates(subset=self.feature_column_names, keep='last').reset_index(drop=True)
-        _y = dfx[['__target__']]
+        _y = dfx['__target__']
         dfx.drop('__target__', axis=1, inplace=True)
 
         dfx_cont = dfx[self.continuous_column_names]
@@ -488,37 +512,40 @@ class IW(AbstractEstimator):
             col_name: self._categorical_encoders[col_name].fit_transform(dfx[[col_name]]).ravel() for col_name in self.categorical_column_names
         })
         _x = pd.concat([dfx_cat, dfx_cont], axis=1)
+        _x = _x[self.categorical_column_names + self.continuous_column_names]
         return _x, _y
 
     def _preprocess_ref_for_pred_proba(self, reference_data: pd.DataFrame):
         for col_name in self.categorical_column_names:
             reference_data[col_name] = self._categorical_encoders[col_name].transform(reference_data[[col_name]]).ravel()
+        # order of columns must be preserved between training and predictions.
+        reference_data = reference_data[self.categorical_column_names + self.continuous_column_names]
         return reference_data
 
     def _train_dre_model(self, _x, _y):
         self._logger.debug("Started training direct ratio estimation model for chunk.")
-        if self.hyperparameters:
-            self._logger.debug("'hyperparameters' set: using custom hyperparameters")
-            self._logger.debug(f"'hyperparameters': {self.hyperparameters}")
-
-            model = LGBMClassifier(**self.hyperparameters)
-            model.fit(_x, _y, categorical_feature=self.categorical_column_names)
-        elif self.tune_hyperparameters:
-            self._logger.debug(
-                f"'tune_hyperparameters' set to '{self.tune_hyperparameters}': " f"performing hyperparameter tuning"
-            )
-            self._logger.debug(f'hyperparameter tuning configuration: {self.hyperparameter_tuning_config}')
-
-            automl = AutoML()
-            automl.fit(_x, _y, **self.hyperparameter_tuning_config, categorical_feature=self.categorical_column_names)
-            model = LGBMClassifier(**automl.model.estimator.get_params())
-            model.fit(_x, _y, categorical_feature=categorical_column_names)
-        else:
-            self._logger.debug(
-                f"'tune_hyperparameters' set to '{self.tune_hyperparameters}': skipping hyperparameter tuning"
-            )
-            self._logger.debug("'hyperparameters' not set: using default hyperparameters")
-            model = LGBMClassifier()
+        # Ingore lightgbm's UserWarning: Using categorical_feature in Dataset.
+        # We explicitly use that feature, don't spam the user
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Using categorical_feature in Dataset.")
+            if self.hyperparameters:
+                self._logger.debug("'hyperparameters' set: using custom hyperparameters")
+                self._logger.debug(f"'hyperparameters': {self.hyperparameters}")
+                model = LGBMClassifier(**self.hyperparameters)
+            elif self.tune_hyperparameters:
+                self._logger.debug(
+                    f"'tune_hyperparameters' set to '{self.tune_hyperparameters}': " f"performing hyperparameter tuning"
+                )
+                self._logger.debug(f'hyperparameter tuning configuration: {self.hyperparameter_tuning_config}')
+                automl = AutoML()
+                automl.fit(_x, _y, **self.hyperparameter_tuning_config, categorical_feature=self.categorical_column_names)
+                model = LGBMClassifier(**automl.model.estimator.get_params())
+            else:
+                self._logger.debug(
+                    f"'tune_hyperparameters' set to '{self.tune_hyperparameters}': skipping hyperparameter tuning"
+                )
+                self._logger.debug("'hyperparameters' not set: using default hyperparameters")
+                model = LGBMClassifier()
             model.fit(_x, _y, categorical_feature=self.categorical_column_names)
         return model
 
@@ -541,11 +568,17 @@ class IW(AbstractEstimator):
             self.reference_data[self.feature_column_names].copy(deep=True)
         )
         reference_dre_probas = model.predict_proba(ref_transformed)[:, 1]
+        print("debug reference_dre_probas")
+        print(reference_dre_probas.mean())
+        print(reference_dre_probas.std())
         reference_weights = self._calculate_weights(
             reference_dre_probas,
             chunk.data.shape[0],
             ref_transformed.shape[0],
         )
+        print("debug weights")
+        print(reference_weights.mean())
+        print(reference_weights.std())
 
         _selected_output_colums = [self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba)
 
@@ -555,8 +588,8 @@ class IW(AbstractEstimator):
                 chunk.data[
                     # because y_true may not be present in chunk data
                     [col for col in _selected_output_colums if col in list(chunk.data.columns)]
-                ],
-                self.reference_data[_selected_output_colums],
+                ].copy(deep=True),
+                self.reference_data[_selected_output_colums].copy(deep=True),
                 reference_weights
             )
             # add the chunk record to the chunk_records dict

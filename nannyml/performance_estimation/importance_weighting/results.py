@@ -194,7 +194,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         if kind == 'performance':
             return plot_metrics(
                 self,
-                title='Estimated performance <b>(CBPE)</b>',
+                title='Estimated performance <b>(IW)</b>',
                 subplot_title_format='Estimated <b>{display_names[1]}</b>',
                 subplot_y_axis_title_format='{display_names[1]}',
                 color=Colors.INDIGO_PERSIAN,
