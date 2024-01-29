@@ -718,7 +718,7 @@ def test_iw_will_not_fail_on_mc_synthetic_sample(multiclass_classification_data)
         pytest.fail(f'unexpected exception was raised: {exc}')
 
 
-@pytest.mark.parametrize('metric', ['accuracy', 'roc_auc', 'f1', 'precision', 'recall', 'specificity'])
+@pytest.mark.parametrize('metric', ['accuracy', 'roc_auc', 'f1', 'precision', 'recall', 'specificity', 'confusion_matrix'])
 def test_iw_runs_for_all_mc_metrics(multiclass_classification_data, metric):  # noqa: D103
     reference, analysis = multiclass_classification_data
     try:
@@ -741,7 +741,8 @@ def test_iw_runs_for_all_mc_metrics(multiclass_classification_data, metric):  # 
                 'upmarket_card': 'y_pred_proba_upmarket_card'},
             metrics=[metric],
             problem_type='classification_multiclass',
-            chunk_size=5_000
+            chunk_size=5_000,
+            normalize_confusion_matrix='all'
         ).fit(reference)
         _ = estimator.estimate(pd.concat([reference, analysis]))
     except Exception as e:

@@ -461,7 +461,7 @@ class IW(AbstractEstimator):
         res = res.reset_index(drop=True)
 
         if self.result is None:
-            self._set_metric_thresholds(res)
+            self.metrics = self._set_metric_thresholds(res)
             res = self._populate_alert_thresholds(res)
             self.result = Result(
                 results_data=res,
@@ -644,44 +644,28 @@ class IW(AbstractEstimator):
                     )
                     updated_metrics.append(metric)
                 elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
-                    ###
-                    realized_chunk_performance = np.asarray(
-                        [self._multi_class_confusion_matrix_realized_performance(chunk.data) for chunk in reference_chunks]
-                    )
-
                     alert_thresholds_dict = {}
-                    num_classes = len(self.classes)
+                    num_classes = len(metric.classes)
                     for i in range(num_classes):
                         for j in range(num_classes):
                             lower_threshold_value, upper_threshold_value = calculate_threshold_values(
-                                threshold=self.threshold,
+                                threshold=metric.threshold,
                                 # data=realized_chunk_performance[:, i, j],
-                                data=result_data.loc[:, (f"true_{self.classes[i]}_pred_{self.classes[j]}", "realized")],
-                                lower_threshold_value_limit=self.lower_threshold_value_limit,
-                                upper_threshold_value_limit=self.upper_threshold_value_limit,
+                                data=result_data.loc[:, (f"true_{metric.classes[i]}_pred_{metric.classes[j]}", "realized")],
+                                lower_threshold_value_limit=metric.lower_threshold_value_limit,
+                                upper_threshold_value_limit=metric.upper_threshold_value_limit,
                             )
-                            alert_thresholds_dict[f"true_{self.classes[i]}_pred_{self.classes[j]}"] = (
+                            alert_thresholds_dict[f"true_{metric.classes[i]}_pred_{metric.classes[j]}"] = (
                                 lower_threshold_value,
                                 upper_threshold_value,
                             )
                     metric.alert_thresholds_dict = alert_thresholds_dict
                     updated_metrics.append(metric)
-                    ###
-
         return updated_metrics
 
     def _populate_alert_thresholds(self, result_data: pd.DataFrame) -> pd.DataFrame:
-        single_component_metric_names = [
-            'f1',
-            'roc_auc',
-            'accuracy',
-            'precision',
-            'recall',
-            'specificity',
-            'business_value',
-        ]
         for metric in self.metrics:
-            if metric.name in single_component_metric_names:
+            if metric.name != "confusion_matrix":
                 column_name = metric.column_name
                 result_data[(column_name, 'upper_threshold')] = metric.upper_threshold_value
                 result_data[(column_name, 'lower_threshold')] = metric.lower_threshold_value
@@ -695,56 +679,72 @@ class IW(AbstractEstimator):
                     axis=1,
                 )
                 del column_name
-            elif metric.name == "confusion_matrix":
-                column_name = 'true_positive'
-                result_data[(column_name, 'upper_threshold')] = metric.true_positive_upper_threshold
-                result_data[(column_name, 'lower_threshold')] = metric.true_positive_lower_threshold
-                result_data[(column_name, 'alert')] = result_data.apply(
-                    lambda row: True
-                    if (
-                        row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
-                        or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+            else:
+                if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
+                    column_name = 'true_positive'
+                    result_data[(column_name, 'upper_threshold')] = metric.true_positive_upper_threshold
+                    result_data[(column_name, 'lower_threshold')] = metric.true_positive_lower_threshold
+                    result_data[(column_name, 'alert')] = result_data.apply(
+                        lambda row: True
+                        if (
+                            row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
+                            or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                        )
+                        else False,
+                        axis=1,
                     )
-                    else False,
-                    axis=1,
-                )
-                column_name = 'true_negative'
-                result_data[(column_name, 'upper_threshold')] = metric.true_negative_upper_threshold
-                result_data[(column_name, 'lower_threshold')] = metric.true_negative_lower_threshold
-                result_data[(column_name, 'alert')] = result_data.apply(
-                    lambda row: True
-                    if (
-                        row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
-                        or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                    column_name = 'true_negative'
+                    result_data[(column_name, 'upper_threshold')] = metric.true_negative_upper_threshold
+                    result_data[(column_name, 'lower_threshold')] = metric.true_negative_lower_threshold
+                    result_data[(column_name, 'alert')] = result_data.apply(
+                        lambda row: True
+                        if (
+                            row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
+                            or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                        )
+                        else False,
+                        axis=1,
                     )
-                    else False,
-                    axis=1,
-                )
-                column_name = 'false_positive'
-                result_data[(column_name, 'upper_threshold')] = metric.false_positive_upper_threshold
-                result_data[(column_name, 'lower_threshold')] = metric.false_positive_lower_threshold
-                result_data[(column_name, 'alert')] = result_data.apply(
-                    lambda row: True
-                    if (
-                        row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
-                        or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                    column_name = 'false_positive'
+                    result_data[(column_name, 'upper_threshold')] = metric.false_positive_upper_threshold
+                    result_data[(column_name, 'lower_threshold')] = metric.false_positive_lower_threshold
+                    result_data[(column_name, 'alert')] = result_data.apply(
+                        lambda row: True
+                        if (
+                            row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
+                            or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                        )
+                        else False,
+                        axis=1,
                     )
-                    else False,
-                    axis=1,
-                )
-                column_name = 'false_negative'
-                result_data[(column_name, 'upper_threshold')] = metric.false_negative_upper_threshold
-                result_data[(column_name, 'lower_threshold')] = metric.false_negative_lower_threshold
-                result_data[(column_name, 'alert')] = result_data.apply(
-                    lambda row: True
-                    if (
-                        row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
-                        or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                    column_name = 'false_negative'
+                    result_data[(column_name, 'upper_threshold')] = metric.false_negative_upper_threshold
+                    result_data[(column_name, 'lower_threshold')] = metric.false_negative_lower_threshold
+                    result_data[(column_name, 'alert')] = result_data.apply(
+                        lambda row: True
+                        if (
+                            row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
+                            or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                        )
+                        else False,
+                        axis=1,
                     )
-                    else False,
-                    axis=1,
-                )
-
+                else:
+                    # column names are all elements of f"true_{self.classes[i]}_pred_{self.classes[j]}"
+                    for column_name in metric.column_names:
+                        _lower_threshold_value = metric.alert_thresholds_dict[column_name][0]
+                        _upper_threshold_value = metric.alert_thresholds_dict[column_name][1]
+                        result_data[(column_name, 'upper_threshold')] = _lower_threshold_value
+                        result_data[(column_name, 'lower_threshold')] = _upper_threshold_value
+                        result_data[(column_name, 'alert')] = result_data.apply(
+                            lambda row: True
+                            if (
+                                row[(column_name, 'value')] > row[(column_name, 'upper_threshold')]
+                                or row[(column_name, 'value')] < row[(column_name, 'lower_threshold')]
+                            )
+                            else False,
+                            axis=1,
+                        )
         return result_data
 
 
