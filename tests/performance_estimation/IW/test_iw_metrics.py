@@ -1,22 +1,22 @@
-# import pandas as pd
-# import pytest
+import pandas as pd
+import pytest
 
-# from nannyml.chunk import DefaultChunker
-# from nannyml.datasets import (
-#     load_synthetic_binary_classification_dataset,
-#     load_synthetic_multiclass_classification_dataset,
-# )
-# from nannyml.performance_estimation.confidence_based import CBPE
-# from nannyml.performance_estimation.confidence_based.metrics import (
-#     BinaryClassificationAccuracy,
-#     BinaryClassificationAUROC,
-#     BinaryClassificationConfusionMatrix,
-#     BinaryClassificationF1,
-#     BinaryClassificationPrecision,
-#     BinaryClassificationRecall,
-#     BinaryClassificationSpecificity,
-# )
-# from nannyml.thresholds import ConstantThreshold
+from nannyml.chunk import DefaultChunker
+from nannyml.datasets import (
+    load_synthetic_car_loan_dataset,
+    load_synthetic_multiclass_classification_dataset,
+)
+from nannyml.performance_estimation.importance_weighting import IW
+from nannyml.performance_estimation.importance_weighting.metrics import (
+    BinaryClassificationAccuracy,
+    BinaryClassificationAUROC,
+    BinaryClassificationConfusionMatrix,
+    BinaryClassificationF1,
+    BinaryClassificationPrecision,
+    BinaryClassificationRecall,
+    BinaryClassificationSpecificity,
+)
+from nannyml.thresholds import ConstantThreshold
 
 
 # @pytest.mark.parametrize(

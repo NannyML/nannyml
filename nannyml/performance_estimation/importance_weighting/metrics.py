@@ -1040,23 +1040,23 @@ class BinaryClassificationConfusionMatrix(Metric):
         reference_data_outputs: pd.DataFrame,
         reference_weights: np.ndarray
     ) -> Dict:
-        self.__realized_cm_elements = self._realized_performance_cm_elements(chunk_data)
+        self.__realized_cm_elements = self._realized_performance_cm_elements(chunk_data_outputs)
         self.__estimated_cm_elements = self._estimate_cm_elements(
             reference_data_outputs, reference_weights
         )
         
         chunk_record = {}
 
-        true_pos_info = self.get_true_pos_info(chunk_data)
+        true_pos_info = self.get_true_pos_info(chunk_data_outputs)
         chunk_record.update(true_pos_info)
 
-        true_neg_info = self.get_true_neg_info(chunk_data)
+        true_neg_info = self.get_true_neg_info(chunk_data_outputs)
         chunk_record.update(true_neg_info)
 
-        false_pos_info = self.get_false_pos_info(chunk_data)
+        false_pos_info = self.get_false_pos_info(chunk_data_outputs)
         chunk_record.update(false_pos_info)
 
-        false_neg_info = self.get_false_neg_info(chunk_data)
+        false_neg_info = self.get_false_neg_info(chunk_data_outputs)
         chunk_record.update(false_neg_info)
 
         self.__realized_cm_elements = None

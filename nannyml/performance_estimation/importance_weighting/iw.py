@@ -54,28 +54,6 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'business_value': StandardDeviationThreshold(),
 }
 
-# DEFAULT_LGBM_HYPERPARAMS = {
-#     'boosting_type': 'gbdt',
-#     'class_weight': None,
-#     'colsample_bytree': 1.0,
-#     'importance_type': 'split',
-#     'learning_rate': 0.1,
-#     'max_depth': -1,
-#     'min_child_samples': 20,
-#     'min_child_weight': 0.001,
-#     'min_split_gain': 0.0,
-#     'n_estimators': 100,
-#     'n_jobs': -1,
-#     'num_leaves': 31,
-#     'objective': None,
-#     'random_state': 13,
-#     'reg_alpha': 0.0,
-#     'reg_lambda': 0.0,
-#     'silent': 'warn',
-#     'subsample': 1.0,
-#     'subsample_for_bin': 200000,
-#     'subsample_freq': 0
-# }
 
 DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG = {
     "time_budget": 120,
@@ -388,27 +366,24 @@ class IW(AbstractEstimator):
         estimator: PerformanceEstimator
             The fitted estimator.
         """
-
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
-
         _list_missing(
             [self.y_true, self.y_pred] + self.feature_column_names + model_output_column_names(self.y_pred_proba),
             reference_data
         )
-
         self.continuous_column_names, self.categorical_column_names = _split_features_by_type(
             reference_data, self.feature_column_names
         )
-
         # TODO: Need a better way of doing this for big data.
         self.reference_data = reference_data[
             [self.y_true, self.y_pred] + self.feature_column_names + model_output_column_names(self.y_pred_proba)
         ]
-
         for metric in self.metrics:
             metric.fit(reference_data)
-        
+        self.result = self._estimate(reference_data)
+        assert self.result
+        self.result.data[('chunk', 'period')] = 'reference'     
         return self
 
     @log_usage(UsageEvent.IW_ESTIMATOR_RUN, metadata_from_self=['metrics', 'problem_type'])
@@ -513,7 +488,6 @@ class IW(AbstractEstimator):
             col_name: self._categorical_encoders[col_name].fit_transform(dfx[[col_name]]).ravel() for col_name in self.categorical_column_names
         })
         _x = pd.concat([dfx_cat, dfx_cont], axis=1)
-
         return _x, _y
 
     def _preprocess_ref_for_pred_proba(self, reference_data: pd.DataFrame):
@@ -734,8 +708,8 @@ class IW(AbstractEstimator):
                     for column_name in metric.column_names:
                         _lower_threshold_value = metric.alert_thresholds_dict[column_name][0]
                         _upper_threshold_value = metric.alert_thresholds_dict[column_name][1]
-                        result_data[(column_name, 'upper_threshold')] = _lower_threshold_value
-                        result_data[(column_name, 'lower_threshold')] = _upper_threshold_value
+                        result_data[(column_name, 'upper_threshold')] = _upper_threshold_value
+                        result_data[(column_name, 'lower_threshold')] = _lower_threshold_value
                         result_data[(column_name, 'alert')] = result_data.apply(
                             lambda row: True
                             if (
@@ -760,8 +734,8 @@ def _create_multilevel_index(metric_names: List[str], include_thresholds: bool =
     ]
     results_column_names = [
         'value',
-        'realized',
         'sampling_error',
+        'realized',
         'upper_confidence_boundary',
         'lower_confidence_boundary',
     ]
