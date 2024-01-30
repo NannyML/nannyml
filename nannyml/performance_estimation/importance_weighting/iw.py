@@ -568,17 +568,17 @@ class IW(AbstractEstimator):
             self.reference_data[self.feature_column_names].copy(deep=True)
         )
         reference_dre_probas = model.predict_proba(ref_transformed)[:, 1]
-        print("debug reference_dre_probas")
-        print(reference_dre_probas.mean())
-        print(reference_dre_probas.std())
+        # print("debug reference_dre_probas")
+        # print(reference_dre_probas.mean())
+        # print(reference_dre_probas.std())
         reference_weights = self._calculate_weights(
             reference_dre_probas,
             chunk.data.shape[0],
             ref_transformed.shape[0],
         )
-        print("debug weights")
-        print(reference_weights.mean())
-        print(reference_weights.std())
+        # print("debug weights")
+        # print(reference_weights.mean())
+        # print(reference_weights.std())
 
         _selected_output_colums = [self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba)
 
@@ -599,7 +599,7 @@ class IW(AbstractEstimator):
     def _set_metric_thresholds(self, result_data: pd.DataFrame) -> List:
         updated_metrics = []
         for metric in self.metrics:
-            if metric.name is not "confusion_matrix":
+            if metric.name != "confusion_matrix":
                 metric.lower_threshold_value, metric.upper_threshold_value = calculate_threshold_values(
                     threshold=metric.threshold,
                     data=result_data.loc[:, (metric.column_name, 'realized')],
