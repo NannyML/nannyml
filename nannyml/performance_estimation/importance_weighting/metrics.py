@@ -23,7 +23,6 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
-    auc,
     confusion_matrix,
     f1_score,
     multilabel_confusion_matrix,
@@ -35,13 +34,13 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
-from nannyml._typing import ModelOutputsType, ProblemType, class_labels, model_output_column_names
+from nannyml._typing import ModelOutputsType, ProblemType, class_labels
 from nannyml.base import _remove_nans
-from nannyml.chunk import Chunk, Chunker
+from nannyml.chunk import Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-from nannyml.thresholds import Threshold, calculate_threshold_values
+from nannyml.thresholds import Threshold
 
 
 class Metric(abc.ABC):
@@ -99,7 +98,6 @@ class Metric(abc.ABC):
 
         Notes
         -----
-
         The `components` approach taken here is a quick fix to deal with metrics that return multiple values.
         Look at the `confusion_matrix` for example: a single metric produces 4 different result sets (containing values,
         thresholds, alerts, etc.).
@@ -120,8 +118,8 @@ class Metric(abc.ABC):
 
         self.confidence_deviation: Optional[float] = None
 
-        self.confidence_upper_bound: Optional[float] = 1.0
-        self.confidence_lower_bound: Optional[float] = 0.0
+        # self.confidence_upper_bound: Optional[float] = 1.0
+        # self.confidence_lower_bound: Optional[float] = 0.0
 
         # A list of (display_name, column_name) tuples
         self.components: List[Tuple[str, str]] = components
@@ -131,25 +129,25 @@ class Metric(abc.ABC):
         return logging.getLogger(__name__)
 
     @property
-    def display_name(self) -> str:
+    def display_name(self) -> str:  # noqa: # noqa: D102
         return self.name
 
     @property
-    def column_name(self) -> str:
+    def column_name(self) -> str:  # noqa: # noqa: D102
         return self.components[0][1]
 
     @property
-    def display_names(self):
+    def display_names(self):  # noqa: # noqa: D102
         return [c[0] for c in self.components]
 
     @property
-    def column_names(self):
+    def column_names(self):  # noqa: # noqa: D102
         return [c[1] for c in self.components]
 
-    def __str__(self):
+    def __str__(self):  # noqa: # noqa: D105
         return self.display_name
 
-    def __repr__(self):
+    def __repr__(self):  # noqa: # noqa: D105
         return self.column_name
 
     def fit(self, reference_data: pd.DataFrame):
@@ -164,8 +162,6 @@ class Metric(abc.ABC):
         # Delegate to subclass
         self._fit(reference_data)
 
-        reference_chunks = self.chunker.split(reference_data)
-
         return
 
     @abc.abstractmethod
@@ -175,7 +171,7 @@ class Metric(abc.ABC):
         )
 
     @abc.abstractmethod
-    def _estimate(self, data: pd.DataFrame):
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _estimate method"
         )
@@ -185,9 +181,6 @@ class Metric(abc.ABC):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _sampling_error method"
         )
-
-    def _confidence_deviation(self, reference_chunks: List[Chunk]):
-        return np.std([self._estimate(chunk.data) for chunk in reference_chunks])
 
     @abc.abstractmethod
     def _realized_performance(self, data: pd.DataFrame) -> float:
@@ -230,9 +223,9 @@ class Metric(abc.ABC):
     def _common_cleaning(
         self,
         data: pd.DataFrame,
-        y_pred_proba_column_name: Optional[str] = None,
+        y_pred_proba_column_name: Optional[ModelOutputsType] = None,
         optional_column: Optional[str] = None
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    ) -> Tuple[pd.Series, pd.Series, Union[pd.Series, None], Union[pd.Series, None]]:
         if y_pred_proba_column_name is None:
             if not isinstance(self.y_pred_proba, str):
                 raise InvalidArgumentsException(
@@ -264,11 +257,12 @@ class Metric(abc.ABC):
 
         Parameters
         ----------
-        chunk_data : pd.DataFrame
-            A pandas dataframe containing the data for a given chunk.
-        Raises
-        ------
-            NotImplementedError: occurs when a metric has multiple componets
+        chunk_data_outputs : pd.DataFrame
+            A pandas dataframe containing the output data for a given chunk.
+        reference_data_outputs : pd.DataFrame
+            A pandas dataframe containing the output data reference data.
+        reference_weights : np.ndarray
+            A numpy array containing the weights of each reference data row.
 
         Returns
         -------
@@ -287,11 +281,11 @@ class Metric(abc.ABC):
         chunk_record[f'sampling_error_{column_name}'] = metric_estimate_sampling_error
         chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data_outputs)
         chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
-            self.confidence_upper_bound or np.inf,
+            self.upper_threshold_value_limit or np.inf,
             estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
         chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
-            self.confidence_lower_bound or -np.inf,
+            self.lower_threshold_value_limit or -np.inf,
             estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
         return chunk_record
@@ -308,6 +302,7 @@ class MetricFactory:
 
     @classmethod
     def create(cls, key: str, use_case: ProblemType, **kwargs) -> Metric:
+        """Create new Metric."""
         if kwargs is None:
             kwargs = {}
 
@@ -333,6 +328,7 @@ class MetricFactory:
 
     @classmethod
     def register(cls, metric: str, use_case: ProblemType) -> Callable:
+        """Register a Metric in the MetricFactory registry."""
         def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:
@@ -345,9 +341,9 @@ class MetricFactory:
         return inner_wrapper
 
 
-
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
+    """IW binary classification accuracy Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -358,6 +354,7 @@ class BinaryClassificationAccuracy(Metric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification accuracy Metric Class."""
         super().__init__(
             name='accuracy',
             y_pred_proba=y_pred_proba,
@@ -417,6 +414,7 @@ class BinaryClassificationAccuracy(Metric):
 
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
+    """IW binary classification AUROC Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -427,6 +425,7 @@ class BinaryClassificationAUROC(Metric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification AUROC Metric Class."""
         super().__init__(
             name='roc_auc',
             y_pred_proba=y_pred_proba,
@@ -481,6 +480,7 @@ class BinaryClassificationAUROC(Metric):
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationF1(Metric):
+    """IW binary classification f1 Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -491,6 +491,7 @@ class BinaryClassificationF1(Metric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification f1 Metric Class."""
         super().__init__(
             name='f1',
             y_pred_proba=y_pred_proba,
@@ -551,6 +552,7 @@ class BinaryClassificationF1(Metric):
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
+    """IW binary classification precision Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -561,6 +563,7 @@ class BinaryClassificationPrecision(Metric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification precision Metric Class."""
         super().__init__(
             name='precision',
             y_pred_proba=y_pred_proba,
@@ -620,6 +623,7 @@ class BinaryClassificationPrecision(Metric):
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
+    """IW binary classification recall Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -630,6 +634,7 @@ class BinaryClassificationRecall(Metric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification recall Metric Class."""
         super().__init__(
             name='recall',
             y_pred_proba=y_pred_proba,
@@ -689,6 +694,7 @@ class BinaryClassificationRecall(Metric):
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
+    """IW binary classification specificity Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -699,6 +705,7 @@ class BinaryClassificationSpecificity(Metric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification specificity Metric Class."""
         super().__init__(
             name='specificity',
             y_pred_proba=y_pred_proba,
@@ -760,6 +767,7 @@ class BinaryClassificationSpecificity(Metric):
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationConfusionMatrix(Metric):
+    """IW binary classification Confusion Matrix Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -771,6 +779,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         normalize_confusion_matrix: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification Confusion Matrix Metric Class."""
         super().__init__(
             name='confusion_matrix',
             y_pred_proba=y_pred_proba,
@@ -790,6 +799,14 @@ class BinaryClassificationConfusionMatrix(Metric):
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
         if self.normalize_confusion_matrix is not None:
             self.upper_threshold_value_limit = 1
+        self.true_positive_lower_threshold: Optional[float] = None
+        self.true_positive_upper_threshold: Optional[float] = None
+        self.true_negative_lower_threshold: Optional[float] = None
+        self.true_negative_upper_threshold: Optional[float] = None
+        self.false_positive_lower_threshold: Optional[float] = None
+        self.false_positive_upper_threshold: Optional[float] = None
+        self.false_negative_lower_threshold: Optional[float] = None
+        self.false_negative_upper_threshold: Optional[float] = None
 
     def _fit(self, reference_data: pd.DataFrame):
         self._true_positive_sampling_error_components = bse.true_positive_sampling_error_components(
@@ -813,7 +830,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             normalize_confusion_matrix=self.normalize_confusion_matrix,
         )
 
-    def _realized_performance_cm_elements(self, data: pd.DataFrame) -> float:
+    def _realized_performance_cm_elements(self, data: pd.DataFrame) -> Tuple[float, float, float, float]:
         _, y_pred, y_true, _ = self._common_cleaning(data, y_pred_proba_column_name=self.y_pred_proba)
         if y_true is None:
             warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
@@ -826,12 +843,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             return (np.NaN, np.NaN, np.NaN, np.NaN)
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return (tn, fp, fn, tp)
-    
+
     def _estimate_cm_elements(
         self,
         reference_data_outputs: pd.DataFrame,
         reference_weights: np.ndarray
-    ):
+    ) -> Tuple[float, float, float, float]:
         reference_data_outputs['reference_weights'] = reference_weights
         _, y_pred, y_true, weights = self._common_cleaning(
             reference_data_outputs,
@@ -887,12 +904,13 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit or np.inf,
                 etp + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
             )
 
         true_pos_info['lower_confidence_boundary_true_positive'] = np.maximum(
-            self.confidence_lower_bound, etp - SAMPLING_ERROR_RANGE * sampling_error_true_positives
+            self.lower_threshold_value_limit or -np.inf,
+            etp - SAMPLING_ERROR_RANGE * sampling_error_true_positives
         )
 
         return true_pos_info
@@ -929,12 +947,13 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit or np.inf,
                 etn + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
             )
 
         true_neg_info['lower_confidence_boundary_true_negative'] = np.maximum(
-            self.confidence_lower_bound, etn - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
+            self.lower_threshold_value_limit or -np.inf,
+            etn - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
         )
 
         return true_neg_info
@@ -971,12 +990,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit or np.inf,
                 efp + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
             )
 
         false_pos_info['lower_confidence_boundary_false_positive'] = np.maximum(
-            self.confidence_lower_bound,
+            self.lower_threshold_value_limit or -np.inf,
             efp - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
         )
 
@@ -1014,12 +1033,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit or np.inf,
                 efn + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
             )
 
         false_neg_info['lower_confidence_boundary_false_negative'] = np.maximum(
-            self.confidence_lower_bound,
+            self.lower_threshold_value_limit or -np.inf,
             efn - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
         )
 
@@ -1031,11 +1050,27 @@ class BinaryClassificationConfusionMatrix(Metric):
         reference_data_outputs: pd.DataFrame,
         reference_weights: np.ndarray
     ) -> Dict:
+        """Returns a dictionary containing the performance metrics for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data_outputs : pd.DataFrame
+            A pandas dataframe containing the output data for a given chunk.
+        reference_data_outputs : pd.DataFrame
+            A pandas dataframe containing the output data reference data.
+        reference_weights : np.ndarray
+            A numpy array containing the weights of each reference data row.
+
+        Returns
+        -------
+            chunk_record : Dict
+                A dictionary of perfomance metric, value pairs.
+        """
         self.__realized_cm_elements = self._realized_performance_cm_elements(chunk_data_outputs)
         self.__estimated_cm_elements = self._estimate_cm_elements(
             reference_data_outputs, reference_weights
         )
-        
+
         chunk_record = {}
 
         true_pos_info = self.get_true_pos_info(chunk_data_outputs)
@@ -1050,11 +1085,11 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info = self.get_false_neg_info(chunk_data_outputs)
         chunk_record.update(false_neg_info)
 
-        self.__realized_cm_elements = None
-        self.__estimated_cm_elements = None
+        self.__realized_cm_elements = (np.NaN, np.NaN, np.NaN, np.NaN)
+        self.__estimated_cm_elements = (np.NaN, np.NaN, np.NaN, np.NaN)
         return chunk_record
 
-    def _estimate(self, data: pd.DataFrame):
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
         pass
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
@@ -1066,6 +1101,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
 @MetricFactory.register('business_value', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationBusinessValue(Metric):
+    """IW binary classification business value Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1078,6 +1114,7 @@ class BinaryClassificationBusinessValue(Metric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW binary classification business value Metric Class."""
         super().__init__(
             name='business_value',
             y_pred_proba=y_pred_proba,
@@ -1107,9 +1144,6 @@ class BinaryClassificationBusinessValue(Metric):
 
         self.business_value_matrix = business_value_matrix
         self.normalize_business_value: Optional[str] = normalize_business_value
-
-        self.confidence_upper_bound: Optional[float] = None
-        self.confidence_lower_bound: Optional[float] = None
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.business_value_sampling_error_components(
@@ -1195,14 +1229,19 @@ def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pre
 class _MulticlassClassificationMetric(Metric):
     """Base class for multiclass classification metrics."""
 
-    def _common_cleaning(
+    def _common_cleaning(  # type: ignore # ignore override error
         self,
         data: pd.DataFrame,
-        y_pred_proba_columns_dict: Optional[dict] = None,
+        y_pred_proba_columns_dict: Optional[ModelOutputsType] = None,
         optional_column: Optional[str] = None
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    ) -> Tuple[
+        Union[pd.DataFrame, None],
+        Union[pd.Series, None],
+        Union[pd.Series, None],
+        Union[pd.Series, None],
+        List[str]
+    ]:
         """Multiclass implementation of _common_cleaning."""
-
         if y_pred_proba_columns_dict is None:
             y_pred_proba_columns_dict = self.y_pred_proba
         if y_pred_proba_columns_dict is None:
@@ -1235,6 +1274,7 @@ class _MulticlassClassificationMetric(Metric):
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
+    """IW Multiclass accuracy Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1245,6 +1285,7 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW Multiclass accuracy Metric Class."""
         super().__init__(
             name='accuracy',
             y_pred_proba=y_pred_proba,
@@ -1281,7 +1322,7 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return accuracy_score(y_true, y_pred, sample_weight=weights)
@@ -1297,7 +1338,7 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return accuracy_score(y_true, y_pred)
@@ -1305,6 +1346,7 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
 
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
+    """IW Multiclass AUROC Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1315,6 +1357,7 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW Multiclass AUROC Metric Class."""
         super().__init__(
             name='roc_auc',
             y_pred_proba=y_pred_proba,
@@ -1335,7 +1378,7 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
     def _fit(self, reference_data: pd.DataFrame):
         classes = class_labels(self.y_pred_proba)
         binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]
+        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]  # type: ignore #mypy_fail
         self._sampling_error_components = mse.auroc_sampling_error_components(
             y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
         )
@@ -1378,6 +1421,7 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(_MulticlassClassificationMetric):
+    """IW Multiclass f1 Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1388,6 +1432,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW Multiclass f1 Metric Class."""
         super().__init__(
             name='f1',
             y_pred_proba=y_pred_proba,
@@ -1422,7 +1467,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return f1_score(
@@ -1444,7 +1489,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
@@ -1452,6 +1497,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
+    """IW Multiclass precision Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1462,6 +1508,7 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW Multiclass precision Metric Class."""
         super().__init__(
             name='precision',
             y_pred_proba=y_pred_proba,
@@ -1496,7 +1543,7 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return precision_score(
@@ -1518,7 +1565,7 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
@@ -1526,6 +1573,7 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(_MulticlassClassificationMetric):
+    """IW Multiclass recall Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1536,6 +1584,7 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW Multiclass recall Metric Class."""
         super().__init__(
             name='recall',
             y_pred_proba=y_pred_proba,
@@ -1570,7 +1619,7 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return recall_score(
@@ -1592,7 +1641,7 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
@@ -1600,6 +1649,7 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
+    """IW Multiclass specificity Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1610,6 +1660,7 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
         timestamp_column_name: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW Multiclass specificity Metric Class."""
         super().__init__(
             name='specificity',
             y_pred_proba=y_pred_proba,
@@ -1644,7 +1695,7 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels, sample_weight=weights)
@@ -1664,7 +1715,7 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
@@ -1676,6 +1727,7 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
+    """IW Multiclass Confusion Matrix Metric Class."""
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1687,12 +1739,13 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
         normalize_confusion_matrix: Optional[str] = None,
         **kwargs,
     ):
+        """Initialize IW Multiclass Confusion Matrix Metric Class."""
         if isinstance(y_pred_proba, str):
             raise ValueError(
                 "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
             )
-
         self.classes = list(y_pred_proba.keys())
+        self.alert_thresholds_dict: Dict[str, Any] = {}
 
         super().__init__(
             name='confusion_matrix',
@@ -1708,10 +1761,9 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
         if self.normalize_confusion_matrix is None:
             # overwrite default upper bound setting.
-            self.confidence_upper_bound = None
+            self.upper_threshold_value_limit = None
         else:
             self.upper_threshold_value_limit = 1
-
 
     def _get_components(self, classes: List[str]) -> List[Tuple[str, str]]:
         components = []
@@ -1749,7 +1801,7 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
 
     def _estimate_multiclass_confusion_matrix(
         self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray
-    ) -> np.ndarray:
+    ) -> Union[np.ndarray, float]:
         reference_data_outputs['reference_weights'] = reference_weights
         _, y_pred, y_true, weights, labels = self._common_cleaning(
             reference_data_outputs,
@@ -1759,10 +1811,10 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
         if reference_data_outputs is None or self.y_true not in reference_data_outputs.columns:
             warnings.warn(f"No 'y_true' values given for chunk, returning NaN as realized {self.name}.")
             return np.NaN
-        if y_true.nunique() <= 1:
+        if y_true is None or y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.name}.")
             return np.NaN
-        if y_pred.nunique() <= 1:
+        if y_pred is None or y_pred.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_pred', returning NaN as realized {self.name}.")
             return np.NaN
         cm = confusion_matrix(
@@ -1776,7 +1828,23 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
         reference_data_outputs: pd.DataFrame,
         reference_weights: np.ndarray
     ) -> Dict:
-        chunk_record = {}
+        """Returns a dictionary containing the performance metrics for a given chunk.
+
+        Parameters
+        ----------
+        chunk_data_outputs : pd.DataFrame
+            A pandas dataframe containing the output data for a given chunk.
+        reference_data_outputs : pd.DataFrame
+            A pandas dataframe containing the output data reference data.
+        reference_weights : np.ndarray
+            A numpy array containing the weights of each reference data row.
+
+        Returns
+        -------
+            chunk_record : Dict
+                A dictionary of perfomance metric, value pairs.
+        """
+        chunk_record: Dict = {}
         estimated_cm = self._estimate_multiclass_confusion_matrix(
             reference_data_outputs, reference_weights
         )
@@ -1814,7 +1882,7 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
                     ] = upper_confidence_boundary
                 else:
                     chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
-                        self.confidence_upper_bound, upper_confidence_boundary
+                        self.upper_threshold_value_limit, upper_confidence_boundary
                     )
 
                 lower_confidence_boundary = (
@@ -1828,11 +1896,11 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
                     ] = lower_confidence_boundary
                 else:
                     chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
-                        self.confidence_lower_bound, lower_confidence_boundary
+                        self.lower_threshold_value_limit, lower_confidence_boundary
                     )
         return chunk_record
 
-    def _estimate(self, data: pd.DataFrame):
+    def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
         pass
 
     def _sampling_error(self, data: pd.DataFrame) -> float:

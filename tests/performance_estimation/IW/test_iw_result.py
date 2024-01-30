@@ -120,7 +120,6 @@ def test_filter_on_both_metric_and_component_names_returns_all_matching_componen
     assert 'true_negative' in sut
     assert 'false_negative' in sut
     assert 'true_positive' in sut
-
     assert 'business_value' in sut
 
 
@@ -192,8 +191,8 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(estimator_ar
             problem_type='classification_multiclass',
             chunk_size=5_000,
             normalize_confusion_matrix='all'
-        ).fit(reference)
-    sut = est.estimate(analysis)
+        ).fit(reference.head(15_000))
+    sut = est.estimate(analysis.tail(10_000))
 
     try:
         _ = sut.plot(**plot_args)
@@ -234,8 +233,8 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         metrics=['roc_auc'],
         problem_type='classification_binary',
         **estimator_args
-    ).fit(reference)
-    sut = est.estimate(analysis)
+    ).fit(reference.head(15_000))
+    sut = est.estimate(analysis.tail(10_000))
 
     try:
         _ = sut.plot(**plot_args)
