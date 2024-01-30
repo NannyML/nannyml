@@ -569,7 +569,6 @@ def test_iw_for_binary_classification_does_not_output_confidence_bounds_outside_
 
 def test_iw_returns_distinct_but_consistent_results_when_reused(binary_classification_data):
     reference, analysis = binary_classification_data
-
     sut = IW(  # type: ignore
         timestamp_column_name='timestamp',
         feature_column_names=[
@@ -591,7 +590,6 @@ def test_iw_returns_distinct_but_consistent_results_when_reused(binary_classific
     sut.fit(reference)
     result1 = sut.estimate(analysis)
     result2 = sut.estimate(analysis)
-
     # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
     # modified on subsequent estimates.
     assert result1 is not result2
@@ -638,7 +636,7 @@ def test_iw_returns_distinct_but_consistent_results_when_reused(binary_classific
         },
     ],
 )
-def test_cbpe_with_custom_thresholds(custom_thresholds):
+def test_iw_with_custom_thresholds(custom_thresholds):
     est = IW(  # type: ignore
         timestamp_column_name='timestamp',
         feature_column_names=[
@@ -664,7 +662,7 @@ def test_cbpe_with_custom_thresholds(custom_thresholds):
     assert sut == expected_thresholds
 
 
-def test_cbpe_with_default_thresholds():
+def test_iw_with_default_thresholds():
     est = IW(  # type: ignore
         timestamp_column_name='timestamp',
         feature_column_names=[
@@ -684,7 +682,6 @@ def test_cbpe_with_default_thresholds():
         chunk_size=5_000
     )
     sut = est.thresholds
-
     assert sut == DEFAULT_THRESHOLDS
 
 

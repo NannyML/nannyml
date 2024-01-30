@@ -294,9 +294,6 @@ class Metric(abc.ABC):
             self.confidence_lower_bound or -np.inf,
             estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
-        # chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
-        # chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
-        # chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
         return chunk_record
 
 
@@ -373,7 +370,6 @@ class BinaryClassificationAccuracy(Metric):
             lower_threshold_value_limit=0,
             upper_threshold_value_limit=1,
         )
-
         # sampling error
         self._sampling_error_components: Tuple = ()
 
@@ -577,7 +573,6 @@ class BinaryClassificationPrecision(Metric):
             lower_threshold_value_limit=0,
             upper_threshold_value_limit=1,
         )
-
         # sampling error
         self._sampling_error_components: Tuple = ()
 
@@ -647,7 +642,6 @@ class BinaryClassificationRecall(Metric):
             lower_threshold_value_limit=0,
             upper_threshold_value_limit=1,
         )
-
         # sampling error
         self._sampling_error_components: Tuple = ()
 
@@ -717,7 +711,6 @@ class BinaryClassificationSpecificity(Metric):
             lower_threshold_value_limit=0,
             upper_threshold_value_limit=1,
         )
-
         # sampling error
         self._sampling_error_components: Tuple = ()
 
@@ -794,9 +787,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             ],
             lower_threshold_value_limit=0,
         )
-
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
-
         if self.normalize_confusion_matrix is not None:
             self.upper_threshold_value_limit = 1
 
