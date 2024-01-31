@@ -1890,7 +1890,7 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
 
                 estimated_value = estimated_cm[
                     self.classes.index(true_class), self.classes.index(pred_class)
-                ] if estimated_cm else np.NaN
+                ] if estimated_cm is not None else np.NaN
 
                 chunk_record[f'estimated_true_{true_class}_pred_{pred_class}'] = estimated_value
 
@@ -1900,7 +1900,7 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
 
                 chunk_record[f'realized_true_{true_class}_pred_{pred_class}'] = realized_cm[
                     self.classes.index(true_class), self.classes.index(pred_class)
-                ] if realized_cm else np.NaN
+                ] if realized_cm is not None else np.NaN
 
                 upper_confidence_boundary = (
                     estimated_value
