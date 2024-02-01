@@ -329,6 +329,68 @@ Calibrating probabilities is yet another reason why NannyML requires reference d
 Fitting a calibrator on model training data would introduce bias [1]_.
 
 
+.. _how-it-works-iw:
+
+-------------------------
+Importance Weighting (IW)
+-------------------------
+
+The Intuition
+=============
+
+Importance Weighting is another algorithm that allows us to estimate performance.
+Assuming that our model is as good as before we can perform a weighted calculation based on our
+original data in order to see what we can expect for new data. The key part is obtaining
+the weights in order to perform the weighted calculation.
+The weights of the calculation are the density ration estimations, also called importance weights.
+The density ratio is the fraction of the probability density functions of the new and the original
+data. The Importance Weighting algorithm allows us to adjust our performance expecation in order to
+account for any change in our data.
+
+
+Implementation details
+======================
+
+Let's go into the details of how Importance weighting is implemented by NannyML.
+The :class:`~nannyml.performance_estimation.importance_weighting.iw.IW` calculator
+is responsible for algorithm's implementation and works for performance estimation of binary 
+and multiclass classification models. Let's go into the details of how
+Importance Weighting works.:
+
+    1. Preprocess data to create the training dataset for the density ratio estimation
+       model. For this step we concatenate the model inputs for the reference data
+       and the :term:`chunk data<Data Chunk>`. Reference data points are labeled as 0 and chunk data points as 1.
+    2. The density ratio estimation model is trained using a LightGBM classifier. Hyperparameter
+       tuning can be performed if opted by the user.
+    3. The model's predicted probabilities for all reference data points are converted to density ratios.
+    4. We calculate the weighted performance score on the reference data.
+
+Those steps are the same for both binary and multiclass classification problems.
+
+.. _iw-assumptions-limitations:
+
+Assumptions and Limitations
+===========================
+
+Importance Weighting works well while also being a relatively simple performance estimation method. However it
+does have it's limitations:
+
+**There is no concept drift**.
+    While dealing well with covaraite shift, Importance Weighting will not work under :term:`concept drift` i.e. when
+    P(Y|X) changes. We cannot get around this limitation and iIn that case Importance Weighting
+    will not give accurate estimations.
+
+**There is no covariate shift to previously unseen regions in the input space.**
+    The algorithm will most likely not work if the drift happens to subregions previously unseen in the input
+    space. Mathematically we can also state that the support of the chunk data needs to be a subset of the
+    support of the reference data. In those cases density ratio estimation is theoritically not defined.
+    Practically if we don't have data from a chunk region in the reference data we can't account for that
+    shift with a weighted calculation from reference data.
+
+**The sample of data used for estimation is large enough.**
+    IW struggles to give accurate estimates when the data size gets low. It is both harder to properly
+    train the density ratio estimation model and the weighted calculation is less effective.
+
 
 .. _how-it-works-dle:
 
