@@ -500,13 +500,7 @@ class IW(AbstractEstimator):
         reference_y = np.zeros(len(reference_X))
 
         dfx = pd.concat([reference_X, chunk_X]).reset_index(drop=True)
-        npy = np.concatenate([reference_y, chunk_y])
-
-        # drop duplicate columns
-        dfx['__target__'] = npy
-        dfx = dfx.drop_duplicates(subset=self.feature_column_names, keep='last').reset_index(drop=True)
-        _y = dfx['__target__']
-        dfx.drop('__target__', axis=1, inplace=True)
+        _y = np.concatenate([reference_y, chunk_y])
 
         dfx_cont = dfx[self.continuous_column_names]
         dfx_cat = pd.DataFrame({
@@ -575,20 +569,13 @@ class IW(AbstractEstimator):
             self.reference_data[self.feature_column_names].copy(deep=True)
         )
         reference_dre_probas = model.predict_proba(ref_transformed)[:, 1]
-        # print("debug reference_dre_probas")
-        # print(reference_dre_probas.mean())
-        # print(reference_dre_probas.std())
         reference_weights = self._calculate_weights(
             reference_dre_probas,
             chunk.data.shape[0],
             ref_transformed.shape[0],
         )
-        # print("debug weights")
-        # print(reference_weights.mean())
-        # print(reference_weights.std())
 
         _selected_output_colums = [self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba)
-
         chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
             chunk_record = metric.get_chunk_record(
