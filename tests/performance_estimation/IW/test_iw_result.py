@@ -15,6 +15,7 @@ from nannyml.datasets import (
 )
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.importance_weighting import IW, Result
+from nannyml.performance_calculation.calculator import PerformanceCalculator
 
 
 @pytest.fixture(scope='module')
@@ -238,5 +239,46 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
 
     try:
         _ = sut.plot(**plot_args)
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_binary_classification_result_comparison_plots():  # noqa: D103
+    reference, analysis, analysis_targets = load_synthetic_car_loan_dataset()
+    est = IW(  # type: ignore
+        feature_column_names=[
+            "car_value",
+            "debt_to_income_ratio",
+            "loan_length",
+            "driver_tenure",
+            "salary_range",
+            "repaid_loan_on_prev_car",
+            "size_of_downpayment"
+        ],
+        y_true='repaid',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+        timestamp_column_name='timestamp',
+        chunk_size=5000
+    ).fit(reference.head(15_000))
+    sut = est.estimate(analysis.tail(10_000))
+
+    analysis = analysis.merge(analysis_targets, left_index=True, right_index=True)
+    calc = PerformanceCalculator(
+        y_pred_proba='y_pred_proba',
+        y_pred='y_pred',
+        y_true='repaid',
+        timestamp_column_name='timestamp',
+        problem_type='classification_binary',
+        metrics=['roc_auc'],
+        chunk_size=5000)
+
+    calc.fit(reference.head(15_000))
+    results = calc.calculate(analysis.tail(10_000))
+
+    try:
+        _ = sut.compare(results).plot()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")

@@ -106,6 +106,30 @@ Glossary
 
         You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
 
+    Density Ratio
+        A density ratio is defined between two datasets. It is defined as the ratio of the
+        :term:`probability density functions<Probability Density Function>` of the two datasets.
+        In NannyML this usually happens between a chunk dataset and a reference hence it is defined
+        as the :term:`probability density function<Probability Density Function>` of the chunk dataset
+        divided by the :term:`probability density function<Probability Density Function>` of the
+        reference dataset. However becasue estimating the probability density functions is difficult
+        Density Ratio is often estimated directly through the use of a
+        :term:`density ratio estimation model<Density Ratio Estimation Model>`.
+
+    Density Ratio Estimation Model
+        A density ratio estimation model is a machine learning model that is used to calculate
+        the :term:`density ratio<Density Ratio>`. The model is a binary classification model
+        trained to label data points as belonging to one or the other dataset. The output
+        probability is transformed to a density ratio using the formula:
+
+        .. math::
+            \mathrm{dr}(x)=\frac{N_{ref}}{N_{chunk}}\cdot\frac{P_{chunk}(x)}{1-P_{chunk}(x)}
+
+        where we calculate the density ratio ``dr`` between a reference dataset and a chunk dataset
+        for each data point ``x``.
+
+
+
     Error
         The error of a statistic on a sample is defined as the difference between the value of the observation and the true value.
         The sample size can sometimes be 1 but it is usually bigger. When the error consists only of the effects
@@ -147,6 +171,10 @@ Glossary
                 A technical identifier such as a globally unique identifier (GUID).
                 A hash of some (or all) of your column values, using a hashing function with appropriate collision properties, e.g. the SHA-2 and SHA-3 families.
                 A concatenation of your dataset name and a row number.
+    
+    Importance Weights
+        Importance Weights are the the :term:`density ratios<Density Ratio>` calculated for each point in a dataset.
+        This is usually done as part of :ref:`Importance Weighting Performance Estimation<how-it-works-iw>`.
 
     Imputation
         The process of substituting missing values with actual values on a dataset.
@@ -224,6 +252,10 @@ Glossary
         Sometimes the prediction of a machine learning model is transformed into a continuous range of real numbers.
         Those scores take values outside the `[0,1]` range that is allowed for probabilities. The higher the score,
         the more likely the positive outcome should be.
+    
+    Probability Density Function
+        A probability density function of a continuous random variable describes the relative likelihood that the
+        variable will have values within a specific range of values. The area under the PDF curve equals to 1.
 
     Ranking
         NannyML uses ranking to order columns in univariate drift results. The resulting order can be helpful

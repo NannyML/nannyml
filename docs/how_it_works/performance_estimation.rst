@@ -339,13 +339,19 @@ The Intuition
 =============
 
 Importance Weighting is another algorithm that allows us to estimate performance.
-Assuming that our model is as good as before we can perform a weighted calculation based on our
-original data in order to see what we can expect for new data. The key part is obtaining
-the weights in order to perform the weighted calculation.
-The weights of the calculation are the density ration estimations, also called importance weights.
-The density ratio is the fraction of the probability density functions of the new and the original
-data. The Importance Weighting algorithm allows us to adjust our performance expecation in order to
-account for any change in our data.
+We assume that we have a reference :term:`data period<Data Period>` which we can use in order
+to extrapolate the performance our model will have on a :term:`data chunk<Data Chunk>`.
+This extrapolation happens by performing a weighted performance calculation whose
+effect is to make the reference data resemble more the chunk data.
+This is accomplished by calculating the :term:`density ratio<Density Ratio>` between the chunk data and the
+reference data. The density ratio is defined as the ratio of the chunk data
+:term:`probability density function<Probability Density Function>`
+divided by the reference data probability density function. Those ratios are
+also called :term:`importance weights<Importance Weights>`. They are calculated for each data point in the
+reference dataset and they are the weights used in the weighted performance calculation.
+The impact of those weights is that data points less likely to be found in the chunk data contribute
+less to the performance result and vica versa. Hence the weighted perfomance calculation result
+on the reference dataset is the performance we estimate the chunk dataset will have once targets become vailable.
 
 
 Implementation details
@@ -357,12 +363,23 @@ is responsible for algorithm's implementation and works for performance estimati
 and multiclass classification models. Let's go into the details of how
 Importance Weighting works.:
 
-    1. Preprocess data to create the training dataset for the density ratio estimation
-       model. For this step we concatenate the model inputs for the reference data
+    1. Preprocess data to create the training dataset for the :term:`density ratio estimation model<Density Ratio Estimation Model>`.
+       For this step we concatenate the model inputs for the reference data
        and the :term:`chunk data<Data Chunk>`. Reference data points are labeled as 0 and chunk data points as 1.
     2. The density ratio estimation model is trained using a LightGBM classifier. Hyperparameter
        tuning can be performed if opted by the user.
-    3. The model's predicted probabilities for all reference data points are converted to density ratios.
+    3. The model's predicted probabilities for all reference data points are converted to density ratios
+       using the following formula:
+
+       .. math::
+            \mathrm{dr}(x)=\frac{N_{ref}}{N_{chunk}}\cdot\frac{P_{chunk}(x)}{1-P_{chunk}(x)}
+
+       However because we don't want to have extreme values, either too low or too high, for our density ratios
+       we use ``density_ratio_minimum_denominator`` and ``density_ratio_minimum_value`` to impose effective limits
+       on the density ratio minimum and maximum values.
+       Those parameters are configurable in the :class:`~nannyml.performance_estimation.importance_weighting.iw.IW`
+       estimator, although that should be rarely required.
+
     4. We calculate the weighted performance score on the reference data.
 
 Those steps are the same for both binary and multiclass classification problems.
