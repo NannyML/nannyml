@@ -5,7 +5,7 @@ Importance Weighting
 ====================
 
 Let's see how to use NannyML to estimate the :term:`confusion matrix<Confusion Matrix>` for binary classification
-models in the absence of target data. To find out how
+models in the absence of target data. To find out how the
 :class:`~nannyml.performance_estimation.importance_weighting.iw.IW` estimator
 estimates performance, read the :ref:`explanation of Importance Weighting<how-it-works-iw>`.
 
@@ -67,9 +67,8 @@ parameters:
     contains the true classes.
   - **timestamp_column_name (Optional):** the name of the column in the reference data that
     contains timestamps.
-  - **metrics:** a list of metrics to estimate. For more information about the
-    metrics that can be estimated for binary classification, check out
-    the :ref:`Binary Performance Estimation page<binary-performance-estimation>`.
+  - **metrics:** a list of metrics to estimate. In this example we
+    will estimate the ``confusion_matrix`` metric.
   - **chunk_size (Optional):** The number of observations in each chunk of data
     used. Only one chunking argument needs to be provided. For more information about
     :term:`chunking<Data Chunk>` configurations check out the :ref:`chunking tutorial<chunking>`.

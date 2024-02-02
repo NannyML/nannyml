@@ -1,18 +1,19 @@
-.. _business-value-estimation:
+.. _business-value-estimation-cbpe:
 
-========================================================================================
+===================================================
 Estimating Business Value for Binary Classification
-========================================================================================
-This tutorial explains how to use NannyML to estimate business value for binary classification
-models in the absence of target data. To find out how CBPE estimates performance, read the :ref:`explanation of Confidence-based
-Performance Estimation<performance-estimation-deep-dive>`.
+===================================================
+
+Let's see how to use NannyML how to use NannyML to estimate business value for binary classification
+models in the absence of target data. To find out how :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+estimates performance, read the :ref:`explanation of Confidence-based Performance Estimation<how-it-works-cbpe>`.
 
 .. note::
     The following example uses :term:`timestamps<Timestamp>`.
     These are optional but have an impact on the way data is chunked and results are plotted.
     You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
 
-.. _business-value-estimation-binary-just-the-code:
+.. _business-value-estimation-binary-just-the-code-cbpe:
 
 Just The Code
 ----------------
@@ -144,7 +145,7 @@ These results can be also plotted. Our plots contains several key elements.
     :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
     :cells: 7
 
-.. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-business-value-estimation-binary-car-loan-analysis-with-ref.svg
+.. image:: ../../../../_static/tutorials/performance_estimation/binary/tutorial-business-value-estimation-binary-car-loan-analysis-with-ref.svg
 
 Additional information such as the chunk index range and chunk date range (if timestamps were provided) is shown in the hover for each chunk (these are
 interactive plots, though only static views are included here).
