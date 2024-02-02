@@ -1,12 +1,11 @@
-.. _standard-metric-estimation-iw:
+.. _confusion-matrix-estimation-iw:
 
 ====================
 Importance Weighting
 ====================
 
-
-Let's see how to use NannyML to estimate the performance of binary classification
-models in the absence of target data using Importance Weighting. To find out how
+Let's see how to use NannyML to estimate the :term:`confusion matrix<Confusion Matrix>` for binary classification
+models in the absence of target data. To find out how
 :class:`~nannyml.performance_estimation.importance_weighting.iw.IW` estimator
 estimates performance, read the :ref:`explanation of Importance Weighting<how-it-works-iw>`.
 
@@ -15,13 +14,13 @@ estimates performance, read the :ref:`explanation of Importance Weighting<how-it
     These are optional but have an impact on the way data is chunked and results are plotted.
     You can read more about them in the :ref:`data requirements<data_requirements_columns_timestamp>`.
 
-.. _performance-estimation-binary-just-the-code-iw:
+.. _confusion-matrix-estimation-binary-just-the-code-iw:
 
 Just The Code
 -------------
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cells: 1 3 4 5 7
 
 .. admonition:: **Advanced configuration**
@@ -29,6 +28,7 @@ Just The Code
 
     - To learn how :class:`~nannyml.chunk.Chunk` works and to set up custom chunkings check out the :ref:`chunking tutorial <chunking>`
     - To learn how :class:`~nannyml.thresholds.ConstantThreshold` works and to set up custom threshold check out the :ref:`thresholds tutorial <thresholds>`
+
 
 Walkthrough
 -----------
@@ -44,18 +44,18 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 We start by loading the dataset we'll be using:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cell: 2
+
 
 Next we create the Importance Weighting
 (:class:`~nannyml.performance_estimation.importance_weighting.iw.IW`)
-estimator. In this example, we will estimate the following metrics: **roc_auc**, **accuracy**, and **f1**.
-
-We specify the following parameters in the initialization of the estimator:
+estimator. To initialize an estimator that estimates the **confusion_matrix**, we specify the following
+parameters:
 
   - **feature_column_names:** A list containing the names of the model features in the provided data set.
     All of these features will be used by the importance weighting calculator.
@@ -116,8 +116,18 @@ We specify the following parameters in the initialization of the estimator:
     The default value is ``0.001``.
 
 
+.. note::
+    Since we are estimating the confusion matrix, the count values
+    in each cell of the confusion matrix are estimates. We normalize the
+    estimates just as if they were true counts. This means that when we
+    normalize over the true class, the estimates in each row will sum to 1.
+    When we normalize over the predicted class, the estimates in each
+    column will sum to 1. When we normalize over all observations, the
+    estimates in the entire matrix will sum to 1.
+
+
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cells: 3
 
 The :class:`~nannyml.performance_estimation.importance_weighting.iw.IW`
@@ -125,7 +135,7 @@ estimator is then fitted using the
 :meth:`~nannyml.performance_estimation.importance_weighting.iw.IW.fit` method on the reference data.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cells: 4
 
 The fitted ``estimator`` can be used to estimate performance on other data, for which performance cannot be calculated.
@@ -136,11 +146,11 @@ NannyML can then output a dataframe that contains all the results. Let's have a 
 only.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cells: 5
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cell: 6
 
 Apart from chunk-related data, the results data have the following columns for each metric
@@ -176,10 +186,10 @@ These results can be also plotted. Our plot contains several key elements.
 * *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised. Alerts are caused by the estimated performance crossing the upper or lower threshold.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Standard Performance Metrics - IW - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - IW - Binary Classification.ipynb
     :cells: 7
 
-.. image:: ../../../../_static/tutorials/performance_estimation/binary//tutorial-performance-estimation-iw-car-loan-analysis-with-ref.svg
+.. image:: ../../../../_static/tutorials/performance_estimation/binary/tutorial-confusion-matrix-estimation-iw-car-loan-analysis-with-ref.svg
 
 Additional information such as the chunk index range and chunk date range (if timestamps were provided) is shown in the hover for each chunk (these are
 interactive plots, though only static views are included here).

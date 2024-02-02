@@ -342,7 +342,7 @@ Importance Weighting is another algorithm that allows us to estimate performance
 We assume that we have a reference :term:`data period<Data Period>` which we can use in order
 to extrapolate the performance our model will have on a :term:`data chunk<Data Chunk>`.
 This extrapolation happens by performing a weighted performance calculation whose
-effect is to make the reference data resemble more the chunk data.
+effect is to make the reference data resemble the chunk data more.
 This is accomplished by calculating the :term:`density ratio<Density Ratio>` between the chunk data and the
 reference data. The density ratio is defined as the ratio of the chunk data
 :term:`probability density function<Probability Density Function>`
@@ -351,7 +351,7 @@ also called :term:`importance weights<Importance Weights>`. They are calculated 
 reference dataset and they are the weights used in the weighted performance calculation.
 The impact of those weights is that data points less likely to be found in the chunk data contribute
 less to the performance result and vica versa. Hence the weighted perfomance calculation result
-on the reference dataset is the performance we estimate the chunk dataset will have once targets become vailable.
+on the reference dataset is the performance we estimate the chunk dataset will have once targets become available.
 
 
 Implementation details
