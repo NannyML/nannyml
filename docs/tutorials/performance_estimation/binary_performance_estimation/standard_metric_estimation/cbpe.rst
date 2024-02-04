@@ -5,7 +5,7 @@ Confidence Based Performannce Estimation
 ========================================
 
 Let's see how to use NannyML to estimate the performance of binary classification
-models in the absence of target data. To find out how :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
+models in the absence of target data using CBPE. To find out how :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
 estimates performance, read the :ref:`explanation of Confidence-based Performance Estimation<how-it-works-cbpe>`.
 
 .. note::
