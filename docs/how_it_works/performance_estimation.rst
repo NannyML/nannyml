@@ -394,11 +394,11 @@ does have it's limitations:
 
 **There is no concept drift**.
     While dealing well with covaraite shift, Importance Weighting will not work under :term:`concept drift` i.e. when
-    P(Y|X) changes. We cannot get around this limitation and iIn that case Importance Weighting
+    P(Y|X) changes. We cannot get around this limitation and in that case Importance Weighting
     will not give accurate estimations.
 
 **There is no covariate shift to previously unseen regions in the input space.**
-    The algorithm will most likely not work if the drift happens to subregions previously unseen in the input
+    The algorithm will most likely not work if the drift happens to subregions previously unseen in the model input
     space. Mathematically we can also state that the support of the chunk data needs to be a subset of the
     support of the reference data. In those cases density ratio estimation is theoritically not defined.
     Practically if we don't have data from a chunk region in the reference data we can't account for that
