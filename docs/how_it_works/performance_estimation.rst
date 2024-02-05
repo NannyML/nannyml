@@ -400,7 +400,7 @@ does have it's limitations:
 **There is no covariate shift to previously unseen regions in the input space.**
     The algorithm will most likely not work if the drift happens to subregions previously unseen in the model input
     space. Mathematically we can also state that the support of the chunk data needs to be a subset of the
-    support of the reference data. In those cases density ratio estimation is theoritically not defined.
+    support of the reference data. If not density ratio estimation is theoretically not defined.
     Practically if we don't have data from a chunk region in the reference data we can't account for that
     shift with a weighted calculation from reference data.
 
@@ -411,9 +411,9 @@ does have it's limitations:
 
 .. _how-it-works-dle:
 
------------------
-Direct Loss (DLE)
------------------
+----------------------------
+Direct Loss Estimation (DLE)
+----------------------------
 
 The Intuition
 =============

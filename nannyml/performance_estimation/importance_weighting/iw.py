@@ -263,21 +263,31 @@ class IW(AbstractEstimator):
 
         Examples
         --------
-        Using CBPE to estimate the perfomance of a model for a binary classification problem.
+
+        Using IW to estimate the perfomance of a model for a binary classification problem.
 
         >>> import nannyml as nml
         >>> from IPython.display import display
         >>> reference_df = nml.load_synthetic_car_loan_dataset()[0]
         >>> analysis_df = nml.load_synthetic_car_loan_dataset()[1]
         >>> display(reference_df.head(3))
-        >>> estimator = nml.CBPE(
-        ...     y_pred_proba='y_pred_proba',
-        ...     y_pred='y_pred',
-        ...     y_true='repaid',
+        >>> estimator = nml.IW(
         ...     timestamp_column_name='timestamp',
-        ...     metrics=['roc_auc', 'accuracy', 'f1'],
-        ...     chunk_size=5000,
+        ...     feature_column_names=[
+        ...         "car_value",
+        ...         "debt_to_income_ratio",
+        ...         "loan_length",
+        ...         "driver_tenure",
+        ...         "salary_range",
+        ...         "repaid_loan_on_prev_car",
+        ...         "size_of_downpayment"
+        ...     ],
+        ...     y_true='repaid',
+        ...     y_pred='y_pred',
+        ...     y_pred_proba='y_pred_proba',
+        ...     metrics=['accuracy', 'roc_auc', 'f1'],
         ...     problem_type='classification_binary',
+        ...     chunk_size=5000
         >>> )
         >>> estimator.fit(reference_df)
         >>> results = estimator.estimate(analysis_df)
@@ -285,11 +295,22 @@ class IW(AbstractEstimator):
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
 
-        Using CBPE to estimate the perfomance of a model for a multiclass classification problem.
+        Using IW to estimate the perfomance of a model for a multiclass classification problem.
 
         >>> import nannyml as nml
+        >>> from IPython.display import display
         >>> reference_df, analysis_df, _ = nml.load_synthetic_multiclass_classification_dataset()
-        >>> estimator = nml.CBPE(
+        >>> display(reference_df.head(3))
+        >>> estimator = nml.IW(
+        ...     feature_column_names=[
+        ...             "app_behavioral_score",
+        ...             "requested_credit_limit",
+        ...             "credit_bureau_score",
+        ...             "stated_income",
+        ...             "acq_channel",
+        ...             "app_channel",
+        ...             "is_customer"
+        ...         ],
         ...     y_pred_proba={
         ...         'prepaid_card': 'y_pred_proba_prepaid_card',
         ...         'highstreet_card': 'y_pred_proba_highstreet_card',
@@ -303,6 +324,7 @@ class IW(AbstractEstimator):
         >>> )
         >>> estimator.fit(reference_df)
         >>> results = estimator.estimate(analysis_df)
+        >>> display(results.filter(period='analysis').to_df())
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
         """

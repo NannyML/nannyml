@@ -1,8 +1,8 @@
 .. _business-value-estimation-cbpe:
 
-===================================================
-Estimating Business Value for Binary Classification
-===================================================
+========================================
+Confidence Based Performannce Estimation
+========================================
 
 Let's see how to use NannyML how to use NannyML to estimate business value for binary classification
 models in the absence of target data. To find out how :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`
@@ -16,7 +16,7 @@ estimates performance, read the :ref:`explanation of Confidence-based Performanc
 .. _business-value-estimation-binary-just-the-code-cbpe:
 
 Just The Code
-----------------
+-------------
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
@@ -24,7 +24,7 @@ Just The Code
 
 
 Walkthrough
---------------
+-----------
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.

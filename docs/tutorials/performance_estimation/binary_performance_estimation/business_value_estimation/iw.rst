@@ -20,7 +20,7 @@ Just The Code
 ----------------
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cells: 1 3 4 5 7
 
 
@@ -37,11 +37,11 @@ You can read more about this in our section on :ref:`data periods<data-drift-per
 We start by loading the dataset we'll be using:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cell: 2
 
 Next we create the Importance Weighting
@@ -112,7 +112,7 @@ parameters:
     the business value matrix, check out the :ref:`Business Value "How it Works" page<business-value-deep-dive>`.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cells: 3
 
 The :class:`~nannyml.performance_estimation.importance_weighting.iw.IW`
@@ -120,7 +120,7 @@ estimator is then fitted using the
 :meth:`~nannyml.performance_estimation.importance_weighting.iw.IW.fit` method on the reference data.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cells: 4
 
 The fitted ``estimator`` can be used to estimate performance on other data, for which performance cannot be calculated.
@@ -131,11 +131,11 @@ NannyML can then output a dataframe that contains all the results. Let's have a 
 only.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cells: 5
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cell: 6
 
 Apart from chunk-related data, the results data have the following columns for each metric
@@ -170,7 +170,7 @@ These results can be also plotted. Our plots contains several key elements.
 * *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised. Alerts are caused by the estimated performance crossing the upper or lower threshold.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Estimating Business Value - Binary Classification.ipynb
+    :path: ./example_notebooks/Tutorial - Estimating Business Value - IW - Binary Classification.ipynb
     :cells: 7
 
 .. image:: ../../../../_static/tutorials/performance_estimation/binary/tutorial-business-value-estimation-iw-car-loan-analysis-with-ref.svg
