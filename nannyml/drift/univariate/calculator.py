@@ -343,13 +343,27 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
             for column_name in self.continuous_column_names:
                 for method in self._column_to_models_mapping[column_name]:
-                    for k, v in _calculate_for_column(chunk.data, column_name, method).items():
-                        row[f'{column_name}_{method.column_name}_{k}'] = v
+                    try:
+                        for k, v in _calculate_for_column(chunk.data, column_name, method).items():
+                            row[f'{column_name}_{method.column_name}_{k}'] = v
+                    except Exception as exc:
+                        self._logger.error(
+                            f"an unexpected exception occurred during calculation of method '{method.display_name}': "
+                            f"{exc}"
+                        )
+                        continue
 
             for column_name in self.categorical_column_names:
                 for method in self._column_to_models_mapping[column_name]:
-                    for k, v in _calculate_for_column(chunk.data, column_name, method).items():
-                        row[f'{column_name}_{method.column_name}_{k}'] = v
+                    try:
+                        for k, v in _calculate_for_column(chunk.data, column_name, method).items():
+                            row[f'{column_name}_{method.column_name}_{k}'] = v
+                    except Exception as exc:
+                        self._logger.error(
+                            f"an unexpected exception occurred during calculation of method '{method.display_name}': "
+                            f"{exc}"
+                        )
+                        continue
 
             rows.append(row)
 

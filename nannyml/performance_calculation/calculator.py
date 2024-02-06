@@ -273,8 +273,13 @@ class PerformanceCalculator(AbstractCalculator):
         # data validation is performed during the _fit for each metric
 
         for metric in self.metrics:
-            metric.fit(reference_data=reference_data, chunker=self.chunker)
-
+            try:
+                metric.fit(reference_data=reference_data, chunker=self.chunker)
+            except Exception as exc:
+                self._logger.error(
+                    f"an unexpected error occurred when calculating metric '{metric.display_name}': {exc}"
+                )
+                continue
         self.previous_reference_data = reference_data
 
         self.result = self._calculate(reference_data)
@@ -349,9 +354,14 @@ class PerformanceCalculator(AbstractCalculator):
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
-            chunk_record = metric.get_chunk_record(chunk.data)
-            chunk_records.update(chunk_record)
-
+            try:
+                chunk_record = metric.get_chunk_record(chunk.data)
+                chunk_records.update(chunk_record)
+            except Exception as exc:
+                self._logger.error(
+                    f"an unexpected error occurred while calculating metric {metric.display_name}: {exc}"
+                )
+                continue
         return chunk_records
 
 

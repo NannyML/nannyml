@@ -299,7 +299,13 @@ class DLE(AbstractEstimator):
 
         for metric in self.metrics:
             metric.categorical_column_names = categorical_feature_columns
-            metric.fit(reference_data)
+            try:
+                metric.fit(reference_data)
+            except Exception as exc:
+                self._logger.error(
+                    f"an unexpected error occurred while calculating metric {metric.display_name}: {exc}"
+                )
+                continue
 
         self.result = self._estimate(reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
@@ -374,8 +380,14 @@ class DLE(AbstractEstimator):
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
-            estimated_metric = metric.estimate(chunk.data)
-            sampling_error = metric.sampling_error(chunk.data)
+            try:
+                estimated_metric = metric.estimate(chunk.data)
+                sampling_error = metric.sampling_error(chunk.data)
+            except Exception as exc:
+                self._logger.error(
+                    f"an unexpected error occurred while calculating metric {metric.display_name}: {exc}"
+                )
+                continue
 
             upper_confidence_boundary = estimated_metric + 3 * sampling_error
             if metric.upper_threshold_value_limit is not None:

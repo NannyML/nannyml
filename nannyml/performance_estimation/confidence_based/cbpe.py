@@ -412,9 +412,15 @@ class CBPE(AbstractEstimator):
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
         chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
-            chunk_record = metric.get_chunk_record(chunk.data)
-            # add the chunk record to the chunk_records dict
-            chunk_records.update(chunk_record)
+            try:
+                chunk_record = metric.get_chunk_record(chunk.data)
+                # add the chunk record to the chunk_records dict
+                chunk_records.update(chunk_record)
+            except Exception as exc:
+                self._logger.error(
+                    f"an unexpected error occurred while calculating metric {metric.display_name}: {exc}"
+                )
+                continue
         return chunk_records
 
     def _fit_binary(self, reference_data: pd.DataFrame) -> CBPE:
