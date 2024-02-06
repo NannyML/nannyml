@@ -132,7 +132,7 @@ class UnseenValuesCalculator(AbstractCalculator):
         _list_missing(self.column_names, reference_data)
 
         # Included columns of dtype=int should be considered categorical. We'll try converting those explicitly.
-        reference_data = _convert_int_columns_to_categorical(reference_data[self.column_names], self._logger)
+        reference_data = _convert_int_columns_to_categorical(reference_data, self.column_names, self._logger)
 
         # All provided columns must be categorical
         continuous_column_names, categorical_column_names = _split_features_by_type(reference_data, self.column_names)
@@ -237,12 +237,14 @@ class UnseenValuesCalculator(AbstractCalculator):
         return result
 
 
-def _convert_int_columns_to_categorical(data: pd.DataFrame, logger: Optional[logging.Logger]) -> pd.DataFrame:
+def _convert_int_columns_to_categorical(
+    data: pd.DataFrame, column_names: List[str], logger: Optional[logging.Logger]
+) -> pd.DataFrame:
     res = data.copy()
     int_cols = list(
         filter(
-            lambda c: data[c].dtype
-            in ('int_', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'),
+            lambda c: c in column_names
+            and data[c].dtype in ('int_', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'),
             data.columns,
         )
     )
