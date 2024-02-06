@@ -4,6 +4,7 @@
 #  License: Apache Software License 2.0
 
 """Tests for Drift package."""
+import logging
 
 import pandas as pd
 import pytest
@@ -41,7 +42,7 @@ def test_unseen_value_calculator_with_default_params_should_not_fail():  # noqa:
         pytest.fail()
 
 
-def test_unseen_value_calculator_raises_invalidargumentsexception_on_numeric_columns():  # noqa: D103
+def test_unseen_value_calculator_raises_invalidargumentsexception_on_non_int_numeric_columns():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
     with pytest.raises(InvalidArgumentsException):
         _ = UnseenValuesCalculator(
@@ -51,6 +52,20 @@ def test_unseen_value_calculator_raises_invalidargumentsexception_on_numeric_col
                 'size_of_downpayment',
             ],
         ).fit(reference)
+
+
+def test_unseen_value_calculator_treats_int_numerical_columns_as_categorical(caplog):  # noqa: D103
+    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    caplog.set_level(logging.WARNING)
+
+    try:
+        _ = UnseenValuesCalculator(
+            column_names=['y_pred'],
+        ).fit(reference)
+    except Exception as exc:
+        pytest.fail(f"Unexpected exception: {exc}")
+
+    assert "converting integer columns to categorical: ['y_pred']" in caplog.messages
 
 
 def test_unseen_value_calculator_with_custom_params_should_not_fail():  # noqa: D103
