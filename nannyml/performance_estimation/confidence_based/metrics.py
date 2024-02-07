@@ -115,9 +115,6 @@ class Metric(abc.ABC):
 
         self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
 
-        self.confidence_upper_bound: Optional[float] = 1.0
-        self.confidence_lower_bound: Optional[float] = 0.0
-
         # A list of (display_name, column_name) tuples
         self.components: List[Tuple[str, str]] = components
 
@@ -271,12 +268,12 @@ class Metric(abc.ABC):
         chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
 
         chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
-            self.confidence_upper_bound or np.inf,
+            self.upper_threshold_value_limit or np.inf,
             estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
 
         chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
-            self.confidence_lower_bound or -np.inf,
+            self.lower_threshold_value_limit or -np.inf,
             estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
 
@@ -860,11 +857,16 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
-
-        self.true_positive_lower_threshold: Optional[float] = 0
-        self.true_positive_upper_threshold: Optional[float] = 1
-        self.true_negative_lower_threshold: Optional[float] = 0
-        self.true_negative_upper_threshold: Optional[float] = 1
+        if self.normalize_confusion_matrix is not None:
+            self.upper_threshold_value_limit = 1
+        self.true_positive_lower_threshold: Optional[float] = None
+        self.true_positive_upper_threshold: Optional[float] = None
+        self.true_negative_lower_threshold: Optional[float] = None
+        self.true_negative_upper_threshold: Optional[float] = None
+        self.false_positive_lower_threshold: Optional[float] = None
+        self.false_positive_upper_threshold: Optional[float] = None
+        self.false_negative_lower_threshold: Optional[float] = None
+        self.false_negative_upper_threshold: Optional[float] = None
 
     def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
         """Fits a Metric on reference data.
@@ -1287,12 +1289,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit,
                 estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
             )
 
         true_pos_info['lower_confidence_boundary_true_positive'] = np.maximum(
-            self.confidence_lower_bound, estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
+            self.lower_threshold_value_limit, estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
         )
 
         true_pos_info['upper_threshold_true_positive'] = self.true_positive_upper_threshold
@@ -1339,12 +1341,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit,
                 estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
             )
 
         true_neg_info['lower_confidence_boundary_true_negative'] = np.maximum(
-            self.confidence_lower_bound, estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
+            self.lower_threshold_value_limit, estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
         )
 
         true_neg_info['upper_threshold_true_negative'] = self.true_negative_upper_threshold
@@ -1391,12 +1393,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit,
                 estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
             )
 
         false_pos_info['lower_confidence_boundary_false_positive'] = np.maximum(
-            self.confidence_lower_bound,
+            self.lower_threshold_value_limit,
             estimated_false_positives - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
         )
 
@@ -1444,12 +1446,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             )
         else:
             false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
-                self.confidence_upper_bound,
+                self.upper_threshold_value_limit,
                 estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
             )
 
         false_neg_info['lower_confidence_boundary_false_negative'] = np.maximum(
-            self.confidence_lower_bound,
+            self.lower_threshold_value_limit,
             estimated_false_negatives - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
         )
 
@@ -1537,11 +1539,8 @@ class BinaryClassificationBusinessValue(Metric):
         self.business_value_matrix = business_value_matrix
         self.normalize_business_value: Optional[str] = normalize_business_value
 
-        self.lower_threshold: Optional[float] = 0
-        self.upper_threshold: Optional[float] = 1
-
-        self.confidence_upper_bound: Optional[float] = None
-        self.confidence_lower_bound: Optional[float] = None
+        # self.lower_threshold: Optional[float] = 0
+        # self.upper_threshold: Optional[float] = 1
 
     def _fit(self, reference_data: pd.DataFrame):
         self._sampling_error_components = bse.business_value_sampling_error_components(
@@ -2114,6 +2113,11 @@ class MulticlassClassificationConfusionMatrix(Metric):
         )
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
+        if self.normalize_confusion_matrix is None:
+            # overwrite default upper bound setting.
+            self.upper_threshold_value_limit = None
+        else:
+            self.upper_threshold_value_limit = 1
 
     def _get_components(self, classes: List[str]) -> List[Tuple[str, str]]:
         components = []
@@ -2283,7 +2287,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                     ] = upper_confidence_boundary
                 else:
                     chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
-                        self.confidence_upper_bound, upper_confidence_boundary
+                        self.upper_threshold_value_limit, upper_confidence_boundary
                     )
 
                 lower_confidence_boundary = (
@@ -2298,7 +2302,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                     ] = lower_confidence_boundary
                 else:
                     chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
-                        self.confidence_lower_bound, lower_confidence_boundary
+                        self.lower_threshold_value_limit, lower_confidence_boundary
                     )
 
                 chunk_record[f'upper_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
