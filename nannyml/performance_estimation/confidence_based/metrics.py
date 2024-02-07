@@ -113,8 +113,6 @@ class Metric(abc.ABC):
         self.lower_threshold_value_limit: Optional[float] = lower_threshold_value_limit
         self.upper_threshold_value_limit: Optional[float] = upper_threshold_value_limit
 
-        self.confidence_deviation: Optional[float] = None
-
         self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
 
         self.confidence_upper_bound: Optional[float] = 1.0
@@ -163,9 +161,6 @@ class Metric(abc.ABC):
 
         reference_chunks = self.chunker.split(reference_data)
 
-        # Calculate confidence bands
-        self.confidence_deviation = self._confidence_deviation(reference_chunks)
-
         # Calculate alert thresholds
         reference_chunk_results = np.asarray([self._realized_performance(chunk.data) for chunk in reference_chunks])
         self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
@@ -195,9 +190,6 @@ class Metric(abc.ABC):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _sampling_error method"
         )
-
-    def _confidence_deviation(self, reference_chunks: List[Chunk]):
-        return np.std([self._estimate(chunk.data) for chunk in reference_chunks])
 
     @abc.abstractmethod
     def _realized_performance(self, data: pd.DataFrame) -> float:
@@ -2151,9 +2143,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         self.alert_thresholds = self._multiclass_confusion_matrix_alert_thresholds(reference_chunks)
 
-        # Calculate confidence bands
-        self.confidence_deviations = self._multiclass_confusion_matrix_confidence_deviations(reference_chunks)
-
         # Delegate to confusion matrix subclass
         self._fit(reference_data)  # could probably put _fit functionality here since overide fit method
 
@@ -2210,22 +2199,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
         )
 
         return cm
-
-    def _multiclass_confusion_matrix_confidence_deviations(
-        self,
-        reference_chunks: List[Chunk],
-    ) -> Dict[str, float]:
-        confidence_deviations = {}
-
-        num_classes = len(self.classes)
-
-        for i in range(num_classes):
-            for j in range(num_classes):
-                confidence_deviations[f'true_{self.classes[i]}_pred_{self.classes[j]}'] = np.std(
-                    [self._get_multiclass_confusion_matrix_estimate(chunk.data)[i, j] for chunk in reference_chunks]
-                )
-
-        return confidence_deviations
 
     def _get_multiclass_confusion_matrix_estimate(self, chunk_data: pd.DataFrame) -> np.ndarray:
         if isinstance(self.y_pred_proba, str):
