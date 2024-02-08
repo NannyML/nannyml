@@ -2337,30 +2337,20 @@ class MulticlassClassificationConfusionMatrix(Metric):
                     + SAMPLING_ERROR_RANGE
                     * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
-
-                if self.normalize_confusion_matrix is None:
-                    chunk_record[
-                        f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'
-                    ] = upper_confidence_boundary
-                else:
-                    chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
-                        self.upper_threshold_value_limit, upper_confidence_boundary
-                    )
+                chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
+                    np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
+                    upper_confidence_boundary
+                )
 
                 lower_confidence_boundary = (
                     estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
                     - SAMPLING_ERROR_RANGE
                     * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
-
-                if self.normalize_confusion_matrix is None:
-                    chunk_record[
-                        f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'
-                    ] = lower_confidence_boundary
-                else:
-                    chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
-                        self.lower_threshold_value_limit, lower_confidence_boundary
-                    )
+                chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
+                    -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
+                    lower_confidence_boundary
+                )
 
                 chunk_record[f'upper_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
                     f'true_{true_class}_pred_{pred_class}'
