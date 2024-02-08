@@ -112,7 +112,6 @@ class MissingValuesCalculator(AbstractCalculator):
             self.upper_threshold_value_limit = 1
         else:
             self.data_quality_metric = 'missing_values_count'
-            # self.upper_threshold_value_limit = np.nan
 
     def _calculate_missing_value_stats(self, data: pd.Series):
         count_tot = data.shape[0]
@@ -222,11 +221,11 @@ class MissingValuesCalculator(AbstractCalculator):
 
         result['upper_confidence_boundary'] = np.minimum(
             result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error'],
-            self.upper_threshold_value_limit or np.inf
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit
         )
         result['lower_confidence_boundary'] = np.maximum(
             result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error'],
-            self.lower_threshold_value_limit or -np.inf
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit
         )
 
         result['upper_threshold'] = self._upper_alert_thresholds[column_name]
