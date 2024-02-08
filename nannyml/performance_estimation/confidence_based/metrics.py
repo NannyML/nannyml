@@ -281,12 +281,12 @@ class Metric(abc.ABC):
         chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
 
         chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
-            self.upper_threshold_value_limit or np.inf,
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
             estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
 
         chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
 
@@ -1314,12 +1314,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_pos_info['realized_true_positive'] = self._true_positive_realized_performance(chunk_data)
 
         true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
-            self.upper_threshold_value_limit or np.inf,
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
             estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
         )
 
         true_pos_info['lower_confidence_boundary_true_positive'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
         )
 
@@ -1362,12 +1362,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_neg_info['realized_true_negative'] = self._true_negative_realized_performance(chunk_data)
 
         true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
-            self.upper_threshold_value_limit or np.inf,
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
             estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
         )
 
         true_neg_info['lower_confidence_boundary_true_negative'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
         )
 
@@ -1410,12 +1410,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_pos_info['realized_false_positive'] = self._false_positive_realized_performance(chunk_data)
 
         false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
-            self.upper_threshold_value_limit or np.inf,
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
             estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
         )
 
         false_pos_info['lower_confidence_boundary_false_positive'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             estimated_false_positives - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
         )
 
@@ -1458,12 +1458,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info['realized_false_negative'] = self._false_negative_realized_performance(chunk_data)
 
         false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
-            self.upper_threshold_value_limit or np.inf,
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
             estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
         )
 
         false_neg_info['lower_confidence_boundary_false_negative'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             estimated_false_negatives - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
         )
 
