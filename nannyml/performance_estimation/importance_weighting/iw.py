@@ -145,7 +145,8 @@ class IW(AbstractEstimator):
         Parameters
         ----------
         feature_column_names: List[str]
-            A list containing the names of the model features in the provided data set. All of these features will be used by
+            A list containing the names of the model features in the provided data set.
+            All of these features will be used by
             the importance weighting calculator.
         y_true: str
             The name of the column containing target values (that are provided in reference data during fitting).
@@ -263,7 +264,6 @@ class IW(AbstractEstimator):
 
         Examples
         --------
-
         Using IW to estimate the perfomance of a model for a binary classification problem.
 
         >>> import nannyml as nml

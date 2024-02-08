@@ -281,11 +281,11 @@ class Metric(abc.ABC):
         chunk_record[f'sampling_error_{column_name}'] = metric_estimate_sampling_error
         chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data_outputs)
         chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
-            self.upper_threshold_value_limit or np.inf,
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
             estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
         chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
         )
         return chunk_record
@@ -904,18 +904,13 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
         true_pos_info['realized_true_positive'] = rl_tp
 
-        if self.normalize_confusion_matrix is None:
-            true_pos_info['upper_confidence_boundary_true_positive'] = (
-                est_tp + SAMPLING_ERROR_RANGE * sampling_error_true_positives
-            )
-        else:
-            true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
-                self.upper_threshold_value_limit or np.inf,
-                est_tp + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
-            )
+        true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
+            est_tp + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
+        )
 
         true_pos_info['lower_confidence_boundary_true_positive'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             est_tp - SAMPLING_ERROR_RANGE * sampling_error_true_positives
         )
 
@@ -953,18 +948,13 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_neg_info['sampling_error_true_negative'] = sampling_error_true_negatives
         true_neg_info['realized_true_negative'] = rl_tn
 
-        if self.normalize_confusion_matrix is None:
-            true_neg_info['upper_confidence_boundary_true_negative'] = (
-                est_tn + SAMPLING_ERROR_RANGE * sampling_error_true_negatives
-            )
-        else:
-            true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
-                self.upper_threshold_value_limit or np.inf,
-                est_tn + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
-            )
+        true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
+            est_tn + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
+        )
 
         true_neg_info['lower_confidence_boundary_true_negative'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             est_tn - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
         )
 
@@ -1002,18 +992,13 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_pos_info['sampling_error_false_positive'] = sampling_error_false_positives
         false_pos_info['realized_false_positive'] = rl_fp
 
-        if self.normalize_confusion_matrix is None:
-            false_pos_info['upper_confidence_boundary_false_positive'] = (
-                est_fp + SAMPLING_ERROR_RANGE * sampling_error_false_positives
-            )
-        else:
-            false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
-                self.upper_threshold_value_limit or np.inf,
-                est_fp + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
-            )
+        false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
+            est_fp + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
+        )
 
         false_pos_info['lower_confidence_boundary_false_positive'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             est_fp - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
         )
 
@@ -1051,18 +1036,13 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info['sampling_error_false_negative'] = sampling_error_false_negatives
         false_neg_info['realized_false_negative'] = rl_fn
 
-        if self.normalize_confusion_matrix is None:
-            false_neg_info['upper_confidence_boundary_false_negative'] = (
-                est_fn + SAMPLING_ERROR_RANGE * sampling_error_false_negatives
-            )
-        else:
-            false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
-                self.upper_threshold_value_limit or np.inf,
-                est_fn + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
-            )
+        false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
+            est_fn + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
+        )
 
         false_neg_info['lower_confidence_boundary_false_negative'] = np.maximum(
-            self.lower_threshold_value_limit or -np.inf,
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
             est_fn - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
         )
 
@@ -1907,28 +1887,21 @@ class MulticlassClassificationConfusionMatrix(_MulticlassClassificationMetric):
                     + SAMPLING_ERROR_RANGE
                     * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
-                if self.normalize_confusion_matrix is None:
-                    chunk_record[
-                        f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'
-                    ] = upper_confidence_boundary
-                else:
-                    chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
-                        self.upper_threshold_value_limit, upper_confidence_boundary
-                    )
+                chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = np.minimum(
+                    np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
+                    upper_confidence_boundary
+                )
 
                 lower_confidence_boundary = (
                     estimated_value
                     - SAMPLING_ERROR_RANGE
                     * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
-                if self.normalize_confusion_matrix is None:
-                    chunk_record[
-                        f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'
-                    ] = lower_confidence_boundary
-                else:
-                    chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
-                        self.lower_threshold_value_limit, lower_confidence_boundary
-                    )
+                chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = np.maximum(
+                    -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
+                    lower_confidence_boundary
+                )
+
         return chunk_record
 
     def _estimate(self, reference_data_outputs: pd.DataFrame, reference_weights: np.ndarray):
