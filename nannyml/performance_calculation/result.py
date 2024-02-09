@@ -84,9 +84,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         self.analysis_data = analysis_data
 
     def keys(self) -> List[Key]:
-        """
-        Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`
-        """
+        """Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
         return [
             Key(
                 properties=(component[1],),
@@ -108,6 +106,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         **kwargs,
     ) -> go.Figure:
         """Render realized performance metrics.
+
         This function will return a :class:`plotly.graph_objects.Figure` object.
 
         Parameters
