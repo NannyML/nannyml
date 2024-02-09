@@ -596,9 +596,11 @@ class MulticlassClassificationConfusionMatrix(Metric):
             threshold=threshold,
             y_pred_proba=y_pred_proba,
             components=[("None", "none")],
+            lower_threshold_limit=0
         )
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
+        self.upper_threshold_value_limit: Optional[float] = 1.0 if normalize_confusion_matrix else None
 
         self.classes: Optional[List[str]] = None
 
