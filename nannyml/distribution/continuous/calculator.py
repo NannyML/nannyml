@@ -83,6 +83,12 @@ def _get_kde(array, cut=3, clip=(-np.inf, np.inf)):
     try:  # pragma: no cover
         kde = sm.nonparametric.KDEUnivariate(array)
         kde.fit(cut=cut, clip=clip)
+
+        # Calculation may return duplicate support values in edge cases. These results are not sensible. Treating it as
+        # an error case and returning None
+        if len(np.unique(kde.support)) < len(kde.support):
+            return None
+
         return kde
     except Exception:
         return None
