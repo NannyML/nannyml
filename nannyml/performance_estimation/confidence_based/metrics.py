@@ -260,32 +260,35 @@ class Metric(abc.ABC):
 
         chunk_record = {}
 
-        estimated_metric_value = self._estimate(chunk_data)
-
-        metric_estimate_sampling_error = self._sampling_error(chunk_data)
-
-        chunk_record[f'estimated_{column_name}'] = estimated_metric_value
-
-        chunk_record[f'sampling_error_{column_name}'] = metric_estimate_sampling_error
-
-        chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
-
-        chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
-            self.confidence_upper_bound or np.inf,
-            estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
-        )
-
-        chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
-            self.confidence_lower_bound or -np.inf,
-            estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
-        )
-
-        chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
-        chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
-
-        chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
-
-        return chunk_record
+        try:
+            estimated_metric_value = self._estimate(chunk_data)
+            metric_estimate_sampling_error = self._sampling_error(chunk_data)
+            chunk_record[f'estimated_{column_name}'] = estimated_metric_value
+            chunk_record[f'sampling_error_{column_name}'] = metric_estimate_sampling_error
+            chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
+            chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
+                self.confidence_upper_bound or np.inf,
+                estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
+            )
+            chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
+                self.confidence_lower_bound or -np.inf,
+                estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
+            )
+            chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
+            chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
+            chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
+        except Exception as exc:
+            self._logger.error(f"an unexpected error occurred while calculating metric {self.display_name}: {exc}")
+            chunk_record[f'estimated_{column_name}'] = np.NaN
+            chunk_record[f'sampling_error_{column_name}'] = np.NaN
+            chunk_record[f'realized_{column_name}'] = np.NaN
+            chunk_record[f'upper_confidence_boundary_{column_name}'] = np.NaN
+            chunk_record[f'lower_confidence_boundary_{column_name}'] = np.NaN
+            chunk_record[f'upper_threshold_{column_name}'] = np.NaN
+            chunk_record[f'lower_threshold_{column_name}'] = np.NaN
+            chunk_record[f'alert_{column_name}'] = np.NaN
+        finally:
+            return chunk_record
 
 
 class MetricFactory:
