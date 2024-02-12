@@ -24,7 +24,10 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(PerColumnResult, ResultCompareMixin):
-    """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+    """Missing Values Result Class.
+
+    Contains calculation results and provides plotting functionality.
+    """
 
     def __init__(
         self,
@@ -34,13 +37,14 @@ class Result(PerColumnResult, ResultCompareMixin):
         timestamp_column_name: Optional[str],
         chunker: Chunker,
     ):
+        """Initialize Missing Values Result Class."""
         super().__init__(results_data, column_names)
 
         self.timestamp_column_name = timestamp_column_name
         self.data_quality_metric = data_quality_metric
         self.chunker = chunker
 
-    def keys(self) -> List[Key]:
+    def keys(self) -> List[Key]:  # noqa: D102
         return [
             Key(
                 properties=(column_name,),
@@ -55,10 +59,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """
-
-        Parameters
-        ----------
+        """Plot Missing Values results.
 
         Returns
         -------
@@ -82,7 +83,6 @@ class Result(PerColumnResult, ResultCompareMixin):
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
 
         """
-
         return plot_metrics(
             self,
             title='Data Quality ',

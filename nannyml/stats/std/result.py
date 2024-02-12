@@ -26,7 +26,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class Result(PerColumnResult, ResultCompareMixin):
-    """Contains the results of the univariate statistical drift calculation and provides plotting functionality."""
+    """Summary Stats Standard Deviation Calculator Results object."""
 
     def __init__(
         self,
@@ -36,13 +36,14 @@ class Result(PerColumnResult, ResultCompareMixin):
         timestamp_column_name: Optional[str],
         chunker: Chunker,
     ):
+        """Initalize Summary Stats Standard Deviation Calculator Results object."""
         super().__init__(results_data, column_names)
 
         self.timestamp_column_name = timestamp_column_name
         self.simple_stats_metric = simple_stats_metric
         self.chunker = chunker
 
-    def keys(self) -> List[Key]:
+    def keys(self) -> List[Key]:  # noqa: D102
         return [
             Key(
                 properties=(column_name,),
@@ -57,10 +58,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """
-
-        Parameters
-        ----------
+        """Plot Summary Stats Standard Deviation Calculator Results.
 
         Returns
         -------
@@ -84,7 +82,6 @@ class Result(PerColumnResult, ResultCompareMixin):
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
 
         """
-
         return plot_metrics(
             self,
             title='Values Standard Deviation',

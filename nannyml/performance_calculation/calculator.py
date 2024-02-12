@@ -17,7 +17,6 @@ For more information, check out the `tutorials`_.
 
 Examples
 --------
-
 >>> import nannyml as nml
 >>> from IPython.display import display
 >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
@@ -113,6 +112,7 @@ class PerformanceCalculator(AbstractCalculator):
                 - 'regression'
                 - 'classification_binary'
                 - 'classification_multiclass'
+
         y_pred_proba: ModelOutputsType, default=None
             Name(s) of the column(s) containing your model output.
             Pass a single string when there is only a single model output column, e.g. in binary classification cases.
@@ -254,7 +254,7 @@ class PerformanceCalculator(AbstractCalculator):
 
         self.result: Optional[Result] = None
 
-    def __str__(self):
+    def __str__(self):  # noqa: D105
         return f"PerformanceCalculator[metrics={str(self.metrics)}]"
 
     @log_usage(UsageEvent.PERFORMANCE_CALC_FIT, metadata_from_self=['metrics', 'problem_type'])

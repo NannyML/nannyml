@@ -62,6 +62,9 @@ class MissingValuesCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+        threshold: Threshold, default=StandardDeviationThreshold
+            The threshold you wish to evaluate values on. Defaults to a StandardDeviationThreshold with default
+            options. The other available value is ConstantThreshold.
 
 
         Examples
@@ -102,14 +105,13 @@ class MissingValuesCalculator(AbstractCalculator):
         self._lower_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
 
         self.lower_threshold_value_limit: float = 0
-        self.upper_threshold_value_limit: float
+        self.upper_threshold_value_limit: Optional[float] = None
         self.normalize = normalize
         if self.normalize:
             self.data_quality_metric = 'missing_values_rate'
             self.upper_threshold_value_limit = 1
         else:
             self.data_quality_metric = 'missing_values_count'
-            self.upper_threshold_value_limit = np.nan
 
     def _calculate_missing_value_stats(self, data: pd.Series):
         count_tot = data.shape[0]
@@ -217,8 +219,14 @@ class MissingValuesCalculator(AbstractCalculator):
         else:
             result['sampling_error'] = serr * np.sqrt(tot)
 
-        result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
-        result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
+        result['upper_confidence_boundary'] = np.minimum(
+            result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error'],
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit
+        )
+        result['lower_confidence_boundary'] = np.maximum(
+            result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error'],
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit
+        )
 
         result['upper_threshold'] = self._upper_alert_thresholds[column_name]
         result['lower_threshold'] = self._lower_alert_thresholds[column_name]
