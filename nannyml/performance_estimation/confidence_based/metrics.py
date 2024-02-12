@@ -277,14 +277,13 @@ class Metric(abc.ABC):
             chunk_record[f'sampling_error_{column_name}'] = metric_estimate_sampling_error
             chunk_record[f'realized_{column_name}'] = self._realized_performance(chunk_data)
             chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
-            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-            estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
-        )
-
-        chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
-            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
-        )
+                np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
+                estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
+            )
+            chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
+                -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
+                estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
+            )
             chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
             chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
             chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
@@ -340,6 +339,7 @@ class MetricFactory:
     @classmethod
     def register(cls, metric: str, use_case: ProblemType) -> Callable:
         """Register a Metric in the MetricFactory registry."""
+
         def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:
@@ -355,6 +355,7 @@ class MetricFactory:
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     """CBPE binary classification AUROC Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -450,6 +451,7 @@ def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationF1(Metric):
     """CBPE binary classification f1 Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -536,6 +538,7 @@ def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
     """CBPE binary classification precision Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -622,6 +625,7 @@ def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> floa
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
     """CBPE binary classification recall Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -707,6 +711,7 @@ def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
     """CBPE binary classification specificity Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -793,6 +798,7 @@ def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> fl
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
     """CBPE binary classification accuracy Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -860,6 +866,7 @@ class BinaryClassificationAccuracy(Metric):
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationConfusionMatrix(Metric):
     """CBPE binary classification confusion matrix Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1324,7 +1331,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         true_pos_info['lower_confidence_boundary_true_positive'] = np.maximum(
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
+            estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives,
         )
 
         true_pos_info['upper_threshold_true_positive'] = self.true_positive_upper_threshold
@@ -1372,7 +1379,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         true_neg_info['lower_confidence_boundary_true_negative'] = np.maximum(
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
+            estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
         )
 
         true_neg_info['upper_threshold_true_negative'] = self.true_negative_upper_threshold
@@ -1526,6 +1533,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 @MetricFactory.register('business_value', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationBusinessValue(Metric):
     """CBPE binary classification business value Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1717,6 +1725,7 @@ class _MulticlassClassificationMetric(Metric):
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
     """CBPE multiclass classification AUROC Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1783,6 +1792,7 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(_MulticlassClassificationMetric):
     """CBPE multiclass classification f1 Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1852,6 +1862,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
     """CBPE multiclass classification precision Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1921,6 +1932,7 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(_MulticlassClassificationMetric):
     """CBPE multiclass classification recall Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -1990,6 +2002,7 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
     """CBPE multiclass classification specificity Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -2063,6 +2076,7 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
     """CBPE multiclass classification accuracy Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -2129,6 +2143,7 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationConfusionMatrix(Metric):
     """CBPE multiclass classification confusion matrix Metric Class."""
+
     def __init__(
         self,
         y_pred_proba: ModelOutputsType,
@@ -2343,7 +2358,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 )
                 chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
                     np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-                    upper_confidence_boundary
+                    upper_confidence_boundary,
                 )
 
                 lower_confidence_boundary = (
@@ -2353,7 +2368,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 )
                 chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
                     -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-                    lower_confidence_boundary
+                    lower_confidence_boundary,
                 )
 
                 chunk_record[f'upper_threshold_true_{true_class}_pred_{pred_class}'] = self.alert_thresholds[
