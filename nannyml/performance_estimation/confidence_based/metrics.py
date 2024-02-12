@@ -35,7 +35,7 @@ from nannyml.base import _remove_nans
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
-from nannyml.sampling_error import SAMPLING_ERROR_RANGE
+# from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import Threshold, calculate_threshold_values
 
 
@@ -282,12 +282,12 @@ class Metric(abc.ABC):
 
         chunk_record[f'upper_confidence_boundary_{column_name}'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-            estimated_metric_value + SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
+            estimated_metric_value + metric_estimate_sampling_error,
         )
 
         chunk_record[f'lower_confidence_boundary_{column_name}'] = np.maximum(
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_metric_value - SAMPLING_ERROR_RANGE * metric_estimate_sampling_error,
+            estimated_metric_value - metric_estimate_sampling_error,
         )
 
         chunk_record[f'upper_threshold_{column_name}'] = self.upper_threshold_value
@@ -1315,12 +1315,12 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-            estimated_true_positives + SAMPLING_ERROR_RANGE * sampling_error_true_positives,
+            estimated_true_positives + sampling_error_true_positives,
         )
 
         true_pos_info['lower_confidence_boundary_true_positive'] = np.maximum(
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_true_positives - SAMPLING_ERROR_RANGE * sampling_error_true_positives
+            estimated_true_positives - sampling_error_true_positives
         )
 
         true_pos_info['upper_threshold_true_positive'] = self.true_positive_upper_threshold
@@ -1363,12 +1363,12 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-            estimated_true_negatives + SAMPLING_ERROR_RANGE * sampling_error_true_negatives,
+            estimated_true_negatives + sampling_error_true_negatives,
         )
 
         true_neg_info['lower_confidence_boundary_true_negative'] = np.maximum(
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_true_negatives - SAMPLING_ERROR_RANGE * sampling_error_true_negatives
+            estimated_true_negatives - sampling_error_true_negatives
         )
 
         true_neg_info['upper_threshold_true_negative'] = self.true_negative_upper_threshold
@@ -1411,12 +1411,12 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-            estimated_false_positives + SAMPLING_ERROR_RANGE * sampling_error_false_positives,
+            estimated_false_positives + sampling_error_false_positives,
         )
 
         false_pos_info['lower_confidence_boundary_false_positive'] = np.maximum(
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_false_positives - SAMPLING_ERROR_RANGE * sampling_error_false_positives,
+            estimated_false_positives - sampling_error_false_positives,
         )
 
         false_pos_info['upper_threshold_false_positive'] = self.false_positive_upper_threshold
@@ -1459,12 +1459,12 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-            estimated_false_negatives + SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
+            estimated_false_negatives + sampling_error_false_negatives,
         )
 
         false_neg_info['lower_confidence_boundary_false_negative'] = np.maximum(
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-            estimated_false_negatives - SAMPLING_ERROR_RANGE * sampling_error_false_negatives,
+            estimated_false_negatives - sampling_error_false_negatives,
         )
 
         false_neg_info['upper_threshold_false_negative'] = self.false_negative_upper_threshold
@@ -2208,7 +2208,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
         self, reference_chunks: List[Chunk]
     ) -> Dict[str, Tuple[Optional[float], Optional[float]]]:
         realized_chunk_performance = np.asarray(
-            [self._multi_class_confusion_matrix_realized_performance(chunk.data) for chunk in reference_chunks]
+            [self._realized_performance(chunk.data) for chunk in reference_chunks]
         )
 
         alert_thresholds = {}
@@ -2230,7 +2230,8 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         return alert_thresholds
 
-    def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
+    def _realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
+        """Calculate realized confusion matrix performance."""
         if data is None or self.y_true not in data.columns:
             warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
             return np.NaN
@@ -2249,7 +2250,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         return cm
 
-    def _get_multiclass_confusion_matrix_estimate(self, chunk_data: pd.DataFrame) -> np.ndarray:
+    def _estimate(self, chunk_data: pd.DataFrame) -> np.ndarray:
         if isinstance(self.y_pred_proba, str):
             raise ValueError(
                 "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
@@ -2306,13 +2307,10 @@ class MulticlassClassificationConfusionMatrix(Metric):
         """
         chunk_record = {}
 
-        estimated_cm = self._get_multiclass_confusion_matrix_estimate(chunk_data)
-        realized_cm = self._multi_class_confusion_matrix_realized_performance(chunk_data)
+        estimated_cm = self._estimate(chunk_data)
+        realized_cm = self._realized_performance(chunk_data)
 
-        sampling_error = mse.multiclass_confusion_matrix_sampling_error(
-            self._confusion_matrix_sampling_error_components,
-            chunk_data,
-        )
+        sampling_error = self._sampling_error(chunk_data)
 
         for true_class in self.classes:
             for pred_class in self.classes:
@@ -2334,8 +2332,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
                 upper_confidence_boundary = (
                     estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
-                    + SAMPLING_ERROR_RANGE
-                    * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
+                    + sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
                 chunk_record[f'upper_confidence_boundary_true_{true_class}_pred_{pred_class}'] = min(
                     np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
@@ -2344,8 +2341,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
                 lower_confidence_boundary = (
                     estimated_cm[self.classes.index(true_class), self.classes.index(pred_class)]
-                    - SAMPLING_ERROR_RANGE
-                    * sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
+                    - sampling_error[self.classes.index(true_class), self.classes.index(pred_class)]
                 )
                 chunk_record[f'lower_confidence_boundary_true_{true_class}_pred_{pred_class}'] = max(
                     -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
@@ -2377,11 +2373,9 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         return chunk_record
 
-    def _estimate(self, data: pd.DataFrame):
-        pass
-
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return 0.0
-
-    def _realized_performance(self, data: pd.DataFrame) -> float:
-        return 0.0
+        """Calculates sampling error matrix for each CM element."""
+        return mse.multiclass_confusion_matrix_sampling_error(
+            self._confusion_matrix_sampling_error_components,
+            data,
+        )

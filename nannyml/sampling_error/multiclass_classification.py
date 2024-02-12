@@ -2,11 +2,16 @@
 #            Jakub Bialek    <jabub@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Module containing functions to estimate sampling error for multiclass classification metrics."""
+
 from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
+
+from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 
 
 def _standard_deviation_of_variances(components: List[Tuple], data) -> float:
@@ -16,8 +21,7 @@ def _standard_deviation_of_variances(components: List[Tuple], data) -> float:
 
 
 def auroc_sampling_error_components(y_true_reference: List[pd.Series], y_pred_proba_reference: List[pd.Series]):
-    """
-    Calculate sampling error components for AUROC using reference data.
+    """Calculate sampling error components for AUROC using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -68,13 +72,14 @@ def auroc_sampling_error_components(y_true_reference: List[pd.Series], y_pred_pr
 
 
 def auroc_sampling_error(sampling_error_components, data) -> float:
-    """
-    Calculate the AUROC sampling error for a chunk of data.
+    """Calculate the AUROC sampling error for a chunk of data.
 
     Parameters
     ----------
-    sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    sampling_error_components:
+        a set of parameters that were derived from reference data.
+    data:
+        the (analysis) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -82,13 +87,13 @@ def auroc_sampling_error(sampling_error_components, data) -> float:
 
     """
     class_variances = [c[0] / (len(data) * c[1]) for c in sampling_error_components]
+    # TODO: why 1.2?
     multiclass_std = np.sqrt(np.sum(class_variances)) / len(class_variances) * 1.2
-    return multiclass_std
+    return SAMPLING_ERROR_RANGE * multiclass_std
 
 
 def f1_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
-    """
-    Calculate sampling error components for F1 using reference data.
+    """Calculate sampling error components for F1 using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -127,25 +132,25 @@ def f1_sampling_error_components(y_true_reference: List[pd.Series], y_pred_refer
 
 
 def f1_sampling_error(sampling_error_components: List[Tuple], data) -> float:
-    """
-    Calculate the F1 sampling error for a chunk of data.
+    """Calculate the F1 sampling error for a chunk of data.
 
     Parameters
     ----------
-    sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    sampling_error_components:
+        a set of parameters that were derived from reference data.
+    data:
+        the (analysis) data you want to calculate or estimate a metric for.
 
     Returns
     -------
     sampling_error: float
 
     """
-    return _standard_deviation_of_variances(sampling_error_components, data)
+    return SAMPLING_ERROR_RANGE * _standard_deviation_of_variances(sampling_error_components, data)
 
 
 def precision_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
-    """
-    Calculate sampling error components for precision using reference data.
+    """Calculate sampling error components for precision using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -182,25 +187,25 @@ def precision_sampling_error_components(y_true_reference: List[pd.Series], y_pre
 
 
 def precision_sampling_error(sampling_error_components: List[Tuple], data) -> float:
-    """
-    Calculate the precision sampling error for a chunk of data.
+    """Calculate the precision sampling error for a chunk of data.
 
     Parameters
     ----------
-    sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    sampling_error_components:
+        a set of parameters that were derived from reference data.
+    data:
+        the (analysis) data you want to calculate or estimate a metric for.
 
     Returns
     -------
     sampling_error: float
 
     """
-    return _standard_deviation_of_variances(sampling_error_components, data)
+    return SAMPLING_ERROR_RANGE * _standard_deviation_of_variances(sampling_error_components, data)
 
 
 def recall_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
-    """
-    Calculate sampling error components for recall using reference data.
+    """Calculate sampling error components for recall using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -236,25 +241,25 @@ def recall_sampling_error_components(y_true_reference: List[pd.Series], y_pred_r
 
 
 def recall_sampling_error(sampling_error_components: List[Tuple], data) -> float:
-    """
-    Calculate the recall sampling error for a chunk of data.
+    """Calculate the recall sampling error for a chunk of data.
 
     Parameters
     ----------
-    sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    sampling_error_components:
+        a set of parameters that were derived from reference data.
+    data:
+        the (analysis) data you want to calculate or estimate a metric for.
 
     Returns
     -------
     sampling_error: float
 
     """
-    return _standard_deviation_of_variances(sampling_error_components, data)
+    return SAMPLING_ERROR_RANGE * _standard_deviation_of_variances(sampling_error_components, data)
 
 
 def specificity_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
-    """
-    Calculate sampling error components for specificity using reference data.
+    """Calculate sampling error components for specificity using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -290,25 +295,25 @@ def specificity_sampling_error_components(y_true_reference: List[pd.Series], y_p
 
 
 def specificity_sampling_error(sampling_error_components: List[Tuple], data) -> float:
-    """
-    Calculate the specificity sampling error for a chunk of data.
+    """Calculate the specificity sampling error for a chunk of data.
 
     Parameters
     ----------
-    sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    sampling_error_components:
+        a set of parameters that were derived from reference data.
+    data:
+        the (analysis) data you want to calculate or estimate a metric for.
 
     Returns
     -------
     sampling_error: float
 
     """
-    return _standard_deviation_of_variances(sampling_error_components, data)
+    return SAMPLING_ERROR_RANGE * _standard_deviation_of_variances(sampling_error_components, data)
 
 
 def accuracy_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
-    """
-    Calculate sampling error components for accuracy using reference data.
+    """Calculate sampling error components for accuracy using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
     probabilities. The order of the Series in both lists should both match the list of class labels present.
@@ -332,25 +337,43 @@ def accuracy_sampling_error_components(y_true_reference: List[pd.Series], y_pred
 
 
 def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
-    """
-    Calculate the accuracy sampling error for a chunk of data.
+    """Calculate the accuracy sampling error for a chunk of data.
 
     Parameters
     ----------
-    sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    sampling_error_components:
+        a set of parameters that were derived from reference data.
+    data:
+        the (analysis) data you want to calculate or estimate a metric for.
 
     Returns
     -------
     sampling_error: float
 
     """
-    return sampling_error_components[0] / np.sqrt(len(data))
+    return SAMPLING_ERROR_RANGE * sampling_error_components[0] / np.sqrt(len(data))
 
 
 def multiclass_confusion_matrix_sampling_error_components(
     y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series], normalize_confusion_matrix: Union[str, None]
 ):
+    """Estimate sampling error components for the confusion matrix.
+
+    Calculation is based on modified standard error of mean formula.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_reference: pd.Series
+        Predictions for the reference dataset.
+    normalize_confusion_matrix: str
+        The type of normalization to apply to the confusion matrix.
+
+    Returns
+    -------
+    (stds, relevant_proportions): Tuple[np.ndarray, float]
+    """
     cm = confusion_matrix(y_true_reference, y_pred_reference)
 
     true_marginal = cm.sum(axis=1)[:, None]
@@ -391,6 +414,19 @@ def multiclass_confusion_matrix_sampling_error_components(
 
 
 def multiclass_confusion_matrix_sampling_error(sampling_error_components: Tuple, data):
+    """Calculate sampling error metrix elements for the confusion matrix for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components:
+        a set of parameters that were derived from reference data.
+    data:
+        the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: np.ndarray
+    """
     reference_stds, relevant_proportions = sampling_error_components
 
     if relevant_proportions is None:
@@ -398,4 +434,4 @@ def multiclass_confusion_matrix_sampling_error(sampling_error_components: Tuple,
     else:
         standard_errors = reference_stds / np.sqrt(len(data) * relevant_proportions)
 
-    return standard_errors
+    return SAMPLING_ERROR_RANGE * standard_errors

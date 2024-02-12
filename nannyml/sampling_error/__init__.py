@@ -4,5 +4,5 @@
 
 """Package containing helper functions for estimating sampling error of Calculator/Estimator on a Chunk."""
 
-"""The multiplier applied to the sampling error to determine confidence bounds."""
+# The multiplier applied to the sampling error to determine confidence bounds
 SAMPLING_ERROR_RANGE = 3

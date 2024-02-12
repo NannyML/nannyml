@@ -434,12 +434,12 @@ def test_cpbe_result_filter_period(estimates):
 @pytest.mark.parametrize(
     'metric, sampling_error',
     [
-        ('roc_auc', 0.001811),
-        ('f1', 0.007549),
-        ('precision', 0.003759),
-        ('recall', 0.006546),
-        ('specificity', 0.003413),
-        ('accuracy', 0.003746),
+        ('roc_auc', 0.0054),
+        ('f1', 0.0226),
+        ('precision', 0.0113),
+        ('recall', 0.0196),
+        ('specificity', 0.0102),
+        ('accuracy', 0.0112),
     ],
 )
 def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
@@ -459,19 +459,19 @@ def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_
     assert (metric, 'sampling_error') in results.data.columns
     assert all(
         np.round(results.to_df().loc[:, (metric, 'sampling_error')], 4)
-        == pd.Series(np.round(sampling_error, 4), index=range(len(results.data)))
+        == pd.Series(sampling_error, index=range(len(results.data)))
     )
 
 
 @pytest.mark.parametrize(
     'metric, sampling_error',
     [
-        ('roc_auc', [0.001819, 0.001043, 0.001046, 0.001046, 0.040489]),
-        ('f1', [0.007585, 0.004348, 0.004360, 0.004362, 0.168798]),
-        ('precision', [0.003777, 0.002165, 0.002171, 0.002172, 0.084046]),
-        ('recall', [0.006578, 0.003770, 0.003781, 0.003783, 0.146378]),
-        ('specificity', [0.003430, 0.001966, 0.001971, 0.001972, 0.076324]),
-        ('accuracy', [0.003764, 0.002158, 0.002164, 0.002165, 0.083769]),
+        ('roc_auc', [0.0055, 0.0031, 0.0031, 0.0031, 0.1215]),
+        ('f1', [0.0228, 0.013 , 0.0131, 0.0131, 0.5064]),
+        ('precision', [0.0113, 0.0065, 0.0065, 0.0065, 0.2521]),
+        ('recall', [0.0197, 0.0113, 0.0113, 0.0113, 0.4391]),
+        ('specificity', [0.0103, 0.0059, 0.0059, 0.0059, 0.229 ]),
+        ('accuracy', [0.0113, 0.0065, 0.0065, 0.0065, 0.2513]),
     ],
 )
 def test_cbpe_for_binary_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
@@ -490,18 +490,18 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
     results = estimator.estimate(analysis).filter(period='analysis')
     sut = results.to_df()
     assert (metric, 'sampling_error') in sut.columns
-    assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
+    assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), sampling_error)
 
 
 @pytest.mark.parametrize(
     'metric, sampling_error',
     [
-        ('roc_auc', 0.002143),
-        ('f1', 0.005652),
-        ('precision', 0.005566),
-        ('recall', 0.005565),
-        ('specificity', 0.003002),
-        ('accuracy', 0.005566),
+        ('roc_auc', 0.0064),
+        ('f1', 0.0170),
+        ('precision', 0.0167),
+        ('recall', 0.0167),
+        ('specificity', 0.0090),
+        ('accuracy', 0.0167),
     ],
 )
 def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
@@ -525,19 +525,19 @@ def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_const
     assert (metric, 'sampling_error') in sut.columns
     assert all(
         np.round(sut.loc[:, (metric, 'sampling_error')], 4)
-        == pd.Series(np.round(sampling_error, 4), index=range(len(sut)))
+        == pd.Series(sampling_error, index=range(len(sut)))
     )
 
 
 @pytest.mark.parametrize(
     'metric, sampling_error',
     [
-        ('roc_auc', [0.001379, 0.001353, 0.001371, 0.001339, 0.008100]),
-        ('f1', [0.003637, 0.003569, 0.003615, 0.003531, 0.021364]),
-        ('precision', [0.003582, 0.003515, 0.003560, 0.003477, 0.021037]),
-        ('recall', [0.003581, 0.003514, 0.003559, 0.003476, 0.021033]),
-        ('specificity', [0.001932, 0.001896, 0.001920, 0.001875, 0.011348]),
-        ('accuracy', [0.003582, 0.003515, 0.003560, 0.003477, 0.021039]),
+        ('roc_auc', [0.0041, 0.0041, 0.0041, 0.004 , 0.0243]),
+        ('f1', [0.0109, 0.0107, 0.0108, 0.0106, 0.0641]),
+        ('precision', [0.0107, 0.0105, 0.0107, 0.0104, 0.0631]),
+        ('recall', [0.0107, 0.0105, 0.0107, 0.0104, 0.0631]),
+        ('specificity', [0.0058, 0.0057, 0.0058, 0.0056, 0.034]),
+        ('accuracy', [0.0107, 0.0105, 0.0107, 0.0104, 0.0631]),
     ],
 )
 def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
@@ -561,7 +561,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
     sut = results.filter(period='analysis').to_df()
 
     assert (metric, 'sampling_error') in sut.columns
-    assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
+    assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), sampling_error)
 
 
 def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):
