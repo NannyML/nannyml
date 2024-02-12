@@ -600,13 +600,11 @@ class BinaryClassificationConfusionMatrix(Metric):
                 ('False Positive', 'false_positive'),
                 ('False Negative', 'false_negative'),
             ],
+            lower_threshold_limit=0
         )
 
-        self.lower_threshold_limit: Optional[float] = 0.0 if normalize_confusion_matrix else None
-        self.upper_threshold_limit: Optional[float] = 1.0 if normalize_confusion_matrix else None
-
+        self.upper_threshold_value_limit: Optional[float] = 1.0 if normalize_confusion_matrix else None
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
-
         # sampling error
         self._sampling_error_components: Tuple = ()
 
@@ -683,8 +681,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         lower_threshold_value, upper_threshold_value = calculate_threshold_values(
             threshold=self.threshold,
             data=np.asarray(chunked_reference_metric),
-            lower_threshold_value_limit=self.lower_threshold_limit,
-            upper_threshold_value_limit=self.upper_threshold_limit,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
             logger=self._logger,
             metric_name=self.display_name,
         )

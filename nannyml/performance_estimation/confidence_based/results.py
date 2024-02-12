@@ -37,7 +37,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         problem_type: ProblemType,
         timestamp_column_name: Optional[str] = None,
     ):
-        """
+        """Initialize CBPE results class.
+
         Parameters
         ----------
         results_data: pd.DataFrame
@@ -124,9 +125,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         return None
 
     def keys(self) -> List[Key]:
-        """
-        Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`
-        """
+        """Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
         return [
             Key(
                 properties=(component[1],),
@@ -155,6 +154,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         Parameters
         ----------
         kind: str, default='performance'
+            What kind of plot to create. Only performance type is available.
+
 
         Raises
         ------

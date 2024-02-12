@@ -298,14 +298,6 @@ class CBPE(AbstractEstimator):
 
         self.result: Optional[Result] = None
 
-    def __deepcopy__(self, memodict={}):
-        cls = self.__class__
-        result = cls.__new__(cls, y_pred_proba=self.y_pred_proba, problem_type=self.problem_type)
-        memodict[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, copy.deepcopy(v, memodict))
-        return result
-
     @log_usage(UsageEvent.CBPE_ESTIMATOR_FIT, metadata_from_self=['metrics', 'problem_type'])
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> CBPE:
         """Fits the drift calculator using a set of reference data.
