@@ -644,6 +644,7 @@ class ResultCompareMixin:
         from nannyml.drift.univariate import Result as UnivariateDriftResult
         from nannyml.performance_calculation import Result as RealizedPerformanceResult
         from nannyml.performance_estimation.confidence_based import Result as CBPEResult
+        from nannyml.performance_estimation.importance_weighting import Result as IWResult
         from nannyml.performance_estimation.direct_loss_estimation import Result as DLEResult
         from nannyml.stats.avg.result import Result as StatsAvgResult
         from nannyml.stats.count import Result as StatsCountResult
@@ -655,6 +656,7 @@ class ResultCompareMixin:
             DataReconstructionDriftResult: "Multivariate drift",
             RealizedPerformanceResult: "Realized performance",
             CBPEResult: "Estimated performance (CBPE)",
+            IWResult: "Estimated performance (IW)",
             DLEResult: "Estimated performance (DLE)",
             MissingValueResult: "Missing Values",
             UnseenValuesResult: "Unseen Values",

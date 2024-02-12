@@ -329,12 +329,91 @@ Calibrating probabilities is yet another reason why NannyML requires reference d
 Fitting a calibrator on model training data would introduce bias [1]_.
 
 
+.. _how-it-works-iw:
+
+-------------------------
+Importance Weighting (IW)
+-------------------------
+
+The Intuition
+=============
+
+Importance Weighting is another algorithm that allows us to estimate performance.
+We assume that we have a reference :term:`data period<Data Period>` which we can use in order
+to extrapolate the performance our model will have on a :term:`data chunk<Data Chunk>`.
+This extrapolation happens by performing a weighted performance calculation whose
+effect is to make the reference data resemble the chunk data more.
+This is accomplished by calculating the :term:`density ratio<Density Ratio>` between the chunk data and the
+reference data. The density ratio is defined as the ratio of the chunk data
+:term:`probability density function<Probability Density Function>`
+divided by the reference data probability density function. Those ratios are
+also called :term:`importance weights<Importance Weights>`. They are calculated for each data point in the
+reference dataset and they are the weights used in the weighted performance calculation.
+The impact of those weights is that data points less likely to be found in the chunk data contribute
+less to the performance result and vica versa. Hence the weighted perfomance calculation result
+on the reference dataset is the performance we estimate the chunk dataset will have once targets become available.
+
+
+Implementation details
+======================
+
+Let's go into the details of how Importance weighting is implemented by NannyML.
+The :class:`~nannyml.performance_estimation.importance_weighting.iw.IW` calculator
+is responsible for algorithm's implementation and works for performance estimation of binary 
+and multiclass classification models. Let's go into the details of how
+Importance Weighting works.:
+
+    1. Preprocess data to create the training dataset for the :term:`density ratio estimation model<Density Ratio Estimation Model>`.
+       For this step we concatenate the model inputs for the reference data
+       and the :term:`chunk data<Data Chunk>`. Reference data points are labeled as 0 and chunk data points as 1.
+    2. The density ratio estimation model is trained using a LightGBM classifier. Hyperparameter
+       tuning can be performed if opted by the user.
+    3. The model's predicted probabilities for all reference data points are converted to density ratios
+       using the following formula:
+
+       .. math::
+            \mathrm{dr}(x)=\frac{N_{ref}}{N_{chunk}}\cdot\frac{P_{chunk}(x)}{1-P_{chunk}(x)}
+
+       However because we don't want to have extreme values, either too low or too high, for our density ratios
+       we use ``density_ratio_minimum_denominator`` and ``density_ratio_minimum_value`` to impose effective limits
+       on the density ratio minimum and maximum values.
+       Those parameters are configurable in the :class:`~nannyml.performance_estimation.importance_weighting.iw.IW`
+       estimator, although that should be rarely required.
+
+    4. We calculate the weighted performance score on the reference data.
+
+Those steps are the same for both binary and multiclass classification problems.
+
+.. _iw-assumptions-limitations:
+
+Assumptions and Limitations
+===========================
+
+Importance Weighting works well while also being a relatively simple performance estimation method. However it
+does have it's limitations:
+
+**There is no concept drift**.
+    While dealing well with covaraite shift, Importance Weighting will not work under :term:`concept drift` i.e. when
+    P(Y|X) changes. We cannot get around this limitation and in that case Importance Weighting
+    will not give accurate estimations.
+
+**There is no covariate shift to previously unseen regions in the input space.**
+    The algorithm will most likely not work if the drift happens to subregions previously unseen in the model input
+    space. Mathematically we can also state that the support of the chunk data needs to be a subset of the
+    support of the reference data. If not density ratio estimation is theoretically not defined.
+    Practically if we don't have data from a chunk region in the reference data we can't account for that
+    shift with a weighted calculation from reference data.
+
+**The sample of data used for estimation is large enough.**
+    IW struggles to give accurate estimates when the data size gets low. It is both harder to properly
+    train the density ratio estimation model and the weighted calculation is less effective.
+
 
 .. _how-it-works-dle:
 
------------------
-Direct Loss (DLE)
------------------
+----------------------------
+Direct Loss Estimation (DLE)
+----------------------------
 
 The Intuition
 =============

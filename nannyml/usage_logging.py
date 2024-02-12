@@ -88,6 +88,10 @@ class UsageEvent(str, Enum):
     CBPE_ESTIMATOR_RUN = "CBPE estimator run"
     CBPE_PLOT = "CBPE estimator plot"
 
+    IW_ESTIMATOR_FIT = "IW estimator fit"
+    IW_ESTIMATOR_RUN = "IW estimator run"
+    IW_PLOT = "IW estimator plot"
+
     DLE_ESTIMATOR_FIT = "DLE estimator fit"
     DLE_ESTIMATOR_RUN = "DLE estimator run"
     DLE_PLOT = "DLE estimator plot"

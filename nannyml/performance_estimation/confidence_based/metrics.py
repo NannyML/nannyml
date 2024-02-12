@@ -1,3 +1,7 @@
+#  Author:   Niels Nuyttens  <niels@nannyml.com>
+#
+#  License: Apache Software License 2.0
+
 """A module containing the implementations of metrics estimated by CBPE.
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator converts a list of metric names into

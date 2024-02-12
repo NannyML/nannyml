@@ -4,7 +4,8 @@
 Creating and Estimating a Custom Binary Classification Metric
 ========================================================================================
 This tutorial explains how to use NannyML to estimate a custom metric based on :term:`confusion matrix<Confusion Matrix>` for binary classification
-models in the absence of target data. In particular, we will be creating a **balanced accuracy** metric.
+models in the absence of target data. In particular, we will be creating the **balanced accuracy** metric.
+We will do this using the CBPE algorithm but custom metrics can also be created with the IW as well.
 To find out how CBPE estimates the confusion matrix components, read the :ref:`explanation of Confidence-based
 Performance Estimation<performance-estimation-deep-dive>`.
 

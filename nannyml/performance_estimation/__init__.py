@@ -6,3 +6,4 @@
 
 from .confidence_based import CBPE
 from .direct_loss_estimation import DLE
+from .importance_weighting import IW

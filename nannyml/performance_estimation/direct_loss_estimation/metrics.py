@@ -299,7 +299,6 @@ class Metric(abc.ABC):
             self._logger.debug(
                 f"'tune_hyperparameters' set to '{tune_hyperparameters}': " f"performing hyperparameter tuning"
             )
-            self._logger.debug("'hyperparameters' not set: using default hyperparameters")
             self._logger.debug(f'hyperparameter tuning configuration: {hyperparameter_tuning_config}')
 
             automl = AutoML()
@@ -312,6 +311,7 @@ class Metric(abc.ABC):
             self._logger.debug(
                 f"'tune_hyperparameters' set to '{tune_hyperparameters}': skipping hyperparameter tuning"
             )
+            self._logger.debug("'hyperparameters' not set: using default hyperparameters")
             model = LGBMRegressor()
             model.fit(X_train, y_train, categorical_feature=categorical_column_names)
 

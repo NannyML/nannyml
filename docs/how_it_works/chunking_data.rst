@@ -15,7 +15,7 @@ Not Enough Chunks
 Sometimes the selected chunking method might not generate enough chunks in the reference period.
 
 NannyML calculates thresholds based on the variability of metrics measured in the reference chunks (see how thresholds
-are calculated for :ref:`performance estimation<performance-estimation-thresholds>`). Having 6 chunks is
+are calculated for :ref:`threshold deep dive<how_thresholds>`). Having 6 chunks is
 far from optimal, but it is a reasonable minimum. If there are less than 6 chunks, a warning will be raised.
 
 .. code-block:: python

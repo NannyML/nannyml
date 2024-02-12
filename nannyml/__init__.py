@@ -55,7 +55,7 @@ from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftC
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator
-from .performance_estimation import CBPE, DLE
+from .performance_estimation import CBPE, DLE, IW
 from .stats import (
     SummaryStatsAvgCalculator,
     SummaryStatsMedianCalculator,
