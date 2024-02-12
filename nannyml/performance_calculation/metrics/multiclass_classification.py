@@ -132,8 +132,11 @@ class MulticlassClassificationAUROC(Metric):
             )
 
         if y_true.nunique() <= 1:
-            warnings.warn("Calculated ROC-AUC score contains NaN values.")
-            return np.nan
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                "Returning NaN."
+            )
+            return np.NaN
         else:
             return roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average='macro', labels=labels)
 
@@ -219,9 +222,16 @@ class MulticlassClassificationF1(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated F1-score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
         else:
             return f1_score(y_true, y_pred, average='macro', labels=labels)
 
@@ -307,9 +317,16 @@ class MulticlassClassificationPrecision(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Precision score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
         else:
             return precision_score(y_true, y_pred, average='macro', labels=labels)
 
@@ -395,9 +412,16 @@ class MulticlassClassificationRecall(Metric):
                 f"could not calculate metric {self.display_name}: " "prediction column contains no data"
             )
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Recall score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
         else:
             return recall_score(y_true, y_pred, average='macro', labels=labels)
 
@@ -483,9 +507,16 @@ class MulticlassClassificationSpecificity(Metric):
                 f"could not calculate metric {self.display_name}: prediction column contains no data"
             )
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Specificity score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class, cannot calculate {self.display_name}. Returning NaN."
+            )
+            return np.NaN
         else:
             MCM = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
             tn_sum = MCM[:, 0, 0]
@@ -596,7 +627,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
             threshold=threshold,
             y_pred_proba=y_pred_proba,
             components=[("None", "none")],
-            lower_threshold_limit=0
+            lower_threshold_limit=0,
         )
 
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix

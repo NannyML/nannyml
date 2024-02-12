@@ -354,14 +354,8 @@ class PerformanceCalculator(AbstractCalculator):
     def _calculate_metrics_for_chunk(self, chunk: Chunk) -> Dict:
         chunk_records: Dict[str, Any] = {}
         for metric in self.metrics:
-            try:
-                chunk_record = metric.get_chunk_record(chunk.data)
-                chunk_records.update(chunk_record)
-            except Exception as exc:
-                self._logger.error(
-                    f"an unexpected error occurred while calculating metric {metric.display_name}: {exc}"
-                )
-                continue
+            chunk_record = metric.get_chunk_record(chunk.data)
+            chunk_records.update(chunk_record)
         return chunk_records
 
 

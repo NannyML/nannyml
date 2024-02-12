@@ -30,8 +30,10 @@ For help selecting the correct univariate drift detection method for your use ca
 from __future__ import annotations
 
 import warnings
+from logging import Logger
 from typing import Any, Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 from pandas import MultiIndex
 
@@ -344,7 +346,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
             for column_name in self.continuous_column_names:
                 for method in self._column_to_models_mapping[column_name]:
                     try:
-                        for k, v in _calculate_for_column(chunk.data, column_name, method).items():
+                        for k, v in _calculate_for_column(chunk.data, column_name, method, self._logger).items():
                             row[f'{column_name}_{method.column_name}_{k}'] = v
                     except Exception as exc:
                         self._logger.error(
@@ -356,7 +358,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
             for column_name in self.categorical_column_names:
                 for method in self._column_to_models_mapping[column_name]:
                     try:
-                        for k, v in _calculate_for_column(chunk.data, column_name, method).items():
+                        for k, v in _calculate_for_column(chunk.data, column_name, method, self._logger).items():
                             row[f'{column_name}_{method.column_name}_{k}'] = v
                     except Exception as exc:
                         self._logger.error(
@@ -400,14 +402,27 @@ class UnivariateDriftCalculator(AbstractCalculator):
         return self.result
 
 
-def _calculate_for_column(data: pd.DataFrame, column_name: str, method: Method) -> Dict[str, Any]:
+def _calculate_for_column(
+    data: pd.DataFrame, column_name: str, method: Method, logger: Optional[Logger] = None
+) -> Dict[str, Any]:
     result = {}
-    value = method.calculate(data[column_name])
-    result['value'] = value
-    result['upper_threshold'] = method.upper_threshold_value
-    result['lower_threshold'] = method.lower_threshold_value
-    result['alert'] = method.alert(value)
-    return result
+    try:
+        value = method.calculate(data[column_name])
+        result['value'] = value
+        result['upper_threshold'] = method.upper_threshold_value
+        result['lower_threshold'] = method.lower_threshold_value
+        result['alert'] = method.alert(value)
+    except Exception as exc:
+        if logger:
+            logger.error(
+                f"an unexpected exception occurred during calculation of method '{method.display_name}': " f"{exc}"
+            )
+        result['value'] = np.NaN
+        result['upper_threshold'] = method.upper_threshold_value
+        result['lower_threshold'] = method.lower_threshold_value
+        result['alert'] = np.NaN
+    finally:
+        return result
 
 
 def _create_multilevel_index(

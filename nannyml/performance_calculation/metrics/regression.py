@@ -1,6 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+import warnings
 from typing import Optional, Tuple
 
 import numpy as np
@@ -81,8 +82,12 @@ class MAE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty or y_pred.empty:
-            return np.nan
+        if y_true.empty:
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
+        elif y_pred.empty:
+            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
 
         return mean_absolute_error(y_true, y_pred)
 
@@ -139,8 +144,12 @@ class MAPE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty or y_pred.empty:
-            return np.nan
+        if y_true.empty:
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
+        elif y_pred.empty:
+            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
 
         return mean_absolute_percentage_error(y_true, y_pred)
 
@@ -197,8 +206,12 @@ class MSE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty or y_pred.empty:
-            return np.nan
+        if y_true.empty:
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
+        elif y_pred.empty:
+            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
 
         return mean_squared_error(y_true, y_pred)
 
@@ -255,8 +268,12 @@ class MSLE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty or y_pred.empty:
-            return np.nan
+        if y_true.empty:
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
+        elif y_pred.empty:
+            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
 
         # TODO: include option to drop negative values as well?
 
@@ -318,8 +335,12 @@ class RMSE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty or y_pred.empty:
-            return np.nan
+        if y_true.empty:
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
+        elif y_pred.empty:
+            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
 
         return mean_squared_error(y_true, y_pred, squared=False)
 
@@ -376,8 +397,12 @@ class RMSLE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty or y_pred.empty:
-            return np.nan
+        if y_true.empty:
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
+        elif y_pred.empty:
+            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
 
         # TODO: include option to drop negative values as well?
 
