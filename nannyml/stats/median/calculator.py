@@ -120,7 +120,9 @@ class SummaryStatsMedianCalculator(AbstractCalculator):
             )
 
         for col in self.column_names:
-            self._sampling_error_components[col] = summary_stats_median_sampling_error_components(reference_data[col])
+            self._sampling_error_components[col] = summary_stats_median_sampling_error_components(
+                reference_data[col].dropna()
+            )
 
         for column in self.column_names:
             reference_chunk_results = np.asarray(

@@ -4,7 +4,7 @@
 #  License: Apache Software License 2.0
 
 """Tests for Drift package."""
-
+import numpy as np
 import pytest
 
 from nannyml.datasets import load_synthetic_car_loan_dataset
@@ -29,6 +29,18 @@ def test_stats_median_calculator_with_default_params_should_not_fail():  # noqa:
     try:
         calc = SummaryStatsMedianCalculator(
             column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure'],
+        ).fit(reference)
+        _ = calc.calculate(data=analysis)
+    except Exception:
+        pytest.fail()
+
+
+def test_stats_median_calculator_should_not_fail_given_nan_values():  # noqa: D103
+    reference, analysis, _ = load_synthetic_car_loan_dataset()
+    reference.loc[20000:30000, 'car_value'] = np.NaN
+    try:
+        calc = SummaryStatsMedianCalculator(
+            column_names=['car_value'],
         ).fit(reference)
         _ = calc.calculate(data=analysis)
     except Exception:
