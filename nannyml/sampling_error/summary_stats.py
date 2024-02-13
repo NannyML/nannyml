@@ -49,6 +49,8 @@ def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
     _std = sampling_error_components[0]
     _mu4 = sampling_error_components[1]
     _size = col.shape[0]
+    if _size < 2:
+        return np.nan
     err_var = np.sqrt((1 / _size) * (_mu4 - ((_size - 3) * (_std**4) / (_size - 1))))
     return (1 / (2 * _std)) * err_var
 
