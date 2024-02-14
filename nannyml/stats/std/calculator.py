@@ -201,7 +201,7 @@ class SummaryStatsStdCalculator(AbstractCalculator):
             value = _calculate_std_value_stats(data[column_name])
             result['value'] = value
             result['sampling_error'] = summary_stats_std_sampling_error(
-                self._sampling_error_components[column_name], data[column_name]
+                self._sampling_error_components[column_name], data[column_name], self._logger
             )
             result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
             result['lower_confidence_boundary'] = np.maximum(
