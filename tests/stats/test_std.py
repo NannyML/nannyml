@@ -63,7 +63,7 @@ def test_stats_std_calculator_with_default_params_chunk_size_one():  # noqa: D10
             ('car_value', 'lower_confidence_boundary'): [19798.9174,np.nan],
             ('car_value', 'upper_threshold'): [20978.5658, 20978.5658],
             ('car_value', 'lower_threshold'): [19816.9091, 19816.9091],
-            ('car_value', 'alert'): [False, False],
+            ('car_value', 'alert'): [False, True],
         }
     )
     pd.testing.assert_frame_equal(
