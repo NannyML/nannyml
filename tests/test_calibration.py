@@ -66,6 +66,15 @@ def test_needs_calibration_returns_true_when_calibration_always_improves_ece(): 
     assert sut
 
 
+def test_needs_calibration_returns_false_when_only_single_class_in_y_true():  # noqa: D103
+    y_true = pd.Series([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    y_pred_proba = abs(1 - y_true)
+    shuffled_indexes = np.random.permutation(len(y_true))
+    y_true, y_pred_proba = y_true[shuffled_indexes], y_pred_proba[shuffled_indexes]
+    sut = needs_calibration(y_true, y_pred_proba, IsotonicCalibrator())
+    assert sut is False
+
+
 def test_needs_calibration_raises_invalid_args_exception_when_y_true_contains_nan():  # noqa: D103
     y_true = pd.Series([0, 0, 0, 0, 0, np.NaN, 1, 1, 1, 1, 1, 1])
     y_pred_proba = np.asarray([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])

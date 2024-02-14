@@ -99,8 +99,11 @@ class BinaryClassificationAUROC(Metric):
         y_pred = data[self.y_pred_proba]
 
         if y_true.nunique() <= 1:
-            warnings.warn("Calculated ROC-AUC score contains NaN values.")
-            return np.nan
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
         else:
             return roc_auc_score(y_true, y_pred)
 
@@ -166,9 +169,18 @@ class BinaryClassificationF1(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated F1-score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
         else:
             return f1_score(y_true, y_pred)
 
@@ -233,9 +245,18 @@ class BinaryClassificationPrecision(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Precision score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
         else:
             return precision_score(y_true, y_pred)
 
@@ -300,9 +321,18 @@ class BinaryClassificationRecall(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Recall score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
         else:
             return recall_score(y_true, y_pred)
 
@@ -367,9 +397,18 @@ class BinaryClassificationSpecificity(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Specificity score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
         else:
             tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
             return tn / (tn + fp)
@@ -435,9 +474,18 @@ class BinaryClassificationAccuracy(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if (y_true.nunique() <= 1) or (y_pred.nunique() <= 1):
-            warnings.warn("Calculated Accuracy score contains NaN values.")
-            return np.nan
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        elif y_pred.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_pred}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
         else:
             tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
             return (tp + tn) / (tp + tn + fp + fn)
@@ -537,7 +585,7 @@ class BinaryClassificationBusinessValue(Metric):
         y_pred = data[self.y_pred]
 
         if y_true.shape[0] == 0:
-            warnings.warn("Calculated Business Value contains NaN values.")
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate business value. Returning NaN.")
             return np.NaN
 
         tp_value = self.business_value_matrix[1, 1]
@@ -600,13 +648,11 @@ class BinaryClassificationConfusionMatrix(Metric):
                 ('False Positive', 'false_positive'),
                 ('False Negative', 'false_negative'),
             ],
+            lower_threshold_limit=0,
         )
 
-        self.lower_threshold_limit: Optional[float] = 0.0 if normalize_confusion_matrix else None
-        self.upper_threshold_limit: Optional[float] = 1.0 if normalize_confusion_matrix else None
-
+        self.upper_threshold_value_limit: Optional[float] = 1.0 if normalize_confusion_matrix else None
         self.normalize_confusion_matrix: Optional[str] = normalize_confusion_matrix
-
         # sampling error
         self._sampling_error_components: Tuple = ()
 
@@ -683,8 +729,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         lower_threshold_value, upper_threshold_value = calculate_threshold_values(
             threshold=self.threshold,
             data=np.asarray(chunked_reference_metric),
-            lower_threshold_value_limit=self.lower_threshold_limit,
-            upper_threshold_value_limit=self.upper_threshold_limit,
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
             logger=self._logger,
             metric_name=self.display_name,
         )
@@ -795,8 +841,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_pred = data[self.y_pred]
 
         if y_true.empty or y_pred.empty:
-            warnings.warn("Calculated false_negatives contain NaN values.")
-            return np.nan
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
+            return np.NaN
 
         num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
         num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))

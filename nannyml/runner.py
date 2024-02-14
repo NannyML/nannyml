@@ -298,6 +298,6 @@ def _add_targets_to_analysis_data(
     analysis_data: pd.DataFrame, target_data: pd.DataFrame, join_column: Optional[str]
 ) -> pd.DataFrame:
     if join_column is not None:
-        return analysis_data.merge(target_data, on=target_data.join_column)
+        return analysis_data.merge(target_data, on=join_column)
     else:
         return analysis_data.join(target_data)

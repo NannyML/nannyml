@@ -192,15 +192,29 @@ class SummaryStatsAvgCalculator(AbstractCalculator):
 
     def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
         result = {}
-        value = _calculate_avg_value_stats(data[column_name])
-        result['value'] = value
-        result['sampling_error'] = self._sampling_error_components[column_name] / np.sqrt(data.shape[0])
-        result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
-        result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
-        result['upper_threshold'] = self._upper_alert_thresholds[column_name]
-        result['lower_threshold'] = self._lower_alert_thresholds[column_name]
-        result['alert'] = _add_alert_flag(result)
-        return result
+        try:
+            value = _calculate_avg_value_stats(data[column_name])
+            result['value'] = value
+            result['sampling_error'] = self._sampling_error_components[column_name] / np.sqrt(data.shape[0])
+            result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
+            result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
+            result['upper_threshold'] = self._upper_alert_thresholds[column_name]
+            result['lower_threshold'] = self._lower_alert_thresholds[column_name]
+            result['alert'] = _add_alert_flag(result)
+        except Exception as exc:
+            if self._logger:
+                self._logger.error(
+                    f"an unexpected exception occurred during calculation of column '{column_name}': " f"{exc}"
+                )
+            result['value'] = np.NaN
+            result['sampling_error'] = np.NaN
+            result['upper_confidence_boundary'] = np.NaN
+            result['lower_confidence_boundary'] = np.NaN
+            result['upper_threshold'] = self._upper_alert_thresholds[column_name]
+            result['lower_threshold'] = self._lower_alert_thresholds[column_name]
+            result['alert'] = np.NaN
+        finally:
+            return result
 
 
 def _create_multilevel_index(

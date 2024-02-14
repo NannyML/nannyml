@@ -4,7 +4,7 @@
 #  License: Apache Software License 2.0
 
 """Drift calculator using Reconstruction Error as a measure of drift."""
-
+import logging
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
@@ -131,6 +131,9 @@ class UnseenValuesCalculator(AbstractCalculator):
 
         _list_missing(self.column_names, reference_data)
 
+        # Included columns of dtype=int should be considered categorical. We'll try converting those explicitly.
+        reference_data = _convert_int_columns_to_categorical(reference_data, self.column_names, self._logger)
+
         # All provided columns must be categorical
         continuous_column_names, categorical_column_names = _split_features_by_type(reference_data, self.column_names)
         if not set(self.column_names) == set(categorical_column_names):
@@ -232,6 +235,25 @@ class UnseenValuesCalculator(AbstractCalculator):
         result['lower_threshold'] = self._lower_alert_thresholds[column_name]
         result['alert'] = _add_alert_flag(result)
         return result
+
+
+def _convert_int_columns_to_categorical(
+    data: pd.DataFrame, column_names: List[str], logger: Optional[logging.Logger]
+) -> pd.DataFrame:
+    res = data.copy()
+    int_cols = list(
+        filter(
+            lambda c: c in column_names
+            and data[c].dtype in ('int_', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'),
+            data.columns,
+        )
+    )
+    for col in int_cols:
+        res[col] = res[col].astype('category')
+
+    if logger:
+        logger.warning(f"converting integer columns to categorical: {list(int_cols)}")
+    return res
 
 
 def _create_multilevel_index(

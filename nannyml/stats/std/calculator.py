@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Simple Statistics Average Calculator"""
+"""Simple Statistics Standard Deviation Module."""
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -25,7 +25,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class SummaryStatsStdCalculator(AbstractCalculator):
-    """SummaryStatsStdCalculator implementation"""
+    """Simple Statistics Standard Deviation Calculator."""
 
     def __init__(
         self,
@@ -102,8 +102,8 @@ class SummaryStatsStdCalculator(AbstractCalculator):
         self._upper_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
         self._lower_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
 
-        self.lower_threshold_value_limit: float = np.nan
-        self.upper_threshold_value_limit: float = np.nan
+        self.lower_threshold_value_limit: float = 0
+        self.upper_threshold_value_limit: Optional[float] = None
         self.simple_stats_metric = 'values_std'
 
     @log_usage(UsageEvent.STATS_STD_FIT)
@@ -197,18 +197,35 @@ class SummaryStatsStdCalculator(AbstractCalculator):
 
     def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
         result = {}
-        value = _calculate_std_value_stats(data[column_name])
-        result['value'] = value
-        result['sampling_error'] = summary_stats_std_sampling_error(
-            self._sampling_error_components[column_name], data[column_name]
-        )
-        result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
-        result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
+        try:
+            value = _calculate_std_value_stats(data[column_name])
+            result['value'] = value
+            result['sampling_error'] = summary_stats_std_sampling_error(
+                self._sampling_error_components[column_name], data[column_name]
+            )
+            result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
+            result['lower_confidence_boundary'] = np.maximum(
+                result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error'],
+                -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
+            )
 
-        result['upper_threshold'] = self._upper_alert_thresholds[column_name]
-        result['lower_threshold'] = self._lower_alert_thresholds[column_name]
-        result['alert'] = _add_alert_flag(result)
-        return result
+            result['upper_threshold'] = self._upper_alert_thresholds[column_name]
+            result['lower_threshold'] = self._lower_alert_thresholds[column_name]
+            result['alert'] = _add_alert_flag(result)
+        except Exception as exc:
+            if self._logger:
+                self._logger.error(
+                    f"an unexpected exception occurred during calculation of column '{column_name}': " f"{exc}"
+                )
+            result['value'] = np.NaN
+            result['sampling_error'] = np.NaN
+            result['upper_confidence_boundary'] = np.NaN
+            result['lower_confidence_boundary'] = np.NaN
+            result['upper_threshold'] = self._upper_alert_thresholds[column_name]
+            result['lower_threshold'] = self._lower_alert_thresholds[column_name]
+            result['alert'] = np.NaN
+        finally:
+            return result
 
 
 def _create_multilevel_index(

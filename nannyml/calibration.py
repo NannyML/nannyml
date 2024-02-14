@@ -284,6 +284,11 @@ def needs_calibration(
     # y_pred_proba = y_pred_proba.reset_index(drop=True)
     # y_true = y_true.reset_index(drop=True)
 
+    # Check if we have a single class in y_true. This would crash the AUROC check below.
+    # If we do only have a single class in y_true, no calibration will be required.
+    if len(np.unique(y_true)) == 1:
+        return False
+
     if roc_auc_score(y_true, y_pred_proba, multi_class='ovr') > 0.999:
         return False
 

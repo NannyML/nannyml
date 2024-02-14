@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.10.2] - 2024-02-13
+
+### Changed
+
+- Removed p-value based thresholds for Chi2 univariate drift detection [(#349)](https://github.com/NannyML/nannyml/issues/349)
+- Change default thresholds for univariate drift methods to standard deviation based thresholds.
+- Add summary stats support to the Runner and CLI [(#353)](https://github.com/NannyML/nannyml/issues/353)
+- Add unique identifier columns to included datasets for better joining [(#348)](https://github.com/NannyML/nannyml/issues/348)
+- Remove unused `confidence_deviation` properties in CBPE metrics [(#357)](https://github.com/NannyML/nannyml/issues/357)
+- Improved error handling: failing metric calculation for a single chunk will no longer stop an entire calculator.
+
+### Added
+
+- Add feature distribution calculators [(#352)](https://github.com/NannyML/nannyml/issues/352)
+
+### Fixed
+
+- Fix join column settings for CLI [(#356)](https://github.com/NannyML/nannyml/issues/356)
+- Fix crashes in `UnseenValuesCalculator`
+
+
 ## [0.10.1] - 2023-11-21
 
 - Various small fixes to the docs, thanks once again ghostwriter [@NeoKish](https://github.com/NeoKish)! [(#345)](https://github.com/NannyML/nannyml/issues/345)

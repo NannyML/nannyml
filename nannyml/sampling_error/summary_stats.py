@@ -92,7 +92,6 @@ def summary_stats_median_sampling_error(sampling_error_components, col) -> float
     sampling_error: float
 
     """
-    # median = sampling_error_components[0]  # TODO: check if this can be removed with Nikoss
     fmedian = sampling_error_components[1]
     _size = col.shape[0]
     err = np.sqrt(1 / (4 * _size * (fmedian**2)))

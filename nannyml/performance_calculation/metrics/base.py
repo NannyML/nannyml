@@ -182,16 +182,27 @@ class Metric(abc.ABC):
 
         chunk_record = {}
 
-        realized_value = self.calculate(chunk_data)
-        sampling_error = self.sampling_error(chunk_data)
+        try:
+            realized_value = self.calculate(chunk_data)
+            sampling_error = self.sampling_error(chunk_data)
 
-        chunk_record[f'{column_name}_sampling_error'] = sampling_error
-        chunk_record[f'{column_name}'] = realized_value
-        chunk_record[f'{column_name}_upper_threshold'] = self.upper_threshold_value
-        chunk_record[f'{column_name}_lower_threshold'] = self.lower_threshold_value
-        chunk_record[f'{column_name}_alert'] = self.alert(realized_value)
-
-        return chunk_record
+            chunk_record[f'{column_name}_sampling_error'] = sampling_error
+            chunk_record[f'{column_name}'] = realized_value
+            chunk_record[f'{column_name}_upper_threshold'] = self.upper_threshold_value
+            chunk_record[f'{column_name}_lower_threshold'] = self.lower_threshold_value
+            chunk_record[f'{column_name}_alert'] = self.alert(realized_value)
+        except Exception as exc:
+            if self._logger:
+                self._logger.error(
+                    f"an unexpected exception occurred during calculation of method '{self.display_name}': " f"{exc}"
+                )
+            chunk_record[f'{column_name}_sampling_error'] = np.NaN
+            chunk_record[f'{column_name}'] = np.NaN
+            chunk_record[f'{column_name}_upper_threshold'] = self.upper_threshold_value
+            chunk_record[f'{column_name}_lower_threshold'] = self.lower_threshold_value
+            chunk_record[f'{column_name}_alert'] = np.NaN
+        finally:
+            return chunk_record
 
     @property
     def display_name(self) -> str:

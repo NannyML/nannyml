@@ -4,6 +4,7 @@
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Union
 
+import numpy as np
 import pandas as pd
 from pandas import MultiIndex
 from sklearn.impute import SimpleImputer
@@ -374,25 +375,35 @@ class DLE(AbstractEstimator):
     def _estimate_chunk(self, chunk: Chunk) -> Dict:
         estimates: Dict[str, Any] = {}
         for metric in self.metrics:
-            estimated_metric = metric.estimate(chunk.data)
-            sampling_error = metric.sampling_error(chunk.data)
-
-            upper_confidence_boundary = estimated_metric + 3 * sampling_error
-            if metric.upper_threshold_value_limit is not None:
-                upper_confidence_boundary = min(metric.upper_threshold_value_limit, upper_confidence_boundary)
-
-            lower_confidence_boundary = estimated_metric - 3 * sampling_error
-            if metric.lower_threshold_value_limit is not None:
-                lower_confidence_boundary = max(metric.lower_threshold_value_limit, lower_confidence_boundary)
-
-            estimates[f'sampling_error_{metric.column_name}'] = sampling_error
-            estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
-            estimates[f'estimated_{metric.column_name}'] = estimated_metric
-            estimates[f'upper_confidence_{metric.column_name}'] = upper_confidence_boundary
-            estimates[f'lower_confidence_{metric.column_name}'] = lower_confidence_boundary
-            estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold_value
-            estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold_value
-            estimates[f'alert_{metric.column_name}'] = metric.alert(estimated_metric)
+            try:
+                estimated_metric = metric.estimate(chunk.data)
+                sampling_error = metric.sampling_error(chunk.data)
+                upper_confidence_boundary = estimated_metric + 3 * sampling_error
+                if metric.upper_threshold_value_limit is not None:
+                    upper_confidence_boundary = min(metric.upper_threshold_value_limit, upper_confidence_boundary)
+                lower_confidence_boundary = estimated_metric - 3 * sampling_error
+                if metric.lower_threshold_value_limit is not None:
+                    lower_confidence_boundary = max(metric.lower_threshold_value_limit, lower_confidence_boundary)
+                estimates[f'sampling_error_{metric.column_name}'] = sampling_error
+                estimates[f'realized_{metric.column_name}'] = metric.realized_performance(chunk.data)
+                estimates[f'estimated_{metric.column_name}'] = estimated_metric
+                estimates[f'upper_confidence_{metric.column_name}'] = upper_confidence_boundary
+                estimates[f'lower_confidence_{metric.column_name}'] = lower_confidence_boundary
+                estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold_value
+                estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold_value
+                estimates[f'alert_{metric.column_name}'] = metric.alert(estimated_metric)
+            except Exception as exc:
+                self._logger.error(
+                    f"an unexpected error occurred while calculating metric {metric.display_name}: {exc}"
+                )
+                estimates[f'sampling_error_{metric.column_name}'] = np.NaN
+                estimates[f'realized_{metric.column_name}'] = np.NaN
+                estimates[f'estimated_{metric.column_name}'] = np.NaN
+                estimates[f'upper_confidence_{metric.column_name}'] = np.NaN
+                estimates[f'lower_confidence_{metric.column_name}'] = np.NaN
+                estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold_value
+                estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold_value
+                estimates[f'alert_{metric.column_name}'] = np.NaN
         return estimates
 
 
