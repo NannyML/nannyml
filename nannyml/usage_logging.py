@@ -78,6 +78,10 @@ class UsageEvent(str, Enum):
     MULTIVAR_DRIFT_CALC_RUN = "Multivariate reconstruction error drift calculator run"
     MULTIVAR_DRIFT_PLOT = "Multivariate drift results plot"
 
+    CDD_CALC_FIT = "Classifier for Drift Detection calculator fit"
+    CDD_CALC_RUN = "Classifier for Drift Detection calculator run"
+    CDD_RESULTS_PLOT = "Classifier for Drift Detection results plot"
+
     PERFORMANCE_CALC_FIT = "Realized performance calculator fit"
     PERFORMANCE_CALC_RUN = "Realized performance calculator run"
     PERFORMANCE_PLOT = "Realized performance calculator plot"

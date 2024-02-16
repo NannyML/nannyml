@@ -51,7 +51,13 @@ from .datasets import (
     load_us_census_ma_employment_data,
 )
 from .distribution import CategoricalDistributionCalculator, ContinuousDistributionCalculator
-from .drift import AlertCountRanker, CorrelationRanker, DataReconstructionDriftCalculator, UnivariateDriftCalculator
+from .drift import (
+    AlertCountRanker,
+    CorrelationRanker,
+    DataReconstructionDriftCalculator,
+    DriftDetectionClassifierCalculator,
+    UnivariateDriftCalculator,
+)
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
 from .performance_calculation import PerformanceCalculator

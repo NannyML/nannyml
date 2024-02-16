@@ -221,11 +221,11 @@ class MissingValuesCalculator(AbstractCalculator):
 
         result['upper_confidence_boundary'] = np.minimum(
             result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error'],
-            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit
+            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
         )
         result['lower_confidence_boundary'] = np.maximum(
             result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error'],
-            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit
+            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
         )
 
         result['upper_threshold'] = self._upper_alert_thresholds[column_name]

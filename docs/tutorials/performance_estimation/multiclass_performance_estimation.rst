@@ -1,8 +1,8 @@
 .. _multiclass-performance-estimation:
 
-================================================
+====================================================
 Estimating Performance for Multiclass Classification
-================================================
+====================================================
 
 We currently support the following **standard** metrics for multiclass classification performance estimation:
 
