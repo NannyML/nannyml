@@ -5,15 +5,15 @@
 
 """Tests for Multivariate Classifier for Drift Detection package."""
 
+from typing import Tuple
+
 import pandas as pd
 import pytest
-from typing import Tuple
+
+from nannyml.datasets import load_synthetic_car_loan_dataset
 
 # from nannyml._typing import Result
 from nannyml.drift.multivariate.classifier_for_drift_detection.calculator import DriftDetectionClassifierCalculator
-from nannyml.datasets import (
-    load_synthetic_car_loan_dataset,
-)
 
 column_names1 = [
     'salary_range',
@@ -22,7 +22,7 @@ column_names1 = [
     'car_value',
     'debt_to_income_ratio',
     'loan_length',
-    'driver_tenure'
+    'driver_tenure',
 ]
 
 
@@ -34,14 +34,18 @@ def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: 
 
 def test_default_cdd_run(binary_classification_data):
     """Test a default run of CDD."""
-    reference, analysis, = binary_classification_data
-    calc = DriftDetectionClassifierCalculator(
-        feature_column_names=column_names1,
-        chunk_size=5_000
-    )
+    (
+        reference,
+        analysis,
+    ) = binary_classification_data
+    calc = DriftDetectionClassifierCalculator(feature_column_names=column_names1, chunk_size=5_000)
     calc.fit(reference)
     results = calc.calculate(analysis)
-    assert list(
-        results.to_df().loc[:, ("classifier_auroc", "value")].round(4)
-    ) == [0.5020, 0.5002, 0.5174, 0.9108, 0.9136]
+    assert list(results.to_df().loc[:, ("classifier_auroc", "value")].round(4)) == [
+        0.5020,
+        0.5002,
+        0.5174,
+        0.9108,
+        0.9136,
+    ]
     assert list(results.to_df().loc[:, ("classifier_auroc", "alert")]) == [False, False, False, True, True]

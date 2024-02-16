@@ -155,10 +155,10 @@ Classifier for Drift Detection
 ------------------------------
 
 Classifier for drift detection provides a measure of how easy it is to discriminate
-the reference data from the examined chunk data. It is an implementation of domain classifiers, as 
+the reference data from the examined chunk data. It is an implementation of domain classifiers, as
 they are called in `relevant literature`_, using a LightGBM classifier.
 As a measure of discrimination performance NannyML uses the cross-validated AUROC score.
-Similar to data reconstruction with PCA this method is also able to capture complex changes in our data. 
+Similar to data reconstruction with PCA this method is also able to capture complex changes in our data.
 
 The algorithm implementing Classifier for Drift Detection follows the steps described below.
 Please note that the process described below is repeated for each :term:`Data Chunk`.

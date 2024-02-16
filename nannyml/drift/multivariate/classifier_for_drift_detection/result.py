@@ -17,8 +17,8 @@ from nannyml.base import PerMetricResult
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metric
-from nannyml.usage_logging import UsageEvent, log_usage
 from nannyml.plots.components import Hover
+from nannyml.usage_logging import UsageEvent, log_usage
 
 Metric = namedtuple("Metric", "display_name column_name")
 

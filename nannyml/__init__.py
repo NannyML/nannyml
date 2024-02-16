@@ -55,8 +55,8 @@ from .drift import (
     AlertCountRanker,
     CorrelationRanker,
     DataReconstructionDriftCalculator,
+    DriftDetectionClassifierCalculator,
     UnivariateDriftCalculator,
-    DriftDetectionClassifierCalculator
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
