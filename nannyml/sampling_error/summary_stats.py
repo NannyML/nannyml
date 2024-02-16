@@ -59,7 +59,7 @@ def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
         np.isfinite(err_var_parenthesis_part) and
         err_var_parenthesis_part >= 0
     ):
-        logger.debug("Summary Stats sampling error calculation imputed to nan because of negative parenthesis factor.")
+        logger.debug("Summary Stats sampling error calculation imputed to nan because of non finite positive parenthesis factor.")
         return np.nan
     err_var = np.sqrt((1 / _size) * err_var_parenthesis_part)
     return (1 / (2 * _std)) * err_var
