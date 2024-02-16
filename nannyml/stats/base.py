@@ -5,9 +5,13 @@
 
 """Module containing base classes for data quality calculations."""
 
+from numpy import isnan
+
 
 def _add_alert_flag(row_result: dict) -> bool:
     flag = False
+    if isnan(row_result['value']):
+        flag = True
     if row_result['upper_threshold'] is not None:
         if row_result['value'] > row_result['upper_threshold']:
             flag = True
