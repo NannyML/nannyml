@@ -7,7 +7,9 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde, moment
+from logging import getLogger
 
+logger = getLogger(__name__)
 
 def summary_stats_std_sampling_error_components(col: pd.Series) -> Tuple:
     """
@@ -28,7 +30,7 @@ def summary_stats_std_sampling_error_components(col: pd.Series) -> Tuple:
     return (std, moment_4th)
 
 
-def summary_stats_std_sampling_error(sampling_error_components, col, logger) -> float:
+def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
     """
     Calculate sampling error for Summary Stats Standard Deviation
     using reference data.
@@ -42,8 +44,6 @@ def summary_stats_std_sampling_error(sampling_error_components, col, logger) -> 
         a set of parameters that were derived from reference data.
     col:
         the (analysis) column you want to calculate sampling error for.
-    logger:
-        logger to log calculation issues
 
     Returns
     -------
