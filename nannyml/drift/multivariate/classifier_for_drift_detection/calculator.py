@@ -14,26 +14,26 @@ the reference and analysis data sets.
 
 """
 
-from typing import List, Optional, Union, Dict, Any
+import warnings
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from flaml import AutoML
+from lightgbm import LGBMClassifier
 from pandas import MultiIndex
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.preprocessing import OrdinalEncoder
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.classifier_for_drift_detection.result import Result
 from nannyml.exceptions import InvalidArgumentsException
+
 # from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import ConstantThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
-from lightgbm import LGBMClassifier
-from flaml import AutoML
-
-import warnings
 
 DEFAULT_LGBM_HYPERPARAMS = {
     'boosting_type': 'gbdt',
@@ -55,7 +55,7 @@ DEFAULT_LGBM_HYPERPARAMS = {
     'silent': 'warn',
     'subsample': 1.0,
     'subsample_for_bin': 200000,
-    'subsample_freq': 0
+    'subsample_freq': 0,
 }
 
 DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG = {
@@ -287,35 +287,14 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
         X = pd.concat([reference_X, chunk_X]).reset_index(drop=True)
         y = np.concatenate([reference_y, chunk_y])
 
-        # drop duplicate column
-        X['__target__'] = y
-        X = X.drop_duplicates(subset=self.feature_column_names, keep='last').reset_index(drop=True)
-        y = X['__target__']
-        X.drop('__target__', axis=1, inplace=True)
+        X, y = drop_matching_duplicate_rows(X, y, self.feature_column_names)
 
-        # preprocess categorical features
-        enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
-        X_cont = X[self.continuous_column_names]
-        X_cat = pd.DataFrame({
-            col_name: enc.fit_transform(X[[col_name]]).ravel() for col_name in self.categorical_column_names
-        })
-        df_X_transformed = pd.concat([X_cat,X_cont], axis=1)
-        del X
+        df_X_transformed = preprocess_categorical_features(
+            X, self.continuous_column_names, self.categorical_column_names
+        )
 
         if self.tune_hyperparameters:
-            with warnings.catch_warnings():
-                # Ingore lightgbm's UserWarning: Using categorical_feature in Dataset.
-                # We explicitly use that feature, don't spam the user
-                warnings.filterwarnings("ignore", message="Using categorical_feature in Dataset.")
-                automl = AutoML()
-                # TODO: Using categorical_feature
-                automl.fit(
-                    df_X_transformed,
-                    y,
-                    **self.hyperparameter_tuning_config,
-                    categorical_feature=self.categorical_column_names
-                )
-                self.hyperparameters = {**automl.model.estimator.get_params()}
+            self.tune_hyperparams(df_X_transformed, y)
 
         skf = StratifiedKFold(n_splits=self.cv_folds_num)
         all_preds = []
@@ -354,7 +333,7 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
             data=result_data.loc[:, ('classifier_auroc', 'value')],
             lower_threshold_value_limit=self._lower_threshold_value_limit,
             upper_threshold_value_limit=self._upper_threshold_value_limit,
-            logger=self._logger
+            logger=self._logger,
         )
 
     def _populate_alert_thresholds(self, result_data: pd.DataFrame) -> pd.DataFrame:
@@ -370,6 +349,41 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
             axis=1,
         )
         return result_data
+
+    def tune_hyperparams(self, X: pd.DataFrame, y: np.ndarray):
+        with warnings.catch_warnings():
+            # Ingore lightgbm's UserWarning: Using categorical_feature in Dataset.
+            # We explicitly use that feature, don't spam the user
+            warnings.filterwarnings("ignore", message="Using categorical_feature in Dataset.")
+            automl = AutoML()
+            # TODO: Using categorical_feature
+            automl.fit(
+                X,
+                y,
+                **self.hyperparameter_tuning_config,
+                categorical_feature=self.categorical_column_names,
+            )
+            self.hyperparameters = {**automl.model.estimator.get_params()}
+
+
+def drop_matching_duplicate_rows(X: pd.DataFrame, y: np.ndarray, subset: List[str]) -> Tuple[pd.DataFrame, np.ndarray]:
+    X['__target__'] = y
+    X = X.drop_duplicates(subset=subset, keep='last').reset_index(drop=True)
+    y = X['__target__']
+    X.drop('__target__', axis=1, inplace=True)
+
+    return X, y
+
+
+def preprocess_categorical_features(
+    X: pd.DataFrame, continuous_column_names: List[str], categorical_column_names: List[str]
+) -> pd.DataFrame:
+    X_cont = X[continuous_column_names]
+
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+    X_cat = pd.DataFrame({col_name: enc.fit_transform(X[[col_name]]).ravel() for col_name in categorical_column_names})
+
+    return pd.concat([X_cat, X_cont], axis=1)
 
 
 def _create_multilevel_index(include_thresholds: bool = False):
