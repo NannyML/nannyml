@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.10.3] - 2024-02-17
+
+### Fixed
+
+- Handle median summary stat calculation failing due to NaN values
+- Fix standard deviation summary stat sampling error calculation occasionally returning infinity [(#363)](https://github.com/NannyML/nannyml/issues/363)
+- Fix plotting confidence bands when value gaps occur [(#364)](https://github.com/NannyML/nannyml/issues/364)
+
+### Added
+
+- New multivariate drift detection method using a classifier and density ration estimation.
+
+
 ## [0.10.2] - 2024-02-13
 
 ### Changed
