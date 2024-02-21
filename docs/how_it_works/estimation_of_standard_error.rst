@@ -205,7 +205,7 @@ Through a simple application of error propagation:
 which means that the standard error of the sum is the standard error of the mean multiplied by sample size.
 
 
-Stnadard Deviation
+Standard Deviation
 ------------------
 
 The standard error of the variance of a random variable is given by the following exact formula:
