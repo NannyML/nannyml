@@ -110,6 +110,12 @@ Glossary
 
         You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
 
+    Domain Classifier
+        A domain classifer is a machine learning classification model trained to identify whether a given data point
+        belongs to one or another dataset. NannyML uses domain classifers as a multivariate drift detection method.
+        You can read more about them in :ref:`How it works: Domain Classifier<how-multiv-drift-dc>` and see how to use
+        them in :ref:`Tutorial: Domain Classifier<multivariate_drift_detection_dc>`.
+
     Error
         The error of a statistic on a sample is defined as the difference between the value of the observation and the true value.
         The sample size can sometimes be 1 but it is usually bigger. When the error consists only of the effects

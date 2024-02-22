@@ -3,7 +3,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Tests for Multivariate Classifier for Drift Detection package."""
+"""Tests for Multivariate Domain Classifier package."""
 
 from typing import Tuple
 
@@ -13,7 +13,7 @@ import pytest
 from nannyml.datasets import load_synthetic_car_loan_dataset
 
 # from nannyml._typing import Result
-from nannyml.drift.multivariate.classifier_for_drift_detection.calculator import DriftDetectionClassifierCalculator
+from nannyml.drift.multivariate.domain_classifier.calculator import DomainClassifierCalculator
 
 column_names1 = [
     'salary_range',
@@ -33,12 +33,12 @@ def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: 
 
 
 def test_default_cdd_run(binary_classification_data):
-    """Test a default run of CDD."""
+    """Test a default run of DC."""
     (
         reference,
         analysis,
     ) = binary_classification_data
-    calc = DriftDetectionClassifierCalculator(feature_column_names=column_names1, chunk_size=5_000)
+    calc = DomainClassifierCalculator(feature_column_names=column_names1, chunk_size=5_000)
     calc.fit(reference)
     results = calc.calculate(analysis)
     assert list(results.to_df().loc[:, ("classifier_auroc", "value")].round(4)) == [

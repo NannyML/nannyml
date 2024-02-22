@@ -149,18 +149,17 @@ For more information on using Reconstruction Error with PCA check
 the :ref:`Multivariate Drift - Data Reconstruction with PCA<multivariate_drift_detection_pca>`
 tutorial.
 
-.. _how-multiv-drift-cdd:
+.. _how-multiv-drift-dc:
 
-Classifier for Drift Detection
-------------------------------
+Domain Classifier
+-----------------
 
-Classifier for drift detection provides a measure of how easy it is to discriminate
-the reference data from the examined chunk data. It is an implementation of domain classifiers, as
-they are called in `relevant literature`_, using a LightGBM classifier.
+A :term:`Domain Classifier` allows us to create a measure of how easy it is to discriminate
+the reference data from the examined chunk data. NannyML uses a LightGBM classifier.
 As a measure of discrimination performance NannyML uses the cross-validated AUROC score.
 Similar to data reconstruction with PCA this method is also able to capture complex changes in our data.
 
-The algorithm implementing Classifier for Drift Detection follows the steps described below.
+The algorithm implementing Domain Classifier follows the steps described below.
 Please note that the process described below is repeated for each :term:`Data Chunk`.
 The process consists of two basic parts, data preprocessing and classifier cross validation.
 
@@ -187,10 +186,10 @@ The higher the AUROC score the easier it is to distinguish the datasets, hence t
 more different they are.
 
 
-Understanding Classifier for Drift Detection
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Understanding Domain Classifier
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Classifier for Drift Detection method relines on a machine learning
+The Domain Classifier method relies on a machine learning
 algorithm to distinguish between the reference and the chunk data.
 We are using a LightGBM Classifier. Because of the versatility
 of this approach the classifier is quite sensitive to shifts in the data.
@@ -199,10 +198,10 @@ directly translate classifier AUROC values to possible performance impact.
 It is better to rely on :ref:`performance estimation<performance-estimation>`
 methods for that.
 
-Classifier for Drift Detection on the butterfly dataset
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Domain Classifier on the butterfly dataset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that we have a better understanding of Classifier for Drift Detection, let's see
+Now that we have a better understanding of Domain Classifier, let's see
 how it performs on the butterfly dataset.
 
 .. nbimport::
@@ -214,8 +213,6 @@ how it performs on the butterfly dataset.
 The change in the butterfly dataset is now clearly visible through the change in the
 classifier's AUROC, while our earlier univariate approach detected no change.
 
-For more information on using Classifier for Drift Detection check
-the :ref:`Multivariate Drift - Classifier for Drift Detection<multivariate_drift_detection_cdd>`
+For more information on using Domain Classifier check
+the :ref:`Multivariate Drift - Domain Classifier<multivariate_drift_detection_dc>`
 tutorial.
-
-.. _`relevant literature`: https://arxiv.org/abs/1810.11953

@@ -19,11 +19,11 @@ The univariate drift detection methods include:
 The multivariate drift detection methods include:
 
 - Data reconstruction error: detects drift by performing dimensionality reduction on the model
-  inputs and then applying the inverse transformation on the latent (reduced) space.
-
-
+  inputs using PCA and then applying the inverse transformation on the latent (reduced) space.
+- Domain Classifer: detects drift by looking at how performance a domain classifier is at distinguising
+  between the reference and the chunk datasets.
 """
-from .multivariate.classifier_for_drift_detection import DriftDetectionClassifierCalculator
+from .multivariate.domain_classifier import DomainClassifierCalculator
 from .multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from .ranker import AlertCountRanker, CorrelationRanker
 from .univariate import FeatureType, Method, MethodFactory, UnivariateDriftCalculator
