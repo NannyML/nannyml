@@ -331,14 +331,14 @@ class SizeBasedChunker(Chunker):
 
     """
 
-    def __init__(self, chunk_size: int, incomplete: str = 'append', timestamp_column_name: Optional[str] = None):
+    def __init__(self, chunk_size: int, incomplete: str = 'keep', timestamp_column_name: Optional[str] = None):
         """Create a new SizeBasedChunker.
 
         Parameters
         ----------
         chunk_size: int
             The preferred size of the resulting Chunks, i.e. the number of observations in each Chunk.
-        incomplete: str, default='append'
+        incomplete: str, default='keep'
             Choose how to handle any leftover observations that don't make up a full Chunk.
             The following options are available:
 
@@ -429,7 +429,7 @@ class CountBasedChunker(Chunker):
 
     """
 
-    def __init__(self, chunk_number: int, incomplete: str = 'append', timestamp_column_name: Optional[str] = None):
+    def __init__(self, chunk_number: int, incomplete: str = 'keep', timestamp_column_name: Optional[str] = None):
         """Creates a new CountBasedChunker.
 
         It will calculate the amount of observations per chunk based on the given chunk count.
@@ -450,7 +450,7 @@ class CountBasedChunker(Chunker):
 
             - ``'append'``: append leftover observations to the last complete Chunk (overfilling it)
 
-            Defaults to ``'append'``.
+            Defaults to ``'keep'``.
 
         Returns
         -------
