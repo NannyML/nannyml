@@ -128,11 +128,11 @@ def calculate_chunk_distributions(
     )
     data['kde_density_local_max'] = data['kde_density'].apply(lambda x: max(x) if len(x) > 0 else 0)
     data['kde_density_global_max'] = data.groupby('chunk_index')['kde_density_local_max'].max().max()
-    data['kde_density_scaled'] = data[['kde_density', 'kde_density_global_max']].apply(
-        lambda row: np.divide(np.array(row['kde_density']), row['kde_density_global_max']), axis=1
+    data['kde_density_scaled'] = data[['kde_density', 'kde_density_local_max']].apply(
+        lambda row: np.divide(np.array(row['kde_density']), row['kde_density_local_max']), axis=1
     )
-    data['kde_quartiles_scaled'] = data[['kde_quartiles', 'kde_density_global_max']].apply(
-        lambda row: [(q[0], q[1] / row['kde_density_global_max']) for q in row['kde_quartiles']], axis=1
+    data['kde_quartiles_scaled'] = data[['kde_quartiles', 'kde_density_local_max']].apply(
+        lambda row: [(q[0], q[1] / row['kde_density_local_max']) for q in row['kde_quartiles']], axis=1
     )
 
     return data
