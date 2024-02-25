@@ -241,12 +241,12 @@ def test_size_based_chunker_returns_chunks_of_required_size(sample_chunk_data): 
     chunker = SizeBasedChunker(chunk_size=chunk_size)
     sut = chunker.split(sample_chunk_data)
     assert len(sut[0]) == chunk_size
-    assert len(sut) == math.ceil(sample_chunk_data.shape[0] / chunk_size) - 1
+    assert len(sut) == math.ceil(sample_chunk_data.shape[0] / chunk_size)
 
 
 def test_size_based_chunker_returns_last_chunk_that_is_partially_filled(sample_chunk_data):  # noqa: D103
     chunk_size = 3333
-    expected_last_chunk_size = chunk_size + sample_chunk_data.shape[0] % chunk_size
+    expected_last_chunk_size = sample_chunk_data.shape[0] % chunk_size
     chunker = SizeBasedChunker(chunk_size)
     sut = chunker.split(sample_chunk_data)
     assert len(sut[-1]) == expected_last_chunk_size
@@ -304,7 +304,7 @@ def test_size_based_chunker_uses_observations_to_set_chunk_date_boundaries(sampl
 
 def test_size_based_chunker_assigns_observation_range_to_chunk_keys(sample_chunk_data):  # noqa: D103
     chunk_size = 1500
-    last_chunk_start = ((sample_chunk_data.shape[0] // chunk_size) - 1) * chunk_size
+    last_chunk_start = (sample_chunk_data.shape[0] // chunk_size) * chunk_size
     last_chunk_end = sample_chunk_data.shape[0] - 1
 
     chunker = SizeBasedChunker(chunk_size=chunk_size)
