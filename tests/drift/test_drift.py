@@ -453,11 +453,11 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
     [
         (
             {'chunk_size': 5000},
-            [0.004968, 0.004833, 0.01186, 0.242068],
+            [0.004968, 0.004833, 0.01186, 0.243595, 0.210516],
         ),
         (
             {'chunk_size': 5000, 'timestamp_column_name': 'timestamp'},
-            [0.004968, 0.004833, 0.01186, 0.242068],
+            [0.004968, 0.004833, 0.01186, 0.243595, 0.210516],
         ),
         (
             {'chunk_number': 5},

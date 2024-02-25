@@ -40,12 +40,6 @@ class WriterConfig(BaseModel):
     write_args: Optional[Dict[str, Any]]
 
 
-class ChunkerConfig(BaseModel):
-    chunk_size: Optional[int]
-    chunk_period: Optional[str]
-    chunk_count: Optional[int]
-
-
 class IntervalSchedulingConfig(BaseModel):
     weeks: Optional[int]
     days: Optional[int]
