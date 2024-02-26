@@ -50,7 +50,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             The name of the column containing the timestamp of the model prediction.
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         """
-        metric = Metric(display_name='Domain Classifier', column_name='classifier_auroc')
+        metric = Metric(display_name='Domain Classifier', column_name='domain_classifier_auroc')
         super().__init__(results_data, [metric])
 
         self.column_names = column_names
@@ -60,7 +60,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
 
     def keys(self) -> List[Key]:
         """Create a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
-        return [Key(properties=('classifier_auroc',), display_names=('Classifier AUROC ',))]
+        return [Key(properties=('domain_classifier_auroc',), display_names=('Classifier AUROC ',))]
 
     @log_usage(UsageEvent.DC_RESULTS_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
@@ -107,8 +107,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             return plot_metric(
                 self,
                 title='Domain Classifier',
-                metric_display_name='Classifier AUROC ',
-                metric_column_name='classifier_auroc',
+                metric_display_name='Domain Classifier AUROC ',
+                metric_column_name='domain_classifier_auroc',
                 hover=Hover(
                     template='%{period} &nbsp; &nbsp; %{alert} <br />'
                     'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'

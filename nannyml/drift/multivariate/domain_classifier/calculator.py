@@ -330,20 +330,20 @@ class DomainClassifierCalculator(AbstractCalculator):
     def _set_metric_thresholds(self, result_data: pd.DataFrame):
         self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
             threshold=self.threshold,
-            data=result_data.loc[:, ('classifier_auroc', 'value')],
+            data=result_data.loc[:, ('domain_classifier_auroc', 'value')],
             lower_threshold_value_limit=self._lower_threshold_value_limit,
             upper_threshold_value_limit=self._upper_threshold_value_limit,
             logger=self._logger,
         )
 
     def _populate_alert_thresholds(self, result_data: pd.DataFrame) -> pd.DataFrame:
-        result_data[('classifier_auroc', 'upper_threshold')] = self.upper_threshold_value
-        result_data[('classifier_auroc', 'lower_threshold')] = self.lower_threshold_value
-        result_data[('classifier_auroc', 'alert')] = result_data.apply(
+        result_data[('domain_classifier_auroc', 'upper_threshold')] = self.upper_threshold_value
+        result_data[('domain_classifier_auroc', 'lower_threshold')] = self.lower_threshold_value
+        result_data[('domain_classifier_auroc', 'alert')] = result_data.apply(
             lambda row: True
             if (
-                row[('classifier_auroc', 'value')] > row[('classifier_auroc', 'upper_threshold')]
-                or row[('classifier_auroc', 'value')] < row[('classifier_auroc', 'lower_threshold')]
+                row[('domain_classifier_auroc', 'value')] > row[('domain_classifier_auroc', 'upper_threshold')]
+                or row[('domain_classifier_auroc', 'value')] < row[('domain_classifier_auroc', 'lower_threshold')]
             )
             else False,
             axis=1,
@@ -401,7 +401,7 @@ def _create_multilevel_index(include_thresholds: bool = False):
             'alert',
         ]
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    reconstruction_tuples = [('classifier_auroc', column_name) for column_name in results_column_names]
+    reconstruction_tuples = [('domain_classifier_auroc', column_name) for column_name in results_column_names]
 
     tuples = chunk_tuples + reconstruction_tuples
 
