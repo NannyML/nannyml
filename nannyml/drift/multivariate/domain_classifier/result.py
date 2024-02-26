@@ -106,7 +106,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         if kind == 'drift':
             return plot_metric(
                 self,
-                title='Domain Classifier',
+                title='Multivariate Drift - Domain Classifier',
                 metric_display_name='Domain Classifier AUROC ',
                 metric_column_name='domain_classifier_auroc',
                 hover=Hover(
