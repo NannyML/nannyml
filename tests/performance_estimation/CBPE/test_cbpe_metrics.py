@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from nannyml.chunk import DefaultChunker
+from nannyml.chunk import DefaultChunker, SizeBasedChunker
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_multiclass_classification_dataset,
@@ -24,7 +24,7 @@ from nannyml.thresholds import ConstantThreshold
     [
         (
             {
-                'chunk_size': 20000,
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
                 'normalize_confusion_matrix': None,
                 'business_value_matrix': [[2, -5], [-10, 10]],
                 'normalize_business_value': None,
@@ -48,7 +48,7 @@ from nannyml.thresholds import ConstantThreshold
         ),
         (
             {
-                'chunk_size': 20000,
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
                 'normalize_confusion_matrix': None,
                 'business_value_matrix': [[2, -5], [-10, 10]],
                 'normalize_business_value': 'per_prediction',
@@ -71,7 +71,11 @@ from nannyml.thresholds import ConstantThreshold
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'all', 'business_value_matrix': [[-1, 4], [8, -8]]},
+            {
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
+                'normalize_confusion_matrix': 'all',
+                'business_value_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -90,7 +94,11 @@ from nannyml.thresholds import ConstantThreshold
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'true', 'business_value_matrix': [[-1, 4], [8, -8]]},
+            {
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
+                'normalize_confusion_matrix': 'true',
+                'business_value_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -109,7 +117,11 @@ from nannyml.thresholds import ConstantThreshold
             ),
         ),
         (
-            {'chunk_size': 20000, 'normalize_confusion_matrix': 'pred', 'business_value_matrix': [[-1, 4], [8, -8]]},
+            {
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
+                'normalize_confusion_matrix': 'pred',
+                'business_value_matrix': [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
                     'key': ['[0:19999]', '[20000:49999]'],
@@ -129,7 +141,7 @@ from nannyml.thresholds import ConstantThreshold
         ),
         (
             {
-                'chunk_size': 20000,
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
                 'normalize_confusion_matrix': None,
                 'timestamp_column_name': 'timestamp',
                 'business_value_matrix': [[-1, 4], [8, -8]],
@@ -153,7 +165,7 @@ from nannyml.thresholds import ConstantThreshold
         ),
         (
             {
-                'chunk_size': 20000,
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
                 'normalize_confusion_matrix': 'all',
                 'timestamp_column_name': 'timestamp',
                 'business_value_matrix': [[-1, 4], [8, -8]],
@@ -177,7 +189,7 @@ from nannyml.thresholds import ConstantThreshold
         ),
         (
             {
-                'chunk_size': 20000,
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
                 'normalize_confusion_matrix': 'all',
                 'timestamp_column_name': 'timestamp',
                 'business_value_matrix': [[2, -5], [-10, 10]],
@@ -202,7 +214,7 @@ from nannyml.thresholds import ConstantThreshold
         ),
         (
             {
-                'chunk_size': 20000,
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
                 'normalize_confusion_matrix': 'true',
                 'timestamp_column_name': 'timestamp',
                 'business_value_matrix': [[-1, 4], [8, -8]],
@@ -226,7 +238,7 @@ from nannyml.thresholds import ConstantThreshold
         ),
         (
             {
-                'chunk_size': 20000,
+                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
                 'normalize_confusion_matrix': 'pred',
                 'timestamp_column_name': 'timestamp',
                 'business_value_matrix': [[-1, 4], [8, -8]],

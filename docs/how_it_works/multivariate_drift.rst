@@ -176,7 +176,7 @@ The classifier cross validation part uses the data created and consists of the f
 
 - Optionally, hyperparameter tuning is performed. The hyperparameters learnt during
   this step will be used in the model training steps below. If hyperparameter tuning
-  is not requested, user specified hyperpatameters can be used instead of the default LightGBM optioms.
+  is not requested, user specified hyperparameters can be used instead of the default LightGBM options.
 - Stratified split is used to split the data into validation folds
 - For each split NannyML trains an `LGBMClassifier` and saves its predicted
   scores in the validation fold.

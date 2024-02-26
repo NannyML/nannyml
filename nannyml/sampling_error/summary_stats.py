@@ -2,14 +2,15 @@
 #
 #  License: Apache Software License 2.0
 
+from logging import getLogger
 from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde, moment
-from logging import getLogger
 
 logger = getLogger(__name__)
+
 
 def summary_stats_std_sampling_error_components(col: pd.Series) -> Tuple:
     """
@@ -54,12 +55,11 @@ def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
     _mu4 = sampling_error_components[1]
     _size = col.shape[0]
 
-    err_var_parenthesis_part = (_mu4 - ((_size - 3) * (_std**4) / (_size - 1)))
-    if not (
-        np.isfinite(err_var_parenthesis_part) and
-        err_var_parenthesis_part >= 0
-    ):
-        logger.debug("Summary Stats sampling error calculation imputed to nan because of non finite positive parenthesis factor.")
+    err_var_parenthesis_part = _mu4 - ((_size - 3) * (_std**4) / (_size - 1))
+    if not (np.isfinite(err_var_parenthesis_part) and err_var_parenthesis_part >= 0):
+        logger.debug(
+            "Summary Stats sampling error calculation imputed to nan because of non finite positive parenthesis factor."
+        )
         return np.nan
     err_var = np.sqrt((1 / _size) * err_var_parenthesis_part)
     return (1 / (2 * _std)) * err_var
