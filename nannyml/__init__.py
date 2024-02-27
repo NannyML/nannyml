@@ -55,7 +55,7 @@ from .drift import (
     AlertCountRanker,
     CorrelationRanker,
     DataReconstructionDriftCalculator,
-    DriftDetectionClassifierCalculator,
+    DomainClassifierCalculator,
     UnivariateDriftCalculator,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException

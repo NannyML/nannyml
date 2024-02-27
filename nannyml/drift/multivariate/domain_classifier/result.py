@@ -34,12 +34,12 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         continuous_column_names: List[str],
         timestamp_column_name: Optional[str] = None,
     ):
-        """Initialize a DriftDetectionClassifierCalculator results object.
+        """Initialize a DomainClassifierCalculator results object.
 
         Parameters
         ----------
         results_data: pd.DataFrame
-            Results data returned by a DriftDetectionClassifierCalculator.
+            Results data returned by a DomainClassifierCalculator.
         column_names: List[str]
             A list of column names indicating which columns contain feature values.
         categorical_column_names : List[str]
@@ -50,7 +50,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             The name of the column containing the timestamp of the model prediction.
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         """
-        metric = Metric(display_name='Classifier for Drift Detection', column_name='classifier_auroc')
+        metric = Metric(display_name='Domain Classifier', column_name='domain_classifier_auroc')
         super().__init__(results_data, [metric])
 
         self.column_names = column_names
@@ -60,9 +60,9 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
 
     def keys(self) -> List[Key]:
         """Create a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
-        return [Key(properties=('classifier_auroc',), display_names=('Classifier AUROC ',))]
+        return [Key(properties=('domain_classifier_auroc',), display_names=('Classifier AUROC ',))]
 
-    @log_usage(UsageEvent.CDD_RESULTS_PLOT, metadata_from_kwargs=['kind'])
+    @log_usage(UsageEvent.DC_RESULTS_PLOT, metadata_from_kwargs=['kind'])
     def plot(self, kind: str = 'drift', *args, **kwargs) -> go.Figure:
         """Render plots for metrics returned by the multivariate classifier for drift detection.
 
@@ -93,7 +93,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         ...     col for col in reference_df.columns
         ...     if col not in non_feature_columns
         >>> ]
-        >>> calc = nml.DriftDetectionClassifierCalculator(
+        >>> calc = nml.DomainClassifierCalculator(
         ...     feature_column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
         ...     chunk_size=5000
@@ -106,9 +106,9 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         if kind == 'drift':
             return plot_metric(
                 self,
-                title='Classifier for Drift Detection',
-                metric_display_name='Classifier AUROC ',
-                metric_column_name='classifier_auroc',
+                title='Multivariate Drift - Domain Classifier',
+                metric_display_name='Domain Classifier AUROC ',
+                metric_column_name='domain_classifier_auroc',
                 hover=Hover(
                     template='%{period} &nbsp; &nbsp; %{alert} <br />'
                     'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'

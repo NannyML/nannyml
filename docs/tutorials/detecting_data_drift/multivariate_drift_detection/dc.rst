@@ -1,12 +1,12 @@
-.. _multivariate_drift_detection_cdd:
+.. _multivariate_drift_detection_dc:
 
-==============================
-Classifier for Drift Detection
-==============================
+=================
+Domain Classifier
+=================
 
-The second multivariate drift detection method of NannyML is Classifier for Drift Detection.
+The second multivariate drift detection method of NannyML is Domain Classifier.
 It provides a measure of how easy it is to discriminate the reference data from the examined chunk data.
-You can read more about on the :ref:`How it works: Classifier for Drift Detection<how-multiv-drift-cdd>` section.
+You can read more about on the :ref:`How it works: Domain Classifier<how-multiv-drift-dc>` section.
 When there is no data drift the datasets can't discerned and we get a value of 0.5.
 The more drift there is, the higher the returned measure will be, up to a value of 1.
 
@@ -14,7 +14,7 @@ Just The Code
 -------------
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cells: 1 3 4 6 8
 
 .. admonition:: **Advanced configuration**
@@ -43,14 +43,14 @@ Let's start by loading some synthetic data provided by the NannyML package set i
 This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cells: 1
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cell: 2
 
-The :class:`~nannyml.drift.multivariate.classifier_for_drift_detection.calculator.DriftDetectionClassifierCalculator`
+The :class:`~nannyml.drift.multivariate.domain_classifier.calculator.DomainClassifierCalculator`
 module implements this functionality. We need to instantiate it with appropriate parameters:
 
 - **feature_column_names:** A list with the column names of the features we want to run drift detection on.
@@ -67,7 +67,7 @@ module implements this functionality. We need to instantiate it with appropriate
   order to create chunks.
 - **chunker (Optional):** A NannyML :class:`~nannyml.chunk.Chunker` object that will handle the aggregation
   provided data in order to create chunks.
-- **cv_folds_num (Optional):** Number of cross-validation folds to use when calculating CDD discrimination value.
+- **cv_folds_num (Optional):** Number of cross-validation folds to use when calculating DC discrimination value.
 - **hyperparameters (Optional):** A dictionary used to provide your own custom hyperparameters when training the
   discrimination model. Check out the available hyperparameter options in the `LightGBM docs`_.
 - **tune_hyperparameters (Optional):** A boolean controlling whether hypertuning should be performed on the internal
@@ -84,7 +84,7 @@ which the results will be based on. Then the
 calculate the multivariate drift results on the provided data.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cells: 3
 
 We can see these results of the data provided to the
@@ -92,21 +92,21 @@ We can see these results of the data provided to the
 method as a dataframe.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cells: 4
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cell: 5
 
 The drift results from the reference data are accessible from the properties of the results object:
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cells: 6
 
 .. nbtable::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cell: 7
 
 
@@ -119,7 +119,7 @@ NannyML can also visualize the multivariate drift results in a plot. Our plot co
   A red, diamond-shaped point marker additionally indicates this in the middle of the chunk.
 
 .. nbimport::
-    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Classifier for Drift.ipynb
+    :path: ./example_notebooks/Tutorial - Drift - Multivariate - Domain Classifier.ipynb
     :cells: 8
 
 .. image:: /_static/tutorials/detecting_data_drift/multivariate_drift_detection/classifier-for-drift-detection.svg

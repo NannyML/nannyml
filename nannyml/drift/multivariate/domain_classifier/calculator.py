@@ -28,7 +28,7 @@ from sklearn.preprocessing import OrdinalEncoder
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-from nannyml.drift.multivariate.classifier_for_drift_detection.result import Result
+from nannyml.drift.multivariate.domain_classifier.result import Result
 from nannyml.exceptions import InvalidArgumentsException
 
 # from nannyml.sampling_error import SAMPLING_ERROR_RANGE
@@ -71,8 +71,8 @@ DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG = {
 }
 
 
-class DriftDetectionClassifierCalculator(AbstractCalculator):
-    """DriftDetectionClassifierCalculator implementation.
+class DomainClassifierCalculator(AbstractCalculator):
+    """DomainClassifierCalculator implementation.
 
     Uses Drift Detection Classifier's cross validated performance as a measure of drift.
     """
@@ -92,7 +92,7 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = DEFAULT_LGBM_HYPERPARAM_TUNING_CONFIG,
         threshold: Threshold = ConstantThreshold(lower=0.45, upper=0.65),
     ):
-        """Create a new DriftDetectionClassifierCalculator instance.
+        """Create a new DomainClassifierCalculator instance.
 
         Parameters:
         -----------
@@ -116,7 +116,7 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
         chunker : Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
         cv_folds_num: Optional[int]
-            Number of cross-validation folds to use when calculating CDD discrimination value.
+            Number of cross-validation folds to use when calculating DC discrimination value.
         hyperparameters : Dict[str, Any], default = None
             A dictionary used to provide your own custom hyperparameters when training the discrimination model.
             Check out the available hyperparameter options in the
@@ -159,7 +159,7 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
         ...     col for col in reference_df.columns
         ...     if col not in non_feature_columns
         >>> ]
-        >>> calc = nml.DriftDetectionClassifierCalculator(
+        >>> calc = nml.DomainClassifierCalculator(
         ...     feature_column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
         ...     chunk_size=5000
@@ -169,7 +169,7 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
         >>> figure = results.plot()
         >>> figure.show()
         """
-        super(DriftDetectionClassifierCalculator, self).__init__(
+        super(DomainClassifierCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
         if isinstance(feature_column_names, str):
@@ -201,9 +201,9 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
         # self._sampling_error_components: Tuple = ()
         self.result: Optional[Result] = None
 
-    @log_usage(UsageEvent.CDD_CALC_FIT)
+    @log_usage(UsageEvent.DC_CALC_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
-        """Fits the CDD calculator to a set of reference data."""
+        """Fits the DC calculator to a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -232,9 +232,9 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
 
         return self
 
-    @log_usage(UsageEvent.CDD_CALC_RUN)
+    @log_usage(UsageEvent.DC_CALC_RUN)
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
-        """Calculate the data CDD calculator metric for a given data set."""
+        """Calculate the data DC calculator metric for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -330,20 +330,20 @@ class DriftDetectionClassifierCalculator(AbstractCalculator):
     def _set_metric_thresholds(self, result_data: pd.DataFrame):
         self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(
             threshold=self.threshold,
-            data=result_data.loc[:, ('classifier_auroc', 'value')],
+            data=result_data.loc[:, ('domain_classifier_auroc', 'value')],
             lower_threshold_value_limit=self._lower_threshold_value_limit,
             upper_threshold_value_limit=self._upper_threshold_value_limit,
             logger=self._logger,
         )
 
     def _populate_alert_thresholds(self, result_data: pd.DataFrame) -> pd.DataFrame:
-        result_data[('classifier_auroc', 'upper_threshold')] = self.upper_threshold_value
-        result_data[('classifier_auroc', 'lower_threshold')] = self.lower_threshold_value
-        result_data[('classifier_auroc', 'alert')] = result_data.apply(
+        result_data[('domain_classifier_auroc', 'upper_threshold')] = self.upper_threshold_value
+        result_data[('domain_classifier_auroc', 'lower_threshold')] = self.lower_threshold_value
+        result_data[('domain_classifier_auroc', 'alert')] = result_data.apply(
             lambda row: True
             if (
-                row[('classifier_auroc', 'value')] > row[('classifier_auroc', 'upper_threshold')]
-                or row[('classifier_auroc', 'value')] < row[('classifier_auroc', 'lower_threshold')]
+                row[('domain_classifier_auroc', 'value')] > row[('domain_classifier_auroc', 'upper_threshold')]
+                or row[('domain_classifier_auroc', 'value')] < row[('domain_classifier_auroc', 'lower_threshold')]
             )
             else False,
             axis=1,
@@ -401,7 +401,7 @@ def _create_multilevel_index(include_thresholds: bool = False):
             'alert',
         ]
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    reconstruction_tuples = [('classifier_auroc', column_name) for column_name in results_column_names]
+    reconstruction_tuples = [('domain_classifier_auroc', column_name) for column_name in results_column_names]
 
     tuples = chunk_tuples + reconstruction_tuples
 

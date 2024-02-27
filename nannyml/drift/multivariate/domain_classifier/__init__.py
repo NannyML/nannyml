@@ -25,5 +25,5 @@ For more information, check out the `tutorial`_ or the `deep dive`_.
 
 """
 
-from .calculator import DriftDetectionClassifierCalculator
+from .calculator import DomainClassifierCalculator
 from .result import Result
