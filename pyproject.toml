@@ -56,7 +56,10 @@ numpy = [
 ]
 seaborn = "^0.11.2"
 kaleido = "0.2.1"
-pyarrow = "^12.0.0"
+pyarrow = [
+    {version="^12.0.0", python=">=3.7,<3.8"},
+    {version="^14.0.0", python=">=3.8,<3.12"}
+]
 gcsfs = "^2022.5.0"
 pydantic = "^1.9.1"
 rich = "^12.5.1"
