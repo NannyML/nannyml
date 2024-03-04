@@ -5,6 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.10.4] - 2024-03-04
+
+### Changed
+
+- We've changed the defaults for the `incomplete` parameter in the `SizeBasedChunker` and `CountBasedChunker`
+  to `keep` from the previous `append`. This means that from now on, by default, you might have an additional
+  "incomplete" final chunk. Previously these records would have been appended to the last "complete" chunk.
+  This change was required for some internal developments, and we also felt it made more sense when looking at
+  continuous monitoring (as the incomplete chunk will be filled up later as more data is appended). [(#367)](https://github.com/NannyML/nannyml/issues/367)
+- We've renamed the *Classifier for Drift Detection (CDD)* to the more appropriate *Domain Classifier*. [(#368)](https://github.com/NannyML/nannyml/issues/368)
+- Bumped the version of the `pyarrow` dependency to `^14.0.0` if you're running on Python 3.8 or up.
+  Congrats on your first contribution here [@amrit110](https://github.com/amrit110), much appreciated!
+
+### Fixed
+
+- Continuous distribution plots will now be scaled per chunk, as opposed to globally. [(#369)](https://github.com/NannyML/nannyml/issues/369)
+
+
 ## [0.10.3] - 2024-02-17
 
 ### Fixed
