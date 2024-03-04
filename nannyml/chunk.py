@@ -317,8 +317,8 @@ class SizeBasedChunker(Chunker):
     Notes
     -----
     - Chunks are adjacent, not overlapping
-    - There will be no "incomplete chunks", so the leftover observations that cannot fill an entire chunk will
-      be dropped by default.
+    - There may be "incomplete" chunks, as the remainder of observations after dividing by `chunk_size`
+      will form a chunk of their own.
 
     Examples
     --------
@@ -348,7 +348,7 @@ class SizeBasedChunker(Chunker):
 
             - ``'append'``: append leftover observations to the last complete Chunk (overfilling it)
 
-            Defaults to ``'append'``.
+            Defaults to ``'keep'``.
 
         Returns
         -------
@@ -420,6 +420,12 @@ class SizeBasedChunker(Chunker):
 class CountBasedChunker(Chunker):
     """A Chunker that will split data into chunks based on the preferred number of total chunks.
 
+    Notes
+    -----
+    - Chunks are adjacent, not overlapping
+    - There may be "incomplete" chunks, as the remainder of observations after dividing by `chunk_size`
+      will form a chunk of their own.
+
     Examples
     --------
     >>> from nannyml.chunk import CountBasedChunker
@@ -439,8 +445,7 @@ class CountBasedChunker(Chunker):
         ----------
         chunk_number: int
             The amount of chunks to split the data in.
-                incomplete: str, default='append'
-        incomplete: str, default='append'
+        incomplete: str, default='keep'
             Choose how to handle any leftover observations that don't make up a full Chunk.
             The following options are available:
 

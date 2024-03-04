@@ -89,10 +89,11 @@ Chunks can be of fixed size, i.e., each chunk contains the same number of observ
     :cell: 5
 
 .. note::
-    If the number of observations is not divisible by the ``chunk_size`` required,
-    by default, the  leftover observations will be appended to the last complete chunk (overfilling it).
-    Notice that on the last chunk the difference between the **start_index** and **end_index**
-    is greater than the ``chunk_size`` defined.
+    If the number of observations is not divisible by the ``chunk_number`` required, by default,
+    the leftover observations will form their own, incomplete chunk.
+    Notice that on the last chunk the difference between the start_index and end_index is smaller than the chunk_size defined.
+
+    Incomplete chunk behavior can be configured using the ``incomplete`` parameter.
 
     Check the :ref:`custom chunks <custom_chunk>` section if you want to change the default behaviour.
 
@@ -124,8 +125,10 @@ The total number of chunks can be set by the ``chunk_number`` parameter:
     Chunks created this way will be equal in size.
 
     If the number of observations is not divisible by the ``chunk_number`` required, by default,
-    the leftover observations will be appended to the last complete chunk (overfilling it).
-    Notice that on the last chunk the difference between the start_index and end_index is greater than the chunk_size defined.
+    the leftover observations will form their own, incomplete chunk.
+    Notice that on the last chunk the difference between the start_index and end_index is smaller than the chunk_size defined.
+
+    Incomplete chunk behavior can be configured using the ``incomplete`` parameter.
 
     Check the :ref:`custom chunks <custom_chunk>` section if you want to change the default behavior.
 
