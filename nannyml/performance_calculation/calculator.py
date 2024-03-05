@@ -28,7 +28,7 @@ Examples
 ...     y_true='repaid',
 ...     timestamp_column_name='timestamp',
 ...     problem_type='classification_binary',
-...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'average_precision'],
 ...     chunk_size=5000)
 >>> calc.fit(reference_df)
 >>> results = calc.calculate(analysis_df)
@@ -62,6 +62,7 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'roc_auc': StandardDeviationThreshold(),
     'f1': StandardDeviationThreshold(),
     'precision': StandardDeviationThreshold(),
+    'average_precision': StandardDeviationThreshold(),
     'recall': StandardDeviationThreshold(),
     'specificity': StandardDeviationThreshold(),
     'accuracy': StandardDeviationThreshold(),
@@ -128,6 +129,7 @@ class PerformanceCalculator(AbstractCalculator):
                     'roc_auc': StandardDeviationThreshold(),
                     'f1': StandardDeviationThreshold(),
                     'precision': StandardDeviationThreshold(),
+                    'average_precision': StandardDeviationThreshold(),
                     'recall': StandardDeviationThreshold(),
                     'specificity': StandardDeviationThreshold(),
                     'accuracy': StandardDeviationThreshold(),
@@ -187,7 +189,7 @@ class PerformanceCalculator(AbstractCalculator):
         ...     y_true='repaid',
         ...     timestamp_column_name='timestamp',
         ...     problem_type='classification_binary',
-        ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
+        ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'average_precision'],
         ...     chunk_size=5000)
         >>> calc.fit(reference_df)
         >>> results = calc.calculate(analysis_df)

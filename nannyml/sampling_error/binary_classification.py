@@ -20,7 +20,13 @@ from typing import Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
+from sklearn.metrics import average_precision_score
+
 from nannyml.exceptions import InvalidArgumentsException
+
+
+# How many experiments to perform when doing resampling to approximate sampling error.
+N_EXPERIMENTS = 40
 
 
 def _universal_sampling_error(reference_std, reference_fraction, data):
@@ -85,6 +91,63 @@ def auroc_sampling_error(sampling_error_components, data):
     """
     reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
+
+def ap_sampling_error_components(
+    y_true_reference: pd.Series,
+    y_pred_proba_reference: pd.Series
+) -> Tuple[np.ndarray, int]:
+    """
+    Calculate sampling error components for AP using reference data.
+    Calculation is done by calculating the sampling error on reference data and extrapolating
+    for different sizes using 1/sqrt(n) approximation.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_proba_reference: pd.Series
+        Prediction values for the reference dataset.
+
+    Returns
+    -------
+    (std, sample_size): Tuple[np.ndarray, int]
+        Note that the sampling error component are different than usual!
+    """
+
+    df = pd.DataFrame(columns=['y_true', 'y_pred_proba'])
+    df['y_true'] = y_true_reference
+    df['y_pred_proba'] = y_pred_proba_reference
+
+    sample_size = df.shape[0]
+
+    ap_results = []
+    for it in range(N_EXPERIMENTS):
+        df_sample = df.sample(sample_size, replace=True)
+        #TODO: Add checks/handling for data quality issues?
+        ap_results.append(
+            average_precision_score(df_sample['y_true'], df_sample['y_pred_proba'])
+        )
+
+    return np.std(ap_results), sample_size
+
+
+def ap_sampling_error(sampling_error_components, data):
+    """
+    Calculate the AUROC sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
+    reference_std, reference_size = sampling_error_components
+    analysis_size = data.shape[0]
+    return reference_std * np.sqrt(reference_size/analysis_size)
 
 
 def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:

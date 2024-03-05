@@ -64,7 +64,7 @@ class BinaryClassificationAUROC(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         y_pred_proba: Optional[str], default=None
             Name(s) of the column(s) containing your model output. For binary classification, pass a single string
-            refering to the model output column.
+            referring to the model output column.
         """
         super().__init__(
             name='roc_auc',
@@ -82,6 +82,80 @@ class BinaryClassificationAUROC(Metric):
 
     def __str__(self):
         return "roc_auc"
+
+    def _fit(self, reference_data: pd.DataFrame):
+        _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
+        self._sampling_error_components = auroc_sampling_error_components(
+            y_true_reference=reference_data[self.y_true],
+            y_pred_proba_reference=reference_data[self.y_pred_proba],
+        )
+
+    def _calculate(self, data: pd.DataFrame):
+        """Redefine to handle NaNs and edge cases."""
+        _list_missing([self.y_true, self.y_pred_proba], list(data.columns))
+        data = _remove_nans(data, (self.y_true, self.y_pred))
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred_proba]
+
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return roc_auc_score(y_true, y_pred)
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return auroc_sampling_error(self._sampling_error_components, data)
+
+
+@MetricFactory.register(metric='average_precision', use_case=ProblemType.CLASSIFICATION_BINARY)
+class BinaryClassificationAP(Metric):
+    """Average Precision metric.
+    
+    https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html
+    """
+
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Optional[str] = None,
+        **kwargs,
+    ):
+        """Creates a new AP instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            referring to the model output column.
+        """
+        super().__init__(
+            name='average_precision',
+            y_true=y_true,
+            y_pred=y_pred,
+            threshold=threshold,
+            y_pred_proba=y_pred_proba,
+            lower_threshold_limit=0,
+            upper_threshold_limit=1,
+            components=[('Average Precision', 'average_precision')],
+        )
+
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
+    def __str__(self):
+        return "average_precision"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
