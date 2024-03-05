@@ -1,12 +1,15 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+"""Module containing implemenations for binary classification metrics and utilities."""
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (
+    confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score, average_precision_score
+)
 
 from nannyml._typing import ProblemType
 from nannyml.base import _list_missing, _remove_nans
@@ -18,6 +21,8 @@ from nannyml.sampling_error.binary_classification import (
     accuracy_sampling_error_components,
     auroc_sampling_error,
     auroc_sampling_error_components,
+    ap_sampling_error,
+    ap_sampling_error_components,
     business_value_sampling_error,
     business_value_sampling_error_components,
     f1_sampling_error,
@@ -81,9 +86,11 @@ class BinaryClassificationAUROC(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Metric string."""
         return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
+        """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
         self._sampling_error_components = auroc_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
@@ -114,7 +121,7 @@ class BinaryClassificationAUROC(Metric):
 @MetricFactory.register(metric='average_precision', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAP(Metric):
     """Average Precision metric.
-    
+
     https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html
     """
 
@@ -155,14 +162,22 @@ class BinaryClassificationAP(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Metric string."""
         return "average_precision"
 
     def _fit(self, reference_data: pd.DataFrame):
+        """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
-        self._sampling_error_components = auroc_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_proba_reference=reference_data[self.y_pred_proba],
-        )
+        # we don't want to count missing rows for sampling error
+        reference_data = _remove_nans(reference_data, (self.y_true, self.y_pred))
+
+        if 1 not in reference_data[self.y_true].unique():
+            self._sampling_error_components = np.NaN, 0
+        else:
+            self._sampling_error_components = ap_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_proba_reference=reference_data[self.y_pred_proba],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
@@ -172,17 +187,17 @@ class BinaryClassificationAP(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred_proba]
 
-        if y_true.nunique() <= 1:
+        if 1 not in y_true.unique():
             warnings.warn(
-                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                f"'{self.y_true}' does not contain positive class for chunk, cannot calculate {self.display_name}. "
                 f"Returning NaN."
             )
             return np.NaN
         else:
-            return roc_auc_score(y_true, y_pred)
+            return average_precision_score(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return auroc_sampling_error(self._sampling_error_components, data)
+        return ap_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='f1', use_case=ProblemType.CLASSIFICATION_BINARY)
@@ -230,6 +245,7 @@ class BinaryClassificationF1(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        # TODO: maybe handle data quality issues here and pass clean data to sampling error calculation?
         self._sampling_error_components = f1_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_reference=reference_data[self.y_pred],

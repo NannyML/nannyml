@@ -27,6 +27,8 @@ from nannyml.exceptions import InvalidArgumentsException
 
 # How many experiments to perform when doing resampling to approximate sampling error.
 N_EXPERIMENTS = 40
+# Max resample size - we don't need full reference if it is too big.
+MAX_RESAMPLE_SIZE = 50_000
 
 
 def _universal_sampling_error(reference_std, reference_fraction, data):
@@ -118,12 +120,13 @@ def ap_sampling_error_components(
     df['y_true'] = y_true_reference
     df['y_pred_proba'] = y_pred_proba_reference
 
-    sample_size = df.shape[0]
+    # we don't need all reference if it's big (save compute)
+    sample_size = np.minimum(df.shape[0], MAX_RESAMPLE_SIZE)
 
     ap_results = []
     for it in range(N_EXPERIMENTS):
         df_sample = df.sample(sample_size, replace=True)
-        #TODO: Add checks/handling for data quality issues?
+        #TODO: Add checks/handling for data quality issues?                                                                                                                                                                                                                                                                    
         ap_results.append(
             average_precision_score(df_sample['y_true'], df_sample['y_pred_proba'])
         )
@@ -134,6 +137,8 @@ def ap_sampling_error_components(
 def ap_sampling_error(sampling_error_components, data):
     """
     Calculate the AUROC sampling error for a chunk of data.
+
+    if first component is NaN (due to data quality) result will be nan
 
     Parameters
     ----------
