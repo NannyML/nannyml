@@ -25,6 +25,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    average_precision_score
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
@@ -445,6 +446,164 @@ def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
     tpr = TP / (TP + FN)
     fpr = FP / (FP + TN)
     metric = auc(fpr, tpr)
+    return metric
+
+
+@MetricFactory.register('average_precision', ProblemType.CLASSIFICATION_BINARY)
+class BinaryClassificationAP(Metric):
+    """CBPE binary classification AP Metric Class."""
+
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        """Initialize CBPE binary classification AP Metric Class."""
+        super().__init__(
+            name='average_precision',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Average Precision', 'average_precision')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
+        )
+
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
+    def _common_cleaning(  # type: ignore
+        self, data: pd.DataFrame, selected_columns: List[str]
+    ) -> Tuple[List[pd.Series], bool]:
+        """Remove NaN values from rows of selected columns.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Pandas dataframe containing data.
+        selected_columns: List[str]
+            List containing the strings of column names
+
+        Returns
+        -------
+        col_list:
+            List containing the clean columns specified. Order of columns from selected_columns is
+            preserved.
+        """
+        # If we want target and it's not available we get None
+        if not set(selected_columns) <= set(data.columns):
+            raise InvalidArgumentsException(
+                f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
+            )
+        df = data[selected_columns].dropna(axis=0, how='any', inplace=False).reset_index()
+        empty: bool = False
+        if df.shape[0] == 0:
+            empty = True
+        results = []
+        for el in selected_columns:
+            results.append(df[el])
+        return (results, empty)
+
+    def _fit(self, reference_data: pd.DataFrame):
+        """Metric _fit implementation on reference data."""
+        # if requested columns are missing we want to raise an error.
+        _dat, _empty = self._common_cleaning(
+            data=reference_data,
+            selected_columns=[self.y_true, self.y_pred_proba]  # type: ignore
+        )
+        y_true, y_pred_proba = _dat
+
+        # if empty then positive class won't be part of y_true series
+        if 1 not in y_true.unique():
+            self._logger.debug(f"Not enough data to compute fit {self.display_name}.")
+            warnings.warn(f"Not enough data to compute fit {self.display_name}.")
+            self._sampling_error_components = np.NaN, 0
+        else:
+            self._sampling_error_components = bse.ap_sampling_error_components(
+                y_true_reference=y_true,
+                y_pred_proba_reference=y_pred_proba,
+            )
+
+    def _estimate(self, data: pd.DataFrame):
+        calibrated_y_pred_proba = data[self.y_pred_proba].to_numpy()
+        uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba].to_numpy()
+
+        return estimate_ap(calibrated_y_pred_proba, uncalibrated_y_pred_proba)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        try:
+            _dat, _ = self._common_cleaning(
+                data=data,
+                selected_columns=[self.uncalibrated_y_pred_proba, self.y_true]
+            )
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+        uncalibrated_y_pred_proba, y_true = _dat
+
+        # if empty then positive class won't be part of y_true series
+        if 1 not in y_true.unique():
+            warnings.warn(
+                f"'{self.y_true}' does not contain positive class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return average_precision_score(y_true, uncalibrated_y_pred_proba)
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return bse.ap_sampling_error(self._sampling_error_components, data)
+
+
+def estimate_ap(calibrated_y_pred_proba: np.ndarray, uncalibrated_y_pred_proba: np.ndarray) -> float:
+    """Estimates the AP metric.
+
+    Parameters
+    ----------
+    calibrated_y_pred_proba : pd.Series
+        Calibrated probability estimates of the sample for each class in the model.
+    uncalibrated_y_pred_proba : pd.Series
+        Raw probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated AP score.
+    """
+    descending_order_index = np.argsort(uncalibrated_y_pred_proba)[::-1]
+    calibrated_y_pred_proba = calibrated_y_pred_proba[descending_order_index]
+
+    tps = np.cumsum(calibrated_y_pred_proba)
+    fps = 1 + np.arange(calibrated_y_pred_proba.shape[0]) - tps
+    tps = np.round(tps, 5)
+    fps = np.round(fps, 5)
+    ps = np.arange(1, tps.shape[0] + 1)
+
+    precision = tps / ps
+    # we add an element for (tps, fps) = (0,0) after the division to avoid error
+    precision = np.r_[1, precision]
+    tps = np.r_[0, tps]
+    recall = tps / tps[-1]
+    # reverse so (0,1) is last element
+    # recall is descending from 1 to 0
+    precision = precision[::-1]
+    recall = recall[::-1]
+
+    # actual AP calculation
+    # https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/metrics/_ranking.py#L236
+    # non unique values will be eliminated because diff will be 0!
+    metric = -np.sum(np.diff(recall) * precision[:-1])
     return metric
 
 

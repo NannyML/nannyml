@@ -10,6 +10,7 @@ from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based.metrics import (
     BinaryClassificationAccuracy,
     BinaryClassificationAUROC,
+    BinaryClassificationAP,
     BinaryClassificationConfusionMatrix,
     BinaryClassificationF1,
     BinaryClassificationPrecision,
@@ -35,6 +36,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -59,6 +61,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -82,6 +85,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -105,6 +109,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -128,6 +133,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -152,6 +158,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -176,6 +183,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -201,6 +209,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -225,6 +234,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -249,6 +259,7 @@ from nannyml.thresholds import ConstantThreshold
                     'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
                     'estimated_f1': [0.9479079222515973, 0.9278089207836576],
                     'estimated_precision': [0.9436121782324026, 0.9197836255005452],
+                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
                     'estimated_recall': [0.9522429574319092, 0.9359754933378336],
                     'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
                     'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
@@ -277,6 +288,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
+                    ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -342,6 +359,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9145613073300847,
                         0.915231419744167,
                     ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
+                    ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
                         0.9426505776503413,
@@ -406,6 +429,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9145613073300847,
                         0.915231419744167,
                     ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
+                    ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
                         0.9426505776503413,
@@ -469,6 +498,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
+                    ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -539,6 +574,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9145613073300847,
                         0.915231419744167,
                     ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
+                    ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
                         0.9426505776503413,
@@ -607,6 +648,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
+                    ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -677,6 +724,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9145613073300847,
                         0.915231419744167,
                     ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
+                    ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
                         0.9426505776503413,
@@ -745,6 +798,12 @@ from nannyml.thresholds import ConstantThreshold
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
+                    ],
+                    'estimated_average_precision': [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -822,6 +881,13 @@ from nannyml.thresholds import ConstantThreshold
                         0.9244858823267199,
                         0.9151737753536913,
                         0.7100248791165871,
+                    ],
+                    'estimated_average_precision': [
+                        0.9639886207960554,
+                        0.9626268503990243,
+                        0.9589551322726588,
+                        0.9561267279887811,
+                        0.7496848462431713
                     ],
                     'estimated_recall': [
                         0.9547917131585199,
@@ -913,6 +979,13 @@ from nannyml.thresholds import ConstantThreshold
                         0.9151737753536913,
                         0.7100248791165871,
                     ],
+                    'estimated_average_precision': [
+                        0.9639886207960554,
+                        0.9626268503990243,
+                        0.9589551322726588,
+                        0.9561267279887811,
+                        0.7496848462431713
+                    ],
                     'estimated_recall': [
                         0.9547917131585199,
                         0.9514239252802291,
@@ -1003,6 +1076,13 @@ from nannyml.thresholds import ConstantThreshold
                         0.9151737753536913,
                         0.7100248791165871,
                     ],
+                    'estimated_average_precision': [
+                        0.9639886207960554,
+                        0.9626268503990243,
+                        0.9589551322726588,
+                        0.9561267279887811,
+                        0.7496848462431713
+                    ],
                     'estimated_recall': [
                         0.9547917131585199,
                         0.9514239252802291,
@@ -1092,6 +1172,13 @@ from nannyml.thresholds import ConstantThreshold
                         0.9244858823267199,
                         0.9151737753536913,
                         0.7100248791165871,
+                    ],
+                    'estimated_average_precision': [
+                        0.9639886207960554,
+                        0.9626268503990243,
+                        0.9589551322726588,
+                        0.9561267279887811,
+                        0.7496848462431713
                     ],
                     'estimated_recall': [
                         0.9547917131585199,
@@ -1203,6 +1290,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9133821290777778,
                         0.9173539177641505,
                         0.9145726617897999,
+                    ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -1355,6 +1454,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
+                    ],
                     'estimated_recall': [
                         0.9546437391537488,
                         0.95007417692678,
@@ -1506,6 +1617,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
+                    ],
                     'estimated_recall': [
                         0.9546437391537488,
                         0.95007417692678,
@@ -1656,6 +1779,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9133821290777778,
                         0.9173539177641505,
                         0.9145726617897999,
+                    ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -1812,6 +1947,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
+                    ],
                     'estimated_recall': [
                         0.9546437391537488,
                         0.95007417692678,
@@ -1966,6 +2113,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9133821290777778,
                         0.9173539177641505,
                         0.9145726617897999,
+                    ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -2122,6 +2281,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
+                    ],
                     'estimated_recall': [
                         0.9546437391537488,
                         0.95007417692678,
@@ -2277,6 +2448,18 @@ from nannyml.thresholds import ConstantThreshold
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
+                    'estimated_average_precision': [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364
+                    ],
                     'estimated_recall': [
                         0.9546437391537488,
                         0.95007417692678,
@@ -2421,6 +2604,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             'roc_auc',
             'f1',
             'precision',
+            'average_precision',
             'recall',
             'specificity',
             'accuracy',
@@ -2438,6 +2622,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         'estimated_roc_auc',
         'estimated_f1',
         'estimated_precision',
+        'estimated_average_precision',
         'estimated_recall',
         'estimated_specificity',
         'estimated_accuracy',
@@ -3235,6 +3420,7 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
     'metric_cls',
     [
         BinaryClassificationAUROC,
+        BinaryClassificationAP,
         BinaryClassificationF1,
         BinaryClassificationPrecision,
         BinaryClassificationRecall,

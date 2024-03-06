@@ -185,7 +185,7 @@ class BinaryClassificationAP(Metric):
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
-        y_pred = data[self.y_pred_proba]
+        y_pred_proba = data[self.y_pred_proba]
 
         if 1 not in y_true.unique():
             warnings.warn(
@@ -194,7 +194,7 @@ class BinaryClassificationAP(Metric):
             )
             return np.NaN
         else:
-            return average_precision_score(y_true, y_pred)
+            return average_precision_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return ap_sampling_error(self._sampling_error_components, data)
