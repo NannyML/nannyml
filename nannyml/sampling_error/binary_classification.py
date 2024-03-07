@@ -116,21 +116,20 @@ def ap_sampling_error_components(
         Note that the sampling error component are different than usual!
     """
 
-    df = pd.DataFrame(columns=['y_true', 'y_pred_proba'])
-    df['y_true'] = y_true_reference
-    df['y_pred_proba'] = y_pred_proba_reference
-
     # we don't need all reference if it's big (save compute)
-    sample_size = np.minimum(df.shape[0], MAX_RESAMPLE_SIZE)
+    sample_size = np.minimum(y_true_reference.shape[0], MAX_RESAMPLE_SIZE)
+
+    y_true_reference = y_true_reference.to_numpy()
+    y_pred_proba_reference = y_pred_proba_reference.to_numpy()
 
     ap_results = []
-    for it in range(N_EXPERIMENTS):
-        df_sample = df.sample(sample_size, replace=True)
-        #TODO: Add checks/handling for data quality issues?                                                                                                                                                                                                                                                                    
+    for _ in range(N_EXPERIMENTS):
+        _indexes_for_sample = np.random.choice(y_true_reference.shape[0], sample_size, replace=True)
+        sample_y_true_reference = y_true_reference[_indexes_for_sample]
+        sample_y_pred_proba_reference = y_pred_proba_reference[_indexes_for_sample]
         ap_results.append(
-            average_precision_score(df_sample['y_true'], df_sample['y_pred_proba'])
+            average_precision_score(sample_y_true_reference, sample_y_pred_proba_reference)
         )
-
     return np.std(ap_results), sample_size
 
 
