@@ -26,7 +26,7 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 # How many experiments to perform when doing resampling to approximate sampling error.
-N_EXPERIMENTS = 40
+N_EXPERIMENTS = 50
 # Max resample size - we don't need full reference if it is too big.
 MAX_RESAMPLE_SIZE = 50_000
 
@@ -117,7 +117,7 @@ def ap_sampling_error_components(
     """
 
     # we don't need all reference if it's big (save compute)
-    sample_size = np.minimum(y_true_reference.shape[0], MAX_RESAMPLE_SIZE)
+    sample_size = np.minimum(y_true_reference.shape[0]//2, MAX_RESAMPLE_SIZE)
 
     y_true_reference = y_true_reference.to_numpy()
     y_pred_proba_reference = y_pred_proba_reference.to_numpy()
