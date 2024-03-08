@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.10.5] - 2024-03-08
+
+### Changed
+
+- Updated dependencies for Python 3.8 and up.  [(#375)](https://github.com/NannyML/nannyml/issues/375)
+
+### Added
+
+- Support for the *average precision* metric for binary classification in realized and estimated performance. [(#374)](https://github.com/NannyML/nannyml/issues/374)
+
+
 ## [0.10.4] - 2024-03-04
 
 ### Changed
