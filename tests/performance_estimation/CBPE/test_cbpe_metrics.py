@@ -9,8 +9,8 @@ from nannyml.datasets import (
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.confidence_based.metrics import (
     BinaryClassificationAccuracy,
-    BinaryClassificationAUROC,
     BinaryClassificationAP,
+    BinaryClassificationAUROC,
     BinaryClassificationConfusionMatrix,
     BinaryClassificationF1,
     BinaryClassificationPrecision,
@@ -293,7 +293,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -363,7 +363,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -433,7 +433,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -503,7 +503,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -578,7 +578,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -653,7 +653,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -728,7 +728,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -803,7 +803,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
-                        0.9560973858800224
+                        0.9560973858800224,
                     ],
                     'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
                     'estimated_specificity': [
@@ -866,7 +866,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
-                        0.898023243746043
+                        0.898023243746043,
                     ],
                     'estimated_f1': [
                         0.9486231864324036,
@@ -887,7 +887,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
-                        0.7496848462431713
+                        0.7496848462431713,
                     ],
                     'estimated_recall': [
                         0.9547917131585199,
@@ -963,7 +963,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
-                        0.898023243746043
+                        0.898023243746043,
                     ],
                     'estimated_f1': [
                         0.9486231864324036,
@@ -984,7 +984,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
-                        0.7496848462431713
+                        0.7496848462431713,
                     ],
                     'estimated_recall': [
                         0.9547917131585199,
@@ -1060,7 +1060,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
-                        0.898023243746043
+                        0.898023243746043,
                     ],
                     'estimated_f1': [
                         0.9486231864324036,
@@ -1081,7 +1081,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
-                        0.7496848462431713
+                        0.7496848462431713,
                     ],
                     'estimated_recall': [
                         0.9547917131585199,
@@ -1157,7 +1157,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
-                        0.898023243746043
+                        0.898023243746043,
                     ],
                     'estimated_f1': [
                         0.9486231864324036,
@@ -1178,7 +1178,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
-                        0.7496848462431713
+                        0.7496848462431713,
                     ],
                     'estimated_recall': [
                         0.9547917131585199,
@@ -1265,7 +1265,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -1301,7 +1301,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -1428,7 +1428,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -1464,7 +1464,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -1591,7 +1591,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -1627,7 +1627,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -1754,7 +1754,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -1790,7 +1790,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -1921,7 +1921,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -1957,7 +1957,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -2088,7 +2088,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -2124,7 +2124,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -2255,7 +2255,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -2291,7 +2291,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -2422,7 +2422,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9618247016040209,
                         0.9610734463362078,
                         0.9625334611153133,
-                        0.9613161529631752
+                        0.9613161529631752,
                     ],
                     'estimated_f1': [
                         0.948555321454138,
@@ -2458,7 +2458,7 @@ from nannyml.thresholds import ConstantThreshold
                         0.9561644458255762,
                         0.9551889092088637,
                         0.9560927338703065,
-                        0.9569107885377364
+                        0.9569107885377364,
                     ],
                     'estimated_recall': [
                         0.9546437391537488,
@@ -2762,7 +2762,12 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             pd.DataFrame(
                 {
                     'key': ['[0:14999]', '[15000:29999]', '[30000:44999]', '[45000:59999]'],
-                    'estimated_roc_auc': [0.9084352218383378, 0.9087633795549603, 0.8195268555812215, 0.8201623718659414],
+                    'estimated_roc_auc': [
+                        0.9084352218383378,
+                        0.9087633795549603,
+                        0.8195268555812215,
+                        0.8201623718659414,
+                    ],
                     'estimated_f1': [0.7550059244451006, 0.7562711250144366, 0.63091155676697, 0.6324244687112559],
                     'estimated_precision': [
                         0.755038246904623,
@@ -2850,7 +2855,12 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             pd.DataFrame(
                 {
                     'key': ['[0:14999]', '[15000:29999]', '[30000:44999]', '[45000:59999]'],
-                    'estimated_roc_auc': [0.9084352218383378, 0.9087633795549603, 0.8195268555812215, 0.8201623718659414],
+                    'estimated_roc_auc': [
+                        0.9084352218383378,
+                        0.9087633795549603,
+                        0.8195268555812215,
+                        0.8201623718659414,
+                    ],
                     'estimated_f1': [0.7550059244451006, 0.7562711250144366, 0.63091155676697, 0.6324244687112559],
                     'estimated_precision': [
                         0.755038246904623,
@@ -2982,7 +2992,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.8200960479088842,
                         0.8189662151429392,
                         0.8192448359184578,
-                        0.8214293833125543
+                        0.8214293833125543,
                     ],
                     'estimated_f1': [
                         0.7533014808638749,
@@ -3181,7 +3191,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.8200960479088842,
                         0.8189662151429392,
                         0.8192448359184578,
-                        0.8214293833125543
+                        0.8214293833125543,
                     ],
                     'estimated_f1': [
                         0.7533014808638749,

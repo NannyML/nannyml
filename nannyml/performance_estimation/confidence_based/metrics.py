@@ -19,20 +19,19 @@ import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
     auc,
+    average_precision_score,
     confusion_matrix,
     f1_score,
     multilabel_confusion_matrix,
     precision_score,
     recall_score,
     roc_auc_score,
-    average_precision_score
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels
-from nannyml.base import _remove_nans
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
@@ -244,9 +243,7 @@ class Metric(abc.ABC):
     #         data = _remove_nans(data, [self.y_true])
 
     #     return data[y_pred_proba_column_name], data[self.y_pred], (data[self.y_true] if clean_targets else None)
-    def _common_cleaning(
-        self, data: pd.DataFrame, selected_columns: List[str]
-    ) -> Tuple[List[pd.Series], bool]:
+    def _common_cleaning(self, data: pd.DataFrame, selected_columns: List[str]) -> Tuple[List[pd.Series], bool]:
         """Remove NaN values from rows of selected columns.
 
         Parameters
@@ -423,9 +420,9 @@ class BinaryClassificationAUROC(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
             _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred_proba, self.uncalibrated_y_pred_proba]
+                data=data, selected_columns=[self.y_pred_proba, self.uncalibrated_y_pred_proba]
             )
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
@@ -444,8 +441,7 @@ class BinaryClassificationAUROC(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
             _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.uncalibrated_y_pred_proba, self.y_true]
+                data=data, selected_columns=[self.uncalibrated_y_pred_proba, self.y_true]
             )
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
@@ -460,8 +456,9 @@ class BinaryClassificationAUROC(Metric):
             return np.NaN
         y_pred_proba, y_true = _dat
         if y_true.nunique() <= 1:
-            warnings.warn(f"'{self.y_true}' contains a single class for chunk, "
-                          f"cannot compute realized {self.display_name}.")
+            warnings.warn(
+                f"'{self.y_true}' contains a single class for chunk, " f"cannot compute realized {self.display_name}."
+            )
             return np.NaN
         return roc_auc_score(y_true, y_pred_proba)
 
@@ -539,8 +536,7 @@ class BinaryClassificationAP(Metric):
         """Metric _fit implementation on reference data."""
         # if requested columns are missing we want to raise an error.
         _dat, _ = self._common_cleaning(
-            data=reference_data,
-            selected_columns=[self.y_true, self.y_pred_proba]  # type: ignore
+            data=reference_data, selected_columns=[self.y_true, self.y_pred_proba]  # type: ignore
         )
         y_true, y_pred_proba = _dat
 
@@ -563,10 +559,7 @@ class BinaryClassificationAP(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _ = self._common_cleaning(
-                data=data,
-                selected_columns=[self.uncalibrated_y_pred_proba, self.y_true]
-            )
+            _dat, _ = self._common_cleaning(data=data, selected_columns=[self.uncalibrated_y_pred_proba, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -669,10 +662,8 @@ class BinaryClassificationF1(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -692,10 +683,7 @@ class BinaryClassificationF1(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -722,7 +710,7 @@ class BinaryClassificationF1(Metric):
                 f"returning NaN as realized {self.display_name} score."
             )
             return np.NaN
-        #TODO: zero_division should be np.nan
+        # TODO: zero_division should be np.nan
         # update when we update sklearn to 1.3+ and remove unnecessary checks.
         return f1_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
@@ -790,10 +778,8 @@ class BinaryClassificationPrecision(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -813,10 +799,7 @@ class BinaryClassificationPrecision(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -842,7 +825,7 @@ class BinaryClassificationPrecision(Metric):
                 f"returning NaN as realized {self.display_name} score."
             )
             return np.NaN
-        #TODO: zero_division should be np.nan
+        # TODO: zero_division should be np.nan
         # update when we update sklearn to 1.3+ and remove unnecessary checks.
         return precision_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
@@ -908,10 +891,8 @@ class BinaryClassificationRecall(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -931,10 +912,7 @@ class BinaryClassificationRecall(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -961,7 +939,7 @@ class BinaryClassificationRecall(Metric):
                 f"returning NaN as realized {self.display_name} score."
             )
             return np.NaN
-        #TODO: zero_division should be np.nan
+        # TODO: zero_division should be np.nan
         # update when we update sklearn to 1.3+ and remove unnecessary checks.
         return recall_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
@@ -1027,10 +1005,8 @@ class BinaryClassificationSpecificity(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1050,10 +1026,7 @@ class BinaryClassificationSpecificity(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1135,10 +1108,8 @@ class BinaryClassificationAccuracy(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1158,10 +1129,7 @@ class BinaryClassificationAccuracy(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1366,10 +1334,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _true_positive_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1383,19 +1348,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             return np.NaN
         y_pred, y_true = _dat
 
-        _, _, _, tp = confusion_matrix(
-            y_true,
-            y_pred,
-            normalize=self.normalize_confusion_matrix
-        ).ravel()
+        _, _, _, tp = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return tp
 
     def _true_negative_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1410,19 +1368,12 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         y_pred, y_true = _dat
 
-        tn, _, _, _ = confusion_matrix(
-            y_true,
-            y_pred,
-            normalize=self.normalize_confusion_matrix
-        ).ravel()
+        tn, _, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return tn
 
     def _false_positive_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1436,19 +1387,12 @@ class BinaryClassificationConfusionMatrix(Metric):
             return np.NaN
         y_pred, y_true = _dat
 
-        _, fp, _, _ = confusion_matrix(
-            y_true,
-            y_pred,
-            normalize=self.normalize_confusion_matrix
-        ).ravel()
+        _, fp, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return fp
 
     def _false_negative_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1462,11 +1406,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             return np.NaN
         y_pred, y_true = _dat
 
-        _, _, fn, _ = confusion_matrix(
-            y_true,
-            y_pred,
-            normalize=self.normalize_confusion_matrix
-        ).ravel()
+        _, _, fn, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return fn
 
     def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
@@ -1483,10 +1423,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated true positive rate.
         """
         try:
-            _dat, _empty = self._common_cleaning(
-                data=chunk_data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1540,10 +1478,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated true negative rate.
         """
         try:
-            _dat, _empty = self._common_cleaning(
-                data=chunk_data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1597,10 +1533,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated false positive rate.
         """
         try:
-            _dat, _empty = self._common_cleaning(
-                data=chunk_data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1654,10 +1588,8 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated false negative rate.
         """
         try:
-            _dat, _empty = self._common_cleaning(
-                data=chunk_data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1988,10 +1920,7 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=data,
-                selected_columns=[self.y_pred, self.y_true]
-            )
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -2020,10 +1949,8 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _estimate(self, chunk_data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(
-                data=chunk_data,
-                selected_columns=[self.y_pred_proba, self.y_pred]
-            )
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -2186,7 +2113,9 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
 
     def _estimate(self, data: pd.DataFrame):
         _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        _, y_pred_probas_uncalibrated, _ = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
+        _, y_pred_probas_uncalibrated, _ = _get_multiclass_uncalibrated_predictions(
+            data, self.y_pred, self.y_pred_proba
+        )
         ovr_estimates = []
         for el in range(len(y_pred_probas)):
             ovr_estimates.append(
@@ -2194,7 +2123,7 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
                     # sorting according to classes is/should_be the same across
                     # _get_binarized_multiclass_predictions and _get_multiclass_uncalibrated_predictions
                     y_pred_probas[el],
-                    y_pred_probas_uncalibrated.iloc[:, el]
+                    y_pred_probas_uncalibrated.iloc[:, el],
                 )
             )
         multiclass_roc_auc = np.mean(ovr_estimates)

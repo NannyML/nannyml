@@ -88,12 +88,7 @@ def test_accuracy_sampling_error():
 def test_ap_sampling_error_when_nan():
     comp1 = np.NaN
     comp2 = 0
-    data = pd.DataFrame(
-        {'y_true': [0,1,1],
-        'y_pred_proba': [0.4, 0.6, 0.7]}
-    )
+    data = pd.DataFrame({'y_true': [0, 1, 1], 'y_pred_proba': [0.4, 0.6, 0.7]})
 
-    sampling_error = bse.ap_sampling_error(
-        (comp1, comp2), data
-    )
+    sampling_error = bse.ap_sampling_error((comp1, comp2), data)
     assert np.isnan(sampling_error)

@@ -8,7 +8,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
-    confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score, average_precision_score
+    average_precision_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
 
 from nannyml._typing import ProblemType
@@ -19,10 +24,10 @@ from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.binary_classification import (
     accuracy_sampling_error,
     accuracy_sampling_error_components,
-    auroc_sampling_error,
-    auroc_sampling_error_components,
     ap_sampling_error,
     ap_sampling_error_components,
+    auroc_sampling_error,
+    auroc_sampling_error_components,
     business_value_sampling_error,
     business_value_sampling_error_components,
     f1_sampling_error,

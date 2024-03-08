@@ -16,6 +16,7 @@ from nannyml.datasets import load_synthetic_binary_classification_dataset
 from nannyml.performance_calculation.metrics.base import MetricFactory
 from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationAccuracy,
+    BinaryClassificationAP,
     BinaryClassificationAUROC,
     BinaryClassificationBusinessValue,
     BinaryClassificationConfusionMatrix,
@@ -23,7 +24,6 @@ from nannyml.performance_calculation.metrics.binary_classification import (
     BinaryClassificationPrecision,
     BinaryClassificationRecall,
     BinaryClassificationSpecificity,
-    BinaryClassificationAP
 )
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
@@ -169,7 +169,10 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         ('roc_auc', [0.97096, 0.97025, 0.97628, 0.96772, 0.96989, 0.96005, 0.95853, 0.95904, 0.96309, 0.95756]),
         ('f1', [0.92186, 0.92124, 0.92678, 0.91684, 0.92356, 0.87424, 0.87672, 0.86806, 0.883, 0.86775]),
         ('precision', [0.96729, 0.96607, 0.96858, 0.96819, 0.9661, 0.94932, 0.95777, 0.95012, 0.95718, 0.94271]),
-        ('average_precision', [0.96362, 0.96053, 0.96629, 0.96098, 0.96252, 0.95285, 0.95327, 0.95178, 0.95433, 0.95196]),
+        (
+            'average_precision',
+            [0.96362, 0.96053, 0.96629, 0.96098, 0.96252, 0.95285, 0.95327, 0.95178, 0.95433, 0.95196],
+        ),
         ('recall', [0.88051, 0.88039, 0.88843, 0.87067, 0.8846, 0.81017, 0.80832, 0.79904, 0.8195, 0.80383]),
         ('specificity', [0.9681, 0.9701, 0.97277, 0.9718, 0.96864, 0.95685, 0.96364, 0.95795, 0.96386, 0.94879]),
         ('accuracy', [0.9228, 0.926, 0.9318, 0.9216, 0.9264, 0.8836, 0.8852, 0.8784, 0.8922, 0.8746]),

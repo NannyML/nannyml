@@ -19,11 +19,9 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-
 from sklearn.metrics import average_precision_score
 
 from nannyml.exceptions import InvalidArgumentsException
-
 
 # How many experiments to perform when doing resampling to approximate sampling error.
 N_EXPERIMENTS = 50
@@ -94,9 +92,9 @@ def auroc_sampling_error(sampling_error_components, data):
     reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
 
+
 def ap_sampling_error_components(
-    y_true_reference: pd.Series,
-    y_pred_proba_reference: pd.Series
+    y_true_reference: pd.Series, y_pred_proba_reference: pd.Series
 ) -> Tuple[np.ndarray, int]:
     """
     Calculate sampling error components for AP using reference data.
@@ -117,7 +115,7 @@ def ap_sampling_error_components(
     """
 
     # we don't need all reference if it's big (save compute)
-    sample_size = np.minimum(y_true_reference.shape[0]//2, MAX_RESAMPLE_SIZE)
+    sample_size = np.minimum(y_true_reference.shape[0] // 2, MAX_RESAMPLE_SIZE)
 
     y_true_reference = y_true_reference.to_numpy()
     y_pred_proba_reference = y_pred_proba_reference.to_numpy()
@@ -127,9 +125,7 @@ def ap_sampling_error_components(
         _indexes_for_sample = np.random.choice(y_true_reference.shape[0], sample_size, replace=True)
         sample_y_true_reference = y_true_reference[_indexes_for_sample]
         sample_y_pred_proba_reference = y_pred_proba_reference[_indexes_for_sample]
-        ap_results.append(
-            average_precision_score(sample_y_true_reference, sample_y_pred_proba_reference)
-        )
+        ap_results.append(average_precision_score(sample_y_true_reference, sample_y_pred_proba_reference))
     return np.std(ap_results), sample_size
 
 
@@ -151,7 +147,7 @@ def ap_sampling_error(sampling_error_components, data):
     """
     reference_std, reference_size = sampling_error_components
     analysis_size = data.shape[0]
-    return reference_std * np.sqrt(reference_size/analysis_size)
+    return reference_std * np.sqrt(reference_size / analysis_size)
 
 
 def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
