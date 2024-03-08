@@ -19,6 +19,7 @@ SUPPORTED_CLASSIFICATION_METRIC_VALUES = [
     'accuracy',
     'confusion_matrix',
     'business_value',
+    'average_precision',
 ]
 
 SUPPORTED_REGRESSION_METRIC_VALUES = [

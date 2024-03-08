@@ -9,6 +9,7 @@ We currently support the following **standard** metrics for bianry classificatio
     * **roc_auc**
     * **f1**
     * **precision**
+    * **average_precision**
     * **recall**
     * **specificity**
     * **accuracy**

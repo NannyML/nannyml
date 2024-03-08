@@ -49,6 +49,7 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
     'accuracy': StandardDeviationThreshold(),
     'confusion_matrix': StandardDeviationThreshold(),
     'business_value': StandardDeviationThreshold(),
+    'average_precision': StandardDeviationThreshold(),
 }
 
 

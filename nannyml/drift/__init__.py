@@ -23,7 +23,7 @@ The multivariate drift detection methods include:
 - Domain Classifer: detects drift by looking at how performance a domain classifier is at distinguising
   between the reference and the chunk datasets.
 """
-from .multivariate.domain_classifier import DomainClassifierCalculator
 from .multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from .multivariate.domain_classifier import DomainClassifierCalculator
 from .ranker import AlertCountRanker, CorrelationRanker
 from .univariate import FeatureType, Method, MethodFactory, UnivariateDriftCalculator

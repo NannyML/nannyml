@@ -19,6 +19,7 @@ import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
     auc,
+    average_precision_score,
     confusion_matrix,
     f1_score,
     multilabel_confusion_matrix,
@@ -31,7 +32,6 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels
-from nannyml.base import _remove_nans
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
@@ -225,24 +225,53 @@ class Metric(abc.ABC):
         """
         return self.components == other.components
 
-    def _common_cleaning(
-        self, data: pd.DataFrame, y_pred_proba_column_name: Optional[str] = None
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        if y_pred_proba_column_name is None:
-            if not isinstance(self.y_pred_proba, str):
-                raise InvalidArgumentsException(
-                    f"'y_pred_proba' is of type '{type(self.y_pred_proba)}'. "
-                    f"Binary use cases require 'y_pred_proba' to be a string."
-                )
-            y_pred_proba_column_name = self.y_pred_proba
+    # def _common_cleaning(
+    #     self, data: pd.DataFrame, y_pred_proba_column_name: Optional[str] = None
+    # ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    #     if y_pred_proba_column_name is None:
+    #         if not isinstance(self.y_pred_proba, str):
+    #             raise InvalidArgumentsException(
+    #                 f"'y_pred_proba' is of type '{type(self.y_pred_proba)}'. "
+    #                 f"Binary use cases require 'y_pred_proba' to be a string."
+    #             )
+    #         y_pred_proba_column_name = self.y_pred_proba
 
-        data = _remove_nans(data, [self.y_pred, y_pred_proba_column_name])
+    #     data = _remove_nans(data, [self.y_pred, y_pred_proba_column_name])
 
-        clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
-        if clean_targets:
-            data = _remove_nans(data, [self.y_true])
+    #     clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
+    #     if clean_targets:
+    #         data = _remove_nans(data, [self.y_true])
 
-        return data[y_pred_proba_column_name], data[self.y_pred], (data[self.y_true] if clean_targets else None)
+    #     return data[y_pred_proba_column_name], data[self.y_pred], (data[self.y_true] if clean_targets else None)
+    def _common_cleaning(self, data: pd.DataFrame, selected_columns: List[str]) -> Tuple[List[pd.Series], bool]:
+        """Remove NaN values from rows of selected columns.
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Pandas dataframe containing data.
+        selected_columns: List[str]
+            List containing the strings of column names
+
+        Returns
+        -------
+        col_list:
+            List containing the clean columns specified. Order of columns from selected_columns is
+            preserved.
+        """
+        # If we want target and it's not available we get None
+        if not set(selected_columns) <= set(data.columns):
+            raise InvalidArgumentsException(
+                f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
+            )
+        df = data[selected_columns].dropna(axis=0, how='any', inplace=False).reset_index()
+        empty: bool = False
+        if df.shape[0] == 0:
+            empty = True
+        results = []
+        for el in selected_columns:
+            results.append(df[el])
+        return (results, empty)
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
         """Returns a dictionary containing the performance metrics for a given chunk.
@@ -390,61 +419,207 @@ class BinaryClassificationAUROC(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(
+                data=data, selected_columns=[self.y_pred_proba, self.uncalibrated_y_pred_proba]
+            )
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        return estimate_roc_auc(y_pred_proba)
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, uncalibrated_y_pred_proba = _dat
+        return estimate_roc_auc(y_pred_proba, uncalibrated_y_pred_proba)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        y_pred_proba, _, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(
+                data=data, selected_columns=[self.uncalibrated_y_pred_proba, self.y_true]
+            )
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-
+        y_pred_proba, y_true = _dat
         if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
+            warnings.warn(
+                f"'{self.y_true}' contains a single class for chunk, " f"cannot compute realized {self.display_name}."
+            )
             return np.NaN
-
         return roc_auc_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.auroc_sampling_error(self._sampling_error_components, data)
 
 
-def estimate_roc_auc(y_pred_proba: pd.Series) -> float:
+def estimate_roc_auc(true_y_pred_proba: pd.Series, model_y_pred_proba: pd.Series) -> float:
     """Estimates the ROC AUC metric.
 
     Parameters
     ----------
-    y_pred_proba : pd.Series
-        Probability estimates of the sample for each class in the model.
+    true_y_pred_proba : pd.Series
+        Calibrated score predictions from the model.
+    model_y_pred_proba : pd.Series
+        Un-Calibrated score predictions from the model.
 
     Returns
     -------
     metric: float
         Estimated ROC AUC score.
     """
-    thresholds = np.append(np.sort(y_pred_proba), 1)
-    one_min_thresholds = 1 - thresholds
+    true_y_pred_proba = true_y_pred_proba.to_numpy()
+    model_y_pred_proba = model_y_pred_proba.to_numpy()
 
-    TP = np.cumsum(thresholds[::-1])[::-1]
-    FP = np.cumsum(one_min_thresholds[::-1])[::-1]
+    sorted_index = np.argsort(model_y_pred_proba)[::-1]
+    model_y_pred_proba = model_y_pred_proba[sorted_index]
+    true_y_pred_proba = true_y_pred_proba[sorted_index]
 
-    thresholds_with_zero = np.insert(thresholds, 0, 0, axis=0)[:-1]
-    one_min_thresholds_with_zero = np.insert(one_min_thresholds, 0, 0, axis=0)[:-1]
+    with np.errstate(divide='ignore', invalid='ignore'):
+        tps = np.cumsum(true_y_pred_proba)
+        fps = 1 + np.arange(len(true_y_pred_proba)) - tps
+        tps = np.r_[0, tps]
+        fps = np.r_[0, fps]
+        tps = np.round(tps, 5)
+        fps = np.round(fps, 5)
+        tpr = tps / tps[-1]
+        fpr = fps / fps[-1]
+        metric = auc(fpr, tpr)
+        return metric
 
-    FN = np.cumsum(thresholds_with_zero)
-    TN = np.cumsum(one_min_thresholds_with_zero)
 
-    non_duplicated_thresholds = np.diff(np.insert(thresholds, 0, -1, axis=0)).astype(bool)
-    TP = TP[non_duplicated_thresholds]
-    FP = FP[non_duplicated_thresholds]
-    FN = FN[non_duplicated_thresholds]
-    TN = TN[non_duplicated_thresholds]
+@MetricFactory.register('average_precision', ProblemType.CLASSIFICATION_BINARY)
+class BinaryClassificationAP(Metric):
+    """CBPE binary classification AP Metric Class."""
 
-    tpr = TP / (TP + FN)
-    fpr = FP / (FP + TN)
-    metric = auc(fpr, tpr)
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        """Initialize CBPE binary classification AP Metric Class."""
+        super().__init__(
+            name='average_precision',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Average Precision', 'average_precision')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
+        )
+
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
+    def _fit(self, reference_data: pd.DataFrame):
+        """Metric _fit implementation on reference data."""
+        # if requested columns are missing we want to raise an error.
+        _dat, _ = self._common_cleaning(
+            data=reference_data, selected_columns=[self.y_true, self.y_pred_proba]  # type: ignore
+        )
+        y_true, y_pred_proba = _dat
+
+        # if empty then positive class won't be part of y_true series
+        if 1 not in y_true.unique():
+            self._logger.debug(f"Not enough data to compute fit {self.display_name}.")
+            warnings.warn(f"Not enough data to compute fit {self.display_name}.")
+            self._sampling_error_components = np.NaN, 0
+        else:
+            self._sampling_error_components = bse.ap_sampling_error_components(
+                y_true_reference=y_true,
+                y_pred_proba_reference=y_pred_proba,
+            )
+
+    def _estimate(self, data: pd.DataFrame):
+        calibrated_y_pred_proba = data[self.y_pred_proba].to_numpy()
+        uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba].to_numpy()
+
+        return estimate_ap(calibrated_y_pred_proba, uncalibrated_y_pred_proba)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        try:
+            _dat, _ = self._common_cleaning(data=data, selected_columns=[self.uncalibrated_y_pred_proba, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+        uncalibrated_y_pred_proba, y_true = _dat
+
+        # if empty then positive class won't be part of y_true series
+        if 1 not in y_true.unique():
+            warnings.warn(
+                f"'{self.y_true}' does not contain positive class for chunk, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return average_precision_score(y_true, uncalibrated_y_pred_proba)
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        return bse.ap_sampling_error(self._sampling_error_components, data)
+
+
+def estimate_ap(calibrated_y_pred_proba: np.ndarray, uncalibrated_y_pred_proba: np.ndarray) -> float:
+    """Estimates the AP metric.
+
+    Parameters
+    ----------
+    calibrated_y_pred_proba : pd.Series
+        Calibrated probability estimates of the sample for each class in the model.
+    uncalibrated_y_pred_proba : pd.Series
+        Raw probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated AP score.
+    """
+    descending_order_index = np.argsort(uncalibrated_y_pred_proba)[::-1]
+    calibrated_y_pred_proba = calibrated_y_pred_proba[descending_order_index]
+
+    tps = np.cumsum(calibrated_y_pred_proba)
+    fps = 1 + np.arange(calibrated_y_pred_proba.shape[0]) - tps
+    tps = np.round(tps, 5)
+    fps = np.round(fps, 5)
+    ps = np.arange(1, tps.shape[0] + 1)
+
+    precision = tps / ps
+    # we add an element for (tps, fps) = (0,0) after the division to avoid error
+    precision = np.r_[1, precision]
+    tps = np.r_[0, tps]
+    recall = tps / tps[-1]
+    # reverse so (0,1) is last element
+    # recall is descending from 1 to 0
+    precision = precision[::-1]
+    recall = recall[::-1]
+
+    # actual AP calculation
+    # https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/metrics/_ranking.py#L236
+    # non unique values will be eliminated because diff will be 0!
+    metric = -np.sum(np.diff(recall) * precision[:-1])
     return metric
 
 
@@ -486,22 +661,41 @@ class BinaryClassificationF1(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
         return estimate_f1(y_pred, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.f1_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn(
-                f"No '{self.y_true}' values given for chunk, returning NaN as realized {self.display_name} score."
-            )
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
+        y_pred, y_true = _dat
 
         if y_true.nunique() <= 1:
             warnings.warn(
@@ -516,8 +710,9 @@ class BinaryClassificationF1(Metric):
                 f"returning NaN as realized {self.display_name} score."
             )
             return np.NaN
-
-        return f1_score(y_true=y_true, y_pred=y_pred)
+        # TODO: zero_division should be np.nan
+        # update when we update sklearn to 1.3+ and remove unnecessary checks.
+        return f1_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
 
 def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
@@ -582,23 +777,41 @@ class BinaryClassificationPrecision(Metric):
         pass
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
         return estimate_precision(y_pred, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.precision_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn(
-                f"No '{self.y_true}' values given for chunk, returning NaN as realized {self.display_name} score."
-            )
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-
+        y_pred, y_true = _dat
         if y_true.nunique() <= 1:
             warnings.warn(
                 f"Too few unique values present in '{self.y_true}', "
@@ -612,8 +825,9 @@ class BinaryClassificationPrecision(Metric):
                 f"returning NaN as realized {self.display_name} score."
             )
             return np.NaN
-
-        return precision_score(y_true=y_true, y_pred=y_pred)
+        # TODO: zero_division should be np.nan
+        # update when we update sklearn to 1.3+ and remove unnecessary checks.
+        return precision_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
 
 def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
@@ -676,22 +890,41 @@ class BinaryClassificationRecall(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
         return estimate_recall(y_pred, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.recall_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn(
-                f"No '{self.y_true}' values given for chunk, returning NaN as realized {self.display_name} score."
-            )
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
+        y_pred, y_true = _dat
 
         if y_true.nunique() <= 1:
             warnings.warn(
@@ -706,8 +939,9 @@ class BinaryClassificationRecall(Metric):
                 f"returning NaN as realized {self.display_name} score."
             )
             return np.NaN
-
-        return recall_score(y_true=y_true, y_pred=y_pred)
+        # TODO: zero_division should be np.nan
+        # update when we update sklearn to 1.3+ and remove unnecessary checks.
+        return recall_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
 
 def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
@@ -770,39 +1004,47 @@ class BinaryClassificationSpecificity(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
         return estimate_specificity(y_pred, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.specificity_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn(
-                f"No '{self.y_true}' values given for chunk, returning NaN as realized {self.display_name} score."
-            )
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-
-        if y_true.nunique() <= 1:
-            warnings.warn(
-                f"Too few unique values present in '{self.y_true}', "
-                f"returning NaN as realized {self.display_name} score."
-            )
-            return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn(
-                f"Too few unique values present in '{self.y_pred}', "
-                f"returning NaN as realized {self.display_name} score."
-            )
-            return np.NaN
-
+        y_pred, y_true = _dat
         tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-        return tn / (tn + fp)
+        denominator = tn + fp
+        if denominator == 0:
+            return np.NaN
+        else:
+            return tn / denominator
 
 
 def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
@@ -865,42 +1107,65 @@ class BinaryClassificationAccuracy(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        y_pred_proba = data[self.y_pred_proba]
-        y_pred = data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        tp = np.where(y_pred == 1, y_pred_proba, 0)
-        tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
-        TP, TN = np.sum(tp), np.sum(tn)
-        metric = (TP + TN) / len(y_pred)
-        return metric
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
+        return estimate_accuracy(y_pred, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return bse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn(
-                f"No '{self.y_true}' values given for chunk, returning NaN as realized {self.display_name} score."
-            )
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-
-        if y_true.nunique() <= 1:
-            warnings.warn(
-                f"Too few unique values present in '{self.y_true}', "
-                f"returning NaN as realized {self.display_name} score."
-            )
-            return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn(
-                f"Too few unique values present in '{self.y_pred}', "
-                f"returning NaN as realized {self.display_name} score."
-            )
-            return np.NaN
+        y_pred, y_true = _dat
 
         return accuracy_score(y_true=y_true, y_pred=y_pred)
+
+
+def estimate_accuracy(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+    """Estimates the accuracy metric.
+
+    Parameters
+    ----------
+    y_pred: pd.Series
+        Predicted class labels of the sample
+    y_pred_proba: pd.Series
+        Probability estimates of the sample for each class in the model.
+
+    Returns
+    -------
+    metric: float
+        Estimated accuracy score.
+    """
+    tp = np.where(y_pred == 1, y_pred_proba, 0)
+    tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
+    TP, TN = np.sum(tp), np.sum(tn)
+    metric = (TP + TN) / len(y_pred)
+    return metric
 
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
@@ -1068,108 +1333,81 @@ class BinaryClassificationConfusionMatrix(Metric):
         return lower_threshold_value, upper_threshold_value
 
     def _true_positive_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
+        y_pred, y_true = _dat
 
-        if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        if self.normalize_confusion_matrix is None:
-            return num_tp
-        elif self.normalize_confusion_matrix == 'true':
-            return num_tp / (num_tp + num_fn)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_tp / (num_tp + num_fp)
-        else:  # normalization is 'all'
-            return num_tp / len(y_true)
+        _, _, _, tp = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        return tp
 
     def _true_negative_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
+        y_pred, y_true = _dat
 
-        if self.normalize_confusion_matrix is None:
-            return num_tn
-        elif self.normalize_confusion_matrix == 'true':
-            return num_tn / (num_tn + num_fp)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_tn / (num_tn + num_fn)
-        else:
-            return num_tn / len(y_true)
+        tn, _, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        return tn
 
     def _false_positive_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
+        y_pred, y_true = _dat
 
-        if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fp = np.sum(np.logical_and(y_pred, np.logical_not(y_true)))
-
-        if self.normalize_confusion_matrix is None:
-            return num_fp
-        elif self.normalize_confusion_matrix == 'true':
-            return num_fp / (num_fp + num_tn)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_fp / (num_fp + num_tp)
-        else:
-            return num_fp / len(y_true)
+        _, fp, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        return fp
 
     def _false_negative_realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized confusion matrix.")
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
+        y_pred, y_true = _dat
 
-        if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        if y_pred.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized confusion matrix.")
-            return np.NaN
-
-        num_tp = np.sum(np.logical_and(y_pred, y_true))
-        num_tn = np.sum(np.logical_and(np.logical_not(y_pred), np.logical_not(y_true)))
-        num_fn = np.sum(np.logical_and(np.logical_not(y_pred), y_true))
-
-        if self.normalize_confusion_matrix is None:
-            return num_fn
-        elif self.normalize_confusion_matrix == 'true':
-            return num_fn / (num_fn + num_tp)
-        elif self.normalize_confusion_matrix == 'pred':
-            return num_fn / (num_fn + num_tn)
-        else:
-            return num_fn / len(y_true)
+        _, _, fn, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        return fn
 
     def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
         """Estimates the true positive rate for a given chunk of data.
@@ -1184,8 +1422,21 @@ class BinaryClassificationConfusionMatrix(Metric):
         normalized_est_tp_ratio : float
             Estimated true positive rate.
         """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
@@ -1226,8 +1477,21 @@ class BinaryClassificationConfusionMatrix(Metric):
         normalized_est_tn_ratio : float
             Estimated true negative rate.
         """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
 
         est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
@@ -1268,8 +1532,21 @@ class BinaryClassificationConfusionMatrix(Metric):
         normalized_est_fp_ratio : float
             Estimated false positive rate.
         """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
@@ -1310,8 +1587,21 @@ class BinaryClassificationConfusionMatrix(Metric):
         normalized_est_fn_ratio : float
             Estimated false negative rate.
         """
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
         est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
@@ -1629,14 +1919,20 @@ class BinaryClassificationBusinessValue(Metric):
         )
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        _, y_pred, y_true = self._common_cleaning(data, y_pred_proba_column_name=self.uncalibrated_y_pred_proba)
+        try:
+            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if y_true is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized business value.")
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-        if y_true.shape[0] == 0:
-            warnings.warn("Calculated Business Value contains NaN values.")
-            return np.NaN
+        y_pred, y_true = _dat
 
         tp_value = self.business_value_matrix[1, 1]
         tn_value = self.business_value_matrix[0, 0]
@@ -1652,8 +1948,21 @@ class BinaryClassificationBusinessValue(Metric):
         return (bv_array * cm).sum()
 
     def _estimate(self, chunk_data: pd.DataFrame) -> float:
-        y_pred_proba = chunk_data[self.y_pred_proba]
-        y_pred = chunk_data[self.y_pred]
+        try:
+            assert isinstance(self.y_pred_proba, str)  # because of binary classification
+            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        if _empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+        y_pred_proba, y_pred = _dat
 
         business_value_normalization = self.normalize_business_value
         business_value_matrix = self.business_value_matrix
@@ -1804,9 +2113,19 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
 
     def _estimate(self, data: pd.DataFrame):
         _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
+        _, y_pred_probas_uncalibrated, _ = _get_multiclass_uncalibrated_predictions(
+            data, self.y_pred, self.y_pred_proba
+        )
         ovr_estimates = []
-        for y_pred_proba_class in y_pred_probas:
-            ovr_estimates.append(estimate_roc_auc(y_pred_proba_class))
+        for el in range(len(y_pred_probas)):
+            ovr_estimates.append(
+                estimate_roc_auc(
+                    # sorting according to classes is/should_be the same across
+                    # _get_binarized_multiclass_predictions and _get_multiclass_uncalibrated_predictions
+                    y_pred_probas[el],
+                    y_pred_probas_uncalibrated.iloc[:, el],
+                )
+            )
         multiclass_roc_auc = np.mean(ovr_estimates)
         return multiclass_roc_auc
 

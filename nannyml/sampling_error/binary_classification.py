@@ -19,8 +19,14 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import average_precision_score
 
 from nannyml.exceptions import InvalidArgumentsException
+
+# How many experiments to perform when doing resampling to approximate sampling error.
+N_EXPERIMENTS = 50
+# Max resample size - we don't need full reference if it is too big.
+MAX_RESAMPLE_SIZE = 50_000
 
 
 def _universal_sampling_error(reference_std, reference_fraction, data):
@@ -85,6 +91,63 @@ def auroc_sampling_error(sampling_error_components, data):
     """
     reference_std, reference_fraction = sampling_error_components
     return _universal_sampling_error(reference_std, reference_fraction, data)
+
+
+def ap_sampling_error_components(
+    y_true_reference: pd.Series, y_pred_proba_reference: pd.Series
+) -> Tuple[np.ndarray, int]:
+    """
+    Calculate sampling error components for AP using reference data.
+    Calculation is done by calculating the sampling error on reference data and extrapolating
+    for different sizes using 1/sqrt(n) approximation.
+
+    Parameters
+    ----------
+    y_true_reference: pd.Series
+        Target values for the reference dataset.
+    y_pred_proba_reference: pd.Series
+        Prediction values for the reference dataset.
+
+    Returns
+    -------
+    (std, sample_size): Tuple[np.ndarray, int]
+        Note that the sampling error component are different than usual!
+    """
+
+    # we don't need all reference if it's big (save compute)
+    sample_size = np.minimum(y_true_reference.shape[0] // 2, MAX_RESAMPLE_SIZE)
+
+    y_true_reference = y_true_reference.to_numpy()
+    y_pred_proba_reference = y_pred_proba_reference.to_numpy()
+
+    ap_results = []
+    for _ in range(N_EXPERIMENTS):
+        _indexes_for_sample = np.random.choice(y_true_reference.shape[0], sample_size, replace=True)
+        sample_y_true_reference = y_true_reference[_indexes_for_sample]
+        sample_y_pred_proba_reference = y_pred_proba_reference[_indexes_for_sample]
+        ap_results.append(average_precision_score(sample_y_true_reference, sample_y_pred_proba_reference))
+    return np.std(ap_results), sample_size
+
+
+def ap_sampling_error(sampling_error_components, data):
+    """
+    Calculate the AUROC sampling error for a chunk of data.
+
+    if first component is NaN (due to data quality) result will be nan
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
+    reference_std, reference_size = sampling_error_components
+    analysis_size = data.shape[0]
+    return reference_std * np.sqrt(reference_size / analysis_size)
 
 
 def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:

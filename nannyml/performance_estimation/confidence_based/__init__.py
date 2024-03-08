@@ -24,6 +24,7 @@ the `tutorial for multiclass classification`_ or the `deep dive`_.
 SUPPORTED_METRIC_VALUES = [
     'roc_auc',
     'f1',
+    'average_precision',
     'precision',
     'recall',
     'specificity',
