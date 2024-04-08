@@ -15,7 +15,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
-import analytics as segment_analytics
+import segment.analytics as segment_analytics
 from dotenv import load_dotenv
 
 from nannyml import __version__
