@@ -7,6 +7,7 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+import warnings
 from scipy.stats import gaussian_kde, moment
 
 logger = getLogger(__name__)
@@ -80,8 +81,13 @@ def summary_stats_median_sampling_error_components(col: pd.Series) -> Tuple:
     (median, pdf(median): Tuple[np.ndarray]
     """
     median = col.median()
-    kernel = gaussian_kde(col)
-    fmedian = kernel.evaluate(median)[0]
+    try:
+        kernel = gaussian_kde(col)
+        fmedian = kernel.evaluate(median)[0]
+    except np.linalg.LinAlgError as ex:
+        logger.warning("Suppressing LinAlgError in summary_stats_median_sampling_error_components: %r", ex)
+        warnings.warn(f"Suppressing LinAlgError in summary_stats_median_sampling_error_components: {ex}")
+        fmedian = np.inf
     return (median, fmedian)
 
 
