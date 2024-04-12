@@ -105,10 +105,10 @@ class BinaryClassificationAUROC(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred_proba], list(data.columns))
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data = _remove_nans(data, [self.y_true, self.y_pred_proba])
 
         y_true = data[self.y_true]
-        y_pred = data[self.y_pred_proba]
+        y_pred_proba = data[self.y_pred_proba]
 
         if y_true.nunique() <= 1:
             warnings.warn(
@@ -117,7 +117,7 @@ class BinaryClassificationAUROC(Metric):
             )
             return np.NaN
         else:
-            return roc_auc_score(y_true, y_pred)
+            return roc_auc_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return auroc_sampling_error(self._sampling_error_components, data)

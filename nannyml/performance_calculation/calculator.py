@@ -302,7 +302,7 @@ class PerformanceCalculator(AbstractCalculator):
         data = data.copy(deep=True)
 
         # Setup for target completeness rate
-        data['NML_TARGET_INCOMPLETE'] = data[self.y_true].isna().astype(np.int16)
+        data[TARGET_COMPLETENESS_RATE_COLUMN_NAME] = data[self.y_true].isna().astype(np.int16)
 
         # Generate chunks
         if self.chunker is None:
