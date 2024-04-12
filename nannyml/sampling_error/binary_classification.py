@@ -22,6 +22,7 @@ import pandas as pd
 from sklearn.metrics import average_precision_score
 
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.base import common_nan_removal
 
 # How many experiments to perform when doing resampling to approximate sampling error.
 N_EXPERIMENTS = 50
@@ -49,14 +50,18 @@ def auroc_sampling_error_components(y_true_reference: pd.Series, y_pred_proba_re
     -------
     (std, fraction): Tuple[np.ndarray, float]
     """
-
-    y_true = y_true_reference.copy().reset_index(drop=True)
-    y_pred_proba = y_pred_proba_reference.copy().reset_index(drop=True)
+    # remove common nans - Better Way? - conform with common_nan_removal API
+    df = pd.DataFrame({
+        'y_true': y_true_reference,
+        'y_pred_proba': y_pred_proba_reference,
+    })
+    [y_true, y_pred_proba], empty = common_nan_removal(df, ['y_true', 'y_pred_proba'])
+    y_true = y_true.to_numpy()
+    y_pred_proba = y_pred_proba.to_numpy()
 
     if np.mean(y_true) > 0.5:
         y_true = abs(np.asarray(y_true) - 1)
         y_pred_proba = 1 - y_pred_proba
-
     sorted_idx = np.argsort(y_pred_proba)
     y_pred_proba = y_pred_proba[sorted_idx]
     y_true = y_true[sorted_idx]
