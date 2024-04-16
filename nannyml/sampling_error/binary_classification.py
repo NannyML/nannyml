@@ -50,14 +50,9 @@ def auroc_sampling_error_components(y_true_reference: pd.Series, y_pred_proba_re
     -------
     (std, fraction): Tuple[np.ndarray, float]
     """
-    # remove common nans - Better Way? - conform with common_nan_removal API
-    df = pd.DataFrame({
-        'y_true': y_true_reference,
-        'y_pred_proba': y_pred_proba_reference,
-    })
-    [y_true, y_pred_proba], empty = common_nan_removal(df, ['y_true', 'y_pred_proba'])
-    y_true = y_true.to_numpy()
-    y_pred_proba = y_pred_proba.to_numpy()
+    # keep converting to numpy here for now
+    y_true = y_true_reference.to_numpy()
+    y_pred_proba = y_pred_proba_reference.to_numpy()
 
     if np.mean(y_true) > 0.5:
         y_true = abs(np.asarray(y_true) - 1)

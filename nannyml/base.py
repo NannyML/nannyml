@@ -615,8 +615,8 @@ def _raise_exception_for_negative_values(column: pd.Series):
             f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
         )
 
-def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple[List[pd.Series], bool]:
-    """Remove NaN values from rows of selected columns.
+def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple[pd.DataFrame, bool]:
+    """Remove rows of dataframe containing NaN values on selected columns.
 
     Parameters
     ----------
@@ -627,9 +627,9 @@ def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple
 
     Returns
     -------
-    col_list:
-        List containing the clean columns specified. Order of columns from selected_columns is
-        preserved.
+    df:
+        Dataframe with rows containing NaN's on selected_columns removed. All columns of original
+        dataframe are being returned.
     empty:
         Boolean whether the resulting data are contain any rows (false) or not (true)
     """
@@ -638,11 +638,8 @@ def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple
         raise InvalidArgumentsException(
             f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
         )
-    df = data[selected_columns].dropna(axis=0, how='any', inplace=False).reset_index()
+    df = data.dropna(axis=0, how='any', inplace=False, subset=selected_columns).reset_index()
     empty: bool = False
     if df.shape[0] == 0:
         empty = True
-    results = []
-    for el in selected_columns:
-        results.append(df[el])
-    return (results, empty)
+    return (df, empty)

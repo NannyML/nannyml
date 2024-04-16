@@ -17,7 +17,7 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _list_missing, _remove_nans
+from nannyml.base import _list_missing, _remove_nans, common_nan_removal
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
@@ -97,10 +97,16 @@ class BinaryClassificationAUROC(Metric):
     def _fit(self, reference_data: pd.DataFrame):
         """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
-        self._sampling_error_components = auroc_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_proba_reference=reference_data[self.y_pred_proba],
-        )
+        # filter nans here
+        data = reference_data[[self.y_true, self.y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
+        if empty:
+            self._sampling_error_components = np.NaN, np.NaN
+        else:
+            self._sampling_error_components = auroc_sampling_error_components(
+                y_true_reference=data[self.y_true],
+                y_pred_proba_reference=data[self.y_pred_proba],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
@@ -120,7 +126,13 @@ class BinaryClassificationAUROC(Metric):
             return roc_auc_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return auroc_sampling_error(self._sampling_error_components, data)
+        # filter nans here - for realized performance both columns are expected
+        data = data[[self.y_true, self.y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
+        if empty:
+            return np.NaN
+        else:
+            return auroc_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='average_precision', use_case=ProblemType.CLASSIFICATION_BINARY)
