@@ -111,11 +111,13 @@ class BinaryClassificationAUROC(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred_proba], list(data.columns))
-        data = _remove_nans(data, [self.y_true, self.y_pred_proba])
+        data = data[[self.y_true, self.y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
+        if empty:
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred_proba = data[self.y_pred_proba]
-
         if y_true.nunique() <= 1:
             warnings.warn(
                 f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
