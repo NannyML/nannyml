@@ -187,21 +187,27 @@ class BinaryClassificationAP(Metric):
     def _fit(self, reference_data: pd.DataFrame):
         """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
-        # we don't want to count missing rows for sampling error
-        reference_data = _remove_nans(reference_data, (self.y_true, self.y_pred))
+        # filter nans here
+        data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred_proba]],
+            [self.y_true, self.y_pred_proba]
+        )
 
-        if 1 not in reference_data[self.y_true].unique():
+        if 1 not in data[self.y_true].unique():
             self._sampling_error_components = np.NaN, 0
         else:
             self._sampling_error_components = ap_sampling_error_components(
-                y_true_reference=reference_data[self.y_true],
-                y_pred_proba_reference=reference_data[self.y_pred_proba],
+                y_true_reference=data[self.y_true],
+                y_pred_proba_reference=data[self.y_pred_proba],
             )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred_proba], list(data.columns))
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data = data[[self.y_true, self.y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
+        if empty:
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred_proba = data[self.y_pred_proba]
@@ -216,7 +222,13 @@ class BinaryClassificationAP(Metric):
             return average_precision_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return ap_sampling_error(self._sampling_error_components, data)
+        # filter nans here - for realized performance both columns are expected
+        data = data[[self.y_true, self.y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
+        if empty:
+            return np.NaN
+        else:
+            return ap_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='f1', use_case=ProblemType.CLASSIFICATION_BINARY)
