@@ -145,9 +145,9 @@ def ap_sampling_error(sampling_error_components, data):
     sampling_error: float
 
     """
-    reference_std, reference_size = sampling_error_components
+    reference_std, sample_size = sampling_error_components
     analysis_size = data.shape[0]
-    return reference_std * np.sqrt(reference_size / analysis_size)
+    return reference_std * np.sqrt(sample_size / analysis_size)
 
 
 def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:

@@ -642,21 +642,12 @@ class BinaryClassificationSpecificity(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.nunique() <= 1:
-            warnings.warn(
-                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
-            return np.NaN
-        elif y_pred.nunique() <= 1:
-            warnings.warn(
-                f"'{self.y_pred}' only contains a single class for chunk, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+        denominator = tn + fp
+        if denominator == 0:
             return np.NaN
         else:
-            tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-            return tn / (tn + fp)
+            return tn / denominator
 
     def _sampling_error(self, data: pd.DataFrame):
         # filter nans here - for realized performance both columns are expected
