@@ -14,7 +14,7 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _list_missing, _raise_exception_for_negative_values, _remove_nans, common_nan_removal
+from nannyml.base import _list_missing, _raise_exception_for_negative_values, common_nan_removal
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
@@ -69,7 +69,7 @@ class MAE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-         # filter nans here
+        # filter nans here
         reference_data, empty = common_nan_removal(
             reference_data[[self.y_true, self.y_pred]],
             [self.y_true, self.y_pred]
