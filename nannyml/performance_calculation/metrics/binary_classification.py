@@ -14,10 +14,11 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    accuracy_score
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _list_missing, _remove_nans, common_nan_removal
+from nannyml.base import _list_missing, common_nan_removal
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
@@ -723,21 +724,7 @@ class BinaryClassificationAccuracy(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.nunique() <= 1:
-            warnings.warn(
-                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
-            return np.NaN
-        elif y_pred.nunique() <= 1:
-            warnings.warn(
-                f"'{self.y_pred}' only contains a single class for chunk, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
-            return np.NaN
-        else:
-            tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
-            return (tp + tn) / (tp + tn + fp + fn)
+        return accuracy_score(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame):
         # filter nans here - for realized performance both columns are expected
