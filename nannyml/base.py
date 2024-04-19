@@ -638,7 +638,9 @@ def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple
         raise InvalidArgumentsException(
             f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
         )
-    df = data.dropna(axis=0, how='any', inplace=False, subset=selected_columns).reset_index()
+    df = data.dropna(
+        axis=0, how='any', inplace=False, subset=selected_columns
+    ).reset_index(drop=True).infer_objects()
     empty: bool = False
     if df.shape[0] == 0:
         empty = True

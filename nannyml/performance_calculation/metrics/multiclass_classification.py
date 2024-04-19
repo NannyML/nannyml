@@ -20,7 +20,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
 from nannyml._typing import ProblemType, class_labels, model_output_column_names
-from nannyml.base import _list_missing, common_nan_removal, _remove_nans
+from nannyml.base import _list_missing, common_nan_removal
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
