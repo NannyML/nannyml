@@ -32,7 +32,7 @@ from sklearn.preprocessing import LabelBinarizer, label_binarize
 from nannyml.base import common_nan_removal, _list_missing
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
-from nannyml._typing import ModelOutputsType, ProblemType, class_labels
+from nannyml._typing import ModelOutputsType, ProblemType, class_labels, model_output_column_names
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
@@ -318,6 +318,7 @@ class Metric(abc.ABC):
             chunk_record[f'lower_threshold_{column_name}'] = self.lower_threshold_value
             chunk_record[f'alert_{column_name}'] = self.alert(estimated_metric_value)
         except Exception as exc:
+            raise exc
             self._logger.error(f"an unexpected error occurred while calculating metric {self.display_name}: {exc}")
             chunk_record[f'estimated_{column_name}'] = np.NaN
             chunk_record[f'sampling_error_{column_name}'] = np.NaN
@@ -2469,14 +2470,50 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
 
     def _fit(self, reference_data: pd.DataFrame):
         classes = class_labels(self.y_pred_proba)
-        binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-        y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]
-
-        self._sampling_error_components = mse.auroc_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        class_uncalibrated_y_pred_proba_columns = [
+            'uncalibrated_'+el for el in class_y_pred_proba_columns
+        ]
+        _list_missing([self.y_true]+class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true]+class_uncalibrated_y_pred_proba_columns],
+            [self.y_true]+class_uncalibrated_y_pred_proba_columns
         )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for class_col in class_y_pred_proba_columns]
+        else:
+            # sampling error
+            binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
+            y_pred_proba = [reference_data['uncalibrated_'+self.y_pred_proba[clazz]].T for clazz in classes]
+            self._sampling_error_components = mse.auroc_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
+            )
 
     def _estimate(self, data: pd.DataFrame):
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        class_uncalibrated_y_pred_proba_columns = [
+            'uncalibrated_'+el for el in class_y_pred_proba_columns
+        ]
+        needed_columns = class_y_pred_proba_columns + class_uncalibrated_y_pred_proba_columns
+        try:
+            _list_missing(needed_columns, list(data.columns))
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        data, empty = common_nan_removal(
+            data,
+            needed_columns
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
         _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         _, y_pred_probas_uncalibrated, _ = _get_multiclass_uncalibrated_predictions(
             data, self.y_pred, self.y_pred_proba
@@ -2495,22 +2532,58 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
         return multiclass_roc_auc
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.auroc_sampling_error(self._sampling_error_components, data)
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        class_uncalibrated_y_pred_proba_columns = [
+            'uncalibrated_'+el for el in class_y_pred_proba_columns
+        ]
+        needed_columns = class_y_pred_proba_columns + class_uncalibrated_y_pred_proba_columns
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(
+            data[needed_columns],
+            needed_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse.auroc_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        class_uncalibrated_y_pred_proba_columns = [
+            'uncalibrated_'+el for el in class_y_pred_proba_columns
+        ]
+        try:
+            _list_missing([self.y_true] + class_uncalibrated_y_pred_proba_columns, data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized ROC-AUC.")
+        data, empty = common_nan_removal(
+            data,
+            [self.y_true]+class_uncalibrated_y_pred_proba_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        if data[self.y_true].nunique() <= 1:
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
             warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
             return np.NaN
 
         _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return roc_auc_score(data[self.y_true], y_pred_probas, multi_class='ovr', average='macro', labels=labels)
+        return roc_auc_score(y_true, y_pred_probas, multi_class='ovr', average='macro', labels=labels)
 
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
@@ -2543,15 +2616,44 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.f1_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        classes = class_labels(self.y_pred_proba)
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
+        else:
+            label_binarizer = LabelBinarizer()
+            binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+            binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+            self._sampling_error_components = mse.f1_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+            )
 
     def _estimate(self, data: pd.DataFrame):
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        try:
+            _list_missing(needed_columns, list(data.columns))
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        data, empty = common_nan_removal(
+            data,
+            needed_columns
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
         y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
@@ -2561,17 +2663,46 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
         return multiclass_metric
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.f1_sampling_error(self._sampling_error_components, data)
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(
+            data[needed_columns],
+            needed_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse.f1_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
+        try:
+            _list_missing([self.y_true, self.y_pred], data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized F1 score.")
+        data, empty = common_nan_removal(
+            data,
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized F1 score.")
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.display_name}.")
             return np.NaN
 
         if data[self.y_pred].nunique() <= 1:
@@ -2580,7 +2711,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return f1_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
+        return f1_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
@@ -2613,15 +2744,44 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.precision_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        classes = class_labels(self.y_pred_proba)
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
+        else:
+            label_binarizer = LabelBinarizer()
+            binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+            binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+            self._sampling_error_components = mse.precision_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+            )
 
     def _estimate(self, data: pd.DataFrame):
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        try:
+            _list_missing(needed_columns, list(data.columns))
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        data, empty = common_nan_removal(
+            data,
+            needed_columns
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
         y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
@@ -2631,26 +2791,55 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
         return multiclass_metric
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.precision_sampling_error(self._sampling_error_components, data)
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(
+            data[needed_columns],
+            needed_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse.precision_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
+        try:
+            _list_missing([self.y_true, self.y_pred], data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
+        data, empty = common_nan_removal(
+            data,
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.display_name}.")
             return np.NaN
 
         if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
+            warnings.warn(
+                f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score.")
             return np.NaN
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-
-        return precision_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
+        return precision_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
@@ -2683,44 +2872,102 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.recall_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        classes = class_labels(self.y_pred_proba)
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
+        else:
+            label_binarizer = LabelBinarizer()
+            binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+            binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+            self._sampling_error_components = mse.recall_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+            )
 
     def _estimate(self, data: pd.DataFrame):
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        try:
+            _list_missing(needed_columns, list(data.columns))
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        data, empty = common_nan_removal(
+            data,
+            needed_columns
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
         y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
             ovr_estimates.append(estimate_recall(y_pred, y_pred_proba))
         multiclass_metric = np.mean(ovr_estimates)
-
         return multiclass_metric
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.recall_sampling_error(self._sampling_error_components, data)
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(
+            data[needed_columns],
+            needed_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse.recall_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
+        try:
+            _list_missing([self.y_true, self.y_pred], data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized recall.")
+        data, empty = common_nan_removal(
+            data,
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized recall.")
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.display_name}.")
             return np.NaN
 
         if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized recall.")
+            warnings.warn(
+                f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score.")
             return np.NaN
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        return recall_score(y_true=data[self.y_true], y_pred=y_pred, average='macro', labels=labels)
+        return recall_score(y_true=y_true, y_pred=y_pred, average='macro', labels=labels)
 
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
@@ -2753,15 +3000,44 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
-        binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
-
-        self._sampling_error_components = mse.specificity_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        classes = class_labels(self.y_pred_proba)
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
+        else:
+            label_binarizer = LabelBinarizer()
+            binarized_y_true = list(label_binarizer.fit_transform(reference_data[self.y_true]).T)
+            binarized_y_pred = list(label_binarizer.transform(reference_data[self.y_pred]).T)
+            self._sampling_error_components = mse.specificity_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+            )
 
     def _estimate(self, data: pd.DataFrame):
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        try:
+            _list_missing(needed_columns, list(data.columns))
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        data, empty = common_nan_removal(
+            data,
+            needed_columns
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
         y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         ovr_estimates = []
         for y_pred, y_pred_proba in zip(y_preds, y_pred_probas):
@@ -2771,26 +3047,56 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
         return multiclass_metric
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.specificity_sampling_error(self._sampling_error_components, data)
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(
+            data[needed_columns],
+            needed_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse.specificity_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
+        try:
+            _list_missing([self.y_true, self.y_pred], data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized specificity.")
+        data, empty = common_nan_removal(
+            data,
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized specificity.")
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.display_name}.")
             return np.NaN
 
         if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized specificity.")
+            warnings.warn(
+                f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score.")
             return np.NaN
 
         y_pred, _, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
 
-        mcm = multilabel_confusion_matrix(data[self.y_true], y_pred, labels=labels)
+        mcm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
         tn_sum = mcm[:, 0, 0]
         fp_sum = mcm[:, 0, 1]
         class_wise_specificity = tn_sum / (tn_sum + fp_sum)
@@ -2827,15 +3133,45 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
-        label_binarizer = LabelBinarizer()
-        binarized_y_true = label_binarizer.fit_transform(reference_data[self.y_true])
-        binarized_y_pred = label_binarizer.transform(reference_data[self.y_pred])
-
-        self._sampling_error_components = mse.accuracy_sampling_error_components(
-            y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+        classes = class_labels(self.y_pred_proba)
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
+        else:
+            label_binarizer = LabelBinarizer()
+            binarized_y_true = label_binarizer.fit_transform(reference_data[self.y_true])
+            binarized_y_pred = label_binarizer.transform(reference_data[self.y_pred])
+
+            self._sampling_error_components = mse.accuracy_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_reference=binarized_y_pred
+            )
 
     def _estimate(self, data: pd.DataFrame):
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        try:
+            _list_missing(needed_columns, list(data.columns))
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        data, empty = common_nan_removal(
+            data,
+            needed_columns
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
         y_preds, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         y_preds_array = np.asarray(y_preds).T
         y_pred_probas_array = np.asarray(y_pred_probas).T
@@ -2843,25 +3179,55 @@ class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
         return np.mean(probability_of_predicted)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse.accuracy_sampling_error(self._sampling_error_components, data)
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(
+            data[needed_columns],
+            needed_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        data = self._ensure_targets(data)
+        try:
+            _list_missing([self.y_true, self.y_pred], data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
 
-        if data is None:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized accuracy.")
+        data, empty = common_nan_removal(
+            data,
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized accuracy.")
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.display_name}.")
             return np.NaN
 
         if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized accuracy.")
+            warnings.warn(
+                f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score.")
             return np.NaN
 
         y_pred, _, _ = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
-        return accuracy_score(data[self.y_true], y_pred)
+        return accuracy_score(y_true, y_pred)
 
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
@@ -2885,7 +3251,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
             )
 
-        self.classes = list(y_pred_proba.keys())
+        self.classes = sorted(list(y_pred_proba.keys()))
 
         super().__init__(
             name='confusion_matrix',
@@ -2941,11 +3307,21 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._confusion_matrix_sampling_error_components = mse.multiclass_confusion_matrix_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        _list_missing([self.y_true, self.y_pred], reference_data)
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
         )
+        if empty:
+            self._confusion_matrix_sampling_error_components = np.full((len(self.classes), len(self.classes)), np.nan), 0
+        else:
+            # sampling error
+            self._confusion_matrix_sampling_error_components = mse.multiclass_confusion_matrix_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+                normalize_confusion_matrix=self.normalize_confusion_matrix,
+            )
 
     def _multiclass_confusion_matrix_alert_thresholds(
         self, reference_chunks: List[Chunk]
@@ -2974,29 +3350,60 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return alert_thresholds
 
     def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
-        if data is None or self.y_true not in data.columns:
-            warnings.warn("No 'y_true' values given for chunk, returning NaN as realized precision.")
+        try:
+            _list_missing([self.y_true, self.y_pred], data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        data, empty = common_nan_removal(
+            data,
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name}. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        if data[self.y_true].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized precision.")
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
+            warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.display_name}.")
             return np.NaN
-
         if data[self.y_pred].nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_pred', returning NaN as realized precision.")
+            warnings.warn(
+                f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score.")
             return np.NaN
 
         cm = confusion_matrix(
             data[self.y_true], data[self.y_pred], labels=self.classes, normalize=self.normalize_confusion_matrix
         )
-
         return cm
 
     def _get_multiclass_confusion_matrix_estimate(self, chunk_data: pd.DataFrame) -> np.ndarray:
-        if isinstance(self.y_pred_proba, str):
-            raise ValueError(
-                "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
-            )
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        try:
+            _list_missing(needed_columns, list(chunk_data.columns))
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        chunk_data, empty = common_nan_removal(
+            chunk_data,
+            needed_columns
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
 
         y_pred_proba = {key: chunk_data[value] for key, value in self.y_pred_proba.items()}
 
@@ -3052,10 +3459,21 @@ class MulticlassClassificationConfusionMatrix(Metric):
         estimated_cm = self._get_multiclass_confusion_matrix_estimate(chunk_data)
         realized_cm = self._multi_class_confusion_matrix_realized_performance(chunk_data)
 
-        sampling_error = mse.multiclass_confusion_matrix_sampling_error(
-            self._confusion_matrix_sampling_error_components,
-            chunk_data,
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        needed_columns = class_y_pred_proba_columns + [self.y_pred]
+        _list_missing(needed_columns, chunk_data)
+        # filter nans here
+        chunk_data, empty = common_nan_removal(
+            chunk_data[needed_columns],
+            needed_columns
         )
+        if empty:
+            sampling_error = np.full((len(self.classes), len(self.classes)), np.nan)
+        else:
+            sampling_error = mse.multiclass_confusion_matrix_sampling_error(
+                self._confusion_matrix_sampling_error_components,
+                chunk_data,
+            )
 
         for true_class in self.classes:
             for pred_class in self.classes:
