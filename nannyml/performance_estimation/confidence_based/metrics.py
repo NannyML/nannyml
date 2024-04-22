@@ -1284,47 +1284,78 @@ class BinaryClassificationAccuracy(Metric):
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._sampling_error_components = bse.accuracy_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-        )
+        # filter nans
+        data = reference_data[[self.y_true, self.y_pred]]
+        data, empty = common_nan_removal(data, [self.y_true, self.y_pred])
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        if empty:
+            self._logger.debug(f"Not enough data to compute fit {self.display_name}.")
+            warnings.warn(f"Not enough data to compute fit {self.display_name}.")
+            self._sampling_error_components = np.NaN, 0
+        else:
+            self._sampling_error_components = bse.accuracy_sampling_error_components(
+                y_true_reference=y_true,
+                y_pred_reference=y_pred,
+            )
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            assert isinstance(self.y_pred_proba, str)  # because of binary classification
-            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred_proba, self.y_pred])
+            _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
+        data, empty = common_nan_removal(
+            data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
+        )
+        if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-        y_pred_proba, y_pred = _dat
+
+        y_pred = data[self.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
         return estimate_accuracy(y_pred, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return bse.accuracy_sampling_error(self._sampling_error_components, data)
+        data = data[[self.y_pred_proba, self.y_pred]]
+        data, empty = common_nan_removal(data, [self.y_pred_proba, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return bse.accuracy_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+            _list_missing([self.y_pred, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
-            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
-            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+        data, empty = common_nan_removal(
+            data[[self.y_pred, self.y_true]],
+            [self.y_pred, self.y_true]
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
+            warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        y_pred, y_true = _dat
+        
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         return accuracy_score(y_true=y_true, y_pred=y_pred)
 
@@ -1430,26 +1461,38 @@ class BinaryClassificationConfusionMatrix(Metric):
         return
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._true_positive_sampling_error_components = bse.true_positive_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
         )
-        self._true_negative_sampling_error_components = bse.true_negative_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
-        )
-        self._false_positive_sampling_error_components = bse.false_positive_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
-        )
-        self._false_negative_sampling_error_components = bse.false_negative_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            normalize_confusion_matrix=self.normalize_confusion_matrix,
-        )
+        if empty:
+            self._true_positive_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
+            self._true_negative_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
+            self._false_positive_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
+            self._false_negative_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
+        else:
+            self._true_positive_sampling_error_components = bse.true_positive_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+                normalize_confusion_matrix=self.normalize_confusion_matrix,
+            )
+            self._true_negative_sampling_error_components = bse.true_negative_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+                normalize_confusion_matrix=self.normalize_confusion_matrix,
+            )
+            self._false_positive_sampling_error_components = bse.false_positive_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+                normalize_confusion_matrix=self.normalize_confusion_matrix,
+            )
+            self._false_negative_sampling_error_components = bse.false_negative_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+                normalize_confusion_matrix=self.normalize_confusion_matrix,
+            )
 
     def _true_positive_alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
         realized_chunk_performance = np.asarray(
@@ -1517,77 +1560,104 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _true_positive_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+            _list_missing([self.y_pred, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
-
-        if _empty:
-            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
-            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate true_positives. "
+                f"Returning NaN."
+            )
             return np.NaN
-        y_pred, y_true = _dat
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         _, _, _, tp = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return tp
 
     def _true_negative_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+            _list_missing([self.y_pred, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
-
-        if _empty:
-            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
-            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate true_negatives. "
+                f"Returning NaN."
+            )
             return np.NaN
 
-        y_pred, y_true = _dat
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         tn, _, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return tn
 
     def _false_positive_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+            _list_missing([self.y_pred, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
-
-        if _empty:
-            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
-            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate false_positives. "
+                f"Returning NaN."
+            )
             return np.NaN
-        y_pred, y_true = _dat
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         _, fp, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return fp
 
     def _false_negative_realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+            _list_missing([self.y_pred, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
-
-        if _empty:
-            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
-            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]],
+            [self.y_true, self.y_pred]
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate false_negatives. "
+                f"Returning NaN."
+            )
             return np.NaN
-        y_pred, y_true = _dat
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         _, _, fn, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
         return fn
@@ -1606,20 +1676,25 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated true positive rate.
         """
         try:
-            assert isinstance(self.y_pred_proba, str)  # because of binary classification
-            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
+        data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
+        )
+        if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-        y_pred_proba, y_pred = _dat
+
+        y_pred = data[self.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
@@ -1661,20 +1736,25 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated true negative rate.
         """
         try:
-            assert isinstance(self.y_pred_proba, str)  # because of binary classification
-            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
+        data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
+        )
+        if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-        y_pred_proba, y_pred = _dat
+
+        y_pred = data[self.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
 
         est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
@@ -1716,20 +1796,25 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated false positive rate.
         """
         try:
-            assert isinstance(self.y_pred_proba, str)  # because of binary classification
-            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
+        data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
+        )
+        if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-        y_pred_proba, y_pred = _dat
+
+        y_pred = data[self.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
         est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
@@ -1771,20 +1856,25 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated false negative rate.
         """
         try:
-            assert isinstance(self.y_pred_proba, str)  # because of binary classification
-            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
+        data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
+        )
+        if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-        y_pred_proba, y_pred = _dat
+
+        y_pred = data[self.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
 
         est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
         est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
@@ -1827,15 +1917,31 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         true_pos_info: Dict[str, Any] = {}
 
+        # we check for nans inside
         estimated_true_positives = self.get_true_positive_estimate(chunk_data)
-
-        sampling_error_true_positives = bse.true_positive_sampling_error(
-            self._true_positive_sampling_error_components, chunk_data
+        realized_true_positives = self._true_positive_realized_performance(chunk_data)
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
+        # TODO: Refactor similarly to multiclass so code can be re-used.
+        # filter nans here - for realized performance both columns are expected
+        chunk_data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
         )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Returning NaN."
+            )
+            sampling_error_true_positives = np.NaN
+        else:
+            sampling_error_true_positives = bse.true_positive_sampling_error(
+                self._true_positive_sampling_error_components, chunk_data
+            )
+        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_pos_info['estimated_true_positive'] = estimated_true_positives
         true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
-        true_pos_info['realized_true_positive'] = self._true_positive_realized_performance(chunk_data)
+        true_pos_info['realized_true_positive'] = realized_true_positives
 
         true_pos_info['upper_confidence_boundary_true_positive'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
@@ -1875,15 +1981,31 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         true_neg_info: Dict[str, Any] = {}
 
+        # we check for nans inside
         estimated_true_negatives = self.get_true_negative_estimate(chunk_data)
-
-        sampling_error_true_negatives = bse.true_negative_sampling_error(
-            self._true_negative_sampling_error_components, chunk_data
+        realized_true_negatives = self._true_negative_realized_performance(chunk_data)
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
+        # TODO: Refactor similarly to multiclass so code can be re-used.
+        # filter nans here - for realized performance both columns are expected
+        chunk_data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
         )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Returning NaN."
+            )
+            sampling_error_true_negatives = np.NaN
+        else:
+            sampling_error_true_negatives = bse.true_negative_sampling_error(
+                self._true_negative_sampling_error_components, chunk_data
+            )
+        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_neg_info['estimated_true_negative'] = estimated_true_negatives
         true_neg_info['sampling_error_true_negative'] = sampling_error_true_negatives
-        true_neg_info['realized_true_negative'] = self._true_negative_realized_performance(chunk_data)
+        true_neg_info['realized_true_negative'] = realized_true_negatives
 
         true_neg_info['upper_confidence_boundary_true_negative'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
@@ -1923,15 +2045,31 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         false_pos_info: Dict[str, Any] = {}
 
+        # we check for nans inside
         estimated_false_positives = self.get_false_positive_estimate(chunk_data)
-
-        sampling_error_false_positives = bse.false_positive_sampling_error(
-            self._false_positive_sampling_error_components, chunk_data
+        realized_false_positives = self._false_positive_realized_performance(chunk_data)
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
+        # TODO: Refactor similarly to multiclass so code can be re-used.
+        # filter nans here - for realized performance both columns are expected
+        chunk_data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
         )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Returning NaN."
+            )
+            sampling_error_false_positives = np.NaN
+        else:
+            sampling_error_false_positives = bse.false_positive_sampling_error(
+                self._false_positive_sampling_error_components, chunk_data
+            )
+        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         false_pos_info['estimated_false_positive'] = estimated_false_positives
         false_pos_info['sampling_error_false_positive'] = sampling_error_false_positives
-        false_pos_info['realized_false_positive'] = self._false_positive_realized_performance(chunk_data)
+        false_pos_info['realized_false_positive'] = realized_false_positives
 
         false_pos_info['upper_confidence_boundary_false_positive'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
@@ -1971,15 +2109,31 @@ class BinaryClassificationConfusionMatrix(Metric):
         """
         false_neg_info: Dict[str, Any] = {}
 
+        # we check for nans inside
         estimated_false_negatives = self.get_false_negative_estimate(chunk_data)
-
-        sampling_error_false_negatives = bse.false_negative_sampling_error(
-            self._false_negative_sampling_error_components, chunk_data
+        realized_false_negatives = self._false_negative_realized_performance(chunk_data)
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
+        # TODO: Refactor similarly to multiclass so code can be re-used.
+        # filter nans here - for realized performance both columns are expected
+        chunk_data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
         )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Returning NaN."
+            )
+            sampling_error_false_negatives = np.NaN
+        else:
+            sampling_error_false_negatives = bse.false_negative_sampling_error(
+                self._false_negative_sampling_error_components, chunk_data
+            )
+        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         false_neg_info['estimated_false_negative'] = estimated_false_negatives
         false_neg_info['sampling_error_false_negative'] = sampling_error_false_negatives
-        false_neg_info['realized_false_negative'] = self._false_negative_realized_performance(chunk_data)
+        false_neg_info['realized_false_negative'] = realized_false_negatives
 
         false_neg_info['upper_confidence_boundary_false_negative'] = np.minimum(
             np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
@@ -2094,28 +2248,45 @@ class BinaryClassificationBusinessValue(Metric):
         # self.upper_threshold: Optional[float] = 1
 
     def _fit(self, reference_data: pd.DataFrame):
-        self._sampling_error_components = bse.business_value_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
-            business_value_matrix=self.business_value_matrix,
-            normalize_business_value=self.normalize_business_value,
-        )
+        # filter nans
+        data = reference_data[[self.y_true, self.y_pred]]
+        data, empty = common_nan_removal(data, [self.y_true, self.y_pred])
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        if empty:
+            self._logger.debug(f"Not enough data to compute fit {self.display_name}.")
+            warnings.warn(f"Not enough data to compute fit {self.display_name}.")
+            self._sampling_error_components = np.NaN, self.normalize_business_value
+        else:
+            self._sampling_error_components = bse.business_value_sampling_error_components(
+                y_true_reference=y_true,
+                y_pred_reference=y_pred,
+                business_value_matrix=self.business_value_matrix,
+                normalize_business_value=self.normalize_business_value,
+            )
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _dat, _empty = self._common_cleaning(data=data, selected_columns=[self.y_pred, self.y_true])
+            _list_missing([self.y_pred, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
-            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
-            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+        data, empty = common_nan_removal(
+            data[[self.y_pred, self.y_true]],
+            [self.y_pred, self.y_true]
+        )
+        if empty:
+            self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
+            warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        y_pred, y_true = _dat
+        
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         tp_value = self.business_value_matrix[1, 1]
         tn_value = self.business_value_matrix[0, 0]
@@ -2132,20 +2303,25 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _estimate(self, chunk_data: pd.DataFrame) -> float:
         try:
-            assert isinstance(self.y_pred_proba, str)  # because of binary classification
-            _dat, _empty = self._common_cleaning(data=chunk_data, selected_columns=[self.y_pred_proba, self.y_pred])
+            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
+        data, empty = common_nan_removal(
+            chunk_data[[self.y_pred_proba, self.y_pred]],
+            [self.y_pred_proba, self.y_pred]
+        )
+        if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
-        y_pred_proba, y_pred = _dat
+
+        y_pred = data[self.y_pred]
+        y_pred_proba = data[self.y_pred_proba]
 
         business_value_normalization = self.normalize_business_value
         business_value_matrix = self.business_value_matrix
@@ -2153,10 +2329,16 @@ class BinaryClassificationBusinessValue(Metric):
         return estimate_business_value(y_pred, y_pred_proba, business_value_normalization, business_value_matrix)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return bse.business_value_sampling_error(
-            self._sampling_error_components,
-            data,
-        )
+        data = data[[self.y_pred_proba, self.y_pred]]
+        data, empty = common_nan_removal(data, [self.y_pred_proba, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
+                "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return bse.business_value_sampling_error(self._sampling_error_components, data)
 
 
 def estimate_business_value(

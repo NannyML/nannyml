@@ -1192,7 +1192,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         # we check for nans inside _calculate_true_positives
         realized_tp = self._calculate_true_positives(chunk_data)
-        # we so sampling error nan checks here because we don't have dedicated sampling error function
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
         # filter nans here - for realized performance both columns are expected
         chunk_data, empty = common_nan_removal(
@@ -1241,7 +1241,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         # we check for nans inside _calculate_true_negatives
         realized_tn = self._calculate_true_negatives(chunk_data)
-        # we so sampling error nan checks here because we don't have dedicated sampling error function
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
         # filter nans here - for realized performance both columns are expected
         chunk_data, empty = common_nan_removal(
@@ -1290,7 +1290,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         # we check for nans inside _calculate_false_positives
         realized_fp = self._calculate_false_positives(chunk_data)
-        # we so sampling error nan checks here because we don't have dedicated sampling error function
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
         # filter nans here - for realized performance both columns are expected
         chunk_data, empty = common_nan_removal(
@@ -1339,7 +1339,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
         # we check for nans inside _calculate_false_negatives
         realized_fn = self._calculate_false_negatives(chunk_data)
-        # we so sampling error nan checks here because we don't have dedicated sampling error function
+        # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
         # filter nans here - for realized performance both columns are expected
         chunk_data, empty = common_nan_removal(
