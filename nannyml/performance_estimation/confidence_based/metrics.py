@@ -338,10 +338,11 @@ class MetricFactory:
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     """CBPE binary classification AUROC Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -481,10 +482,11 @@ def estimate_roc_auc(true_y_pred_proba: pd.Series, model_y_pred_proba: pd.Series
 @MetricFactory.register('average_precision', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAP(Metric):
     """CBPE binary classification AP Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -637,10 +639,11 @@ def estimate_ap(calibrated_y_pred_proba: np.ndarray, uncalibrated_y_pred_proba: 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationF1(Metric):
     """CBPE binary classification f1 Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -783,10 +786,11 @@ def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
     """CBPE binary classification precision Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -928,10 +932,11 @@ def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> floa
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationRecall(Metric):
     """CBPE binary classification recall Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -1073,10 +1078,11 @@ def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
     """CBPE binary classification specificity Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -1208,10 +1214,11 @@ def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> fl
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAccuracy(Metric):
     """CBPE binary classification accuracy Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -1338,10 +1345,11 @@ def estimate_accuracy(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationConfusionMatrix(Metric):
     """CBPE binary classification confusion matrix Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -2153,10 +2161,11 @@ class BinaryClassificationConfusionMatrix(Metric):
 @MetricFactory.register('business_value', ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationBusinessValue(Metric):
     """CBPE binary classification business value Metric Class."""
+    y_pred_proba: str
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: str,
         y_pred: str,
         y_true: str,
         chunker: Chunker,
