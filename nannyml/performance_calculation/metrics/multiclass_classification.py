@@ -46,13 +46,14 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
+    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
         y_true: str,
         y_pred: str,
         threshold: Threshold,
-        y_pred_proba: Optional[Union[str, Dict[str, str]]] = None,
+        y_pred_proba: Dict[str, str],
         **kwargs,
     ):
         """Creates a new AUROC instance.
@@ -169,6 +170,7 @@ class MulticlassClassificationAUROC(Metric):
 @MetricFactory.register(metric='f1', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
     """F1 score metric."""
+    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
@@ -288,6 +290,7 @@ class MulticlassClassificationF1(Metric):
 @MetricFactory.register(metric='precision', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(Metric):
     """Precision metric."""
+    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
@@ -407,6 +410,7 @@ class MulticlassClassificationPrecision(Metric):
 @MetricFactory.register(metric='recall', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
+    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
@@ -526,6 +530,7 @@ class MulticlassClassificationRecall(Metric):
 @MetricFactory.register(metric='specificity', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
+    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
@@ -649,6 +654,7 @@ class MulticlassClassificationSpecificity(Metric):
 @MetricFactory.register(metric='accuracy', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(Metric):
     """Accuracy metric."""
+    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
@@ -750,6 +756,8 @@ class MulticlassClassificationAccuracy(Metric):
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationConfusionMatrix(Metric):
     """Multiclass Confusion Matrix metric."""
+    y_pred_proba: Dict[str, str]
+
     def __init__(
         self,
         y_true: str,
