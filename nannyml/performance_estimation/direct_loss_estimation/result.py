@@ -32,7 +32,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         hyperparameters: Optional[Dict[str, Any]],
         timestamp_column_name: Optional[str] = None,
     ):
-        """
+        """DLE Result Class.
+
         Parameters
         ----------
         results_data: pd.DataFrame
@@ -93,9 +94,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         self.hyperparameters = hyperparameters
 
     def keys(self) -> List[Key]:
-        """
-        Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`
-        """
+        """Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
         return [
             Key(
                 properties=(metric.column_name,),
@@ -119,6 +118,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         Parameters
         ----------
         kind: str, default='performance'
+            What kind of plot to create, currently only performance is supported.
 
         Raises
         ------

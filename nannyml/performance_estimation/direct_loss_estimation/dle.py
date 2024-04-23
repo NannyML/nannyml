@@ -1,6 +1,10 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Classs implementing Direct Loss Estimation algorithm to estimate performance for regression models."""
+
+
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Union
 
@@ -31,7 +35,9 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
 
 
 class DLE(AbstractEstimator):
-    """The Direct Loss Estimator (DLE) estimates the :term:`loss<Loss>` resulting
+    """Class implementing the Direct Loss Estimation method.
+
+    The Direct Loss Estimator (DLE) estimates the :term:`loss<Loss>` resulting
     from the difference between the prediction and the target before the targets become known.
     The loss is defined from the regression performance metric
     specified. For all metrics used the loss function is positive.
@@ -81,8 +87,7 @@ class DLE(AbstractEstimator):
         hyperparameter_tuning_config: Optional[Dict[str, Any]] = None,
         thresholds: Optional[Dict[str, Threshold]] = None,
     ):
-        """
-        Creates a new Direct Loss Estimator.
+        """Creates a new Direct Loss Estimator.
 
         Parameters
         ----------
@@ -268,6 +273,7 @@ class DLE(AbstractEstimator):
         self.result: Optional[Result] = None
 
     def __str__(self):
+        """Get sting representing instantiated class."""
         return (
             f"{self.__class__.__name__}[tune_hyperparameters={self.tune_hyperparameters}, "
             f"metrics={[str(m) for m in self.metrics]}]"
