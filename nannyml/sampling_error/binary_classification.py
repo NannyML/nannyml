@@ -22,7 +22,6 @@ import pandas as pd
 from sklearn.metrics import average_precision_score
 
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.base import common_nan_removal
 
 # How many experiments to perform when doing resampling to approximate sampling error.
 N_EXPERIMENTS = 50
