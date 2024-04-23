@@ -226,54 +226,6 @@ class Metric(abc.ABC):
         """
         return self.components == other.components
 
-    # def _common_cleaning(
-    #     self, data: pd.DataFrame, y_pred_proba_column_name: Optional[str] = None
-    # ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    #     if y_pred_proba_column_name is None:
-    #         if not isinstance(self.y_pred_proba, str):
-    #             raise InvalidArgumentsException(
-    #                 f"'y_pred_proba' is of type '{type(self.y_pred_proba)}'. "
-    #                 f"Binary use cases require 'y_pred_proba' to be a string."
-    #             )
-    #         y_pred_proba_column_name = self.y_pred_proba
-
-    #     data = _remove_nans(data, [self.y_pred, y_pred_proba_column_name])
-
-    #     clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
-    #     if clean_targets:
-    #         data = _remove_nans(data, [self.y_true])
-
-    #     return data[y_pred_proba_column_name], data[self.y_pred], (data[self.y_true] if clean_targets else None)
-    def _common_cleaning(self, data: pd.DataFrame, selected_columns: List[str]) -> Tuple[List[pd.Series], bool]:
-        """Remove NaN values from rows of selected columns.
-
-        Parameters
-        ----------
-        data: pd.DataFrame
-            Pandas dataframe containing data.
-        selected_columns: List[str]
-            List containing the strings of column names
-
-        Returns
-        -------
-        col_list:
-            List containing the clean columns specified. Order of columns from selected_columns is
-            preserved.
-        """
-        # If we want target and it's not available we get None
-        if not set(selected_columns) <= set(data.columns):
-            raise InvalidArgumentsException(
-                f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
-            )
-        df = data[selected_columns].dropna(axis=0, how='any', inplace=False).reset_index()
-        empty: bool = False
-        if df.shape[0] == 0:
-            empty = True
-        results = []
-        for el in selected_columns:
-            results.append(df[el])
-        return (results, empty)
-
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict:
         """Returns a dictionary containing the performance metrics for a given chunk.
 
@@ -2419,26 +2371,8 @@ def _get_multiclass_uncalibrated_predictions(data: pd.DataFrame, y_pred: str, y_
     return data[y_pred], data[class_probability_columns], labels
 
 
-class _MulticlassClassificationMetric(Metric):
-    """Base class for multiclass classification metrics."""
-
-    def _ensure_targets(self, data: pd.DataFrame) -> Optional[pd.DataFrame]:
-        """Ensures that the data contains the target column and that it doesn't contain all NaNs.
-
-        Any rows in the input where the target is NaN are dropped.
-        """
-        if self.y_true not in data.columns:
-            return None
-
-        na = data[self.y_true].isna()
-        if na.all():
-            return None
-        else:
-            return data[~na]
-
-
 @MetricFactory.register('roc_auc', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
+class MulticlassClassificationAUROC(Metric):
     """CBPE multiclass classification AUROC Metric Class."""
 
     def __init__(
@@ -2587,7 +2521,7 @@ class MulticlassClassificationAUROC(_MulticlassClassificationMetric):
 
 
 @MetricFactory.register('f1', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationF1(_MulticlassClassificationMetric):
+class MulticlassClassificationF1(Metric):
     """CBPE multiclass classification f1 Metric Class."""
 
     def __init__(
@@ -2715,7 +2649,7 @@ class MulticlassClassificationF1(_MulticlassClassificationMetric):
 
 
 @MetricFactory.register('precision', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
+class MulticlassClassificationPrecision(Metric):
     """CBPE multiclass classification precision Metric Class."""
 
     def __init__(
@@ -2843,7 +2777,7 @@ class MulticlassClassificationPrecision(_MulticlassClassificationMetric):
 
 
 @MetricFactory.register('recall', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationRecall(_MulticlassClassificationMetric):
+class MulticlassClassificationRecall(Metric):
     """CBPE multiclass classification recall Metric Class."""
 
     def __init__(
@@ -2971,7 +2905,7 @@ class MulticlassClassificationRecall(_MulticlassClassificationMetric):
 
 
 @MetricFactory.register('specificity', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
+class MulticlassClassificationSpecificity(Metric):
     """CBPE multiclass classification specificity Metric Class."""
 
     def __init__(
@@ -3104,7 +3038,7 @@ class MulticlassClassificationSpecificity(_MulticlassClassificationMetric):
 
 
 @MetricFactory.register('accuracy', ProblemType.CLASSIFICATION_MULTICLASS)
-class MulticlassClassificationAccuracy(_MulticlassClassificationMetric):
+class MulticlassClassificationAccuracy(Metric):
     """CBPE multiclass classification accuracy Metric Class."""
 
     def __init__(
