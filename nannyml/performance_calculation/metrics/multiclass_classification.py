@@ -89,16 +89,17 @@ class MulticlassClassificationAUROC(Metric):
         self._sampling_error_components: List[Tuple] = []
 
     def __str__(self):
+        """Get string representation of metric."""
         return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
         classes = class_labels(self.y_pred_proba)
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        _list_missing([self.y_true]+class_y_pred_proba_columns, list(reference_data.columns))
+        _list_missing([self.y_true] + class_y_pred_proba_columns, list(reference_data.columns))
         # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true]+class_y_pred_proba_columns],
-            [self.y_true]+class_y_pred_proba_columns
+            reference_data[[self.y_true] + class_y_pred_proba_columns],
+            [self.y_true] + class_y_pred_proba_columns
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for class_col in class_y_pred_proba_columns]
@@ -121,8 +122,8 @@ class MulticlassClassificationAUROC(Metric):
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         _list_missing([self.y_true] + class_y_pred_proba_columns, data)
         data, empty = common_nan_removal(
-            data[[self.y_true]+class_y_pred_proba_columns],
-            [self.y_true]+class_y_pred_proba_columns
+            data[[self.y_true] + class_y_pred_proba_columns],
+            [self.y_true] + class_y_pred_proba_columns
         )
         if empty:
             warnings.warn(
@@ -152,8 +153,8 @@ class MulticlassClassificationAUROC(Metric):
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         _list_missing([self.y_true] + class_y_pred_proba_columns, data)
         data, empty = common_nan_removal(
-            data[[self.y_true]+class_y_pred_proba_columns],
-            [self.y_true]+class_y_pred_proba_columns
+            data[[self.y_true] + class_y_pred_proba_columns],
+            [self.y_true] + class_y_pred_proba_columns
         )
         if empty:
             warnings.warn(
@@ -209,6 +210,7 @@ class MulticlassClassificationF1(Metric):
         self._sampling_error_components: List[Tuple] = []
 
     def __str__(self):
+        """Get string representation of metric."""
         return "f1"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -327,6 +329,7 @@ class MulticlassClassificationPrecision(Metric):
         self._sampling_error_components: List[Tuple] = []
 
     def __str__(self):
+        """Get string representation of metric."""
         return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -445,6 +448,7 @@ class MulticlassClassificationRecall(Metric):
         self._sampling_error_components: List[Tuple] = []
 
     def __str__(self):
+        """Get string representation of metric."""
         return "recall"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -563,6 +567,7 @@ class MulticlassClassificationSpecificity(Metric):
         self._sampling_error_components: List[Tuple] = []
 
     def __str__(self):
+        """Get string representation of metric."""
         return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -685,6 +690,7 @@ class MulticlassClassificationAccuracy(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -743,6 +749,7 @@ class MulticlassClassificationAccuracy(Metric):
 
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationConfusionMatrix(Metric):
+    """Multiclass Confusion Matrix metric."""
     def __init__(
         self,
         y_true: str,
@@ -769,9 +776,22 @@ class MulticlassClassificationConfusionMatrix(Metric):
         self.classes: Optional[List[str]] = None
 
     def __str__(self):
+        """Get string representation of metric."""
         return "confusion_matrix"
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
+        """Fits a Metric on reference data.
+
+        Parameters
+        ----------
+        reference_data: pd.DataFrame
+            The reference data used for fitting. Must have target data available.
+        chunker: Chunker
+            The :class:`~nannyml.chunk.Chunker` used to split the reference data into chunks.
+            This value is provided by the calling
+            :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator`.
+
+        """
         # _fit
         # realized perf on chunks
         # set thresholds
@@ -885,7 +905,6 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         Returns
         -------
-
         sampling_error: float
             The expected sampling error.
 
@@ -905,6 +924,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
             return multiclass_confusion_matrix_sampling_error(self.sampling_error_components, data)
 
     def get_chunk_record(self, chunk_data: pd.DataFrame) -> Dict[str, Union[float, bool]]:
+        """Create results for provided chunk data."""
         if self.classes is None:
             raise ValueError("classes must be set before calling this method")
 

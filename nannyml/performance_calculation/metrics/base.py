@@ -1,6 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+"""Base Classes for performane calculation."""
 import abc
 import logging
 from logging import Logger
@@ -134,7 +135,6 @@ class Metric(abc.ABC):
 
         Returns
         -------
-
         sampling_error: float
             The expected sampling error.
 
@@ -153,6 +153,7 @@ class Metric(abc.ABC):
         ----------
         value: float
             Value of a calculated metric.
+
         Returns
         -------
         bool: bool
@@ -206,18 +207,22 @@ class Metric(abc.ABC):
 
     @property
     def display_name(self) -> str:
+        """Get metric display name."""
         return self.name
 
     @property
     def column_name(self) -> str:
+        """Get metric column name."""
         return self.components[0][1]
 
     @property
     def display_names(self) -> List[str]:
+        """Get metric display names."""
         return [c[0] for c in self.components]
 
     @property
     def column_names(self) -> List[str]:
+        """Get metric column names."""
         return [c[1] for c in self.components]
 
 
@@ -256,6 +261,7 @@ class MetricFactory:
 
     @classmethod
     def register(cls, metric: str, use_case: ProblemType) -> Callable:
+        """Register performance metric class in MetricFactory."""
         def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:

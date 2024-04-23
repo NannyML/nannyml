@@ -1,6 +1,8 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+"""Performance Calculation Regression Metrics Module."""
+
 import warnings
 from typing import Optional, Tuple
 
@@ -65,6 +67,7 @@ class MAE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MAE"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -149,11 +152,12 @@ class MAPE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MAPE"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-         # filter nans here
+        # filter nans here
         reference_data, empty = common_nan_removal(
             reference_data[[self.y_true, self.y_pred]],
             [self.y_true, self.y_pred]
@@ -233,6 +237,7 @@ class MSE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MSE"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -317,6 +322,7 @@ class MSLE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MSLE"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -405,6 +411,7 @@ class RMSE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "RMSE"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -489,6 +496,7 @@ class RMSLE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "RMSLE"
 
     def _fit(self, reference_data: pd.DataFrame):

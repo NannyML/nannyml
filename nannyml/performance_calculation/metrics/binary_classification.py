@@ -291,6 +291,7 @@ class BinaryClassificationF1(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "f1"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -398,6 +399,7 @@ class BinaryClassificationPrecision(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "precision"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -504,6 +506,7 @@ class BinaryClassificationRecall(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "recall"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -609,6 +612,7 @@ class BinaryClassificationSpecificity(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "specificity"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -706,6 +710,7 @@ class BinaryClassificationAccuracy(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "accuracy"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -791,7 +796,6 @@ class BinaryClassificationBusinessValue(Metric):
             Name(s) of the column(s) containing your model output. For binary classification, pass a single string
             refering to the model output column.
         """
-
         if normalize_business_value not in [None, "per_prediction"]:
             raise InvalidArgumentsException(
                 f"normalize_business_value must be None or 'per_prediction', but got {normalize_business_value}"
@@ -829,6 +833,7 @@ class BinaryClassificationBusinessValue(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "business_value"
 
     def _fit(self, reference_data: pd.DataFrame):
@@ -942,6 +947,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "confusion_matrix"
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):
@@ -1064,8 +1070,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true_positives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate true_positives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1093,8 +1099,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true_negatives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate true_negatives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1122,8 +1128,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate false_positives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate false_positives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1151,8 +1157,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate false_negatives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate false_negatives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1185,7 +1191,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_pos_info : Dict
             A dictionary of true positive's information and its value pairs.
         """
-
         column_name = 'true_positive'
 
         true_pos_info: Dict[str, Any] = {}
@@ -1201,7 +1206,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Too many missing values, cannot calculate true positive sampling error. "
                 "Returning NaN."
             )
             sampling_error_tp = np.NaN
@@ -1209,7 +1214,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_tp = true_positive_sampling_error(
                 self._true_positive_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        #  TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_pos_info[f'{column_name}_sampling_error'] = sampling_error_tp
         true_pos_info[f'{column_name}'] = realized_tp
@@ -1234,7 +1239,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         true_neg_info : Dict
             A dictionary of true negative's information and its value pairs.
         """
-
         column_name = 'true_negative'
 
         true_neg_info: Dict[str, Any] = {}
@@ -1250,7 +1254,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true negative sampling error. "
+                "Too many missing values, cannot calculate true negative sampling error. "
                 "Returning NaN."
             )
             sampling_error_tn = np.NaN
@@ -1258,7 +1262,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_tn = true_negative_sampling_error(
                 self._true_negative_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        #  TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_neg_info[f'{column_name}_sampling_error'] = sampling_error_tn
         true_neg_info[f'{column_name}'] = realized_tn
@@ -1283,7 +1287,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_pos_info : Dict
             A dictionary of false positive's information and its value pairs.
         """
-
         column_name = 'false_positive'
 
         false_pos_info: Dict[str, Any] = {}
@@ -1299,7 +1302,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate false positive sampling error. "
+                "Too many missing values, cannot calculate false positive sampling error. "
                 "Returning NaN."
             )
             sampling_error_fp = np.NaN
@@ -1307,7 +1310,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_fp = false_positive_sampling_error(
                 self._false_positive_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        #  TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         false_pos_info[f'{column_name}_sampling_error'] = sampling_error_fp
         false_pos_info[f'{column_name}'] = realized_fp
@@ -1332,7 +1335,6 @@ class BinaryClassificationConfusionMatrix(Metric):
         false_neg_info : Dict
             A dictionary of false negative's information and its value pairs.
         """
-
         column_name = 'false_negative'
 
         false_neg_info: Dict[str, Any] = {}
@@ -1348,7 +1350,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate false positive sampling error. "
+                "Too many missing values, cannot calculate false positive sampling error. "
                 "Returning NaN."
             )
             sampling_error_fn = np.NaN
@@ -1356,7 +1358,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_fn = false_negative_sampling_error(
                 self._false_negative_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        #  TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         false_neg_info[f'{column_name}_sampling_error'] = sampling_error_fn
         false_neg_info[f'{column_name}'] = realized_fn
