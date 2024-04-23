@@ -419,7 +419,7 @@ class BinaryClassificationAUROC(Metric):
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
             warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        
+
         y_true = data[self.y_true]
         uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba]
 
@@ -566,7 +566,7 @@ class BinaryClassificationAP(Metric):
             data[[self.uncalibrated_y_pred_proba, self.y_true]],
             [self.uncalibrated_y_pred_proba, self.y_true]
         )
-        
+
         y_true = data[self.y_true]
         uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba]
 
@@ -735,7 +735,7 @@ class BinaryClassificationF1(Metric):
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
             warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        
+
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
@@ -881,7 +881,7 @@ class BinaryClassificationPrecision(Metric):
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
             warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        
+
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
@@ -1026,7 +1026,7 @@ class BinaryClassificationRecall(Metric):
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
             warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        
+
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
@@ -1171,7 +1171,7 @@ class BinaryClassificationSpecificity(Metric):
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
             warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        
+
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
@@ -1306,7 +1306,7 @@ class BinaryClassificationAccuracy(Metric):
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
             warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        
+
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
@@ -1526,8 +1526,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true_positives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate true_positives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1552,8 +1552,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true_negatives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate true_negatives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1578,8 +1578,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate false_positives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate false_positives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1604,8 +1604,8 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate false_negatives. "
-                f"Returning NaN."
+                "Too many missing values, cannot calculate false_negatives. "
+                "Returning NaN."
             )
             return np.NaN
 
@@ -1882,7 +1882,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Too many missing values, cannot calculate true positive sampling error. "
                 "Returning NaN."
             )
             sampling_error_true_positives = np.NaN
@@ -1890,7 +1890,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_true_positives = bse.true_positive_sampling_error(
                 self._true_positive_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        # TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_pos_info['estimated_true_positive'] = estimated_true_positives
         true_pos_info['sampling_error_true_positive'] = sampling_error_true_positives
@@ -1946,7 +1946,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Too many missing values, cannot calculate true positive sampling error. "
                 "Returning NaN."
             )
             sampling_error_true_negatives = np.NaN
@@ -1954,7 +1954,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_true_negatives = bse.true_negative_sampling_error(
                 self._true_negative_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        # TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_neg_info['estimated_true_negative'] = estimated_true_negatives
         true_neg_info['sampling_error_true_negative'] = sampling_error_true_negatives
@@ -2010,7 +2010,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Too many missing values, cannot calculate true positive sampling error. "
                 "Returning NaN."
             )
             sampling_error_false_positives = np.NaN
@@ -2018,7 +2018,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_false_positives = bse.false_positive_sampling_error(
                 self._false_positive_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        # TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         false_pos_info['estimated_false_positive'] = estimated_false_positives
         false_pos_info['sampling_error_false_positive'] = sampling_error_false_positives
@@ -2074,7 +2074,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate true positive sampling error. "
+                "Too many missing values, cannot calculate true positive sampling error. "
                 "Returning NaN."
             )
             sampling_error_false_negatives = np.NaN
@@ -2082,7 +2082,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             sampling_error_false_negatives = bse.false_negative_sampling_error(
                 self._false_negative_sampling_error_components, chunk_data
             )
-        #TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
+        # TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         false_neg_info['estimated_false_negative'] = estimated_false_negatives
         false_neg_info['sampling_error_false_negative'] = sampling_error_false_negatives
@@ -2237,7 +2237,7 @@ class BinaryClassificationBusinessValue(Metric):
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
             warnings.warn(f"Not enough data to compute realized {self.display_name}.")
             return np.NaN
-        
+
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
@@ -2406,20 +2406,20 @@ class MulticlassClassificationAUROC(Metric):
         classes = class_labels(self.y_pred_proba)
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         class_uncalibrated_y_pred_proba_columns = [
-            'uncalibrated_'+el for el in class_y_pred_proba_columns
+            'uncalibrated_' + el for el in class_y_pred_proba_columns
         ]
-        _list_missing([self.y_true]+class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
+        _list_missing([self.y_true] + class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
         # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true]+class_uncalibrated_y_pred_proba_columns],
-            [self.y_true]+class_uncalibrated_y_pred_proba_columns
+            reference_data[[self.y_true] + class_uncalibrated_y_pred_proba_columns],
+            [self.y_true] + class_uncalibrated_y_pred_proba_columns
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for class_col in class_y_pred_proba_columns]
         else:
             # sampling error
             binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-            y_pred_proba = [reference_data['uncalibrated_'+self.y_pred_proba[clazz]].T for clazz in classes]
+            y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in classes]
             self._sampling_error_components = mse.auroc_sampling_error_components(
                 y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
             )
@@ -2427,7 +2427,7 @@ class MulticlassClassificationAUROC(Metric):
     def _estimate(self, data: pd.DataFrame):
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         class_uncalibrated_y_pred_proba_columns = [
-            'uncalibrated_'+el for el in class_y_pred_proba_columns
+            'uncalibrated_' + el for el in class_y_pred_proba_columns
         ]
         needed_columns = class_y_pred_proba_columns + class_uncalibrated_y_pred_proba_columns
         try:
@@ -2468,7 +2468,7 @@ class MulticlassClassificationAUROC(Metric):
     def _sampling_error(self, data: pd.DataFrame) -> float:
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         class_uncalibrated_y_pred_proba_columns = [
-            'uncalibrated_'+el for el in class_y_pred_proba_columns
+            'uncalibrated_' + el for el in class_y_pred_proba_columns
         ]
         needed_columns = class_y_pred_proba_columns + class_uncalibrated_y_pred_proba_columns
         _list_missing(needed_columns, data)
@@ -2488,7 +2488,7 @@ class MulticlassClassificationAUROC(Metric):
     def _realized_performance(self, data: pd.DataFrame) -> float:
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         class_uncalibrated_y_pred_proba_columns = [
-            'uncalibrated_'+el for el in class_y_pred_proba_columns
+            'uncalibrated_' + el for el in class_y_pred_proba_columns
         ]
         try:
             _list_missing([self.y_true] + class_uncalibrated_y_pred_proba_columns, data)
@@ -2501,7 +2501,7 @@ class MulticlassClassificationAUROC(Metric):
 
         data, empty = common_nan_removal(
             data,
-            [self.y_true]+class_uncalibrated_y_pred_proba_columns
+            [self.y_true] + class_uncalibrated_y_pred_proba_columns
         )
         if empty:
             warnings.warn(
@@ -3248,10 +3248,11 @@ class MulticlassClassificationConfusionMatrix(Metric):
             [self.y_true, self.y_pred]
         )
         if empty:
-            self._confusion_matrix_sampling_error_components = np.full((len(self.classes), len(self.classes)), np.nan), 0
+            self._confusion_matrix_sampling_error_components = (
+                np.full((len(self.classes), len(self.classes)), np.nan), 0)
         else:
             # sampling error
-            self._confusion_matrix_sampling_error_components = mse.multiclass_confusion_matrix_sampling_error_components(
+            self._confusion_matrix_sampling_error_components = mse.multiclass_confusion_matrix_sampling_error_components(  # noqa: E501
                 y_true_reference=reference_data[self.y_true],
                 y_pred_reference=reference_data[self.y_pred],
                 normalize_confusion_matrix=self.normalize_confusion_matrix,

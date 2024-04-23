@@ -255,7 +255,7 @@ class CBPE(AbstractEstimator):
             self.problem_type = ProblemType.parse(problem_type)
         else:
             self.problem_type = problem_type
-        
+
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             if not isinstance(self.y_pred_proba, str):
                 raise InvalidArgumentsException(
