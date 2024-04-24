@@ -520,7 +520,7 @@ class BinaryClassificationAP(Metric):
         y_pred_proba = data[self.y_pred_proba]
 
         # if empty then positive class won't be part of y_true series
-        if empty:
+        if 1 not in y_true.unique():
             self._logger.debug(f"Not enough data to compute fit {self.display_name}.")
             warnings.warn(f"Not enough data to compute fit {self.display_name}.")
             self._sampling_error_components = np.NaN, 0
