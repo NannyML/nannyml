@@ -532,23 +532,25 @@ class BinaryClassificationAP(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _dat, _empty = common_nan_removal(
-                data=data, selected_columns=[self.y_pred_proba, self.uncalibrated_y_pred_proba]
-            )
+            _list_missing([self.y_pred_proba, self.uncalibrated_y_pred_proba], list(data.columns))
         except InvalidArgumentsException as ex:
-            if "not all present in provided data columns" in str(ex):
+            if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
                 return np.NaN
             else:
                 raise ex
 
-        if _empty:
+        data, empty = common_nan_removal(
+            data[[self.y_pred_proba, self.uncalibrated_y_pred_proba]],
+            [self.y_pred_proba, self.uncalibrated_y_pred_proba]
+        )
+        if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
+
         calibrated_y_pred_proba = data[self.y_pred_proba].to_numpy()
         uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba].to_numpy()
-
         return estimate_ap(calibrated_y_pred_proba, uncalibrated_y_pred_proba)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
