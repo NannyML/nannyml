@@ -432,8 +432,8 @@ class BinaryClassificationAUROC(Metric):
         return roc_auc_score(y_true, uncalibrated_y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        data = data[[self.y_pred_proba]]
-        data, empty = common_nan_removal(data, [self.y_pred_proba])
+        data = data[[self.y_pred_proba, self.uncalibrated_y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_pred_proba, self.uncalibrated_y_pred_proba])
         if empty:
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. "
@@ -583,8 +583,8 @@ class BinaryClassificationAP(Metric):
             return average_precision_score(y_true, uncalibrated_y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        data = data[[self.y_pred_proba]]
-        data, empty = common_nan_removal(data, [self.y_pred_proba])
+        data = data[[self.y_pred_proba, self.uncalibrated_y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_pred_proba, self.uncalibrated_y_pred_proba])
         if empty:
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. "
