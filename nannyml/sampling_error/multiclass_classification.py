@@ -306,7 +306,9 @@ def specificity_sampling_error(sampling_error_components: List[Tuple], data) -> 
     return _standard_deviation_of_variances(sampling_error_components, data)
 
 
-def accuracy_sampling_error_components(y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]):
+def accuracy_sampling_error_components(
+    y_true_reference: List[pd.Series], y_pred_reference: List[pd.Series]
+):
     """
     Calculate sampling error components for accuracy using reference data.
 

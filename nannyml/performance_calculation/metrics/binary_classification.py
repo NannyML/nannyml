@@ -54,6 +54,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
+    y_pred_proba: str
 
     def __init__(
         self,
@@ -152,6 +153,7 @@ class BinaryClassificationAP(Metric):
 
     https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html
     """
+    y_pred_proba: str
 
     def __init__(
         self,
@@ -1036,10 +1038,10 @@ class BinaryClassificationConfusionMatrix(Metric):
             [self.y_true, self.y_pred]
         )
         if empty:
-            self._true_positive_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
-            self._true_negative_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
-            self._false_positive_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
-            self._false_negative_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
+            self._true_positive_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
+            self._true_negative_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
+            self._false_positive_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
+            self._false_negative_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
         else:
             self._true_positive_sampling_error_components = true_positive_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],

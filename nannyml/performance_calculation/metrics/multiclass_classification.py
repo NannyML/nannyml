@@ -654,7 +654,6 @@ class MulticlassClassificationSpecificity(Metric):
 @MetricFactory.register(metric='accuracy', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAccuracy(Metric):
     """Accuracy metric."""
-    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
@@ -702,13 +701,12 @@ class MulticlassClassificationAccuracy(Metric):
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], reference_data)
         # filter nans here
-        classes = class_labels(self.y_pred_proba)
         reference_data, empty = common_nan_removal(
             reference_data[[self.y_true, self.y_pred]],
             [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
+            self._sampling_error_components = (np.NaN,)
         else:
             # sampling error
             label_binarizer = LabelBinarizer()
@@ -757,6 +755,7 @@ class MulticlassClassificationAccuracy(Metric):
 class MulticlassClassificationConfusionMatrix(Metric):
     """Multiclass Confusion Matrix metric."""
     y_pred_proba: Dict[str, str]
+    # classes: List[str]
 
     def __init__(
         self,
@@ -927,7 +926,8 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. "
                 "Returning NaN."
             )
-            return np.full((len(self.classes), len(self.classes)), np.nan)
+            num_classes: int = len(self.classes)  # type: ignore
+            return np.full((num_classes, num_classes), np.nan)
         else:
             return multiclass_confusion_matrix_sampling_error(self.sampling_error_components, data)
 

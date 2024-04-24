@@ -382,7 +382,7 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
 
 def true_positive_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for true positive rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -486,7 +486,7 @@ def true_positive_sampling_error(sampling_error_components: Tuple, data) -> floa
 
 def true_negative_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for true negative rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -590,7 +590,7 @@ def true_negative_sampling_error(sampling_error_components: Tuple, data) -> floa
 
 def false_positive_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for false positive rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -694,7 +694,7 @@ def false_positive_sampling_error(sampling_error_components: Tuple, data) -> flo
 
 def false_negative_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for false negative rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -801,7 +801,7 @@ def business_value_sampling_error_components(
     y_pred_reference: pd.Series,
     business_value_matrix: np.ndarray,
     normalize_business_value: Optional[str],
-) -> Tuple:
+) -> Tuple[float, Union[str, None]]:
     """
     Estimate sampling error for the false negative rate.
     Parameters
