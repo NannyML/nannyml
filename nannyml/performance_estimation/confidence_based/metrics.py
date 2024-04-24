@@ -1429,10 +1429,10 @@ class BinaryClassificationConfusionMatrix(Metric):
             [self.y_true, self.y_pred]
         )
         if empty:
-            self._true_positive_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
-            self._true_negative_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
-            self._false_positive_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
-            self._false_negative_sampling_error_components = np.NaN, 0, self.normalize_confusion_matrix
+            self._true_positive_sampling_error_components = np.NaN, 0., self.normalize_confusion_matrix
+            self._true_negative_sampling_error_components = np.NaN, 0., self.normalize_confusion_matrix
+            self._false_positive_sampling_error_components = np.NaN, 0., self.normalize_confusion_matrix
+            self._false_negative_sampling_error_components = np.NaN, 0., self.normalize_confusion_matrix
         else:
             self._true_positive_sampling_error_components = bse.true_positive_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -3076,7 +3076,6 @@ class MulticlassClassificationAccuracy(Metric):
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
-        classes = class_labels(self.y_pred_proba)
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
         # filter nans here
         reference_data, empty = common_nan_removal(
@@ -3084,7 +3083,7 @@ class MulticlassClassificationAccuracy(Metric):
             [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
+            self._sampling_error_components = (np.NaN,)
         else:
             label_binarizer = LabelBinarizer()
             binarized_y_true = label_binarizer.fit_transform(reference_data[self.y_true])
@@ -3176,10 +3175,11 @@ class MulticlassClassificationAccuracy(Metric):
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationConfusionMatrix(Metric):
     """CBPE multiclass classification confusion matrix Metric Class."""
+    y_pred_proba: Dict[str, str]
 
     def __init__(
         self,
-        y_pred_proba: ModelOutputsType,
+        y_pred_proba: Dict[str, str],
         y_pred: str,
         y_true: str,
         chunker: Chunker,
@@ -3194,7 +3194,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 "y_pred_proba must be a dictionary with class labels as keys and pred_proba column names as values"
             )
 
-        self.classes = sorted(list(y_pred_proba.keys()))
+        self.classes: List[str] = sorted(list(y_pred_proba.keys()))
 
         super().__init__(
             name='confusion_matrix',
@@ -3336,7 +3336,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
-                return np.NaN
+                return np.full((len(self.classes), len(self.classes)), np.nan)
             else:
                 raise ex
 
@@ -3347,7 +3347,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
-            return np.NaN
+            return np.full((len(self.classes), len(self.classes)), np.nan)
 
         y_pred_proba = {key: chunk_data[value] for key, value in self.y_pred_proba.items()}
 
