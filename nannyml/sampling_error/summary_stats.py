@@ -2,12 +2,12 @@
 #
 #  License: Apache Software License 2.0
 
+import warnings
 from logging import getLogger
 from typing import Tuple
 
 import numpy as np
 import pandas as pd
-import warnings
 from scipy.stats import gaussian_kde, moment
 
 logger = getLogger(__name__)

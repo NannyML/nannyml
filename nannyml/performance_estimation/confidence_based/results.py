@@ -30,7 +30,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         self,
         results_data: pd.DataFrame,
         metrics: List[Metric],
-        y_pred: str,
+        y_pred: Optional[str],
         y_pred_proba: ModelOutputsType,
         y_true: str,
         chunker: Chunker,

@@ -106,6 +106,58 @@ def test_performance_calculator_create_with_single_or_list_of_metrics(metrics, e
     assert [metric.column_name for metric in calc.metrics] == expected
 
 
+@pytest.mark.parametrize(
+    'problem',
+    [
+        "classification_multiclass",
+        "regression",
+    ],
+)
+def test_performance_calculator_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_clf(
+    problem,
+):
+    with pytest.raises(InvalidArgumentsException, match=f"'y_pred' can not be 'None' for problem type {problem}"):
+        _ = PerformanceCalculator(
+            timestamp_column_name='timestamp',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=['roc_auc', 'f1'],
+            problem_type=problem,
+        )
+
+
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        (['roc_auc', 'f1'], "['f1']"),
+        (['roc_auc', 'f1', 'average_precision', 'precision'], "['f1', 'precision']"),
+    ],
+)
+def test_performance_calculator_create_without_y_pred_raises_exception_when_metrics_require_it(metric, expected):
+    with pytest.raises(InvalidArgumentsException, match=expected):
+        _ = PerformanceCalculator(
+            timestamp_column_name='timestamp',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=metric,
+            problem_type='classification_binary',
+        )
+
+
+@pytest.mark.parametrize('metric', ['roc_auc', 'average_precision'])
+def test_performance_calculator_create_without_y_pred_works_when_metrics_dont_require_it(metric):
+    try:
+        _ = PerformanceCalculator(
+            timestamp_column_name='timestamp',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=metric,
+            problem_type='classification_binary',
+        )
+    except Exception as exc:
+        pytest.fail(f'unexpected exception: {exc}')
+
+
 def test_calculator_fit_should_raise_invalid_args_exception_when_no_target_data_present(data):  # noqa: D103, F821
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
