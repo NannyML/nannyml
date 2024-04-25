@@ -346,7 +346,10 @@ class CBPE(AbstractEstimator):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
-            _list_missing([self.y_pred, self.y_pred_proba], data)
+            required_cols = [self.y_pred_proba]
+            if self.y_pred is not None:
+                required_cols.append(self.y_pred)
+            _list_missing(required_cols, list(data.columns))
 
             # We need uncalibrated data to calculate the realized performance on.
             # https://github.com/NannyML/nannyml/issues/98
@@ -419,7 +422,10 @@ class CBPE(AbstractEstimator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
+        required_cols = [self.y_true, self.y_pred_proba]
+        if self.y_pred is not None:
+            required_cols.append(self.y_pred)
+        _list_missing(required_cols, list(reference_data.columns))
 
         # We need uncalibrated data to calculate the realized performance on.
         # We need realized performance in threshold calculations.
