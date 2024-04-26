@@ -39,7 +39,7 @@ from nannyml.performance_estimation.direct_loss_estimation.result import Result 
 
 @pytest.fixture(scope='module')
 def sample_drift_result() -> UnivariateResults:  # noqa: D103
-    reference, analysis, _ = load_synthetic_binary_classification_dataset()
+    reference, monitored, _ = load_synthetic_binary_classification_dataset()
     calc = UnivariateDriftCalculator(
         timestamp_column_name='timestamp',
         column_names=[col for col in reference.columns if col not in ['timestamp', 'id', 'work_home_actual', 'period']],
@@ -47,15 +47,15 @@ def sample_drift_result() -> UnivariateResults:  # noqa: D103
         categorical_methods=['chi2', 'jensen_shannon'],
         chunk_size=5000,
     ).fit(reference)
-    result = calc.calculate(analysis)
+    result = calc.calculate(monitored)
     assert isinstance(result, UnivariateResults)
     return result
 
 
 @pytest.fixture(scope='module')
 def sample_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D103
-    reference, analysis, analysis_target = load_synthetic_binary_classification_dataset()
-    analysis = analysis.merge(analysis_target, on='id')
+    reference, monitored, monitored_target = load_synthetic_binary_classification_dataset()
+    monitored = monitored.merge(monitored_target, on='id')
 
     # initialize, fit and calculate realized performance
     realized = PerformanceCalculator(
@@ -68,15 +68,15 @@ def sample_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D10
         chunk_size=5000,
     )
     realized.fit(reference)
-    realized_performance = realized.calculate(analysis)
+    realized_performance = realized.calculate(monitored)
     assert isinstance(realized_performance, PerformanceCalculationResults)
     return realized_performance
 
 
 @pytest.fixture(scope='module')
 def sample_multiclass_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D103
-    reference, analysis, analysis_target = load_synthetic_multiclass_classification_dataset()
-    analysis = analysis.merge(analysis_target, left_index=True, right_index=True)
+    reference, monitored, monitored_target = load_synthetic_multiclass_classification_dataset()
+    monitored = monitored.merge(monitored_target, left_index=True, right_index=True)
     # initialize, fit and calculate realized performance
     realized = PerformanceCalculator(
         y_pred_proba={
@@ -92,15 +92,15 @@ def sample_multiclass_realized_perf_result() -> PerformanceCalculationResults:  
         chunk_size=6000,
     )
     realized.fit(reference)
-    realized_performance = realized.calculate(analysis)
+    realized_performance = realized.calculate(monitored)
     assert isinstance(realized_performance, PerformanceCalculationResults)
     return realized_performance
 
 
 @pytest.fixture(scope='module')
 def sample_multiclass_estimated_perf_result() -> CBPEResults:  # noqa: D103
-    reference, analysis, analysis_target = load_synthetic_multiclass_classification_dataset()
-    analysis = analysis.merge(analysis_target, left_index=True, right_index=True)
+    reference, monitored, monitored_target = load_synthetic_multiclass_classification_dataset()
+    monitored = monitored.merge(monitored_target, left_index=True, right_index=True)
     # initialize, fit and calculate realized performance
     estimated = CBPE(  # type: ignore[abstract]
         y_pred_proba={
@@ -116,14 +116,14 @@ def sample_multiclass_estimated_perf_result() -> CBPEResults:  # noqa: D103
         chunk_size=6000,
     )
     estimated.fit(reference)
-    estimated_performance = estimated.estimate(analysis)
+    estimated_performance = estimated.estimate(monitored)
     assert isinstance(estimated_performance, CBPEResults)
     return estimated_performance
 
 
 @pytest.fixture(scope='module')
 def sample_multiclass_drift_result() -> UnivariateResults:  # noqa: D103
-    reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
+    reference, monitored, _ = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
         timestamp_column_name='timestamp',
         column_names=[
@@ -139,14 +139,14 @@ def sample_multiclass_drift_result() -> UnivariateResults:  # noqa: D103
         categorical_methods=['chi2', 'jensen_shannon'],
         chunk_size=6000,
     ).fit(reference)
-    result = calc.calculate(analysis)
+    result = calc.calculate(monitored)
     assert isinstance(result, UnivariateResults)
     return result
 
 
 @pytest.fixture(scope='module')
 def sample_regression_drift_result() -> UnivariateResults:  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_price_dataset()
+    reference, monitored, _ = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
         timestamp_column_name='timestamp',
         column_names=['car_age', 'km_driven', 'price_new', 'accident_count', 'door_count', 'fuel', 'transmission'],
@@ -154,14 +154,14 @@ def sample_regression_drift_result() -> UnivariateResults:  # noqa: D103
         categorical_methods=['chi2', 'jensen_shannon'],
         chunk_size=6000,
     ).fit(reference)
-    result = calc.calculate(analysis)
+    result = calc.calculate(monitored)
     assert isinstance(result, UnivariateResults)
     return result
 
 
 @pytest.fixture(scope='module')
 def sample_regression_estimated_perf_result() -> DLEResults:  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_price_dataset()
+    reference, monitored, _ = load_synthetic_car_price_dataset()
     # initialize, fit and calculate realized performance
     estimated = DLE(
         feature_column_names=[
@@ -181,15 +181,15 @@ def sample_regression_estimated_perf_result() -> DLEResults:  # noqa: D103
         tune_hyperparameters=False,
     )
     estimated.fit(reference)
-    estimated_performance = estimated.estimate(analysis)
+    estimated_performance = estimated.estimate(monitored)
     assert isinstance(estimated_performance, DLEResults)
     return estimated_performance
 
 
 @pytest.fixture(scope='module')
 def sample_regression_realized_perf_result() -> PerformanceCalculationResults:  # noqa: D103
-    reference, analysis, analysis_target = load_synthetic_car_price_dataset()
-    analysis = analysis.merge(analysis_target, on='id')
+    reference, monitored, monitored_target = load_synthetic_car_price_dataset()
+    monitored = monitored.merge(monitored_target, on='id')
     # initialize, fit and calculate realized performance
     calc = PerformanceCalculator(
         y_pred='y_pred',
@@ -200,14 +200,14 @@ def sample_regression_realized_perf_result() -> PerformanceCalculationResults:  
         chunk_size=6000,
     )
     calc.fit(reference)
-    realized_performance = calc.calculate(analysis)
+    realized_performance = calc.calculate(monitored)
     assert isinstance(realized_performance, PerformanceCalculationResults)
     return realized_performance
 
 
 @pytest.fixture(scope="module")
 def sample_missing_value_result() -> MissingValueResults:
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = MissingValuesCalculator(
         column_names=[
@@ -220,19 +220,19 @@ def sample_missing_value_result() -> MissingValueResults:
             'driver_tenure',
         ],
     ).fit(reference)
-    missing_values = calc.calculate(data=analysis)
+    missing_values = calc.calculate(data=monitored)
     assert isinstance(missing_values, MissingValueResults)
     return missing_values
 
 
 @pytest.fixture(scope="module")
 def sample_unseen_value_result() -> UnseenValueResults:
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = UnseenValuesCalculator(
         column_names=['salary_range', 'repaid_loan_on_prev_car'],
     ).fit(reference)
-    unseen_values = calc.calculate(data=analysis)
+    unseen_values = calc.calculate(data=monitored)
     assert isinstance(unseen_values, UnseenValueResults)
     return unseen_values
 
@@ -438,7 +438,7 @@ def test_correlation_ranking_raises_same_data_period(sample_drift_result, sample
     ):
         ranking.rank(
             sample_drift_result.filter(period='all', methods=['jensen_shannon']),
-            sample_realized_perf_result.filter(period='analysis', metrics=['roc_auc']),
+            sample_realized_perf_result.filter(period='monitored', metrics=['roc_auc']),
         )
 
 

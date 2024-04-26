@@ -21,7 +21,7 @@ far from optimal, but it is a reasonable minimum. If there are less than 6 chunk
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference_df, analysis_df, _ = nml.load_synthetic_car_loan_dataset()
+    >>> reference_df, monitored_df, _ = nml.load_synthetic_car_loan_dataset()
     >>> cbpe = nml.CBPE(
     ...     y_pred_proba='y_pred_proba',
     ...     y_pred='y_pred',
@@ -31,7 +31,7 @@ far from optimal, but it is a reasonable minimum. If there are less than 6 chunk
     ...     metrics=['roc_auc'],
     ...     problem_type='classification_binary',
     >>> ).fit(reference_data=reference_df)
-    >>> est_perf = cbpe.estimate(analysis_df)
+    >>> est_perf = cbpe.estimate(monitored_df)
     UserWarning: The resulting number of chunks is too low. Please consider splitting your data in a different way or continue at your own risk.
 
 
@@ -52,7 +52,7 @@ In such situations NannyML, will return ``NaN`` in the results data for that spe
 Impact of Chunk Size on Reliability of Results
 ----------------------------------------------
 
-Small sample size strongly affects the reliability of any ML or statistical analysis.
+Small sample size strongly affects the reliability of any ML or statistical monitored.
 NannyML allows splitting data into chunks in different ways to let users choose chunks that
 are meaningful for them.
 

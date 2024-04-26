@@ -15,7 +15,7 @@ from nannyml.stats import SummaryStatsStdCalculator
 
 # @pytest.fixture(scope="module")
 # def status_sum_result() -> Result:
-#     reference, analysis, _ = load_synthetic_car_loan_dataset()
+#     reference, monitored, _ = load_synthetic_car_loan_dataset()
 
 #     calc = SummaryStatsStdCalculator(
 #         column_names=[
@@ -24,26 +24,26 @@ from nannyml.stats import SummaryStatsStdCalculator
 #             'driver_tenure'
 #         ],
 #     ).fit(reference)
-#     return calc.calculate(data=analysis)
+#     return calc.calculate(data=monitored)
 
 
 def test_stats_std_calculator_with_default_params_should_not_fail():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
     try:
         calc = SummaryStatsStdCalculator(
             column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure'],
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()
 
 
 def test_stats_std_calculator_with_default_params_chunk_size_one():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
 
     chunker = SizeBasedChunker(chunk_size=5_000, incomplete='keep')
     calc = SummaryStatsStdCalculator(column_names=['car_value'], chunker=chunker).fit(reference)
-    result = calc.calculate(data=analysis.head(5_001))
+    result = calc.calculate(data=monitored.head(5_001))
     expected = pd.DataFrame(
         {
             ('chunk', 'key'): ['[0:4999]', '[5000:5000]'],
@@ -52,7 +52,7 @@ def test_stats_std_calculator_with_default_params_chunk_size_one():  # noqa: D10
             ('chunk', 'end_index'): [4999, 5000],
             ('chunk', 'start_date'): [None, None],
             ('chunk', 'end_date'): [None, None],
-            ('chunk', 'period'): ['analysis', 'analysis'],
+            ('chunk', 'period'): ['monitored', 'monitored'],
             ('car_value', 'value'): [20614.8926, np.nan],
             ('car_value', 'sampling_error'): [271.9917, np.nan],
             ('car_value', 'upper_confidence_boundary'): [21430.8679, np.nan],
@@ -62,4 +62,4 @@ def test_stats_std_calculator_with_default_params_chunk_size_one():  # noqa: D10
             ('car_value', 'alert'): [False, True],
         }
     )
-    pd.testing.assert_frame_equal(expected, result.filter(period='analysis').to_df().round(4))
+    pd.testing.assert_frame_equal(expected, result.filter(period='monitored').to_df().round(4))

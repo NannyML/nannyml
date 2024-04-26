@@ -27,7 +27,7 @@ For simplicity this guide is based on a synthetic dataset included in the librar
 predicts whether a customer will repay a loan to buy a car.
 Check out :ref:`Car Loan Dataset<dataset-synthetic-binary-car-loan>` to learn more about this dataset.
 
-This datasets provided contains targets for analysis period. It has the :term:`target<Target>` values for the
+This datasets provided contains targets for monitored period. It has the :term:`target<Target>` values for the
 monitored model in the **repaid** column.
 
 
@@ -39,7 +39,7 @@ monitored model in the **repaid** column.
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
     :cell: 2
 
-For this example, the analysis targets and the analysis frame are joined by their index.
+For this example, the monitored targets and the monitored frame are joined by their index.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Compare Estimated and Realized Performance.ipynb
@@ -63,7 +63,7 @@ For more information about chunking you can check the :ref:`chunking tutorial<ch
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator is then fitted using
 the :meth:`~nannyml.base.AbstractEstimator.fit` method on the reference data.
 
-We estimate the performance of both the reference and analysis datasets,
+We estimate the performance of both the reference and monitored datasets,
 to compare the estimated and actual performance of the reference period.
 
 We filter the results to only have the estimated values.

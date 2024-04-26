@@ -21,7 +21,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
     data['period'] = 'reference'
-    data.loc[data.week >= 11, ['period']] = 'analysis'
+    data.loc[data.week >= 11, ['period']] = 'monitored'
     # data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(167)
     data['f1'] = np.random.randn(data.shape[0])
@@ -205,7 +205,7 @@ def test_data_reconstruction_drift_calculator_should_contain_a_row_for_each_chun
         n_components=0.75,
         chunk_period='W',
     ).fit(ref_data)
-    drift = calc.calculate(data=sample_drift_data).filter(period='analysis')
+    drift = calc.calculate(data=sample_drift_data).filter(period='monitored')
 
     expected = len(PeriodBasedChunker(offset='W', timestamp_column_name='timestamp').split(sample_drift_data))
     sut = len(drift.data)
@@ -233,7 +233,7 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data)
     calc = DataReconstructionDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunk_period='W'
     ).fit(ref_data)
-    drift = calc.calculate(data=sample_drift_data).filter(period='analysis')
+    drift = calc.calculate(data=sample_drift_data).filter(period='monitored')
     expected_drift = pd.DataFrame.from_dict(
         {
             'key': [
@@ -356,7 +356,7 @@ def test_data_reconstruction_drift_calculator_works_with_chunker(
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').to_df()
+    sut = calc.calculate(data=sample_drift_data).filter(period='monitored').to_df()
 
     assert all(round(sut.loc[:, ('reconstruction_error', 'value')], 5) == [round(n, 5) for n in expected])
 
@@ -497,7 +497,7 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
 
     assert ('reconstruction_error', 'sampling_error') in results.data.columns
     assert np.array_equal(
-        np.round(results.filter(period='analysis').to_df().loc[:, ('reconstruction_error', 'sampling_error')], 4),
+        np.round(results.filter(period='monitored').to_df().loc[:, ('reconstruction_error', 'sampling_error')], 4),
         np.round([0.009511, 0.009005, 0.008710, 0.008854, 0.009899], 4),
     )
 
@@ -505,8 +505,8 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
 @pytest.mark.parametrize(
     'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
-        ({}, {'kind': 'drift'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'monitored'),
+        ({}, {'kind': 'drift'}, 'monitored'),
         ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
         ({}, {'kind': 'drift'}, 'all'),
     ],
@@ -519,7 +519,7 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
 )
 def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args, period):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4'], **calc_args).fit(ref_data)
     sut = calc.calculate(data=ana_data).filter(period=period)
@@ -532,7 +532,7 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
 
 def test_result_comparison_to_univariate_drift_plots_raise_no_exceptions(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
     result = calc.calculate(ana_data)
@@ -553,7 +553,7 @@ def test_result_comparison_to_univariate_drift_plots_raise_no_exceptions(sample_
 
 def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
     result = calc.calculate(ana_data)

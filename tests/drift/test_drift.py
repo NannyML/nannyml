@@ -26,7 +26,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
     data['period'] = 'reference'
-    data.loc[data.week >= 11, ['period']] = 'analysis'
+    data.loc[data.week >= 11, ['period']] = 'monitored'
     # data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(167)
     data['f1'] = np.random.randn(data.shape[0])
@@ -373,7 +373,7 @@ def test_univariate_drift_calculator_ignores_chi2_custom_threshold(caplog, recwa
     ],
     ids=['chunk_period_weekly', 'chunk_period_monthly', 'chunk_size_1000', 'chunk_count_25'],
 )
-def test_univariate_drift_calculator_should_return_a_row_for_each_analysis_chunk_key(  # noqa: D103
+def test_univariate_drift_calculator_should_return_a_row_for_each_monitored_chunk_key(  # noqa: D103
     sample_drift_data, chunker
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
@@ -384,7 +384,7 @@ def test_univariate_drift_calculator_should_return_a_row_for_each_analysis_chunk
         categorical_methods=['chi2'],
         chunker=chunker,
     ).fit(ref_data)
-    sut = calc.calculate(data=sample_drift_data).filter(period='analysis').data
+    sut = calc.calculate(data=sample_drift_data).filter(period='monitored').data
 
     chunks = chunker.split(sample_drift_data)
     assert len(chunks) == sut.shape[0]
@@ -433,17 +433,17 @@ def test_univariate_statistical_drift_calculator_returns_stat_column_for_each_fe
 
 
 def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_drift_data):  # noqa: D103
-    # rig the data by setting all f3-values in first analysis chunk to 0
+    # rig the data by setting all f3-values in first monitored chunk to 0
     sample_drift_data.loc[10080:16000, 'f3'] = 0
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    analysis_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    monitored_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         timestamp_column_name='timestamp',
         continuous_methods=['kolmogorov_smirnov'],
         categorical_methods=['chi2'],
     ).fit(ref_data)
-    results = calc.calculate(data=analysis_data)
+    results = calc.calculate(data=monitored_data)
 
     assert not np.isnan(results.data.loc[0, ('f3', 'chi2', 'value')])
 
@@ -528,7 +528,7 @@ def test_univariate_statistical_drift_calculator_works_with_chunker(
         categorical_methods=['chi2'],
         **calculator_opts,
     ).fit(ref_data)
-    result = calc.calculate(data=sample_drift_data).filter(period='analysis').data
+    result = calc.calculate(data=sample_drift_data).filter(period='monitored').data
     sut = result[('f1', 'kolmogorov_smirnov', 'value')].to_list()
     assert all(np.round(sut, 6) == expected)
 
@@ -552,7 +552,7 @@ def test_statistical_drift_calculator_given_empty_reference_data_should_raise_in
         calc.fit(ref_data)
 
 
-def test_base_drift_calculator_given_empty_analysis_data_should_raise_invalid_args_exception(  # noqa: D103
+def test_base_drift_calculator_given_empty_monitored_data_should_raise_invalid_args_exception(  # noqa: D103
     sample_drift_data,
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
@@ -570,7 +570,7 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
     sample_drift_data,
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f3'],
@@ -700,7 +700,7 @@ def test_univariate_drift_result_filter_period(univariate_drift_result):
 )
 def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_args):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f3'],
@@ -749,7 +749,7 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
 )
 def test_calculator_with_diff_methods_raise_no_exceptions(sample_drift_data, cont_methods, cat_methods):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
     try:
         calc = UnivariateDriftCalculator(
             column_names=['f1', 'f3'],
@@ -764,10 +764,10 @@ def test_calculator_with_diff_methods_raise_no_exceptions(sample_drift_data, con
 
 def test_repeat_calculation_results_return_only_latest_calculation_results(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     chunker = SizeBasedChunker(chunk_size=1000, timestamp_column_name='timestamp')
-    analysis_chunks = chunker.split(ana_data)
+    monitored_chunks = chunker.split(ana_data)
 
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f3'],
@@ -777,26 +777,26 @@ def test_repeat_calculation_results_return_only_latest_calculation_results(sampl
         timestamp_column_name='timestamp',
     ).fit(ref_data)
 
-    res0 = calc.calculate(analysis_chunks[0].data).filter(period='analysis')
+    res0 = calc.calculate(monitored_chunks[0].data).filter(period='monitored')
 
-    res1 = calc.calculate(analysis_chunks[1].data).filter(period='analysis')
+    res1 = calc.calculate(monitored_chunks[1].data).filter(period='monitored')
 
-    res2 = calc.calculate(analysis_chunks[2].data).filter(period='analysis')
+    res2 = calc.calculate(monitored_chunks[2].data).filter(period='monitored')
 
     assert len(res0) == 1
-    assert res0.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[0].start_datetime
-    assert res0.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[0].end_datetime
+    assert res0.data.loc[0, ('chunk', 'chunk', 'start_date')] == monitored_chunks[0].start_datetime
+    assert res0.data.loc[0, ('chunk', 'chunk', 'end_date')] == monitored_chunks[0].end_datetime
     assert len(res1) == 1
-    assert res1.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[1].start_datetime
-    assert res1.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[1].end_datetime
+    assert res1.data.loc[0, ('chunk', 'chunk', 'start_date')] == monitored_chunks[1].start_datetime
+    assert res1.data.loc[0, ('chunk', 'chunk', 'end_date')] == monitored_chunks[1].end_datetime
     assert len(res2) == 1
-    assert res2.data.loc[0, ('chunk', 'chunk', 'start_date')] == analysis_chunks[2].start_datetime
-    assert res2.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[2].end_datetime
+    assert res2.data.loc[0, ('chunk', 'chunk', 'start_date')] == monitored_chunks[2].start_datetime
+    assert res2.data.loc[0, ('chunk', 'chunk', 'end_date')] == monitored_chunks[2].end_datetime
 
 
 def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
     result = calc.calculate(ana_data)
@@ -817,7 +817,7 @@ def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sampl
 
 def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
+    ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'monitored']
 
     calc = UnivariateDriftCalculator(
         column_names=['f1'],

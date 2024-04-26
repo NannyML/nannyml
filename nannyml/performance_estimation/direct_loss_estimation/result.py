@@ -136,7 +136,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         --------
         >>> import nannyml as nml
         >>>
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference_df, monitored_df, _ = nml.load_synthetic_car_price_dataset()
         >>>
         >>> estimator = nml.DLE(
         ...     feature_column_names=['car_age', 'km_driven', 'price_new', 'accident_count',
@@ -150,7 +150,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         >>>
         >>> estimator.fit(reference_df)
         >>>
-        >>> results = estimator.estimate(analysis_df)
+        >>> results = estimator.estimate(monitored_df)
         >>> results.plot().show()
         """
         if kind == 'performance':

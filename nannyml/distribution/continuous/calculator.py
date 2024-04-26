@@ -68,7 +68,7 @@ class ContinuousDistributionCalculator(AbstractCalculator):
         result_data[('chunk', 'end_index')] = [c.end_index for c in chunks]
         result_data[('chunk', 'start_date')] = [c.start_datetime for c in chunks]
         result_data[('chunk', 'end_date')] = [c.end_datetime for c in chunks]
-        result_data[('chunk', 'period')] = ['analysis' for _ in chunks]
+        result_data[('chunk', 'period')] = ['monitored' for _ in chunks]
 
         if self.result is None:
             self.result = Result(result_data, self.column_names, self.timestamp_column_name, self.chunker)
@@ -157,7 +157,7 @@ def calculate_chunk_distributions(
         data_with_chunk_keys['period'] = data_periods
         group_by_cols += ['period']
     data = (
-        #  group by period too, 'key' column can be there for both reference and analysis
+        #  group by period too, 'key' column can be there for both reference and monitored
         data_with_chunk_keys.groupby(group_by_cols)[data.name]
         .apply(get_kde_partial_application)
         .to_frame('kde')

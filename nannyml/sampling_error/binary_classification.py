@@ -12,7 +12,7 @@ Most of the time these will be the standard deviation of the distribution of dif
 ``y_true`` and ``y_pred`` and the fraction of positive labels in ``y_true``.
 
 The second function will be called during calculation or estimation. It takes the predetermined error components and
-combines them with the size of the (analysis) data to give an estimate for the sampling error.
+combines them with the size of the (monitored) data to give an estimate for the sampling error.
 """
 
 from typing import Optional, Tuple, Union
@@ -82,7 +82,7 @@ def auroc_sampling_error(sampling_error_components, data):
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -138,7 +138,7 @@ def ap_sampling_error(sampling_error_components, data):
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -146,8 +146,8 @@ def ap_sampling_error(sampling_error_components, data):
 
     """
     reference_std, reference_size = sampling_error_components
-    analysis_size = data.shape[0]
-    return reference_std * np.sqrt(reference_size / analysis_size)
+    monitored_size = data.shape[0]
+    return reference_std * np.sqrt(reference_size / monitored_size)
 
 
 def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
@@ -192,7 +192,7 @@ def f1_sampling_error(sampling_error_components, data):
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -238,7 +238,7 @@ def precision_sampling_error(sampling_error_components, data):
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -283,7 +283,7 @@ def recall_sampling_error(sampling_error_components, data):
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -328,7 +328,7 @@ def specificity_sampling_error(sampling_error_components, data):
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -370,7 +370,7 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -460,7 +460,7 @@ def true_positive_sampling_error(sampling_error_components: Tuple, data) -> floa
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -564,7 +564,7 @@ def true_negative_sampling_error(sampling_error_components: Tuple, data) -> floa
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -668,7 +668,7 @@ def false_positive_sampling_error(sampling_error_components: Tuple, data) -> flo
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -772,7 +772,7 @@ def false_negative_sampling_error(sampling_error_components: Tuple, data) -> flo
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -843,7 +843,7 @@ def business_value_sampling_error(sampling_error_components: Tuple, data) -> flo
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
     Returns
     -------
     sampling_error: float
@@ -851,10 +851,10 @@ def business_value_sampling_error(sampling_error_components: Tuple, data) -> flo
     (reference_std, norm_type) = sampling_error_components
 
     if norm_type is None:
-        analysis_std = reference_std * len(data)
+        monitored_std = reference_std * len(data)
     else:  # norm_type must be 'per_prediciton'
-        analysis_std = reference_std
+        monitored_std = reference_std
 
-    total_value_standard_error = analysis_std / np.sqrt(len(data))
+    total_value_standard_error = monitored_std / np.sqrt(len(data))
 
     return total_value_standard_error

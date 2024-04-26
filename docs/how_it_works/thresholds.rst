@@ -20,7 +20,7 @@ for the related method or metric for each :term:`chunk<Data Chunk>`. Those value
 :meth:`~nannyml.thresholds.Threshold.thresholds` method to calculate the associated lower and upper
 threshold values.
 
-When the calculator or estimator runs on an :term:`analysis<data period>` :term:`chunk<Data Chunk>`
+When the calculator or estimator runs on an :term:`monitored<data period>` :term:`chunk<Data Chunk>`
 the lower and upper threshold values will be compared with the method or metric values for each
 chunk to see if they are breaching either the lower or upper threshold values.
 If so, the alert flag will be set to ``True`` for that chunk.

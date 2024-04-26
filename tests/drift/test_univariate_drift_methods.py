@@ -31,57 +31,57 @@ def test_js_for_0_distance():
 def test_js_for_both_continuous():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
-    analysis = pd.Series(np.random.normal(0, 1, 1000), name='A')
+    monitored = pd.Series(np.random.normal(0, 1, 1000), name='A')
     js = JensenShannonDistance(chunker=chunker, threshold=threshold)
     js.fit(reference)
-    distance = js.calculate(analysis)
+    distance = js.calculate(monitored)
     assert np.round(distance, 2) == 0.05
 
 
 def test_js_for_quasi_continuous():
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
-    analysis = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
+    monitored = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
     js = JensenShannonDistance(chunker=chunker, threshold=threshold)
     js.fit(reference)
-    distance = js.calculate(analysis)
+    distance = js.calculate(monitored)
     assert np.round(distance, 2) == 0.73
 
 
 def test_js_for_categorical():
     np.random.seed(1)
     reference = pd.Series(np.random.choice(['a', 'b', 'c', 'd'], 10_000), name='A')
-    analysis = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
+    monitored = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
     js = JensenShannonDistance(chunker=chunker, threshold=threshold)
     js.fit(reference)
-    distance = js.calculate(analysis)
+    distance = js.calculate(monitored)
     assert np.round(distance, 2) == 0.5
 
 
 def test_l_infinity_for_new_category():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
-    analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c', 'd'], name='A')
+    monitored = pd.Series(['a', 'a', 'b', 'b', 'c', 'c', 'd'], name='A')
     infnorm = LInfinityDistance(chunker=chunker, threshold=threshold)
     infnorm.fit(reference)
-    distance = infnorm.calculate(analysis)
+    distance = infnorm.calculate(monitored)
     assert np.round(distance, 2) == 0.14
 
 
 def test_l_infinity_for_no_change():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
-    analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
+    monitored = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
     infnorm = LInfinityDistance(chunker=chunker, threshold=threshold)
     infnorm.fit(reference)
-    distance = infnorm.calculate(analysis)
+    distance = infnorm.calculate(monitored)
     assert np.round(distance, 2) == 0.0
 
 
 def test_l_infinity_for_total_change():
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
-    analysis = pd.Series(['b', 'b', 'b', 'b', 'b'], name='A')
+    monitored = pd.Series(['b', 'b', 'b', 'b', 'b'], name='A')
     infnorm = LInfinityDistance(chunker=chunker, threshold=threshold)
     infnorm.fit(reference)
-    distance = infnorm.calculate(analysis)
+    distance = infnorm.calculate(monitored)
     assert np.round(distance, 2) == 0.67
 
 
@@ -91,9 +91,9 @@ def test_l_infinity_for_total_change():
 def test_wasserstein_both_continuous_0_distance():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
-    analysis = reference
+    monitored = reference
     wass_dist = WassersteinDistance(chunker=chunker, threshold=threshold)
-    wass_dist = wass_dist.fit(reference).calculate(analysis)
+    wass_dist = wass_dist.fit(reference).calculate(monitored)
     wass_dist = np.round(wass_dist, 2)
     assert wass_dist == 0
 
@@ -101,19 +101,19 @@ def test_wasserstein_both_continuous_0_distance():
 def test_wasserstein_both_continuous_positive_means_small_drift():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10000), name='A')
-    analysis = pd.Series(np.random.normal(1, 1, 1000), name='A')
+    monitored = pd.Series(np.random.normal(1, 1, 1000), name='A')
     wass_dist = WassersteinDistance(chunker=chunker, threshold=threshold)
-    wass_dist = wass_dist.fit(reference).calculate(analysis)
+    wass_dist = wass_dist.fit(reference).calculate(monitored)
     wass_dist = np.round(wass_dist, 2)
     assert wass_dist == 1.01
 
 
-def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
+def test_wasserstein_both_continuous_monitored_with_neg_mean_medium_drift():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 100000), name='A')
-    analysis = pd.Series(np.random.normal(-4, 1, 1000), name='A')
+    monitored = pd.Series(np.random.normal(-4, 1, 1000), name='A')
     wass_dist = WassersteinDistance(chunker=chunker, threshold=threshold)
-    wass_dist = wass_dist.fit(reference).calculate(analysis)
+    wass_dist = wass_dist.fit(reference).calculate(monitored)
     wass_dist = np.round(wass_dist, 2)
     assert wass_dist == 3.99
 
@@ -124,8 +124,8 @@ def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
 def test_hellinger_complete_overlap():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
-    analysis = reference
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
+    monitored = reference
+    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(monitored)
     hell_dist = np.round(hell_dist, 2)
     assert hell_dist == 0
 
@@ -133,17 +133,17 @@ def test_hellinger_complete_overlap():
 def test_hellinger_no_overlap():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
-    analysis = pd.Series(np.random.normal(7, 1, 10_000), name='A')
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
+    monitored = pd.Series(np.random.normal(7, 1, 10_000), name='A')
+    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(monitored)
     hell_dist = np.round(hell_dist, 2)
     assert hell_dist == 1
 
 
-def test_hellinger_both_continuous_analysis_with_small_drift():
+def test_hellinger_both_continuous_monitored_with_small_drift():
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
-    analysis = pd.Series(np.random.normal(-2, 1, 10_000), name='A')
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
+    monitored = pd.Series(np.random.normal(-2, 1, 10_000), name='A')
+    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(monitored)
     hell_dist = np.round(hell_dist, 2)
     assert hell_dist == 0.63
 
@@ -151,20 +151,20 @@ def test_hellinger_both_continuous_analysis_with_small_drift():
 def test_hellinger_for_quasi_continuous():
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
-    analysis = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
+    monitored = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
     hell_dist = HellingerDistance(chunker=chunker, threshold=threshold)
     hell_dist.fit(reference)
-    distance = hell_dist.calculate(analysis)
+    distance = hell_dist.calculate(monitored)
     assert np.round(distance, 2) == 0.72
 
 
 def test_hellinger_for_categorical():
     np.random.seed(1)
     reference = pd.Series(np.random.choice(['a', 'b', 'c', 'd'], 10_000), name='A')
-    analysis = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
+    monitored = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
     hell_dist = HellingerDistance(chunker=chunker, threshold=threshold)
     hell_dist.fit(reference)
-    distance = hell_dist.calculate(analysis)
+    distance = hell_dist.calculate(monitored)
     assert np.round(distance, 2) == 0.5
 
 

@@ -320,7 +320,7 @@ really required. This is how NannyML does it:
 4. The average ECE from all test folds for raw and calibrated probabilities is calculated.
 5. If the mean ECE for calibrated probabilities is lower than the mean ECE for raw probabilities then it is
    beneficial to calibrate probabilities. Calibrator is fitted on the whole reference set and probabilities get
-   calibrated on the set that is subject to analysis. Otherwise, raw probabilities are used.
+   calibrated on the set that is subject to monitored. Otherwise, raw probabilities are used.
 
 For multiclass models the logic above is applied to each class-probability pair separately (so probabilities for
 some classes might get calibrated while for others not). At the end, probabilities are normalized so they sum up to 1.
@@ -371,7 +371,7 @@ Implementation details
 Currently NannyML supports :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` for performance estimation
 of regression models. The algorithm is rather simple. Let's denote with :math:`f` the monitored model and :math:`h` the
 :term:`nanny model`. Let's assume we are interested in estimating
-mean absolute error (MAE) of :math:`f` for some analysis data for which targets are not available.
+mean absolute error (MAE) of :math:`f` for some monitored data for which targets are not available.
 :math:`f` was trained on train data and used on reference data providing :math:`f(X_{reference})`
 predictions. Targets for reference set :math:`y_{reference}` are available. The algorithm runs as follows:
 
@@ -381,7 +381,7 @@ predictions. Targets for reference set :math:`y_{reference}` are available. The 
        :math:`X_{reference}` and
        monitored model predictions :math:`f(X_{reference})`. The target is absolute error :math:`AE_{reference}`
        calculated in previous step. So :math:`\hat{AE} = h(X,f(X))`.
-    3. Estimate performance of :term:`child model` on analysis data. Estimate absolute error for each observation
+    3. Estimate performance of :term:`child model` on monitored data. Estimate absolute error for each observation
        :math:`\hat{AE}_{reference}` with :math:`h` and, finally calculate the mean of :math:`\hat{AE}_{reference}` to get MAE.
 
 For other metrics step 1 and 3 are slightly modified. For example, for root mean squared error (RMSE) in step 1 we
@@ -540,7 +540,7 @@ as the monitored model. The important details of the current NannyML implementat
       hyperparameters, it often gives results that are difficult to beat with other models.
 
     * The :term:`nanny model` is trained on the reference dataset. It can be used to estimate performance of unseen
-      (analysis) data as long as :ref:`assumptions<dee_assumptions>` are met.
+      (monitored) data as long as :ref:`assumptions<dee_assumptions>` are met.
 
     * The :term:`child model` prediction is used as an input feature for the :term:`nanny model`.
       Depending on the :term:`child model` used,

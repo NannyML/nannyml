@@ -12,7 +12,7 @@ from nannyml.stats import SummaryStatsMedianCalculator
 
 # @pytest.fixture(scope="module")
 # def status_sum_result() -> Result:
-#     reference, analysis, _ = load_synthetic_car_loan_dataset()
+#     reference, monitored, _ = load_synthetic_car_loan_dataset()
 
 #     calc = SummaryStatsStdCalculator(
 #         column_names=[
@@ -21,27 +21,27 @@ from nannyml.stats import SummaryStatsMedianCalculator
 #             'driver_tenure'
 #         ],
 #     ).fit(reference)
-#     return calc.calculate(data=analysis)
+#     return calc.calculate(data=monitored)
 
 
 def test_stats_median_calculator_with_default_params_should_not_fail():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
     try:
         calc = SummaryStatsMedianCalculator(
             column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure'],
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()
 
 
 def test_stats_median_calculator_should_not_fail_given_nan_values():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
     reference.loc[20000:30000, 'car_value'] = np.NaN
     try:
         calc = SummaryStatsMedianCalculator(
             column_names=['car_value'],
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()

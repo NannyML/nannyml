@@ -48,7 +48,7 @@ Enriching the data
 The things that need to be added to the dataset are:
 
 - A time dimension
-- Splitting the data into reference and analysis sets
+- Splitting the data into reference and monitored sets
 - A binary classification target
 
 .. code-block:: python
@@ -106,20 +106,20 @@ The data are now being split to satisfy NannyML format requirements.
 .. code-block:: python
 
     >>> df_for_nanny = df[df['partition']!='train'].reset_index(drop=True)
-    >>> df_for_nanny['partition'] = df_for_nanny['partition'].map({'test':'reference', 'production':'analysis'})
+    >>> df_for_nanny['partition'] = df_for_nanny['partition'].map({'test':'reference', 'production':'monitored'})
 
     >>> reference_df = df_for_nanny[df_for_nanny['partition']=='reference'].copy()
-    >>> analysis_df = df_for_nanny[df_for_nanny['partition']=='analysis'].copy()
-    >>> analysis_targets_df = analysis_df[['clf_target']].copy()
-    >>> analysis_df = analysis_df.drop('clf_target', axis=1)
+    >>> monitored_df = df_for_nanny[df_for_nanny['partition']=='monitored'].copy()
+    >>> monitored_targets_df = monitored_df[['clf_target']].copy()
+    >>> monitored_df = monitored_df.drop('clf_target', axis=1)
 
     >>> # dropping partition column that is now removed from requirements.
     >>> reference_df.drop('partition', axis=1, inplace=True)
-    >>> analysis_df.drop('partition', axis=1, inplace=True)
+    >>> monitored_df.drop('partition', axis=1, inplace=True)
 
-The ``reference_df`` dataframe represents the reference :term:`Data Period` and the ``analysis_df``
-dataframe represents the analysis period. The ``analysis_targets_df`` dataframe contains the targets
-for the analysis period, which is provided separately.
+The ``reference_df`` dataframe represents the reference :term:`Data Period` and the ``monitored_df``
+dataframe represents the monitored period. The ``monitored_targets_df`` dataframe contains the targets
+for the monitored period, which is provided separately.
 
 
 .. _California Housing Dataset: https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_california_housing.html

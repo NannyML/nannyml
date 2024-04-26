@@ -27,7 +27,7 @@ A sample of the dataset can be seen below.
 .. code-block:: python
 
     >>> import nannyml as nml
-    >>> reference_df, analysis_df, analysis_targets_df = nml.load_titanic_dataset()
+    >>> reference_df, monitored_df, monitored_targets_df = nml.load_titanic_dataset()
     >>> reference_df.head()
 
 +----+---------------+----------+-----------------------------------------------------+--------+-------+---------+---------+------------------+---------+---------+------------+--------+--------+---------------------------------------------------+------------+
@@ -65,7 +65,7 @@ The **Survived** column tells us whether the passenger survived and is what we c
 There is also an auxiliary column that kaggle_ uses and we have kept for compatibility:
 
 - **PassengerId** - a unique number referencing each passenger. This is very useful for joining the target
-  results on the analysis dataset.
+  results on the monitored dataset.
 
 The titanic dataset is used by NannyML at the :ref:`Data Quality Tutorials<data-quality>` showcasing our Missing values
 and Unseen Values detection functionality.

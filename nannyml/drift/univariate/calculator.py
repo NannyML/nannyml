@@ -181,7 +181,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference, monitored, _ = nml.load_synthetic_car_price_dataset()
         >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.UnivariateDriftCalculator(
         ...   column_names=column_names,
@@ -189,8 +189,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
         ...   categorical_methods=['chi2', 'jensen_shannon', 'l_infinity'],
         ... ).fit(reference)
-        >>> res = calc.calculate(analysis)
-        >>> res = res.filter(period='analysis')
+        >>> res = calc.calculate(monitored)
+        >>> res = res.filter(period='monitored')
         >>> for column_name in res.continuous_column_names:
         ...  for method in res.continuous_method_names:
         ...    res.plot(kind='drift', column_name=column_name, method=method).show()
@@ -243,7 +243,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         # required for distribution plots
         self.previous_reference_results: Optional[pd.DataFrame] = None
-        self.previous_analysis_data: Optional[pd.DataFrame] = None
+        self.previous_monitored_data: Optional[pd.DataFrame] = None
 
         self.result: Optional[Result] = None
 
@@ -340,7 +340,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_datetime': chunk.start_datetime,
                 'end_datetime': chunk.end_datetime,
-                'period': 'analysis',
+                'period': 'monitored',
             }
 
             for column_name in self.continuous_column_names:
@@ -397,7 +397,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
             self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
-            self.result.analysis_data = data.copy()
+            self.result.monitored_data = data.copy()
 
         return self.result
 

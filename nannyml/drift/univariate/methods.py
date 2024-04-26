@@ -10,7 +10,7 @@ into an instance of the base :class:`~nannyml.drift.univariate.methods.Method` c
 The :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` class will perform
 the required data transformations before looping over all
 :class:`~nannyml.drift.univariate.methods.Method` instances it holds and fit each on reference data
-or calculate the drift value on analysis data.
+or calculate the drift value on monitored data.
 
 """
 
@@ -525,8 +525,8 @@ class LInfinityDistance(Method):
         if data.empty:
             return np.nan
 
-        analysis_data_ratio = data.value_counts(normalize=True)
-        return self._reference_proba.sub(analysis_data_ratio, fill_value=0).abs().max()
+        monitored_data_ratio = data.value_counts(normalize=True)
+        return self._reference_proba.sub(monitored_data_ratio, fill_value=0).abs().max()
 
 
 @MethodFactory.register(key='wasserstein', feature_type=FeatureType.CONTINUOUS)

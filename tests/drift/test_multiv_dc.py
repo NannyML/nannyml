@@ -36,11 +36,11 @@ def test_default_cdd_run(binary_classification_data):
     """Test a default run of DC."""
     (
         reference,
-        analysis,
+        monitored,
     ) = binary_classification_data
     calc = DomainClassifierCalculator(feature_column_names=column_names1, chunk_size=5_000)
     calc.fit(reference)
-    results = calc.calculate(analysis)
+    results = calc.calculate(monitored)
     assert list(results.to_df().loc[:, ("domain_classifier_auroc", "value")].round(4)) == [
         0.5020,
         0.5002,

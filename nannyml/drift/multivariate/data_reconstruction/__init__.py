@@ -7,7 +7,7 @@
 The data reconstruction error drift detection method is used to detect multivariate drift, i.e. it works on a subset or
 all features of a model.
 
-It will perform a dimensionality reduction, currently only using Principal Component Analysis (PCA). In doing so, the
+It will perform a dimensionality reduction, currently only using Principal Component Monitored (PCA). In doing so, the
 dimensionality reducer learns about the internal structure of the data. When new, unseen data arrives, applying the
 inverse transformation with the reducer renders a reconstruction according to the original reference data set.
 

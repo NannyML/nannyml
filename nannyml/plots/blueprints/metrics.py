@@ -30,7 +30,7 @@ def plot_metrics(
         number_of_columns = min(len(result.keys()), 1)
 
     reference_result = result.filter(period='reference')
-    analysis_result = result.filter(period='analysis')
+    monitored_result = result.filter(period='monitored')
 
     if figure_args is None:
         figure_args = {}
@@ -74,18 +74,18 @@ def plot_metrics(
             reference_upper_confidence_boundary=reference_result.upper_confidence_bounds(key),
             reference_lower_confidence_boundary=reference_result.lower_confidence_bounds(key),
             reference_sampling_error=reference_result.sampling_error(key),
-            analysis_metric=analysis_result.values(key),
-            analysis_alerts=analysis_result.alerts(key),
-            analysis_chunk_keys=analysis_result.chunk_keys,
-            analysis_chunk_periods=analysis_result.chunk_periods,
-            analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
-            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
-            analysis_upper_thresholds=analysis_result.upper_thresholds(key),
-            analysis_lower_thresholds=analysis_result.lower_thresholds(key),
-            analysis_upper_confidence_boundary=analysis_result.upper_confidence_bounds(key),
-            analysis_lower_confidence_boundary=analysis_result.lower_confidence_bounds(key),
-            analysis_sampling_error=analysis_result.sampling_error(key),
+            monitored_metric=monitored_result.values(key),
+            monitored_alerts=monitored_result.alerts(key),
+            monitored_chunk_keys=monitored_result.chunk_keys,
+            monitored_chunk_periods=monitored_result.chunk_periods,
+            monitored_chunk_indices=monitored_result.chunk_indices,
+            monitored_chunk_start_dates=monitored_result.chunk_start_dates,
+            monitored_chunk_end_dates=monitored_result.chunk_end_dates,
+            monitored_upper_thresholds=monitored_result.upper_thresholds(key),
+            monitored_lower_thresholds=monitored_result.lower_thresholds(key),
+            monitored_upper_confidence_boundary=monitored_result.upper_confidence_bounds(key),
+            monitored_lower_confidence_boundary=monitored_result.lower_confidence_bounds(key),
+            monitored_sampling_error=monitored_result.sampling_error(key),
             hover=hover,
             subplot_y_axis_title=subplot_y_axis_title_format.format(display_names=key.display_names),
             **kwargs,
@@ -106,7 +106,7 @@ def plot_metric(
     **kwargs,
 ) -> Figure:
     reference_result = result.filter(period='reference')
-    analysis_result = result.filter(period='analysis')
+    monitored_result = result.filter(period='monitored')
 
     if figure_args is None:
         figure_args = {}
@@ -140,18 +140,18 @@ def plot_metric(
         reference_upper_confidence_boundary=reference_result.upper_confidence_bounds(key),
         reference_lower_confidence_boundary=reference_result.lower_confidence_bounds(key),
         reference_sampling_error=reference_result.sampling_error(key),
-        analysis_metric=analysis_result.values(key),
-        analysis_alerts=analysis_result.alerts(key),
-        analysis_chunk_keys=analysis_result.chunk_keys,
-        analysis_chunk_periods=analysis_result.chunk_periods,
-        analysis_chunk_indices=analysis_result.chunk_indices,
-        analysis_chunk_start_dates=analysis_result.chunk_start_dates,
-        analysis_chunk_end_dates=analysis_result.chunk_end_dates,
-        analysis_upper_thresholds=analysis_result.upper_thresholds(key),
-        analysis_lower_thresholds=analysis_result.lower_thresholds(key),
-        analysis_upper_confidence_boundary=analysis_result.upper_confidence_bounds(key),
-        analysis_lower_confidence_boundary=analysis_result.lower_confidence_bounds(key),
-        analysis_sampling_error=analysis_result.sampling_error(key),
+        monitored_metric=monitored_result.values(key),
+        monitored_alerts=monitored_result.alerts(key),
+        monitored_chunk_keys=monitored_result.chunk_keys,
+        monitored_chunk_periods=monitored_result.chunk_periods,
+        monitored_chunk_indices=monitored_result.chunk_indices,
+        monitored_chunk_start_dates=monitored_result.chunk_start_dates,
+        monitored_chunk_end_dates=monitored_result.chunk_end_dates,
+        monitored_upper_thresholds=monitored_result.upper_thresholds(key),
+        monitored_lower_thresholds=monitored_result.lower_thresholds(key),
+        monitored_upper_confidence_boundary=monitored_result.upper_confidence_bounds(key),
+        monitored_lower_confidence_boundary=monitored_result.lower_confidence_bounds(key),
+        monitored_sampling_error=monitored_result.sampling_error(key),
         **kwargs,
     )
 
@@ -161,7 +161,7 @@ def plot_metric(
 def _plot_metric(  # noqa: C901
     figure: Figure,
     metric_display_name: str,
-    analysis_metric: Union[np.ndarray, pd.Series],
+    monitored_metric: Union[np.ndarray, pd.Series],
     reference_metric: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -174,17 +174,17 @@ def _plot_metric(  # noqa: C901
     reference_upper_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_lower_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_sampling_error: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_upper_thresholds: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_lower_thresholds: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_upper_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_lower_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_sampling_error: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_upper_thresholds: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_lower_thresholds: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_upper_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_lower_confidence_boundary: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_sampling_error: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
     hover: Optional[Hover] = None,
@@ -266,7 +266,7 @@ def _plot_metric(  # noqa: C901
         )
     # endregion
 
-    # region analysis metrics
+    # region monitored metrics
     if hover is None:
         _hover = Hover(
             template='%{period} &nbsp; &nbsp; %{alert} <br />'
@@ -278,44 +278,44 @@ def _plot_metric(  # noqa: C901
     else:
         _hover = copy.deepcopy(hover)
 
-    _hover.add(np.asarray([metric_display_name] * len(analysis_metric)), 'metric_name')
+    _hover.add(np.asarray([metric_display_name] * len(monitored_metric)), 'metric_name')
 
-    if analysis_chunk_periods is not None:
-        _hover.add(render_period_string(analysis_chunk_periods, color), name='period')
+    if monitored_chunk_periods is not None:
+        _hover.add(render_period_string(monitored_chunk_periods, color), name='period')
 
-    if analysis_alerts is not None:
-        _hover.add(render_alert_string(analysis_alerts), name='alert')
+    if monitored_alerts is not None:
+        _hover.add(render_alert_string(monitored_alerts), name='alert')
 
-    if analysis_chunk_keys is not None:
-        _hover.add(analysis_chunk_keys, name='chunk_key')
+    if monitored_chunk_keys is not None:
+        _hover.add(monitored_chunk_keys, name='chunk_key')
 
     _hover.add(
         render_x_coordinate(
-            analysis_chunk_indices,
-            analysis_chunk_start_dates,
-            analysis_chunk_end_dates,
+            monitored_chunk_indices,
+            monitored_chunk_start_dates,
+            monitored_chunk_end_dates,
         ),
         name='x_coordinate',
     )
-    _hover.add(np.round(analysis_metric, 4), name='metric_value')
+    _hover.add(np.round(monitored_metric, 4), name='metric_value')
 
-    if analysis_sampling_error is not None:
-        _hover.add(np.round(analysis_sampling_error * 3, 4), name='sampling_error')
+    if monitored_sampling_error is not None:
+        _hover.add(np.round(monitored_sampling_error * 3, 4), name='sampling_error')
 
     if has_reference_results:
         assert reference_chunk_indices is not None
-        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
+        monitored_chunk_indices = monitored_chunk_indices + (max(reference_chunk_indices) + 1)
 
     figure.add_metric(
-        data=analysis_metric,
-        indices=analysis_chunk_indices,
-        start_dates=analysis_chunk_start_dates,
-        end_dates=analysis_chunk_end_dates,
+        data=monitored_metric,
+        indices=monitored_chunk_indices,
+        start_dates=monitored_chunk_start_dates,
+        end_dates=monitored_chunk_end_dates,
         name=metric_name,
         color=color or Colors.BLUE_SKY_CRAYOLA,
         hover=_hover,
         subplot_args=dict(row=row, col=col, subplot_y_axis_title=subplot_y_axis_title or metric_display_name),
-        legendgroup='metric_analysis',
+        legendgroup='metric_monitored',
         showlegend=show_in_legend and not has_reference_results,
         **kwargs,
     )
@@ -323,13 +323,13 @@ def _plot_metric(  # noqa: C901
 
     # region alert
 
-    if analysis_alerts is not None:
+    if monitored_alerts is not None:
         figure.add_alert(
-            data=analysis_metric,
-            alerts=analysis_alerts,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
+            data=monitored_metric,
+            alerts=monitored_alerts,
+            indices=monitored_chunk_indices,
+            start_dates=monitored_chunk_start_dates,
+            end_dates=monitored_chunk_end_dates,
             name='Alert',
             subplot_args=dict(row=row, col=col),
             legendgroup='alert',
@@ -368,12 +368,12 @@ def _plot_metric(  # noqa: C901
                 showlegend=show_threshold_legend,
             )
             show_threshold_legend = False
-    if has_non_null_data(analysis_upper_thresholds):
+    if has_non_null_data(monitored_upper_thresholds):
         figure.add_threshold(
-            data=analysis_upper_thresholds,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
+            data=monitored_upper_thresholds,
+            indices=monitored_chunk_indices,
+            start_dates=monitored_chunk_start_dates,
+            end_dates=monitored_chunk_end_dates,
             name='Threshold',
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
@@ -382,12 +382,12 @@ def _plot_metric(  # noqa: C901
         )
         show_threshold_legend = False
 
-    if has_non_null_data(analysis_lower_thresholds):
+    if has_non_null_data(monitored_lower_thresholds):
         figure.add_threshold(
-            data=analysis_lower_thresholds,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
+            data=monitored_lower_thresholds,
+            indices=monitored_chunk_indices,
+            start_dates=monitored_chunk_start_dates,
+            end_dates=monitored_chunk_end_dates,
             name='Threshold',
             with_additional_endpoint=True,
             subplot_args=dict(row=row, col=col),
@@ -414,13 +414,13 @@ def _plot_metric(  # noqa: C901
                 showlegend=show_in_legend,
             )
 
-    if analysis_upper_confidence_boundary is not None and analysis_upper_confidence_boundary is not None:
+    if monitored_upper_confidence_boundary is not None and monitored_upper_confidence_boundary is not None:
         figure.add_confidence_band(
-            upper_confidence_boundaries=analysis_upper_confidence_boundary,
-            lower_confidence_boundaries=analysis_lower_confidence_boundary,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
+            upper_confidence_boundaries=monitored_upper_confidence_boundary,
+            lower_confidence_boundaries=monitored_lower_confidence_boundary,
+            indices=monitored_chunk_indices,
+            start_dates=monitored_chunk_start_dates,
+            end_dates=monitored_chunk_end_dates,
             name='Confidence band',
             color=color or Colors.BLUE_SKY_CRAYOLA,
             with_additional_endpoint=True,
@@ -437,7 +437,7 @@ def _plot_metric(  # noqa: C901
             x=(
                 ensure_numpy(reference_chunk_indices)[0][-1] + 1
                 if not is_time_based
-                else ensure_numpy(analysis_chunk_start_dates)[0][0]
+                else ensure_numpy(monitored_chunk_start_dates)[0][0]
             )
         )
 
@@ -457,7 +457,7 @@ def _plot_metric(  # noqa: C901
         )
 
         analyis_period_text_x = (
-            analysis_chunk_indices.mean() if not is_time_based else analysis_chunk_start_dates.mean()  # type: ignore
+            monitored_chunk_indices.mean() if not is_time_based else monitored_chunk_start_dates.mean()  # type: ignore
         )
 
         figure.add_annotation(
@@ -465,7 +465,7 @@ def _plot_metric(  # noqa: C901
             xshift=15,
             yref='y domain',
             y=1.01,
-            text="Analysis",
+            text="Monitored",
             showarrow=False,
             row=row,
             col=col,

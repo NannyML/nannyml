@@ -36,7 +36,7 @@ which type of credit card product new customers should be assigned to.
 Check out :ref:`Credit Card Dataset<dataset-synthetic-multiclass>` to learn more about this dataset.
 
 In order to monitor a model, NannyML needs to learn about it and set expectations from a reference dataset.
-Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+Then it can monitor the data that is subject to actual monitored, provided as the monitored dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 .. nbimport::
@@ -73,9 +73,9 @@ estimator is then fitted using the
 
 The fitted ``estimator`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where target is missing. In our example this is
-the ``analysis_df`` data.
+the ``monitored_df`` data.
 
-NannyML can then output a dataframe that contains all the results. Let's have a look at the results for analysis period
+NannyML can then output a dataframe that contains all the results. Let's have a look at the results for monitored period
 only.
 
 .. nbimport::
@@ -106,10 +106,10 @@ that was estimated:
 
 These results can be also plotted. Our plot contains several key elements.
 
-* The purple dashed step plot shows the estimated performance in each chunk of the analysis period. Thick squared point
+* The purple dashed step plot shows the estimated performance in each chunk of the monitored period. Thick squared point
   markers indicate the middle of these chunks.
 
-* The black vertical line splits the reference and analysis periods.
+* The black vertical line splits the reference and monitored periods.
 
 * The low-saturated colored area around the estimated performance indicates the :ref:`sampling error<estimation_of_standard_error>`.
 

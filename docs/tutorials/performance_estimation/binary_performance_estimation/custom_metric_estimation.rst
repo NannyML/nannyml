@@ -28,7 +28,7 @@ For simplicity this guide is based on a synthetic dataset included in the librar
 predicts whether a customer will repay a loan to buy a car.
 You can read more about this synthetic dataset :ref:`here<dataset-synthetic-binary-car-loan>`.
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual monitored, provided as the monitored dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 We start by importing the libraries we'll need and loading the dataset we'll be using:
@@ -63,7 +63,7 @@ estimator is then fitted using the
 
 The fitted ``estimator`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where target is missing. In our example this is
-the ``analysis_df`` data.
+the ``monitored_df`` data.
 
 NannyML can then output a dataframe that contains all the results.
 
@@ -107,8 +107,8 @@ where :math:`TP` is the number of true positives (or true positive rate), :math:
     :path: ./example_notebooks/Tutorial - Creating and Estimating a Custom Metric - Binary Classification.ipynb
     :cells: 8
 
-To distinguish between the balanced accuracy for the reference data and the analysis data,
-we can get the number of chunks in the reference data and analysis data and then use this to
+To distinguish between the balanced accuracy for the reference data and the monitored data,
+we can get the number of chunks in the reference data and monitored data and then use this to
 index the ``balanced_accuracy`` array.
 
 .. nbimport::
@@ -122,7 +122,7 @@ estimation results.
     :path: ./example_notebooks/Tutorial - Creating and Estimating a Custom Metric - Binary Classification.ipynb
     :cells: 10
 
-.. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-custom-metric-estimation-binary-car-loan-analysis-with-ref.svg
+.. image:: ../../../_static/tutorials/performance_estimation/binary/tutorial-custom-metric-estimation-binary-car-loan-monitored-with-ref.svg
 
 Insights
 --------

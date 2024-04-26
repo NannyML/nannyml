@@ -1157,7 +1157,7 @@ L 198.975 61.73125
 " style="fill: none; stroke: #3b0280; stroke-width: 2; stroke-linecap: square"/>
     </g>
     <g id="text_18">
-     <!-- Analysis -->
+     <!-- Monitored -->
      <g transform="translate(206.975 65.23125) scale(0.1 -0.1)">
       <defs>
        <path id="Helvetica-41" d="M 2844 1881
@@ -1504,7 +1504,7 @@ z
      </g>
     </g>
     <g id="text_27">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(542.071438 468.735657) scale(0.2 -0.2)">
       <defs>
        <path id="Helvetica-6f" d="M 1741 363
@@ -2237,7 +2237,7 @@ z
      </g>
     </g>
     <g id="text_46">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(886.648438 468.735657) scale(0.2 -0.2)">
       <use xlink:href="#Helvetica-4d"/>
       <use xlink:href="#Helvetica-65" x="83.300781"/>
@@ -2841,7 +2841,7 @@ z
      </g>
     </g>
     <g id="text_63">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(1231.225437 468.735657) scale(0.2 -0.2)">
       <use xlink:href="#Helvetica-4d"/>
       <use xlink:href="#Helvetica-65" x="83.300781"/>
@@ -3452,7 +3452,7 @@ z
      </g>
     </g>
     <g id="text_80">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(1575.802437 468.735657) scale(0.2 -0.2)">
       <use xlink:href="#Helvetica-4d"/>
       <use xlink:href="#Helvetica-65" x="83.300781"/>
@@ -4285,7 +4285,7 @@ L 198.975 513.203405
 " style="fill: none; stroke: #3b0280; stroke-width: 2; stroke-linecap: square"/>
     </g>
     <g id="text_107">
-     <!-- Analysis -->
+     <!-- Monitored -->
      <g transform="translate(206.975 516.703405) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-41"/>
       <use xlink:href="#Helvetica-6e" x="66.699219"/>
@@ -4569,7 +4569,7 @@ z
      </g>
     </g>
     <g id="text_113">
-     <!-- STD of Analysis Distribution -->
+     <!-- STD of Monitored Distribution -->
      <g transform="translate(547.083938 920.395312) scale(0.2 -0.2)">
       <use xlink:href="#Helvetica-53"/>
       <use xlink:href="#Helvetica-54" x="66.699219"/>
@@ -5142,7 +5142,7 @@ z
      </g>
     </g>
     <g id="text_129">
-     <!-- STD of Analysis Distribution -->
+     <!-- STD of Monitored Distribution -->
      <g transform="translate(891.660938 920.395312) scale(0.2 -0.2)">
       <use xlink:href="#Helvetica-53"/>
       <use xlink:href="#Helvetica-54" x="66.699219"/>
@@ -5733,7 +5733,7 @@ z
      </g>
     </g>
     <g id="text_145">
-     <!-- STD of Analysis Distribution -->
+     <!-- STD of Monitored Distribution -->
      <g transform="translate(1236.237937 920.395312) scale(0.2 -0.2)">
       <use xlink:href="#Helvetica-53"/>
       <use xlink:href="#Helvetica-54" x="66.699219"/>
@@ -6264,7 +6264,7 @@ z
      </g>
     </g>
     <g id="text_157">
-     <!-- STD of Analysis Distribution -->
+     <!-- STD of Monitored Distribution -->
      <g transform="translate(1580.814938 920.395312) scale(0.2 -0.2)">
       <use xlink:href="#Helvetica-53"/>
       <use xlink:href="#Helvetica-54" x="66.699219"/>

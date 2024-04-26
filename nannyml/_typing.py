@@ -122,7 +122,7 @@ class Calculator(Protocol):
         """Fits the calculator on reference data."""
 
     def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
-        """Perform a calculation based on analysis data."""
+        """Perform a calculation based on monitored data."""
 
 
 class Estimator(Protocol):
@@ -132,7 +132,7 @@ class Estimator(Protocol):
         """Fits the estimator on reference data."""
 
     def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
-        """Perform an estimation based on analysis data."""
+        """Perform an estimation based on monitored data."""
 
 
 ModelOutputsType = Union[str, Dict[str, str]]

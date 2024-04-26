@@ -111,7 +111,7 @@ class UnivariateDriftResultMapper(Mapper):
         for column_name in result.continuous_column_names:
             for method in result.continuous_method_names:
                 res += (
-                    result.filter(period='analysis')
+                    result.filter(period='monitored')
                     .to_df()[
                         [
                             ('chunk', 'chunk', 'start_date'),
@@ -127,7 +127,7 @@ class UnivariateDriftResultMapper(Mapper):
         for column_name in result.categorical_column_names:
             for method in result.categorical_method_names:
                 res += (
-                    result.filter(period='analysis')
+                    result.filter(period='monitored')
                     .to_df()[
                         [
                             ('chunk', 'chunk', 'start_date'),
@@ -182,7 +182,7 @@ class ReconstructionErrorDriftResultMapper(Mapper):
 
         for metric in result.metrics:
             res += (
-                result.filter(period='analysis')
+                result.filter(period='monitored')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),
@@ -238,7 +238,7 @@ class RealizedPerformanceMapper(Mapper):
 
         for metric in column_names:
             res += (
-                result.filter(partition='analysis')
+                result.filter(partition='monitored')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),
@@ -292,7 +292,7 @@ class CBPEMapper(Mapper):
 
         for metric in [column_name for metric in result.metrics for column_name in metric.column_names]:
             res += (
-                result.filter(period='analysis')
+                result.filter(period='monitored')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),
@@ -346,7 +346,7 @@ class DLEMapper(Mapper):
 
         for metric in [metric.column_name for metric in result.metrics]:
             res += (
-                result.filter(period='analysis')
+                result.filter(period='monitored')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),
@@ -405,7 +405,7 @@ class UnseenValuesResultMapper:
 
         for column in columns:
             res += (
-                result.filter(period='analysis')
+                result.filter(period='monitored')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),
@@ -464,7 +464,7 @@ class MissingValuesResultMapper:
 
         for column in columns:
             res += (
-                result.filter(period='analysis')
+                result.filter(period='monitored')
                 .to_df()[
                     [
                         ('chunk', 'start_date'),

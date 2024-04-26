@@ -86,7 +86,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         --------
         >>> import nannyml as nml
         >>> # Load synthetic data
-        >>> reference, analysis, _ = nml.load_synthetic_car_loan_dataset()
+        >>> reference, monitored, _ = nml.load_synthetic_car_loan_dataset()
         >>> non_feature_columns = ['timestamp', 'y_pred_proba', 'y_pred', 'repaid']
         >>> feature_column_names = [
         ...     col for col in reference.columns
@@ -98,7 +98,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         ...     chunk_size=5000
         >>> )
         >>> calc.fit(reference)
-        >>> results = calc.calculate(analysis)
+        >>> results = calc.calculate(monitored)
         >>> figure = results.plot()
         >>> figure.show()
         """

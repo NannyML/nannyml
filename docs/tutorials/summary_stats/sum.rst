@@ -19,7 +19,7 @@ The Summation value calculation is straightforward.
 For each :term:`chunk<Data Chunk>` NannyML calculates the sum for all selected numerical columns.
 The resulting
 values from the reference :ref:`data<data-drift-periods>` chunks are used to calculate the
-alert :term:`thresholds<Threshold>`. The sum value results from the analysis chunks are
+alert :term:`thresholds<Threshold>`. The sum value results from the monitored chunks are
 compared against those thresholds and generate alerts if applicable.
 
 We begin by loading the :ref:`synthetic car loan dataset<dataset-synthetic-binary-car-loan>` provided by the NannyML package.
@@ -56,7 +56,7 @@ We need to instantiate it with appropriate parameters:
     :cells: 3
 
 Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs
-to be called on the reference data, which provides the baseline that the analysis data will be
+to be called on the reference data, which provides the baseline that the monitored data will be
 compared with for :term:`alert<Alert>` generation. Then the
 :meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the data quality results on the data provided to it.

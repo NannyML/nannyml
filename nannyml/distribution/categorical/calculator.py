@@ -56,7 +56,7 @@ class CategoricalDistributionCalculator(AbstractCalculator):
                 'end_datetime': [c.end_datetime for c in chunks],
                 'start_index': [c.start_index for c in chunks],
                 'end_index': [c.end_index for c in chunks],
-                'period': ['analysis' if self._was_fitted else 'reference' for _ in chunks],
+                'period': ['monitored' if self._was_fitted else 'reference' for _ in chunks],
             }
         )
 

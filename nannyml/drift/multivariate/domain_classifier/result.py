@@ -87,7 +87,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         --------
         >>> import nannyml as nml
         >>> # Load synthetic data
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_loan_dataset()
+        >>> reference_df, monitored_df, _ = nml.load_synthetic_car_loan_dataset()
         >>> # Define feature columns
         >>> feature_column_names = [
         ...     col for col in reference_df.columns
@@ -99,7 +99,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         ...     chunk_size=5000
         >>> )
         >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
+        >>> results = calc.calculate(monitored_df)
         >>> figure = results.plot()
         >>> figure.show()
         """

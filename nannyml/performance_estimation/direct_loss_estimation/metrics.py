@@ -11,7 +11,7 @@ instances using the :class:`~nannyml.performance_estimation.direct_loss_estimati
 
 The :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` estimator will then loop over these
 :class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
-and run the estimation on analysis data.
+and run the estimation on monitored data.
 """
 import abc
 import logging

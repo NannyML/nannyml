@@ -163,7 +163,7 @@ class DLE(AbstractEstimator):
         Without hyperparameter tuning:
 
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference_df, monitored_df, _ = nml.load_synthetic_car_price_dataset()
         >>> estimator = nml.DLE(
         ...     feature_column_names=['car_age', 'km_driven', 'price_new', 'accident_count',
         ...                           'door_count', 'fuel', 'transmission'],
@@ -174,14 +174,14 @@ class DLE(AbstractEstimator):
         ...     chunk_size=6000,
         >>> )
         >>> estimator.fit(reference_df)
-        >>> results = estimator.estimate(analysis_df)
+        >>> results = estimator.estimate(monitored_df)
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
 
         With hyperparameter tuning, using a custom hyperparameter tuning configuration:
 
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference_df, monitored_df, _ = nml.load_synthetic_car_price_dataset()
         >>> estimator = nml.DLE(
         ...     feature_column_names=['car_age', 'km_driven', 'price_new', 'accident_count',
         ...                           'door_count', 'fuel', 'transmission'],
@@ -204,7 +204,7 @@ class DLE(AbstractEstimator):
         ...     }
         >>> )
         >>> estimator.fit(reference_df)
-        >>> results = estimator.estimate(analysis_df)
+        >>> results = estimator.estimate(monitored_df)
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
 
@@ -342,7 +342,7 @@ class DLE(AbstractEstimator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis',
+                    'period': 'monitored',
                     **self._estimate_chunk(chunk),
                 }
                 for chunk in chunks

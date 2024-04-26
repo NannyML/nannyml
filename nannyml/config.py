@@ -30,7 +30,7 @@ class TargetDataConfig(InputDataConfig):
 
 class InputConfig(BaseModel):
     reference_data: InputDataConfig
-    analysis_data: InputDataConfig
+    monitored_data: InputDataConfig
     target_data: Optional[TargetDataConfig]
 
 
@@ -109,7 +109,7 @@ class Config(BaseModel):
     def _render(self) -> Self:
         if self.input is not None:
             self.input.reference_data.path = _render_path_template(self.input.reference_data.path)
-            self.input.analysis_data.path = _render_path_template(self.input.analysis_data.path)
+            self.input.monitored_data.path = _render_path_template(self.input.monitored_data.path)
 
             if self.input.target_data:
                 self.input.target_data.path = _render_path_template(self.input.target_data.path)

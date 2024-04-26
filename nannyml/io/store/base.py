@@ -15,7 +15,7 @@ class Store(ABC):
     The Store is used to persist and retrieve Python objects at runtime.
 
     One example use case is storing calculators and estimators after fitting them to reference data, a potentially
-    compute intensive operation. When the calculators and estimators are then used on analysis data repeatedly, they
+    compute intensive operation. When the calculators and estimators are then used on monitored data repeatedly, they
     can be simply retrieved from the store, eliminating the need for repeated fitting.
 
     This abstract base class does not restrict in any way how the storage mechanism should work.

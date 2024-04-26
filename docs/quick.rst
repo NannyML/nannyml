@@ -36,9 +36,9 @@ predicts whether an individual is employed based on survey data. To learn more a
 check out :ref:`US Census Employment dataset <dataset-real-world-ma-employment>`.
 
 The data is split into two periods: :ref:`reference <data-drift-periods-reference>` and
-:ref:`analysis<data-drift-periods-analysis>`. The reference data is used by
+:ref:`monitored<data-drift-periods-monitored>`. The reference data is used by
 NannyML to establish a baseline for model performance and drift detection. The model's test set
-can serve as the reference data. The analysis data is the data you want to analyze i.e. check whether the model
+can serve as the reference data. The monitored data is the data you want to analyze i.e. check whether the model
 maintains its performance or if the feature distributions have shifted etc. This would usually be the latest production
 data.
 
@@ -63,9 +63,9 @@ Let's load the libraries and the data:
 The dataframes contain:
 
 - model inputs like **AGEP**, **SCHL**, etc.
-- **year** - the year the data was gathered. The ``df_reference`` data covers 2015 while ``df_analysis`` ranges
+- **year** - the year the data was gathered. The ``df_reference`` data covers 2015 while ``df_monitored`` ranges
   from 2016 to 2018.
-- **employed** - classification :term:`target<Target>`. Notice that the target is not available in ``df_analysis``.
+- **employed** - classification :term:`target<Target>`. Notice that the target is not available in ``df_monitored``.
 - **prediction** - analyzed model predictions.
 - **predicted_probability** - analyzed model predicted probability scores.
 
@@ -101,7 +101,7 @@ arguments:
     :path: ./example_notebooks/Quickstart.ipynb
     :cells: 7
 
-Now we will fit it on ``df_reference`` and estimate on ``df_analysis``:
+Now we will fit it on ``df_reference`` and estimate on ``df_monitored``:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -115,7 +115,7 @@ Let's visualize the results:
 
 .. image:: ./_static/quickstart/quick-start-perf-est.svg
 
-The estimated performance dropped significantly in the later part of the analysis.
+The estimated performance dropped significantly in the later part of the monitored.
 Let's investigate this to determine whether we can rely on the estimation.
 
 Investigating Data Distribution Shifts
@@ -125,7 +125,7 @@ Once we've identified a performance issue, we will troubleshoot it. We will quan
 for all the features using the :ref:`univariate drift
 detection module<univariate_drift_detection>`.
 We will instantiate the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator`
-class with the required arguments, fit it on ``df_reference``, and calculate on ``df_analysis``.
+class with the required arguments, fit it on ``df_reference``, and calculate on ``df_monitored``.
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb
@@ -159,7 +159,7 @@ Let's plot univariate drift results for these features:
 
 The plots show JS-distance calculated between the reference data and each chunk for every feature. For
 **AGEP** and **RELP**
-one can see a mild shift starting around one-third of the analysis period and a high peak that likely corresponds
+one can see a mild shift starting around one-third of the monitored period and a high peak that likely corresponds
 to a performance drop. Around the same time, a similar peak can be noticed for **SCHL**. Let's check whether the shift
 happens at the same time as the performance drop by
 :ref:`showing both results in a single plot<compare_estimated_and_realized_performance>`:
@@ -173,7 +173,7 @@ happens at the same time as the performance drop by
 The main drift peak indeed coincides with the strongest performance drop. It is interesting
 to see that there is a noticeable shift magnitude increase right before the estimated drop happens. That looks
 like an early sign of incoming issues. Now let's have a closer look at changes in the distributions by visualizing them
-in the analysis period:
+in the monitored period:
 
 .. nbimport::
     :path: ./example_notebooks/Quickstart.ipynb

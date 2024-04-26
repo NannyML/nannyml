@@ -21,7 +21,7 @@ NannyML's approach to missing values detection is quite straightforward.
 For each :term:`chunk<Data Chunk>` NannyML calculates the number of missing values. There is an option, called
 ``normalize``, to convert the count of values to a relative ratio if needed. The resulting
 values from the reference :ref:`data<data-drift-periods>` chunks are used to calculate the
-alert :term:`thresholds<Threshold>`. The missing values results from the analysis chunks are
+alert :term:`thresholds<Threshold>`. The missing values results from the monitored chunks are
 compared against those thresholds and generate alerts if applicable.
 
 We begin by loading the :ref:`titanic dataset<dataset-titanic>` provided by the NannyML package.
@@ -60,7 +60,7 @@ We need to instantiate it with appropriate parameters:
     :cells: 3
 
 Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs
-to be called on the reference data, which provides the baseline that the analysis data will be
+to be called on the reference data, which provides the baseline that the monitored data will be
 compared with for :term:`alert<Alert>` generation. Then the
 :meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the data quality results on the data provided to it.

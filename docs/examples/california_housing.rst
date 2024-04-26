@@ -25,7 +25,7 @@ Let's load the dataset from NannyML's included datasets.
 Performance Estimation
 ======================
 
-We first want to estimate performance for the analysis period, using the reference period as our performance baseline.
+We first want to estimate performance for the monitored period, using the reference period as our performance baseline.
 
 .. nbimport::
     :path: ./example_notebooks/Examples California Housing.ipynb
@@ -77,7 +77,7 @@ and compare it to the estimated values.
 
 .. image:: ../_static/example_california_performance_estimation_tmp.svg
 
-We can see that the significant drop at the first few chunks of the analysis period was
+We can see that the significant drop at the first few chunks of the monitored period was
 estimated accurately. After that, the overall trend seems to be well
 represented. The estimation of performance has a lower variance than
 actual performance.
@@ -98,7 +98,7 @@ univariate drift detection, and see what we discover.
     :cell: 12
 
 
-It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the analysis period,
+It looks like there is a lot of drift in this dataset. Since we have 12 chunks in the monitored period,
 we can see that the top 4 features drifted in all analyzed chunks. Let's look at the magnitude of this drift
 by examining the KS distance statistics.
 
@@ -110,8 +110,8 @@ by examining the KS distance statistics.
     :path: ./example_notebooks/Examples California Housing.ipynb
     :cell: 14
 
-The mean value of D-statistic for Longitude and Latitude on the analysis chunks is the largest. Let's plot their
-distributions for the analysis period.
+The mean value of D-statistic for Longitude and Latitude on the monitored chunks is the largest. Let's plot their
+distributions for the monitored period.
 
 .. nbimport::
     :path: ./example_notebooks/Examples California Housing.ipynb

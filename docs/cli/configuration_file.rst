@@ -58,9 +58,9 @@ The configuration file format is broken down into multiple sections.
 Input section
 *************
 
-This section describes the input data for NannyML, i.e. the ``reference`` and ``analysis`` datasets.
+This section describes the input data for NannyML, i.e. the ``reference`` and ``monitored`` datasets.
 
-The following snippet shows the basic form of pointing towards two local CSV files as reference and analysis data.
+The following snippet shows the basic form of pointing towards two local CSV files as reference and monitored data.
 
 .. code-block:: yaml
 
@@ -68,8 +68,8 @@ The following snippet shows the basic form of pointing towards two local CSV fil
       reference_data:
         path: /data/synthetic_sample_reference.csv
 
-      analysis_data:
-        path: /data/synthetic_sample_analysis.csv
+      monitored_data:
+        path: /data/synthetic_sample_monitored.csv
 
 You can also work with data living in cloud storage. We currently support reading data from S3 buckets
 (Amazon Web Services), GCS buckets (Google Cloud Platform) and ADLS or Azure Blob Storage (Microsoft Azure).
@@ -88,8 +88,8 @@ variables or providing config files like ``.aws/credentials``) or provide them i
             aws_access_key_id: 'ACCESS_KEY_ID'
             aws_secret_access_key: 'SECRET_ACCESS_KEY'
 
-      analysis_data:
-        path: gs://nml-data/synthetic_sample_analysis.pq
+      monitored_data:
+        path: gs://nml-data/synthetic_sample_monitored.pq
         credentials:  # providing example GCP credentials
             token: ml6-workshop-fa83b3d60b5d.json  # path to service account key file
 
@@ -108,7 +108,7 @@ using the ``read_args`` parameter.
 
 
 When target values are delivered separately you can specify these as an input as well. You must also provide a column
-used to join your target values with your analysis data.
+used to join your target values with your monitored data.
 
 .. code-block:: yaml
 
@@ -116,11 +116,11 @@ used to join your target values with your analysis data.
       reference_data:
         path: /data/synthetic_sample_reference.csv
 
-      analysis_data:
-        path: /data/synthetic_sample_analysis.csv
+      monitored_data:
+        path: /data/synthetic_sample_monitored.csv
 
       target_data:
-        path: /data/synthetic_sample_analysis_gt.csv
+        path: /data/synthetic_sample_monitored_gt.csv
         join_column: identifier
 
 
@@ -484,8 +484,8 @@ All data is read and written to the local filesystem.
       reference_data:
         path: data/synthetic_sample_reference.csv
 
-      analysis_data:
-        path: data/synthetic_sample_analysis.csv
+      monitored_data:
+        path: data/synthetic_sample_monitored.csv
 
     output:
       raw_files:
@@ -514,7 +514,7 @@ All data is read and written to the local filesystem.
 The following example contains the configuration used to run the ``nml`` CLI on the :ref:`dataset-synthetic-multiclass`.
 
 Input data is read from one S3 bucket using templated paths.
-Targets have been provided separately - they are not present in the analysis data.
+Targets have been provided separately - they are not present in the monitored data.
 The results are written to another S3 bucket, also using a templated path.
 
 
@@ -528,15 +528,15 @@ The results are written to another S3 bucket, also using a templated path.
             aws_access_key_id: 'DATA_ACCESS_KEY_ID'
             aws_secret_access_key: 'DATA_SECRET_ACCESS_KEY'
 
-      analysis_data:
-        path: s3://nml-data/{{year}}/{{month}}/{{day}}/mc_analysis.csv
+      monitored_data:
+        path: s3://nml-data/{{year}}/{{month}}/{{day}}/mc_monitored.csv
         credentials:
           client_kwargs:
             aws_access_key_id: 'DATA_ACCESS_KEY_ID'
             aws_secret_access_key: 'DATA_SECRET_ACCESS_KEY'
 
       target_data:
-        path: s3://nml-data/{{year}}/{{month}}/{{day}}/mc_analysis.csv
+        path: s3://nml-data/{{year}}/{{month}}/{{day}}/mc_monitored.csv
         join_column: identifier
         credentials:
           client_kwargs:
@@ -588,11 +588,11 @@ The data is read from the local filesystem but written to an external database.
       reference_data:
         path: data/regression_synthetic_reference.csv
 
-      analysis_data:
-        path: data/regression_synthetic_analysis.csv
+      monitored_data:
+        path: data/regression_synthetic_monitored.csv
 
       target_data:
-        path: data/regression_synthetic_analysis_targets.csv
+        path: data/regression_synthetic_monitored_targets.csv
 
     output:
       database:

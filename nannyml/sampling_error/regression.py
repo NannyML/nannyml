@@ -34,7 +34,7 @@ def mae_sampling_error(sampling_error_components, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -70,7 +70,7 @@ def mape_sampling_error(sampling_error_components, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -106,7 +106,7 @@ def mse_sampling_error(sampling_error_components, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -142,7 +142,7 @@ def msle_sampling_error(sampling_error_components, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -180,7 +180,7 @@ def rmse_sampling_error(sampling_error_components, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -219,7 +219,7 @@ def rmsle_sampling_error(sampling_error_components, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------

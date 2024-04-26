@@ -48,7 +48,7 @@ The first thing we need before using the alert count ranker is to create the uni
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 2
 
-To illustrate the results, we filter and display the analysis period results for **debt_to_income_ratio** feature.
+To illustrate the results, we filter and display the monitored period results for **debt_to_income_ratio** feature.
 The next step is to instantiate the ranker and instruct it to :meth:`~nannyml.drift.ranker.AlertCountRanker.rank`
 the provided results. Notice that the univariate results are filtered to ensure they only have one drift method
 per categorical and continuous feature as required.
@@ -83,7 +83,7 @@ performance results are created below.
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 6
 
-The analysis period estimations are shown.
+The monitored period estimations are shown.
 
 The realized performance results are also created
 since both can be used according to the use case.
@@ -96,7 +96,7 @@ since both can be used according to the use case.
     :path: ./example_notebooks/Tutorial - Ranking.ipynb
     :cell: 8
 
-The analysis period results are shown.
+The monitored period results are shown.
 
 We can now proceed to correlation ranking. First, let's correlate drift results with the estimated ``roc_auc``.
 A key difference here is that after instantiation, we need to :meth:`~nannyml.drift.ranker.CorrelationRanker.fit`
@@ -115,7 +115,7 @@ filtered univariate and performance results.
     :cell: 10
 
 Depending on circumstances, it may be appropriate to consider the correlation
-of drift results on just the analysis dataset or for different metrics.
+of drift results on just the monitored dataset or for different metrics.
 Below we can see the correlation between the same drift and the ``recall``
 results.
 

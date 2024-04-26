@@ -2616,7 +2616,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
     result = cbpe.estimate(ana_df)
 
     metric_column_names = [name for metric in result.metrics for name in metric.column_names]
-    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + [(c, 'value') for c in metric_column_names]]
+    sut = result.filter(period='monitored').to_df()[[('chunk', 'key')] + [(c, 'value') for c in metric_column_names]]
     sut.columns = [
         'key',
         'estimated_roc_auc',
@@ -3403,7 +3403,7 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
         ('true_upmarket_card_pred_prepaid_card', 'value'),
         ('true_upmarket_card_pred_upmarket_card', 'value'),
     ]
-    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + column_names]
+    sut = result.filter(period='monitored').to_df()[[('chunk', 'key')] + column_names]
     sut.columns = [
         'key',
         'estimated_roc_auc',

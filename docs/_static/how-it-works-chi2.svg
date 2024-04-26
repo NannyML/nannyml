@@ -1306,7 +1306,7 @@ z
 " style="fill: #3b0280; opacity: 0.5"/>
     </g>
     <g id="text_24">
-     <!-- Analysis Observed -->
+     <!-- Monitored Observed -->
      <g transform="translate(81.19 101.079375) scale(0.12 -0.12)">
       <defs>
        <path id="DejaVuSans-6c" d="M 603 4863
@@ -1362,7 +1362,7 @@ z
 " style="fill: url(#h40f9f9a3b7); opacity: 0.3; stroke: #3b0280; stroke-linejoin: miter"/>
     </g>
     <g id="text_25">
-     <!-- Analysis Expected -->
+     <!-- Monitored Expected -->
      <g transform="translate(81.19 118.693125) scale(0.12 -0.12)">
       <use xlink:href="#DejaVuSans-41"/>
       <use xlink:href="#DejaVuSans-6e" x="68.408203"/>

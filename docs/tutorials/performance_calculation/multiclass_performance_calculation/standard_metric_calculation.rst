@@ -33,13 +33,13 @@ which type of credit card product new customers should be assigned to.
 Check out :ref:`Credit Card Dataset<dataset-synthetic-multiclass>` to learn more about this dataset.
 
 In order to monitor a model, NannyML needs to learn about it from a reference dataset.
-Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+Then it can monitor the data that is subject to actual monitored, provided as the monitored dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`
 
-The ``analysis_targets_df`` dataframe contains the target results of the analysis period. This is kept separate in the
+The ``monitored_targets_df`` dataframe contains the target results of the monitored period. This is kept separate in the
 synthetic data because it is not used during :ref:`performance estimation<performance-estimation>`. But it is required
 to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.
-The analysis target values are joined on the analysis frame by the **identifier** column.
+The monitored target values are joined on the monitored frame by the **identifier** column.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Realized Performance - Multiclass Classification.ipynb
@@ -75,7 +75,7 @@ The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculato
 The fitted :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` can then be used to calculate
 realized performance metrics on all data which has target values available with the
 :meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.calculate` method.
-NannyML can output a dataframe that contains all the results of the analysis data.
+NannyML can output a dataframe that contains all the results of the monitored data.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Realized Performance - Multiclass Classification.ipynb

@@ -165,10 +165,10 @@ We will later use NannyML to check how well the model performs on this data.
 Analysing ML model performance in production
 ============================================
 
-We need to create a reference and analysis set to properly analyze the model performance in production.
+We need to create a reference and monitored set to properly analyze the model performance in production.
 
 * **Reference dataset:** The reference dataset should be one where the model behaves as expected. Ideally, one that the model did not see during training, but we know the correct targets and the model's predictions. This dataset allows us to establish a baseline for every metric we want to monitor. Ideally, we use the test set as a reference set, which is what we use in the code cell below.
-* **Analysis dataset:** The analysis dataset is typically the latest production data up to a desired point in the past, which should be after the reference period ends. The analysis period is not required to have targets available. The analysis period is where NannyML analyzes/monitors the model's performance and data drift of the model using the knowledge gained from the reference set.
+* **Monitored dataset:** The monitored dataset is typically the latest production data up to a desired point in the past, which should be after the reference period ends. The monitored period is not required to have targets available. The monitored period is where NannyML analyzes/monitors the model's performance and data drift of the model using the knowledge gained from the reference set.
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb
@@ -223,7 +223,7 @@ The algorithm later decompresses the latent space data and reconstructs it with 
 
 We can later use the learned compressor/decompressor to transform the **production**
 set and measure its reconstruction error. If the reconstruction error is bigger than a threshold, the structure learned by PCA no longer
-accurately resembles the underlying structure of the analysis data. This indicates that there is data drift in the analysis/production data.
+accurately resembles the underlying structure of the monitored data. This indicates that there is data drift in the monitored/production data.
 
 To learn more about how this works, check out our
 documentation `Data Reconstruction with PCA Deep Dive <https://nannyml.readthedocs.io/en/stable/how_it_works/data_reconstruction.html>`_.
@@ -250,7 +250,7 @@ Detecting univariate data drift
 ===============================
 
 Univariate drift detection allows us to perform a more granular investigation. This time we will look at each feature individually and compare the reference and
-analysis periods in search for drift in any relevant feature.
+monitored periods in search for drift in any relevant feature.
 
 .. nbimport::
     :path: ./example_notebooks/Examples Green Taxi.ipynb

@@ -62,7 +62,7 @@ def performance_calculator(timestamp_column_name: Optional[str] = 'timestamp') -
 @pytest.fixture(scope='module')
 def realized_performance_metrics(binary_data) -> pd.DataFrame:
     calculator = performance_calculator().fit(binary_data[0])
-    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='analysis')
+    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='monitored')
     return results.data
 
 
@@ -82,7 +82,7 @@ def realized_performance_alt_cm_pred(binary_data) -> pd.DataFrame:
         normalize_confusion_matrix='pred',
         problem_type='classification_binary',
     ).fit(binary_data[0])
-    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='analysis')
+    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='monitored')
     return results.data
 
 
@@ -101,24 +101,24 @@ def realized_performance_alt_cm_true(binary_data) -> pd.DataFrame:
         normalize_confusion_matrix='true',
         problem_type='classification_binary',
     ).fit(binary_data[0])
-    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='analysis')
+    results = calculator.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='monitored')
     return results.data
 
 
 @pytest.fixture(scope='module')
 def no_timestamp_metrics(binary_data):
     calc = performance_calculator(timestamp_column_name=None).fit(binary_data[0])
-    results = calc.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='analysis')
+    results = calc.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='monitored')
     return results.data
 
 
 @pytest.fixture(scope='module')
 def partial_target_metrics(binary_data):
     partial_targets = binary_data[2][: len(binary_data[2]) // 2]
-    analysis_data = binary_data[1].merge(partial_targets, on='id', how='left')
+    monitored_data = binary_data[1].merge(partial_targets, on='id', how='left')
 
     calc = performance_calculator().fit(binary_data[0])
-    results = calc.calculate(analysis_data).filter(period='analysis')
+    results = calc.calculate(monitored_data).filter(period='monitored')
     return results.data
 
 

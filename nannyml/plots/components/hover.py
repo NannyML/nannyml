@@ -72,7 +72,7 @@ def render_period_string(period_column: Union[np.ndarray, pd.Series], color: Opt
         period_column,
         lambda x: f'<b style="color:{color or Colors.BLUE_SKY_CRAYOLA};line-height:60px">Reference</b>'
         if x == 'reference'
-        else f'<b style="color:{color or Colors.INDIGO_PERSIAN};line-height:60px">Analysis</b>',
+        else f'<b style="color:{color or Colors.INDIGO_PERSIAN};line-height:60px">Monitored</b>',
     )
 
 

@@ -74,7 +74,7 @@ def auroc_sampling_error(sampling_error_components, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -133,7 +133,7 @@ def f1_sampling_error(sampling_error_components: List[Tuple], data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -188,7 +188,7 @@ def precision_sampling_error(sampling_error_components: List[Tuple], data) -> fl
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -242,7 +242,7 @@ def recall_sampling_error(sampling_error_components: List[Tuple], data) -> float
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -296,7 +296,7 @@ def specificity_sampling_error(sampling_error_components: List[Tuple], data) -> 
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------
@@ -338,7 +338,7 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    data : the (analysis) data you want to calculate or estimate a metric for.
+    data : the (monitored) data you want to calculate or estimate a metric for.
 
     Returns
     -------

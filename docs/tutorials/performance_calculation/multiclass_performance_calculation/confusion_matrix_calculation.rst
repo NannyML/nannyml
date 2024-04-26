@@ -29,13 +29,13 @@ For simplicity this guide is based on a synthetic dataset where the monitored mo
 which type of credit card product new customers should be assigned to.
 Check out :ref:`Credit Card Dataset<dataset-synthetic-multiclass>` to learn more about this dataset.
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual monitored, provided as the monitored dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
-The ``analysis_targets`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
+The ``monitored_targets`` dataframe contains the target results of the monitored period. This is kept separate in the synthetic data because it is
 not used during :ref:`performance estimation<performance-estimation>`. But it is required to calculate performance, so the first thing we need to in this case is set up the right data in the right dataframes.
 
-The analysis target values are joined on the analysis frame by their index. Your dataset may already contain the **target** column, so you may skip this join.
+The monitored target values are joined on the monitored frame by their index. Your dataset may already contain the **target** column, so you may skip this join.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Calculating Confusion Matrix - Multiclass Classification.ipynb
@@ -89,7 +89,7 @@ The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculato
 The fitted :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` can then be used to calculate
 realized performance metrics on all data which has target values available with the
 :meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.calculate` method.
-NannyML can output a dataframe that contains all the results of the analysis data.
+NannyML can output a dataframe that contains all the results of the monitored data.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Calculating Confusion Matrix - Multiclass Classification.ipynb
@@ -125,13 +125,13 @@ calculated metric.
 
 The results can be plotted for visual inspection. Our plot contains several key elements.
 
-* *The purple step plot* shows the performance in each chunk of the analysis period. Thick squared point
+* *The purple step plot* shows the performance in each chunk of the monitored period. Thick squared point
   markers indicate the middle of these chunks.
 
 * *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate
   the middle of these chunks.
 
-* *The gray vertical line* splits the reference and analysis periods.
+* *The gray vertical line* splits the reference and monitored periods.
 
 * *The red horizontal dashed lines* show upper and lower thresholds for alerting purposes.
 
@@ -141,7 +141,7 @@ The results can be plotted for visual inspection. Our plot contains several key 
     :path: ./example_notebooks/Tutorial - Calculating Confusion Matrix - Multiclass Classification.ipynb
     :cells: 9
 
-.. image:: /_static/tutorials/performance_calculation/binary/tutorial-confusion-matrix-calculation-binary-car-loan-analysis.svg
+.. image:: /_static/tutorials/performance_calculation/binary/tutorial-confusion-matrix-calculation-binary-car-loan-monitored.svg
 
 Additional information such as the chunk index range and chunk date range (if timestamps were provided) is shown in the hover for each chunk (these are
 interactive plots, though only static views are included here).

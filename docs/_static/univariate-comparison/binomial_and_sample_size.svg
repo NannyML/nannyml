@@ -367,7 +367,7 @@ z
      </g>
     </g>
     <g id="text_4">
-     <!-- Analysis Sample Size -->
+     <!-- Monitored Sample Size -->
      <g transform="translate(84.15625 201.666562) scale(0.1 -0.1)">
       <defs>
        <path id="Helvetica-41" d="M 2844 1881
@@ -1505,7 +1505,7 @@ z
      </g>
     </g>
     <g id="text_16">
-     <!-- Analysis Sample Size -->
+     <!-- Monitored Sample Size -->
      <g transform="translate(297.47875 201.666562) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-41"/>
       <use xlink:href="#Helvetica-6e" x="66.699219"/>
@@ -2133,7 +2133,7 @@ z
      </g>
     </g>
     <g id="text_27">
-     <!-- Analysis Sample Size -->
+     <!-- Monitored Sample Size -->
      <g transform="translate(510.80125 201.666562) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-41"/>
       <use xlink:href="#Helvetica-6e" x="66.699219"/>
@@ -2787,7 +2787,7 @@ z
      </g>
     </g>
     <g id="text_40">
-     <!-- Analysis Sample Size -->
+     <!-- Monitored Sample Size -->
      <g transform="translate(724.12375 201.666562) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-41"/>
       <use xlink:href="#Helvetica-6e" x="66.699219"/>

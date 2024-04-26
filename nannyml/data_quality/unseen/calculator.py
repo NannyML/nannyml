@@ -68,15 +68,15 @@ class UnseenValuesCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference, monitored, _ = nml.load_synthetic_car_price_dataset()
         >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.UnseenValuesCalculator(
         ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
-        >>> res = calc.calculate(analysis)
+        >>> res = calc.calculate(monitored)
         >>> for column_name in res.column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        ...     res = res.filter(period='monitored', column_name=column_name).plot().show()
         """
         super(UnseenValuesCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
@@ -191,7 +191,7 @@ class UnseenValuesCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_datetime': chunk.start_datetime,
                 'end_datetime': chunk.end_datetime,
-                'period': 'analysis',
+                'period': 'monitored',
             }
 
             for column_name in self.column_names:

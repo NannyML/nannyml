@@ -21,7 +21,7 @@ in the :term:`reference period<Data Period>`.
 NannyML's approach to unseen values detection is simple.
 The reference :term:`period <Data Period>` is used to create a set of expected values for
 each categorical feature.
-For each :term:`chunk<Data Chunk>` in the analysis :term:`period <Data Period>`
+For each :term:`chunk<Data Chunk>` in the monitored :term:`period <Data Period>`
 NannyML calculates the number of unseen values. There is an option,
 called ``normalize``, to convert the count of values to a relative ratio if needed.
 If unseen values are detected in a chunk, an alert is raised for the relevant feature.
@@ -70,7 +70,7 @@ We need to instantiate it with appropriate parameters:
     :cells: 3
 
 Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs
-to be called on the reference data, which provides the baseline that the analysis data will be
+to be called on the reference data, which provides the baseline that the monitored data will be
 compared with for :term:`alert<Alert>` generation. Then the
 :meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the data quality results on the data provided to it.

@@ -38,9 +38,9 @@ class FakeEstimator(AbstractEstimator):
 
 @pytest.fixture(scope='module')
 def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    reference, analysis, _ = load_synthetic_car_price_dataset()
+    reference, monitored, _ = load_synthetic_car_price_dataset()
 
-    return reference, analysis
+    return reference, monitored
 
 
 @pytest.fixture(scope='module')
@@ -62,14 +62,14 @@ def direct_error_estimator(regression_feature_columns) -> DLE:
 
 @pytest.fixture(scope='module')
 def estimates(regression_data, direct_error_estimator):
-    reference, analysis = regression_data
+    reference, monitored = regression_data
 
     # Get rid of negative values for log based metrics
     reference = reference[~(reference['y_pred'] < 0)]
-    analysis = analysis[~(analysis['y_pred'] < 0)]
+    monitored = monitored[~(monitored['y_pred'] < 0)]
 
     direct_error_estimator.fit(reference)
-    estimates = direct_error_estimator.estimate(analysis)
+    estimates = direct_error_estimator.estimate(monitored)
     return estimates
 
 
@@ -88,14 +88,14 @@ def hypertuned_estimates(regression_data, direct_error_estimator: DLE):
         "verbose": 0,
     }
 
-    reference, analysis = regression_data
+    reference, monitored = regression_data
 
     # Get rid of negative values for log based metrics
     reference = reference[~(reference['y_pred'] < 0)]
-    analysis = analysis[~(analysis['y_pred'] < 0)]
+    monitored = monitored[~(monitored['y_pred'] < 0)]
 
     direct_error_estimator.fit(reference)
-    return direct_error_estimator.estimate(analysis)
+    return direct_error_estimator.estimate(monitored)
 
 
 @pytest.fixture(scope='module')
@@ -125,14 +125,14 @@ def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DLE
         'verbose': -1,
     }
 
-    reference, analysis = regression_data
+    reference, monitored = regression_data
 
     # Get rid of negative values for log based metrics
     reference = reference[~(reference['y_pred'] < 0)]
-    analysis = analysis[~(analysis['y_pred'] < 0)]
+    monitored = monitored[~(monitored['y_pred'] < 0)]
 
     direct_error_estimator.fit(reference)
-    return direct_error_estimator.estimate(analysis)
+    return direct_error_estimator.estimate(monitored)
 
 
 @pytest.mark.parametrize(
@@ -201,7 +201,7 @@ def test_direct_error_estimator_sets_custom_hyperparameter_tuning_config_when_gi
     ],
 )
 def test_direct_error_estimation_yields_correct_results_for_metric(estimates, metric, expected):
-    sut = estimates.filter(period='analysis').to_df()
+    sut = estimates.filter(period='monitored').to_df()
     all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
@@ -219,7 +219,7 @@ def test_direct_error_estimation_yields_correct_results_for_metric(estimates, me
 def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertuning(
     hypertuned_estimates, metric, expected
 ):
-    sut = hypertuned_estimates.filter(period='analysis').to_df()
+    sut = hypertuned_estimates.filter(period='monitored').to_df()
     all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
@@ -237,7 +237,7 @@ def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertun
 def test_direct_error_estimation_yields_correct_results_for_metric_with_custom_hyperparameters(
     custom_hyperparameter_estimates, metric, expected
 ):
-    sut = custom_hyperparameter_estimates.filter(period='analysis').to_df()
+    sut = custom_hyperparameter_estimates.filter(period='monitored').to_df()
     all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
@@ -248,15 +248,15 @@ def test_result_plot_raises_invalid_args_exception_when_given_incorrect_kind(est
 
 # See https://github.com/NannyML/nannyml/issues/192
 def test_dle_returns_distinct_but_consistent_results_when_reused(regression_data, direct_error_estimator):
-    reference, analysis = regression_data
+    reference, monitored = regression_data
 
     # Get rid of negative values for log based metrics
     reference = reference[~(reference['y_pred'] < 0)]
-    analysis = analysis[~(analysis['y_pred'] < 0)]
+    monitored = monitored[~(monitored['y_pred'] < 0)]
 
     direct_error_estimator.fit(reference)
-    estimate1 = direct_error_estimator.estimate(analysis)
-    estimate2 = direct_error_estimator.estimate(analysis)
+    estimate1 = direct_error_estimator.estimate(monitored)
+    estimate2 = direct_error_estimator.estimate(monitored)
 
     # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
     # modified on subsequent estimates.
@@ -408,7 +408,7 @@ def test_result_plot_contains_reference_data_when_plot_reference_set_to_true(est
     ],
 )
 def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
+    reference, monitored, monitored_targets = load_synthetic_car_price_dataset()
     est = DLE(
         feature_column_names=[col for col in reference.columns if col not in ['y_true', 'y_pred', 'timestamp']],
         y_true='y_true',
@@ -416,7 +416,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         metrics=['mae', 'mape'],
         **estimator_args,
     ).fit(reference)
-    sut = est.estimate(analysis)
+    sut = est.estimate(monitored)
 
     try:
         _ = sut.plot(**plot_args)

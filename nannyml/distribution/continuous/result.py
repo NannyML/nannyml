@@ -125,7 +125,7 @@ def _plot_continuous_distribution(
         )
 
     reference_result = result.filter(period='reference')
-    analysis_result = result.filter(period='analysis')
+    monitored_result = result.filter(period='monitored')
 
     for idx, key in enumerate(result.keys()):
         row = (idx // number_of_columns) + 1
@@ -145,13 +145,13 @@ def _plot_continuous_distribution(
             reference_chunk_indices=reference_result.chunk_indices,
             reference_chunk_start_dates=reference_result.chunk_start_dates,
             reference_chunk_end_dates=reference_result.chunk_end_dates,
-            analysis_distributions=analysis_result.to_df().loc[:, (column_name,)],
-            analysis_alerts=None,
-            analysis_chunk_keys=analysis_result.chunk_keys,
-            analysis_chunk_periods=analysis_result.chunk_periods,
-            analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
-            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
+            monitored_distributions=monitored_result.to_df().loc[:, (column_name,)],
+            monitored_alerts=None,
+            monitored_chunk_keys=monitored_result.chunk_keys,
+            monitored_chunk_periods=monitored_result.chunk_periods,
+            monitored_chunk_indices=monitored_result.chunk_indices,
+            monitored_chunk_start_dates=monitored_result.chunk_start_dates,
+            monitored_chunk_end_dates=monitored_result.chunk_end_dates,
         )
 
     return figure
@@ -200,8 +200,8 @@ def _plot_continuous_distribution_with_alerts(
 
     reference_result = result.filter(period='reference')
     reference_result.data.sort_index(inplace=True)
-    analysis_result = result.filter(period='analysis')
-    analysis_result.data.sort_index(inplace=True)
+    monitored_result = result.filter(period='monitored')
+    monitored_result.data.sort_index(inplace=True)
 
     for idx, drift_key in enumerate(drift_result.keys()):
         row = (idx // number_of_columns) + 1
@@ -210,7 +210,7 @@ def _plot_continuous_distribution_with_alerts(
         (column_name, method_name) = drift_key.properties
 
         # reference_alerts = drift_result.filter(period='reference').alerts(drift_key)
-        analysis_alerts = drift_result.filter(period='analysis').alerts(drift_key)
+        monitored_alerts = drift_result.filter(period='monitored').alerts(drift_key)
 
         figure = _plot_joyplot(
             figure=figure,
@@ -224,13 +224,13 @@ def _plot_continuous_distribution_with_alerts(
             reference_chunk_indices=reference_result.chunk_indices,
             reference_chunk_start_dates=reference_result.chunk_start_dates,
             reference_chunk_end_dates=reference_result.chunk_end_dates,
-            analysis_distributions=analysis_result.to_df().xs(column_name, level=0, axis=1),
-            analysis_alerts=analysis_alerts,
-            analysis_chunk_keys=analysis_result.chunk_keys,
-            analysis_chunk_periods=analysis_result.chunk_periods,
-            analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
-            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
+            monitored_distributions=monitored_result.to_df().xs(column_name, level=0, axis=1),
+            monitored_alerts=monitored_alerts,
+            monitored_chunk_keys=monitored_result.chunk_keys,
+            monitored_chunk_periods=monitored_result.chunk_periods,
+            monitored_chunk_indices=monitored_result.chunk_indices,
+            monitored_chunk_start_dates=monitored_result.chunk_start_dates,
+            monitored_chunk_end_dates=monitored_result.chunk_end_dates,
         )
 
     return figure
@@ -240,19 +240,19 @@ def _plot_joyplot(
     figure: go.Figure,
     metric_display_name: str,
     reference_distributions: pd.DataFrame,
-    analysis_distributions: pd.DataFrame,
+    monitored_distributions: pd.DataFrame,
     reference_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
     hover: Optional[Hover] = None,
@@ -279,31 +279,31 @@ def _plot_joyplot(
         )
 
         assert reference_chunk_indices is not None
-        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
+        monitored_chunk_indices = monitored_chunk_indices + (max(reference_chunk_indices) + 1)
 
     figure = joy(
         fig=figure,
-        data_distributions=analysis_distributions,
-        chunk_keys=analysis_chunk_keys,
-        chunk_indices=analysis_chunk_indices,
-        chunk_start_dates=analysis_chunk_start_dates,
-        chunk_end_dates=analysis_chunk_end_dates,
-        name='Analysis',
+        data_distributions=monitored_distributions,
+        chunk_keys=monitored_chunk_keys,
+        chunk_indices=monitored_chunk_indices,
+        chunk_start_dates=monitored_chunk_start_dates,
+        chunk_end_dates=monitored_chunk_end_dates,
+        name='Monitored',
         color=Colors.INDIGO_PERSIAN,
         subplot_args=subplot_args,
     )
 
-    if analysis_alerts is not None:
+    if monitored_alerts is not None:
         figure = joy_alert(
             fig=figure,
-            alerts=analysis_alerts,
-            data_distributions=analysis_distributions,
+            alerts=monitored_alerts,
+            data_distributions=monitored_distributions,
             color=Colors.RED_IMPERIAL,
             name='Alerts',
-            chunk_keys=analysis_chunk_keys,
-            chunk_indices=analysis_chunk_indices,
-            chunk_start_dates=analysis_chunk_start_dates,
-            chunk_end_dates=analysis_chunk_end_dates,
+            chunk_keys=monitored_chunk_keys,
+            chunk_indices=monitored_chunk_indices,
+            chunk_start_dates=monitored_chunk_start_dates,
+            chunk_end_dates=monitored_chunk_end_dates,
             subplot_args=subplot_args,
         )
 

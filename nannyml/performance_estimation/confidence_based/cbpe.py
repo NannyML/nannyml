@@ -188,7 +188,7 @@ class CBPE(AbstractEstimator):
         >>> import nannyml as nml
         >>> from IPython.display import display
         >>> reference_df = nml.load_synthetic_car_loan_dataset()[0]
-        >>> analysis_df = nml.load_synthetic_car_loan_dataset()[1]
+        >>> monitored_df = nml.load_synthetic_car_loan_dataset()[1]
         >>> display(reference_df.head(3))
         >>> estimator = nml.CBPE(
         ...     y_pred_proba='y_pred_proba',
@@ -200,8 +200,8 @@ class CBPE(AbstractEstimator):
         ...     problem_type='classification_binary',
         >>> )
         >>> estimator.fit(reference_df)
-        >>> results = estimator.estimate(analysis_df)
-        >>> display(results.filter(period='analysis').to_df())
+        >>> results = estimator.estimate(monitored_df)
+        >>> display(results.filter(period='monitored').to_df())
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
 
@@ -209,7 +209,7 @@ class CBPE(AbstractEstimator):
         Using CBPE to estimate the perfomance of a model for a multiclass classification problem.
 
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_multiclass_classification_dataset()
+        >>> reference_df, monitored_df, _ = nml.load_synthetic_multiclass_classification_dataset()
         >>> estimator = nml.CBPE(
         ...     y_pred_proba={
         ...         'prepaid_card': 'y_pred_proba_prepaid_card',
@@ -223,7 +223,7 @@ class CBPE(AbstractEstimator):
         ...     chunk_size=6000,
         >>> )
         >>> estimator.fit(reference_df)
-        >>> results = estimator.estimate(analysis_df)
+        >>> results = estimator.estimate(monitored_df)
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
         """
@@ -372,7 +372,7 @@ class CBPE(AbstractEstimator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis',
+                    'period': 'monitored',
                     **self._estimate_chunk(chunk),
                 }
                 for chunk in chunks

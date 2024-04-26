@@ -20,7 +20,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
     data['period'] = 'reference'
-    data.loc[data.week >= 11, ['period']] = 'analysis'
+    data.loc[data.week >= 11, ['period']] = 'monitored'
     # data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(167)
     data['f1'] = np.random.randn(data.shape[0])
@@ -140,14 +140,14 @@ def test_target_distribution_calculator_with_default_params_should_not_fail(samp
 
 
 def test_target_distribution_calculator_for_regression_problems_statistical_drift(regression_data):  # noqa: D103
-    reference, analysis, analysis_targets = regression_data
+    reference, monitored, monitored_targets = regression_data
 
     # Get rid of negative values for log based metrics
     reference = regression_data[0][~(regression_data[0]['y_pred'] < 0)]
-    analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
+    monitored = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
 
     calc = UnivariateDriftCalculator(column_names=['y_true'], timestamp_column_name='timestamp').fit(reference)
-    result = calc.calculate(analysis.merge(analysis_targets, on='id')).filter(period='analysis')
+    result = calc.calculate(monitored.merge(monitored_targets, on='id')).filter(period='monitored')
     print(round(result.data[('y_true', 'jensen_shannon', 'value')], 5))
     assert (
         round(result.data[('y_true', 'jensen_shannon', 'value')], 5)
@@ -317,13 +317,13 @@ def test_target_distribution_calculator_for_regression_problems_statistical_drif
     ],
 )
 def test_target_drift_for_regression_works_with_chunker(calculator_opts, expected):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
+    reference, monitored, monitored_targets = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
         column_names=['y_true'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.merge(analysis_targets, on='id'))
-    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
+    results = calc.calculate(monitored.merge(monitored_targets, on='id'))
+    sut = results.filter(period='monitored').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'statistical_target_drift']
     pd.testing.assert_frame_equal(expected, sut)
 
@@ -480,15 +480,15 @@ def test_target_drift_for_regression_works_with_chunker(calculator_opts, expecte
     ],
 )
 def test_target_drift_for_binary_classification_works_with_chunker(calculator_opts, expected):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_binary_classification_dataset()
     reference['work_home_actual'] = reference['work_home_actual'].astype('category')
-    analysis_targets['work_home_actual'] = analysis_targets['work_home_actual'].astype('category')
+    monitored_targets['work_home_actual'] = monitored_targets['work_home_actual'].astype('category')
     calc = UnivariateDriftCalculator(
         column_names=['work_home_actual'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.merge(analysis_targets, on='id'))
-    sut = results.filter(period='analysis').to_df()[
+    results = calc.calculate(monitored.merge(monitored_targets, on='id'))
+    sut = results.filter(period='monitored').to_df()[
         [('chunk', 'chunk', 'key'), ('work_home_actual', 'jensen_shannon', 'value')]
     ]
     sut.columns = ['key', 'statistical_target_drift']
@@ -654,15 +654,15 @@ def test_target_drift_for_binary_classification_works_with_chunker(calculator_op
     ],
 )
 def test_target_drift_for_multiclass_classification_works_with_chunker(calculator_opts, expected):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=['y_true'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True)).filter(
-        period='analysis'
+    results = calc.calculate(monitored.merge(monitored_targets, left_index=True, right_index=True)).filter(
+        period='monitored'
     )
-    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
+    sut = results.filter(period='monitored').to_df()[[('chunk', 'chunk', 'key'), ('y_true', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'statistical_target_drift']
     pd.testing.assert_frame_equal(expected, sut)
 
@@ -673,9 +673,9 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
-            'analysis',
+            'monitored',
         ),
-        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
+        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'monitored'),
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
@@ -685,9 +685,9 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
-            'analysis',
+            'monitored',
         ),
-        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
+        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'monitored'),
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
@@ -707,9 +707,9 @@ def test_target_drift_for_multiclass_classification_works_with_chunker(calculato
     ],
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True)).filter(period=period)
+    sut = calc.calculate(monitored.merge(monitored_targets, left_index=True, right_index=True)).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -723,9 +723,9 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
-            'analysis',
+            'monitored',
         ),
-        ({}, {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}, 'analysis'),
+        ({}, {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'}, 'monitored'),
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'drift', 'column_name': 'work_home_actual', 'method': 'jensen_shannon'},
@@ -739,7 +739,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
                 'column_name': 'work_home_actual',
                 'method': 'jensen_shannon',
             },
-            'analysis',
+            'monitored',
         ),
         (
             {},
@@ -748,7 +748,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
                 'column_name': 'work_home_actual',
                 'method': 'jensen_shannon',
             },
-            'analysis',
+            'monitored',
         ),
         (
             {'timestamp_column_name': 'timestamp'},
@@ -781,11 +781,11 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
     ],
 )
 def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_binary_classification_dataset()
     reference['work_home_actual'] = reference['work_home_actual'].astype('category')
-    analysis_targets['work_home_actual'] = analysis_targets['work_home_actual'].astype('category')
+    monitored_targets['work_home_actual'] = monitored_targets['work_home_actual'].astype('category')
     calc = UnivariateDriftCalculator(column_names=['work_home_actual'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='id')).filter(period=period)
+    sut = calc.calculate(monitored.merge(monitored_targets, on='id')).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -799,9 +799,9 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
-            'analysis',
+            'monitored',
         ),
-        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
+        ({}, {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'monitored'),
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'drift', 'column_name': 'y_true', 'method': 'jensen_shannon'},
@@ -811,9 +811,9 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
-            'analysis',
+            'monitored',
         ),
-        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'analysis'),
+        ({}, {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'}, 'monitored'),
         (
             {'timestamp_column_name': 'timestamp'},
             {'kind': 'distribution', 'column_name': 'y_true', 'method': 'jensen_shannon'},
@@ -833,9 +833,9 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
     ],
 )
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
+    reference, monitored, monitored_targets = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_true'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='id')).filter(period=period)
+    sut = calc.calculate(monitored.merge(monitored_targets, on='id')).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)

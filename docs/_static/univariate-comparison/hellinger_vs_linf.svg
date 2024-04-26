@@ -2386,7 +2386,7 @@ z
 " style="fill: #dbd3e7; stroke: #3b0280; stroke-linejoin: miter"/>
     </g>
     <g id="text_72">
-     <!-- $\sqrt{Analysis PMF}$ -->
+     <!-- $\sqrt{Monitored PMF}$ -->
      <g transform="translate(81.64 89.709375) scale(0.12 -0.12)">
       <defs>
        <path id="DejaVuSans-Oblique-41" d="M 2356 4666
@@ -4334,7 +4334,7 @@ z
 " style="fill: #dbd3e7; stroke: #3b0280; stroke-linejoin: miter"/>
     </g>
     <g id="text_144">
-     <!-- Analysis PMF -->
+     <!-- Monitored PMF -->
      <g transform="translate(81.64 453.65625) scale(0.12 -0.12)">
       <defs>
        <path id="Helvetica-41" d="M 2844 1881

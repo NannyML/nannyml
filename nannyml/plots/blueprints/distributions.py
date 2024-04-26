@@ -22,7 +22,7 @@ from nannyml.plots.util import is_time_based_x_axis
 def plot_distributions(
     result,
     reference_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
-    analysis_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
+    monitored_data: pd.DataFrame,  # TODO: move distribution calculations to calculator run
     chunker: Chunker,  # TODO: move distribution calculations to calculator run
     title: Optional[str] = 'Column distributions',
     figure: Optional[Figure] = None,
@@ -67,7 +67,7 @@ def plot_distributions(
         )
 
     reference_result = result.filter(period='reference')
-    analysis_result = result.filter(period='analysis')
+    monitored_result = result.filter(period='monitored')
 
     for idx, key in enumerate(result.keys()):
         row = (idx // number_of_columns) + 1
@@ -75,9 +75,9 @@ def plot_distributions(
 
         column_name, method = key.properties
 
-        analysis_chunk_start_dates = analysis_result.chunk_start_dates
-        analysis_chunk_end_dates = analysis_result.chunk_end_dates
-        x_axis_is_time_based = is_time_based_x_axis(analysis_chunk_start_dates, analysis_chunk_end_dates)
+        monitored_chunk_start_dates = monitored_result.chunk_start_dates
+        monitored_chunk_end_dates = monitored_result.chunk_end_dates
+        x_axis_is_time_based = is_time_based_x_axis(monitored_chunk_start_dates, monitored_chunk_end_dates)
 
         if column_name in result.categorical_column_names and method in result.categorical_method_names:
             figure = _plot_stacked_bar(
@@ -97,14 +97,14 @@ def plot_distributions(
                 reference_chunk_indices=reference_result.chunk_indices,
                 reference_chunk_start_dates=reference_result.chunk_start_dates,
                 reference_chunk_end_dates=reference_result.chunk_end_dates,
-                analysis_data=analysis_data[column_name],
-                analysis_data_timestamps=analysis_data[result.timestamp_column_name] if x_axis_is_time_based else None,
-                analysis_alerts=analysis_result.alerts(key),
-                analysis_chunk_keys=analysis_result.chunk_keys,
-                analysis_chunk_periods=analysis_result.chunk_periods,
-                analysis_chunk_indices=analysis_result.chunk_indices,
-                analysis_chunk_start_dates=analysis_chunk_start_dates,
-                analysis_chunk_end_dates=analysis_chunk_end_dates,
+                monitored_data=monitored_data[column_name],
+                monitored_data_timestamps=monitored_data[result.timestamp_column_name] if x_axis_is_time_based else None,
+                monitored_alerts=monitored_result.alerts(key),
+                monitored_chunk_keys=monitored_result.chunk_keys,
+                monitored_chunk_periods=monitored_result.chunk_periods,
+                monitored_chunk_indices=monitored_result.chunk_indices,
+                monitored_chunk_start_dates=monitored_chunk_start_dates,
+                monitored_chunk_end_dates=monitored_chunk_end_dates,
             )
         elif column_name in result.continuous_column_names and method in result.continuous_method_names:
             figure = _plot_joyplot(
@@ -123,14 +123,14 @@ def plot_distributions(
                 reference_chunk_indices=reference_result.chunk_indices,
                 reference_chunk_start_dates=reference_result.chunk_start_dates,
                 reference_chunk_end_dates=reference_result.chunk_end_dates,
-                analysis_data=analysis_data[column_name],
-                analysis_data_timestamps=analysis_data[result.timestamp_column_name] if x_axis_is_time_based else None,
-                analysis_alerts=analysis_result.alerts(key),
-                analysis_chunk_keys=analysis_result.chunk_keys,
-                analysis_chunk_periods=analysis_result.chunk_periods,
-                analysis_chunk_indices=analysis_result.chunk_indices,
-                analysis_chunk_start_dates=analysis_chunk_start_dates,
-                analysis_chunk_end_dates=analysis_chunk_end_dates,
+                monitored_data=monitored_data[column_name],
+                monitored_data_timestamps=monitored_data[result.timestamp_column_name] if x_axis_is_time_based else None,
+                monitored_alerts=monitored_result.alerts(key),
+                monitored_chunk_keys=monitored_result.chunk_keys,
+                monitored_chunk_periods=monitored_result.chunk_periods,
+                monitored_chunk_indices=monitored_result.chunk_indices,
+                monitored_chunk_start_dates=monitored_chunk_start_dates,
+                monitored_chunk_end_dates=monitored_chunk_end_dates,
             )
         else:
             raise InvalidArgumentsException(
@@ -145,8 +145,8 @@ def _plot_joyplot(
     metric_display_name: str,
     reference_data: Union[np.ndarray, pd.Series],
     reference_data_timestamps: Union[np.ndarray, pd.Series],
-    analysis_data: Union[np.ndarray, pd.Series],
-    analysis_data_timestamps: Union[np.ndarray, pd.Series],
+    monitored_data: Union[np.ndarray, pd.Series],
+    monitored_data_timestamps: Union[np.ndarray, pd.Series],
     chunker: Chunker,
     reference_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -154,12 +154,12 @@ def _plot_joyplot(
     reference_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
     hover: Optional[Hover] = None,
@@ -192,36 +192,36 @@ def _plot_joyplot(
         )
 
         assert reference_chunk_indices is not None
-        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
+        monitored_chunk_indices = monitored_chunk_indices + (max(reference_chunk_indices) + 1)
 
-    analysis_distributions = calculate_chunk_distributions(  # TODO: move distribution calculations to calculator run
-        data=analysis_data,
+    monitored_distributions = calculate_chunk_distributions(  # TODO: move distribution calculations to calculator run
+        data=monitored_data,
         chunker=chunker,
-        data_periods=pd.Series('analysis', index=range(len(analysis_data))),
-        timestamps=analysis_data_timestamps,
+        data_periods=pd.Series('monitored', index=range(len(monitored_data))),
+        timestamps=monitored_data_timestamps,
     )
 
     figure = joy(
         fig=figure,
-        data_distributions=analysis_distributions,
-        chunk_indices=analysis_chunk_indices,
-        chunk_start_dates=analysis_chunk_start_dates,
-        chunk_end_dates=analysis_chunk_end_dates,
-        name='Analysis',
+        data_distributions=monitored_distributions,
+        chunk_indices=monitored_chunk_indices,
+        chunk_start_dates=monitored_chunk_start_dates,
+        chunk_end_dates=monitored_chunk_end_dates,
+        name='Monitored',
         color=Colors.INDIGO_PERSIAN,
         subplot_args=subplot_args,
     )
 
-    if analysis_alerts is not None:
+    if monitored_alerts is not None:
         figure = joy_alert(
             fig=figure,
-            alerts=analysis_alerts,
-            data_distributions=analysis_distributions,
+            alerts=monitored_alerts,
+            data_distributions=monitored_distributions,
             color=Colors.RED_IMPERIAL,
             name='Alerts',
-            chunk_indices=analysis_chunk_indices,
-            chunk_start_dates=analysis_chunk_start_dates,
-            chunk_end_dates=analysis_chunk_end_dates,
+            chunk_indices=monitored_chunk_indices,
+            chunk_start_dates=monitored_chunk_start_dates,
+            chunk_end_dates=monitored_chunk_end_dates,
             subplot_args=subplot_args,
         )
 
@@ -234,8 +234,8 @@ def _plot_stacked_bar(
     metric_display_name: str,
     reference_data: Union[np.ndarray, pd.Series],
     reference_data_timestamps: Union[np.ndarray, pd.Series],
-    analysis_data: Union[np.ndarray, pd.Series],
-    analysis_data_timestamps: Union[np.ndarray, pd.Series],
+    monitored_data: Union[np.ndarray, pd.Series],
+    monitored_data_timestamps: Union[np.ndarray, pd.Series],
     chunker: Chunker,
     reference_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -243,12 +243,12 @@ def _plot_stacked_bar(
     reference_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
     hover: Optional[Hover] = None,
@@ -297,24 +297,24 @@ def _plot_stacked_bar(
         )
 
         assert reference_chunk_indices is not None
-        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
+        monitored_chunk_indices = monitored_chunk_indices + (max(reference_chunk_indices) + 1)
 
-    analysis_value_counts = calculate_value_counts(
-        data=analysis_data,
+    monitored_value_counts = calculate_value_counts(
+        data=monitored_data,
         chunker=chunker,
-        timestamps=analysis_data_timestamps,
+        timestamps=monitored_data_timestamps,
         max_number_of_categories=5,
         missing_category_label='Missing',
     )
 
     figure = stacked_bar(
         figure=figure,
-        stacked_bar_table=analysis_value_counts,
+        stacked_bar_table=monitored_value_counts,
         color=Colors.INDIGO_PERSIAN,
-        chunk_indices=analysis_chunk_indices,
-        chunk_start_dates=analysis_chunk_start_dates,
-        chunk_end_dates=analysis_chunk_end_dates,
-        annotation='Analysis',
+        chunk_indices=monitored_chunk_indices,
+        chunk_start_dates=monitored_chunk_start_dates,
+        chunk_end_dates=monitored_chunk_end_dates,
+        annotation='Monitored',
         showlegend=False,
         legendgroup=column_name,
         subplot_args=subplot_args,
@@ -322,12 +322,12 @@ def _plot_stacked_bar(
 
     figure = stacked_bar_alert(
         figure=figure,
-        alerts=analysis_alerts,
-        stacked_bar_table=analysis_value_counts,
+        alerts=monitored_alerts,
+        stacked_bar_table=monitored_value_counts,
         color=Colors.RED_IMPERIAL,
-        chunk_indices=analysis_chunk_indices,
-        chunk_start_dates=analysis_chunk_start_dates,
-        chunk_end_dates=analysis_chunk_end_dates,
+        chunk_indices=monitored_chunk_indices,
+        chunk_start_dates=monitored_chunk_start_dates,
+        chunk_end_dates=monitored_chunk_end_dates,
         showlegend=True,
         legendgroup=column_name,
         subplot_args=subplot_args,

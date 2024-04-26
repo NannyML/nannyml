@@ -4146,7 +4146,7 @@ z
 " style="fill: #3b0280; opacity: 0.6"/>
     </g>
     <g id="text_15">
-     <!-- Analysis -->
+     <!-- Monitored -->
      <g transform="translate(263.465625 41.23125) scale(0.1 -0.1)">
       <defs>
        <path id="Helvetica-41" d="M 2844 1881
@@ -7700,7 +7700,7 @@ z
 " style="fill: #dd4040; opacity: 0.6"/>
     </g>
     <g id="text_30">
-     <!-- Analysis Drifted -->
+     <!-- Monitored Drifted -->
      <g transform="translate(558.734375 41.332812) scale(0.1 -0.1)">
       <defs>
        <path id="Helvetica-44" d="M 2250 531

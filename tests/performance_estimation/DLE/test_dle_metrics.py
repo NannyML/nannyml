@@ -311,7 +311,7 @@ def test_dle_for_regression_with_timestamps(calculator_opts, expected):
         **calculator_opts,
     ).fit(ref_df)
     result = dle.estimate(ana_df)
-    sut = result.filter(period='analysis').to_df()[
+    sut = result.filter(period='monitored').to_df()[
         [('chunk', 'key')] + [(metric.column_name, 'value') for metric in result.metrics]
     ]
     sut.columns = [

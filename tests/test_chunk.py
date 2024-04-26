@@ -35,7 +35,7 @@ def sample_chunk_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['ordered_at'])
     data['week'] = data.ordered_at.dt.isocalendar().week - 1
     data['period'] = 'reference'
-    data.loc[data.week >= 11, ['period']] = 'analysis'
+    data.loc[data.week >= 11, ['period']] = 'monitored'
     np.random.seed(13)
     data['f1'] = np.random.randn(data.shape[0])
     data['f2'] = np.random.rand(data.shape[0])

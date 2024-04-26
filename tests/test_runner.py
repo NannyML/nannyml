@@ -20,14 +20,14 @@ from nannyml.runner import run
 @pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
 def test_runner_executes_for_binary_classification_without_exceptions(timestamp_column_name):
-    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
-    analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
+    reference, monitored, monitored_targets = load_synthetic_binary_classification_dataset()
+    monitored_with_targets = monitored.merge(monitored_targets, on='identifier')
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
-                analysis_data=analysis_with_targets,
+                monitored_data=monitored_with_targets,
                 column_mapping={
                     'features': [
                         'distance_from_office',
@@ -57,14 +57,14 @@ def test_runner_executes_for_binary_classification_without_exceptions(timestamp_
 @pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
 def test_runner_executes_for_multiclass_classification_without_exceptions(timestamp_column_name):
-    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
-    analysis_with_targets = analysis.merge(analysis_targets, left_index=True, right_index=True)
+    reference, monitored, monitored_targets = load_synthetic_multiclass_classification_dataset()
+    monitored_with_targets = monitored.merge(monitored_targets, left_index=True, right_index=True)
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
-                analysis_data=analysis_with_targets,
+                monitored_data=monitored_with_targets,
                 column_mapping={
                     'features': [
                         'acq_channel',
@@ -98,14 +98,14 @@ def test_runner_executes_for_multiclass_classification_without_exceptions(timest
 @pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
 def test_runner_executes_for_regression_without_exceptions(timestamp_column_name):
-    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
-    analysis_with_targets = analysis.join(analysis_targets)
+    reference, monitored, monitored_targets = load_synthetic_car_price_dataset()
+    monitored_with_targets = monitored.join(monitored_targets)
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
-                analysis_data=analysis_with_targets,
+                monitored_data=monitored_with_targets,
                 column_mapping={
                     'features': [
                         'car_age',
@@ -133,14 +133,14 @@ def test_runner_executes_for_regression_without_exceptions(timestamp_column_name
 
 @pytest.mark.slow
 def test_runner_executes_for_binary_classification_with_database_writer_without_exceptions():
-    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
-    analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
+    reference, monitored, monitored_targets = load_synthetic_binary_classification_dataset()
+    monitored_with_targets = monitored.merge(monitored_targets, on='identifier')
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
-                analysis_data=analysis_with_targets,
+                monitored_data=monitored_with_targets,
                 column_mapping={
                     'features': [
                         'distance_from_office',
@@ -169,14 +169,14 @@ def test_runner_executes_for_binary_classification_with_database_writer_without_
 
 @pytest.mark.slow
 def test_runner_executes_for_multiclass_classification_with_database_writer_without_exceptions():
-    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
-    analysis_with_targets = analysis.merge(analysis_targets, left_index=True, right_index=True)
+    reference, monitored, monitored_targets = load_synthetic_multiclass_classification_dataset()
+    monitored_with_targets = monitored.merge(monitored_targets, left_index=True, right_index=True)
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
-                analysis_data=analysis_with_targets,
+                monitored_data=monitored_with_targets,
                 column_mapping={
                     'features': [
                         'acq_channel',
@@ -209,14 +209,14 @@ def test_runner_executes_for_multiclass_classification_with_database_writer_with
 
 @pytest.mark.slow
 def test_runner_executes_for_regression_with_database_writer_without_exceptions():
-    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
-    analysis_with_targets = analysis.join(analysis_targets)
+    reference, monitored, monitored_targets = load_synthetic_car_price_dataset()
+    monitored_with_targets = monitored.join(monitored_targets)
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
-                analysis_data=analysis_with_targets,
+                monitored_data=monitored_with_targets,
                 column_mapping={
                     'features': [
                         'car_age',

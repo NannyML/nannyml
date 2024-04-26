@@ -36,9 +36,9 @@ def plot_2d_compare_step_to_step(
     number_of_rows = math.ceil(number_of_plots / number_of_columns)
 
     reference_result_1: Result = result_1.filter(period='reference')
-    analysis_result_1: Result = result_1.filter(period='analysis')
+    monitored_result_1: Result = result_1.filter(period='monitored')
     reference_result_2: Result = result_2.filter(period='reference')
-    analysis_result_2: Result = result_2.filter(period='analysis')
+    monitored_result_2: Result = result_2.filter(period='monitored')
 
     reference_chunk_indices = reference_result_1.chunk_indices
     reference_chunk_start_dates = reference_result_1.chunk_start_dates
@@ -46,11 +46,11 @@ def plot_2d_compare_step_to_step(
     reference_chunk_periods = reference_result_1.chunk_periods
     reference_chunk_keys = reference_result_1.chunk_keys
 
-    analysis_chunk_indices = analysis_result_1.chunk_indices
-    analysis_chunk_start_dates = analysis_result_1.chunk_start_dates
-    analysis_chunk_end_dates = analysis_result_1.chunk_end_dates
-    analysis_chunk_periods = analysis_result_1.chunk_periods
-    analysis_chunk_keys = analysis_result_1.chunk_keys
+    monitored_chunk_indices = monitored_result_1.chunk_indices
+    monitored_chunk_start_dates = monitored_result_1.chunk_start_dates
+    monitored_chunk_end_dates = monitored_result_1.chunk_end_dates
+    monitored_chunk_periods = monitored_result_1.chunk_periods
+    monitored_chunk_keys = monitored_result_1.chunk_keys
 
     # region setup axes
 
@@ -109,14 +109,14 @@ def plot_2d_compare_step_to_step(
         reference_metric_1_lower_confidence_bounds = reference_result_1.lower_confidence_bounds(key_1)
         reference_metric_2_upper_confidence_bounds = reference_result_2.upper_confidence_bounds(key_2)
         reference_metric_2_lower_confidence_bounds = reference_result_2.lower_confidence_bounds(key_2)
-        analysis_metric_1 = analysis_result_1.values(key_1)
-        analysis_metric_2 = analysis_result_2.values(key_2)
-        analysis_metric_1_alerts = analysis_result_1.alerts(key_1)
-        analysis_metric_2_alerts = analysis_result_2.alerts(key_2)
-        analysis_metric_1_upper_confidence_bounds = analysis_result_1.upper_confidence_bounds(key_1)
-        analysis_metric_1_lower_confidence_bounds = analysis_result_1.lower_confidence_bounds(key_1)
-        analysis_metric_2_upper_confidence_bounds = analysis_result_2.upper_confidence_bounds(key_2)
-        analysis_metric_2_lower_confidence_bounds = analysis_result_2.lower_confidence_bounds(key_2)
+        monitored_metric_1 = monitored_result_1.values(key_1)
+        monitored_metric_2 = monitored_result_2.values(key_2)
+        monitored_metric_1_alerts = monitored_result_1.alerts(key_1)
+        monitored_metric_2_alerts = monitored_result_2.alerts(key_2)
+        monitored_metric_1_upper_confidence_bounds = monitored_result_1.upper_confidence_bounds(key_1)
+        monitored_metric_1_lower_confidence_bounds = monitored_result_1.lower_confidence_bounds(key_1)
+        monitored_metric_2_upper_confidence_bounds = monitored_result_2.upper_confidence_bounds(key_2)
+        monitored_metric_2_lower_confidence_bounds = monitored_result_2.lower_confidence_bounds(key_2)
 
         # TODO: move this logic to the `Result` and `Metric` level.
         #       This is just a quick and very dirty way to check the same "metric" is being plotted, e.g.
@@ -131,8 +131,8 @@ def plot_2d_compare_step_to_step(
             figure=figure,
             metric_1_display_name=key_1.display_names,
             metric_2_display_name=key_2.display_names,
-            analysis_metric_1=analysis_metric_1,
-            analysis_metric_2=analysis_metric_2,
+            monitored_metric_1=monitored_metric_1,
+            monitored_metric_2=monitored_metric_2,
             reference_chunk_keys=reference_chunk_keys,
             reference_chunk_periods=reference_chunk_periods,
             reference_chunk_indices=reference_chunk_indices,
@@ -144,17 +144,17 @@ def plot_2d_compare_step_to_step(
             reference_metric_1_lower_confidence_bounds=reference_metric_1_lower_confidence_bounds,
             reference_metric_2_upper_confidence_bounds=reference_metric_2_upper_confidence_bounds,
             reference_metric_2_lower_confidence_bounds=reference_metric_2_lower_confidence_bounds,
-            analysis_chunk_keys=analysis_chunk_keys,
-            analysis_chunk_periods=analysis_chunk_periods,
-            analysis_chunk_indices=analysis_chunk_indices,
-            analysis_chunk_start_dates=analysis_chunk_start_dates,
-            analysis_chunk_end_dates=analysis_chunk_end_dates,
-            analysis_metric_1_alerts=analysis_metric_1_alerts,
-            analysis_metric_2_alerts=analysis_metric_2_alerts,
-            analysis_metric_1_upper_confidence_bounds=analysis_metric_1_upper_confidence_bounds,
-            analysis_metric_1_lower_confidence_bounds=analysis_metric_1_lower_confidence_bounds,
-            analysis_metric_2_upper_confidence_bounds=analysis_metric_2_upper_confidence_bounds,
-            analysis_metric_2_lower_confidence_bounds=analysis_metric_2_lower_confidence_bounds,
+            monitored_chunk_keys=monitored_chunk_keys,
+            monitored_chunk_periods=monitored_chunk_periods,
+            monitored_chunk_indices=monitored_chunk_indices,
+            monitored_chunk_start_dates=monitored_chunk_start_dates,
+            monitored_chunk_end_dates=monitored_chunk_end_dates,
+            monitored_metric_1_alerts=monitored_metric_1_alerts,
+            monitored_metric_2_alerts=monitored_metric_2_alerts,
+            monitored_metric_1_upper_confidence_bounds=monitored_metric_1_upper_confidence_bounds,
+            monitored_metric_1_lower_confidence_bounds=monitored_metric_1_lower_confidence_bounds,
+            monitored_metric_2_upper_confidence_bounds=monitored_metric_2_upper_confidence_bounds,
+            monitored_metric_2_lower_confidence_bounds=monitored_metric_2_lower_confidence_bounds,
             hover=hover,
             xaxis=x_axis,
             yaxis=y_axis,
@@ -193,8 +193,8 @@ def _plot_compare_step_to_step(  # noqa: C901
     figure: Figure,
     metric_1_display_name: Union[str, Tuple],
     metric_2_display_name: Union[str, Tuple],
-    analysis_metric_1: Union[np.ndarray, pd.Series],
-    analysis_metric_2: Union[np.ndarray, pd.Series],
+    monitored_metric_1: Union[np.ndarray, pd.Series],
+    monitored_metric_2: Union[np.ndarray, pd.Series],
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -206,17 +206,17 @@ def _plot_compare_step_to_step(  # noqa: C901
     reference_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_metric_2_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_metric_1_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_metric_2_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_metric_1_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_metric_2_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_metric_1_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_metric_2_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_metric_1_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_metric_1_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_metric_2_upper_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_metric_2_lower_confidence_bounds: Optional[Union[np.ndarray, pd.Series]] = None,
     hover: Optional[Hover] = None,
     xaxis: Optional[str] = 'x',
     yaxis: Optional[str] = 'y',
@@ -255,16 +255,16 @@ def _plot_compare_step_to_step(  # noqa: C901
         and len(reference_metric_2) > 0
     )
 
-    has_analysis_results = (
-        analysis_metric_1 is not None
-        and len(analysis_metric_1) > 0
-        and analysis_metric_2 is not None
-        and len(analysis_metric_2) > 0
+    has_monitored_results = (
+        monitored_metric_1 is not None
+        and len(monitored_metric_1) > 0
+        and monitored_metric_2 is not None
+        and len(monitored_metric_2) > 0
     )
 
     if has_reference_results and not is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates):
         assert reference_chunk_indices is not None
-        analysis_chunk_indices = analysis_chunk_indices + max(reference_chunk_indices) + 1
+        monitored_chunk_indices = monitored_chunk_indices + max(reference_chunk_indices) + 1
 
     if has_reference_results:
         # region reference metric 1
@@ -396,14 +396,14 @@ def _plot_compare_step_to_step(  # noqa: C901
             )
 
         # region Period separator
-        if has_analysis_results:
+        if has_monitored_results:
             is_time_based = is_time_based_x_axis(reference_chunk_start_dates, reference_chunk_end_dates)
 
             figure.add_period_separator(
                 x=(
                     ensure_numpy(reference_chunk_indices)[0][-1] + 1
                     if not is_time_based
-                    else ensure_numpy(analysis_chunk_start_dates)[0][0]
+                    else ensure_numpy(monitored_chunk_start_dates)[0][0]
                 )
             )
 
@@ -423,9 +423,9 @@ def _plot_compare_step_to_step(  # noqa: C901
             )
 
             analyis_period_text_x = (
-                analysis_chunk_indices.mean()  # type: ignore
+                monitored_chunk_indices.mean()  # type: ignore
                 if not is_time_based
-                else analysis_chunk_start_dates.mean()  # type: ignore
+                else monitored_chunk_start_dates.mean()  # type: ignore
             )
 
             figure.add_annotation(
@@ -433,15 +433,15 @@ def _plot_compare_step_to_step(  # noqa: C901
                 xshift=15,
                 yref='paper',
                 y=1,
-                text="Analysis",
+                text="Monitored",
                 showarrow=False,
             )
         # endregion
 
         # endregion
 
-    if has_analysis_results:
-        # region analysis metric 1
+    if has_monitored_results:
+        # region monitored metric 1
 
         _hover = hover or Hover(
             template='%{period} &nbsp; &nbsp; %{alert} <br />'
@@ -450,32 +450,32 @@ def _plot_compare_step_to_step(  # noqa: C901
             # 'Sampling error range: +/- <b>%{sampling_error}</b><br />'
             show_extra=True,
         )
-        _hover.add(np.asarray([_metric_1_display_name] * len(analysis_metric_1)), 'metric_name')
+        _hover.add(np.asarray([_metric_1_display_name] * len(monitored_metric_1)), 'metric_name')
 
-        if analysis_chunk_periods is not None:
-            _hover.add(render_period_string(analysis_chunk_periods, color=metric_1_color), name='period')
+        if monitored_chunk_periods is not None:
+            _hover.add(render_period_string(monitored_chunk_periods, color=metric_1_color), name='period')
 
-        if analysis_metric_1_alerts is not None:
-            _hover.add(render_alert_string(analysis_metric_1_alerts), name='alert')
+        if monitored_metric_1_alerts is not None:
+            _hover.add(render_alert_string(monitored_metric_1_alerts), name='alert')
 
-        if analysis_chunk_keys is not None:
-            _hover.add(analysis_chunk_keys, name='chunk_key')
+        if monitored_chunk_keys is not None:
+            _hover.add(monitored_chunk_keys, name='chunk_key')
 
         _hover.add(
             render_x_coordinate(
-                analysis_chunk_indices,
-                analysis_chunk_start_dates,
-                analysis_chunk_end_dates,
+                monitored_chunk_indices,
+                monitored_chunk_start_dates,
+                monitored_chunk_end_dates,
             ),
             name='x_coordinate',
         )
-        _hover.add(np.round(analysis_metric_1, 4), name='metric_value')
+        _hover.add(np.round(monitored_metric_1, 4), name='metric_value')
 
         figure.add_metric(
-            data=analysis_metric_1,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
+            data=monitored_metric_1,
+            indices=monitored_chunk_indices,
+            start_dates=monitored_chunk_start_dates,
+            end_dates=monitored_chunk_end_dates,
             name=f'{_metric_1_display_name}',
             hover=_hover,
             xaxis=xaxis,
@@ -486,15 +486,15 @@ def _plot_compare_step_to_step(  # noqa: C901
         )
 
         if (
-            analysis_metric_1_upper_confidence_bounds is not None
-            and analysis_metric_1_lower_confidence_bounds is not None
+            monitored_metric_1_upper_confidence_bounds is not None
+            and monitored_metric_1_lower_confidence_bounds is not None
         ):
             figure.add_confidence_band(
-                upper_confidence_boundaries=analysis_metric_1_upper_confidence_bounds,
-                lower_confidence_boundaries=analysis_metric_1_lower_confidence_bounds,
-                indices=analysis_chunk_indices,
-                start_dates=analysis_chunk_start_dates,
-                end_dates=analysis_chunk_end_dates,
+                upper_confidence_boundaries=monitored_metric_1_upper_confidence_bounds,
+                lower_confidence_boundaries=monitored_metric_1_lower_confidence_bounds,
+                indices=monitored_chunk_indices,
+                start_dates=monitored_chunk_start_dates,
+                end_dates=monitored_chunk_end_dates,
                 name='Confidence band',
                 xaxis=xaxis,
                 yaxis=yaxis,
@@ -505,7 +505,7 @@ def _plot_compare_step_to_step(  # noqa: C901
 
         # endregion
 
-        # region analysis metric 2
+        # region monitored metric 2
         _hover = hover or Hover(
             template='%{period} &nbsp; &nbsp; %{alert} <br />'
             'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
@@ -514,33 +514,33 @@ def _plot_compare_step_to_step(  # noqa: C901
             show_extra=True,
         )
         _hover.add(
-            np.asarray([render_metric_display_name(metric_2_display_name)] * len(analysis_metric_2)), 'metric_name'
+            np.asarray([render_metric_display_name(metric_2_display_name)] * len(monitored_metric_2)), 'metric_name'
         )
 
-        if analysis_chunk_periods is not None:
-            _hover.add(render_period_string(analysis_chunk_periods, color=metric_2_color), name='period')
+        if monitored_chunk_periods is not None:
+            _hover.add(render_period_string(monitored_chunk_periods, color=metric_2_color), name='period')
 
-        if analysis_metric_2_alerts is not None:
-            _hover.add(render_alert_string(analysis_metric_2_alerts), name='alert')
+        if monitored_metric_2_alerts is not None:
+            _hover.add(render_alert_string(monitored_metric_2_alerts), name='alert')
 
-        if analysis_chunk_keys is not None:
-            _hover.add(analysis_chunk_keys, name='chunk_key')
+        if monitored_chunk_keys is not None:
+            _hover.add(monitored_chunk_keys, name='chunk_key')
 
         _hover.add(
             render_x_coordinate(
-                analysis_chunk_indices,
-                analysis_chunk_start_dates,
-                analysis_chunk_end_dates,
+                monitored_chunk_indices,
+                monitored_chunk_start_dates,
+                monitored_chunk_end_dates,
             ),
             name='x_coordinate',
         )
-        _hover.add(np.round(analysis_metric_2, 4), name='metric_value')
+        _hover.add(np.round(monitored_metric_2, 4), name='metric_value')
 
         figure.add_metric(
-            data=analysis_metric_2,
-            indices=analysis_chunk_indices,
-            start_dates=analysis_chunk_start_dates,
-            end_dates=analysis_chunk_end_dates,
+            data=monitored_metric_2,
+            indices=monitored_chunk_indices,
+            start_dates=monitored_chunk_start_dates,
+            end_dates=monitored_chunk_end_dates,
             name=f'{_metric_2_display_name}',
             xaxis=xaxis,
             yaxis=yaxis2,
@@ -551,15 +551,15 @@ def _plot_compare_step_to_step(  # noqa: C901
         )
 
         if (
-            analysis_metric_2_upper_confidence_bounds is not None
-            and analysis_metric_2_lower_confidence_bounds is not None
+            monitored_metric_2_upper_confidence_bounds is not None
+            and monitored_metric_2_lower_confidence_bounds is not None
         ):
             figure.add_confidence_band(
-                upper_confidence_boundaries=analysis_metric_2_upper_confidence_bounds,
-                lower_confidence_boundaries=analysis_metric_2_lower_confidence_bounds,
-                indices=analysis_chunk_indices,
-                start_dates=analysis_chunk_start_dates,
-                end_dates=analysis_chunk_end_dates,
+                upper_confidence_boundaries=monitored_metric_2_upper_confidence_bounds,
+                lower_confidence_boundaries=monitored_metric_2_lower_confidence_bounds,
+                indices=monitored_chunk_indices,
+                start_dates=monitored_chunk_start_dates,
+                end_dates=monitored_chunk_end_dates,
                 name='Confidence band',
                 xaxis=xaxis,
                 yaxis=yaxis2,
@@ -573,13 +573,13 @@ def _plot_compare_step_to_step(  # noqa: C901
 
         # region alerts
 
-        if analysis_metric_1_alerts is not None:
+        if monitored_metric_1_alerts is not None:
             figure.add_alert(
-                data=analysis_metric_1,
-                alerts=analysis_metric_1_alerts,
-                indices=analysis_chunk_indices,
-                start_dates=analysis_chunk_start_dates,
-                end_dates=analysis_chunk_end_dates,
+                data=monitored_metric_1,
+                alerts=monitored_metric_1_alerts,
+                indices=monitored_chunk_indices,
+                start_dates=monitored_chunk_start_dates,
+                end_dates=monitored_chunk_end_dates,
                 name='Alert',
                 legendgroup='alert',
                 plot_areas=False,
@@ -588,13 +588,13 @@ def _plot_compare_step_to_step(  # noqa: C901
                 yaxis=yaxis,
             )
 
-        if analysis_metric_2_alerts is not None:
+        if monitored_metric_2_alerts is not None:
             figure.add_alert(
-                data=analysis_metric_2,
-                alerts=analysis_metric_2_alerts,
-                indices=analysis_chunk_indices,
-                start_dates=analysis_chunk_start_dates,
-                end_dates=analysis_chunk_end_dates,
+                data=monitored_metric_2,
+                alerts=monitored_metric_2_alerts,
+                indices=monitored_chunk_indices,
+                start_dates=monitored_chunk_start_dates,
+                end_dates=monitored_chunk_end_dates,
                 name='Alert',
                 legendgroup='alert',
                 plot_areas=False,

@@ -72,15 +72,15 @@ class Result(Abstract1DResult, ResultCompareMixin):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference, monitored, _ = nml.load_synthetic_car_price_dataset()
         >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.MissingValuesCalculator(
         ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
-        >>> res = calc.calculate(analysis)
+        >>> res = calc.calculate(monitored)
         >>> for column_name in res.column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        ...     res = res.filter(period='monitored', column_name=column_name).plot().show()
 
         """
 

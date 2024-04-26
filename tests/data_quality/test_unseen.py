@@ -17,7 +17,7 @@ from nannyml.exceptions import InvalidArgumentsException
 
 @pytest.fixture(scope="module")
 def unseen_value_result() -> Result:
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = UnseenValuesCalculator(
         column_names=[
@@ -25,11 +25,11 @@ def unseen_value_result() -> Result:
             'size_of_downpayment',
         ],
     ).fit(reference)
-    return calc.calculate(data=analysis)
+    return calc.calculate(data=monitored)
 
 
 def test_unseen_value_calculator_with_default_params_should_not_fail():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     try:
         calc = UnseenValuesCalculator(
             column_names=[
@@ -37,13 +37,13 @@ def test_unseen_value_calculator_with_default_params_should_not_fail():  # noqa:
                 'size_of_downpayment',
             ],
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()
 
 
 def test_unseen_value_calculator_raises_invalidargumentsexception_on_non_int_numeric_columns():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     with pytest.raises(InvalidArgumentsException):
         _ = UnseenValuesCalculator(
             column_names=[
@@ -55,7 +55,7 @@ def test_unseen_value_calculator_raises_invalidargumentsexception_on_non_int_num
 
 
 def test_unseen_value_calculator_treats_int_numerical_columns_as_categorical(caplog):  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     caplog.set_level(logging.WARNING)
 
     try:
@@ -69,7 +69,7 @@ def test_unseen_value_calculator_treats_int_numerical_columns_as_categorical(cap
 
 
 def test_unseen_value_calculator_with_custom_params_should_not_fail():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     try:
         calc = UnseenValuesCalculator(
             column_names=[
@@ -79,7 +79,7 @@ def test_unseen_value_calculator_with_custom_params_should_not_fail():  # noqa: 
             timestamp_column_name='timestamp',
             normalize=False,
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()
 
@@ -138,7 +138,7 @@ def test_unseen_value_calculator_fit_should_raise_invalid_args_exception_when_co
 
 
 def test_unseen_value_calculator_calculate_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = UnseenValuesCalculator(
         column_names=[
             'repaid_loan_on_prev_car',
@@ -148,7 +148,7 @@ def test_unseen_value_calculator_calculate_should_raise_invalid_args_exception_w
         normalize=False,
     ).fit(reference_data=reference)
     with pytest.raises(InvalidArgumentsException):
-        _ = calc.calculate(analysis.drop('size_of_downpayment', axis=1))
+        _ = calc.calculate(monitored.drop('size_of_downpayment', axis=1))
 
 
 def test_whether_data_quality_metric_property_on_results_mv_rate(unseen_value_result):
@@ -176,7 +176,7 @@ def test_whether_result_data_dataframe_has_proper_columns(unseen_value_result):
 
 
 def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = UnseenValuesCalculator(
         column_names=[
             'repaid_loan_on_prev_car',
@@ -184,7 +184,7 @@ def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D1
         ],
         normalize=False,
     ).fit(reference)
-    assert calc.calculate(data=analysis).data_quality_metric == 'unseen_values_count'
+    assert calc.calculate(data=monitored).data_quality_metric == 'unseen_values_count'
 
 
 def test_results_filtering_column_repaid_loan_on_prev_car_str(unseen_value_result):

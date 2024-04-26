@@ -26,7 +26,7 @@ The data structure
 ===================
 
 In order to obtain results, we first have to perform some calculation. We will start by loading the `reference` and
-`analysis` sample data for binary classification.
+`monitored` sample data for binary classification.
 Then, we will perform univariate drift detection on a number of columns whose names are printed below.
 Knowing the column names will help you understand this walkthrough better.
 
@@ -39,7 +39,7 @@ We then set up the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftC
 of the columns to evaluate and the continuous and categorical methods we would like to use.
 
 We then fit the calculator on our `reference` data. The fitted calculator is then used to evaluate drift for the
-`analysis` data, stored here as the variable ``results``.
+`monitored` data, stored here as the variable ``results``.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb
@@ -84,7 +84,7 @@ The following snippet illustrates retrieving all calculated method values from o
 To improve this experience, we have introduced a helper method that allows you to filter the result data to easily
 retrieve the information you want. Since the :class:`~nannyml.drift.univariate.calculator.UnivariateDriftCalculator` has
 two degrees of freedom, we have included both in the :meth:`~nannyml.base.AbstractResult.filter` method.
-Additionally, you can filter on the :term:`data period<Data Period>`, i.e., ``reference`` or ``analysis``.
+Additionally, you can filter on the :term:`data period<Data Period>`, i.e., ``reference`` or ``monitored``.
 
 The :meth:`~nannyml.base.AbstractResult.filter` method will return a new
 :class:`~nannyml.drift.univariate.result.Result` instance, allowing you to chain methods like,
@@ -97,7 +97,7 @@ The :meth:`~nannyml.base.AbstractResult.filter` method will return a new
     :show_output:
 
 When looking at the results after filtering, you can see only the `chi2` data for the `salary_range` column during the
-`analysis` period is included.
+`monitored` period is included.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Working with results.ipynb

@@ -50,7 +50,7 @@ class Chunk:
         end_datetime: datetime
             The end point in time for this chunk.
         period : string, optional
-            The 'period' this chunk belongs to, for example 'reference' or 'analysis'.
+            The 'period' this chunk belongs to, for example 'reference' or 'monitored'.
         """
         self.key = key
         self.data = data

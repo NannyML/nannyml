@@ -24,11 +24,11 @@ Walkthrough
 -----------
 
 NannyML's univariate approach for data drift looks at each variable individually and compares the
-:ref:`chunks<chunking>` created from the analysis :ref:`data period<data-drift-periods>` with the reference period.
+:ref:`chunks<chunking>` created from the monitored :ref:`data period<data-drift-periods>` with the reference period.
 You can read more about periods and other data requirements in our section on :ref:`data periods<data-drift-periods>`.
 
 The comparison results in a single number, a drift metric, representing the amount of drift between the reference and
-analysis chunks. NannyML calculates them for every chunk, allowing you to track them over time.
+monitored chunks. NannyML calculates them for every chunk, allowing you to track them over time.
 
 NannyML offers both statistical tests as well as distance measures to detect drift. They are referred to as
 `methods`. Some methods only apply to continuous data, others to categorical data and some might be used on both.
@@ -83,7 +83,7 @@ First, we need to instantiate it with the appropriate parameters:
     :cells: 3
 
 Next, the :meth:`~nannyml.base.AbstractCalculator.fit` method needs
-to be called on the reference data, which provides the baseline that the analysis data will be compared with. Then the
+to be called on the reference data, which provides the baseline that the monitored data will be compared with. Then the
 :meth:`~nannyml.base.AbstractCalculator.calculate` method will
 calculate the drift results on the provided data.
 

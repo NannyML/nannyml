@@ -25,53 +25,53 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 
 @pytest.fixture(scope='module')
 def univariate_drift_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_binary_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'work_home_actual', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df)
+    result = calc.calculate(monitored_df)
     return result
 
 
 @pytest.fixture(scope='module')
 def univariate_drift_for_multiclass_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df)
+    result = calc.calculate(monitored_df)
     return result
 
 
 @pytest.fixture(scope='module')
 def univariate_drift_for_regression_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df)
+    result = calc.calculate(monitored_df)
     return result
 
 
 @pytest.fixture(scope='module')
 def data_reconstruction_drift_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_binary_classification_dataset()
     calc = DataReconstructionDriftCalculator(
         column_names=[
             col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_pred_proba', 'work_home_actual', 'id']
         ],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df)
+    result = calc.calculate(monitored_df)
     return result
 
 
 @pytest.fixture(scope='module')
 def data_reconstruction_drift_for_multiclass_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = DataReconstructionDriftCalculator(
         column_names=[
             col
@@ -89,24 +89,24 @@ def data_reconstruction_drift_for_multiclass_classification_result():
         ],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df)
+    result = calc.calculate(monitored_df)
     return result
 
 
 @pytest.fixture(scope='module')
 def data_reconstruction_drift_for_regression_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_car_price_dataset()
     calc = DataReconstructionDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df)
+    result = calc.calculate(monitored_df)
     return result
 
 
 @pytest.fixture(scope='module')
 def realized_performance_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_binary_classification_dataset()
     calc = PerformanceCalculator(
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
@@ -115,13 +115,13 @@ def realized_performance_for_binary_classification_result():
         timestamp_column_name='timestamp',
         metrics=['roc_auc', 'f1', 'confusion_matrix'],
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.calculate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 
 @pytest.fixture(scope='module')
 def realized_performance_for_multiclass_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = PerformanceCalculator(
         y_pred='y_pred',
         y_pred_proba={
@@ -134,13 +134,13 @@ def realized_performance_for_multiclass_classification_result():
         problem_type='classification_multiclass',
         metrics=['roc_auc', 'f1'],
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.calculate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 
 @pytest.fixture(scope='module')
 def realized_performance_for_regression_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_car_price_dataset()
     calc = PerformanceCalculator(
         y_pred='y_pred',
         y_true='y_true',
@@ -148,13 +148,13 @@ def realized_performance_for_regression_result():
         problem_type='regression',
         metrics=['mae', 'mape'],
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.calculate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 
 @pytest.fixture(scope='module')
 def cbpe_estimated_performance_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_binary_classification_dataset()
     calc = CBPE(
         y_pred='y_pred',
         y_pred_proba='y_pred_proba',
@@ -163,13 +163,13 @@ def cbpe_estimated_performance_for_binary_classification_result():
         timestamp_column_name='timestamp',
         metrics=['roc_auc', 'f1', 'confusion_matrix'],
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.estimate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 
 @pytest.fixture(scope='module')
 def cbpe_estimated_performance_for_multiclass_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = CBPE(
         y_pred='y_pred',
         y_pred_proba={
@@ -182,13 +182,13 @@ def cbpe_estimated_performance_for_multiclass_classification_result():
         problem_type='classification_multiclass',
         metrics=['roc_auc', 'f1'],
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.estimate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 
 @pytest.fixture(scope='module')
 def dle_estimated_performance_for_regression_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_car_price_dataset()
     calc = DLE(
         feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
         y_pred='y_pred',
@@ -196,31 +196,31 @@ def dle_estimated_performance_for_regression_result():
         timestamp_column_name='timestamp',
         metrics=['mae', 'mape'],
     ).fit(reference_df)
-    result = calc.estimate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.estimate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 
 @pytest.fixture(scope='module')
 def missing_values_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.calculate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 
 @pytest.fixture(scope='module')
 def unseen_values_for_binary_classification_result():
-    reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
+    reference_df, monitored_df, monitored_targets_df = load_synthetic_car_loan_data_quality_dataset()
     calc = UnseenValuesCalculator(
         # categorical features as described in
         # https://nannyml.readthedocs.io/en/stable/datasets/binary_car_loan.html#dataset-description
         column_names=['salary_range', 'repaid_loan_on_prev_car', 'size_of_downpayment'],
         timestamp_column_name='timestamp',
     ).fit(reference_df)
-    result = calc.calculate(analysis_df.merge(analysis_targets_df, on='id'))
+    result = calc.calculate(monitored_df.merge(monitored_targets_df, on='id'))
     return result
 
 

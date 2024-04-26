@@ -30,7 +30,7 @@ For simplicity this guide is based on a synthetic dataset where the monitored mo
 which type of credit card product new customers should be assigned to.
 Check out :ref:`Credit Card Dataset<dataset-synthetic-multiclass>` to learn more about this dataset.
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual monitored, provided as the monitored dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
 We start by loading the dataset we'll be using:
@@ -99,9 +99,9 @@ estimator is then fitted using the
 
 The fitted ``estimator`` can be used to estimate performance on other data, for which performance cannot be calculated.
 Typically, this would be used on the latest production data where target is missing. In our example this is
-the ``analysis_df`` data.
+the ``monitored_df`` data.
 
-NannyML can then output a dataframe that contains all the results. Let's have a look at the results for analysis period
+NannyML can then output a dataframe that contains all the results. Let's have a look at the results for monitored period
 only.
 
 .. nbimport::
@@ -131,13 +131,13 @@ that was estimated:
 
 These results can be also plotted. Our plot contains several key elements.
 
-* *The purple step plot* shows the estimated performance in each chunk of the analysis period. Thick squared point
+* *The purple step plot* shows the estimated performance in each chunk of the monitored period. Thick squared point
   markers indicate the middle of these chunks.
 
-* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is
+* *The low-saturated purple area* around the estimated performance in the monitored period corresponds to the :term:`confidence band<Confidence Band>` which is
   calculated as the estimated performance +/- 3 times the estimated :term:`Sampling Error`.
 
-* *The gray vertical line* splits the reference and analysis periods.
+* *The gray vertical line* splits the reference and monitored periods.
 
 * *The red horizontal dashed lines* show upper and lower thresholds for alerting purposes.
 
@@ -147,7 +147,7 @@ These results can be also plotted. Our plot contains several key elements.
     :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - Multiclass Classification.ipynb
     :cells: 7
 
-.. image:: ../../../_static/tutorials/performance_estimation/multiclass/tutorial-confusion-matrix-estimation-multiclass-analysis-with-ref.svg
+.. image:: ../../../_static/tutorials/performance_estimation/multiclass/tutorial-confusion-matrix-estimation-multiclass-monitored-with-ref.svg
 
 Additional information such as the chunk index range and chunk date range (if timestamps were provided) is shown in the hover for each chunk (these are
 interactive plots, though only static views are included here).

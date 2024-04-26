@@ -147,15 +147,15 @@ The total number of chunks can be set by the ``chunk_number`` parameter:
 
 .. warning::
     The same splitting rule is always applied to the dataset used for fitting (**reference**) and the dataset of
-    interest (in the presented case - **analysis**).
+    interest (in the presented case - **monitored**).
 
     Unless these two datasets are the same size, the chunk sizes
-    can be considerably different. For example, if the **reference** dataset has 10 000 observations and the **analysis**
+    can be considerably different. For example, if the **reference** dataset has 10 000 observations and the **monitored**
     dataset has 80 000, and chunking is number-based, chunks in **reference** will be much smaller than in
-    the **analysis**.
+    the **monitored**.
 
     Additionally, if the data drift or performance estimation is calculated on
-    combined **reference** and **analysis**, the results presented for **reference** will be calculated on different
+    combined **reference** and **monitored**, the results presented for **reference** will be calculated on different
     chunks than they were fitted.
 
 Automatic chunking

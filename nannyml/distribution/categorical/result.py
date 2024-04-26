@@ -243,7 +243,7 @@ def _plot_categorical_distribution(
         (column_name,) = key.properties
 
         reference_result = result.filter(period='reference', column_names=[column_name])
-        analysis_result = result.filter(period='analysis', column_names=[column_name])
+        monitored_result = result.filter(period='monitored', column_names=[column_name])
 
         figure = _plot_stacked_bar(
             figure=figure,
@@ -257,13 +257,13 @@ def _plot_categorical_distribution(
             reference_chunk_indices=reference_result.chunk_indices,
             reference_chunk_start_dates=reference_result.chunk_start_dates,
             reference_chunk_end_dates=reference_result.chunk_end_dates,
-            analysis_value_counts=analysis_result.value_counts(key),
-            analysis_alerts=None,
-            analysis_chunk_keys=analysis_result.chunk_keys,
-            analysis_chunk_periods=analysis_result.chunk_periods,
-            analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
-            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
+            monitored_value_counts=monitored_result.value_counts(key),
+            monitored_alerts=None,
+            monitored_chunk_keys=monitored_result.chunk_keys,
+            monitored_chunk_periods=monitored_result.chunk_periods,
+            monitored_chunk_indices=monitored_result.chunk_indices,
+            monitored_chunk_start_dates=monitored_result.chunk_start_dates,
+            monitored_chunk_end_dates=monitored_result.chunk_end_dates,
         )
 
     return figure
@@ -318,11 +318,11 @@ def _plot_categorical_distribution_with_alerts(
 
         reference_result = result.filter(period='reference', column_names=[column_name])
         reference_result.data.sort_index(inplace=True)
-        analysis_result = result.filter(period='analysis', column_names=[column_name])
-        analysis_result.data.sort_index(inplace=True)
+        monitored_result = result.filter(period='monitored', column_names=[column_name])
+        monitored_result.data.sort_index(inplace=True)
 
         # reference_alerts = drift_result.filter(period='reference').alerts(drift_key)
-        analysis_alerts = drift_result.filter(period='analysis').alerts(drift_key)
+        monitored_alerts = drift_result.filter(period='monitored').alerts(drift_key)
 
         figure = _plot_stacked_bar(
             figure=figure,
@@ -336,13 +336,13 @@ def _plot_categorical_distribution_with_alerts(
             reference_chunk_indices=reference_result.chunk_indices,
             reference_chunk_start_dates=reference_result.chunk_start_dates,
             reference_chunk_end_dates=reference_result.chunk_end_dates,
-            analysis_value_counts=analysis_result.value_counts(column_name=column_name),
-            analysis_alerts=analysis_alerts,
-            analysis_chunk_keys=analysis_result.chunk_keys,
-            analysis_chunk_periods=analysis_result.chunk_periods,
-            analysis_chunk_indices=analysis_result.chunk_indices,
-            analysis_chunk_start_dates=analysis_result.chunk_start_dates,
-            analysis_chunk_end_dates=analysis_result.chunk_end_dates,
+            monitored_value_counts=monitored_result.value_counts(column_name=column_name),
+            monitored_alerts=monitored_alerts,
+            monitored_chunk_keys=monitored_result.chunk_keys,
+            monitored_chunk_periods=monitored_result.chunk_periods,
+            monitored_chunk_indices=monitored_result.chunk_indices,
+            monitored_chunk_start_dates=monitored_result.chunk_start_dates,
+            monitored_chunk_end_dates=monitored_result.chunk_end_dates,
         )
 
     return figure
@@ -352,19 +352,19 @@ def _plot_stacked_bar(
     figure: Figure,
     column_name: str,
     reference_value_counts: pd.DataFrame,
-    analysis_value_counts: pd.DataFrame,
+    monitored_value_counts: pd.DataFrame,
     reference_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     reference_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
-    analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_alerts: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_keys: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_periods: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
+    monitored_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
 ) -> Figure:
@@ -404,34 +404,34 @@ def _plot_stacked_bar(
         )
 
         assert reference_chunk_indices is not None
-        analysis_chunk_indices = (analysis_chunk_indices + (max(reference_chunk_indices) + 1)).reset_index(drop=True)
-        analysis_value_counts['chunk_indices'] += max(reference_chunk_indices) + 1
+        monitored_chunk_indices = (monitored_chunk_indices + (max(reference_chunk_indices) + 1)).reset_index(drop=True)
+        monitored_value_counts['chunk_indices'] += max(reference_chunk_indices) + 1
 
-        if analysis_chunk_start_dates is not None:
-            analysis_chunk_start_dates = analysis_chunk_start_dates.reset_index(drop=True)
+        if monitored_chunk_start_dates is not None:
+            monitored_chunk_start_dates = monitored_chunk_start_dates.reset_index(drop=True)
 
     figure = stacked_bar(
         figure=figure,
-        stacked_bar_table=analysis_value_counts,
+        stacked_bar_table=monitored_value_counts,
         color=Colors.INDIGO_PERSIAN,
-        chunk_indices=analysis_chunk_indices,
-        chunk_start_dates=analysis_chunk_start_dates,
-        chunk_end_dates=analysis_chunk_end_dates,
-        annotation='Analysis',
+        chunk_indices=monitored_chunk_indices,
+        chunk_start_dates=monitored_chunk_start_dates,
+        chunk_end_dates=monitored_chunk_end_dates,
+        annotation='Monitored',
         showlegend=False,
         legendgroup=column_name,
         subplot_args=subplot_args,
     )
 
-    if analysis_alerts is not None:
+    if monitored_alerts is not None:
         figure = stacked_bar_alert(
             figure=figure,
-            alerts=analysis_alerts,
-            stacked_bar_table=analysis_value_counts,
+            alerts=monitored_alerts,
+            stacked_bar_table=monitored_value_counts,
             color=Colors.RED_IMPERIAL,
-            chunk_indices=analysis_chunk_indices,
-            chunk_start_dates=analysis_chunk_start_dates,
-            chunk_end_dates=analysis_chunk_end_dates,
+            chunk_indices=monitored_chunk_indices,
+            chunk_start_dates=monitored_chunk_start_dates,
+            chunk_end_dates=monitored_chunk_end_dates,
             showlegend=True,
             legendgroup=column_name,
             subplot_args=subplot_args,

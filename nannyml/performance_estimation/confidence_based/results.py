@@ -174,7 +174,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         >>> import nannyml as nml
         >>> from IPython.display import display
         >>> reference_df = nml.load_synthetic_car_loan_dataset()[0]
-        >>> analysis_df = nml.load_synthetic_car_loan_dataset()[1]
+        >>> monitored_df = nml.load_synthetic_car_loan_dataset()[1]
         >>> display(reference_df.head(3))
         >>> estimator = nml.CBPE(
         ...     y_pred_proba='y_pred_proba',
@@ -186,8 +186,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         ...     problem_type='classification_binary',
         >>> )
         >>> estimator.fit(reference_df)
-        >>> results = estimator.estimate(analysis_df)
-        >>> display(results.filter(period='analysis').to_df())
+        >>> results = estimator.estimate(monitored_df)
+        >>> display(results.filter(period='monitored').to_df())
         >>> metric_fig = results.plot()
         >>> metric_fig.show()
         """

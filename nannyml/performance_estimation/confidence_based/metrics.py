@@ -6,7 +6,7 @@ The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimato
 
 The :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE` estimator will then loop over these
 :class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
-and run the estimation on analysis data.
+and run the estimation on monitored data.
 """
 
 import abc

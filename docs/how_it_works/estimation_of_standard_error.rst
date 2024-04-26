@@ -258,9 +258,9 @@ selected twice. Nevertheless, this approach provides an estimation with good eno
 keeping the computation cost very low.
 
 Another thing to keep in mind is that regardless of the method chosen to calculate it, the standard error is based
-on reference data. The only information it takes from the analysis chunk is its size. Therefore, it provides
-accurate estimations for the analysis period as long as the i.i.d (independent and identically distributed) assumption holds.
-Or in other words - it assumes that the *variability* of a metric on analysis set will be the same as on reference set.
+on reference data. The only information it takes from the monitored chunk is its size. Therefore, it provides
+accurate estimations for the monitored period as long as the i.i.d (independent and identically distributed) assumption holds.
+Or in other words - it assumes that the *variability* of a metric on monitored set will be the same as on reference set.
 
 
 **References**

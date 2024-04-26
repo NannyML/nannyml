@@ -19,8 +19,8 @@ Examples
 --------
 >>> import nannyml as nml
 >>> from IPython.display import display
->>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
->>> analysis_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
+>>> reference_df, monitored_df, monitored_targets_df = nml.load_synthetic_car_loan_dataset()
+>>> monitored_df = monitored_df.merge(monitored_targets_df, left_index=True, right_index=True)
 >>> display(reference_df.head(3))
 >>> calc = nml.PerformanceCalculator(
 ...     y_pred_proba='y_pred_proba',
@@ -31,8 +31,8 @@ Examples
 ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'average_precision'],
 ...     chunk_size=5000)
 >>> calc.fit(reference_df)
->>> results = calc.calculate(analysis_df)
->>> display(results.filter(period='analysis').to_df())
+>>> results = calc.calculate(monitored_df)
+>>> display(results.filter(period='monitored').to_df())
 >>> display(results.filter(period='reference').to_df())
 >>> figure = results.plot()
 >>> figure.show()
@@ -180,8 +180,8 @@ class PerformanceCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
+        >>> reference_df, monitored_df, monitored_targets_df = nml.load_synthetic_car_loan_dataset()
+        >>> monitored_df = monitored_df.merge(monitored_targets_df, left_index=True, right_index=True)
         >>> display(reference_df.head(3))
         >>> calc = nml.PerformanceCalculator(
         ...     y_pred_proba='y_pred_proba',
@@ -192,8 +192,8 @@ class PerformanceCalculator(AbstractCalculator):
         ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'average_precision'],
         ...     chunk_size=5000)
         >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
-        >>> display(results.filter(period='analysis').to_df())
+        >>> results = calc.calculate(monitored_df)
+        >>> display(results.filter(period='monitored').to_df())
         >>> display(results.filter(period='reference').to_df())
         >>> figure = results.plot()
         >>> figure.show()
@@ -292,7 +292,7 @@ class PerformanceCalculator(AbstractCalculator):
 
     @log_usage(UsageEvent.PERFORMANCE_CALC_RUN, metadata_from_self=['metrics', 'problem_type'])
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
-        """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
+        """Calculates performance on the monitored data, using the metrics specified on calculator creation."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
@@ -323,7 +323,7 @@ class PerformanceCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis',
+                    'period': 'monitored',
                     'targets_missing_rate': chunk.data[TARGET_COMPLETENESS_RATE_COLUMN_NAME].sum()
                     / chunk.data[TARGET_COMPLETENESS_RATE_COLUMN_NAME].count(),
                     **self._calculate_metrics_for_chunk(chunk),

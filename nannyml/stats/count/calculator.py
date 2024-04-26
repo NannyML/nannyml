@@ -56,11 +56,11 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference, monitored, _ = nml.load_synthetic_car_price_dataset()
         >>> calc = nml.SummaryStatsRowCountCalculator(
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
-        >>> res = calc.calculate(analysis)
+        >>> res = calc.calculate(monitored)
         >>> res.plot().show()
         """
         super(SummaryStatsRowCountCalculator, self).__init__(
@@ -125,7 +125,7 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_datetime': chunk.start_datetime,
                 'end_datetime': chunk.end_datetime,
-                'period': 'analysis',
+                'period': 'monitored',
             }
 
             for k, v in self._calculate_for_df(chunk.data).items():

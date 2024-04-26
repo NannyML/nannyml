@@ -19,7 +19,7 @@ def sample_drift_data() -> pd.DataFrame:  # noqa: D103
     data = pd.DataFrame(pd.date_range(start='1/6/2020', freq='10min', periods=20 * 1008), columns=['timestamp'])
     data['week'] = data.timestamp.dt.isocalendar().week - 1
     data['period'] = 'reference'
-    data.loc[data.week >= 11, ['period']] = 'analysis'
+    data.loc[data.week >= 11, ['period']] = 'monitored'
     # data[NML_METADATA_PERIOD_COLUMN_NAME] = data['period']  # simulate preprocessing
     np.random.seed(167)
     data['f1'] = np.random.randn(data.shape[0])
@@ -137,14 +137,14 @@ def test_output_drift_calculator_with_default_params_should_not_fail(sample_drif
 
 
 def test_output_drift_calculator_for_regression_problems():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_price_dataset()
+    reference, monitored, _ = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
         column_names=['y_pred'],
         timestamp_column_name='timestamp',
         chunk_size=5000,
     ).fit(reference)
-    results = calc.calculate(analysis)
-    sut = results.filter(period='analysis').to_df()
+    results = calc.calculate(monitored)
+    sut = results.filter(period='monitored').to_df()
 
     assert (
         round(sut['y_pred', 'jensen_shannon', 'value'], 5)
@@ -316,13 +316,13 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
 def test_univariate_statistical_drift_calculator_for_regression_works_with_chunker(
     calculator_opts, expected  # noqa: D103
 ):
-    reference, analysis, _ = load_synthetic_car_price_dataset()
+    reference, monitored, _ = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
         column_names=['y_pred'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis)
-    sut = results.filter(period='analysis').to_df()[[('chunk', 'chunk', 'key'), ('y_pred', 'jensen_shannon', 'value')]]
+    results = calc.calculate(monitored)
+    sut = results.filter(period='monitored').to_df()[[('chunk', 'chunk', 'key'), ('y_pred', 'jensen_shannon', 'value')]]
     sut.columns = ['key', 'y_pred_js']
     pd.testing.assert_frame_equal(expected, sut)
 
@@ -540,14 +540,14 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
 def test_univariate_statistical_drift_calculator_for_binary_classification_works_with_chunker(
     calculator_opts, expected  # noqa: D103
 ):
-    reference, analysis, _ = load_synthetic_binary_classification_dataset()
+    reference, monitored, _ = load_synthetic_binary_classification_dataset()
     reference['y_pred'] = reference['y_pred'].astype("category")
     calc = UnivariateDriftCalculator(
         column_names=['y_pred_proba', 'y_pred'],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis)
-    sut = results.filter(period='analysis').to_df()[
+    results = calc.calculate(monitored)
+    sut = results.filter(period='monitored').to_df()[
         [('chunk', 'chunk', 'key'), ('y_pred', 'jensen_shannon', 'value'), ('y_pred_proba', 'jensen_shannon', 'value')]
     ]
     sut.columns = ['key', 'y_pred_js', 'y_pred_proba_js']
@@ -774,7 +774,7 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
 def test_univariate_statistical_drift_calculator_for_multiclass_classification_works_with_chunker(
     calculator_opts, expected  # noqa: D103
 ):
-    reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
+    reference, monitored, _ = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[
             'y_pred',
@@ -784,8 +784,8 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
         ],
         **calculator_opts,
     ).fit(reference)
-    results = calc.calculate(analysis)
-    sut = results.filter(period='analysis').to_df()[
+    results = calc.calculate(monitored)
+    sut = results.filter(period='monitored').to_df()[
         [
             ('chunk', 'chunk', 'key'),
             ('y_pred', 'jensen_shannon', 'value'),
@@ -800,10 +800,10 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
 @pytest.mark.parametrize(
     'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
-        ({}, {'kind': 'drift'}, 'analysis'),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'analysis'),
-        ({}, {'kind': 'distribution'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'monitored'),
+        ({}, {'kind': 'drift'}, 'monitored'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'monitored'),
+        ({}, {'kind': 'distribution'}, 'monitored'),
         ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
         ({}, {'kind': 'drift'}, 'all'),
         ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'all'),
@@ -821,7 +821,7 @@ def test_univariate_statistical_drift_calculator_for_multiclass_classification_w
     ],
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
-    reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
+    reference, monitored, _ = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[
             'y_pred',
@@ -831,7 +831,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         ],
         **calc_args,
     ).fit(reference)
-    sut = calc.calculate(analysis).filter(period=period)
+    sut = calc.calculate(monitored).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -842,10 +842,10 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
 @pytest.mark.parametrize(
     'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
-        ({}, {'kind': 'drift'}, 'analysis'),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'analysis'),
-        ({}, {'kind': 'distribution'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'monitored'),
+        ({}, {'kind': 'drift'}, 'monitored'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'monitored'),
+        ({}, {'kind': 'distribution'}, 'monitored'),
         ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
         ({}, {'kind': 'drift'}, 'all'),
         ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'all'),
@@ -863,10 +863,10 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
     ],
 )
 def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
-    reference, analysis, _ = load_synthetic_binary_classification_dataset()
+    reference, monitored, _ = load_synthetic_binary_classification_dataset()
     reference['y_pred'] = reference['y_pred'].astype("category")
     calc = UnivariateDriftCalculator(column_names=['y_pred', 'y_pred_proba'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis).filter(period=period)
+    sut = calc.calculate(monitored).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)
@@ -877,10 +877,10 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 @pytest.mark.parametrize(
     'calc_args, plot_args, period',
     [
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'analysis'),
-        ({}, {'kind': 'drift'}, 'analysis'),
-        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'analysis'),
-        ({}, {'kind': 'distribution'}, 'analysis'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'monitored'),
+        ({}, {'kind': 'drift'}, 'monitored'),
+        ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'monitored'),
+        ({}, {'kind': 'distribution'}, 'monitored'),
         ({'timestamp_column_name': 'timestamp'}, {'kind': 'drift'}, 'all'),
         ({}, {'kind': 'drift'}, 'all'),
         ({'timestamp_column_name': 'timestamp'}, {'kind': 'distribution'}, 'all'),
@@ -898,9 +898,9 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
     ],
 )
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args, period):  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_price_dataset()
+    reference, monitored, _ = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(column_names=['y_pred'], **calc_args).fit(reference)
-    sut = calc.calculate(analysis).filter(period=period)
+    sut = calc.calculate(monitored).filter(period=period)
 
     try:
         _ = sut.plot(**plot_args)

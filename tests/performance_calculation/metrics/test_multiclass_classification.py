@@ -66,7 +66,7 @@ def realized_performance_metrics(multiclass_data) -> pd.DataFrame:
     ).fit(multiclass_data[0])
     results = performance_calculator.calculate(
         multiclass_data[1].merge(multiclass_data[2], left_index=True, right_index=True)
-    ).filter(period='analysis')
+    ).filter(period='monitored')
     return results.to_df()
 
 
@@ -75,7 +75,7 @@ def no_timestamp_metrics(performance_calculator, multiclass_data) -> pd.DataFram
     performance_calculator.fit(multiclass_data[0])
     results = performance_calculator.calculate(
         multiclass_data[1].merge(multiclass_data[2], left_index=True, right_index=True)
-    ).filter(period='analysis')
+    ).filter(period='monitored')
     return results.data
 
 

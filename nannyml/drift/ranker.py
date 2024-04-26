@@ -144,8 +144,8 @@ class AlertCountRanker:
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_full_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
+        >>> reference_df, monitored_df, monitored_targets_df = nml.load_synthetic_car_loan_dataset()
+        >>> monitored_full_df = monitored_df.merge(monitored_targets_df, left_index=True, right_index=True)
         >>> feature_column_names = [
         ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
         ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
@@ -159,7 +159,7 @@ class AlertCountRanker:
         ...     chunk_size=5000
         >>> )
         >>> univ_calc.fit(reference_df)
-        >>> univariate_results = univ_calc.calculate(analysis_full_df)
+        >>> univariate_results = univ_calc.calculate(monitored_full_df)
         >>> alert_count_ranker = nml.AlertCountRanker()
         >>> alert_count_ranked_features = alert_count_ranker.rank(
         ...     univariate_results.filter(methods=['jensen_shannon']),
@@ -201,8 +201,8 @@ class CorrelationRanker:
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_full_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
+        >>> reference_df, monitored_df, monitored_targets_df = nml.load_synthetic_car_loan_dataset()
+        >>> monitored_full_df = monitored_df.merge(monitored_targets_df, left_index=True, right_index=True)
         >>> feature_column_names = [
         ...     'car_value', 'salary_range', 'debt_to_income_ratio', 'loan_length', 'repaid_loan_on_prev_car',
         ...     'size_of_downpayment', 'driver_tenure', 'y_pred_proba', 'y_pred', 'repaid'
@@ -216,7 +216,7 @@ class CorrelationRanker:
         ...     chunk_size=5000
         >>> )
         >>> univ_calc.fit(reference_df)
-        >>> univariate_results = univ_calc.calculate(analysis_full_df)
+        >>> univariate_results = univ_calc.calculate(monitored_full_df)
         >>> realized_calc = nml.PerformanceCalculator(
         ...     y_pred_proba='y_pred_proba',
         ...     y_pred='y_pred',
@@ -226,15 +226,15 @@ class CorrelationRanker:
         ...     metrics=['roc_auc', 'recall',],
         ...     chunk_size=5000)
         >>> realized_calc.fit(reference_df)
-        >>> realized_perf_results = realized_calc.calculate(analysis_full_df)
+        >>> realized_perf_results = realized_calc.calculate(monitored_full_df)
         >>> ranker2 = nml.CorrelationRanker()
         >>> # ranker fits on one metric and reference period data only
         >>> ranker2.fit(
         ...     realized_perf_results.filter(period='reference', metrics=['recall']))
         >>> # ranker ranks on one drift method and one performance metric
         >>> correlation_ranked_features2 = ranker2.rank(
-        ...     univariate_results.filter(period='analysis', methods=['jensen_shannon']),
-        ...     realized_perf_results.filter(period='analysis', metrics=['recall']),
+        ...     univariate_results.filter(period='monitored', methods=['jensen_shannon']),
+        ...     realized_perf_results.filter(period='monitored', metrics=['recall']),
         ...     only_drifting = False)
         >>> display(correlation_ranked_features2)
                           column_name  pearsonr_correlation  pearsonr_pvalue  has_drifted  rank

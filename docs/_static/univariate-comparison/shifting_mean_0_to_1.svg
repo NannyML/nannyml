@@ -269,7 +269,7 @@ z
      </g>
     </g>
     <g id="text_6">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(60.810019 201.572812) scale(0.1 -0.1)">
       <defs>
        <path id="Helvetica-4d" d="M 472 4591
@@ -1269,7 +1269,7 @@ z
      </g>
     </g>
     <g id="text_22">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(276.877519 201.572812) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-4d"/>
       <use xlink:href="#Helvetica-65" x="83.300781"/>
@@ -1654,7 +1654,7 @@ z
      </g>
     </g>
     <g id="text_35">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(492.945019 201.572812) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-4d"/>
       <use xlink:href="#Helvetica-65" x="83.300781"/>
@@ -2119,7 +2119,7 @@ z
      </g>
     </g>
     <g id="text_49">
-     <!-- Mean of Analysis Distribution -->
+     <!-- Mean of Monitored Distribution -->
      <g transform="translate(709.012519 201.572812) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-4d"/>
       <use xlink:href="#Helvetica-65" x="83.300781"/>

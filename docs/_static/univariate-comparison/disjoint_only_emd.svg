@@ -17353,7 +17353,7 @@ L 915.552911 343.58625
    </g>
   </g>
   <g id="text_163">
-   <!-- Analysis 1 -->
+   <!-- Monitored 1 -->
    <g transform="translate(16.549687 189.575) rotate(-90) scale(0.2 -0.2)">
     <defs>
      <path id="Helvetica-79" d="M 2503 3347
@@ -17394,7 +17394,7 @@ z
    </g>
   </g>
   <g id="text_164">
-   <!-- Analysis 2 -->
+   <!-- Monitored 2 -->
    <g transform="translate(16.549687 477.575) rotate(-90) scale(0.2 -0.2)">
     <use xlink:href="#Helvetica-41"/>
     <use xlink:href="#Helvetica-6e" x="66.699219"/>

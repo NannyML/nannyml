@@ -173,7 +173,7 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
         problem_type='classification_binary',
     ).fit(reference_data=ref_data)
     result = calc.calculate(data)
-    sut = result.filter(period='analysis').to_df()
+    sut = result.filter(period='monitored').to_df()
 
     assert ('chunk', 'targets_missing_rate') in sut.columns
     assert sut.loc[0, ('chunk', 'targets_missing_rate')] == 0.1
@@ -187,16 +187,16 @@ def test_calculator_calculate_should_support_partial_bool_targets(data, performa
     when calculating the performance metrics. This test ensures that the calculator supports partial bool targets.
     """
     ref_data = data[0]
-    analysis_data = data[1].merge(data[2], on='id')
+    monitored_data = data[1].merge(data[2], on='id')
 
     # Convert target column to bool dtype
-    analysis_data = analysis_data.astype({'work_home_actual': 'bool'})
+    monitored_data = monitored_data.astype({'work_home_actual': 'bool'})
 
     # Drop 10% of the target values in the first chunk
-    analysis_data.loc[0:499, 'work_home_actual'] = np.NAN
+    monitored_data.loc[0:499, 'work_home_actual'] = np.NAN
 
     performance_calculator.fit(reference_data=ref_data)
-    performance_calculator.calculate(analysis_data)
+    performance_calculator.calculate(monitored_data)
 
     # No further checks needed, if the above code runs without errors, the test passes.
 
@@ -280,9 +280,9 @@ def test_performance_calculator_with_default_thresholds():
 
 # See https://github.com/NannyML/nannyml/issues/192
 def test_calculator_returns_distinct_but_consistent_results_when_reused(data, performance_calculator):
-    reference, analysis, target = data
+    reference, monitored, target = data
 
-    data = analysis.merge(target, on='id')
+    data = monitored.merge(target, on='id')
     performance_calculator.fit(reference)
     result1 = performance_calculator.calculate(data)
     result2 = performance_calculator.calculate(data)
@@ -330,11 +330,11 @@ def test_performance_calculator_result_filter_period(performance_result):
     ],
 )
 def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
+    reference, monitored, monitored_targets = load_synthetic_car_price_dataset()
     calc = PerformanceCalculator(
         y_true='y_true', y_pred='y_pred', problem_type=ProblemType.REGRESSION, metrics=['mae', 'mape'], **calc_args
     ).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='id'))
+    sut = calc.calculate(monitored.merge(monitored_targets, on='id'))
 
     try:
         _ = sut.plot(**plot_args)
@@ -358,7 +358,7 @@ def test_regression_result_plots_raise_no_exceptions(calc_args, plot_args):  # n
     ],
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_multiclass_classification_dataset()
     calc = PerformanceCalculator(
         y_true='y_true',
         y_pred='y_pred',
@@ -371,7 +371,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
         metrics=['roc_auc', 'f1'],
         **calc_args,
     ).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, left_index=True, right_index=True))
+    sut = calc.calculate(monitored.merge(monitored_targets, left_index=True, right_index=True))
 
     try:
         _ = sut.plot(**plot_args)
@@ -395,7 +395,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(calc_args, p
     ],
 )
 def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_binary_classification_dataset()
     calc = PerformanceCalculator(
         y_true='work_home_actual',
         y_pred='y_pred',
@@ -404,7 +404,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         metrics=['roc_auc', 'f1'],
         **calc_args,
     ).fit(reference)
-    sut = calc.calculate(analysis.merge(analysis_targets, on='id'))
+    sut = calc.calculate(monitored.merge(monitored_targets, on='id'))
 
     try:
         _ = sut.plot(**plot_args)

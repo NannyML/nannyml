@@ -30,10 +30,10 @@ The changes in this value reflect a change in the structure of the model inputs.
 NannyML calculates the reconstruction error over time for the monitored model, and raises an alert if the
 values get outside a range defined by the variance in the reference :ref:`data period<data-drift-periods>`.
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data subject to actual analysis, provided as the analysis dataset.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data subject to actual monitored, provided as the monitored dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
-Let's start by loading some synthetic data provided by the NannyML package set it up as our reference and analysis dataframes.
+Let's start by loading some synthetic data provided by the NannyML package set it up as our reference and monitored dataframes.
 This synthetic data is for a binary classification model, but multi-class classification can be handled in the same way.
 
 .. nbimport::
@@ -112,7 +112,7 @@ The drift results from the reference data are accessible from the properties of 
 
 NannyML can also visualize the multivariate drift results in a plot. Our plot contains several key elements.
 
-* The purple step plot shows the reconstruction error in each chunk of the analysis period. Thick squared point
+* The purple step plot shows the reconstruction error in each chunk of the monitored period. Thick squared point
   markers indicate the middle of these chunks.
 * The low-saturated purple area around the reconstruction error indicates the :ref:`sampling error<estimation_of_standard_error>`.
 * The red horizontal dashed lines show upper and lower thresholds for alerting purposes.

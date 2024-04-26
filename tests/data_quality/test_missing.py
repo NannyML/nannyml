@@ -16,7 +16,7 @@ from nannyml.exceptions import InvalidArgumentsException
 
 @pytest.fixture(scope="module")
 def missing_value_result() -> Result:
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = MissingValuesCalculator(
         column_names=[
@@ -29,11 +29,11 @@ def missing_value_result() -> Result:
             'driver_tenure',
         ],
     ).fit(reference)
-    return calc.calculate(data=analysis)
+    return calc.calculate(data=monitored)
 
 
 def test_missing_value_calculator_with_default_params_should_not_fail():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     try:
         calc = MissingValuesCalculator(
             column_names=[
@@ -46,13 +46,13 @@ def test_missing_value_calculator_with_default_params_should_not_fail():  # noqa
                 'driver_tenure',
             ],
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()
 
 
 def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     try:
         calc = MissingValuesCalculator(
             column_names=[
@@ -67,7 +67,7 @@ def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa:
             timestamp_column_name='timestamp',
             normalize=False,
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()
 
@@ -136,7 +136,7 @@ def test_missing_value_calculator_fit_should_raise_invalid_args_exception_when_c
 
 
 def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_when_column_missing():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
         column_names=[
             'car_value',
@@ -151,7 +151,7 @@ def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_
         normalize=False,
     ).fit(reference_data=reference)
     with pytest.raises(InvalidArgumentsException):
-        _ = calc.calculate(analysis.drop('driver_tenure', axis=1))
+        _ = calc.calculate(monitored.drop('driver_tenure', axis=1))
 
 
 def test_whether_data_quality_metric_property_on_results_mv_rate(missing_value_result):
@@ -220,7 +220,7 @@ def test_whether_result_data_dataframe_has_proper_columns(missing_value_result):
 
 
 def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
         column_names=[
             'car_value',
@@ -233,7 +233,7 @@ def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D1
         ],
         normalize=False,
     ).fit(reference)
-    assert calc.calculate(data=analysis).data_quality_metric == 'missing_values_count'
+    assert calc.calculate(data=monitored).data_quality_metric == 'missing_values_count'
 
 
 def test_results_filtering_column_str(missing_value_result):

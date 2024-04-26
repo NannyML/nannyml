@@ -267,7 +267,7 @@ z
      </g>
     </g>
     <g id="text_6">
-     <!-- Standard Deviation of Analysis Distribution -->
+     <!-- Standard Deviation of Monitored Distribution -->
      <g transform="translate(32.7833 201.666562) scale(0.1 -0.1)">
       <defs>
        <path id="Helvetica-53" d="M 894 1481
@@ -1266,7 +1266,7 @@ z
      </g>
     </g>
     <g id="text_20">
-     <!-- Standard Deviation of Analysis Distribution -->
+     <!-- Standard Deviation of Monitored Distribution -->
      <g transform="translate(247.4783 201.666562) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-53"/>
       <use xlink:href="#Helvetica-74" x="66.699219"/>
@@ -1665,7 +1665,7 @@ z
      </g>
     </g>
     <g id="text_33">
-     <!-- Standard Deviation of Analysis Distribution -->
+     <!-- Standard Deviation of Monitored Distribution -->
      <g transform="translate(462.1733 201.666562) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-53"/>
       <use xlink:href="#Helvetica-74" x="66.699219"/>
@@ -2139,7 +2139,7 @@ z
      </g>
     </g>
     <g id="text_47">
-     <!-- Standard Deviation of Analysis Distribution -->
+     <!-- Standard Deviation of Monitored Distribution -->
      <g transform="translate(676.8683 201.666562) scale(0.1 -0.1)">
       <use xlink:href="#Helvetica-53"/>
       <use xlink:href="#Helvetica-74" x="66.699219"/>

@@ -31,7 +31,7 @@ def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # no
 
 @pytest.fixture(scope='module')
 def estimates(binary_classification_data) -> Result:  # noqa: D103
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='work_home_actual',
@@ -42,7 +42,7 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
         business_value_matrix=np.array([[0, 1], [1, 0]]),
     )
     estimator.fit(reference)
-    return estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
+    return estimator.estimate(pd.concat([reference, monitored]))  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -121,7 +121,7 @@ def test_filter_on_non_existing_metric_raises_invalid_arguments_exception(estima
 
 
 def test_filter_on_non_calculated_metric_raises_invalid_arguments_exception(binary_classification_data):
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='work_home_actual',
@@ -131,7 +131,7 @@ def test_filter_on_non_calculated_metric_raises_invalid_arguments_exception(bina
         problem_type='classification_binary',
     )
     estimator.fit(reference)
-    estimates = estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
+    estimates = estimator.estimate(pd.concat([reference, monitored]))  # type: ignore
     with pytest.raises(InvalidArgumentsException, match="no 'f1' in result, did you calculate it?"):
         _ = estimates.filter(metrics='f1')
 
@@ -152,7 +152,7 @@ def test_filter_on_non_calculated_metric_raises_invalid_arguments_exception(bina
     ],
 )
 def test_multiclass_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_multiclass_classification_dataset()
     est = CBPE(
         y_true='y_true',
         y_pred='y_pred',
@@ -164,7 +164,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(estimator_ar
         problem_type=ProblemType.CLASSIFICATION_MULTICLASS,
         metrics=['roc_auc', 'f1'],
     ).fit(reference)
-    sut = est.estimate(analysis)
+    sut = est.estimate(monitored)
 
     try:
         _ = sut.plot(**plot_args)
@@ -188,7 +188,7 @@ def test_multiclass_classification_result_plots_raise_no_exceptions(estimator_ar
     ],
 )
 def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, plot_args):  # noqa: D103
-    reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
+    reference, monitored, monitored_targets = load_synthetic_binary_classification_dataset()
     est = CBPE(
         y_true='work_home_actual',
         y_pred='y_pred',
@@ -197,7 +197,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         metrics=['roc_auc', 'f1'],
         **estimator_args,
     ).fit(reference)
-    sut = est.estimate(analysis)
+    sut = est.estimate(monitored)
 
     try:
         _ = sut.plot(**plot_args)

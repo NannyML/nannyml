@@ -94,7 +94,7 @@ def calculate_chunk_distributions(
         data_with_chunk_keys['period'] = data_periods
         group_by_cols += ['period']
     data = (
-        #  group by period too, 'key' column can be there for both reference and analysis
+        #  group by period too, 'key' column can be there for both reference and monitored
         data_with_chunk_keys.groupby(group_by_cols)[data.name]
         .apply(get_kde_partial_application)
         .to_frame('kde')

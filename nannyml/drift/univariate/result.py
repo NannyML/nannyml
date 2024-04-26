@@ -41,7 +41,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
         continuous_method_names: List[str],
         timestamp_column_name: Optional[str],
         chunker: Chunker,
-        analysis_data: pd.DataFrame = None,
+        monitored_data: pd.DataFrame = None,
         reference_data: pd.DataFrame = None,
     ):
         """
@@ -76,7 +76,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         chunker: Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
-        analysis_data: pd.DataFrame, default= None
+        monitored_data: pd.DataFrame, default= None
             Portion of data that NannyML will use to calculate the observed drift.
         reference_data: pd.DataFrame, default = None
             Portion of data that NannyML will use to fit its drift methods.
@@ -107,7 +107,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
         self.continuous_methods = continuous_methods
         self.chunker = chunker
 
-        self.analysis_data = analysis_data
+        self.monitored_data = monitored_data
         self.reference_data = reference_data
 
     @property
@@ -215,7 +215,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference, monitored, _ = nml.load_synthetic_car_price_dataset()
         >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.UnivariateDriftCalculator(
         ...   column_names=column_names,
@@ -223,8 +223,8 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
         ...   continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein'],
         ...   categorical_methods=['chi2', 'jensen_shannon', 'l_infinity'],
         ... ).fit(reference)
-        >>> res = calc.calculate(analysis)
-        >>> res = res.filter(period='analysis')
+        >>> res = calc.calculate(monitored)
+        >>> res = res.filter(period='monitored')
         >>> for column_name in res.continuous_column_names:
         ...  for method in res.continuous_method_names:
         ...    res.plot(kind='drift', column_name=column_name, method=method).show()
@@ -249,7 +249,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
             return plot_distributions(
                 self,
                 reference_data=self.reference_data,
-                analysis_data=self.analysis_data,
+                monitored_data=self.monitored_data,
                 chunker=self.chunker,
             )
         else:

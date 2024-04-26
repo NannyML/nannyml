@@ -44,7 +44,7 @@ def summary_stats_std_sampling_error(sampling_error_components, col) -> float:
     sampling_error_components:
         a set of parameters that were derived from reference data.
     col:
-        the (analysis) column you want to calculate sampling error for.
+        the (monitored) column you want to calculate sampling error for.
 
     Returns
     -------
@@ -97,7 +97,7 @@ def summary_stats_median_sampling_error(sampling_error_components, col) -> float
     Parameters
     ----------
     sampling_error_components : a set of parameters that were derived from reference data.
-    col : the (analysis) column you want to calculate sampling error for.
+    col : the (monitored) column you want to calculate sampling error for.
 
     Returns
     -------

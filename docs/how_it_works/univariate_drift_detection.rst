@@ -140,9 +140,9 @@ Hellinger Distance
 ........................
 
 The `Hellinger Distance`_ is a distance metric used to quantify the similarity between two probability distributions.
-It measures the overlap between the probabilities assigned to the same event by both the reference and analysis samples.
+It measures the overlap between the probabilities assigned to the same event by both the reference and monitored samples.
 It ranges from 0 to 1 where a value of 1 is only achieved when reference assigns zero probability to each event to which
-the analysis sample assigns some positive probability and vice versa.
+the monitored sample assigns some positive probability and vice versa.
 
 Between two distributions :math:`P,Q` of a continuous feature Hellinger is defined as:
 
@@ -217,7 +217,7 @@ Despite that, the Chi-squared test is a common choice amongst practitioners as i
 statistic that helps to better evaluate its result.
 
 The image below shows a visualization of the chi-squared statistic for a categorical variable with two categories, a and b.
-You can see the expected values are calculated from both the reference and analysis data. The red bars represent the difference
+You can see the expected values are calculated from both the reference and monitored data. The red bars represent the difference
 between the observed and expected frequencies. As mentioned above, in the chi-squared statistic formula, the difference is
 squared and divided by the expected frequency, and the resulting value is then summed over all categories for both samples.
 
@@ -268,7 +268,7 @@ To help our intuition we can look at the image below:
 .. image:: ../_static/how-it-works-cat_js.svg
     :width: 1400pt
 
-We see how the relative frequencies of the three categories have changed between reference and analysis data.
+We see how the relative frequencies of the three categories have changed between reference and monitored data.
 We also see that the JS Divergence contribution of each change and the resulting JS distance.
 
 .. _univ_cat_method_hellinger:
@@ -278,9 +278,9 @@ Hellinger Distance
 
 The `Hellinger Distance`_ is a distance metric used to quantify the similarity between two probability distributions.
 It measures the overlap between the probabilities assigned
-to the same event by both reference and analysis samples. It ranges from 0 to 1 where a value of 1 is only achieved
+to the same event by both reference and monitored samples. It ranges from 0 to 1 where a value of 1 is only achieved
 when the reference assigns zero probability to each event to which
-the analysis sample assigns some positive probability and vice versa.
+the monitored sample assigns some positive probability and vice versa.
 
 Between two distributions :math:`P,Q` of a categorical feature Hellinger Distance is defined as:
 
@@ -310,7 +310,7 @@ L-Infinity Distance
 ...................
 
 We are using L-Infinity to measure the similarity of categorical features. L-Infinity, for categorical features, is defined as
-the maximum of the absolute difference between the relative frequencies of each category in the reference and analysis data.
+the maximum of the absolute difference between the relative frequencies of each category in the reference and monitored data.
 You can find more about `L-Infinity at Wikipedia`_. It falls into the range of 0-1 and is easy to interpret as
 it is the greatest change in relative frequency among all categories. This behavior is different compared to Chi Squared test,
 where even small changes in low-frequency labels can heavily influence the resulting test statistic.
@@ -320,7 +320,7 @@ To help our intuition we can look at the image below:
 .. image:: ../_static/how-it-works-linf.svg
     :width: 1400pt
 
-We see how the relative frequencies of the three categories have changed between reference and analysis data.
+We see how the relative frequencies of the three categories have changed between reference and monitored data.
 We also see that the resulting L-Infinity distance is the relative frequency change in category c.
 
 

@@ -3,14 +3,14 @@
 #
 #  License: Apache Software License 2.0
 
-"""Calculates the data reconstruction error on unseen analysis data after fitting on reference data.
+"""Calculates the data reconstruction error on unseen monitored data after fitting on reference data.
 
 This calculator wraps a PCA transformation. It will be fitted on reference data when the `fit` method is called.
-On calling the `calculate` method it will perform the inverse transformation on the analysis data and calculate
-the euclidian distance between the analysis data and the reconstructed version of it.
+On calling the `calculate` method it will perform the inverse transformation on the monitored data and calculate
+the euclidian distance between the monitored data and the reconstructed version of it.
 
 This is the data reconstruction error, and it can be used as a measure of drift between
-the reference and analysis data sets.
+the reference and monitored data sets.
 
 """
 
@@ -153,7 +153,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> # Load synthetic data
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_loan_dataset()
+        >>> reference_df, monitored_df, _ = nml.load_synthetic_car_loan_dataset()
         >>> # Define feature columns
         >>> feature_column_names = [
         ...     col for col in reference_df.columns
@@ -165,7 +165,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         ...     chunk_size=5000
         >>> )
         >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
+        >>> results = calc.calculate(monitored_df)
         >>> figure = results.plot()
         >>> figure.show()
         """
@@ -250,7 +250,7 @@ class DomainClassifierCalculator(AbstractCalculator):
                     'end_index': chunk.end_index,
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
-                    'period': 'analysis',
+                    'period': 'monitored',
                     # 'sampling_error': sampling_error(self._sampling_error_components, chunk.data),
                     'classifier_auroc_value': self._calculate_chunk(data=chunk.data),
                 }

@@ -36,7 +36,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         metrics: List[Metric],
         timestamp_column_name: Optional[str] = None,
         reference_data: Optional[pd.DataFrame] = None,
-        analysis_data: Optional[pd.DataFrame] = None,
+        monitored_data: Optional[pd.DataFrame] = None,
     ):
         """Creates a new Result instance.
 
@@ -67,7 +67,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         reference_data: pd.DataFrame, default=None
             The reference data used for fitting. Must have target data available.
-        analysis_data: pd.DataFrame, default=None
+        monitored_data: pd.DataFrame, default=None
             The data on which NannyML calculates the perfomance.
 
         """
@@ -81,7 +81,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         self.timestamp_column_name = timestamp_column_name
 
         self.reference_data = reference_data
-        self.analysis_data = analysis_data
+        self.monitored_data = monitored_data
 
     def keys(self) -> List[Key]:
         """Creates a list of keys where each Key is a `namedtuple('Key', 'properties display_names')`."""
@@ -130,8 +130,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         --------
         >>> import nannyml as nml
         >>> from IPython.display import display
-        >>> reference_df, analysis_df, analysis_targets_df = nml.load_synthetic_car_loan_dataset()
-        >>> analysis_df = analysis_df.merge(analysis_targets_df, left_index=True, right_index=True)
+        >>> reference_df, monitored_df, monitored_targets_df = nml.load_synthetic_car_loan_dataset()
+        >>> monitored_df = monitored_df.merge(monitored_targets_df, left_index=True, right_index=True)
         >>> display(reference_df.head(3))
         >>> calc = nml.PerformanceCalculator(
         ...     y_pred_proba='y_pred_proba',
@@ -142,8 +142,8 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         ...     metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'],
         ...     chunk_size=5000)
         >>> calc.fit(reference_df)
-        >>> results = calc.calculate(analysis_df)
-        >>> display(results.filter(period='analysis').to_df())
+        >>> results = calc.calculate(monitored_df)
+        >>> display(results.filter(period='monitored').to_df())
         >>> display(results.filter(period='reference').to_df())
         >>> figure = results.plot()
         >>> figure.show()

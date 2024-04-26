@@ -105,8 +105,8 @@ Glossary
         level of performance. It most likely also includes **target** data. This period can be the test set for a model that
         only recently entered production or a selected benchmark dataset for a model that has been in production for some time.
 
-        The second subset of the data is the **analysis** period. It contains the observations you want NannyML to analyse.
-        In the absence of targets, performance in the analysis period can be estimated.
+        The second subset of the data is the **monitored** period. It contains the observations you want NannyML to analyse.
+        In the absence of targets, performance in the monitored period can be estimated.
 
         You can read more about Data Periods in the :ref:`relevant data requirements section<data-drift-periods>`.
 
@@ -208,7 +208,7 @@ Glossary
         in order to produce model monitoring results.
 
     PCA
-        Principal Component Analysis is a method used for dimensionality reduction. The method produces
+        Principal Component Monitored is a method used for dimensionality reduction. The method produces
         a linear transformation of the input data that results in a space with orthogonal components that maximise
         the available variance of the input data.
 
@@ -309,7 +309,7 @@ Glossary
     Unseen Values
         NannyML uses Unseen Values as a data quality check for categorical features. This is done in
         two steps. By looking at the reference :term:`Data Period` a set of expected is created for
-        each categorical feature. The second step is looking at the values present in the analysis
+        each categorical feature. The second step is looking at the values present in the monitored
         :term:`Data Period` for each categorical feature, any value not previously seen on the
         reference period is considered Unseen Value. You can find more information at the
         :ref:`unseen_values` tutorial.
@@ -321,7 +321,7 @@ Glossary
 .. _`wikipedia Chi-squared test page`: https://en.wikipedia.org/wiki/Chi-squared_test
 .. _`scipy implementation of the Chi-square test of independence of variables in a contingency table`:
     https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2_contingency.html
-.. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_analysis
+.. _`PCA Wikipedia page`: https://en.wikipedia.org/wiki/Principal_component_monitored
 .. _`Wikipedia Standard Error page`: https://en.wikipedia.org/wiki/Standard_error
 .. _`loss function`: https://en.wikipedia.org/wiki/Loss_function
 .. _`Wikipedia Confusion Matrix page`: https://en.wikipedia.org/wiki/Confusion_matrix

@@ -70,15 +70,15 @@ class MissingValuesCalculator(AbstractCalculator):
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
+        >>> reference_df, monitored_df, _ = nml.load_synthetic_car_price_dataset()
         >>> feature_column_names = [col for col in reference_df.columns if col not in ['timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.MissingValuesCalculator(
         ...     column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference_df)
-        >>> res = calc.calculate(analysis_df)
+        >>> res = calc.calculate(monitored_df)
         >>> for column_name in res.feature_column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        ...     res = res.filter(period='monitored', column_name=column_name).plot().show()
         """
         super(MissingValuesCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
@@ -173,7 +173,7 @@ class MissingValuesCalculator(AbstractCalculator):
                 'end_index': chunk.end_index,
                 'start_datetime': chunk.start_datetime,
                 'end_datetime': chunk.end_datetime,
-                'period': 'analysis',
+                'period': 'monitored',
             }
 
             for column_name in self.column_names:

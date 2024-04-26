@@ -14,7 +14,7 @@ Data Periods
 NannyML works with two :term:`Data Periods<data period>`. The first one, called the :ref:`reference period<data-drift-periods-reference>`,
 is represented by the **reference dataset**, and is used to establish the expectations of the model's performance.
 
-The second is called the :ref:`analysis period<data-drift-periods-analysis>`. And it is represented by the **analysis
+The second is called the :ref:`monitored period<data-drift-periods-monitored>`. And it is represented by the **monitored
 dataset** which, as the name suggests, is analyzed by NannyML to check whether model performance meets the
 expectations set based on the **reference dataset**.
 
@@ -40,21 +40,21 @@ during which the model performed as expected.
     Don't use model training data as a reference dataset. Machine learning models tend to overfit on their training data.
     Therefore expectations for model performance will be unrealistic.
 
-.. _data-drift-periods-analysis:
+.. _data-drift-periods-monitored:
 
-Analysis Period
-^^^^^^^^^^^^^^^
+Monitored Period
+^^^^^^^^^^^^^^^^
 
-The analysis period is where NannyML analyzes the data drift and the performance of the monitored
+The monitored period is where NannyML analyzes the data drift and the performance of the monitored
 model using the knowledge gained from studying the reference period. In the average use case, it will
 consist of the latest production data up to a desired point in the past, which should be after
-the reference period ends. The analysis period is not required to have targets available.
+the reference period ends. The monitored period is not required to have targets available.
 
-When performing drift analysis, NannyML compares each :term:`Data Chunk` of the analysis period
+When performing drift monitored, NannyML compares each :term:`Data Chunk` of the monitored period
 with the reference data. NannyML will flag any meaningful changes to data distributions as data drift.
 
-The analysis data does not need to contain any target values, so performance can be estimated for it.
-If target data is provided for the analysis period, it can be used to calculate :term:`Realized Performance`, but it will be ignored
+The monitored data does not need to contain any target values, so performance can be estimated for it.
+If target data is provided for the monitored period, it can be used to calculate :term:`Realized Performance`, but it will be ignored
 when estimating the performance.
 
 
@@ -64,7 +64,7 @@ Columns
 The following sections describe the different data columns that NannyML requires. These will differ based on
 the type of the model being monitored, and the function being used. There will be columns that are common across model types, whereas others will
 be specific to a given model type. Also, note that there is an expectation that the columns have the same name between reference and
-analysis datasets when they describe the same thing.
+monitored datasets when they describe the same thing.
 
 We will illustrate this using the fictional *car_loan* model included with the library,
 a binary classifier trying to predict whether a prospective customer will pay off a car loan.
@@ -133,7 +133,7 @@ The actual outcome of the event the machine learning model is trying to predict.
 In the sample data this is the **repaid** column.
 
 Required in the reference data for :ref:`performance estimation<performance-estimation>`,
-and in both reference and analysis data to :ref:`calculate realized performance<performance-calculation>`.
+and in both reference and monitored data to :ref:`calculate realized performance<performance-calculation>`.
 
 Features
 ^^^^^^^^
@@ -185,14 +185,14 @@ You can see those requirements in the table below:
 +==============+=====================================+=====================================+=====================================+===================================+===================================+===================================+===================================+
 | timestamp    |                                     |                                     |                                     |                                   |                                   |                                   |                                   |
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| features     |                                     | Required (reference and analysis)   |                                     | Required (reference and analysis) | Required (reference and analysis) |                                   |                                   |
+| features     |                                     | Required (reference and monitored)  |                                     | Required (reference and monitored)| Required (reference and monitored)|                                   |                                   |
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| y_pred_proba | Required (reference and analysis)   |                                     |                                     |                                   |                                   |                                   | Required (reference and analysis) |
+| y_pred_proba | Required (reference and monitored)  |                                     |                                     |                                   |                                   |                                   | Required (reference and monitored)|
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| y_pred       | | Required (reference and analysis) | Required (reference and analysis)   | | Required (reference and analysis) |                                   |                                   |                                   | Required (reference and analysis) |
+| y_pred       | | Required (reference and monitored)| Required (reference and monitored)  | | Required (reference and monitored)|                                   |                                   |                                   | Required (reference and monitored)|
 |              | | Not needed for ROC_AUC metric     |                                     | | Not needed for ROC_AUC metric     |                                   |                                   |                                   |                                   |
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
-| y_true       | Required (reference only)           |  Required (reference only)          | Required (reference and analysis)   |                                   |                                   | Required (reference and analysis) |                                   |
+| y_true       | Required (reference only)           |  Required (reference only)          | Required (reference and monitored)  |                                   |                                   | Required (reference and monitored)|                                   |
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 
 

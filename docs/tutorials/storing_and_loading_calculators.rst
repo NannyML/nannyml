@@ -91,8 +91,8 @@ If no `path` is provided, a file will be created using a standard name within th
 
 This concludes the first part: storing the fitted calculator.
 
-When running NannyML in a new session to perform calculations on analysis data (e.g., repeated on a daily basis), we can load the pre-fitted calculator from the store.
-But, first, we define the analysis data and declare the store:
+When running NannyML in a new session to perform calculations on monitored data (e.g., repeated on a daily basis), we can load the pre-fitted calculator from the store.
+But, first, we define the monitored data and declare the store:
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Storing and Loading Calculators - Univariate.ipynb

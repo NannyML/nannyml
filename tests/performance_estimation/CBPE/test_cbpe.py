@@ -38,7 +38,7 @@ def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # no
 
 @pytest.fixture
 def estimates(binary_classification_data) -> Result:  # noqa: D103
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='work_home_actual',
@@ -48,7 +48,7 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
         problem_type='classification_binary',
     )
     estimator.fit(reference)
-    return estimator.estimate(pd.concat([reference, analysis]))  # type: ignore
+    return estimator.estimate(pd.concat([reference, monitored]))  # type: ignore
 
 
 @pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
@@ -99,7 +99,7 @@ def test_cbpe_will_not_calibrate_scores_when_not_needed(binary_classification_da
 
 
 def test_cbpe_will_not_fail_on_work_from_home_sample(binary_classification_data):  # noqa: D103
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     try:
         estimator = CBPE(
             timestamp_column_name='timestamp',
@@ -110,7 +110,7 @@ def test_cbpe_will_not_fail_on_work_from_home_sample(binary_classification_data)
             problem_type='classification_binary',
         )
         estimator.fit(reference)
-        _ = estimator.estimate(analysis)
+        _ = estimator.estimate(monitored)
     except Exception as exc:
         pytest.fail(f'unexpected exception was raised: {exc}')
 
@@ -248,7 +248,7 @@ def test_cbpe_uses_custom_calibrator_when_provided():  # noqa: D103
 def test_cbpe_uses_calibrator_to_calibrate_predicted_probabilities_when_needed(  # noqa: D103
     binary_classification_data, mocker: MockerFixture
 ):
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
 
     calibrator = IsotonicCalibrator()
     estimator = CBPE(  # type: ignore
@@ -264,14 +264,14 @@ def test_cbpe_uses_calibrator_to_calibrate_predicted_probabilities_when_needed( 
 
     spy = mocker.spy(calibrator, 'calibrate')
 
-    estimator.estimate(analysis)
+    estimator.estimate(monitored)
     spy.assert_called_once()
 
 
 def test_cbpe_doesnt_use_calibrator_to_calibrate_predicted_probabilities_when_not_needed(  # noqa: D103
     binary_classification_data, mocker: MockerFixture
 ):
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
 
     calibrator = IsotonicCalibrator()
     estimator = CBPE(  # type: ignore
@@ -287,7 +287,7 @@ def test_cbpe_doesnt_use_calibrator_to_calibrate_predicted_probabilities_when_no
     typing.cast(CBPE, estimator).needs_calibration = False  # Override this to disable calibration
 
     spy = mocker.spy(calibrator, 'calibrate')
-    estimator.estimate(analysis)
+    estimator.estimate(monitored)
     spy.assert_not_called()
 
 
@@ -310,7 +310,7 @@ def test_cbpe_raises_missing_metadata_exception_when_predicted_probabilities_are
 
 @pytest.mark.parametrize('metric', ['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy'])
 def test_cbpe_runs_for_all_metrics(binary_classification_data, metric):  # noqa: D103
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     try:
         estimator = CBPE(  # type: ignore
             timestamp_column_name='timestamp',
@@ -320,7 +320,7 @@ def test_cbpe_runs_for_all_metrics(binary_classification_data, metric):  # noqa:
             metrics=[metric],
             problem_type='classification_binary',
         ).fit(reference)
-        _ = estimator.estimate(pd.concat([reference, analysis]))
+        _ = estimator.estimate(pd.concat([reference, monitored]))
     except Exception as e:
         pytest.fail(f'an unexpected exception occurred: {e}')
 
@@ -369,7 +369,7 @@ def reduce_confidence_bounds(monkeypatch, estimator, results):
 def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
     monkeypatch, binary_classification_data
 ):
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='work_home_actual',
@@ -378,12 +378,12 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
         metrics=['roc_auc'],
         problem_type='classification_binary',
     ).fit(reference)
-    results = estimator.estimate(pd.concat([reference, analysis]))
+    results = estimator.estimate(pd.concat([reference, monitored]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
-    # manually remove previous 'analysis' results
+    # manually remove previous 'monitored' results
     results.data = results.data[results.data[('chunk', 'period')] == 'reference']
-    results = estimator.estimate(analysis)
-    sut = results.filter(period='analysis').to_df()
+    results = estimator.estimate(monitored)
+    sut = results.filter(period='monitored').to_df()
     assert all(sut.loc[:, ('roc_auc', 'lower_confidence_boundary')] >= new_lower_bound)
     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
@@ -391,7 +391,7 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
 def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
     monkeypatch, multiclass_classification_data
 ):
-    reference, analysis = multiclass_classification_data
+    reference, monitored = multiclass_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='y_true',
@@ -404,11 +404,11 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
         metrics=['roc_auc'],
         problem_type='classification_multiclass',
     ).fit(reference)
-    results = estimator.estimate(pd.concat([reference, analysis]))
+    results = estimator.estimate(pd.concat([reference, monitored]))
     estimator, new_lower_bound, new_upper_bound = reduce_confidence_bounds(monkeypatch, estimator, results)
     results.data = results.filter(period='reference').to_df()
-    results = estimator.estimate(analysis)
-    sut = results.filter(period='analysis').to_df()
+    results = estimator.estimate(monitored)
+    sut = results.filter(period='monitored').to_df()
     assert all(sut.loc[:, ('roc_auc', 'lower_confidence_boundary')] >= new_lower_bound)
     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
@@ -445,7 +445,7 @@ def test_cpbe_result_filter_period(estimates):
 def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
     binary_classification_data, metric, sampling_error
 ):
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='work_home_actual',
@@ -454,7 +454,7 @@ def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_
         metrics=[metric],
         problem_type='classification_binary',
     ).fit(reference)
-    results = estimator.estimate(analysis)
+    results = estimator.estimate(monitored)
 
     assert (metric, 'sampling_error') in results.data.columns
     assert all(
@@ -477,7 +477,7 @@ def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_
 def test_cbpe_for_binary_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
     binary_classification_data, metric, sampling_error
 ):
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='work_home_actual',
@@ -487,7 +487,7 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
         chunk_period='Y',
         problem_type='classification_binary',
     ).fit(reference)
-    results = estimator.estimate(analysis).filter(period='analysis')
+    results = estimator.estimate(monitored).filter(period='monitored')
     sut = results.to_df()
     assert (metric, 'sampling_error') in sut.columns
     assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
@@ -507,7 +507,7 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
 def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
     multiclass_classification_data, metric, sampling_error
 ):
-    reference, analysis = multiclass_classification_data
+    reference, monitored = multiclass_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='y_true',
@@ -520,7 +520,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_const
         metrics=[metric],
         problem_type='classification_multiclass',
     ).fit(reference)
-    results = estimator.estimate(analysis)
+    results = estimator.estimate(monitored)
     sut = results.to_df()
     assert (metric, 'sampling_error') in sut.columns
     assert all(
@@ -543,7 +543,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_const
 def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
     multiclass_classification_data, metric, sampling_error
 ):
-    reference, analysis = multiclass_classification_data
+    reference, monitored = multiclass_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',
         y_true='y_true',
@@ -557,15 +557,15 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
         chunk_period='M',
         problem_type='classification_multiclass',
     ).fit(reference)
-    results = estimator.estimate(analysis)
-    sut = results.filter(period='analysis').to_df()
+    results = estimator.estimate(monitored)
+    sut = results.filter(period='monitored').to_df()
 
     assert (metric, 'sampling_error') in sut.columns
     assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
 
 
 def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):
-    reference, analysis = binary_classification_data
+    reference, monitored = binary_classification_data
 
     sut = CBPE(
         # timestamp_column_name='timestamp',
@@ -577,8 +577,8 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classif
         problem_type='classification_binary',
     )
     sut.fit(reference)
-    result1 = sut.estimate(analysis)
-    result2 = sut.estimate(analysis)
+    result1 = sut.estimate(monitored)
+    result2 = sut.estimate(monitored)
 
     # Checks two distinct results are returned. Previously there was a bug causing the previous result instance to be
     # modified on subsequent estimates.

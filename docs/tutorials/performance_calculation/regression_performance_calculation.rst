@@ -30,12 +30,12 @@ Walkthrough
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model predicts
 the market price of a used car. Check out :ref:`Car Price Dataset<dataset-synthetic-regression>` to learn more about this dataset.
 
-In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual analysis, provided as the analysis dataset.
+In order to monitor a model, NannyML needs to learn about it from a reference dataset. Then it can monitor the data that is subject to actual monitored, provided as the monitored dataset.
 You can read more about this in our section on :ref:`data periods<data-drift-periods>`.
 
-The ``analysis_targets_df`` dataframe contains the target results of the analysis period. This is kept separate in the synthetic data because it is
+The ``monitored_targets_df`` dataframe contains the target results of the monitored period. This is kept separate in the synthetic data because it is
 not used during :ref:`performance estimation<performance-estimation>`.
-But as it is required to calculate performance, the first thing to do in this case is to join the analysis target values with the analysis data.
+But as it is required to calculate performance, the first thing to do in this case is to join the monitored target values with the monitored data.
 
 
 .. nbimport::
@@ -71,7 +71,7 @@ The new :class:`~nannyml.performance_calculation.calculator.PerformanceCalculato
 The fitted :class:`~nannyml.performance_calculation.calculator.PerformanceCalculator` can then be used to calculate
 realized performance metrics on all data which has target values available with the
 :meth:`~nannyml.performance_calculation.calculator.PerformanceCalculator.calculate` method.
-NannyML can output a dataframe that contains all the results of the analysis data.
+NannyML can output a dataframe that contains all the results of the monitored data.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Realized Performance - Regression.ipynb
