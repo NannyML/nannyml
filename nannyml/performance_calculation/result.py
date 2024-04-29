@@ -30,7 +30,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         self,
         results_data: pd.DataFrame,
         problem_type: ProblemType,
-        y_pred: str,
+        y_pred: Optional[str],
         y_pred_proba: Optional[Union[str, Dict[str, str]]],
         y_true: str,
         metrics: List[Metric],

@@ -84,8 +84,8 @@ class PerformanceCalculator(AbstractCalculator):
         self,
         metrics: Union[str, List[str]],
         y_true: str,
-        y_pred: str,
         problem_type: Union[str, ProblemType],
+        y_pred: Optional[str] = None,
         y_pred_proba: Optional[ModelOutputsType] = None,
         timestamp_column_name: Optional[str] = None,
         thresholds: Optional[Dict[str, Threshold]] = None,
@@ -105,8 +105,10 @@ class PerformanceCalculator(AbstractCalculator):
             A metric or list of metrics to calculate.
         y_true: str
             The name of the column containing target values.
-        y_pred: str
+        y_pred: Optional[str], default=None
             The name of the column containing your model predictions.
+            This parameter is optional for binary classification cases.
+            When it is not given, only the ROC AUC and Average Precision metrics are supported.
         problem_type: Union[str, ProblemType]
             Determines which method to use. Allowed values are:
 
@@ -211,7 +213,12 @@ class PerformanceCalculator(AbstractCalculator):
             self.problem_type = problem_type
 
         if self.problem_type is not ProblemType.REGRESSION and y_pred_proba is None:
-            raise InvalidArgumentsException(f"'y_pred_proba' can not be 'None' for problem type {ProblemType.value}")
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' can not be 'None' for problem type {self.problem_type.value}"
+            )
+
+        if self.problem_type is not ProblemType.CLASSIFICATION_BINARY and y_pred is None:
+            raise InvalidArgumentsException(f"'y_pred' can not be 'None' for problem type {self.problem_type.value}")
 
         self.thresholds = DEFAULT_THRESHOLDS
         if thresholds:
@@ -235,6 +242,8 @@ class PerformanceCalculator(AbstractCalculator):
         for metric in metrics:
             if metric not in SUPPORTED_METRIC_VALUES:
                 raise InvalidArgumentsException(f"Metric '{metric}' is not supported.")
+
+        raise_if_metrics_require_y_pred(metrics, y_pred)
 
         self.metrics: List[Metric] = [
             MetricFactory.create(
@@ -387,3 +396,16 @@ def _create_multilevel_index(metric_names: List[str]):
     tuples = chunk_tuples + reconstruction_tuples
 
     return MultiIndex.from_tuples(tuples)
+
+
+def raise_if_metrics_require_y_pred(metrics: List[str], y_pred: Optional[str]):
+    """Raise an exception if metrics require y_pred and y_pred is not set.
+
+    Current metrics that require 'y_pred' are:
+    - roc_auc
+    - average_precision
+    """
+    metrics_that_need_y_pred = [m for m in metrics if m not in ['roc_auc', 'average_precision']]
+
+    if len(metrics_that_need_y_pred) > 0 and y_pred is None:
+        raise InvalidArgumentsException(f"Metrics '{metrics_that_need_y_pred}' require 'y_pred' to be set.")
