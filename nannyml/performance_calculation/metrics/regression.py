@@ -77,6 +77,7 @@ class MAE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -139,6 +140,7 @@ class MAPE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -201,6 +203,7 @@ class MSE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -263,6 +266,7 @@ class MSLE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -330,6 +334,7 @@ class RMSE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -392,6 +397,7 @@ class RMSLE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
