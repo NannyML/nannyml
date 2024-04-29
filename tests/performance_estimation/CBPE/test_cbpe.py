@@ -706,15 +706,18 @@ def test_cbpe_with_default_thresholds():
 
 def test_cbpe_without_predictions():
     ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
-    cbpe = CBPE(
-        y_pred_proba='y_pred_proba',
-        y_true='work_home_actual',
-        problem_type='classification_binary',
-        metrics=[
-            'roc_auc',
-            'average_precision',
-        ],
-        timestamp_column_name='timestamp',
-        chunk_period='M',
-    ).fit(ref_df)
-    result = cbpe.estimate(ana_df)
+    try:
+        cbpe = CBPE(
+            y_pred_proba='y_pred_proba',
+            y_true='work_home_actual',
+            problem_type='classification_binary',
+            metrics=[
+                'roc_auc',
+                'average_precision',
+            ],
+            timestamp_column_name='timestamp',
+            chunk_period='M',
+        ).fit(ref_df)
+        _ = cbpe.estimate(ana_df)
+    except Exception as exc:
+        pytest.fail(f'unexpected exception: {exc}')

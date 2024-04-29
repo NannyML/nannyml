@@ -466,13 +466,15 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
 
 def test_binary_classification_calculate_without_prediction_column():
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
-    calc = PerformanceCalculator(
-        y_true='work_home_actual',
-        y_pred_proba='y_pred_proba',
-        problem_type=ProblemType.CLASSIFICATION_BINARY,
-        metrics=['roc_auc', 'average_precision'],
-        timestamp_column_name='timestamp',
-        chunk_period='M'
-    ).fit(reference)
-    res = calc.calculate(analysis.merge(analysis_targets, on='id'))
-    
+    try:
+        calc = PerformanceCalculator(
+            y_true='work_home_actual',
+            y_pred_proba='y_pred_proba',
+            problem_type=ProblemType.CLASSIFICATION_BINARY,
+            metrics=['roc_auc', 'average_precision'],
+            timestamp_column_name='timestamp',
+            chunk_period='M',
+        ).fit(reference)
+        _ = calc.calculate(analysis.merge(analysis_targets, on='id'))
+    except Exception as exc:
+        pytest.fail(f"an unexpected exception occurred: {exc}")
