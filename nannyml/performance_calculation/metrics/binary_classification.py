@@ -57,8 +57,8 @@ class BinaryClassificationAUROC(Metric):
     def __init__(
         self,
         y_true: str,
-        y_pred: str,
         threshold: Threshold,
+        y_pred: Optional[str] = None,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -97,6 +97,8 @@ class BinaryClassificationAUROC(Metric):
     def _fit(self, reference_data: pd.DataFrame):
         """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
+        # we don't want to count missing rows for sampling error
+        reference_data = _remove_nans(reference_data, (self.y_true,))
         self._sampling_error_components = auroc_sampling_error_components(
             y_true_reference=reference_data[self.y_true],
             y_pred_proba_reference=reference_data[self.y_pred_proba],
@@ -105,10 +107,10 @@ class BinaryClassificationAUROC(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred_proba], list(data.columns))
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data = _remove_nans(data, (self.y_true,))
 
         y_true = data[self.y_true]
-        y_pred = data[self.y_pred_proba]
+        y_pred_proba = data[self.y_pred_proba]
 
         if y_true.nunique() <= 1:
             warnings.warn(
@@ -117,7 +119,7 @@ class BinaryClassificationAUROC(Metric):
             )
             return np.NaN
         else:
-            return roc_auc_score(y_true, y_pred)
+            return roc_auc_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         return auroc_sampling_error(self._sampling_error_components, data)
@@ -133,8 +135,8 @@ class BinaryClassificationAP(Metric):
     def __init__(
         self,
         y_true: str,
-        y_pred: str,
         threshold: Threshold,
+        y_pred: Optional[str] = None,
         y_pred_proba: Optional[str] = None,
         **kwargs,
     ):
@@ -174,7 +176,7 @@ class BinaryClassificationAP(Metric):
         """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
         # we don't want to count missing rows for sampling error
-        reference_data = _remove_nans(reference_data, (self.y_true, self.y_pred))
+        reference_data = _remove_nans(reference_data, (self.y_true,))
 
         if 1 not in reference_data[self.y_true].unique():
             self._sampling_error_components = np.NaN, 0
@@ -187,7 +189,7 @@ class BinaryClassificationAP(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred_proba], list(data.columns))
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data = _remove_nans(data, (self.y_true,))
 
         y_true = data[self.y_true]
         y_pred_proba = data[self.y_pred_proba]
@@ -259,6 +261,7 @@ class BinaryClassificationF1(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -335,6 +338,7 @@ class BinaryClassificationPrecision(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -411,6 +415,7 @@ class BinaryClassificationRecall(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -487,6 +492,7 @@ class BinaryClassificationSpecificity(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -564,6 +570,7 @@ class BinaryClassificationAccuracy(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -674,6 +681,7 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -858,6 +866,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_true_positives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -882,6 +891,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_true_negatives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -906,6 +916,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_false_positives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
@@ -930,6 +941,7 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_false_negatives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]

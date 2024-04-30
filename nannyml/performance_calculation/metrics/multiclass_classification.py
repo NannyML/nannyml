@@ -211,6 +211,7 @@ class MulticlassClassificationF1(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -306,6 +307,7 @@ class MulticlassClassificationPrecision(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -401,6 +403,7 @@ class MulticlassClassificationRecall(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -496,6 +499,7 @@ class MulticlassClassificationSpecificity(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -588,6 +592,7 @@ class MulticlassClassificationAccuracy(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], data)
+        assert self.y_pred
         data = _remove_nans(data, (self.y_true, self.y_pred))
 
         y_true = data[self.y_true]
