@@ -721,3 +721,31 @@ def test_cbpe_without_predictions():
         _ = cbpe.estimate(ana_df)
     except Exception as exc:
         pytest.fail(f'unexpected exception: {exc}')
+
+
+@pytest.mark.filterwarnings("ignore:Too few unique values", "ignore:'y_true' contains a single class")
+def test_cbpe_fitting_does_not_generate_error_when_single_class_present():
+    ref_df = pd.DataFrame({
+        'y_true': [0] * 1000,
+        'y_pred': [0] * 1000,
+        'y_pred_proba': [0.5] * 1000,
+    })
+    sut = CBPE(
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        problem_type='classification_binary',
+        metrics=[
+            'roc_auc',
+            'f1',
+            'precision',
+            'recall',
+            'specificity',
+            'accuracy',
+            'confusion_matrix',
+            'business_value',
+        ],
+        chunk_size=100,
+        business_value_matrix=[[1, -1], [-1, 1]]
+    )
+    sut.fit(ref_df)
