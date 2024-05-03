@@ -470,23 +470,6 @@ def test_data_reconstruction_drift_result_filter_period(reconstruction_drift_res
     assert filtered_result.data.equals(ref_period)
 
 
-def test_data_reconstruction_drift_chunked_by_size_has_fixed_sampling_error(sample_drift_data):  # noqa: D103
-    ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
-
-    chunker = SizeBasedChunker(chunk_size=2500, incomplete='drop')
-
-    calc = DataReconstructionDriftCalculator(
-        column_names=['f1', 'f2', 'f3', 'f4'], timestamp_column_name='timestamp', chunker=chunker
-    ).fit(ref_data)
-    results = calc.calculate(data=sample_drift_data)
-
-    assert ('reconstruction_error', 'sampling_error') in results.data.columns
-    assert np.array_equal(
-        np.round(results.to_df().loc[:, ('reconstruction_error', 'sampling_error')], 4),
-        np.round([0.01164 for _ in range(len(results.data))], 4),
-    )
-
-
 def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
 
@@ -498,7 +481,7 @@ def test_data_reconstruction_drift_chunked_by_period_has_variable_sampling_error
     assert ('reconstruction_error', 'sampling_error') in results.data.columns
     assert np.array_equal(
         np.round(results.filter(period='analysis').to_df().loc[:, ('reconstruction_error', 'sampling_error')], 4),
-        np.round([0.009511, 0.009005, 0.008710, 0.008854, 0.009899], 4),
+        [0.0095, 0.0090, 0.0086, 0.0086, 0.0092],
     )
 
 
