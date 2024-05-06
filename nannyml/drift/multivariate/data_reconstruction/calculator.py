@@ -193,7 +193,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'period': 'analysis',
-                    **self._calculate_chunk_record(chunk.data)
+                    **self._calculate_chunk_record(chunk.data),
                 }
                 for chunk in chunks
             ]
@@ -229,7 +229,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             record['sampling_error'] = sampling_error
             record['upper_confidence_bound'] = rcerr_mean + SAMPLING_ERROR_RANGE * sampling_error
             record['lower_confidence_bound'] = np.maximum(
-                rcerr_mean + SAMPLING_ERROR_RANGE * sampling_error,
+                rcerr_mean - SAMPLING_ERROR_RANGE * sampling_error,
                 self.lower_threshold_value_limit,
             )
         except Exception as exc:
@@ -246,7 +246,9 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
     def _calculate_dre_results(self, data: pd.DataFrame) -> Tuple[float, float]:
         # Impute missing values
         if self.categorical_column_names:
-            data[self.categorical_column_names] = self._imputer_categorical.transform(data[self.categorical_column_names])  # noqa: E501
+            data[self.categorical_column_names] = self._imputer_categorical.transform(
+                data[self.categorical_column_names]
+            )  # noqa: E501
         if self.continuous_column_names:
             data[self.continuous_column_names] = self._imputer_continuous.transform(data[self.continuous_column_names])
 
@@ -269,7 +271,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             upper_threshold_value_limit=None,
             override_using_none=True,
             logger=self._logger,
-            metric_name=self.column_name
+            metric_name=self.column_name,
         )
         self.lower_threshold_value = lower
         self.upper_threshold_value = upper
@@ -277,13 +279,11 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
     def _populate_thresholds(self, results: pd.DataFrame):
         results[(self.column_name, 'upper_threshold')] = self.upper_threshold_value
         results[(self.column_name, 'lower_threshold')] = self.lower_threshold_value
+
+        lower_threshold = float('-inf') if self.lower_threshold_value is None else self.lower_threshold_value
+        upper_threshold = float('inf') if self.upper_threshold_value is None else self.upper_threshold_value
         results[(self.column_name, 'alert')] = results.apply(
-            lambda row: True
-            if (
-                (self.upper_threshold_value is not None and row[(self.column_name, 'value')] > self.upper_threshold_value)  # noqa: E501
-                or (self.lower_threshold_value is not None and row[(self.column_name, 'value')] < self.lower_threshold_value)  # noqa: E501
-            )
-            else False,
+            lambda row: not (lower_threshold < row[(self.column_name, 'value')] < upper_threshold),
             axis=1,
         )
         return results
@@ -292,7 +292,6 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 def _create_multilevel_index():
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     method_column_names = [
-        'value',
         'sampling_error',
         'upper_confidence_boundary',
         'lower_confidence_boundary',
