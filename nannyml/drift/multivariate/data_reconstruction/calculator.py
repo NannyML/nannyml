@@ -292,6 +292,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 def _create_multilevel_index():
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     method_column_names = [
+        'value',
         'sampling_error',
         'upper_confidence_boundary',
         'lower_confidence_boundary',
