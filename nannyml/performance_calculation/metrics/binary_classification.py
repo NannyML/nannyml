@@ -14,7 +14,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
-    accuracy_score
+    accuracy_score,
 )
 
 from nannyml._typing import ProblemType
@@ -54,6 +54,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
+
     y_pred_proba: str
 
     def __init__(
@@ -99,7 +100,6 @@ class BinaryClassificationAUROC(Metric):
     def _fit(self, reference_data: pd.DataFrame):
         """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
-        # filter nans here
         data = reference_data[[self.y_true, self.y_pred_proba]]
         data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
         if empty:
@@ -116,10 +116,7 @@ class BinaryClassificationAUROC(Metric):
         data = data[[self.y_true, self.y_pred_proba]]
         data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -134,13 +131,11 @@ class BinaryClassificationAUROC(Metric):
             return roc_auc_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
         data = data[[self.y_true, self.y_pred_proba]]
         data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -153,6 +148,7 @@ class BinaryClassificationAP(Metric):
 
     https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html
     """
+
     y_pred_proba: str
 
     def __init__(
@@ -198,10 +194,8 @@ class BinaryClassificationAP(Metric):
     def _fit(self, reference_data: pd.DataFrame):
         """Metric _fit implementation on reference data."""
         _list_missing([self.y_true, self.y_pred_proba], list(reference_data.columns))
-        # filter nans here
         data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred_proba]],
-            [self.y_true, self.y_pred_proba]
+            reference_data[[self.y_true, self.y_pred_proba]], [self.y_true, self.y_pred_proba]
         )
 
         if empty:
@@ -218,10 +212,7 @@ class BinaryClassificationAP(Metric):
         data = data[[self.y_true, self.y_pred_proba]]
         data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -237,15 +228,10 @@ class BinaryClassificationAP(Metric):
             return average_precision_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred_proba]],
-            [self.y_true, self.y_pred_proba]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred_proba]], [self.y_true, self.y_pred_proba])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -298,11 +284,7 @@ class BinaryClassificationF1(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
-        data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
 
         if empty:
             self._sampling_error_components = np.NaN, 0
@@ -315,15 +297,9 @@ class BinaryClassificationF1(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -345,15 +321,10 @@ class BinaryClassificationF1(Metric):
             return f1_score(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -406,11 +377,7 @@ class BinaryClassificationPrecision(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
-        data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
 
         if empty:
             self._sampling_error_components = np.NaN, 0
@@ -422,15 +389,9 @@ class BinaryClassificationPrecision(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -452,15 +413,10 @@ class BinaryClassificationPrecision(Metric):
             return precision_score(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame):
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -513,11 +469,7 @@ class BinaryClassificationRecall(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
-        data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             self._sampling_error_components = np.NaN, 0
         else:
@@ -528,15 +480,9 @@ class BinaryClassificationRecall(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -558,15 +504,10 @@ class BinaryClassificationRecall(Metric):
             return recall_score(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame):
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -619,11 +560,7 @@ class BinaryClassificationSpecificity(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
-        data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             self._sampling_error_components = np.NaN, 0
         else:
@@ -634,15 +571,9 @@ class BinaryClassificationSpecificity(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -656,15 +587,10 @@ class BinaryClassificationSpecificity(Metric):
             return tn / denominator
 
     def _sampling_error(self, data: pd.DataFrame):
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -717,11 +643,7 @@ class BinaryClassificationAccuracy(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
-        data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             self._sampling_error_components = np.NaN, 0
         else:
@@ -732,15 +654,9 @@ class BinaryClassificationAccuracy(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -749,15 +665,10 @@ class BinaryClassificationAccuracy(Metric):
         return accuracy_score(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame):
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -840,11 +751,7 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
-        data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             self._sampling_error_components = np.NaN, self.normalize_business_value
         else:
@@ -857,10 +764,7 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(f"'{self.y_true}' contains no data, cannot calculate business value. Returning NaN.")
             return np.NaN
@@ -883,15 +787,10 @@ class BinaryClassificationBusinessValue(Metric):
         return (bv_array * cm).sum()
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -1032,16 +931,14 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
-            self._true_positive_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
-            self._true_negative_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
-            self._false_positive_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
-            self._false_negative_sampling_error_components = (np.NaN, 0., self.normalize_confusion_matrix)
+            self._true_positive_sampling_error_components = (np.NaN, 0.0, self.normalize_confusion_matrix)
+            self._true_negative_sampling_error_components = (np.NaN, 0.0, self.normalize_confusion_matrix)
+            self._false_positive_sampling_error_components = (np.NaN, 0.0, self.normalize_confusion_matrix)
+            self._false_negative_sampling_error_components = (np.NaN, 0.0, self.normalize_confusion_matrix)
         else:
             self._true_positive_sampling_error_components = true_positive_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -1066,15 +963,9 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_true_positives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate true_positives. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate true_positives. " "Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -1095,15 +986,9 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_true_negatives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate true_negatives. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate true_negatives. " "Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -1124,15 +1009,9 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_false_positives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate false_positives. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate false_positives. " "Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -1153,15 +1032,9 @@ class BinaryClassificationConfusionMatrix(Metric):
 
     def _calculate_false_negatives(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate false_negatives. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate false_negatives. " "Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -1201,21 +1074,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_tp = self._calculate_true_positives(chunk_data)
         # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
-        # filter nans here - for realized performance both columns are expected
-        chunk_data, empty = common_nan_removal(
-            chunk_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        chunk_data, empty = common_nan_removal(chunk_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate true positive sampling error. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate true positive sampling error. " "Returning NaN.")
             sampling_error_tp = np.NaN
         else:
-            sampling_error_tp = true_positive_sampling_error(
-                self._true_positive_sampling_error_components, chunk_data
-            )
+            sampling_error_tp = true_positive_sampling_error(self._true_positive_sampling_error_components, chunk_data)
         #  TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_pos_info[f'{column_name}_sampling_error'] = sampling_error_tp
@@ -1249,21 +1113,12 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_tn = self._calculate_true_negatives(chunk_data)
         # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
-        # filter nans here - for realized performance both columns are expected
-        chunk_data, empty = common_nan_removal(
-            chunk_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        chunk_data, empty = common_nan_removal(chunk_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate true negative sampling error. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate true negative sampling error. " "Returning NaN.")
             sampling_error_tn = np.NaN
         else:
-            sampling_error_tn = true_negative_sampling_error(
-                self._true_negative_sampling_error_components, chunk_data
-            )
+            sampling_error_tn = true_negative_sampling_error(self._true_negative_sampling_error_components, chunk_data)
         #  TODO: NaN removal is duplicated to an extent. Upon refactor consider if we can do it only once
 
         true_neg_info[f'{column_name}_sampling_error'] = sampling_error_tn
@@ -1297,16 +1152,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_fp = self._calculate_false_positives(chunk_data)
         # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
-        # filter nans here - for realized performance both columns are expected
-        chunk_data, empty = common_nan_removal(
-            chunk_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        chunk_data, empty = common_nan_removal(chunk_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate false positive sampling error. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate false positive sampling error. " "Returning NaN.")
             sampling_error_fp = np.NaN
         else:
             sampling_error_fp = false_positive_sampling_error(
@@ -1345,16 +1193,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         realized_fn = self._calculate_false_negatives(chunk_data)
         # we do sampling error nan checks here because we don't have dedicated sampling error function
         # TODO: Refactor similarly to multiclass so code can be re-used.
-        # filter nans here - for realized performance both columns are expected
-        chunk_data, empty = common_nan_removal(
-            chunk_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        chunk_data, empty = common_nan_removal(chunk_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                "Too many missing values, cannot calculate false positive sampling error. "
-                "Returning NaN."
-            )
+            warnings.warn("Too many missing values, cannot calculate false positive sampling error. " "Returning NaN.")
             sampling_error_fn = np.NaN
         else:
             sampling_error_fn = false_negative_sampling_error(

@@ -46,6 +46,7 @@ from nannyml.thresholds import Threshold, calculate_threshold_values
 @MetricFactory.register(metric='roc_auc', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationAUROC(Metric):
     """Area under Receiver Operating Curve metric."""
+
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -97,10 +98,8 @@ class MulticlassClassificationAUROC(Metric):
         classes = class_labels(self.y_pred_proba)
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         _list_missing([self.y_true] + class_y_pred_proba_columns, list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true] + class_y_pred_proba_columns],
-            [self.y_true] + class_y_pred_proba_columns
+            reference_data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for class_col in class_y_pred_proba_columns]
@@ -123,14 +122,10 @@ class MulticlassClassificationAUROC(Metric):
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         _list_missing([self.y_true] + class_y_pred_proba_columns, data)
         data, empty = common_nan_removal(
-            data[[self.y_true] + class_y_pred_proba_columns],
-            [self.y_true] + class_y_pred_proba_columns
+            data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
         )
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         labels, class_probability_columns = [], []
@@ -154,13 +149,11 @@ class MulticlassClassificationAUROC(Metric):
         class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
         _list_missing([self.y_true] + class_y_pred_proba_columns, data)
         data, empty = common_nan_removal(
-            data[[self.y_true] + class_y_pred_proba_columns],
-            [self.y_true] + class_y_pred_proba_columns
+            data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
         )
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                f"Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " f"Returning NaN."
             )
             return np.NaN
         else:
@@ -170,6 +163,7 @@ class MulticlassClassificationAUROC(Metric):
 @MetricFactory.register(metric='f1', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationF1(Metric):
     """F1 score metric."""
+
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -217,11 +211,9 @@ class MulticlassClassificationF1(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], reference_data)
-        # filter nans here
         classes = class_labels(self.y_pred_proba)
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
@@ -243,15 +235,9 @@ class MulticlassClassificationF1(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -273,14 +259,10 @@ class MulticlassClassificationF1(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -290,6 +272,7 @@ class MulticlassClassificationF1(Metric):
 @MetricFactory.register(metric='precision', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationPrecision(Metric):
     """Precision metric."""
+
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -337,11 +320,9 @@ class MulticlassClassificationPrecision(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], reference_data)
-        # filter nans here
         classes = class_labels(self.y_pred_proba)
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
@@ -363,15 +344,9 @@ class MulticlassClassificationPrecision(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -393,14 +368,10 @@ class MulticlassClassificationPrecision(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -410,6 +381,7 @@ class MulticlassClassificationPrecision(Metric):
 @MetricFactory.register(metric='recall', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
+
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -457,11 +429,9 @@ class MulticlassClassificationRecall(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], reference_data)
-        # filter nans here
         classes = class_labels(self.y_pred_proba)
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
@@ -483,15 +453,9 @@ class MulticlassClassificationRecall(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -513,14 +477,10 @@ class MulticlassClassificationRecall(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -530,6 +490,7 @@ class MulticlassClassificationRecall(Metric):
 @MetricFactory.register(metric='specificity', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
+
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -577,11 +538,9 @@ class MulticlassClassificationSpecificity(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], reference_data)
-        # filter nans here
         classes = class_labels(self.y_pred_proba)
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for clazz in classes]
@@ -603,15 +562,9 @@ class MulticlassClassificationSpecificity(Metric):
             )
 
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         labels = sorted(list(self.y_pred_proba.keys()))
@@ -637,14 +590,10 @@ class MulticlassClassificationSpecificity(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -700,10 +649,8 @@ class MulticlassClassificationAccuracy(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], reference_data)
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = (np.NaN,)
@@ -719,15 +666,9 @@ class MulticlassClassificationAccuracy(Metric):
 
     def _calculate(self, data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -737,14 +678,10 @@ class MulticlassClassificationAccuracy(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -754,6 +691,7 @@ class MulticlassClassificationAccuracy(Metric):
 @MetricFactory.register('confusion_matrix', ProblemType.CLASSIFICATION_MULTICLASS)
 class MulticlassClassificationConfusionMatrix(Metric):
     """Multiclass Confusion Matrix metric."""
+
     y_pred_proba: Dict[str, str]
     # classes: List[str]
 
@@ -851,10 +789,8 @@ class MulticlassClassificationConfusionMatrix(Metric):
         self.components = self._get_components(self.classes)
 
         _list_missing([self.y_true, self.y_pred], reference_data)
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = np.full((len(self.classes), len(self.classes)), np.nan), 0
@@ -882,15 +818,9 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
     def _calculate(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
-            )
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
@@ -917,14 +847,10 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
         """
         _list_missing([self.y_true, self.y_pred], data)
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             num_classes: int = len(self.classes)  # type: ignore
             return np.full((num_classes, num_classes), np.nan)

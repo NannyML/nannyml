@@ -72,10 +72,8 @@ class MAE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = (np.NaN,)
@@ -88,14 +86,10 @@ class MAE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"No data or too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
             return np.NaN
 
@@ -105,15 +99,10 @@ class MAE(Metric):
         return mean_absolute_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -157,10 +146,8 @@ class MAPE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = (np.NaN,)
@@ -173,14 +160,10 @@ class MAPE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"No data or too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
             return np.NaN
 
@@ -190,15 +173,10 @@ class MAPE(Metric):
         return mean_absolute_percentage_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -242,10 +220,8 @@ class MSE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = (np.NaN,)
@@ -258,14 +234,10 @@ class MSE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"No data or too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
             return np.NaN
 
@@ -275,15 +247,10 @@ class MSE(Metric):
         return mean_squared_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -327,10 +294,8 @@ class MSLE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = (np.NaN,)
@@ -343,14 +308,10 @@ class MSLE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"No data or too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
             return np.NaN
 
@@ -364,15 +325,10 @@ class MSLE(Metric):
         return mean_squared_log_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -416,10 +372,8 @@ class RMSE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = (np.NaN,)
@@ -432,14 +386,10 @@ class RMSE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"No data or too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
             return np.NaN
 
@@ -449,15 +399,10 @@ class RMSE(Metric):
         return mean_squared_error(y_true, y_pred, squared=False)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
@@ -501,10 +446,8 @@ class RMSLE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
             self._sampling_error_components = (np.NaN,)
@@ -517,14 +460,10 @@ class RMSLE(Metric):
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"No data or too many missing values, cannot calculate {self.display_name}. "
-                f"Returning NaN."
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
             return np.NaN
 
@@ -538,15 +477,10 @@ class RMSLE(Metric):
         return mean_squared_log_error(y_true, y_pred, squared=False)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        # filter nans here - for realized performance both columns are expected
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. "
-                "Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
             return np.NaN
         else:
