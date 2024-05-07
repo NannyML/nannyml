@@ -29,10 +29,10 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
-from nannyml.base import common_nan_removal, _list_missing
 import nannyml.sampling_error.binary_classification as bse
 import nannyml.sampling_error.multiclass_classification as mse
 from nannyml._typing import ModelOutputsType, ProblemType, class_labels, model_output_column_names
+from nannyml.base import _list_missing, common_nan_removal
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorException, InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES

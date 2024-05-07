@@ -261,14 +261,10 @@ class CBPE(AbstractEstimator):
 
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             if not isinstance(self.y_pred_proba, str):
-                raise InvalidArgumentsException(
-                    "y_pred_proba must be a string for binary classification"
-                )
+                raise InvalidArgumentsException("y_pred_proba must be a string for binary classification")
         elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
             if not isinstance(self.y_pred_proba, dict):
-                raise InvalidArgumentsException(
-                    "y_pred_proba must be a dictionary for multiclass classification"
-                )
+                raise InvalidArgumentsException("y_pred_proba must be a dictionary for multiclass classification")
 
         self.thresholds = DEFAULT_THRESHOLDS
         if thresholds:

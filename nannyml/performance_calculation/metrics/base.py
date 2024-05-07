@@ -262,6 +262,7 @@ class MetricFactory:
     @classmethod
     def register(cls, metric: str, use_case: ProblemType) -> Callable:
         """Register performance metric class in MetricFactory."""
+
         def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if use_case in cls.registry[metric]:

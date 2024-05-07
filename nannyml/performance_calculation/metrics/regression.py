@@ -39,6 +39,8 @@ from nannyml.thresholds import Threshold
 class MAE(Metric):
     """Mean Absolute Error metric."""
 
+    y_pred: str
+
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAE instance.
 
@@ -112,6 +114,8 @@ class MAE(Metric):
 @MetricFactory.register(metric='mape', use_case=ProblemType.REGRESSION)
 class MAPE(Metric):
     """Mean Absolute Percentage Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAPE instance.
@@ -187,6 +191,8 @@ class MAPE(Metric):
 class MSE(Metric):
     """Mean Squared Error metric."""
 
+    y_pred: str
+
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSE instance.
 
@@ -260,6 +266,8 @@ class MSE(Metric):
 @MetricFactory.register(metric='msle', use_case=ProblemType.REGRESSION)
 class MSLE(Metric):
     """Mean Squared Logarithmic Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSLE instance.
@@ -339,6 +347,8 @@ class MSLE(Metric):
 class RMSE(Metric):
     """Root Mean Squared Error metric."""
 
+    y_pred: str
+
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSE instance.
 
@@ -412,6 +422,8 @@ class RMSE(Metric):
 @MetricFactory.register(metric='rmsle', use_case=ProblemType.REGRESSION)
 class RMSLE(Metric):
     """Root Mean Squared Logarithmic Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSLE instance.

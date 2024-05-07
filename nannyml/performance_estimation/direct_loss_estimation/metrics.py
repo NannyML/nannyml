@@ -351,6 +351,7 @@ class MetricFactory:
     @classmethod
     def register(cls, metric: str, problem_type: ProblemType) -> Callable:
         """Add a metric class to metric registry."""
+
         def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if problem_type in cls.registry[metric]:
@@ -368,6 +369,7 @@ class MetricFactory:
 @MetricFactory.register('mae', ProblemType.REGRESSION)
 class MAE(Metric):
     """Estimate regression performance using Mean Absolute Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -437,10 +439,7 @@ class MAE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(
-            reference_data,
-            [self.y_true, self.y_pred]
-        )
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -473,10 +472,7 @@ class MAE(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         # we only expect predictions to be present and estimate sampling error based on them
-        data, empty = common_nan_removal(
-            data[[self.y_pred]],
-            [self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
             return np.NaN
         else:
@@ -499,10 +495,7 @@ class MAE(Metric):
         """
         if self.y_true not in data.columns:
             return np.NaN
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             return np.NaN
 
@@ -514,6 +507,7 @@ class MAE(Metric):
 @MetricFactory.register('mape', ProblemType.REGRESSION)
 class MAPE(Metric):
     """Estimate regression performance using Mean Absolute Percentage Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -583,10 +577,7 @@ class MAPE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(
-            reference_data,
-            [self.y_true, self.y_pred]
-        )
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -620,10 +611,7 @@ class MAPE(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         # we only expect predictions to be present and estimate sampling error based on them
-        data, empty = common_nan_removal(
-            data[[self.y_pred]],
-            [self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
             return np.NaN
         else:
@@ -646,10 +634,7 @@ class MAPE(Metric):
         """
         if self.y_true not in data.columns:
             return np.NaN
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             return np.NaN
 
@@ -661,6 +646,7 @@ class MAPE(Metric):
 @MetricFactory.register('mse', ProblemType.REGRESSION)
 class MSE(Metric):
     """Estimate regression performance using Mean Squared Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -730,10 +716,7 @@ class MSE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(
-            reference_data,
-            [self.y_true, self.y_pred]
-        )
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -766,10 +749,7 @@ class MSE(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         # we only expect predictions to be present and estimate sampling error based on them
-        data, empty = common_nan_removal(
-            data[[self.y_pred]],
-            [self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
             return np.NaN
         else:
@@ -792,10 +772,7 @@ class MSE(Metric):
         """
         if self.y_true not in data.columns:
             return np.NaN
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             return np.NaN
         y_true = data[self.y_true]
@@ -806,6 +783,7 @@ class MSE(Metric):
 @MetricFactory.register('msle', ProblemType.REGRESSION)
 class MSLE(Metric):
     """Estimate regression performance using Mean Squared Logarithmic Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -875,10 +853,7 @@ class MSLE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(
-            reference_data,
-            [self.y_true, self.y_pred]
-        )
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -913,10 +888,7 @@ class MSLE(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         # we only expect predictions to be present and estimate sampling error based on them
-        data, empty = common_nan_removal(
-            data[[self.y_pred]],
-            [self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
             return np.NaN
         else:
@@ -943,10 +915,7 @@ class MSLE(Metric):
         """
         if self.y_true not in data.columns:
             return np.NaN
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             return np.NaN
         y_true = data[self.y_true]
@@ -957,6 +926,7 @@ class MSLE(Metric):
 @MetricFactory.register('rmse', ProblemType.REGRESSION)
 class RMSE(Metric):
     """Estimate regression performance using Root Mean Squared Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -1026,10 +996,7 @@ class RMSE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(
-            reference_data,
-            [self.y_true, self.y_pred]
-        )
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -1062,10 +1029,7 @@ class RMSE(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         # we only expect predictions to be present and estimate sampling error based on them
-        data, empty = common_nan_removal(
-            data[[self.y_pred]],
-            [self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
             return np.NaN
         else:
@@ -1088,10 +1052,7 @@ class RMSE(Metric):
         """
         if self.y_true not in data.columns:
             return np.NaN
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             return np.NaN
         y_true = data[self.y_true]
@@ -1102,6 +1063,7 @@ class RMSE(Metric):
 @MetricFactory.register('rmsle', ProblemType.REGRESSION)
 class RMSLE(Metric):
     """Estimate regression performance using Root Mean Squared Logarithmic Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -1171,10 +1133,7 @@ class RMSLE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(
-            reference_data,
-            [self.y_true, self.y_pred]
-        )
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -1210,10 +1169,7 @@ class RMSLE(Metric):
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         # we only expect predictions to be present and estimate sampling error based on them
-        data, empty = common_nan_removal(
-            data[[self.y_pred]],
-            [self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
             return np.NaN
         else:
@@ -1240,10 +1196,7 @@ class RMSLE(Metric):
         """
         if self.y_true not in data.columns:
             return np.NaN
-        data, empty = common_nan_removal(
-            data[[self.y_true, self.y_pred]],
-            [self.y_true, self.y_pred]
-        )
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
             return np.NaN
         y_true = data[self.y_true]

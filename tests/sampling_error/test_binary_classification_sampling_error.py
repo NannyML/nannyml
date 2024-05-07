@@ -29,6 +29,7 @@ def test_auroc_sampling_error_nan():
     sampling_error = bse.auroc_sampling_error(components, chunk)
     assert np.isnan(sampling_error)
 
+
 def test_f1_sampling_error():
     np.random.seed(1)
     sample_size = 50

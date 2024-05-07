@@ -725,11 +725,13 @@ def test_cbpe_without_predictions():
 
 @pytest.mark.filterwarnings("ignore:Too few unique values", "ignore:'y_true' contains a single class")
 def test_cbpe_fitting_does_not_generate_error_when_single_class_present():
-    ref_df = pd.DataFrame({
-        'y_true': [0] * 1000,
-        'y_pred': [0] * 1000,
-        'y_pred_proba': [0.5] * 1000,
-    })
+    ref_df = pd.DataFrame(
+        {
+            'y_true': [0] * 1000,
+            'y_pred': [0] * 1000,
+            'y_pred_proba': [0.5] * 1000,
+        }
+    )
     sut = CBPE(
         y_true='y_true',
         y_pred='y_pred',
@@ -746,6 +748,6 @@ def test_cbpe_fitting_does_not_generate_error_when_single_class_present():
             'business_value',
         ],
         chunk_size=100,
-        business_value_matrix=[[1, -1], [-1, 1]]
+        business_value_matrix=[[1, -1], [-1, 1]],
     )
     sut.fit(ref_df)

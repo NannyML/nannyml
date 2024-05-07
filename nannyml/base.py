@@ -615,6 +615,7 @@ def _raise_exception_for_negative_values(column: pd.Series):
             f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
         )
 
+
 def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple[pd.DataFrame, bool]:
     """Remove rows of dataframe containing NaN values on selected columns.
 
@@ -638,9 +639,7 @@ def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple
         raise InvalidArgumentsException(
             f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
         )
-    df = data.dropna(
-        axis=0, how='any', inplace=False, subset=selected_columns
-    ).reset_index(drop=True).infer_objects()
+    df = data.dropna(axis=0, how='any', inplace=False, subset=selected_columns).reset_index(drop=True).infer_objects()
     empty: bool = False
     if df.shape[0] == 0:
         empty = True

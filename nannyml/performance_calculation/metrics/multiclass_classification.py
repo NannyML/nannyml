@@ -164,6 +164,7 @@ class MulticlassClassificationAUROC(Metric):
 class MulticlassClassificationF1(Metric):
     """F1 score metric."""
 
+    y_pred: str
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -273,6 +274,7 @@ class MulticlassClassificationF1(Metric):
 class MulticlassClassificationPrecision(Metric):
     """Precision metric."""
 
+    y_pred: str
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -382,6 +384,7 @@ class MulticlassClassificationPrecision(Metric):
 class MulticlassClassificationRecall(Metric):
     """Recall metric, also known as 'sensitivity'."""
 
+    y_pred: str
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -491,6 +494,7 @@ class MulticlassClassificationRecall(Metric):
 class MulticlassClassificationSpecificity(Metric):
     """Specificity metric."""
 
+    y_pred: str
     y_pred_proba: Dict[str, str]
 
     def __init__(
@@ -604,6 +608,9 @@ class MulticlassClassificationSpecificity(Metric):
 class MulticlassClassificationAccuracy(Metric):
     """Accuracy metric."""
 
+    y_pred: str
+    y_pred_proba: Dict[str, str]
+
     def __init__(
         self,
         y_true: str,
@@ -692,6 +699,7 @@ class MulticlassClassificationAccuracy(Metric):
 class MulticlassClassificationConfusionMatrix(Metric):
     """Multiclass Confusion Matrix metric."""
 
+    y_pred: str
     y_pred_proba: Dict[str, str]
     # classes: List[str]
 

@@ -569,8 +569,6 @@ def test_data_reconstruction_drift_chunked_by_size(sample_drift_data):  # noqa: 
 
     assert ('reconstruction_error', 'sampling_error') in results.data.columns
     assert np.array_equal(
-        np.round(
-            results.filter(period='analysis').to_df().loc[:, ('reconstruction_error', 'sampling_error')],
-            4),
+        np.round(results.filter(period='analysis').to_df().loc[:, ('reconstruction_error', 'sampling_error')], 4),
         [0.0118, 0.0115, 0.0118],
     )

@@ -8,13 +8,13 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
+    accuracy_score,
     average_precision_score,
     confusion_matrix,
     f1_score,
     precision_score,
     recall_score,
     roc_auc_score,
-    accuracy_score,
 )
 
 from nannyml._typing import ProblemType
@@ -242,6 +242,8 @@ class BinaryClassificationAP(Metric):
 class BinaryClassificationF1(Metric):
     """F1 score metric."""
 
+    y_pred: str
+
     def __init__(
         self,
         y_true: str,
@@ -334,6 +336,8 @@ class BinaryClassificationF1(Metric):
 @MetricFactory.register(metric='precision', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationPrecision(Metric):
     """Precision metric."""
+
+    y_pred: str
 
     def __init__(
         self,
@@ -440,6 +444,8 @@ class BinaryClassificationRecall(Metric):
         refering to the model output column.
     """
 
+    y_pred: str
+
     def __init__(
         self,
         y_true: str,
@@ -517,6 +523,8 @@ class BinaryClassificationRecall(Metric):
 @MetricFactory.register(metric='specificity', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationSpecificity(Metric):
     """Specificity metric."""
+
+    y_pred: str
 
     def __init__(
         self,
@@ -614,6 +622,8 @@ class BinaryClassificationAccuracy(Metric):
         refering to the model output column.
     """
 
+    y_pred: str
+
     def __init__(
         self,
         y_true: str,
@@ -678,6 +688,8 @@ class BinaryClassificationAccuracy(Metric):
 @MetricFactory.register(metric='business_value', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationBusinessValue(Metric):
     """Business Value metric."""
+
+    y_pred: str
 
     def __init__(
         self,
@@ -801,6 +813,8 @@ class BinaryClassificationBusinessValue(Metric):
 @MetricFactory.register(metric='confusion_matrix', use_case=ProblemType.CLASSIFICATION_BINARY)
 class BinaryClassificationConfusionMatrix(Metric):
     """Confusion Matrix metric."""
+
+    y_pred: str
 
     def __init__(
         self,
