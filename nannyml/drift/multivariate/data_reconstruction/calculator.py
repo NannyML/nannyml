@@ -14,7 +14,7 @@ the reference and analysis data sets.
 
 """
 
-from typing import List, Optional, Tuple, Union, Dict
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd

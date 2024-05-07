@@ -1,6 +1,8 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+"""Performance Calculation Regression Metrics Module."""
+
 import warnings
 from typing import Optional, Tuple
 
@@ -14,7 +16,7 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _list_missing, _raise_exception_for_negative_values, _remove_nans
+from nannyml.base import _list_missing, _raise_exception_for_negative_values, common_nan_removal
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
@@ -36,6 +38,8 @@ from nannyml.thresholds import Threshold
 @MetricFactory.register(metric='mae', use_case=ProblemType.REGRESSION)
 class MAE(Metric):
     """Mean Absolute Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAE instance.
@@ -65,40 +69,53 @@ class MAE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MAE"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        self._sampling_error_components = mae_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = (np.NaN,)
+        else:
+            self._sampling_error_components = mae_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        assert self.y_pred
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
+            )
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty:
-            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-        elif y_pred.empty:
-            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-
         return mean_absolute_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mae_sampling_error(self._sampling_error_components, data)
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mae_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='mape', use_case=ProblemType.REGRESSION)
 class MAPE(Metric):
     """Mean Absolute Percentage Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MAPE instance.
@@ -128,40 +145,53 @@ class MAPE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MAPE"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        self._sampling_error_components = mape_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = (np.NaN,)
+        else:
+            self._sampling_error_components = mape_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        assert self.y_pred
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
+            )
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty:
-            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-        elif y_pred.empty:
-            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-
         return mean_absolute_percentage_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mape_sampling_error(self._sampling_error_components, data)
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mape_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='mse', use_case=ProblemType.REGRESSION)
 class MSE(Metric):
     """Mean Squared Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSE instance.
@@ -191,40 +221,53 @@ class MSE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MSE"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        self._sampling_error_components = mse_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = (np.NaN,)
+        else:
+            self._sampling_error_components = mse_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        assert self.y_pred
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
+            )
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty:
-            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-        elif y_pred.empty:
-            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-
         return mean_squared_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse_sampling_error(self._sampling_error_components, data)
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='msle', use_case=ProblemType.REGRESSION)
 class MSLE(Metric):
     """Mean Squared Logarithmic Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new MSLE instance.
@@ -254,45 +297,57 @@ class MSLE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "MSLE"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        self._sampling_error_components = msle_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = (np.NaN,)
+        else:
+            self._sampling_error_components = msle_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        assert self.y_pred
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
+            )
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty:
-            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-        elif y_pred.empty:
-            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-
         # TODO: include option to drop negative values as well?
-
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
 
         return mean_squared_log_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return msle_sampling_error(self._sampling_error_components, data)
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return msle_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='rmse', use_case=ProblemType.REGRESSION)
 class RMSE(Metric):
     """Root Mean Squared Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSE instance.
@@ -322,40 +377,53 @@ class RMSE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "RMSE"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        self._sampling_error_components = rmse_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = (np.NaN,)
+        else:
+            self._sampling_error_components = rmse_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        assert self.y_pred
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
+            )
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty:
-            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-        elif y_pred.empty:
-            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-
         return mean_squared_error(y_true, y_pred, squared=False)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return rmse_sampling_error(self._sampling_error_components, data)
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return rmse_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='rmsle', use_case=ProblemType.REGRESSION)
 class RMSLE(Metric):
     """Root Mean Squared Logarithmic Error metric."""
+
+    y_pred: str
 
     def __init__(self, y_true: str, y_pred: str, threshold: Threshold, y_pred_proba: Optional[str] = None, **kwargs):
         """Creates a new RMSLE instance.
@@ -385,37 +453,47 @@ class RMSLE(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "RMSLE"
 
     def _fit(self, reference_data: pd.DataFrame):
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
-        self._sampling_error_components = rmsle_sampling_error_components(
-            y_true_reference=reference_data[self.y_true],
-            y_pred_reference=reference_data[self.y_pred],
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
+        if empty:
+            self._sampling_error_components = (np.NaN,)
+        else:
+            self._sampling_error_components = rmsle_sampling_error_components(
+                y_true_reference=reference_data[self.y_true],
+                y_pred_reference=reference_data[self.y_pred],
+            )
 
     def _calculate(self, data: pd.DataFrame):
         """Redefine to handle NaNs and edge cases."""
         _list_missing([self.y_true, self.y_pred], list(data.columns))
-        assert self.y_pred
-        data = _remove_nans(data, (self.y_true, self.y_pred))
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
+            )
+            return np.NaN
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        if y_true.empty:
-            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-        elif y_pred.empty:
-            warnings.warn(f"'{self.y_pred}' contains no data, cannot calculate {self.display_name}. Returning NaN.")
-            return np.NaN
-
         # TODO: include option to drop negative values as well?
-
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
 
         return mean_squared_log_error(y_true, y_pred, squared=False)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return rmsle_sampling_error(self._sampling_error_components, data)
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return rmsle_sampling_error(self._sampling_error_components, data)

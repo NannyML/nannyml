@@ -49,14 +49,13 @@ def auroc_sampling_error_components(y_true_reference: pd.Series, y_pred_proba_re
     -------
     (std, fraction): Tuple[np.ndarray, float]
     """
-
-    y_true = y_true_reference.copy().reset_index(drop=True)
-    y_pred_proba = y_pred_proba_reference.copy().reset_index(drop=True)
+    # keep converting to numpy here for now
+    y_true = y_true_reference.to_numpy()
+    y_pred_proba = y_pred_proba_reference.to_numpy()
 
     if np.mean(y_true) > 0.5:
         y_true = abs(np.asarray(y_true) - 1)
         y_pred_proba = 1 - y_pred_proba
-
     sorted_idx = np.argsort(y_pred_proba)
     y_pred_proba = y_pred_proba[sorted_idx]
     y_true = y_true[sorted_idx]
@@ -145,9 +144,9 @@ def ap_sampling_error(sampling_error_components, data):
     sampling_error: float
 
     """
-    reference_std, reference_size = sampling_error_components
+    reference_std, sample_size = sampling_error_components
     analysis_size = data.shape[0]
-    return reference_std * np.sqrt(reference_size / analysis_size)
+    return reference_std * np.sqrt(sample_size / analysis_size)
 
 
 def f1_sampling_error_components(y_true_reference: pd.Series, y_pred_reference: pd.Series) -> Tuple:
@@ -387,7 +386,7 @@ def accuracy_sampling_error(sampling_error_components: Tuple, data) -> float:
 
 def true_positive_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for true positive rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -491,7 +490,7 @@ def true_positive_sampling_error(sampling_error_components: Tuple, data) -> floa
 
 def true_negative_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for true negative rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -595,7 +594,7 @@ def true_negative_sampling_error(sampling_error_components: Tuple, data) -> floa
 
 def false_positive_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for false positive rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -699,7 +698,7 @@ def false_positive_sampling_error(sampling_error_components: Tuple, data) -> flo
 
 def false_negative_sampling_error_components(
     y_true_reference: pd.Series, y_pred_reference: pd.Series, normalize_confusion_matrix: Union[str, None]
-) -> Tuple:
+) -> Tuple[float, float, Union[str, None]]:
     """
     Estimate sampling error components for false negative rate using reference data.
     Calculation is based on modified standard error of mean formula.
@@ -806,7 +805,7 @@ def business_value_sampling_error_components(
     y_pred_reference: pd.Series,
     business_value_matrix: np.ndarray,
     normalize_business_value: Optional[str],
-) -> Tuple:
+) -> Tuple[float, Union[str, None]]:
     """
     Estimate sampling error for the false negative rate.
     Parameters

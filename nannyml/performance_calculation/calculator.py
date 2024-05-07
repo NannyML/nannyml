@@ -111,11 +111,9 @@ class PerformanceCalculator(AbstractCalculator):
             When it is not given, only the ROC AUC and Average Precision metrics are supported.
         problem_type: Union[str, ProblemType]
             Determines which method to use. Allowed values are:
-
                 - 'regression'
                 - 'classification_binary'
                 - 'classification_multiclass'
-
         y_pred_proba: ModelOutputsType, default=None
             Name(s) of the column(s) containing your model output.
             Pass a single string when there is only a single model output column, e.g. in binary classification cases.
@@ -124,7 +122,6 @@ class PerformanceCalculator(AbstractCalculator):
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
         thresholds: dict
-
             The default values are::
 
                 {
@@ -158,7 +155,7 @@ class PerformanceCalculator(AbstractCalculator):
         chunk_period: str, default=None
             Splits the data according to the given period.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
-        chunker : Chunker, default=None
+        chunker: Chunker, default=None
             The `Chunker` used to split the data sets into a lists of chunks.
         normalize_confusion_matrix: str, default=None
             Determines how the confusion matrix will be normalized. Allowed values are None, 'all', 'true' and
@@ -311,7 +308,7 @@ class PerformanceCalculator(AbstractCalculator):
         data = data.copy(deep=True)
 
         # Setup for target completeness rate
-        data['NML_TARGET_INCOMPLETE'] = data[self.y_true].isna().astype(np.int16)
+        data[TARGET_COMPLETENESS_RATE_COLUMN_NAME] = data[self.y_true].isna().astype(np.int16)
 
         # Generate chunks
         if self.chunker is None:

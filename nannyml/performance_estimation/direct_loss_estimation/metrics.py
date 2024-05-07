@@ -2,8 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""A module containing the implementations of metrics estimated by
-:class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE`.
+"""A module containing the implementations of metrics estimated by DLE class.
 
 The :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` estimator
 converts a list of metric names into :class:`~nannyml.performance_estimation.direct_loss_estimation.metrics.Metric`
@@ -29,9 +28,9 @@ from sklearn.metrics import (
 )
 
 from nannyml._typing import ProblemType
-from nannyml.base import _raise_exception_for_negative_values, _remove_nans
+from nannyml.base import _raise_exception_for_negative_values, common_nan_removal
 from nannyml.chunk import Chunk, Chunker
-from nannyml.exceptions import InvalidArgumentsException
+from nannyml.exceptions import InvalidArgumentsException, InvalidReferenceDataException
 from nannyml.sampling_error.regression import (
     mae_sampling_error,
     mae_sampling_error_components,
@@ -154,6 +153,7 @@ class Metric(abc.ABC):
         return logging.getLogger(__name__)
 
     def __str__(self):
+        """Get string of class name."""
         return self.__class__.__name__
 
     def fit(self, reference_data: pd.DataFrame):
@@ -211,10 +211,8 @@ class Metric(abc.ABC):
 
         Returns
         -------
-
         sampling_error: float
             The expected sampling error.
-
         """
         return self._sampling_error(data)
 
@@ -255,7 +253,8 @@ class Metric(abc.ABC):
 
     @abc.abstractmethod
     def realized_performance(self, data: pd.DataFrame) -> float:
-        """Calculates de realized performance of a model with respect of a given chunk of data.
+        """Calculates the realized performance of a model with respect of a given chunk of data.
+
         The data needs to have both prediction and real targets.
 
         Parameters
@@ -270,15 +269,6 @@ class Metric(abc.ABC):
     def __eq__(self, other):
         """Establishes equality by comparing all properties."""
         return self.display_name == other.display_name and self.column_name == other.column_name
-
-    def _common_cleaning(self, data: pd.DataFrame) -> Tuple[pd.Series, Optional[pd.Series]]:
-        data = _remove_nans(data, [self.y_pred])
-
-        clean_targets = self.y_true in data.columns and not data[self.y_true].isna().all()
-        if clean_targets:
-            data = _remove_nans(data, [self.y_pred, self.y_true])
-
-        return data[self.y_pred], (data[self.y_true] if clean_targets else None)
 
     def _train_direct_error_estimation_model(
         self,
@@ -334,6 +324,7 @@ class MetricFactory:
         Parameters
         ----------
         key: str
+            string representing metric key of selected metric
         problem_type: ProblemType
             Determines which method to use. Use 'regression' for regression tasks.
         """
@@ -359,6 +350,8 @@ class MetricFactory:
 
     @classmethod
     def register(cls, metric: str, problem_type: ProblemType) -> Callable:
+        """Add a metric class to metric registry."""
+
         def inner_wrapper(wrapped_class: Type[Metric]) -> Type[Metric]:
             if metric in cls.registry:
                 if problem_type in cls.registry[metric]:
@@ -375,6 +368,8 @@ class MetricFactory:
 
 @MetricFactory.register('mae', ProblemType.REGRESSION)
 class MAE(Metric):
+    """Estimate regression performance using Mean Absolute Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -443,6 +438,13 @@ class MAE(Metric):
         )
 
     def _fit(self, reference_data: pd.DataFrame):
+        # filter nans here
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        if empty:
+            raise InvalidReferenceDataException(
+                f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
+            )
+
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -469,31 +471,43 @@ class MAE(Metric):
         return chunk_level_estimate
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mae_sampling_error(self._sampling_error_components, data)
+        # we only expect predictions to be present and estimate sampling error based on them
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
+        if empty:
+            return np.NaN
+        else:
+            return mae_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        """Calculates de realized performance of a model with respect of a given chunk of data.
+        """Calculates the realized performance of a model with respect of a given chunk of data.
+
         The data needs to have both prediction and real targets.
 
         Parameters
         ----------
         data: pd.DataFrame
             The data to calculate the realized performance on.
+
         Returns
         -------
         mae: float
-        Mean Absolute Error
+            Mean Absolute Error
         """
-        y_pred, y_true = self._common_cleaning(data)
-
-        if y_true is None:
+        if self.y_true not in data.columns:
+            return np.NaN
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
             return np.NaN
 
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
         return mean_absolute_error(y_true, y_pred)
 
 
 @MetricFactory.register('mape', ProblemType.REGRESSION)
 class MAPE(Metric):
+    """Estimate regression performance using Mean Absolute Percentage Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -562,6 +576,13 @@ class MAPE(Metric):
         )
 
     def _fit(self, reference_data: pd.DataFrame):
+        # filter nans here
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        if empty:
+            raise InvalidReferenceDataException(
+                f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
+            )
+
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -589,31 +610,43 @@ class MAPE(Metric):
         return chunk_level_estimate
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mape_sampling_error(self._sampling_error_components, data)
+        # we only expect predictions to be present and estimate sampling error based on them
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
+        if empty:
+            return np.NaN
+        else:
+            return mape_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        """Calculates de realized performance of a model with respect of a given chunk of data.
+        """Calculates the realized performance of a model with respect of a given chunk of data.
+
         The data needs to have both prediction and real targets.
 
         Parameters
         ----------
         data: pd.DataFrame
             The data to calculate the realized performance on.
+
         Returns
         -------
-        mae: float
-        Mean Absolute Percentage Error
+        mape: float
+            Mean Absolute Percentage Error
         """
-        y_pred, y_true = self._common_cleaning(data)
-
-        if y_true is None:
+        if self.y_true not in data.columns:
+            return np.NaN
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
             return np.NaN
 
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
         return mean_absolute_percentage_error(y_true, y_pred)
 
 
 @MetricFactory.register('mse', ProblemType.REGRESSION)
 class MSE(Metric):
+    """Estimate regression performance using Mean Squared Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -682,6 +715,13 @@ class MSE(Metric):
         )
 
     def _fit(self, reference_data: pd.DataFrame):
+        # filter nans here
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        if empty:
+            raise InvalidReferenceDataException(
+                f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
+            )
+
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -708,31 +748,42 @@ class MSE(Metric):
         return chunk_level_estimate
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return mse_sampling_error(self._sampling_error_components, data)
+        # we only expect predictions to be present and estimate sampling error based on them
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
+        if empty:
+            return np.NaN
+        else:
+            return mse_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        """Calculates de realized performance of a model with respect of a given chunk of data.
+        """Calculates the realized performance of a model with respect of a given chunk of data.
+
         The data needs to have both prediction and real targets.
 
         Parameters
         ----------
         data: pd.DataFrame
             The data to calculate the realized performance on.
+
         Returns
         -------
-        mae: float
-        Mean Squared Error
+        mse: float
+            Mean Squared Error
         """
-        y_pred, y_true = self._common_cleaning(data)
-
-        if y_true is None:
+        if self.y_true not in data.columns:
             return np.NaN
-
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            return np.NaN
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
         return mean_squared_error(y_true, y_pred)
 
 
 @MetricFactory.register('msle', ProblemType.REGRESSION)
 class MSLE(Metric):
+    """Estimate regression performance using Mean Squared Logarithmic Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -801,6 +852,12 @@ class MSLE(Metric):
         )
 
     def _fit(self, reference_data: pd.DataFrame):
+        # filter nans here
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        if empty:
+            raise InvalidReferenceDataException(
+                f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
+            )
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -830,10 +887,16 @@ class MSLE(Metric):
         return chunk_level_estimate
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return msle_sampling_error(self._sampling_error_components, data)
+        # we only expect predictions to be present and estimate sampling error based on them
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
+        if empty:
+            return np.NaN
+        else:
+            return msle_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        """Calculates de realized performance of a model with respect of a given chunk of data.
+        """Calculates the realized performance of a model with respect of a given chunk of data.
+
         The data needs to have both prediction and real targets.
 
         Parameters
@@ -847,22 +910,23 @@ class MSLE(Metric):
 
         Returns
         -------
-        mae: float
-        Mean Squared Log Error
+        msle: float
+            Mean Squared Log Error
         """
-        y_pred, y_true = self._common_cleaning(data)
-
-        if y_true is None:
+        if self.y_true not in data.columns:
             return np.NaN
-
-        _raise_exception_for_negative_values(y_true)
-        _raise_exception_for_negative_values(y_pred)
-
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            return np.NaN
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
         return mean_squared_log_error(y_true, y_pred)
 
 
 @MetricFactory.register('rmse', ProblemType.REGRESSION)
 class RMSE(Metric):
+    """Estimate regression performance using Root Mean Squared Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -931,6 +995,13 @@ class RMSE(Metric):
         )
 
     def _fit(self, reference_data: pd.DataFrame):
+        # filter nans here
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        if empty:
+            raise InvalidReferenceDataException(
+                f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
+            )
+
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -957,10 +1028,16 @@ class RMSE(Metric):
         return chunk_level_estimate
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return rmse_sampling_error(self._sampling_error_components, data)
+        # we only expect predictions to be present and estimate sampling error based on them
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
+        if empty:
+            return np.NaN
+        else:
+            return rmse_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        """Calculates de realized performance of a model with respect of a given chunk of data.
+        """Calculates the realized performance of a model with respect of a given chunk of data.
+
         The data needs to have both prediction and real targets.
 
         Parameters
@@ -971,18 +1048,22 @@ class RMSE(Metric):
         Returns
         -------
         rmse: float
-        Root Mean Squared Error
+            Root Mean Squared Error
         """
-        y_pred, y_true = self._common_cleaning(data)
-
-        if y_true is None:
+        if self.y_true not in data.columns:
             return np.NaN
-
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            return np.NaN
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
         return mean_squared_error(y_true, y_pred, squared=False)
 
 
 @MetricFactory.register('rmsle', ProblemType.REGRESSION)
 class RMSLE(Metric):
+    """Estimate regression performance using Root Mean Squared Logarithmic Error metric."""
+
     def __init__(
         self,
         feature_column_names: List[str],
@@ -1051,6 +1132,13 @@ class RMSLE(Metric):
         )
 
     def _fit(self, reference_data: pd.DataFrame):
+        # filter nans here
+        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        if empty:
+            raise InvalidReferenceDataException(
+                f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
+            )
+
         y_true = reference_data[self.y_true]
         y_pred = reference_data[self.y_pred]
 
@@ -1080,10 +1168,16 @@ class RMSLE(Metric):
         return chunk_level_estimate
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        return rmsle_sampling_error(self._sampling_error_components, data)
+        # we only expect predictions to be present and estimate sampling error based on them
+        data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
+        if empty:
+            return np.NaN
+        else:
+            return rmsle_sampling_error(self._sampling_error_components, data)
 
     def realized_performance(self, data: pd.DataFrame) -> float:
-        """Calculates de realized performance of a model with respect of a given chunk of data.
+        """Calculates the realized performance of a model with respect of a given chunk of data.
+
         The data needs to have both prediction and real targets.
 
         Parameters
@@ -1098,12 +1192,15 @@ class RMSLE(Metric):
         Returns
         -------
         rmsle: float
-        Root Mean Squared Log Error
+            Root Mean Squared Log Error
         """
-        y_pred, y_true = self._common_cleaning(data)
-
-        if y_true is None:
+        if self.y_true not in data.columns:
             return np.NaN
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            return np.NaN
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
 
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)

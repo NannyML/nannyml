@@ -614,3 +614,33 @@ def _raise_exception_for_negative_values(column: pd.Series):
             "\tLog-based metrics are not supported for negative target values.\n"
             f"\tCheck '{column.name}' at rows {str(negative_item_indices)}."
         )
+
+
+def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple[pd.DataFrame, bool]:
+    """Remove rows of dataframe containing NaN values on selected columns.
+
+    Parameters
+    ----------
+    data: pd.DataFrame
+        Pandas dataframe containing data.
+    selected_columns: List[str]
+        List containing the strings of column names
+
+    Returns
+    -------
+    df:
+        Dataframe with rows containing NaN's on selected_columns removed. All columns of original
+        dataframe are being returned.
+    empty:
+        Boolean whether the resulting data are contain any rows (false) or not (true)
+    """
+    # If we want target and it's not available we get None
+    if not set(selected_columns) <= set(data.columns):
+        raise InvalidArgumentsException(
+            f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
+        )
+    df = data.dropna(axis=0, how='any', inplace=False, subset=selected_columns).reset_index(drop=True).infer_objects()
+    empty: bool = False
+    if df.shape[0] == 0:
+        empty = True
+    return (df, empty)

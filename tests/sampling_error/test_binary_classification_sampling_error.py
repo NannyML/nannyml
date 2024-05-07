@@ -20,6 +20,16 @@ def test_auroc_sampling_error():
     assert np.round(sampling_error, 4) == 0.0575
 
 
+def test_auroc_sampling_error_nan():
+    np.random.seed(1)
+    sample_size = 50
+    chunk = np.random.random(sample_size)
+
+    components = np.NaN, np.NaN
+    sampling_error = bse.auroc_sampling_error(components, chunk)
+    assert np.isnan(sampling_error)
+
+
 def test_f1_sampling_error():
     np.random.seed(1)
     sample_size = 50
