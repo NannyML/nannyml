@@ -368,7 +368,6 @@ class BinaryClassificationAUROC(Metric):
         self._sampling_error_components: Tuple = ()
 
     def _fit(self, reference_data: pd.DataFrame):
-        # filter nans here
         data = reference_data[[self.y_true, self.y_pred_proba]]
         data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
         if empty:
@@ -512,7 +511,6 @@ class BinaryClassificationAP(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         """Metric _fit implementation on reference data."""
-        # filter nans
         data = reference_data[[self.y_true, self.y_pred_proba]]
         data, empty = common_nan_removal(data, [self.y_true, self.y_pred_proba])
         y_true = data[self.y_true]
@@ -1086,6 +1084,9 @@ class BinaryClassificationSpecificity(Metric):
         # sampling error
         self._sampling_error_components: Tuple = ()
 
+        # Set labels expected in y_true/y_pred. Currently hard-coded to 0, 1 for binary classification
+        self._labels = [0, 1]
+
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans
         data = reference_data[[self.y_true, self.y_pred]]
@@ -1152,8 +1153,7 @@ class BinaryClassificationSpecificity(Metric):
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
-
-        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=self._labels).ravel()
         denominator = tn + fp
         if denominator == 0:
             return np.NaN
@@ -1355,6 +1355,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         self.false_negative_lower_threshold: Optional[float] = None
         self.false_negative_upper_threshold: Optional[float] = None
 
+        # Set labels expected in y_true/y_pred. Currently hard-coded to 0, 1 for binary classification
+        self._labels = [0, 1]
+
     def fit(self, reference_data: pd.DataFrame):  # override the superclass fit method
         """Fits a Metric on reference data.
 
@@ -1502,7 +1505,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        _, _, _, tp = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        _, _, _, tp = confusion_matrix(
+            y_true, y_pred, labels=self._labels, normalize=self.normalize_confusion_matrix
+        ).ravel()
         return tp
 
     def _true_negative_realized_performance(self, data: pd.DataFrame) -> float:
@@ -1522,7 +1527,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        tn, _, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        tn, _, _, _ = confusion_matrix(
+            y_true, y_pred, labels=self._labels, normalize=self.normalize_confusion_matrix
+        ).ravel()
         return tn
 
     def _false_positive_realized_performance(self, data: pd.DataFrame) -> float:
@@ -1542,7 +1549,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        _, fp, _, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        _, fp, _, _ = confusion_matrix(
+            y_true, y_pred, labels=self._labels, normalize=self.normalize_confusion_matrix
+        ).ravel()
         return fp
 
     def _false_negative_realized_performance(self, data: pd.DataFrame) -> float:
@@ -1562,7 +1571,9 @@ class BinaryClassificationConfusionMatrix(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        _, _, fn, _ = confusion_matrix(y_true, y_pred, normalize=self.normalize_confusion_matrix).ravel()
+        _, _, fn, _ = confusion_matrix(
+            y_true, y_pred, labels=self._labels, normalize=self.normalize_confusion_matrix
+        ).ravel()
         return fn
 
     def get_true_positive_estimate(self, chunk_data: pd.DataFrame) -> float:
@@ -2121,6 +2132,9 @@ class BinaryClassificationBusinessValue(Metric):
         self.business_value_matrix = business_value_matrix
         self.normalize_business_value: Optional[str] = normalize_business_value
 
+        # Set labels expected in y_true/y_pred. Currently hard-coded to 0, 1 for binary classification
+        self._labels = [0, 1]
+
         # self.lower_threshold: Optional[float] = 0
         # self.upper_threshold: Optional[float] = 1
 
@@ -2168,7 +2182,7 @@ class BinaryClassificationBusinessValue(Metric):
         fn_value = self.business_value_matrix[1, 0]
         bv_array = np.array([[tn_value, fp_value], [fn_value, tp_value]])
 
-        cm = confusion_matrix(y_true, y_pred)
+        cm = confusion_matrix(y_true, y_pred, labels=self._labels)
         if self.normalize_business_value == 'per_prediction':
             with np.errstate(all="ignore"):
                 cm = cm / cm.sum(axis=0, keepdims=True)

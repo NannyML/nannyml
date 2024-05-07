@@ -75,10 +75,10 @@ class CBPE(AbstractEstimator):
     def __init__(
         self,
         metrics: Union[str, List[str]],
-        y_pred: str,
         y_pred_proba: ModelOutputsType,
         y_true: str,
         problem_type: Union[str, ProblemType],
+        y_pred: Optional[str] = None,
         timestamp_column_name: Optional[str] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
@@ -103,8 +103,6 @@ class CBPE(AbstractEstimator):
                 - For binary classification, pass a single string refering to the model output column.
                 - For multiclass classification, pass a dictionary that maps a class string to the column name
                   model outputs for that class.
-        y_pred: str
-            The name of the column containing your model predictions.
         timestamp_column_name: str, default=None
             The name of the column containing the timestamp of the model prediction.
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
@@ -121,6 +119,8 @@ class CBPE(AbstractEstimator):
                 - `accuracy`
                 - `confusion_matrix` - only for binary classification tasks
                 - `business_value` - only for binary classification tasks
+        y_pred: str
+            The name of the column containing your model predictions.
         chunk_size: int, default=None
             Splits the data into chunks containing `chunks_size` observations.
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
@@ -256,6 +256,9 @@ class CBPE(AbstractEstimator):
         else:
             self.problem_type = problem_type
 
+        if self.problem_type is not ProblemType.CLASSIFICATION_BINARY and y_pred is None:
+            raise InvalidArgumentsException(f"'y_pred' can not be 'None' for problem type {self.problem_type.value}")
+
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             if not isinstance(self.y_pred_proba, str):
                 raise InvalidArgumentsException(
@@ -273,6 +276,8 @@ class CBPE(AbstractEstimator):
 
         if isinstance(metrics, str):
             metrics = [metrics]
+
+        raise_if_metrics_require_y_pred(metrics, y_pred)
 
         self.metrics = []
         for metric in metrics:
@@ -352,7 +357,10 @@ class CBPE(AbstractEstimator):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
-            _list_missing([self.y_pred, self.y_pred_proba], data)
+            required_cols = [self.y_pred_proba]
+            if self.y_pred is not None:
+                required_cols.append(self.y_pred)
+            _list_missing(required_cols, list(data.columns))
 
             # We need uncalibrated data to calculate the realized performance on.
             # https://github.com/NannyML/nannyml/issues/98
@@ -425,7 +433,10 @@ class CBPE(AbstractEstimator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        _list_missing([self.y_true, self.y_pred_proba, self.y_pred], list(reference_data.columns))
+        required_cols = [self.y_true, self.y_pred_proba]
+        if self.y_pred is not None:
+            required_cols.append(self.y_pred)
+        _list_missing(required_cols, list(reference_data.columns))
 
         # We need uncalibrated data to calculate the realized performance on.
         # We need realized performance in threshold calculations.
@@ -563,3 +574,16 @@ def _calibrate_predicted_probabilities(
         calibrated_data[predicted_class_proba_column_names[idx]] = calibrated_probas[:, idx]
 
     return calibrated_data
+
+
+def raise_if_metrics_require_y_pred(metrics: List[str], y_pred: Optional[str]):
+    """Raise an exception if metrics require y_pred and y_pred is not set.
+
+    Current metrics that require 'y_pred' are:
+    - roc_auc
+    - average_precision
+    """
+    metrics_that_need_y_pred = [m for m in metrics if m not in ['roc_auc', 'average_precision']]
+
+    if len(metrics_that_need_y_pred) > 0 and y_pred is None:
+        raise InvalidArgumentsException(f"Metrics '{metrics_that_need_y_pred}' require 'y_pred' to be set.")

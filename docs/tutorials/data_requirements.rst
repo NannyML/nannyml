@@ -170,7 +170,7 @@ The :term:`predicted label<Predicted labels>`, retrieved by interpreting (thresh
 In the sample data this is the **y_pred** column.
 
 Required for running :ref:`performance estimation<performance-estimation>` or :ref:`performance calculation<performance-calculation>` on binary classification, multiclass, and regression models.
-
+On binary classification models, it is not required for calculating the **AUROC** and **average precision** metrics.
 
 NannyML Functionality Requirements
 ----------------------------------
@@ -190,7 +190,8 @@ You can see those requirements in the table below:
 | y_pred_proba | Required (reference and analysis)   |                                     |                                     |                                   |                                   |                                   | Required (reference and analysis) |
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 | y_pred       | | Required (reference and analysis) | Required (reference and analysis)   | | Required (reference and analysis) |                                   |                                   |                                   | Required (reference and analysis) |
-|              | | Not needed for ROC_AUC metric     |                                     | | Not needed for ROC_AUC metric     |                                   |                                   |                                   |                                   |
+|              | | Not needed for ROC_AUC or         |                                     | | Not needed for ROC_AUC or         |                                   |                                   |                                   |                                   |
+|              | | average precision metrics         |                                     | | average precision metrics         |                                   |                                   |                                   |                                   |
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+
 | y_true       | Required (reference only)           |  Required (reference only)          | Required (reference and analysis)   |                                   |                                   | Required (reference and analysis) |                                   |
 +--------------+-------------------------------------+-------------------------------------+-------------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+-----------------------------------+

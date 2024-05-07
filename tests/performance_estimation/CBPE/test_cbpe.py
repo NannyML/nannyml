@@ -64,6 +64,56 @@ def test_cbpe_create_with_single_or_list_of_metrics(metrics, expected):
     assert [metric.name for metric in sut.metrics] == expected
 
 
+@pytest.mark.parametrize(
+    'problem',
+    [
+        "classification_multiclass",
+        "regression",
+    ],
+)
+def test_cbpe_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_classification(problem):
+    with pytest.raises(InvalidArgumentsException, match=f"'y_pred' can not be 'None' for problem type {problem}"):
+        _ = CBPE(
+            timestamp_column_name='timestamp',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=['roc_auc', 'f1'],
+            problem_type=problem,
+        )
+
+
+@pytest.mark.parametrize(
+    'metric, expected',
+    [
+        (['roc_auc', 'f1'], "['f1']"),
+        (['roc_auc', 'f1', 'average_precision', 'precision'], "['f1', 'precision']"),
+    ],
+)
+def test_cbpe_create_without_y_pred_raises_exception_when_metrics_require_it(metric, expected):
+    with pytest.raises(InvalidArgumentsException, match=expected):
+        _ = CBPE(
+            timestamp_column_name='timestamp',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=metric,
+            problem_type='classification_binary',
+        )
+
+
+@pytest.mark.parametrize('metric', ['roc_auc', 'average_precision'])
+def test_cbpe_create_without_y_pred_works_when_metrics_dont_require_it(metric):
+    try:
+        _ = CBPE(
+            timestamp_column_name='timestamp',
+            y_pred_proba='y_pred_proba',
+            y_true='y_true',
+            metrics=metric,
+            problem_type='classification_binary',
+        )
+    except Exception as exc:
+        pytest.fail(f'unexpected exception: {exc}')
+
+
 def test_cbpe_will_calibrate_scores_when_needed(binary_classification_data):  # noqa: D103
     ref_df = binary_classification_data[0]
 
@@ -652,3 +702,50 @@ def test_cbpe_with_default_thresholds():
     sut = est.thresholds
 
     assert sut == DEFAULT_THRESHOLDS
+
+
+def test_cbpe_without_predictions():
+    ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
+    try:
+        cbpe = CBPE(
+            y_pred_proba='y_pred_proba',
+            y_true='work_home_actual',
+            problem_type='classification_binary',
+            metrics=[
+                'roc_auc',
+                'average_precision',
+            ],
+            timestamp_column_name='timestamp',
+            chunk_period='M',
+        ).fit(ref_df)
+        _ = cbpe.estimate(ana_df)
+    except Exception as exc:
+        pytest.fail(f'unexpected exception: {exc}')
+
+
+@pytest.mark.filterwarnings("ignore:Too few unique values", "ignore:'y_true' contains a single class")
+def test_cbpe_fitting_does_not_generate_error_when_single_class_present():
+    ref_df = pd.DataFrame({
+        'y_true': [0] * 1000,
+        'y_pred': [0] * 1000,
+        'y_pred_proba': [0.5] * 1000,
+    })
+    sut = CBPE(
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        problem_type='classification_binary',
+        metrics=[
+            'roc_auc',
+            'f1',
+            'precision',
+            'recall',
+            'specificity',
+            'accuracy',
+            'confusion_matrix',
+            'business_value',
+        ],
+        chunk_size=100,
+        business_value_matrix=[[1, -1], [-1, 1]]
+    )
+    sut.fit(ref_df)

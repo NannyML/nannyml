@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Dict, Optional
 
-import analytics
+from segment import analytics
 
 from nannyml import __version__
 

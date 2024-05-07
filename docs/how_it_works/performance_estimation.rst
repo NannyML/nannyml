@@ -332,9 +332,9 @@ Fitting a calibrator on model training data would introduce bias [1]_.
 
 .. _how-it-works-dle:
 
------------------
-Direct Loss (DLE)
------------------
+----------------------------
+Direct Loss Estimation (DLE)
+----------------------------
 
 The Intuition
 =============
@@ -611,10 +611,11 @@ Just like :class:`~nannyml.performance_estimation.confidence_based.cbpe.CBPE`, i
 Other Approaches to Estimate Performance of Regression Models
 -------------------------------------------------------------
 
-When it comes to estimating performance of classification models we believe that CBPE is the best NannyML can currently offer. It can
-still be improved (by better probability calibration etc.) which is on our radar, but in general the theory behind
-the approach is solid. We wanted to use the same for estimation of performance of regression models but it cannot be
-used directly.
+When it comes to estimating performance of classification models NannyML offers two solutions.
+:ref:`CBPE<how-it-works-cbpe>` uses solid theoritical foundations based on statistics and probability calbiration to
+estimate performance. We further iterate on that with `M-CBPE`_ using multi-calibration to take into account subtle effects
+of covariate shift in performance estimation. We wanted to use a similar approach for estimation of performance of regression
+models but it cannot be used directly.
 Unlike classification models, most regression models do not inherently provide information
 about confidence of the prediction (:term:`confidence score`). They just return a point prediction. If probability distribution was given
 together with point prediction,
@@ -686,3 +687,5 @@ is what we eventually did with :ref:`DLE<how-it-works-dle>`.
 .. [5] https://lightgbm.readthedocs.io/en/v3.3.2/
 .. [6] https://microsoft.github.io/FLAML/
 .. [7] Anastasios N. Angelopoulos, Stephen Bates: "A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification"
+
+.. _`M-CBPE`: https://docs.nannyml.com/cloud/model-monitoring/how-it-works/multi-calibrated-confidence-based-performance-estimation-m-cbpe

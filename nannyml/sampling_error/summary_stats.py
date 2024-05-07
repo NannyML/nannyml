@@ -2,6 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
+import warnings
 from logging import getLogger
 from typing import Tuple
 
@@ -80,8 +81,13 @@ def summary_stats_median_sampling_error_components(col: pd.Series) -> Tuple:
     (median, pdf(median): Tuple[np.ndarray]
     """
     median = col.median()
-    kernel = gaussian_kde(col)
-    fmedian = kernel.evaluate(median)[0]
+    try:
+        kernel = gaussian_kde(col)
+        fmedian = kernel.evaluate(median)[0]
+    except np.linalg.LinAlgError as ex:
+        logger.warning("Suppressing LinAlgError in summary_stats_median_sampling_error_components: %r", ex)
+        warnings.warn(f"Suppressing LinAlgError in summary_stats_median_sampling_error_components: {ex}")
+        fmedian = np.inf
     return (median, fmedian)
 
 
