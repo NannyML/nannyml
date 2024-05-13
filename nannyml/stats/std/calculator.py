@@ -102,7 +102,7 @@ class SummaryStatsStdCalculator(AbstractCalculator):
         self._upper_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
         self._lower_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
 
-        self.lower_threshold_value_limit: float = 0
+        self.lower_threshold_value_limit: Optional[float] = 0
         self.upper_threshold_value_limit: Optional[float] = None
         self.simple_stats_metric = 'values_std'
 
