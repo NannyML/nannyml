@@ -266,7 +266,7 @@ class CBPE(AbstractEstimator):
             if not isinstance(self.y_pred_proba, dict):
                 raise InvalidArgumentsException("y_pred_proba must be a dictionary for multiclass classification")
 
-        self.thresholds = DEFAULT_THRESHOLDS
+        self.thresholds = DEFAULT_THRESHOLDS.copy()
         if thresholds:
             self.thresholds.update(**thresholds)
 
