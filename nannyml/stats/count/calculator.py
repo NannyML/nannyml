@@ -75,8 +75,8 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         self._upper_alert_threshold: Optional[float] = 0
         self._lower_alert_threshold: Optional[float] = 0
 
-        self.lower_threshold_value_limit: float = 0
-        self.upper_threshold_value_limit: float = np.nan
+        self.lower_threshold_value_limit: Optional[float] = 0
+        self.upper_threshold_value_limit: Optional[float] = None
         self.simple_stats_metric = 'rows_count'
 
     def _calculate_count_value_stats(self, data: pd.DataFrame):
