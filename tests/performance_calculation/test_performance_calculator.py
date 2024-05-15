@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Unit tests for the PerformanceCalculator."""
+from copy import copy
 from typing import Tuple
 
 import numpy as np
@@ -309,9 +310,10 @@ def test_performance_calculator_with_custom_thresholds(custom_thresholds):
         y_true='work_home_actual',
         metrics=['roc_auc', 'f1'],
         problem_type='classification_binary',
+        thresholds=custom_thresholds,
     )
     sut = calc.thresholds
-    expected_thresholds = DEFAULT_THRESHOLDS
+    expected_thresholds = copy(DEFAULT_THRESHOLDS)
     expected_thresholds.update(**custom_thresholds)
     assert sut == expected_thresholds
 

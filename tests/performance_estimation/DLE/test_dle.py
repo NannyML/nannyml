@@ -2,6 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
+from copy import copy
 from typing import List, Optional, Tuple
 
 import pandas as pd
@@ -326,14 +327,15 @@ def test_cbpe_with_custom_thresholds(custom_thresholds, regression_feature_colum
         feature_column_names=regression_feature_columns,
         chunk_size=10000,
         metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+        thresholds=custom_thresholds,
     )
     sut = est.thresholds
-    expected_thresholds = DEFAULT_THRESHOLDS
+    expected_thresholds = copy(DEFAULT_THRESHOLDS)
     expected_thresholds.update(**custom_thresholds)
     assert sut == expected_thresholds
 
 
-def test_cbpe_with_default_thresholds(regression_feature_columns):
+def test_dle_with_default_thresholds(regression_feature_columns):
     est = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
