@@ -658,7 +658,7 @@ def _common_nan_removal_ndarrays(data: Sequence[np.array], selected_columns: Lis
     Returns
     -------
     df:
-        Dataframe with rows containing NaN's on selected_columns removed. The columns of the DataFrame are the 
+        Dataframe with rows containing NaN's on selected_columns removed. The columns of the DataFrame are the
         numpy ndarrays in the same order as the input data.
     empty:
         Boolean whether the resulting data are contain any rows (false) or not (true)
@@ -668,10 +668,10 @@ def _common_nan_removal_ndarrays(data: Sequence[np.array], selected_columns: Lis
         raise ValueError(
             f"Selected columns: {selected_columns} not all present in provided data columns with shape {data[0].shape}"
         )
-    
+
     # Convert the numpy ndarrays to a pandas dataframe
     df = pd.DataFrame({f'col_{i}': col for i, col in enumerate(data)})
-    
+
     # Use the dataframe function to remove NaNs
     selected_columns_names = [df.columns[col] for col in selected_columns]
     result, empty = _common_nan_removal_dataframe(df, selected_columns_names)
@@ -679,13 +679,17 @@ def _common_nan_removal_ndarrays(data: Sequence[np.array], selected_columns: Lis
     return result, empty
 
 
-
 @overload
 def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple[pd.DataFrame, bool]: ...
+
+
 @overload
 def common_nan_removal(data: Sequence[np.array], selected_columns: List[int]) -> Tuple[pd.DataFrame, bool]: ...
 
-def common_nan_removal(data: Union[pd.DataFrame, Sequence[np.array]], selected_columns: Union[List[str], List[int]]) -> Tuple[pd.DataFrame, bool]:
+
+def common_nan_removal(
+        data: Union[pd.DataFrame, Sequence[np.array]], selected_columns: Union[List[str], List[int]]
+) -> Tuple[pd.DataFrame, bool]:
     """
     Wrapper function to handle both pandas DataFrame and sequences of numpy ndarrays.
 
@@ -707,10 +711,10 @@ def common_nan_removal(data: Union[pd.DataFrame, Sequence[np.array]], selected_c
     if isinstance(data, pd.DataFrame):
         if not all(isinstance(col, str) for col in selected_columns):
             raise TypeError("When data is a pandas DataFrame, selected_columns should be a list of strings.")
-        return _common_nan_removal_dataframe(data, selected_columns)
+        return _common_nan_removal_dataframe(data, selected_columns)  # type: ignore
     elif isinstance(data, Sequence) and all(isinstance(arr, np.ndarray) for arr in data):
         if not all(isinstance(col, int) for col in selected_columns):
             raise TypeError("When data is a sequence of numpy ndarrays, selected_columns should be a list of integers.")
-        return _common_nan_removal_ndarrays(data, selected_columns)
+        return _common_nan_removal_ndarrays(data, selected_columns)  # type: ignore
     else:
         raise TypeError("Data should be either a pandas DataFrame or a sequence of numpy ndarrays.")
