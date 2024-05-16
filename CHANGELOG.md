@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.6] - 2024-05-16
 
 ### Changed
 
@@ -15,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed a breaking issue in the sampling error calculation for the median summary statistic when there is only a single value for a column.  [(#377)](https://github.com/NannyML/nannyml/issues/377)
-- Drop `identifier` column from reconstruction error calculation with PCA.  [(#382)](https://github.com/NannyML/nannyml/issues/382)
+- Drop `identifier` column from the documentation example for reconstruction error calculation with PCA.  [(#382)](https://github.com/NannyML/nannyml/issues/382)
 - Fix an issue where default threshold configurations would get changed when upon setting custom thresholds, bad mutables!  [(#386)](https://github.com/NannyML/nannyml/issues/386)
 
 ## [0.10.5] - 2024-03-08
