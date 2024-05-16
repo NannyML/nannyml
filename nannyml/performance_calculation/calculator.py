@@ -217,7 +217,7 @@ class PerformanceCalculator(AbstractCalculator):
         if self.problem_type is not ProblemType.CLASSIFICATION_BINARY and y_pred is None:
             raise InvalidArgumentsException(f"'y_pred' can not be 'None' for problem type {self.problem_type.value}")
 
-        self.thresholds = DEFAULT_THRESHOLDS
+        self.thresholds = DEFAULT_THRESHOLDS.copy()
         if thresholds:
             self.thresholds.update(**thresholds)
 

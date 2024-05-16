@@ -227,7 +227,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
         self.computation_params: Optional[Dict[str, Any]] = computation_params
 
         # Setting thresholds: update default values with custom values if given
-        self.thresholds = DEFAULT_THRESHOLDS
+        self.thresholds = DEFAULT_THRESHOLDS.copy()
         if thresholds is not None:
             if 'chi2' in thresholds:
                 msg = "ignoring custom threshold for 'chi2' as it does not support custom thresholds for now."

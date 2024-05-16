@@ -236,7 +236,7 @@ class DLE(AbstractEstimator):
         self.tune_hyperparameters = tune_hyperparameters
         self.hyperparameters = hyperparameters
 
-        self.thresholds = DEFAULT_THRESHOLDS
+        self.thresholds = DEFAULT_THRESHOLDS.copy()
         if thresholds:
             self.thresholds.update(**thresholds)
 
