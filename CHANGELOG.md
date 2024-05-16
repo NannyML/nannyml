@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+### Changed
+
+- Make predictions optional for performance calcuation. When not provided, only AUROC and average precision will be calculated.  [(#380)](https://github.com/NannyML/nannyml/issues/380)
+- Small DLE docs updates
+- Combed through and optimized the reconstruction error calculation with PCA resulting in a nice speedup. Cheers [@nikml](https://github.com/nikml)!  [(#385)](https://github.com/NannyML/nannyml/issues/385)
+- Updated summary stats value limits to be in line with the rest of the library. Changed from `np.nan` to `None`.  [(#387)](https://github.com/NannyML/nannyml/issues/387)
+
+### Fixed
+
+- Fixed a breaking issue in the sampling error calculation for the median summary statistic when there is only a single value for a column.  [(#377)](https://github.com/NannyML/nannyml/issues/377)
+- Drop `identifier` column from reconstruction error calculation with PCA.  [(#382)](https://github.com/NannyML/nannyml/issues/382)
+- Fix an issue where default threshold configurations would get changed when upon setting custom thresholds, bad mutables!  [(#386)](https://github.com/NannyML/nannyml/issues/386)
+
 ## [0.10.5] - 2024-03-08
 
 ### Changed
