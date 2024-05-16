@@ -636,7 +636,7 @@ def _common_nan_removal_dataframe(data: pd.DataFrame, selected_columns: List[str
         Boolean whether the resulting data are contain any rows (false) or not (true)
     """
     if not set(selected_columns) <= set(data.columns):
-        raise ValueError(
+        raise InvalidArgumentsException(
             f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
         )
     df = data.dropna(axis=0, how='any', inplace=False, subset=selected_columns).reset_index(drop=True).infer_objects()
@@ -646,12 +646,12 @@ def _common_nan_removal_dataframe(data: pd.DataFrame, selected_columns: List[str
 
 def _common_nan_removal_ndarrays(data: Sequence[np.array], selected_columns: List[int]) -> Tuple[pd.DataFrame, bool]:
     """
-    Remove rows of numpy ndarrays containing NaN values on selected columns.
+    Remove rows of numpy arrays containing NaN values on selected columns.
 
     Parameters
     ----------
     data: Sequence[np.array]
-        Sequence containing numpy ndarrays.
+        Sequence containing numpy arrays.
     selected_columns: List[int]
         List containing the indices of column numbers
 
@@ -665,7 +665,7 @@ def _common_nan_removal_ndarrays(data: Sequence[np.array], selected_columns: Lis
     """
     # Check if all selected_columns indices are valid for the first ndarray
     if not all(col < len(data) for col in selected_columns):
-        raise ValueError(
+        raise InvalidArgumentsException(
             f"Selected columns: {selected_columns} not all present in provided data columns with shape {data[0].shape}"
         )
 
@@ -680,22 +680,24 @@ def _common_nan_removal_ndarrays(data: Sequence[np.array], selected_columns: Lis
 
 
 @overload
-def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple[pd.DataFrame, bool]: ...
+def common_nan_removal(data: pd.DataFrame, selected_columns: List[str]) -> Tuple[pd.DataFrame, bool]:
+    ...
 
 
 @overload
-def common_nan_removal(data: Sequence[np.array], selected_columns: List[int]) -> Tuple[pd.DataFrame, bool]: ...
+def common_nan_removal(data: Sequence[np.array], selected_columns: List[int]) -> Tuple[pd.DataFrame, bool]:
+    ...
 
 
 def common_nan_removal(
-        data: Union[pd.DataFrame, Sequence[np.array]], selected_columns: Union[List[str], List[int]]
+    data: Union[pd.DataFrame, Sequence[np.array]], selected_columns: Union[List[str], List[int]]
 ) -> Tuple[pd.DataFrame, bool]:
     """
     Wrapper function to handle both pandas DataFrame and sequences of numpy ndarrays.
 
     Parameters
     ----------
-    data: Union[pd.DataFrame, Sequence[np.ndarray]]
+    data: Union[pd.DataFrame, Sequence[np.array]]
         Pandas dataframe or sequence of numpy ndarrays containing data.
     selected_columns: Union[List[str], List[int]]
         List containing the column names or indices
