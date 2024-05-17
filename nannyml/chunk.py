@@ -376,7 +376,7 @@ class SizeBasedChunker(Chunker):
 
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
         def _create_chunk(index: int, data: pd.DataFrame, chunk_size: int) -> Chunk:
-            chunk_data = data.loc[index : index + chunk_size - 1, :]
+            chunk_data = data.iloc[index : index + chunk_size]
             chunk = Chunk(
                 key=f'[{index}:{index + chunk_size - 1}]',
                 data=chunk_data,
@@ -388,10 +388,9 @@ class SizeBasedChunker(Chunker):
                 chunk.end_datetime = pd.to_datetime(chunk.data[self.timestamp_column_name].max())
             return chunk
 
-        data = data.copy().reset_index(drop=True)
         chunks = [
             _create_chunk(index=i, data=data, chunk_size=self.chunk_size)
-            for i in range(0, len(data), self.chunk_size)
+            for i in range(0, data.shape[0], self.chunk_size)
             if i + self.chunk_size - 1 < len(data)
         ]
 
