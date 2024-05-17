@@ -325,6 +325,8 @@ class CBPE(AbstractEstimator):
         estimator: PerformanceEstimator
             The fitted estimator.
         """
+        reference_data = reference_data.copy(deep=True)
+
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             return self._fit_binary(reference_data)
         elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
@@ -351,6 +353,8 @@ class CBPE(AbstractEstimator):
         """
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        data = data.copy(deep=True)
 
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             required_cols = [self.y_pred_proba]

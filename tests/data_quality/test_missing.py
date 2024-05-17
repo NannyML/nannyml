@@ -326,3 +326,24 @@ def test_results_driver_tenure_values(missing_value_result):
 def test_results_driver_tenure_alerts(missing_value_result):
     res = missing_value_result.filter(column_names='driver_tenure').to_df()
     assert list(res[('driver_tenure', 'alert')]) == [False] * 15 + [True] * 5
+
+def test_oo_behavior_missing_value_calculator_calculate():  # noqa: D103
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = MissingValuesCalculator(
+        column_names=[
+            'car_value',
+            'salary_range',
+            'debt_to_income_ratio',
+            'loan_length',
+            'repaid_loan_on_prev_car',
+            'size_of_downpayment',
+            'driver_tenure',
+        ],
+        timestamp_column_name='timestamp',
+        normalize=False,
+    ).fit(reference_data=reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

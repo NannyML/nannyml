@@ -285,6 +285,8 @@ class DLE(AbstractEstimator):
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
+        reference_data = reference_data.copy(deep=True)
+
         _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
 
         _, categorical_feature_columns = _split_features_by_type(reference_data, self.feature_column_names)
@@ -317,6 +319,8 @@ class DLE(AbstractEstimator):
     def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        data = data.copy(deep=True)
 
         _list_missing([self.y_pred], list(data.columns))
 

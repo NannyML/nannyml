@@ -424,3 +424,21 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_oo_behavior_reg_perf_est(regression_data):
+    reference, monitored = regression_data
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    estimator = DLE(
+        feature_column_names=[
+            col for col in reference2.columns if col not in ['y_true', 'y_pred', 'timestamp']
+        ],
+        y_true='y_true',
+        y_pred='y_pred',
+        metrics=['mae', 'mape', 'rmse'],
+    )
+    estimator.fit(reference2)
+    results = estimator.estimate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

@@ -15,10 +15,12 @@ from nannyml._typing import Key, Result, Self
 from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from nannyml.drift.multivariate.domain_classifier import  DomainClassifierCalculator
 from nannyml.drift.univariate.calculator import DEFAULT_THRESHOLDS, UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
+from nannyml.datasets import load_synthetic_car_loan_dataset
 
 
 @pytest.fixture(scope="module")
@@ -841,3 +843,76 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
         _ = result.compare(result2).plot()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_oo_behavior_univ_calc():
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    feature_column_names = [
+        'car_value',
+        'salary_range',
+        'debt_to_income_ratio',
+        'loan_length',
+        'repaid_loan_on_prev_car',
+        'size_of_downpayment',
+        'driver_tenure'
+    ]
+    calc = UnivariateDriftCalculator(
+        column_names=feature_column_names,
+        treat_as_categorical=['y_pred'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein', 'hellinger'],
+        categorical_methods=['chi2', 'jensen_shannon', 'l_infinity', 'hellinger'],
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_oo_behavior_dre_calc():
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    feature_column_names = [
+        'car_value',
+        'salary_range',
+        'debt_to_income_ratio',
+        'loan_length',
+        'repaid_loan_on_prev_car',
+        'size_of_downpayment',
+        'driver_tenure'
+    ]
+    calc = DataReconstructionDriftCalculator(
+        column_names=feature_column_names,
+        timestamp_column_name='timestamp',
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_oo_behavior_dc_calc():
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    feature_column_names = [
+        'car_value',
+        'salary_range',
+        'debt_to_income_ratio',
+        'loan_length',
+        'repaid_loan_on_prev_car',
+        'size_of_downpayment',
+        'driver_tenure'
+    ]
+    calc = DomainClassifierCalculator(
+        feature_column_names=feature_column_names,
+        timestamp_column_name='timestamp',
+        chunk_number=1
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

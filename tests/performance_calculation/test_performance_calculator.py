@@ -480,3 +480,63 @@ def test_binary_classification_calculate_without_prediction_column():
         _ = calc.calculate(analysis.merge(analysis_targets, on='id'))
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_oo_behavior_bc_perf_calc(data):
+    reference, monitored, targets = data
+    reference2 = reference.copy(deep=True)
+    monitored = monitored.merge(targets, left_index=True, right_index=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        y_true='work_home_actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_oo_behavior_mc_perf_calc(data):
+    reference, monitored, targets = load_synthetic_multiclass_classification_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored = monitored.merge(targets, left_index=True, right_index=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card'
+        },
+        y_true='y_true',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_multiclass',
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_oo_behavior_reg_perf_calc(data):
+    reference, monitored, targets = load_synthetic_car_price_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored = monitored.merge(targets, left_index=True, right_index=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = PerformanceCalculator(
+        y_pred='y_pred',
+        y_true='y_true',
+        timestamp_column_name='timestamp',
+        problem_type='regression',
+        metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

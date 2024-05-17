@@ -801,3 +801,44 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(binary
     result2 = sut.estimate(analysis)
     assert result1 is not result2
     pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
+
+def test_oo_behavior_bc_perf_est(binary_classification_data):
+    reference, monitored = binary_classification_data
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    estimator = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    )
+    estimator.fit(reference2)
+    results = estimator.estimate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_oo_behavior_mc_perf_est(multiclass_classification_data):
+    reference, monitored = multiclass_classification_data
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    estimator = CBPE(  # type: ignore
+        timestamp_column_name='timestamp',
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+        },
+        metrics=['roc_auc', 'f1'],
+        chunk_period='M',
+        problem_type='classification_multiclass',
+    )
+    estimator.fit(reference2)
+    results = estimator.estimate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

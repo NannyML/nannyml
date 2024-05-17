@@ -234,3 +234,20 @@ def test_results_size_of_downpayment_values(unseen_value_result):
 def test_results_size_of_downpayment_alerts(unseen_value_result):
     res = unseen_value_result.filter(column_names='size_of_downpayment').to_df()
     assert list(res[('size_of_downpayment', 'alert')]) == [False] * 10 + [True] * 10
+
+
+def test_oo_behavior_unseen_value_calculator_calculate():  # noqa: D103
+    reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = UnseenValuesCalculator(
+        column_names=[
+            'salary_range',
+            'repaid_loan_on_prev_car',
+            'size_of_downpayment',
+        ],
+        timestamp_column_name='timestamp',
+    ).fit(reference_data=reference2)
+    results = calc.calculate(monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
