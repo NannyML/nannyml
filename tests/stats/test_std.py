@@ -9,31 +9,26 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from typing import Tuple
 from nannyml.chunk import SizeBasedChunker
 from nannyml.datasets import load_synthetic_car_loan_dataset
 from nannyml.stats import SummaryStatsStdCalculator
 
-# @pytest.fixture(scope="module")
-# def status_sum_result() -> Result:
-#     reference, analysis, _ = load_synthetic_car_loan_dataset()
-
-#     calc = SummaryStatsStdCalculator(
-#         column_names=[
-#             'car_value',
-#             'debt_to_income_ratio',
-#             'driver_tenure'
-#         ],
-#     ).fit(reference)
-#     return calc.calculate(data=analysis)
+@pytest.fixture
+def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
+    return reference.head(15_000), monitored.head(5_000)
 
 
-def test_stats_std_calculator_with_default_params_should_not_fail():  # noqa: D103
-    reference, analysis, _ = load_synthetic_car_loan_dataset()
+def test_stats_std_calculator_with_default_params_should_not_fail(
+    binary_classification_data
+):  # noqa: D103
+    reference, monitored = binary_classification_data
     try:
         calc = SummaryStatsStdCalculator(
             column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure'],
         ).fit(reference)
-        _ = calc.calculate(data=analysis)
+        _ = calc.calculate(data=monitored)
     except Exception:
         pytest.fail()
 
@@ -63,3 +58,59 @@ def test_stats_std_calculator_with_default_params_chunk_size_one():  # noqa: D10
         }
     )
     pd.testing.assert_frame_equal(expected, result.filter(period='analysis').to_df().round(4))
+
+
+def test_stats_std_calculator_results(binary_classification_data):  # noqa: D103
+    reference, monitored = binary_classification_data
+    column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    calc = SummaryStatsStdCalculator(
+        column_names=column_names,
+        chunk_size=5_000
+    ).fit(reference)
+    results = calc.calculate(data=monitored)
+    eval_cols = [('car_value', 'value'), ('debt_to_income_ratio', 'value'), ('driver_tenure', 'value'),]
+    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
+    expected = pd.DataFrame({
+        'car_value': [20403.1164, 20527.4427, 20114.8408, 20614.8926],
+        'debt_to_income_ratio': [0.1541, 0.1576, 0.1558, 0.1524],
+        'driver_tenure': [2.2973, 2.2971, 2.2981, 2.3396],
+    })
+    expected.columns = exp_cols
+    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
+
+
+def test_stats_std_calculator_returns_distinct_but_consistent_results_when_reused(
+    binary_classification_data
+):  # noqa: D103
+    reference, monitored = binary_classification_data
+    column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    calc = SummaryStatsStdCalculator(
+        column_names=column_names,
+        chunk_size=5_000
+    ).fit(reference)
+    results1 = calc.calculate(data=monitored)
+    results2 = calc.calculate(data=monitored)
+    assert results1 is not results2
+    pd.testing.assert_frame_equal(results1.to_df(), results2.to_df())
+
+
+def test_stats_std_calculator_returns_distinct_but_consistent_results_when_data_reused(
+    binary_classification_data
+):  # noqa: D103
+    reference, monitored = binary_classification_data
+    column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    calc = SummaryStatsStdCalculator(
+        column_names=column_names,
+        chunk_size=5_000
+    ).fit(reference)
+    results1 = calc.calculate(data=monitored)
+
+    column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    calc = SummaryStatsStdCalculator(
+        column_names=column_names,
+        chunk_size=5_000
+    ).fit(reference)
+    results2 = calc.calculate(data=monitored)
+
+    assert results1 is not results2
+    pd.testing.assert_frame_equal(results1.to_df(), results2.to_df())
