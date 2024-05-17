@@ -2,25 +2,23 @@
 #
 #  License: Apache Software License 2.0
 
-"""Simple Statistics Average Calculator"""
+"""Simple Statistics Average Calculator."""
 
 from typing import Any, Dict, Optional
 
-import numpy as np
 import pandas as pd
 from pandas import MultiIndex
 
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.stats.base import _add_alert_flag
 from nannyml.stats.count.result import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class SummaryStatsRowCountCalculator(AbstractCalculator):
-    """SummaryStatsRowCountCalculator implementation"""
+    """SummaryStatsRowCountCalculator implementation."""
 
     def __init__(
         self,
@@ -181,6 +179,6 @@ def _create_multilevel_index(
 ):
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    count_tuples = [(column0, el) for el in ['value',]]
+    count_tuples = [(column0, el) for el in ['value', ]]
     tuples = chunk_tuples + count_tuples
     return MultiIndex.from_tuples(tuples)

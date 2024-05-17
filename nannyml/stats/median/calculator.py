@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Simple Statistics Average Calculator"""
+"""Simple Statistics Median Calculator."""
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -18,14 +18,13 @@ from nannyml.sampling_error.summary_stats import (
     summary_stats_median_sampling_error,
     summary_stats_median_sampling_error_components,
 )
-from nannyml.stats.base import _add_alert_flag
 from nannyml.stats.median.result import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class SummaryStatsMedianCalculator(AbstractCalculator):
-    """SummaryStatsMedianCalculator implementation"""
+    """SummaryStatsMedianCalculator implementation."""
 
     def __init__(
         self,
@@ -224,8 +223,8 @@ class SummaryStatsMedianCalculator(AbstractCalculator):
             results[(column, 'upper_threshold')] = self._upper_alert_thresholds[column]
             results[(column, 'lower_threshold')] = self._lower_alert_thresholds[column]
 
-            lower_threshold = float('-inf') if self._lower_alert_thresholds[column] is None else self._lower_alert_thresholds[column]
-            upper_threshold = float('inf') if self._upper_alert_thresholds[column] is None else self._upper_alert_thresholds[column]
+            lower_threshold = float('-inf') if self._lower_alert_thresholds[column] is None else self._lower_alert_thresholds[column]  # noqa: E501
+            upper_threshold = float('inf') if self._upper_alert_thresholds[column] is None else self._upper_alert_thresholds[column]  # noqa: E501
             results[(column, 'alert')] = results.apply(
                 lambda row: not (lower_threshold < row[(column, 'value')] < upper_threshold),
                 axis=1,

@@ -36,6 +36,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         timestamp_column_name: Optional[str],
         chunker: Chunker,
     ):
+        """Initialize Results Class."""
         super().__init__(results_data, column_names)
 
         self.timestamp_column_name = timestamp_column_name
@@ -43,6 +44,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         self.chunker = chunker
 
     def keys(self) -> List[Key]:
+        """Get result Keys."""
         return [
             Key(
                 properties=(column_name,),
@@ -57,10 +59,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """
-
-        Parameters
-        ----------
+        """Plot results.
 
         Returns
         -------
@@ -84,7 +83,6 @@ class Result(PerColumnResult, ResultCompareMixin):
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
 
         """
-
         return plot_metrics(
             self,
             title='Values Median',

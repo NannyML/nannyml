@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Simple Statistics Sum Calculator"""
+"""Simple Statistics Sum Calculator."""
 
 from typing import Any, Dict, List, Optional, Union
 
@@ -14,7 +14,6 @@ from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_t
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-from nannyml.stats.base import _add_alert_flag
 from nannyml.stats.sum.result import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -215,8 +214,8 @@ class SummaryStatsSumCalculator(AbstractCalculator):
             results[(column, 'upper_threshold')] = self._upper_alert_thresholds[column]
             results[(column, 'lower_threshold')] = self._lower_alert_thresholds[column]
 
-            lower_threshold = float('-inf') if self._lower_alert_thresholds[column] is None else self._lower_alert_thresholds[column]
-            upper_threshold = float('inf') if self._upper_alert_thresholds[column] is None else self._upper_alert_thresholds[column]
+            lower_threshold = float('-inf') if self._lower_alert_thresholds[column] is None else self._lower_alert_thresholds[column]  # noqa: E501
+            upper_threshold = float('inf') if self._upper_alert_thresholds[column] is None else self._upper_alert_thresholds[column]  # noqa: E501
             results[(column, 'alert')] = results.apply(
                 lambda row: not (lower_threshold < row[(column, 'value')] < upper_threshold),
                 axis=1,

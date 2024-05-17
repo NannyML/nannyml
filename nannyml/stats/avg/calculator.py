@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Simple Statistics Average Calculator"""
+"""Simple Statistics Average Calculator."""
 
 from typing import Any, Dict, List, Optional, Union
 
@@ -20,7 +20,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 
 class SummaryStatsAvgCalculator(AbstractCalculator):
-    """SummaryStatsAvgCalculator implementation"""
+    """SummaryStatsAvgCalculator implementation."""
 
     def __init__(
         self,
@@ -215,8 +215,8 @@ class SummaryStatsAvgCalculator(AbstractCalculator):
             results[(column, 'upper_threshold')] = self._upper_alert_thresholds[column]
             results[(column, 'lower_threshold')] = self._lower_alert_thresholds[column]
 
-            lower_threshold = float('-inf') if self._lower_alert_thresholds[column] is None else self._lower_alert_thresholds[column]
-            upper_threshold = float('inf') if self._upper_alert_thresholds[column] is None else self._upper_alert_thresholds[column]
+            lower_threshold = float('-inf') if self._lower_alert_thresholds[column] is None else self._lower_alert_thresholds[column]  # noqa: E501
+            upper_threshold = float('inf') if self._upper_alert_thresholds[column] is None else self._upper_alert_thresholds[column]  # noqa: E501
             results[(column, 'alert')] = results.apply(
                 lambda row: not (lower_threshold < row[(column, 'value')] < upper_threshold),
                 axis=1,
