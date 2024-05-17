@@ -781,3 +781,23 @@ def test_cbpe_fitting_does_not_generate_error_when_single_class_present():
         business_value_matrix=[[1, -1], [-1, 1]],
     )
     sut.fit(ref_df)
+
+from nannyml.calibration import NoopCalibrator
+def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(binary_classification_data):
+    reference, analysis = binary_classification_data
+
+    sut = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+        calibrator=NoopCalibrator()
+    )
+    sut.fit(reference)
+    result1 = sut.estimate(analysis)
+    result2 = sut.estimate(analysis)
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
