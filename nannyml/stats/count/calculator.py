@@ -69,7 +69,6 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
 
         self.result: Optional[Result] = None
         # No sampling error
-        # self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
         # threshold strategy is the same across all columns
         self.threshold = threshold
         self._upper_alert_threshold: Optional[float] = 0
@@ -89,19 +88,6 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
-
-        reference_chunk_results = np.asarray(
-            [self._calculate_count_value_stats(chunk.data) for chunk in self.chunker.split(reference_data)]
-        )
-        self._lower_alert_threshold, self._upper_alert_threshold = calculate_threshold_values(
-            threshold=self.threshold,
-            data=reference_chunk_results,
-            lower_threshold_value_limit=self.lower_threshold_value_limit,
-            upper_threshold_value_limit=self.upper_threshold_value_limit,
-            logger=self._logger,
-            metric_name=self.simple_stats_metric,
-            override_using_none=True,
-        )
 
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
@@ -141,6 +127,8 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         res = res.reset_index(drop=True)
 
         if self.result is None:
+            self._set_thresholds(results=res)
+            res = self._populate_thresholds(results=res)
             self.result = Result(
                 results_data=res,
                 simple_stats_metric=self.simple_stats_metric,
@@ -153,6 +141,7 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
             #       but this causes us to lose the "common behavior" in the top level 'filter' method when overriding.
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
             self.result = self.result.filter(period='reference')
+            res = self._populate_thresholds(results=res)
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
@@ -161,10 +150,30 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         result = {}
         value = self._calculate_count_value_stats(data)
         result['value'] = value
-        result['upper_threshold'] = self._upper_alert_threshold
-        result['lower_threshold'] = self._lower_alert_threshold
-        result['alert'] = _add_alert_flag(result)
         return result
+
+    def _set_thresholds(self, results: pd.DataFrame):
+        self._lower_alert_threshold, self._upper_alert_threshold = calculate_threshold_values(
+            threshold=self.threshold,
+            data=results[(self.simple_stats_metric, 'value')].to_numpy(),
+            lower_threshold_value_limit=self.lower_threshold_value_limit,
+            upper_threshold_value_limit=self.upper_threshold_value_limit,
+            override_using_none=True,
+            logger=self._logger,
+            metric_name=self.simple_stats_metric,
+        )
+
+    def _populate_thresholds(self, results: pd.DataFrame):
+        results[(self.simple_stats_metric, 'upper_threshold')] = self._upper_alert_threshold
+        results[(self.simple_stats_metric, 'lower_threshold')] = self._lower_alert_threshold
+
+        lower_threshold = float('-inf') if self._lower_alert_threshold is None else self._lower_alert_threshold
+        upper_threshold = float('inf') if self._upper_alert_threshold is None else self._upper_alert_threshold
+        results[(self.simple_stats_metric, 'alert')] = results.apply(
+            lambda row: not (lower_threshold < row[(self.simple_stats_metric, 'value')] < upper_threshold),
+            axis=1,
+        )
+        return results
 
 
 def _create_multilevel_index(
@@ -172,6 +181,6 @@ def _create_multilevel_index(
 ):
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
-    count_tuples = [(column0, el) for el in ['value', 'upper_threshold', 'lower_threshold', 'alert']]
+    count_tuples = [(column0, el) for el in ['value',]]
     tuples = chunk_tuples + count_tuples
     return MultiIndex.from_tuples(tuples)

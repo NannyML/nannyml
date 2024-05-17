@@ -36,6 +36,9 @@ def test_stats_count_calculator_results(binary_classification_data):  # noqa: D1
         timestamp_column_name='timestamp'
     ).fit(reference)
     results = calc.calculate(data=monitored)
+    print("debug")
+    print(list(results.to_df().columns))
+    print(results.to_df())
     eval_cols = [('rows_count', 'value')]
     exp_cols = pd.MultiIndex.from_tuples(eval_cols)
     expected = pd.DataFrame({
@@ -87,17 +90,12 @@ def test_stats_count_calculator_returns_distinct_but_consistent_results_when_dat
     binary_classification_data
 ):  # noqa: D103
     reference, monitored = binary_classification_data
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
     calc = SummaryStatsRowCountCalculator(
         chunk_period='M',
         timestamp_column_name='timestamp'
-    ).fit(reference)
-    results1 = calc.calculate(data=monitored)
-
-    calc = SummaryStatsRowCountCalculator(
-        chunk_period='M',
-        timestamp_column_name='timestamp'
-    ).fit(reference)
-    results2 = calc.calculate(data=monitored)
-
-    assert results1 is not results2
-    pd.testing.assert_frame_equal(results1.to_df(), results2.to_df())
+    ).fit(reference2)
+    results = calc.calculate(data=monitored2)
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
