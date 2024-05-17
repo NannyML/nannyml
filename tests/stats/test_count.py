@@ -15,7 +15,7 @@ from nannyml.stats import SummaryStatsRowCountCalculator
 @pytest.fixture
 def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_dataset()
-    return reference.head(15_000), monitored.head(5_000)
+    return reference.head(15_000), monitored.tail(5_000)
 
 
 def test_stats_count_calculator_with_default_params_should_not_fail(
@@ -39,7 +39,31 @@ def test_stats_count_calculator_results(binary_classification_data):  # noqa: D1
     eval_cols = [('rows_count', 'value')]
     exp_cols = pd.MultiIndex.from_tuples(eval_cols)
     expected = pd.DataFrame({
-        'count': [5120, 4625, 5119, 136, 207, 4793],
+        'count': [5120, 4625, 5119, 136, 294, 4706],
+    })
+    expected.columns = exp_cols
+    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
+
+    eval_cols = [('rows_count', 'upper_threshold')]
+    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
+    expected = pd.DataFrame({
+        'count': [10038.8619, 10038.8619, 10038.8619, 10038.8619, 10038.8619, 10038.8619],
+    })
+    expected.columns = exp_cols
+    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
+
+    eval_cols = [('rows_count', 'lower_threshold')]
+    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
+    expected = pd.DataFrame({
+        'count': [None, None, None, None, None, None,],
+    })
+    expected.columns = exp_cols
+    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
+
+    eval_cols = [('rows_count', 'alert')]
+    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
+    expected = pd.DataFrame({
+        'count': [False, False, False, False, False, False],
     })
     expected.columns = exp_cols
     pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
