@@ -15,7 +15,6 @@ from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.stats.avg.result import Result
-from nannyml.stats.base import _add_alert_flag
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -222,7 +221,7 @@ class SummaryStatsAvgCalculator(AbstractCalculator):
                 lambda row: not (lower_threshold < row[(column, 'value')] < upper_threshold),
                 axis=1,
             )
-            return results
+        return results
 
 
 def _create_multilevel_index(
