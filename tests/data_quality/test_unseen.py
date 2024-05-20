@@ -16,7 +16,7 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture(scope="module")
-def unseen_value_result() -> Result:
+def unseen_value_result() -> Result:  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = UnseenValuesCalculator(
@@ -84,7 +84,7 @@ def test_unseen_value_calculator_with_custom_params_should_not_fail():  # noqa: 
         pytest.fail()
 
 
-def test_unseen_value_calculator_validates_column_names_list_elements():
+def test_unseen_value_calculator_validates_column_names_list_elements():  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = UnseenValuesCalculator(
             column_names=[
@@ -151,11 +151,11 @@ def test_unseen_value_calculator_calculate_should_raise_invalid_args_exception_w
         _ = calc.calculate(analysis.drop('size_of_downpayment', axis=1))
 
 
-def test_whether_data_quality_metric_property_on_results_mv_rate(unseen_value_result):
+def test_whether_data_quality_metric_property_on_results_mv_rate(unseen_value_result):  # noqa: D103
     assert unseen_value_result.data_quality_metric == 'unseen_values_rate'
 
 
-def test_whether_result_data_dataframe_has_proper_columns(unseen_value_result):
+def test_whether_result_data_dataframe_has_proper_columns(unseen_value_result):  # noqa: D103
     cols = unseen_value_result.data.columns
     assert len(cols) == 7 + 2 * 4
     assert ('chunk', 'key') in cols
@@ -187,14 +187,14 @@ def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D1
     assert calc.calculate(data=analysis).data_quality_metric == 'unseen_values_count'
 
 
-def test_results_filtering_column_repaid_loan_on_prev_car_str(unseen_value_result):
+def test_results_filtering_column_repaid_loan_on_prev_car_str(unseen_value_result):  # noqa: D103
     try:
         unseen_value_result.filter(column_names='repaid_loan_on_prev_car')
     except Exception:
         pytest.fail()
 
 
-def test_results_filtering_columns_size_of_downpayment_list(unseen_value_result):
+def test_results_filtering_columns_size_of_downpayment_list(unseen_value_result):  # noqa: D103
     try:
         unseen_value_result.filter(
             column_names=[
@@ -205,17 +205,17 @@ def test_results_filtering_columns_size_of_downpayment_list(unseen_value_result)
         pytest.fail()
 
 
-def test_results_repaid_loan_on_prev_car_values(unseen_value_result):
+def test_results_repaid_loan_on_prev_car_values(unseen_value_result):  # noqa: D103
     res = unseen_value_result.filter(column_names='repaid_loan_on_prev_car').to_df()
     assert list(res[('repaid_loan_on_prev_car', 'value')]) == [0] * 20
 
 
-def test_results_repaid_loan_on_prev_car_alerts(unseen_value_result):
+def test_results_repaid_loan_on_prev_car_alerts(unseen_value_result):  # noqa: D103
     res = unseen_value_result.filter(column_names='repaid_loan_on_prev_car').to_df()
     assert list(res[('repaid_loan_on_prev_car', 'alert')]) == [False] * 20
 
 
-def test_results_size_of_downpayment_values(unseen_value_result):
+def test_results_size_of_downpayment_values(unseen_value_result):  # noqa: D103
     res = unseen_value_result.filter(column_names='size_of_downpayment').to_df()
     assert list(res[('size_of_downpayment', 'value')]) == [0] * 10 + [
         0.0094,
@@ -231,7 +231,7 @@ def test_results_size_of_downpayment_values(unseen_value_result):
     ]
 
 
-def test_results_size_of_downpayment_alerts(unseen_value_result):
+def test_results_size_of_downpayment_alerts(unseen_value_result):  # noqa: D103
     res = unseen_value_result.filter(column_names='size_of_downpayment').to_df()
     assert list(res[('size_of_downpayment', 'alert')]) == [False] * 10 + [True] * 10
 
@@ -248,6 +248,6 @@ def test_oo_behavior_unseen_value_calculator_calculate():  # noqa: D103
         ],
         timestamp_column_name='timestamp',
     ).fit(reference_data=reference2)
-    results = calc.calculate(monitored2)
+    results = calc.calculate(monitored2)  # noqa: F841
     pd.testing.assert_frame_equal(monitored, monitored2)
     pd.testing.assert_frame_equal(reference, reference2)

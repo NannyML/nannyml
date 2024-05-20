@@ -206,7 +206,7 @@ def sample_regression_realized_perf_result() -> PerformanceCalculationResults:  
 
 
 @pytest.fixture(scope="module")
-def sample_missing_value_result() -> MissingValueResults:
+def sample_missing_value_result() -> MissingValueResults:  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = MissingValuesCalculator(
@@ -226,7 +226,7 @@ def sample_missing_value_result() -> MissingValueResults:
 
 
 @pytest.fixture(scope="module")
-def sample_unseen_value_result() -> UnseenValueResults:
+def sample_unseen_value_result() -> UnseenValueResults:  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = UnseenValuesCalculator(
@@ -319,7 +319,7 @@ def test_correlation_ranking_contains_rank_column(sample_drift_result, sample_re
     assert 'rank' in sut.columns
 
 
-def test_correlation_ranking_contains_rank_column_on_dq_missing_value_results(
+def test_correlation_ranking_contains_rank_column_on_dq_missing_value_results(  # noqa: D103
     sample_missing_value_result, sample_realized_perf_result
 ):  # noqa: D103
     ranking = CorrelationRanker()
@@ -335,7 +335,7 @@ def test_correlation_ranking_contains_rank_column_on_dq_missing_value_results(
     assert 'rank' in sut.columns
 
 
-def test_correlation_ranking_contains_rank_column_on_dq_unseen_value_results(
+def test_correlation_ranking_contains_rank_column_on_dq_unseen_value_results(  # noqa: D103
     sample_unseen_value_result, sample_realized_perf_result
 ):  # noqa: D103
     ranking = CorrelationRanker()

@@ -12,15 +12,16 @@ from typing import Tuple
 from nannyml.datasets import load_synthetic_car_loan_dataset
 from nannyml.stats import SummaryStatsRowCountCalculator
 
+
 @pytest.fixture
 def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_dataset()
     return reference.head(15_000), monitored.tail(5_000)
 
 
-def test_stats_count_calculator_with_default_params_should_not_fail(
+def test_stats_count_calculator_with_default_params_should_not_fail(  # noqa: D103
     binary_classification_data
-):  # noqa: D103
+):
     reference, monitored = binary_classification_data
     try:
         calc = SummaryStatsRowCountCalculator().fit(reference)
@@ -58,7 +59,7 @@ def test_stats_count_calculator_results(binary_classification_data):  # noqa: D1
     eval_cols = [('rows_count', 'lower_threshold')]
     exp_cols = pd.MultiIndex.from_tuples(eval_cols)
     expected = pd.DataFrame({
-        'count': [None, None, None, None, None, None,],
+        'count': [None, None, None, None, None, None],
     })
     expected.columns = exp_cols
     pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
@@ -72,9 +73,9 @@ def test_stats_count_calculator_results(binary_classification_data):  # noqa: D1
     pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
 
 
-def test_stats_count_calculator_returns_distinct_but_consistent_results_when_reused(
+def test_stats_count_calculator_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
     binary_classification_data
-):  # noqa: D103
+):
     reference, monitored = binary_classification_data
     calc = SummaryStatsRowCountCalculator(
         chunk_period='M',
@@ -86,9 +87,9 @@ def test_stats_count_calculator_returns_distinct_but_consistent_results_when_reu
     pd.testing.assert_frame_equal(results1.to_df(), results2.to_df())
 
 
-def test_stats_count_calculator_returns_distinct_but_consistent_results_when_data_reused(
+def test_stats_count_calculator_returns_distinct_but_consistent_results_when_data_reused(  # noqa: D103
     binary_classification_data
-):  # noqa: D103
+):
     reference, monitored = binary_classification_data
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
@@ -96,6 +97,6 @@ def test_stats_count_calculator_returns_distinct_but_consistent_results_when_dat
         chunk_period='M',
         timestamp_column_name='timestamp'
     ).fit(reference2)
-    results = calc.calculate(data=monitored2)
+    results = calc.calculate(data=monitored2)  # noqa: F841
     pd.testing.assert_frame_equal(monitored, monitored2)
     pd.testing.assert_frame_equal(reference, reference2)

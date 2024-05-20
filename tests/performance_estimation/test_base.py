@@ -30,15 +30,15 @@ def simple_estimator() -> AbstractEstimator:  # noqa: D103
     return SimpleEstimator(chunk_size=5000)
 
 
-class SimpleEstimatorResult(Abstract1DResult):
-    def __init__(self, results_data, calculator):
+class SimpleEstimatorResult(Abstract1DResult):  # noqa: D101
+    def __init__(self, results_data, calculator):  # noqa: D107
         super().__init__(results_data)
         self.calculator = calculator
 
-    def keys(self) -> List[Key]:
+    def keys(self) -> List[Key]:  # noqa: D102
         return []
 
-    def plot(self):
+    def plot(self):  # noqa: D102
         pass
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> SimpleEstimatorResult:

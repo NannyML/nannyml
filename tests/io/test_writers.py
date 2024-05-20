@@ -1,6 +1,8 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+"""Test IO Module."""
+
 import os
 import tempfile
 
@@ -24,7 +26,7 @@ from nannyml.performance_estimation.direct_loss_estimation import DLE
 
 
 @pytest.fixture(scope='module')
-def univariate_drift_for_binary_classification_result():
+def univariate_drift_for_binary_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'work_home_actual', 'id']],
@@ -35,7 +37,7 @@ def univariate_drift_for_binary_classification_result():
 
 
 @pytest.fixture(scope='module')
-def univariate_drift_for_multiclass_classification_result():
+def univariate_drift_for_multiclass_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_true', 'id']],
@@ -46,7 +48,7 @@ def univariate_drift_for_multiclass_classification_result():
 
 
 @pytest.fixture(scope='module')
-def univariate_drift_for_regression_result():
+def univariate_drift_for_regression_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_true', 'id']],
@@ -57,7 +59,7 @@ def univariate_drift_for_regression_result():
 
 
 @pytest.fixture(scope='module')
-def data_reconstruction_drift_for_binary_classification_result():
+def data_reconstruction_drift_for_binary_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = DataReconstructionDriftCalculator(
         column_names=[
@@ -70,7 +72,7 @@ def data_reconstruction_drift_for_binary_classification_result():
 
 
 @pytest.fixture(scope='module')
-def data_reconstruction_drift_for_multiclass_classification_result():
+def data_reconstruction_drift_for_multiclass_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = DataReconstructionDriftCalculator(
         column_names=[
@@ -94,7 +96,7 @@ def data_reconstruction_drift_for_multiclass_classification_result():
 
 
 @pytest.fixture(scope='module')
-def data_reconstruction_drift_for_regression_result():
+def data_reconstruction_drift_for_regression_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = DataReconstructionDriftCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
@@ -105,7 +107,7 @@ def data_reconstruction_drift_for_regression_result():
 
 
 @pytest.fixture(scope='module')
-def realized_performance_for_binary_classification_result():
+def realized_performance_for_binary_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = PerformanceCalculator(
         y_pred='y_pred',
@@ -120,7 +122,7 @@ def realized_performance_for_binary_classification_result():
 
 
 @pytest.fixture(scope='module')
-def realized_performance_for_multiclass_classification_result():
+def realized_performance_for_multiclass_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = PerformanceCalculator(
         y_pred='y_pred',
@@ -139,7 +141,7 @@ def realized_performance_for_multiclass_classification_result():
 
 
 @pytest.fixture(scope='module')
-def realized_performance_for_regression_result():
+def realized_performance_for_regression_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = PerformanceCalculator(
         y_pred='y_pred',
@@ -153,7 +155,7 @@ def realized_performance_for_regression_result():
 
 
 @pytest.fixture(scope='module')
-def cbpe_estimated_performance_for_binary_classification_result():
+def cbpe_estimated_performance_for_binary_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_binary_classification_dataset()
     calc = CBPE(
         y_pred='y_pred',
@@ -168,7 +170,7 @@ def cbpe_estimated_performance_for_binary_classification_result():
 
 
 @pytest.fixture(scope='module')
-def cbpe_estimated_performance_for_multiclass_classification_result():
+def cbpe_estimated_performance_for_multiclass_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_multiclass_classification_dataset()
     calc = CBPE(
         y_pred='y_pred',
@@ -187,7 +189,7 @@ def cbpe_estimated_performance_for_multiclass_classification_result():
 
 
 @pytest.fixture(scope='module')
-def dle_estimated_performance_for_regression_result():
+def dle_estimated_performance_for_regression_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_price_dataset()
     calc = DLE(
         feature_column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
@@ -201,7 +203,7 @@ def dle_estimated_performance_for_regression_result():
 
 
 @pytest.fixture(scope='module')
-def missing_values_for_binary_classification_result():
+def missing_values_for_binary_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
     calc = MissingValuesCalculator(
         column_names=[col for col in reference_df if col not in ['timestamp', 'y_pred', 'y_true', 'id']],
@@ -212,7 +214,7 @@ def missing_values_for_binary_classification_result():
 
 
 @pytest.fixture(scope='module')
-def unseen_values_for_binary_classification_result():
+def unseen_values_for_binary_classification_result():  # noqa: D103
     reference_df, analysis_df, analysis_targets_df = load_synthetic_car_loan_data_quality_dataset()
     calc = UnseenValuesCalculator(
         # categorical features as described in
@@ -243,7 +245,7 @@ def unseen_values_for_binary_classification_result():
         lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
-def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):
+def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):  # noqa: D103
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             writer = RawFilesWriter(path=tmpdir)
@@ -271,7 +273,7 @@ def test_raw_files_writer_raises_no_exceptions_when_writing_to_parquet(result):
         lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
-def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):
+def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):  # noqa: D103
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             writer = RawFilesWriter(path=tmpdir)
@@ -299,7 +301,7 @@ def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):
         lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
-def test_database_writer_raises_no_exceptions_when_writing(result):
+def test_database_writer_raises_no_exceptions_when_writing(result):  # noqa: D103
     try:
         writer = DatabaseWriter(connection_string='sqlite:///', model_name='test')
         writer.write(result)
@@ -326,7 +328,7 @@ def test_database_writer_raises_no_exceptions_when_writing(result):
         lazy_fixture('unseen_values_for_binary_classification_result'),
     ],
 )
-def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
+def test_pickle_file_writer_raises_no_exceptions_when_writing(result):  # noqa: D103
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
             writer = PickleFileWriter(path=tmpdir)
@@ -374,7 +376,7 @@ def test_pickle_file_writer_raises_no_exceptions_when_writing(result):
         (lazy_fixture('unseen_values_for_binary_classification_result'), 'unseen_values_metrics', 30),
     ],
 )
-def test_database_writer_exports_correctly(result, table_name, expected_row_count):
+def test_database_writer_exports_correctly(result, table_name, expected_row_count):  # noqa: D103
     try:
         writer = DatabaseWriter(connection_string='sqlite:///test.db', model_name='test')
         writer.write(result)
@@ -399,7 +401,7 @@ def test_database_writer_exports_correctly(result, table_name, expected_row_coun
         (lazy_fixture('cbpe_estimated_performance_for_binary_classification_result'), 'cbpe_performance_metrics'),
     ],
 )
-def test_database_writer_deals_with_metric_components(result, table_name):
+def test_database_writer_deals_with_metric_components(result, table_name):  # noqa: D103
     try:
         writer = DatabaseWriter(connection_string='sqlite:///test.db', model_name='test')
         writer.write(result.filter(metrics=['confusion_matrix']))

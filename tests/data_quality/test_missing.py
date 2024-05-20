@@ -15,7 +15,7 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture(scope="module")
-def missing_value_result() -> Result:
+def missing_value_result() -> Result:  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
 
     calc = MissingValuesCalculator(
@@ -72,7 +72,7 @@ def test_missing_value_calculator_with_custom_params_should_not_fail():  # noqa:
         pytest.fail()
 
 
-def test_missing_value_calculator_validates_column_names_list_elements():
+def test_missing_value_calculator_validates_column_names_list_elements():  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = MissingValuesCalculator(
             column_names=[
@@ -154,11 +154,11 @@ def test_missing_value_calculator_calculate_should_raise_invalid_args_exception_
         _ = calc.calculate(analysis.drop('driver_tenure', axis=1))
 
 
-def test_whether_data_quality_metric_property_on_results_mv_rate(missing_value_result):
+def test_whether_data_quality_metric_property_on_results_mv_rate(missing_value_result):  # noqa: D103
     assert missing_value_result.data_quality_metric == 'missing_values_rate'
 
 
-def test_whether_result_data_dataframe_has_proper_columns(missing_value_result):
+def test_whether_result_data_dataframe_has_proper_columns(missing_value_result):  # noqa: D103
     cols = missing_value_result.data.columns
     assert len(cols) == 7 + 7 * 7
     assert ('chunk', 'key') in cols
@@ -236,14 +236,14 @@ def test_whether_data_quality_metric_property_on_results_mv_count():  # noqa: D1
     assert calc.calculate(data=analysis).data_quality_metric == 'missing_values_count'
 
 
-def test_results_filtering_column_str(missing_value_result):
+def test_results_filtering_column_str(missing_value_result):  # noqa: D103
     try:
         missing_value_result.filter(column_names='car_value')
     except Exception:
         pytest.fail()
 
 
-def test_results_filtering_columns_list(missing_value_result):
+def test_results_filtering_columns_list(missing_value_result):  # noqa: D103
     try:
         missing_value_result.filter(
             column_names=[
@@ -256,17 +256,17 @@ def test_results_filtering_columns_list(missing_value_result):
         pytest.fail()
 
 
-def test_results_car_value_values(missing_value_result):
+def test_results_car_value_values(missing_value_result):  # noqa: D103
     res = missing_value_result.filter(column_names='car_value').to_df()
     assert list(res[('car_value', 'value')]) == [0] * 20
 
 
-def test_results_car_value_alerts(missing_value_result):
+def test_results_car_value_alerts(missing_value_result):  # noqa: D103
     res = missing_value_result.filter(column_names='car_value').to_df()
     assert list(res[('car_value', 'alert')]) == [False] * 20
 
 
-def test_results_salary_range_values(missing_value_result):
+def test_results_salary_range_values(missing_value_result):  # noqa: D103
     res = missing_value_result.filter(column_names='salary_range').to_df()
     assert list(res[('salary_range', 'value')]) == [
         0.0998,
@@ -292,12 +292,12 @@ def test_results_salary_range_values(missing_value_result):
     ]
 
 
-def test_results_salary_range_alerts(missing_value_result):
+def test_results_salary_range_alerts(missing_value_result):  # noqa: D103
     res = missing_value_result.filter(column_names='salary_range').to_df()
     assert list(res[('salary_range', 'alert')]) == [False] * 15 + [True] * 5
 
 
-def test_results_driver_tenure_values(missing_value_result):
+def test_results_driver_tenure_values(missing_value_result):  # noqa: D103
     res = missing_value_result.filter(column_names='driver_tenure').to_df()
     assert list(res[('driver_tenure', 'value')]) == [
         0.1018,
@@ -323,9 +323,10 @@ def test_results_driver_tenure_values(missing_value_result):
     ]
 
 
-def test_results_driver_tenure_alerts(missing_value_result):
+def test_results_driver_tenure_alerts(missing_value_result):  # noqa: D103
     res = missing_value_result.filter(column_names='driver_tenure').to_df()
     assert list(res[('driver_tenure', 'alert')]) == [False] * 15 + [True] * 5
+
 
 def test_oo_behavior_missing_value_calculator_calculate():  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
@@ -344,6 +345,6 @@ def test_oo_behavior_missing_value_calculator_calculate():  # noqa: D103
         timestamp_column_name='timestamp',
         normalize=False,
     ).fit(reference_data=reference2)
-    results = calc.calculate(monitored2)
+    results = calc.calculate(monitored2)  # noqa: F841
     pd.testing.assert_frame_equal(monitored, monitored2)
     pd.testing.assert_frame_equal(reference, reference2)

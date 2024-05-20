@@ -19,9 +19,9 @@ def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: 
     return reference.head(15_000), monitored.tail(5_000)
 
 
-def test_stats_avg_calculator_with_default_params_should_not_fail(
+def test_stats_avg_calculator_with_default_params_should_not_fail(  # noqa: D103
     binary_classification_data
-):  # noqa: D103
+):
     reference, monitored = binary_classification_data
     try:
         calc = SummaryStatsAvgCalculator(
@@ -34,13 +34,13 @@ def test_stats_avg_calculator_with_default_params_should_not_fail(
 
 def test_stats_avg_calculator_results(binary_classification_data):  # noqa: D103
     reference, monitored = binary_classification_data
-    column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    column_names = ['car_value', 'debt_to_income_ratio', 'driver_tenure']
     calc = SummaryStatsAvgCalculator(
         column_names=column_names,
         chunk_size=5_000
     ).fit(reference)
     results = calc.calculate(data=monitored)
-    eval_cols = [('car_value', 'value'), ('debt_to_income_ratio', 'value'), ('driver_tenure', 'value'),]
+    eval_cols = [('car_value', 'value'), ('debt_to_income_ratio', 'value'), ('driver_tenure', 'value')]
     exp_cols = pd.MultiIndex.from_tuples(eval_cols)
     expected = pd.DataFrame({
         'car_value': [29660.4932, 29617.694, 29577.5972, 48706.3372],
@@ -135,11 +135,11 @@ def test_stats_avg_calculator_results(binary_classification_data):  # noqa: D103
     pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
 
 
-def test_stats_avg_calculator_returns_distinct_but_consistent_results_when_reused(
+def test_stats_avg_calculator_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
     binary_classification_data
-):  # noqa: D103
+):
     reference, monitored = binary_classification_data
-    column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    column_names = ['car_value', 'debt_to_income_ratio', 'driver_tenure']
     calc = SummaryStatsAvgCalculator(
         column_names=column_names,
         chunk_size=5_000
@@ -150,17 +150,17 @@ def test_stats_avg_calculator_returns_distinct_but_consistent_results_when_reuse
     pd.testing.assert_frame_equal(results1.to_df(), results2.to_df())
 
 
-def test_stats_avg_calculator_returns_distinct_but_consistent_results_when_data_reused(
+def test_stats_avg_calculator_returns_distinct_but_consistent_results_when_data_reused(  # noqa: D103
     binary_classification_data
-):  # noqa: D103
+):
     reference, monitored = binary_classification_data
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
-    column_names=['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    column_names = ['car_value', 'debt_to_income_ratio', 'driver_tenure']
     calc = SummaryStatsAvgCalculator(
         column_names=column_names,
         chunk_size=5_000
     ).fit(reference2)
-    results = calc.calculate(data=monitored2)
+    results = calc.calculate(data=monitored2)  # noqa: F841
     pd.testing.assert_frame_equal(monitored, monitored2)
     pd.testing.assert_frame_equal(reference, reference2)

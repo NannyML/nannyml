@@ -1,13 +1,16 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Tests."""
+
 import numpy as np
 import pandas as pd
 
 import nannyml.sampling_error.binary_classification as bse
 
 
-def test_auroc_sampling_error():
+def test_auroc_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -20,7 +23,7 @@ def test_auroc_sampling_error():
     assert np.round(sampling_error, 4) == 0.0575
 
 
-def test_auroc_sampling_error_nan():
+def test_auroc_sampling_error_nan():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -30,7 +33,7 @@ def test_auroc_sampling_error_nan():
     assert np.isnan(sampling_error)
 
 
-def test_f1_sampling_error():
+def test_f1_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -43,7 +46,7 @@ def test_f1_sampling_error():
     assert np.round(sampling_error, 4) == 0.1153
 
 
-def test_precision_sampling_error():
+def test_precision_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -56,7 +59,7 @@ def test_precision_sampling_error():
     assert np.round(sampling_error, 4) == 0.0989
 
 
-def test_recall_sampling_error():
+def test_recall_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -69,7 +72,7 @@ def test_recall_sampling_error():
     assert np.round(sampling_error, 4) == 0.0998
 
 
-def test_specificity_sampling_error():
+def test_specificity_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -82,7 +85,7 @@ def test_specificity_sampling_error():
     assert np.round(sampling_error, 4) == 0.1001
 
 
-def test_accuracy_sampling_error():
+def test_accuracy_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -95,7 +98,7 @@ def test_accuracy_sampling_error():
     assert np.round(sampling_error, 4) == 0.0707
 
 
-def test_ap_sampling_error_when_nan():
+def test_ap_sampling_error_when_nan():  # noqa: D103
     comp1 = np.NaN
     comp2 = 0
     data = pd.DataFrame({'y_true': [0, 1, 1], 'y_pred_proba': [0.4, 0.6, 0.7]})

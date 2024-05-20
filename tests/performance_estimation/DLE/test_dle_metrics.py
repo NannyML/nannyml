@@ -1,6 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Tests."""
+
 from typing import List, Optional
 
 import pandas as pd
@@ -16,18 +19,18 @@ from nannyml.performance_estimation.direct_loss_estimation.metrics import MAE, M
 from nannyml.thresholds import ConstantThreshold
 
 
-class FakeEstimatorResult(Abstract1DResult):
-    def keys(self) -> List[Key]:
+class FakeEstimatorResult(Abstract1DResult):  # noqa: D101
+    def keys(self) -> List[Key]:  # noqa: D102
         return []
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         return self
 
-    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:  # noqa: D102
         return plotly.graph_objects.Figure()
 
 
-class FakeEstimator(AbstractEstimator):
+class FakeEstimator(AbstractEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         return self
 
@@ -301,7 +304,7 @@ class FakeEstimator(AbstractEstimator):
         'default_with_timestamp',
     ],
 )
-def test_dle_for_regression_with_timestamps(calculator_opts, expected):
+def test_dle_for_regression_with_timestamps(calculator_opts, expected):  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_car_price_dataset()
     dle = DLE(
         feature_column_names=[col for col in ref_df.columns if col not in ['timestamp', 'y_true', 'y_pred', 'id']],
@@ -328,7 +331,9 @@ def test_dle_for_regression_with_timestamps(calculator_opts, expected):
 
 
 @pytest.mark.parametrize('metric_cls', [MAE, MAPE, MSE, MSLE, RMSE, RMSLE])
-def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls):
+def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(  # noqa: D103
+    caplog, metric_cls
+):
     ref_df, ana_df, _ = load_synthetic_car_price_dataset()
 
     metric = metric_cls(

@@ -115,7 +115,7 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 
 
 @pytest.fixture(scope="module")
-def reconstruction_drift_result(sample_drift_data) -> Result:
+def reconstruction_drift_result(sample_drift_data) -> Result:  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
@@ -351,8 +351,8 @@ def test_data_reconstruction_drift_calculator_numeric_results(sample_drift_data)
         'default_with_timestamp',
     ],
 )
-def test_data_reconstruction_drift_calculator_works_with_chunker(
-    sample_drift_data, calculator_opts, expected  # noqa: D103
+def test_data_reconstruction_drift_calculator_works_with_chunker(  # noqa: D103
+    sample_drift_data, calculator_opts, expected
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4'], **calculator_opts).fit(ref_data)
@@ -445,7 +445,9 @@ def test_data_reconstruction_drift_lower_threshold_smaller_than_upper_threshold(
 
 
 # See https://github.com/NannyML/nannyml/issues/192
-def test_data_reconstruction_drift_calculator_returns_distinct_but_consistent_results_when_reused(sample_drift_data):
+def test_data_reconstruction_drift_calculator_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
+    sample_drift_data
+):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     sut = DataReconstructionDriftCalculator(column_names=['f1', 'f2', 'f3', 'f4']).fit(ref_data)
     result1 = sut.calculate(data=sample_drift_data)
@@ -456,13 +458,15 @@ def test_data_reconstruction_drift_calculator_returns_distinct_but_consistent_re
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_data_reconstruction_drift_result_filter_should_preserve_data_with_default_args(reconstruction_drift_result):
+def test_data_reconstruction_drift_result_filter_should_preserve_data_with_default_args(  # noqa: D103
+    reconstruction_drift_result
+):
     filtered_result = reconstruction_drift_result.filter()
     assert filtered_result.data.equals(reconstruction_drift_result.data)
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_data_reconstruction_drift_result_filter_period(reconstruction_drift_result):
+def test_data_reconstruction_drift_result_filter_period(reconstruction_drift_result):  # noqa: D103
     ref_period = reconstruction_drift_result.data.loc[
         reconstruction_drift_result.data.loc[:, ("chunk", "period")] == "reference", :
     ]
@@ -513,7 +517,7 @@ def test_result_plots_raise_no_exceptions(sample_drift_data, calc_args, plot_arg
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_result_comparison_to_univariate_drift_plots_raise_no_exceptions(sample_drift_data):
+def test_result_comparison_to_univariate_drift_plots_raise_no_exceptions(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
@@ -534,7 +538,7 @@ def test_result_comparison_to_univariate_drift_plots_raise_no_exceptions(sample_
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
+def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 

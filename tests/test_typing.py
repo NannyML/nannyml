@@ -1,6 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Tests."""
+
 from typing import Tuple
 
 import pandas as pd
@@ -12,12 +15,12 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture
-def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
     return load_synthetic_car_price_dataset()
 
 
 @pytest.fixture
-def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
     return load_synthetic_multiclass_classification_dataset()
 
 
@@ -29,11 +32,11 @@ def multiclass_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Dat
         ('regression', ProblemType.REGRESSION),
     ],
 )
-def test_problem_type_parsing(problem_type_str, problem_type):
+def test_problem_type_parsing(problem_type_str, problem_type):  # noqa: D103
     assert ProblemType.parse(problem_type_str) == problem_type
 
 
-def test_problem_type_parsing_raises_invalid_args_exc_when_given_unknown_problem_type_str():
+def test_problem_type_parsing_raises_invalid_args_exc_when_given_unknown_problem_type_str():  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = ProblemType.parse('foo')
 
@@ -42,12 +45,12 @@ def test_problem_type_parsing_raises_invalid_args_exc_when_given_unknown_problem
     'y_pred_proba, expected_labels',
     [({'C': 'col_c', 'A': 'col_a', 'B': 'col_b'}, ['A', 'B', 'C']), ({}, [])],
 )
-def test_class_labels(y_pred_proba, expected_labels):
+def test_class_labels(y_pred_proba, expected_labels):  # noqa: D103
     labels = class_labels(y_pred_proba)
 
     assert labels == expected_labels
 
 
-def test_class_labels_raises_invalid_args_exception_when_not_given_dict():
+def test_class_labels_raises_invalid_args_exception_when_not_given_dict():  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = class_labels('err')

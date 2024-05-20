@@ -1,3 +1,5 @@
+"""Tests."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -6,7 +8,7 @@ from nannyml.base import common_nan_removal
 from nannyml.exceptions import InvalidArgumentsException
 
 
-def test_common_nan_removal_dataframe():
+def test_common_nan_removal_dataframe():  # noqa: D103
     data = pd.DataFrame({'A': [1, 2, np.nan, 4], 'B': [5, np.nan, 7, 8], 'C': [9, 10, 11, np.nan]})
     selected_columns = ['A', 'B']
     df_cleaned, is_empty = common_nan_removal(data, selected_columns)
@@ -17,7 +19,7 @@ def test_common_nan_removal_dataframe():
     assert not is_empty
 
 
-def test_common_nan_removal_dataframe_all_nan():
+def test_common_nan_removal_dataframe_all_nan():  # noqa: D103
     data = pd.DataFrame({'A': [np.nan, np.nan], 'B': [np.nan, np.nan], 'C': [np.nan, np.nan]})
     selected_columns = ['A', 'B']
     df_cleaned, is_empty = common_nan_removal(data, selected_columns)
@@ -28,7 +30,7 @@ def test_common_nan_removal_dataframe_all_nan():
     assert is_empty
 
 
-def test_common_nan_removal_arrays():
+def test_common_nan_removal_arrays():  # noqa: D103
     data = [np.array([1, 5, 9]), np.array([2, np.nan, 10]), np.array([np.nan, 7, 11]), np.array([4, 8, np.nan])]
     selected_columns_indices = [0, 1]  # Corresponds to columns 'A' and 'B'
 
@@ -47,7 +49,7 @@ def test_common_nan_removal_arrays():
     assert not is_empty
 
 
-def test_common_nan_removal_arrays_all_nan():
+def test_common_nan_removal_arrays_all_nan():  # noqa: D103
     data = [
         np.array([np.nan, np.nan]),
         np.array([np.nan, np.nan]),
@@ -63,14 +65,14 @@ def test_common_nan_removal_arrays_all_nan():
     assert is_empty
 
 
-def test_invalid_dataframe_columns():
+def test_invalid_dataframe_columns():  # noqa: D103
     data = pd.DataFrame({'A': [1, 2, np.nan, 4], 'B': [5, np.nan, 7, 8], 'C': [9, 10, 11, np.nan]})
     selected_columns = ['A', 'D']  # 'D' does not exist
     with pytest.raises(InvalidArgumentsException):
         common_nan_removal(data, selected_columns)
 
 
-def test_invalid_array_columns():
+def test_invalid_array_columns():  # noqa: D103
     data = [
         np.array([np.nan, np.nan]),
         np.array([np.nan, np.nan]),

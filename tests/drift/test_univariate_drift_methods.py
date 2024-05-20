@@ -19,7 +19,7 @@ chunker = CountBasedChunker(1)
 threshold = ConstantThreshold(lower=None, upper=0.1)
 
 
-def test_js_for_0_distance():
+def test_js_for_0_distance():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
     js = JensenShannonDistance(chunker=chunker, threshold=threshold)
@@ -28,7 +28,7 @@ def test_js_for_0_distance():
     assert distance == 0
 
 
-def test_js_for_both_continuous():
+def test_js_for_both_continuous():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = pd.Series(np.random.normal(0, 1, 1000), name='A')
@@ -38,7 +38,7 @@ def test_js_for_both_continuous():
     assert np.round(distance, 2) == 0.05
 
 
-def test_js_for_quasi_continuous():
+def test_js_for_quasi_continuous():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
     analysis = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
@@ -48,7 +48,7 @@ def test_js_for_quasi_continuous():
     assert np.round(distance, 2) == 0.73
 
 
-def test_js_for_categorical():
+def test_js_for_categorical():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(['a', 'b', 'c', 'd'], 10_000), name='A')
     analysis = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
@@ -58,7 +58,7 @@ def test_js_for_categorical():
     assert np.round(distance, 2) == 0.5
 
 
-def test_l_infinity_for_new_category():
+def test_l_infinity_for_new_category():  # noqa: D103
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
     analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c', 'd'], name='A')
     infnorm = LInfinityDistance(chunker=chunker, threshold=threshold)
@@ -67,7 +67,7 @@ def test_l_infinity_for_new_category():
     assert np.round(distance, 2) == 0.14
 
 
-def test_l_infinity_for_no_change():
+def test_l_infinity_for_no_change():  # noqa: D103
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
     analysis = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
     infnorm = LInfinityDistance(chunker=chunker, threshold=threshold)
@@ -76,7 +76,7 @@ def test_l_infinity_for_no_change():
     assert np.round(distance, 2) == 0.0
 
 
-def test_l_infinity_for_total_change():
+def test_l_infinity_for_total_change():  # noqa: D103
     reference = pd.Series(['a', 'a', 'b', 'b', 'c', 'c'], name='A')
     analysis = pd.Series(['b', 'b', 'b', 'b', 'b'], name='A')
     infnorm = LInfinityDistance(chunker=chunker, threshold=threshold)
@@ -88,7 +88,7 @@ def test_l_infinity_for_total_change():
 # ************* Wasserstein Tests *************
 
 
-def test_wasserstein_both_continuous_0_distance():
+def test_wasserstein_both_continuous_0_distance():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = reference
@@ -98,7 +98,7 @@ def test_wasserstein_both_continuous_0_distance():
     assert wass_dist == 0
 
 
-def test_wasserstein_both_continuous_positive_means_small_drift():
+def test_wasserstein_both_continuous_positive_means_small_drift():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10000), name='A')
     analysis = pd.Series(np.random.normal(1, 1, 1000), name='A')
@@ -108,7 +108,7 @@ def test_wasserstein_both_continuous_positive_means_small_drift():
     assert wass_dist == 1.01
 
 
-def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
+def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 100000), name='A')
     analysis = pd.Series(np.random.normal(-4, 1, 1000), name='A')
@@ -121,7 +121,7 @@ def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():
 # ************* Hellinger Tests *************
 
 
-def test_hellinger_complete_overlap():
+def test_hellinger_complete_overlap():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = reference
@@ -130,7 +130,7 @@ def test_hellinger_complete_overlap():
     assert hell_dist == 0
 
 
-def test_hellinger_no_overlap():
+def test_hellinger_no_overlap():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = pd.Series(np.random.normal(7, 1, 10_000), name='A')
@@ -139,7 +139,7 @@ def test_hellinger_no_overlap():
     assert hell_dist == 1
 
 
-def test_hellinger_both_continuous_analysis_with_small_drift():
+def test_hellinger_both_continuous_analysis_with_small_drift():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = pd.Series(np.random.normal(-2, 1, 10_000), name='A')
@@ -148,7 +148,7 @@ def test_hellinger_both_continuous_analysis_with_small_drift():
     assert hell_dist == 0.63
 
 
-def test_hellinger_for_quasi_continuous():
+def test_hellinger_for_quasi_continuous():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
     analysis = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
@@ -158,7 +158,7 @@ def test_hellinger_for_quasi_continuous():
     assert np.round(distance, 2) == 0.72
 
 
-def test_hellinger_for_categorical():
+def test_hellinger_for_categorical():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(['a', 'b', 'c', 'd'], 10_000), name='A')
     analysis = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
@@ -178,7 +178,7 @@ def test_hellinger_for_categorical():
         HellingerDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
     ],
 )
-def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, method):
+def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, method):  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 1000), name='A')
     method.fit(reference)
@@ -195,7 +195,7 @@ def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
         KolmogorovSmirnovStatistic(chunker=DefaultChunker(), threshold=ConstantThreshold(upper=2)),
     ],
 )
-def test_method_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(caplog, method):
+def test_method_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(caplog, method):  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 1000), name='A')
     method.fit(reference)
