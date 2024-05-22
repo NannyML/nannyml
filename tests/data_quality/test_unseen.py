@@ -236,7 +236,7 @@ def test_results_size_of_downpayment_alerts(unseen_value_result):  # noqa: D103
     assert list(res[('size_of_downpayment', 'alert')]) == [False] * 10 + [True] * 10
 
 
-def test_oo_behavior_unseen_value_calculator_calculate():  # noqa: D103
+def test_input_dataframes_are_not_altered_by_calculator():  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)

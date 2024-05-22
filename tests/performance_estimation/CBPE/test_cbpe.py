@@ -810,7 +810,7 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(  # no
     pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
 
 
-def test_oo_behavior_bc_perf_est(binary_classification_data):  # noqa: D103
+def test_input_dataframes_are_not_altered_by_multiclass_calculator(binary_classification_data):  # noqa: D103
     reference, monitored = binary_classification_data
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
@@ -829,7 +829,7 @@ def test_oo_behavior_bc_perf_est(binary_classification_data):  # noqa: D103
     pd.testing.assert_frame_equal(reference, reference2)
 
 
-def test_oo_behavior_mc_perf_est(multiclass_classification_data):  # noqa: D103
+def test_input_dataframes_are_not_altered_by_multiclass_calculator(multiclass_classification_data):  # noqa: D103
     reference, monitored = multiclass_classification_data
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)

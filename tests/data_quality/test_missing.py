@@ -328,7 +328,7 @@ def test_results_driver_tenure_alerts(missing_value_result):  # noqa: D103
     assert list(res[('driver_tenure', 'alert')]) == [False] * 15 + [True] * 5
 
 
-def test_oo_behavior_missing_value_calculator_calculate():  # noqa: D103
+def test_input_dataframes_are_not_altered_by_calculator():  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_data_quality_dataset()
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)

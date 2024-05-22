@@ -484,7 +484,7 @@ def test_binary_classification_calculate_without_prediction_column():  # noqa: D
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_oo_behavior_bc_perf_calc(data):  # noqa: D103
+def test_input_dataframes_are_not_altered_by_bin_class_calculator(data):  # noqa: D103
     reference, monitored, targets = data
     reference2 = reference.copy(deep=True)
     monitored = monitored.merge(targets, left_index=True, right_index=True)
@@ -503,7 +503,7 @@ def test_oo_behavior_bc_perf_calc(data):  # noqa: D103
     pd.testing.assert_frame_equal(reference, reference2)
 
 
-def test_oo_behavior_mc_perf_calc(data):  # noqa: D103
+def test_input_dataframes_are_not_altered_by_multiclass_calculator(data):  # noqa: D103
     reference, monitored, targets = load_synthetic_multiclass_classification_dataset()
     reference2 = reference.copy(deep=True)
     monitored = monitored.merge(targets, left_index=True, right_index=True)
@@ -526,7 +526,7 @@ def test_oo_behavior_mc_perf_calc(data):  # noqa: D103
     pd.testing.assert_frame_equal(reference, reference2)
 
 
-def test_oo_behavior_reg_perf_calc(data):  # noqa: D103
+def test_input_dataframes_are_not_altered_by_regression_calculator(data):  # noqa: D103
     reference, monitored, targets = load_synthetic_car_price_dataset()
     reference2 = reference.copy(deep=True)
     monitored = monitored.merge(targets, left_index=True, right_index=True)

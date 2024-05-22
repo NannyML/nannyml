@@ -859,7 +859,7 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_oo_behavior_univ_calc():  # noqa: D103
+def test_input_dataframes_are_not_altered_by_univ_calculator():  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_dataset()
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
@@ -885,7 +885,7 @@ def test_oo_behavior_univ_calc():  # noqa: D103
     pd.testing.assert_frame_equal(reference, reference2)
 
 
-def test_oo_behavior_dre_calc():  # noqa: D103
+def test_input_dataframes_are_not_altered_by_dre_calculator():  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_dataset()
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
@@ -908,7 +908,7 @@ def test_oo_behavior_dre_calc():  # noqa: D103
     pd.testing.assert_frame_equal(reference, reference2)
 
 
-def test_oo_behavior_dc_calc():  # noqa: D103
+def test_input_dataframes_are_not_altered_by_dc_calculator():  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_dataset()
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
