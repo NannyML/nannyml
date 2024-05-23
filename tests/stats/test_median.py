@@ -19,6 +19,18 @@ def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: 
     return reference.head(15_000), monitored.tail(5_000)
 
 
+@pytest.fixture
+def calculator_results(binary_classification_data):
+    reference, monitored = binary_classification_data
+    column_names = ['car_value', 'debt_to_income_ratio', 'driver_tenure']
+    calc = SummaryStatsMedianCalculator(
+        column_names=column_names,
+        chunk_size=5_000
+    ).fit(reference)
+    results = calc.calculate(data=monitored)
+    return results
+
+
 def test_stats_median_calculator_with_default_params_should_not_fail(  # noqa: D103
     binary_classification_data
 ):
@@ -46,107 +58,53 @@ def test_stats_median_calculator_should_not_fail_given_nan_values(  # noqa: D103
         pytest.fail()
 
 
-def test_stats_median_calculator_results(binary_classification_data):  # noqa: D103
-    reference, monitored = binary_classification_data
+@pytest.mark.parametrize(
+    'column, expected_dir',
+    [
+        ('value', {
+            'car_value': [21985.5, 21970.5, 21932.0, 44438.0],
+            'debt_to_income_ratio': [0.6578, 0.6574, 0.6611, 0.661],
+            'driver_tenure': [5.6424, 5.6498, 5.5153, 5.5879],
+        }),
+        ('sampling_error', {
+            'car_value': [281.5532, 281.5532, 281.5532, 281.5532],
+            'debt_to_income_ratio': [0.0023, 0.0023, 0.0023, 0.0023],
+            'driver_tenure': [0.0388, 0.0388, 0.0388, 0.0388],
+        }),
+        ('upper_confidence_boundary', {
+            'car_value': [22830.1596, 22815.1596, 22776.6596, 45282.6596],
+            'debt_to_income_ratio': [0.6647, 0.6644, 0.668, 0.668],
+            'driver_tenure': [5.7587, 5.7661, 5.6317, 5.7042],
+        }),
+        ('lower_confidence_boundary', {
+            'car_value': [21140.8404, 21125.8404, 21087.3404, 43593.3404],
+            'debt_to_income_ratio': [0.6509, 0.6505, 0.6541, 0.6541],
+            'driver_tenure': [5.526, 5.5334, 5.399, 5.4716],
+        }),
+        ('upper_threshold', {
+            'car_value': [22030.2647, 22030.2647, 22030.2647, 22030.2647],
+            'debt_to_income_ratio': [0.6637, 0.6637, 0.6637, 0.6637],
+            'driver_tenure': [5.7875, 5.7875, 5.7875, 5.7875],
+        }),
+        ('lower_threshold', {
+            'car_value': [21895.0686, 21895.0686, 21895.0686, 21895.0686],
+            'debt_to_income_ratio': [0.6539, 0.6539, 0.6539, 0.6539],
+            'driver_tenure': [5.4174, 5.4174, 5.4174, 5.4174],
+        }),
+        ('alert', {
+            'car_value': [False, False, False, True],
+            'debt_to_income_ratio': [False, False, False, False],
+            'driver_tenure': [False, False, False, False],
+        }),
+    ],
+)
+def test_stats_median_calculator_results(calculator_results, column, expected_dir):  # noqa: D103
     column_names = ['car_value', 'debt_to_income_ratio', 'driver_tenure']
-    calc = SummaryStatsMedianCalculator(
-        column_names=column_names,
-        chunk_size=5_000
-    ).fit(reference)
-    results = calc.calculate(data=monitored)
-    eval_cols = [('car_value', 'value'), ('debt_to_income_ratio', 'value'), ('driver_tenure', 'value')]
+    eval_cols = [(col, column) for col in column_names]
     exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'car_value': [21985.5, 21970.5, 21932.0, 44438.0],
-        'debt_to_income_ratio': [0.6578, 0.6574, 0.6611, 0.661],
-        'driver_tenure': [5.6424, 5.6498, 5.5153, 5.5879],
-    })
+    expected = pd.DataFrame(expected_dir)
     expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [
-        ('car_value', 'sampling_error'),
-        ('debt_to_income_ratio', 'sampling_error'),
-        ('driver_tenure', 'sampling_error'),
-    ]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'car_value': [281.5532, 281.5532, 281.5532, 281.5532],
-        'debt_to_income_ratio': [0.0023, 0.0023, 0.0023, 0.0023],
-        'driver_tenure': [0.0388, 0.0388, 0.0388, 0.0388],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [
-        ('car_value', 'upper_confidence_boundary'),
-        ('debt_to_income_ratio', 'upper_confidence_boundary'),
-        ('driver_tenure', 'upper_confidence_boundary'),
-    ]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'car_value': [22830.1596, 22815.1596, 22776.6596, 45282.6596],
-        'debt_to_income_ratio': [0.6647, 0.6644, 0.668, 0.668],
-        'driver_tenure': [5.7587, 5.7661, 5.6317, 5.7042],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [
-        ('car_value', 'lower_confidence_boundary'),
-        ('debt_to_income_ratio', 'lower_confidence_boundary'),
-        ('driver_tenure', 'lower_confidence_boundary'),
-    ]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'car_value': [21140.8404, 21125.8404, 21087.3404, 43593.3404],
-        'debt_to_income_ratio': [0.6509, 0.6505, 0.6541, 0.6541],
-        'driver_tenure': [5.526, 5.5334, 5.399, 5.4716],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [
-        ('car_value', 'upper_threshold'),
-        ('debt_to_income_ratio', 'upper_threshold'),
-        ('driver_tenure', 'upper_threshold'),
-    ]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'car_value': [22030.2647, 22030.2647, 22030.2647, 22030.2647],
-        'debt_to_income_ratio': [0.6637, 0.6637, 0.6637, 0.6637],
-        'driver_tenure': [5.7875, 5.7875, 5.7875, 5.7875],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [
-        ('car_value', 'lower_threshold'),
-        ('debt_to_income_ratio', 'lower_threshold'),
-        ('driver_tenure', 'lower_threshold'),
-    ]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'car_value': [21895.0686, 21895.0686, 21895.0686, 21895.0686],
-        'debt_to_income_ratio': [0.6539, 0.6539, 0.6539, 0.6539],
-        'driver_tenure': [5.4174, 5.4174, 5.4174, 5.4174],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [
-        ('car_value', 'alert'),
-        ('debt_to_income_ratio', 'alert'),
-        ('driver_tenure', 'alert'),
-    ]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'car_value': [False, False, False, True],
-        'debt_to_income_ratio': [False, False, False, False],
-        'driver_tenure': [False, False, False, False],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
+    pd.testing.assert_frame_equal(calculator_results.to_df()[eval_cols].round(4), expected)
 
 
 def test_stats_median_calculator_returns_distinct_but_consistent_results_when_reused(  # noqa: D103

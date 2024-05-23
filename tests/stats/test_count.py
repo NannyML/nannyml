@@ -19,6 +19,17 @@ def binary_classification_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: 
     return reference.head(15_000), monitored.tail(5_000)
 
 
+@pytest.fixture
+def calculator_results(binary_classification_data):
+    reference, monitored = binary_classification_data
+    calc = SummaryStatsRowCountCalculator(
+        chunk_period='M',
+        timestamp_column_name='timestamp'
+    ).fit(reference)
+    results = calc.calculate(data=monitored)
+    return results
+
+
 def test_stats_count_calculator_with_default_params_should_not_fail(  # noqa: D103
     binary_classification_data
 ):
@@ -30,47 +41,29 @@ def test_stats_count_calculator_with_default_params_should_not_fail(  # noqa: D1
         pytest.fail()
 
 
-def test_stats_count_calculator_results(binary_classification_data):  # noqa: D103
-    reference, monitored = binary_classification_data
-    calc = SummaryStatsRowCountCalculator(
-        chunk_period='M',
-        timestamp_column_name='timestamp'
-    ).fit(reference)
-    results = calc.calculate(data=monitored)
-    print("debug")
-    print(list(results.to_df().columns))
-    print(results.to_df())
-    eval_cols = [('rows_count', 'value')]
+@pytest.mark.parametrize(
+    'column, expected_dir',
+    [
+        ('value', {
+            'count': [5120, 4625, 5119, 136, 294, 4706],
+        }),
+        ('upper_threshold', {
+            'count': [10038.8619, 10038.8619, 10038.8619, 10038.8619, 10038.8619, 10038.8619],
+        }),
+        ('lower_threshold', {
+            'count': [None, None, None, None, None, None],
+        }),
+        ('alert', {
+            'count': [False, False, False, False, False, False],
+        }),
+    ],
+)
+def test_stats_count_calculator_results(calculator_results, column, expected_dir):  # noqa: D103
+    eval_cols = [('rows_count', column)]
     exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'count': [5120, 4625, 5119, 136, 294, 4706],
-    })
+    expected = pd.DataFrame(expected_dir)
     expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [('rows_count', 'upper_threshold')]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'count': [10038.8619, 10038.8619, 10038.8619, 10038.8619, 10038.8619, 10038.8619],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [('rows_count', 'lower_threshold')]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'count': [None, None, None, None, None, None],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
-
-    eval_cols = [('rows_count', 'alert')]
-    exp_cols = pd.MultiIndex.from_tuples(eval_cols)
-    expected = pd.DataFrame({
-        'count': [False, False, False, False, False, False],
-    })
-    expected.columns = exp_cols
-    pd.testing.assert_frame_equal(results.to_df()[eval_cols].round(4), expected)
+    pd.testing.assert_frame_equal(calculator_results.to_df()[eval_cols].round(4), expected)
 
 
 def test_stats_count_calculator_returns_distinct_but_consistent_results_when_reused(  # noqa: D103

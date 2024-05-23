@@ -446,7 +446,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_oo_behavior_reg_perf_est(regression_data):  # noqa: D103
+def test_input_dataframes_are_not_altered_by_calculator(regression_data):  # noqa: D103
     reference, monitored = regression_data
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
