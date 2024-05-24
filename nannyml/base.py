@@ -293,12 +293,14 @@ class PerMetricPerColumnResult(Abstract2DResult, ABC, Generic[MetricLike]):
         *args,
         **kwargs,
     ) -> Self:
+        res = super()._filter(period, *args, **kwargs)
+        if metrics is None and column_names is None:
+            return res
+
         if metrics is None:
             metrics = [metric.column_name for metric in self.metrics]
         if column_names is None:
             column_names = self.column_names
-
-        res = super()._filter(period, *args, **kwargs)
 
         data = pd.concat([res.data.loc[:, (['chunk'])], res.data.loc[:, (column_names, metrics)]], axis=1)
         data = data.reset_index(drop=True)
