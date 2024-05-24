@@ -484,8 +484,6 @@ class CountBasedChunker(Chunker):
         if data.shape[0] == 0:
             return []
 
-        data = data.copy().reset_index()
-
         chunk_size = data.shape[0] // self.chunk_number
         chunks = SizeBasedChunker(
             chunk_size=chunk_size, incomplete=self.incomplete, timestamp_column_name=self.timestamp_column_name
@@ -514,8 +512,6 @@ class DefaultChunker(Chunker):
     def _split(self, data: pd.DataFrame) -> List[Chunk]:
         if data.shape[0] == 0:
             return []
-
-        data = data.copy().reset_index(drop=True)
 
         chunk_size = data.shape[0] // self.DEFAULT_CHUNK_COUNT
         chunks = SizeBasedChunker(chunk_size=chunk_size, timestamp_column_name=self.timestamp_column_name).split(
